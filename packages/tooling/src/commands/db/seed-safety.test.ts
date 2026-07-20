@@ -4,11 +4,14 @@ import {
   assertSeedSafety,
   DefaultAdminEmail,
   DefaultAdminPassword,
+  isLocalDevelopmentDatabase,
   resolvePassword,
 } from "./seed-safety.ts";
 
 const localDatabase = "postgres://postgres:postgres@localhost:5432/nest_react_boilerplate";
 const productionDatabase = "postgres://postgres:postgres@db.example.com:5432/app";
+// The default prod deployment shares this host+db name with local dev.
+const defaultDatabase = "postgres://postgres:postgres@postgres:5432/nest_react_boilerplate";
 
 function defaultArgs(overrides = {}) {
   return {
@@ -60,6 +63,44 @@ describe("db seed safety guard", () => {
 
     assert.doesNotThrow(() =>
       assertSeedSafety(args, productionDatabase, {
+        env: {
+          DB_SEED_ALLOW_NON_LOCAL: "true",
+          DB_SEED_ALLOW_PRODUCTION: "true",
+          NODE_ENV: "production",
+        },
+      }),
+    );
+  });
+
+  it("does not treat the default db name as local-dev under NODE_ENV=production", () => {
+    assert.equal(
+      isLocalDevelopmentDatabase(defaultDatabase, { NODE_ENV: "production" }),
+      false,
+    );
+  });
+
+  it("still treats the default db name as local-dev for local development", () => {
+    assert.equal(isLocalDevelopmentDatabase(defaultDatabase, {}), true);
+    assert.equal(
+      isLocalDevelopmentDatabase(defaultDatabase, { NODE_ENV: "development" }),
+      true,
+    );
+  });
+
+  it("blocks forced seeding of the default db in production via the existing gates", () => {
+    const args = defaultArgs({
+      email: "ops-admin@example.com",
+      force: true,
+      password: "CorrectHorseBatteryStaple123!",
+    });
+
+    assert.throws(
+      () => assertSeedSafety(args, defaultDatabase, { env: { NODE_ENV: "production" } }),
+      /DB_SEED_ALLOW_NON_LOCAL=true/,
+    );
+
+    assert.doesNotThrow(() =>
+      assertSeedSafety(args, defaultDatabase, {
         env: {
           DB_SEED_ALLOW_NON_LOCAL: "true",
           DB_SEED_ALLOW_PRODUCTION: "true",

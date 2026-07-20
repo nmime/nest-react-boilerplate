@@ -844,6 +844,118 @@ describe('ExternalAuthService', () => {
     expect(social.revokedProviderTokenCalls).toBe(1);
   });
 
+  it('does not revoke provider tokens when unlinking an identity the caller does not own', async () => {
+    const social = new CapturingSocialAuthStore();
+    const { auth, service } = createService(social);
+    const owner = await auth.register({ email: 'owner@example.com', password: 'password123' });
+    const attacker = await auth.register({ email: 'attacker@example.com', password: 'password123' });
+
+    const ownerIdentity = (
+      await social.upsertIdentity({
+        channel: AuthProviderChannel.TelegramBot,
+        email: null,
+        provider: AuthProvider.Telegram,
+        providerSubject: 'owner-subject',
+        tenantId: DefaultAuthTenantId,
+        userId: owner.user.id,
+      })
+    )._unsafeUnwrap();
+
+    // The attacker owns their own linked identity + method so they clear the
+    // recent-auth and usable-method guards on their own account.
+    const attackerIdentity = (
+      await social.upsertIdentity({
+        channel: AuthProviderChannel.DiscordOauth,
+        email: null,
+        provider: AuthProvider.Discord,
+        providerSubject: 'attacker-subject',
+        tenantId: DefaultAuthTenantId,
+        userId: attacker.user.id,
+      })
+    )._unsafeUnwrap();
+    await social.upsertMethod({
+      amr: ['discord'],
+      externalIdentityId: attackerIdentity.id,
+      method: AuthProviderChannel.DiscordOauth,
+      tenantId: DefaultAuthTenantId,
+      userId: attacker.user.id,
+    });
+
+    // Stored provider tokens exist for the victim's identity.
+    await social.persistProviderToken({
+      tenantId: DefaultAuthTenantId,
+      userId: owner.user.id,
+      externalIdentityId: ownerIdentity.id,
+      provider: AuthProvider.Discord,
+      tokenKind: 'access',
+      plaintext: 'victim-provider-token',
+    });
+
+    await expect(
+      service.unlinkProviderIdentity(ownerIdentity.id, {
+        authTime: Math.floor(Date.now() / 1000),
+        subject: attacker.user.id,
+        tenantId: DefaultAuthTenantId,
+      }),
+    ).resolves.toEqual({ unlinked: false });
+    // The owner-scoped delete removed nothing, so the victim's provider tokens
+    // must never be revoked.
+    expect(social.revokedProviderTokenCalls).toBe(0);
+  });
+
+  it('prevents unlinking the last usable identity even when a stale auth-method row from a prior unlink remains', async () => {
+    const social = new CapturingSocialAuthStore();
+    const { service } = createService(social);
+    const userId = 'external-only-user';
+
+    const identityA = (
+      await social.upsertIdentity({
+        channel: AuthProviderChannel.TelegramBot,
+        email: null,
+        provider: AuthProvider.Telegram,
+        providerSubject: 'aaa',
+        tenantId: DefaultAuthTenantId,
+        userId,
+      })
+    )._unsafeUnwrap();
+    const identityB = (
+      await social.upsertIdentity({
+        channel: AuthProviderChannel.DiscordOauth,
+        email: null,
+        provider: AuthProvider.Discord,
+        providerSubject: 'bbb',
+        tenantId: DefaultAuthTenantId,
+        userId,
+      })
+    )._unsafeUnwrap();
+    await social.upsertMethod({
+      amr: ['telegram'],
+      externalIdentityId: identityA.id,
+      method: AuthProviderChannel.TelegramBot,
+      tenantId: DefaultAuthTenantId,
+      userId,
+    });
+    await social.upsertMethod({
+      amr: ['discord'],
+      externalIdentityId: identityB.id,
+      method: AuthProviderChannel.DiscordOauth,
+      tenantId: DefaultAuthTenantId,
+      userId,
+    });
+
+    const authTime = Math.floor(Date.now() / 1000);
+    // Two live identities: unlinking the first is allowed.
+    await expect(
+      service.unlinkProviderIdentity(identityA.id, { authTime, subject: userId, tenantId: DefaultAuthTenantId }),
+    ).resolves.toEqual({ unlinked: true });
+
+    // identityA's AuthMethod row is now stale (its identity is gone). It must not
+    // be counted, so the last remaining usable identity cannot be unlinked.
+    await expect(
+      service.unlinkProviderIdentity(identityB.id, { authTime, subject: userId, tenantId: DefaultAuthTenantId }),
+    ).rejects.toMatchObject({ code: 'last-auth-method-unlink-forbidden', status: 409 });
+  });
+
   it('maps social store failures for link tokens, identity listing, unlinking, and linking', async () => {
     const activeUser = authUserRecord({ id: 'linked-user-id' });
 
@@ -872,7 +984,8 @@ describe('ExternalAuthService', () => {
       createServiceWithStores(
         {},
         {
-          countMethods: () => errAsync({ code: 'repository_error', message: 'count failed' }),
+          listMethods: () => errAsync({ code: 'repository_error', message: 'count failed' }),
+          listIdentities: () => okAsync([]),
         },
       ).service.unlinkProviderIdentity('identity-id', {
         authTime: Math.floor(Date.now() / 1000),
@@ -885,7 +998,8 @@ describe('ExternalAuthService', () => {
       createServiceWithStores(
         {},
         {
-          countMethods: () => okAsync(2),
+          listMethods: () => okAsync([{ externalIdentityId: null }, { externalIdentityId: null }]),
+          listIdentities: () => okAsync([]),
           revokeProviderTokens: () => okAsync(undefined),
           deleteIdentity: () => errAsync({ code: 'repository_error', message: 'delete failed' }),
         },

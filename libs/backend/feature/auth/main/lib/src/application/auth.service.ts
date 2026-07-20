@@ -27,6 +27,7 @@ import {
   AuthTokenStoreInjectToken,
   type AuthTokenStore,
   type AuthUserTokenPurpose,
+  type RefreshTokenAuthContext,
   InMemoryAuthTokenStore,
   SocialAuthStoreInjectToken,
   type SocialAuthStore,
@@ -53,6 +54,44 @@ import { parseTenantId } from './util/auth-error-adapter.util';
 // barrel stays stable.
 export * from './type/auth-service.type';
 export * from './util/auth-error-adapter.util';
+
+// Claims for a fresh password authentication (register/login). Computed once per
+// authentication so the value stored with the refresh-token family and the value
+// emitted in the access token share the exact same `auth_time`.
+function passwordAuthClaims(): AuthMethodClaims {
+  return {
+    amr: ['pwd'],
+    authProvider: AuthProvider.Password,
+    authChannel: AuthProviderChannel.Password,
+    authTime: Math.floor(Date.now() / 1000),
+  };
+}
+
+// Project session claims onto the persisted refresh-token context (the persisted
+// subset excludes per-request members such as externalIdentityId).
+function claimsToRefreshTokenAuthContext(claims: AuthMethodClaims): RefreshTokenAuthContext {
+  return {
+    ...(claims.amr ? { amr: claims.amr } : {}),
+    ...(claims.authProvider ? { authProvider: claims.authProvider } : {}),
+    ...(claims.authChannel ? { authChannel: claims.authChannel } : {}),
+    ...(claims.authTime ? { authTime: claims.authTime } : {}),
+  };
+}
+
+// Rebuild session claims from a rotated token's stored context. A missing context
+// (legacy token issued before this was persisted) yields empty claims, so no
+// `auth_time` is emitted and step-up fails closed until re-authentication.
+function refreshTokenAuthContextToClaims(context: RefreshTokenAuthContext | null | undefined): AuthMethodClaims {
+  if (!context) {
+    return {};
+  }
+  return {
+    ...(context.amr ? { amr: context.amr } : {}),
+    ...(context.authProvider ? { authProvider: context.authProvider } : {}),
+    ...(context.authChannel ? { authChannel: context.authChannel } : {}),
+    ...(context.authTime ? { authTime: context.authTime } : {}),
+  };
+}
 
 @Injectable()
 export class AuthService {
@@ -101,7 +140,13 @@ export class AuthService {
     const sessionUser = await this.bootstrapUserAccess(created.value, roleKeys);
     await this.recordPasswordMethod(sessionUser);
 
-    return this.createSession(sessionUser, process.env, await this.issueRefreshTokenForUser(sessionUser));
+    const claims = passwordAuthClaims();
+    return this.createSession(
+      sessionUser,
+      process.env,
+      await this.issueRefreshTokenForUser(sessionUser, claims),
+      claims,
+    );
   }
 
   // Assign the bootstrap roles to a freshly created user and refresh the
@@ -136,7 +181,13 @@ export class AuthService {
     const loggedIn = await this.users.recordLogin(user.value.id, new Date(), tenantId);
     const sessionUser = loggedIn.isOk() && loggedIn.value ? loggedIn.value : user.value;
     await this.recordPasswordMethod(sessionUser);
-    return this.createSession(sessionUser, process.env, await this.issueRefreshTokenForUser(sessionUser));
+    const claims = passwordAuthClaims();
+    return this.createSession(
+      sessionUser,
+      process.env,
+      await this.issueRefreshTokenForUser(sessionUser, claims),
+      claims,
+    );
   }
 
   async refreshSession(input: RefreshSessionInput): Promise<AuthSessionView> {
@@ -161,7 +212,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
-    return this.createSession(user.value, process.env, rotated.value.token);
+    // Re-emit the authentication context captured when this refresh-token family
+    // was first issued, so `auth_time` (and the authentication method) reflect the
+    // last real authentication event rather than the refresh time. Without this, a
+    // refresh — or a replayed stolen refresh token — silently resets `auth_time` to
+    // "now" and satisfies the recent-auth (step-up) gate. Legacy tokens issued
+    // before the context was stored carry no `auth_time` and therefore fail step-up
+    // closed until the user authenticates again.
+    const claims = refreshTokenAuthContextToClaims(rotated.value.authContext);
+    return this.createSession(user.value, process.env, rotated.value.token, claims);
   }
 
   async revokeRefreshToken(input: RefreshSessionInput): Promise<boolean> {
@@ -296,10 +355,13 @@ export class AuthService {
     return this.createSession(user, env);
   }
 
-  private async issueRefreshTokenForUser(user: AuthUserRecord): Promise<string | undefined> {
+  private async issueRefreshTokenForUser(user: AuthUserRecord, claims?: AuthMethodClaims): Promise<string | undefined> {
     const issued = await this.tokens.issueRefreshToken({
       tenantId: user.tenantId,
       userId: user.id,
+      // Persist the authentication context with the family so it can be re-emitted
+      // unchanged on every rotation (see refreshSession).
+      authContext: claims ? claimsToRefreshTokenAuthContext(claims) : null,
     });
     return issued.isOk() ? issued.value.token : undefined;
   }

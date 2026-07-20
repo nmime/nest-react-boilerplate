@@ -1,7 +1,15 @@
 import type { HealthSafeDetails } from '../dto';
 
-const unsafeDetailKeyPattern = /(authorization|cookie|credential|passwd|password|private[_-]?key|secret|token)/iu;
+const unsafeDetailKeyPatterns: readonly RegExp[] = [
+  /authorization|bearer|cookie|credential|passwd|password|secret|token|jwt|ssn/iu,
+  /(private|api|access)[_-]?key/iu,
+  /session[_-]?id/iu,
+];
 const redactedDetailValue = '[redacted]';
+
+function isUnsafeDetailKey(key: string): boolean {
+  return unsafeDetailKeyPatterns.some((pattern) => pattern.test(key));
+}
 
 export function sanitizeHealthDetails(details: HealthSafeDetails | undefined): HealthSafeDetails | undefined {
   if (!details) {
@@ -16,7 +24,7 @@ function sanitizeRecord(record: HealthSafeDetails): HealthSafeDetails {
 }
 
 function sanitizeValue(key: string, value: unknown): unknown {
-  if (unsafeDetailKeyPattern.test(key)) {
+  if (isUnsafeDetailKey(key)) {
     return redactedDetailValue;
   }
 

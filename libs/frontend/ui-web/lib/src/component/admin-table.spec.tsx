@@ -98,6 +98,52 @@ describe('UiDataTable branch coverage', () => {
     expect(onRowClick).not.toHaveBeenCalled();
   });
 
+  it('does not fire the row click handler when a nested control is activated', () => {
+    const onRowClick = vi.fn();
+    const onDelete = vi.fn();
+
+    render(
+      <UiDataTable
+        columns={[
+          { header: 'Name', id: 'name', render: (row) => row.name },
+          {
+            header: 'Actions',
+            id: 'actions',
+            render: () => (
+              <button onClick={onDelete} type="button">
+                Delete
+              </button>
+            ),
+          },
+        ]}
+        onRowClick={onRowClick}
+        rowKey={(row) => row.id}
+        rows={rows}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it('does not swallow space or fire the row handler from a nested input', () => {
+    const onRowClick = vi.fn();
+
+    render(
+      <UiDataTable
+        columns={[{ header: 'Name', id: 'name', render: () => <input aria-label="Edit name" /> }]}
+        onRowClick={onRowClick}
+        rowKey={(row) => row.id}
+        rows={rows}
+      />,
+    );
+
+    const notPrevented = fireEvent.keyDown(screen.getByLabelText('Edit name'), { key: ' ' });
+    expect(notPrevented).toBe(true);
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
   it('renders a React node error without a string description', () => {
     render(
       <UiDataTable<Row>

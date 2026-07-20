@@ -25,10 +25,10 @@ export class RedisRateLimitService implements SharedRateLimiter {
   constructor(@InjectRedis() private readonly redis: RedisClientLike) {}
 
   async hit(params: RateLimitHitInput): Promise<RateLimitHitResult> {
-    const count = await this.redis.incr(params.key);
-    if (count === 1) {
-      await this.redis.expire(params.key, params.windowSeconds);
-    }
+    // Atomic INCR + PEXPIRE-if-no-TTL: the counter can never be observed
+    // without an expiry, so a dropped connection between separate INCR and
+    // EXPIRE round-trips can no longer leave a key that never resets.
+    const { count } = await this.redis.incrementWithWindow(params.key, params.windowSeconds * 1000);
 
     return {
       allowed: count <= params.limit,
@@ -50,8 +50,13 @@ export function buildRateLimitKey(parts: {
 }
 
 function sanitizeRateLimitKeyPart(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._:-]/gu, '_');
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      // Strip the ':' field delimiter too: leaving it inside a part would shift
+      // key boundaries and let distinct (scope,tenant,subject,action) tuples
+      // collapse onto one shared counter.
+      .replace(/[^a-z0-9._-]/gu, '_')
+  );
 }

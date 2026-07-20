@@ -63,6 +63,18 @@ export class Migration20260614120000CreateSocialAuthDataModel extends Migration 
     this.addSql('drop table if exists "auth_methods";');
     this.addSql('drop table if exists "auth_external_identities";');
     this.addSql('drop index if exists "uq__auth_users__tenant_id_lower_email";');
+    this.addSql(`
+      do $$
+      begin
+        if not exists (
+          select 1 from pg_constraint where conname = 'uq__auth_users__tenant_id_email'
+        ) then
+          alter table "auth_users"
+            add constraint "uq__auth_users__tenant_id_email"
+            unique ("tenant_id", "email");
+        end if;
+      end $$;
+    `);
     this.addSql('alter table "auth_users" alter column "email" set not null;');
   }
 }

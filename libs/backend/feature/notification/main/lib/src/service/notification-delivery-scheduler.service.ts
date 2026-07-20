@@ -11,6 +11,7 @@ import {
 import { MessageStrategyResolver } from '../messages';
 import { ChannelStrategyResolver } from '../strategy/transport';
 import { NotificationConfigService } from '../config/notification-config.service';
+import { NotificationRecipientLookupError } from './notification-recipient-resolver.service';
 import { NotificationStrategyResolverService } from './notification-strategy-resolver.service';
 
 @Injectable()
@@ -89,12 +90,27 @@ export class NotificationDeliverySchedulerService {
         error: { reason: NotificationErrorReason.NotFoundTargetStrategy },
       };
     }
-    return strategy.handleNotification({
-      pending,
-      channelStrategyResolver: this.channelStrategyResolver,
-      messageStrategyResolver: this.messageStrategyResolver,
-      recipientResolver: this.recipientResolver,
-    });
+    try {
+      return await strategy.handleNotification({
+        pending,
+        channelStrategyResolver: this.channelStrategyResolver,
+        messageStrategyResolver: this.messageStrategyResolver,
+        recipientResolver: this.recipientResolver,
+      });
+    } catch (error) {
+      if (error instanceof NotificationRecipientLookupError) {
+        // Transient recipient-lookup failure: keep the delivery Pending so it is retried
+        // (with backoff) instead of aborting the whole chunk and re-sending its siblings.
+        this.logger.warn(`${error.message}; rescheduling delivery ${pending.delivery.id}`);
+        return {
+          id: pending.delivery.id,
+          createdAt: pending.delivery.createdAt,
+          status: NotificationStatus.Pending,
+          error: { reason: NotificationErrorReason.NetworkError, message: error.message },
+        };
+      }
+      throw error;
+    }
   }
 
   private chunk<T>(items: T[], size: number): T[][] {

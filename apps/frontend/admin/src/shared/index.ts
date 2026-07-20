@@ -57,7 +57,13 @@ export const totalPages = (total = 0, limit = pageSize): number => Math.max(1, M
 
 export const join = (values?: readonly string[]): string => (values?.length ? values.join(', ') : '—');
 
-export const formatDate = (value?: string): string => (value ? new Date(value).toISOString() : '—');
+export const formatDate = (value?: string): string => {
+  if (!value) {
+    return '—';
+  }
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? '—' : d.toISOString();
+};
 
 export type AdminPrincipal = Partial<adminApi.AuthenticatedPrincipalDto>;
 

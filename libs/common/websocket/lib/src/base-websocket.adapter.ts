@@ -25,13 +25,17 @@ export class InMemoryWebsocketAdapter<TMessage = unknown> {
 
     // One failing client must not abort delivery to the rest; report how many
     // sends actually succeeded rather than how many were targeted.
-    const outcomes = await Promise.allSettled(targets.map((client) => Promise.resolve(client.send(operation.message))));
+    const outcomes = await Promise.allSettled(
+      targets.map((client) => Promise.resolve().then(() => client.send(operation.message))),
+    );
     return outcomes.filter((outcome) => outcome.status === 'fulfilled').length;
   }
 
   async closeAll(code?: number, reason?: string): Promise<void> {
     // Always clear the registry, even if some clients throw while closing.
-    await Promise.allSettled([...this.clients.values()].map((client) => Promise.resolve(client.close?.(code, reason))));
+    await Promise.allSettled(
+      [...this.clients.values()].map((client) => Promise.resolve().then(() => client.close?.(code, reason))),
+    );
     this.clients.clear();
   }
 }

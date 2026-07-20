@@ -400,6 +400,34 @@ describe('AuthService', () => {
     expect(rotate).toHaveBeenCalledTimes(1);
   });
 
+  it('preserves the original authTime and method across refresh so step-up is not reset', async () => {
+    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
+    vi.useFakeTimers();
+    try {
+      const loginAt = new Date('2026-01-01T00:00:00.000Z');
+      vi.setSystemTime(loginAt);
+      const service = new AuthService(new InMemoryAuthUserStore());
+      const login = await service.register({ email: 'stepup@example.com', password: 'password123' });
+      expect(login.refreshToken).toBeDefined();
+      const originalAuthTime = Math.floor(loginAt.getTime() / 1000);
+      expect(login.authTime).toBe(originalAuthTime);
+
+      // Two hours later the client refreshes the access token without re-authenticating.
+      vi.setSystemTime(new Date(loginAt.getTime() + 2 * 60 * 60 * 1000));
+      const refreshed = await service.refreshSession({ refreshToken: login.refreshToken as string });
+
+      // auth_time must reflect the last real authentication event, not the refresh
+      // time — otherwise a refresh (or a stolen refresh token) silently satisfies
+      // the recent-auth (step-up) gate. The authentication method must also survive.
+      expect(refreshed.authTime).toBe(originalAuthTime);
+      expect(refreshed.amr).toEqual(login.amr);
+      expect(refreshed.authProvider).toBe(login.authProvider);
+      expect(refreshed.authChannel).toBe(login.authChannel);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('does not rotate the refresh token when the user is inactive', async () => {
     process.env.AUTH_JWT_SECRET = testJwtSecretValue;
     const disabledRecord = {

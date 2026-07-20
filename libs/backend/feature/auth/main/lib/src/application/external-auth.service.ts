@@ -216,19 +216,43 @@ export class ExternalAuthService {
     if (!isRecentAuthTime(principal.authTime)) {
       throw new StepUpRequiredException();
     }
-    const count = await this.social.countMethods(principal.subject, tenantId);
-    if (count.isErr()) {
-      throw new ConflictException(count.error.message);
-    }
-    if (count.value <= 1) {
+    // Count only methods whose backing identity still exists. A prior unlink
+    // deletes the ExternalIdentity but leaves its AuthMethod row behind; counting
+    // those stale rows would let a user unlink past the last usable method and
+    // lock themselves out, defeating the last-auth-method guard.
+    const usableMethods = await this.countUsableMethods(principal.subject, tenantId);
+    if (usableMethods <= 1) {
       throw new LastAuthMethodUnlinkForbiddenException();
     }
-    await this.social.revokeProviderTokens(identityId, tenantId);
+    // Delete first, scoped to the caller (identityId + subject + tenantId). Only
+    // revoke provider tokens once the owner-scoped delete actually removed a row;
+    // revoking by identityId alone would let a caller wipe another user's stored
+    // provider tokens (cross-user IDOR).
     const deleted = await this.social.deleteIdentity(identityId, principal.subject, tenantId);
     if (deleted.isErr()) {
       throw new ConflictException(deleted.error.message);
     }
+    if (deleted.value) {
+      await this.social.revokeProviderTokens(identityId, tenantId);
+    }
     return { unlinked: deleted.value };
+  }
+
+  private async countUsableMethods(userId: string, tenantId: string): Promise<number> {
+    const [methods, identities] = await Promise.all([
+      this.social.listMethods(userId, tenantId),
+      this.social.listIdentities(userId, tenantId),
+    ]);
+    if (methods.isErr()) {
+      throw new ConflictException(methods.error.message);
+    }
+    if (identities.isErr()) {
+      throw new ConflictException(identities.error.message);
+    }
+    const liveIdentityIds = new Set(identities.value.map((identity) => identity.id));
+    return methods.value.filter(
+      (method) => method.externalIdentityId === null || liveIdentityIds.has(method.externalIdentityId),
+    ).length;
   }
 
   createDiscordAuthorizationRequest(input: DiscordAuthorizationRequestInput): DiscordAuthorizationRequestResult {

@@ -31,7 +31,7 @@ export class WebSocketResponseTransformer implements NestInterceptor {
     return {
       id: this.getRequestId(context),
       result: {
-        ...(result && typeof result === 'object' ? result : { value: result }),
+        ...(result !== null && typeof result === 'object' && !Array.isArray(result) ? result : { value: result }),
         success: true,
       },
     };

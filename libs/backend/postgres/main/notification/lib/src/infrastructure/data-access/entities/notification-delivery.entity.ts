@@ -37,6 +37,9 @@ export class NotificationDeliveryEntity {
   priority: number = NotificationPriority.Default;
   sendAfter: Date = new Date();
   sentAt: Date | null = null;
+  // Delivery-claim lease marker. The epoch sentinel means "unclaimed"; the scheduler
+  // stamps it with the claim time and re-claims only once the lease has elapsed.
+  claimedAt: Date = new Date(0);
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 
@@ -75,6 +78,7 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
     priority: { type: 'int', default: NotificationPriority.Default },
     sendAfter: { type: 'timestamptz', fieldName: 'send_after', onCreate: () => new Date() },
     sentAt: { type: 'timestamptz', fieldName: 'sent_at', nullable: true, default: null },
+    claimedAt: { type: 'timestamptz', fieldName: 'claimed_at', defaultRaw: "'1970-01-01 00:00:00+00'" },
     createdAt: { type: 'timestamptz', fieldName: 'created_at', primary: true, onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },

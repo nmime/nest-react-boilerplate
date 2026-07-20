@@ -32,6 +32,7 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
       expiresAt: issued.expiresAt,
       revokedAt: null,
       replacedByTokenId: null,
+      authContext: issued.authContext ?? null,
     });
     return okAsync(issued);
   }
@@ -47,6 +48,8 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
       userId: record.userId,
       familyId: record.familyId,
       parentTokenId: record.id,
+      // Carry the family's original authentication context forward unchanged.
+      authContext: record.authContext ?? null,
     });
     record.revokedAt = new Date();
     record.replacedByTokenId = issued.id;
@@ -115,6 +118,7 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
       expiresAt: issued.expiresAt,
       revokedAt: null,
       replacedByTokenId: null,
+      authContext: issued.authContext ?? null,
     });
     return issued;
   }

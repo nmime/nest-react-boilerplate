@@ -12,6 +12,16 @@ function collectSql(migration: { addSql(sql: string): void; up(): void }) {
   return statements.join('\n');
 }
 
+function collectDownSql(migration: { addSql(sql: string): void; down(): void }) {
+  const statements: string[] = [];
+  migration.addSql = (sql: string) => {
+    statements.push(sql);
+  };
+  migration.down();
+
+  return statements.join('\n');
+}
+
 describe('social auth data model migration', () => {
   it('makes user email nullable and adds partial uniqueness for non-null normalized email', () => {
     const sql = collectSql(
@@ -55,6 +65,17 @@ describe('social auth data model migration', () => {
     expect(sql).toContain('"ix__auth_methods__tenant_id_auth_user_id_last_used_at_desc"');
     expect(sql).toContain('"uq__auth_methods__tenant_id_auth_user_id"');
     expect(sql).toContain('"uq__auth_methods__tenant_id_external_identity_id_method"');
+  });
+
+  it('restores the (tenant_id, email) uniqueness that up() removed on rollback', () => {
+    const sql = collectDownSql(
+      new Migration20260614120000CreateSocialAuthDataModel(undefined as never, undefined as never),
+    );
+
+    expect(sql).toContain('drop index if exists "uq__auth_users__tenant_id_lower_email"');
+    expect(sql).toContain('add constraint "uq__auth_users__tenant_id_email"');
+    expect(sql).toContain('unique ("tenant_id", "email")');
+    expect(sql).toContain('alter table "auth_users" alter column "email" set not null');
   });
 
   it('registers the social auth migration', () => {

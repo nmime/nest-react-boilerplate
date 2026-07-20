@@ -2,6 +2,7 @@
 import type {
   HTMLAttributes,
   KeyboardEvent,
+  MouseEvent,
   ReactNode,
   TableHTMLAttributes,
   TdHTMLAttributes,
@@ -82,6 +83,18 @@ export const UiTableCell = ({ className, ...props }: Readonly<TdHTMLAttributes<H
   <td className={cn('xr-table__cell', className)} data-slot="table-cell" {...props} />
 );
 
+const interactiveRowDescendantSelector = 'a, button, input, select, textarea, label, [role="button"]';
+
+const isFromInteractiveDescendant = (target: EventTarget | null, currentTarget: HTMLElement): boolean => {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  const interactive = target.closest(interactiveRowDescendantSelector);
+
+  return interactive !== null && interactive !== currentTarget && currentTarget.contains(interactive);
+};
+
 const renderErrorAction = (action?: UiDataTableStateAction): ReactNode => {
   if (!action) {
     return undefined;
@@ -150,7 +163,20 @@ export const UiDataTable = <TRow extends UiDataTableRow>({
                 return;
               }
 
+              // Ignore activation keys originating from interactive controls inside a
+              // cell (e.g. a nested input's Space) so they are not hijacked by the row.
+              if (isFromInteractiveDescendant(event.target, event.currentTarget)) {
+                return;
+              }
+
               event.preventDefault();
+              onRowClick(row);
+            };
+            const handleClick = (event: MouseEvent<HTMLTableRowElement>) => {
+              if (!onRowClick || isFromInteractiveDescendant(event.target, event.currentTarget)) {
+                return;
+              }
+
               onRowClick(row);
             };
 
@@ -159,13 +185,7 @@ export const UiDataTable = <TRow extends UiDataTableRow>({
                 aria-label={getRowAriaLabel?.(row)}
                 className={isInteractive ? 'xr-table__row--interactive' : undefined}
                 key={rowKey(row)}
-                onClick={
-                  onRowClick
-                    ? () => {
-                        onRowClick(row);
-                      }
-                    : undefined
-                }
+                onClick={onRowClick ? handleClick : undefined}
                 onKeyDown={handleKeyDown}
                 tabIndex={isInteractive ? 0 : undefined}
               >

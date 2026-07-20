@@ -20,7 +20,7 @@ assert.ok(workflows.length > 0, 'No GitHub workflows found');
 
 for (const { name, text } of workflows) {
   assert.ok(!/pull_request_target:/u.test(text), `${name} must not use pull_request_target`);
-  assert.ok(/permissions:\n/u.test(text), `${name} must declare top-level permissions`);
+  assert.ok(/^permissions:/mu.test(text), `${name} must declare top-level permissions`);
   assert.ok(!/write-all|read-all/u.test(text), `${name} must avoid broad read-all/write-all permissions`);
 
   const usesLines = text.matchAll(/^\s*uses:\s*([^\s#]+)(?:\s+#.*)?$/gmu);

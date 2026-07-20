@@ -16,6 +16,7 @@ import { Migration20260704130000GrantAdminRolesWrite } from './Migration20260704
 import { Migration20260710120000AddAuthUserAvatar } from './Migration20260710120000AddAuthUserAvatar';
 import { Migration20260716120000AddTelegramOidcChannel } from './Migration20260716120000AddTelegramOidcChannel';
 import { Migration20260719120000CreateProblemPresentationOverrides } from './Migration20260719120000CreateProblemPresentationOverrides';
+import { Migration20260720120000AddAuthRefreshTokenAuthContext } from './Migration20260720120000AddAuthRefreshTokenAuthContext';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
 
@@ -37,6 +38,7 @@ export const authMigrations = [
   Migration20260710120000AddAuthUserAvatar,
   Migration20260716120000AddTelegramOidcChannel,
   Migration20260719120000CreateProblemPresentationOverrides,
+  Migration20260720120000AddAuthRefreshTokenAuthContext,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -65,3 +67,4 @@ export * from './Migration20260704130000GrantAdminRolesWrite';
 export * from './Migration20260710120000AddAuthUserAvatar';
 export * from './Migration20260716120000AddTelegramOidcChannel';
 export * from './Migration20260719120000CreateProblemPresentationOverrides';
+export * from './Migration20260720120000AddAuthRefreshTokenAuthContext';

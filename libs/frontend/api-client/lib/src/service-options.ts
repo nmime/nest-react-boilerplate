@@ -13,7 +13,15 @@ export type ApiClientRequestOptions = Omit<ApiFetchOptions, 'body' | 'fetchImpl'
 
 const trimTrailingSlash = (value: string): string => value.replace(/\/$/u, '');
 
-const getDefaultOpenApiBaseUrl = (): string => globalThis.location.origin;
+const getDefaultOpenApiBaseUrl = (): string => {
+  if (typeof globalThis.location === 'undefined') {
+    throw new Error(
+      'Cannot resolve a default API base URL outside a browser environment. Provide an absolute baseUrl when using the API client during server-side rendering.',
+    );
+  }
+
+  return globalThis.location.origin;
+};
 
 const normalizeOpenApiBaseUrl = (baseUrl?: string): string => {
   const normalizedBaseUrl = trimTrailingSlash(baseUrl?.trim() ?? '');

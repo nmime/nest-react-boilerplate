@@ -19,6 +19,16 @@ const mocks = vi.hoisted(() => {
     useGlobalFilters: vi.fn(),
     useGlobalInterceptors: vi.fn(),
     useGlobalPipes: vi.fn(),
+    useLogger: vi.fn(),
+  };
+  const logger = {
+    debug: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
+    log: vi.fn(),
+    setLogLevels: vi.fn(),
+    verbose: vi.fn(),
+    warn: vi.fn(),
   };
   const helmetMiddleware = vi.fn();
   const localeMiddleware = vi.fn();
@@ -31,7 +41,9 @@ const mocks = vi.hoisted(() => {
   return {
     app,
     closeRedisClient: vi.fn(() => Promise.resolve()),
+    createLogger: vi.fn(() => ({ logger, middlewares: [] })),
     createValidationPipe: vi.fn(() => 'validation-pipe'),
+    logger,
     createRequestLocaleMiddleware: vi.fn(() => localeMiddleware),
     createRedisClient: vi.fn(() => redisClient),
     fastifyAdapter: vi.fn(function FastifyAdapterMock(options: unknown) {
@@ -121,6 +133,10 @@ vi.mock('@app/backend-common-response', () => ({
   ExceptionsFilter: mocks.exceptionsFilter,
   ExceptionsResponseTransformer: mocks.exceptionsResponseTransformer,
   mergeVaryHeader: mocks.mergeVaryHeader,
+}));
+
+vi.mock('@app/backend-common-logger', () => ({
+  createLogger: mocks.createLogger,
 }));
 
 vi.mock('@app/backend-common-swagger', () => ({
@@ -335,6 +351,16 @@ describe('bootstrapNestApi', () => {
     expect(mocks.nestCreate).toHaveBeenCalledWith(TestModule, expect.anything(), { bufferLogs: true, rawBody: true });
     expect(mocks.fastifyRegister).toHaveBeenCalledTimes(2);
     expect(mocks.app.listen).toHaveBeenCalledWith(3010);
+  });
+
+  it('installs the redacting structured logger so buffered logs are not printed unredacted', async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+    });
+
+    expect(mocks.createLogger).toHaveBeenCalledWith({ name: 'test-api' });
+    expect(mocks.app.useLogger).toHaveBeenCalledWith(mocks.logger);
   });
 
   it('honors HOST when binding the API listener', async () => {

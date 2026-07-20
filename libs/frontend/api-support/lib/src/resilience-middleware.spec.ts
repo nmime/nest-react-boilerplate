@@ -29,6 +29,20 @@ const invokeOnResponse = async (
     schemaPath: '/profile',
   })) as Response | undefined;
 
+const invokeOnError = async (
+  middleware: ReturnType<typeof createApiResilienceMiddleware>,
+  request: Request,
+  error: unknown,
+): Promise<Response | undefined> =>
+  (await middleware.onError?.({
+    error,
+    id: 'test',
+    options: middlewareOptions,
+    params: {},
+    request,
+    schemaPath: '/profile',
+  })) as Response | undefined;
+
 describe('createApiResilienceMiddleware onResponse', () => {
   it('shows a success toast for <400 responses and passes them through untouched', async () => {
     const eventHub = createApiRuntimeEventHub();
@@ -104,5 +118,36 @@ describe('createApiResilienceMiddleware onResponse', () => {
       message: 'Missing',
       status: 404,
     });
+  });
+});
+
+describe('createApiResilienceMiddleware onError', () => {
+  it('rethrows an AbortError without emitting network-offline', async () => {
+    const eventHub = createApiRuntimeEventHub();
+    const events: string[] = [];
+    eventHub.subscribe((event) => events.push(event.type));
+    const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
+    const middleware = createApiResilienceMiddleware({ eventHub, toastRuntime });
+    const request = new Request('https://api.example.test/profile', { method: 'GET' });
+    const abortError = new DOMException('The operation was aborted.', 'AbortError');
+
+    await expect(invokeOnError(middleware, request, abortError)).rejects.toBe(abortError);
+
+    expect(events).not.toContain('network-offline');
+    expect(eventHub.getState().status).toBe('online');
+    expect(toastRuntime.visible).toHaveLength(0);
+  });
+
+  it('emits network-offline for a genuine network failure', async () => {
+    const eventHub = createApiRuntimeEventHub();
+    const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
+    const middleware = createApiResilienceMiddleware({ eventHub, toastRuntime });
+    const request = new Request('https://api.example.test/profile', { method: 'GET' });
+
+    await expect(invokeOnError(middleware, request, new TypeError('Failed to fetch'))).rejects.toBeInstanceOf(
+      TypeError,
+    );
+
+    expect(eventHub.getState().status).toBe('offline');
   });
 });

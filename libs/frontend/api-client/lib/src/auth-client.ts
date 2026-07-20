@@ -20,10 +20,15 @@ export const resolveBetterAuthBaseUrl = (
     return typeof globalThis.location === 'undefined' ? 'http://localhost:3003' : globalThis.location.origin;
   }
 
+  const pickConfigured = (value?: string): string | undefined => {
+    const trimmed = value?.trim();
+    return trimmed ? trimmed : undefined;
+  };
+
   return (
-    environment['VITE_AUTH_API_BASE_URL'] ??
-    environment['NEXT_PUBLIC_API_URL'] ??
-    environment['VITE_API_BASE_URL'] ??
+    pickConfigured(environment['VITE_AUTH_API_BASE_URL']) ??
+    pickConfigured(environment['NEXT_PUBLIC_API_URL']) ??
+    pickConfigured(environment['VITE_API_BASE_URL']) ??
     (typeof globalThis.location === 'undefined' ? 'http://localhost:3003' : globalThis.location.origin)
   );
 };

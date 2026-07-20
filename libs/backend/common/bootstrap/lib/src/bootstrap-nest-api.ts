@@ -27,6 +27,7 @@ import { createRequestLocaleMiddleware, resolveLocaleFromRequest } from '@app/ba
 import { setupSwagger } from '@app/backend-common-swagger';
 import { createValidationPipe } from '@app/backend-common-validation';
 import { createRequestLoggingMiddleware } from './request-logging.middleware';
+import { createLogger } from '@app/backend-common-logger';
 import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
 import { problemInstanceForRequestId, problemTypeForCode } from '@app/common-problem-details';
 
@@ -902,6 +903,12 @@ export async function bootstrapNestApi(
       rawBody: true,
     },
   );
+
+  // Install the redacting structured logger before buffered logs flush, so every
+  // application log passes through StructuredConsoleLogger's redaction instead of
+  // Nest's default ConsoleLogger, which would print secrets verbatim.
+  const { logger } = createLogger({ name: options.appName });
+  app.useLogger(logger);
 
   app.enableShutdownHooks();
   await registerFastifySession(app, config);

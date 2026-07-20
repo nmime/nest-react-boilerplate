@@ -1,8 +1,8 @@
-import { BadRequestException, Controller, Get } from '@nestjs/common';
+import { BadRequestException, ConflictException, Controller, Get, Logger } from '@nestjs/common';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
-import { ok } from 'neverthrow';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { err, ok } from 'neverthrow';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { UseTransformer } from './use-transformer.decorator';
 
 @UseTransformer()
@@ -16,6 +16,11 @@ class TransformedController {
   @Get('boom')
   failure() {
     throw new BadRequestException('Invalid input');
+  }
+
+  @Get('err-result')
+  errResult() {
+    return err(new ConflictException('conflict'));
   }
 }
 
@@ -51,5 +56,22 @@ describe('UseTransformer', () => {
       status: 400,
       title: 'Bad Request',
     });
+  });
+
+  it('surfaces failing Results as problem+json with the correct status, not HTTP 200', async () => {
+    const debugSpy = vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+
+    try {
+      const response = await app.inject({ method: 'GET', url: '/err-result' });
+
+      expect(response.statusCode).toBe(409);
+      expect(response.headers['content-type']).toContain('application/problem+json');
+      expect(response.json()).toMatchObject({
+        status: 409,
+        title: 'Conflict',
+      });
+    } finally {
+      debugSpy.mockRestore();
+    }
   });
 });

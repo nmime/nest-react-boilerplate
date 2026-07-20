@@ -32,6 +32,7 @@ export interface UiApiRuntimeOverlayProps {
   className?: string;
   copy?: Partial<UiApiRuntimeOverlayCopy>;
   lastError?: { message: string } | null;
+  onAuthDismiss?: () => void;
   onDismissToast?: (id: string) => void;
   redirectTo?: string | null;
   status?: 'online' | 'offline' | 'server-error';
@@ -69,6 +70,7 @@ export const UiApiRuntimeOverlay = ({
   authRequired = false,
   className,
   copy,
+  onAuthDismiss,
   onDismissToast,
   redirectTo,
   status = 'online',
@@ -119,6 +121,15 @@ export const UiApiRuntimeOverlay = ({
       <UiDialog
         className="xr-api-runtime-dialog"
         description={overlayCopy.defaultAuthDescription}
+        onOpenChange={
+          onAuthDismiss
+            ? (next) => {
+                if (!next) {
+                  onAuthDismiss();
+                }
+              }
+            : undefined
+        }
         open={authRequired}
         title={overlayCopy.authRequiredTitle}
       >

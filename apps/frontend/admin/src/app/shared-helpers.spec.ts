@@ -36,6 +36,11 @@ describe('shared helpers', () => {
     expect(formatDate()).toBe('—');
   });
 
+  it('falls back to an em dash for a malformed timestamp instead of throwing', () => {
+    expect(() => formatDate('not-a-real-date')).not.toThrow();
+    expect(formatDate('not-a-real-date')).toBe('—');
+  });
+
   it('computes total pages with a floor of one', () => {
     expect(totalPages(0)).toBe(1);
     expect(totalPages(25, 10)).toBe(3);

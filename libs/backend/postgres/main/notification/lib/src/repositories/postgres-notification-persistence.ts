@@ -1,3 +1,4 @@
+import { LockMode } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import {
@@ -38,6 +39,11 @@ import {
 const defaultDeliveryChannels: NotificationDeliveryChannel[] = [NotificationChannel.Bot];
 const retryBaseDelaySeconds = 30;
 const retryMaxDelaySeconds = 30 * 60;
+
+// A claimed delivery is re-claimable only after this lease elapses, so a worker
+// that crashes between claiming and saving results cannot strand the row, while a
+// second worker/replica still cannot re-send within the lease window.
+export const DeliveryClaimLeaseSeconds = 5 * 60;
 
 @Injectable()
 export class PostgresNotificationPersistence extends NotificationPersistence {
@@ -140,43 +146,59 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
   async findPendingDeliveries<T = NotificationData>(
     params: FindPendingNotificationDeliveriesParams,
   ): Promise<PendingNotificationDelivery<T>[]> {
-    const deliveries = await this.entityManager.find(
-      NotificationDeliveryEntity,
-      {
-        targetType: params.targetType,
-        status: NotificationStatus.Pending,
-        sendAfter: { $lte: params.now },
-        ...(params.targetId ? { targetId: params.targetId } : {}),
-      },
-      { limit: params.count, orderBy: { priority: 'DESC', id: 'ASC' } },
-    );
+    // Claim due deliveries atomically before returning them. Selecting with
+    // FOR UPDATE SKIP LOCKED (PESSIMISTIC_PARTIAL_WRITE) inside a transaction and
+    // stamping `claimedAt` guarantees two workers/replicas never pick the same row,
+    // and the `claimedAt <= now - lease` filter lets a row that was claimed but never
+    // saved (worker crash) become re-claimable only after the lease expires.
+    // saveDeliveryResults releases the claim (resets claimedAt) once processed.
+    const claimableBefore = new Date(params.now.getTime() - DeliveryClaimLeaseSeconds * 1000);
 
-    if (deliveries.length === 0) {
-      return [];
-    }
+    return this.entityManager.transactional(async (em) => {
+      const deliveries = await em.find(
+        NotificationDeliveryEntity,
+        {
+          targetType: params.targetType,
+          status: NotificationStatus.Pending,
+          sendAfter: { $lte: params.now },
+          claimedAt: { $lte: claimableBefore },
+          ...(params.targetId ? { targetId: params.targetId } : {}),
+        },
+        { limit: params.count, orderBy: { priority: 'DESC', id: 'ASC' }, lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE },
+      );
 
-    const notificationIds = [...new Set(deliveries.map((delivery) => delivery.notificationId))];
-    const notifications = await this.entityManager.find(
-      NotificationEntity<T>,
-      { id: { $in: notificationIds } },
-      { populate: ['template'] },
-    );
-    const templateIds = [...new Set(notifications.map((notification) => notification.template.id))];
-    const templateChannels = await this.entityManager.find(NotificationTemplateChannelEntity, {
-      templateId: { $in: templateIds },
-    });
+      if (deliveries.length === 0) {
+        return [];
+      }
 
-    const channelsByTemplateId = groupTemplateChannels(templateChannels);
-    const notificationsById = new Map(
-      notifications.map((notification) => [
-        notification.id,
-        mapNotification(notification, channelsByTemplateId.get(notification.template.id) ?? []),
-      ]),
-    );
+      for (const delivery of deliveries) {
+        delivery.claimedAt = params.now;
+      }
+      await em.flush();
 
-    return deliveries.flatMap((delivery) => {
-      const notification = notificationsById.get(delivery.notificationId);
-      return notification ? [{ delivery: mapDelivery(delivery), notification }] : [];
+      const notificationIds = [...new Set(deliveries.map((delivery) => delivery.notificationId))];
+      const notifications = await em.find(
+        NotificationEntity<T>,
+        { id: { $in: notificationIds } },
+        { populate: ['template'] },
+      );
+      const templateIds = [...new Set(notifications.map((notification) => notification.template.id))];
+      const templateChannels = await em.find(NotificationTemplateChannelEntity, {
+        templateId: { $in: templateIds },
+      });
+
+      const channelsByTemplateId = groupTemplateChannels(templateChannels);
+      const notificationsById = new Map(
+        notifications.map((notification) => [
+          notification.id,
+          mapNotification(notification, channelsByTemplateId.get(notification.template.id) ?? []),
+        ]),
+      );
+
+      return deliveries.flatMap((delivery) => {
+        const notification = notificationsById.get(delivery.notificationId);
+        return notification ? [{ delivery: mapDelivery(delivery), notification }] : [];
+      });
     });
   }
 
@@ -201,6 +223,9 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
         delivery.status = result.status;
         delivery.error = result.error ?? null;
         delivery.updatedAt = new Date();
+        // Release the claim (reset to the epoch sentinel) so a rescheduled retry is
+        // eligible again once its sendAfter passes (terminal rows keep it harmlessly).
+        delivery.claimedAt = new Date(0);
 
         if (result.status === NotificationStatus.Sent) {
           delivery.sentAt = delivery.updatedAt;

@@ -50,6 +50,15 @@ describe('AuthUserRepository', () => {
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
+  it('normalizes email to lowercase before persisting so findByEmail lookups match', async () => {
+    const { entityManager } = createEntityManagerMock();
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.createUser({ email: '  Foo@Example.COM ' });
+
+    expect(result._unsafeUnwrap().email).toBe('foo@example.com');
+  });
+
   it('finds an auth user by email', async () => {
     const entity = new AuthUserEntity({ email: 'user@example.com' });
     const { findOne, entityManager } = createEntityManagerMock();

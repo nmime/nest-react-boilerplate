@@ -1,39 +1,9 @@
 import { ConsoleLogger, type LoggerService, type LogLevel } from '@nestjs/common';
 import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
+import { ProtectedLoggerFields, RedactedValue } from './const/logger-fields.const';
 
-export const ProtectedLoggerFields = [
-  'authorization',
-  'cookie',
-  'set-cookie',
-  'password',
-  'passwd',
-  'pwd',
-  'token',
-  'access-token',
-  'access_token',
-  'refresh-token',
-  'refresh_token',
-  'id-token',
-  'id_token',
-  'signature',
-  'x-signature',
-  'x-api-key',
-  'api-key',
-  'api_key',
-  'apikey',
-  'access_key',
-  'secret',
-  'client-secret',
-  'client_secret',
-  'private-key',
-  'private_key',
-  'session',
-  'sid',
-  'csrf',
-  'xsrf',
-] as const;
-
-export const RedactedValue = '[redacted]';
+// Re-export the single source of truth so the logger barrel keeps exposing them.
+export { ProtectedLoggerFields, RedactedValue };
 
 const MaxRedactionDepth = 8;
 const MaxStringLength = 8_192;
@@ -114,18 +84,39 @@ function normalizeFieldName(key: string): string {
   return key.toLowerCase().replaceAll(/[^a-z0-9]/g, '');
 }
 
+const NormalizedProtectedFields: ReadonlySet<string> = new Set(ProtectedLoggerFields.map(normalizeFieldName));
+
+// Split a field name into lowercase word segments, breaking on separators,
+// camelCase boundaries, and letter/digit transitions. Matching then happens on
+// whole tokens instead of raw substrings, so innocent keys like "residentId" or
+// "consideration" are not redacted merely because they contain "sid".
+function tokenizeFieldName(key: string): string[] {
+  return key
+    .replaceAll(/([a-z\d])(?=[A-Z])/g, '$1 ')
+    .replaceAll(/([A-Z])(?=[A-Z][a-z])/g, '$1 ')
+    .replaceAll(/([a-zA-Z])(?=\d)/g, '$1 ')
+    .replaceAll(/(\d)(?=[a-zA-Z])/g, '$1 ')
+    .toLowerCase()
+    .split(/[^a-z\d]+/)
+    .filter((segment) => segment.length > 0);
+}
+
 function isProtectedField(key: string): boolean {
-  const normalizedKey = normalizeFieldName(key);
+  const segments = tokenizeFieldName(key);
 
-  return ProtectedLoggerFields.some((field) => {
-    const normalizedField = normalizeFieldName(field);
+  // A field is protected when a contiguous run of its segments joins to exactly a
+  // known protected name (e.g. "accessToken" -> "token", "x-api-key" -> "apikey").
+  for (let start = 0; start < segments.length; start += 1) {
+    let run = '';
+    for (const segment of segments.slice(start)) {
+      run += segment;
+      if (NormalizedProtectedFields.has(run)) {
+        return true;
+      }
+    }
+  }
 
-    return (
-      normalizedKey === normalizedField ||
-      normalizedKey.endsWith(normalizedField) ||
-      normalizedKey.includes(normalizedField)
-    );
-  });
+  return false;
 }
 
 function redactAuthorizationHeader(value: string): string {

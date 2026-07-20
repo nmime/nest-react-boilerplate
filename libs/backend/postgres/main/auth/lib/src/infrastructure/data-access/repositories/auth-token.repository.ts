@@ -93,6 +93,7 @@ export class AuthTokenRepository {
     entity.familyId = input.familyId;
     entity.parentTokenId = input.parentTokenId ?? null;
     entity.expiresAt = input.expiresAt;
+    entity.authContext = input.authContext ?? {};
 
     this.entityManager.persist(entity);
     await this.entityManager.flush();
@@ -129,6 +130,8 @@ export class AuthTokenRepository {
       replacement.familyId = current.familyId;
       replacement.parentTokenId = current.id;
       replacement.expiresAt = input.replacement.expiresAt;
+      // Carry the family's original authentication context forward unchanged.
+      replacement.authContext = current.authContext;
 
       current.revokedAt = now;
       current.replacedByTokenId = replacement.id;

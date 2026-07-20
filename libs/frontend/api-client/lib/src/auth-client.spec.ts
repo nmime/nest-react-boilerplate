@@ -39,4 +39,23 @@ describe('resolveBetterAuthBaseUrl', () => {
   it('falls back to the browser origin for same-origin deployments', () => {
     expect(resolveBetterAuthBaseUrl({})).toBe('https://app.local.test');
   });
+
+  it('treats blank env values as absent and falls through to the next candidate', () => {
+    expect(
+      resolveBetterAuthBaseUrl({
+        VITE_AUTH_API_BASE_URL: '',
+        VITE_API_BASE_URL: 'https://user-app-api.example.com',
+      }),
+    ).toBe('https://user-app-api.example.com');
+  });
+
+  it('falls back to the browser origin when every configured value is blank', () => {
+    expect(
+      resolveBetterAuthBaseUrl({
+        NEXT_PUBLIC_API_URL: '   ',
+        VITE_API_BASE_URL: '',
+        VITE_AUTH_API_BASE_URL: '',
+      }),
+    ).toBe('https://app.local.test');
+  });
 });

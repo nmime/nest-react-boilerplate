@@ -207,6 +207,16 @@ describe('generated api clients', () => {
     expect(unwrapEnvelopeData({ value: 'raw' })).toEqual({ value: 'raw' });
   });
 
+  it('fails fast with a descriptive error when resolving a default base URL without a browser location', () => {
+    vi.stubGlobal('location', undefined);
+    try {
+      expect(() => toOpenApiFetchOptions({ baseUrl: '/user-api' })).toThrow(/server-side rendering/u);
+      expect(() => toOpenApiFetchOptions({ baseUrl: '' })).toThrow(/server-side rendering/u);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('unwraps success envelopes through the data helper', async () => {
     const fetchImpl = mockFetch({ data: session });
 

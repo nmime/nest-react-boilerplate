@@ -640,6 +640,29 @@ describe('createTelegramBot', () => {
     expect(texts(calls)).toContain('Добро пожаловать! Выберите действие.');
   });
 
+  it('clears sticky link-state when the backend reports the identity is no longer linked', async () => {
+    const { calls, fetchMock } = apiMock();
+    const findLinkedUser = vi
+      .fn<TelegramBotAuthPort['findLinkedUser']>()
+      .mockResolvedValueOnce({ userId: 'user-1', tenantId: 'tenant-1', locale: 'en' })
+      .mockResolvedValue(null);
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
+      createLinkInstructions: vi.fn(() => Promise.resolve(null)),
+      findLinkedUser,
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    // First update: the identity is linked, so the profile reports the linked status.
+    await bot.handleUpdate(messageUpdate('/profile') as never);
+    expect(latestPayload(calls, 'sendMessage').text).toContain('auth.social.status.linked');
+
+    // Identity is unlinked out-of-band; the next update must clear the sticky flag.
+    await bot.handleUpdate(messageUpdate('/profile') as never);
+    expect(latestPayload(calls, 'sendMessage').text).toContain('auth.social.status.notLinked');
+  });
+
   it('creates link instructions from Telegram identity instead of frontend trust', async () => {
     const { calls, fetchMock } = apiMock();
     const createLinkInstructions = vi.fn(() => Promise.resolve('Open the account-link page from this Telegram chat.'));

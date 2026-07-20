@@ -73,6 +73,15 @@ describe('UiApiRuntimeOverlay', () => {
     expect(screen.getByRole('link', { name: 'Continue to sign in' }).getAttribute('href')).toBe('/login');
   });
 
+  it('notifies the consumer when the auth dialog is dismissed', () => {
+    const onAuthDismiss = vi.fn();
+
+    render(<UiApiRuntimeOverlay authRequired onAuthDismiss={onAuthDismiss} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onAuthDismiss).toHaveBeenCalledTimes(1);
+  });
+
   it('prefers a provided auth action over the default sign-in link', () => {
     render(<UiApiRuntimeOverlay authAction={<button type="button">Custom sign in</button>} authRequired />);
 

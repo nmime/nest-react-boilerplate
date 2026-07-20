@@ -84,6 +84,22 @@ describe('redactProtectedVariables', () => {
     });
   });
 
+  it('redacts only whole protected tokens and leaves lookalike keys intact', () => {
+    expect(
+      redactProtectedVariables({
+        accessToken: 'abc',
+        apiKey: 'xyz',
+        consideration: 'approved',
+        residentId: 42,
+      }),
+    ).toEqual({
+      accessToken: RedactedValue,
+      apiKey: RedactedValue,
+      consideration: 'approved',
+      residentId: 42,
+    });
+  });
+
   it('serializes Error instances with redacted message, stack, cause, and code', () => {
     const error = new Error('failed password=secret', {
       cause: new Error('cause token=abc'),

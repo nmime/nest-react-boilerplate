@@ -63,6 +63,11 @@ export const createAuthRefreshMiddleware = ({
   shouldHandle401 = () => true,
 }: ApiAuthMiddlewareOptions): Middleware => {
   const refreshOnce = createSingleFlightRefresh(refreshAccessToken);
+  // Pre-fetch request clones, keyed by the openapi-fetch middleware `id`, so a
+  // 401 retry can re-send the original body. Cloning in onResponse is too late:
+  // openapi-fetch has already consumed the body, so request.clone() throws
+  // "TypeError: unusable" for any request WITH a body (POST/PUT/PATCH).
+  const retryableRequests = new Map<string, Request>();
 
   const clearAndEmit = async (
     request: Request,
@@ -95,28 +100,35 @@ export const createAuthRefreshMiddleware = ({
   };
 
   return {
-    async onRequest({ request }) {
+    async onRequest({ id, request }) {
       const token = await getAccessToken();
 
       if (token?.trim()) {
         request.headers.set('Authorization', `Bearer ${token.trim()}`);
       }
 
+      // Snapshot the request before its body is consumed so a 401 retry can
+      // replay it. Deleted on every exit path in onResponse to avoid a leak.
+      retryableRequests.set(id, request.clone());
+
       return request;
     },
-    async onResponse({ request, response }) {
+    async onResponse({ id, request, response }) {
       if (response.status !== 401 || !shouldHandle401(request)) {
+        retryableRequests.delete(id);
         return undefined;
       }
 
       const token = await refreshOnce();
 
       if (!token) {
+        retryableRequests.delete(id);
         await clearAndEmit(request, response, 'refresh-failed');
         return undefined;
       }
 
-      const retryRequest = request.clone();
+      const retryRequest = retryableRequests.get(id) ?? request.clone();
+      retryableRequests.delete(id);
       retryRequest.headers.set('Authorization', `Bearer ${token}`);
       const retryResponse = await fetchImpl(retryRequest);
 

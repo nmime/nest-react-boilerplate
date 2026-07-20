@@ -144,6 +144,35 @@ describe('createApiRuntimeFetch error paths', () => {
   });
 });
 
+describe('createApiRuntimeFetch thrown errors', () => {
+  it('rethrows an AbortError without emitting network-offline or going offline', async () => {
+    const eventHub = createApiRuntimeEventHub();
+    const events: string[] = [];
+    eventHub.subscribe((event) => events.push(event.type));
+    const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
+    const abortError = new DOMException('The operation was aborted.', 'AbortError');
+    const baseFetch = vi.fn<typeof fetch>().mockRejectedValue(abortError);
+    const runtimeFetch = createApiRuntimeFetch({ baseFetch, eventHub, toastRuntime });
+
+    await expect(runtimeFetch('https://api.example.test/profile')).rejects.toBe(abortError);
+
+    expect(events).not.toContain('network-offline');
+    expect(eventHub.getState().status).toBe('online');
+    expect(toastRuntime.visible).toHaveLength(0);
+  });
+
+  it('emits network-offline for a genuine network failure', async () => {
+    const eventHub = createApiRuntimeEventHub();
+    const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
+    const baseFetch = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed to fetch'));
+    const runtimeFetch = createApiRuntimeFetch({ baseFetch, eventHub, toastRuntime });
+
+    await expect(runtimeFetch('https://api.example.test/profile')).rejects.toBeInstanceOf(TypeError);
+
+    expect(eventHub.getState().status).toBe('offline');
+  });
+});
+
 describe('emitBrowserOfflineEvent', () => {
   it('marks the provided hub offline with a navigator offline snapshot', () => {
     const eventHub = createApiRuntimeEventHub();

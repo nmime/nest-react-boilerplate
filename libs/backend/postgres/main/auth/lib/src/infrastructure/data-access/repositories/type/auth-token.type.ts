@@ -1,4 +1,4 @@
-import type { AuthUserTokenPurpose } from '../../entities';
+import type { AuthRefreshTokenAuthContext, AuthUserTokenPurpose } from '../../entities';
 
 export interface AuthTokenRepositoryError {
   code: 'repository_error';
@@ -13,6 +13,7 @@ export interface PersistAuthRefreshTokenInput {
   familyId: string;
   parentTokenId?: string | null;
   expiresAt: Date;
+  authContext?: AuthRefreshTokenAuthContext | null;
 }
 
 export interface RotateAuthRefreshTokenInput {

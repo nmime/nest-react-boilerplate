@@ -1,6 +1,12 @@
 import { translate } from '@app/frontend-i18n-shared';
 import { getApiLocale } from './api-locale';
-import { enrichJsonResponse, normalizeApiError, readJsonBody, type NormalizedApiError } from './error-normalization';
+import {
+  enrichJsonResponse,
+  isNetworkFailure,
+  normalizeApiError,
+  readJsonBody,
+  type NormalizedApiError,
+} from './error-normalization';
 import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
 import { apiToastRuntime, resolveApiToastRules, type ApiToastRulesSource, type ApiToastRuntime } from './toast-runtime';
 
@@ -114,11 +120,16 @@ export const createApiRuntimeFetch =
         method: request.method,
       });
 
-      eventHub.emit({
-        type: 'network-offline',
-        error: snapshotError(normalized),
-      });
-      toastRuntime.showForApiResult(normalized, resolveApiToastRules(toastRules));
+      // Only a genuine network failure flips runtime status to offline. Aborts
+      // (AbortError / aborted signals) are intentional cancellations, not
+      // connectivity loss, so rethrow them without emitting or mutating status.
+      if (isNetworkFailure(error) || normalized.kind === 'network') {
+        eventHub.emit({
+          type: 'network-offline',
+          error: snapshotError(normalized),
+        });
+        toastRuntime.showForApiResult(normalized, resolveApiToastRules(toastRules));
+      }
 
       throw error;
     }

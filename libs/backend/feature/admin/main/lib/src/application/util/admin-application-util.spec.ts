@@ -1,7 +1,12 @@
 import { err, ok } from 'neverthrow';
 import { describe, expect, it } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import { AdminRolesReadPermission, AdminUsersReadPermission, UserProfileReadPermission } from '@app/common-authz';
+import {
+  AdminManageAllPermission,
+  AdminRolesReadPermission,
+  AdminUsersReadPermission,
+  UserProfileReadPermission,
+} from '@app/common-authz';
 import { AdminApplicationError } from '../admin-errors';
 import type { AdminRolePermissionView } from '../../domain';
 import {
@@ -110,6 +115,12 @@ describe('requireAllowedPolicy', () => {
     expect(() => {
       requireAllowedPolicy({ roles: [], permissions: ['*'] });
     }).toThrow(/outside the admin catalog/);
+  });
+
+  it('rejects the break-glass admin:manage:all permission even though it is in the catalog', () => {
+    expect(() => {
+      requireAllowedPolicy({ roles: ['admin'], permissions: [AdminManageAllPermission] });
+    }).toThrow(/break-glass/);
   });
 });
 

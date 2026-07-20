@@ -18,7 +18,16 @@ function isTruthy(value: unknown): boolean {
   );
 }
 
-export function isLocalDevelopmentDatabase(connectionString: string): boolean {
+export function isLocalDevelopmentDatabase(
+  connectionString: string,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  // Fail closed: in production the host/name heuristic is not trustworthy because
+  // the default prod deployment also uses host "postgres" and db
+  // "nest_react_boilerplate" (matches the /_boilerplate/ heuristic). NODE_ENV is
+  // the primary signal (set to "production" in docker-compose.prod.yml); the
+  // host/name heuristic remains the secondary check for local/dev/test runs.
+  if (env.NODE_ENV === "production") return false;
   const url = new URL(connectionString);
   const host = url.hostname.toLowerCase();
   const database = url.pathname.replace(/^\//u, "");
@@ -44,7 +53,7 @@ export function assertSeedSafety(
   connectionString: string,
   { env = process.env, assertLocalDevelopmentDatabase }: SeedSafetyOptions = {},
 ): void {
-  const localDevelopmentDatabase = isLocalDevelopmentDatabase(connectionString);
+  const localDevelopmentDatabase = isLocalDevelopmentDatabase(connectionString, env);
   const productionRuntime = env.NODE_ENV === "production";
   const defaultSeedCredentials =
     args.email.toLowerCase() === DefaultAdminEmail &&

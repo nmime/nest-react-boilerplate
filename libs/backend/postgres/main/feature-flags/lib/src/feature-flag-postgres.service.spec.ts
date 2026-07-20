@@ -64,6 +64,31 @@ describe('PostgresFeatureFlagProvider', () => {
     }
   });
 
+  it('coerces boolean-like literals when the fallback is a boolean', async () => {
+    const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const repository = createRepositoryMock({
+      'billing.portal': new FeatureFlagEntity({
+        key: 'billing.portal',
+        value: 'on',
+      }),
+      'billing.disabled': new FeatureFlagEntity({
+        key: 'billing.disabled',
+        value: 'off',
+      }),
+    });
+    const provider = new PostgresFeatureFlagProvider(repository);
+
+    try {
+      // getValue agrees with isEnabled for the same string-stored flag.
+      await expect(provider.isEnabled('billing.portal')).resolves.toBe(true);
+      await expect(provider.getValue('billing.portal', false)).resolves.toBe(true);
+      await expect(provider.getValue('billing.disabled', true)).resolves.toBe(false);
+      expect(warnSpy).not.toHaveBeenCalled();
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
   it('returns DB snapshots', async () => {
     const repository = createRepositoryMock({
       'rollout.percent': new FeatureFlagEntity({
@@ -80,18 +105,27 @@ describe('PostgresFeatureFlagProvider', () => {
   });
 
   it('falls back safely when the repository fails', async () => {
+    const errorSpy = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     const repository = {
       findByKey: vi.fn(() => errAsync({ code: 'repository_error', message: 'db down' })),
       getSnapshot: vi.fn(() => errAsync({ code: 'repository_error', message: 'db down' })),
     } as unknown as FeatureFlagRepository;
     const provider = new PostgresFeatureFlagProvider(repository);
 
-    await expect(provider.isEnabled('billing.portal')).resolves.toBe(false);
-    await expect(provider.getValue('billing.portal', 'off')).resolves.toBe('off');
-    await expect(provider.getSnapshot()).resolves.toEqual({
-      source: 'postgres',
-      values: {},
-    });
+    try {
+      await expect(provider.isEnabled('billing.portal')).resolves.toBe(false);
+      await expect(provider.getValue('billing.portal', 'off')).resolves.toBe('off');
+      await expect(provider.getSnapshot()).resolves.toEqual({
+        source: 'postgres',
+        values: {},
+      });
+
+      // A DB outage must be observable, not silently indistinguishable from an unset flag.
+      expect(errorSpy).toHaveBeenCalledWith('Failed to evaluate feature flag "billing.portal": db down');
+      expect(errorSpy).toHaveBeenCalledWith('Failed to load feature flag snapshot: db down');
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it('forwards the tenant context to the repository', async () => {

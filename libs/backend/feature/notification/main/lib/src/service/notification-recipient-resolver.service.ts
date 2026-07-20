@@ -10,6 +10,24 @@ import {
   NotificationTargetType,
 } from '@app/common-notifications';
 
+/**
+ * Raised when the recipient lookup fails because of an infrastructure error
+ * (e.g. the auth database is momentarily unavailable). This must be
+ * distinguished from a successful lookup that yields no recipient: the former
+ * is transient and the delivery should be retried, whereas the latter is a
+ * terminal "incorrect target".
+ */
+export class NotificationRecipientLookupError extends Error {
+  constructor(
+    readonly targetType: NotificationTargetType,
+    readonly targetId: string,
+    reason: string,
+  ) {
+    super(`Failed to resolve notification recipient for ${targetType}/${targetId}: ${reason}`);
+    this.name = 'NotificationRecipientLookupError';
+  }
+}
+
 @Injectable()
 export class NotificationRecipientResolverService extends NotificationRecipientResolver {
   constructor(private readonly externalIdentityRepository: ExternalIdentityRepository) {
@@ -33,7 +51,9 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
 
     const identitiesResult = await this.externalIdentityRepository.findByUser(targetId);
     if (identitiesResult.isErr()) {
-      return null;
+      // A transient repository failure is not the same as "no recipient": throw so the
+      // delivery is retried instead of being permanently marked as an incorrect target.
+      throw new NotificationRecipientLookupError(targetType, targetId, identitiesResult.error.message);
     }
     const telegramIdentity = identitiesResult.value.find((identity) => identity.provider === 'telegram');
     return telegramIdentity

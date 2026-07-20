@@ -27,6 +27,12 @@ describe('WebSocketResponseTransformer', () => {
     });
   });
 
+  it('wraps array results under a value key without corrupting the list', async () => {
+    const response = await intercept(contextWithData({ id: 'req-arr' }), handlerOf([{ id: 1 }, { id: 2 }]));
+
+    expect(response.result).toEqual({ value: [{ id: 1 }, { id: 2 }], success: true });
+  });
+
   it('wraps primitive results under a value key', async () => {
     const response = await intercept(contextWithData({ id: 'req-2' }), handlerOf('pong'));
 

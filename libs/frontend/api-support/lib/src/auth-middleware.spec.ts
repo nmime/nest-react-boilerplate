@@ -138,6 +138,39 @@ describe('createAuthRefreshMiddleware onResponse', () => {
     expect((fetchImpl.mock.calls[0]?.[0] as Request).headers.get('Authorization')).toBe('Bearer fresh');
   });
 
+  it('retries a request WITH a body after refresh using the pre-fetch clone', async () => {
+    const clearAuth = vi.fn<() => void>();
+    let retriedBody: string | undefined;
+    const fetchImpl = vi.fn<typeof fetch>().mockImplementation(async (input) => {
+      retriedBody = await (input as Request).text();
+      return jsonResponse({ ok: true }, 200);
+    });
+    const middleware = createAuthRefreshMiddleware({
+      clearAuth,
+      fetchImpl,
+      getAccessToken: () => 'expired',
+      refreshAccessToken: () => Promise.resolve('fresh'),
+    });
+    const request = new Request('https://api.example.test/profile', {
+      body: JSON.stringify({ name: 'Ada' }),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
+    });
+
+    await invokeOnRequest(middleware, request);
+    // Simulate openapi-fetch consuming the request body before onResponse runs,
+    // which makes a late request.clone() throw "TypeError: unusable".
+    await request.arrayBuffer();
+    expect(request.bodyUsed).toBe(true);
+
+    const result = await invokeOnResponse(middleware, request, new Response(null, { status: 401 }));
+
+    expect(result?.status).toBe(200);
+    expect(clearAuth).not.toHaveBeenCalled();
+    expect((fetchImpl.mock.calls[0]?.[0] as Request).headers.get('Authorization')).toBe('Bearer fresh');
+    expect(retriedBody).toBe(JSON.stringify({ name: 'Ada' }));
+  });
+
   it('clears auth and emits when the retried request is rejected again', async () => {
     const eventHub = createApiRuntimeEventHub();
     const events: string[] = [];

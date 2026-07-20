@@ -4,6 +4,19 @@ import { DefaultAuthTenantId } from './auth-user.entity';
 
 export type AuthUserTokenPurpose = 'email_verification' | 'password_reset';
 
+/**
+ * Authentication metadata captured when a refresh-token family is first issued.
+ * Persisted as jsonb and carried forward unchanged across rotations so that
+ * `auth_time` (and the authentication method) reflect the last real
+ * authentication event when a rotated token's session is re-emitted.
+ */
+export interface AuthRefreshTokenAuthContext {
+  authTime?: number;
+  amr?: string[];
+  authProvider?: string;
+  authChannel?: string;
+}
+
 export class AuthRefreshTokenEntity {
   id: string = randomUUID();
   tenantId: string = DefaultAuthTenantId;
@@ -14,6 +27,7 @@ export class AuthRefreshTokenEntity {
   expiresAt!: Date;
   revokedAt: Date | null = null;
   replacedByTokenId: string | null = null;
+  authContext: AuthRefreshTokenAuthContext = {};
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 }
@@ -58,6 +72,11 @@ export const AuthRefreshTokenEntitySchema = new EntitySchema<AuthRefreshTokenEnt
       type: 'uuid',
       fieldName: 'replaced_by_token_id',
       nullable: true,
+    },
+    authContext: {
+      type: 'json',
+      fieldName: 'auth_context',
+      defaultRaw: "'{}'::jsonb",
     },
     createdAt: {
       type: 'timestamptz',

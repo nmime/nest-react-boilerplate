@@ -499,6 +499,36 @@ describe('AuthController', () => {
     });
   });
 
+  it('binds created link tokens to the caller tenant and ignores a body-supplied tenantId', async () => {
+    const principal: AuthenticatedPrincipal = {
+      subject: 'user-id',
+      tenantId: DefaultAuthTenantId,
+      email: 'user@example.com',
+      displayName: 'Ada Lovelace',
+      locale: Language.Ru,
+      theme: AuthenticatedTheme.Dark,
+      roles: ['user'],
+      permissions: ['profile:read'],
+    };
+    const externalAuth = createExternalAuthService();
+    const controller = toController(createService(), externalAuth);
+
+    await controller.createLinkToken(principal, {
+      provider: AuthProvider.Telegram,
+      tenantId: '00000000-0000-4000-8000-000000000042',
+    });
+
+    expect(externalAuth.createLinkToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: DefaultAuthTenantId,
+        userId: 'user-id',
+      }),
+    );
+    expect(externalAuth.createLinkToken).not.toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: '00000000-0000-4000-8000-000000000042' }),
+    );
+  });
+
   it('clears the session principal and all response adapters on logout', async () => {
     process.env[SessionCookieName] = 'custom.sid';
     const principal: AuthenticatedPrincipal = {

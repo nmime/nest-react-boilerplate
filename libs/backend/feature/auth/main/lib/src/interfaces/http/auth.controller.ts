@@ -217,7 +217,11 @@ export class AuthController {
       await this.externalAuth.createLinkToken({
         ...input,
         userId: principal.subject,
-        tenantId: input.tenantId ?? principal.tenantId,
+        // Link-token creation is authenticated; bind the token to the caller's
+        // own tenant. A body-supplied tenantId must never override the
+        // principal's tenant, matching every other authenticated endpoint and
+        // preserving tenant confinement.
+        tenantId: principal.tenantId,
       }),
     );
   }

@@ -7,6 +7,7 @@ import { InMemoryRedisClient } from './in-memory-redis.client';
 import { RedisRedlockService } from './redis-redlock.service';
 import { RedisHealthIndicator } from './redis.health';
 import { buildRateLimitKey, RedisRateLimitService } from './redis-rate-limit.service';
+import type { RedisClientLike } from './type';
 
 describe('RedisClientAdapter', () => {
   function nativeRedisClient(commands: string[][]) {
@@ -403,5 +404,45 @@ describe('RedisRateLimitService', () => {
         action: 'login',
       }),
     ).toBe('rate-limit:auth:global:anonymous:login');
+  });
+
+  it('counts hits atomically so the counter always carries a TTL', async () => {
+    const incrementWithWindow = vi.fn(() => Promise.resolve({ count: 1, resetAt: Date.now() + 60000 }));
+    const incr = vi.fn(() => Promise.resolve(1));
+    const expire = vi.fn(() => Promise.resolve(1));
+    const redis = { incrementWithWindow, incr, expire } as unknown as RedisClientLike;
+    const limiter = new RedisRateLimitService(redis);
+
+    await expect(limiter.hit({ key: 'rate-limit:auth:t:u:login', windowSeconds: 60, limit: 5 })).resolves.toEqual({
+      allowed: true,
+      count: 1,
+      remaining: 4,
+    });
+
+    // The atomic INCR + PEXPIRE-if-no-TTL primitive is used instead of the
+    // race-prone separate incr()/expire() pair that could leave a key with no
+    // expiry (and thus permanently rate-limit a subject).
+    expect(incrementWithWindow).toHaveBeenCalledWith('rate-limit:auth:t:u:login', 60000);
+    expect(incr).not.toHaveBeenCalled();
+    expect(expire).not.toHaveBeenCalled();
+  });
+
+  it('escapes the ":" delimiter inside key parts so distinct tuples never collide', () => {
+    const compositeSubject = buildRateLimitKey({
+      scope: 'auth',
+      tenantId: 't',
+      subject: 'google:alice',
+      action: 'login',
+    });
+    const compositeAction = buildRateLimitKey({
+      scope: 'auth',
+      tenantId: 't',
+      subject: 'google',
+      action: 'alice:login',
+    });
+
+    expect(compositeSubject).toBe('rate-limit:auth:t:google_alice:login');
+    expect(compositeAction).toBe('rate-limit:auth:t:google:alice_login');
+    expect(compositeSubject).not.toBe(compositeAction);
   });
 });

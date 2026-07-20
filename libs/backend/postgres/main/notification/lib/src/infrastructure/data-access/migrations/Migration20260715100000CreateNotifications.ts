@@ -96,22 +96,24 @@ export class Migration20260715100000CreateNotifications extends Migration {
     this.addSql(
       'create index "ix__notification_deliveries__target_type_status_send_after_target_id_priority_desc_id" on "notification_deliveries" ("target_type", "status", "send_after", "target_id", "priority" desc, "id");',
     );
+    // Boundaries are anchored to UTC month edges so the seeded partitions line up exactly with the
+    // partitions created at runtime by NotificationDeliveryPartitionService (which emits UTC/ISO bounds).
+    // Using a session-timezone-dependent bound here would leave a gap or overlap at the seam on any
+    // non-UTC database.
     this.addSql(`
       do $$
       declare
-        partition_start date;
-        partition_end date;
+        month_start timestamp;
         partition_name text;
       begin
         for month_offset in 0..6 loop
-          partition_start := date_trunc('month', current_date) + make_interval(months => month_offset);
-          partition_end := partition_start + interval '1 month';
-          partition_name := 'notification_deliveries_' || to_char(partition_start, 'YYYY_MM');
+          month_start := date_trunc('month', now() at time zone 'UTC') + make_interval(months => month_offset);
+          partition_name := 'notification_deliveries_' || to_char(month_start, 'YYYY_MM');
           execute format(
             'create table if not exists %I partition of notification_deliveries for values from (%L) to (%L)',
             partition_name,
-            partition_start,
-            partition_end
+            month_start at time zone 'UTC',
+            (month_start + interval '1 month') at time zone 'UTC'
           );
         end loop;
       end $$;

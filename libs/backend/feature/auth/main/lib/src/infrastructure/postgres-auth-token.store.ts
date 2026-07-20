@@ -24,6 +24,7 @@ import { createIssuedRefreshToken, createIssuedUserActionToken } from './factory
 import {
   mapTokenStoreError,
   secondsFromNow,
+  toRefreshTokenAuthContext,
   toRefreshTokenRecord,
   toUserActionTokenRecord,
 } from './util/auth-token-store.util';
@@ -45,6 +46,7 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
         familyId: issued.familyId,
         parentTokenId: input.parentTokenId ?? null,
         expiresAt: issued.expiresAt,
+        authContext: issued.authContext ?? null,
       })
       .map(() => issued)
       .mapErr(mapTokenStoreError);
@@ -79,6 +81,7 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
               tokenHash: entity.tokenHash,
               familyId: entity.familyId,
               expiresAt: entity.expiresAt,
+              authContext: toRefreshTokenAuthContext(entity.authContext),
             }
           : null,
       )

@@ -86,4 +86,45 @@ describe('StaticDataService', () => {
 
     await expect(service.getJson('broken')).rejects.toBeInstanceOf(SyntaxError);
   });
+
+  it('rejects getJson keys that traverse outside the root', async () => {
+    // Create a JSON file one level above the root that the traversal would target.
+    const outsideDir = await mkdtemp(join(tmpdir(), 'static-data-outside-'));
+    try {
+      await writeFile(join(outsideDir, 'secret.json'), JSON.stringify({ secret: true }));
+      const nestedRoot = join(rootDir, 'nested');
+      await mkdir(nestedRoot);
+      const service = new StaticDataService(nestedRoot);
+
+      // ../../<outsideDir>/secret would escape nestedRoot without containment.
+      await expect(service.getJson(join('..', '..', outsideDir, 'secret'))).rejects.toThrow(
+        /outside the static-data root/u,
+      );
+    } finally {
+      await rm(outsideDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects listJson directories that traverse outside the root', async () => {
+    const nestedRoot = join(rootDir, 'nested');
+    await mkdir(nestedRoot);
+    const service = new StaticDataService(nestedRoot);
+
+    await expect(service.listJson(join('..', '..'))).rejects.toThrow(/outside the static-data root/u);
+  });
+
+  it('collapses distinct string variants of the same key to a single cache entry', async () => {
+    const filePath = join(rootDir, 'shared.json');
+    await writeFile(filePath, JSON.stringify({ value: 1 }));
+    const service = new StaticDataService(rootDir);
+
+    const first = await service.getJson<{ value: number }>('shared');
+    // Mutating the file must not surface through a variant path if caching by
+    // resolved path is working; both reads should return the same cached object.
+    await writeFile(filePath, JSON.stringify({ value: 999 }));
+    const second = await service.getJson<{ value: number }>(join('.', 'shared'));
+
+    expect(second).toBe(first);
+    expect(second).toEqual({ value: 1 });
+  });
 });

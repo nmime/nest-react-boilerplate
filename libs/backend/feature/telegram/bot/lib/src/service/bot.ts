@@ -287,12 +287,19 @@ function createIdentityAndLocaleMiddleware(application: TelegramBotApplicationPo
     ctx.identity = identity;
     /* v8 ignore next -- grammy session updates without a Telegram sender cannot safely reach this middleware. */
     const linkedUser = identity ? await application.findLinkedUser(identity) : null;
-    ctx.session.auth = {
-      linked: Boolean(linkedUser) || ctx.session.auth.linked,
-      userId: linkedUser?.userId ?? ctx.session.auth.userId,
-      tenantId: linkedUser?.tenantId ?? ctx.session.auth.tenantId,
-      linkedLocale: linkedUser?.locale ?? ctx.session.auth.linkedLocale,
-    };
+    // findLinkedUser is the source of truth on every update: a null result means
+    // the identity is no longer linked, so link-state must be cleared rather than
+    // kept sticky-true. (Infrastructure failures throw and propagate, so they are
+    // never observed here as a spurious null.) Only overwrite when we actually
+    // performed a lookup for a present identity.
+    if (identity) {
+      ctx.session.auth = {
+        linked: Boolean(linkedUser),
+        userId: linkedUser?.userId,
+        tenantId: linkedUser?.tenantId ?? undefined,
+        linkedLocale: linkedUser?.locale ?? undefined,
+      };
+    }
     /* v8 ignore next -- same invalid sender-less update guard as linked-user lookup. */
     ctx.session.identityLocale = identity?.locale ?? undefined;
     ctx.session.locale = resolveTelegramLocale({

@@ -147,6 +147,7 @@ export class AuthUserRepository {
   private async persistUser(input: AuthUserEntityInput): Promise<AuthUserEntity> {
     const entity = new AuthUserEntity({
       ...input,
+      email: input.email?.trim().toLowerCase() || null,
       tenantId: input.tenantId ?? DefaultAuthTenantId,
     });
     this.entityManager.persist(entity);

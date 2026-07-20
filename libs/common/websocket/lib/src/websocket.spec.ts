@@ -41,6 +41,38 @@ describe('shared websocket contracts', () => {
     expect(healthy.send).toHaveBeenCalledWith('ping');
   });
 
+  it('keeps delivering when one client send throws synchronously and reports successful sends', async () => {
+    const adapter = new InMemoryWebsocketAdapter<string>();
+    const failing = new TestWebsocketClient<string>('failing');
+    const healthy = new TestWebsocketClient<string>('healthy');
+    failing.send.mockImplementationOnce(() => {
+      throw new Error('socket not open');
+    });
+
+    adapter.addClient(failing);
+    adapter.addClient(healthy);
+
+    await expect(adapter.broadcast({ message: 'ping' })).resolves.toBe(1);
+    expect(healthy.send).toHaveBeenCalledWith('ping');
+  });
+
+  it('clears all clients even when a close call throws synchronously', async () => {
+    const adapter = new InMemoryWebsocketAdapter<string>();
+    const failing = new TestWebsocketClient<string>('failing');
+    const healthy = new TestWebsocketClient<string>('healthy');
+    failing.close.mockImplementationOnce(() => {
+      throw new Error('already closed');
+    });
+
+    adapter.addClient(failing);
+    adapter.addClient(healthy);
+
+    await expect(adapter.closeAll()).resolves.toBeUndefined();
+    expect(adapter.getClient('failing')).toBeUndefined();
+    expect(adapter.getClient('healthy')).toBeUndefined();
+    expect(healthy.close).toHaveBeenCalled();
+  });
+
   it('clears all clients even when a close call rejects', async () => {
     const adapter = new InMemoryWebsocketAdapter<string>();
     const failing = new TestWebsocketClient<string>('failing');

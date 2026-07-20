@@ -21,6 +21,7 @@ export function createIssuedRefreshToken(input: RefreshTokenIssueInput): IssuedR
     tokenHash,
     familyId: input.familyId ?? randomUUID(),
     expiresAt: secondsFromNow(input.ttlSeconds ?? DefaultRefreshTokenTtlSeconds),
+    authContext: input.authContext ?? null,
   };
 }
 

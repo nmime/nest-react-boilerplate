@@ -56,9 +56,13 @@ export interface AuthenticatedRawRequest {
 
 export interface AuthenticatedRequest {
   headers?: Record<string, string | string[] | undefined>;
+  ip?: string;
+  method?: string;
   get?: (name: string) => string | undefined;
   path?: string;
   raw?: AuthenticatedRawRequest;
+  socket?: { remoteAddress?: string };
+  routeOptions?: { url?: string };
   reply?: AuthenticatedResponse;
   session?: AuthenticatedSession & Record<string, unknown>;
   res?: AuthenticatedResponse;

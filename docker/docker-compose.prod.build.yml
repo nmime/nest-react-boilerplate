@@ -53,6 +53,24 @@ services:
         NX_PROJECT: telegram-bot-api
         BUILD_OUTPUT: dist/apps/backend/telegram/telegram-bot-api
 
+  notification-scheduler:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: notification-scheduler
+        BUILD_OUTPUT: dist/apps/backend/notification/notification-scheduler
+
+  notification-consumer:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: notification-consumer
+        BUILD_OUTPUT: dist/apps/backend/notification/notification-consumer
+
   admin-app:
     build:
       context: ..

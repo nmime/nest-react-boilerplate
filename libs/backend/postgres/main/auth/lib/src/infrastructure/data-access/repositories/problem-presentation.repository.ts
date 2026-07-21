@@ -2,7 +2,12 @@ import { EntityManager, LockMode } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync } from 'neverthrow';
 import type { ProblemPresentationDisplay, ProblemPresentationSeverity } from '@app/common-problem-details';
-import { AdminAuditLogEntity, DefaultAuthTenantId, ProblemPresentationEntity } from '../entities';
+import {
+  AdminAuditLogEntity,
+  DefaultAuthTenantId,
+  ProblemPresentationEntity,
+  TransactionalOutboxEventEntity,
+} from '../entities';
 
 export interface ProblemPresentationRepositoryError {
   code: 'repository_error' | 'revision_conflict';
@@ -112,7 +117,7 @@ export class ProblemPresentationRepository {
         after: snapshot(entity),
         metadata: { ruleId: input.ruleId, ...(input.metadata ?? {}) },
       });
-      transactionalEntityManager.persist([entity, auditLog]);
+      transactionalEntityManager.persist([entity, auditLog, problemPresentationOutbox(auditLog)]);
       await transactionalEntityManager.flush();
 
       return entity;
@@ -145,7 +150,7 @@ export class ProblemPresentationRepository {
         after: {},
         metadata: { ruleId: input.ruleId, ...(input.metadata ?? {}) },
       });
-      transactionalEntityManager.persist(auditLog);
+      transactionalEntityManager.persist([auditLog, problemPresentationOutbox(auditLog)]);
       transactionalEntityManager.remove(existing);
       await transactionalEntityManager.flush();
 
@@ -173,6 +178,16 @@ const snapshot = (entity: ProblemPresentationEntity): Record<string, unknown> =>
   messageRu: entity.messageRu,
   revision: entity.revision,
 });
+
+const problemPresentationOutbox = (auditLog: AdminAuditLogEntity): TransactionalOutboxEventEntity =>
+  new TransactionalOutboxEventEntity({
+    tenantId: auditLog.tenantId,
+    aggregateType: 'problem-presentation',
+    aggregateId: auditLog.id,
+    eventType: auditLog.action,
+    payload: { auditLogId: auditLog.id, before: auditLog.before, after: auditLog.after },
+    metadata: auditLog.metadata,
+  });
 
 const mapProblemPresentationRepositoryError = (cause: unknown): ProblemPresentationRepositoryError =>
   cause instanceof ProblemPresentationRevisionConflictError

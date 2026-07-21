@@ -22,7 +22,18 @@
     "type": {
       "type": "string",
       "description": "Semantic library role used for layout and Nx boundaries",
-      "enum": ["common", "util", "ui", "sdk", "feature-main", "feature-shared", "data-access", "test-util", "asset"],
+      "enum": [
+        "common",
+        "util",
+        "ui",
+        "sdk",
+        "feature-main",
+        "feature-admin",
+        "feature-shared",
+        "data-access",
+        "test-util",
+        "asset"
+      ],
       "default": "common",
       "x-priority": "important"
     },

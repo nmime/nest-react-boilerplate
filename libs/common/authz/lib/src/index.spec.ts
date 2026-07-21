@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   AdminDashboardReadPermission,
   AdminManageAllPermission,
+  AdminNotificationBroadcastsApprovePermission,
+  AdminNotificationBroadcastsReadPermission,
+  AdminNotificationBroadcastsSendPermission,
+  AdminNotificationBroadcastsWritePermission,
+  AdminNotificationSegmentsReadPermission,
+  AdminNotificationSegmentsWritePermission,
+  AdminNotificationTemplatesReadPermission,
+  AdminNotificationTemplatesTestPermission,
+  AdminNotificationTemplatesWritePermission,
   AdminProfileReadPermission,
   AdminRole,
   AdminRolesWritePermission,
@@ -31,7 +40,7 @@ describe('@app/common-authz normalizeStringList', () => {
 });
 
 describe('@app/common-authz permission catalog', () => {
-  it('exposes the reconciled 13-permission catalog', () => {
+  it('exposes the complete shared permission catalog', () => {
     expect(permissionCatalog.map((entry) => entry.key)).toEqual([
       UserProfileReadPermission,
       AdminDashboardReadPermission,
@@ -45,6 +54,15 @@ describe('@app/common-authz permission catalog', () => {
       'admin:audit:read',
       'admin:settings:read',
       AdminSettingsUpdatePermission,
+      AdminNotificationTemplatesReadPermission,
+      AdminNotificationTemplatesWritePermission,
+      AdminNotificationTemplatesTestPermission,
+      AdminNotificationSegmentsReadPermission,
+      AdminNotificationSegmentsWritePermission,
+      AdminNotificationBroadcastsReadPermission,
+      AdminNotificationBroadcastsWritePermission,
+      AdminNotificationBroadcastsSendPermission,
+      AdminNotificationBroadcastsApprovePermission,
       AdminManageAllPermission,
     ]);
   });
@@ -109,6 +127,15 @@ describe('@app/common-authz role matrix', () => {
       'admin:audit:read',
       'admin:settings:read',
       AdminSettingsUpdatePermission,
+      AdminNotificationTemplatesReadPermission,
+      AdminNotificationTemplatesWritePermission,
+      AdminNotificationTemplatesTestPermission,
+      AdminNotificationSegmentsReadPermission,
+      AdminNotificationSegmentsWritePermission,
+      AdminNotificationBroadcastsReadPermission,
+      AdminNotificationBroadcastsWritePermission,
+      AdminNotificationBroadcastsSendPermission,
+      AdminNotificationBroadcastsApprovePermission,
       AdminManageAllPermission,
     ]);
     expect(permissionsForRoles([UserRole])).toEqual([UserProfileReadPermission]);

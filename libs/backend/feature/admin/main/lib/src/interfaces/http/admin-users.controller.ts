@@ -11,8 +11,8 @@ import {
   type AuthenticatedRequest,
 } from '@app/backend-feature-auth-shared';
 import {
-  AdminAuditReadPermission,
   AdminDashboardReadPermission,
+  AdminRbacGuard,
   AdminRole,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersReadPermission,
@@ -20,17 +20,9 @@ import {
   AdminUsersWritePermission,
 } from '@app/backend-feature-admin-shared';
 import { AdminUsersUseCase } from '../../application';
-import type {
-  AdminAuditLogListPayload,
-  AdminDashboardSummary,
-  AdminUserListPayload,
-  AdminUserView,
-} from '../../domain';
-import { AdminRbacGuard } from './admin-rbac.guard';
+import type { AdminDashboardSummary, AdminUserListPayload, AdminUserView } from '../../domain';
 import { executeAdminUseCase, requestContextFromRequest } from './admin-http';
 import {
-  AdminAuditLogListPayloadDto,
-  AdminAuditQueryDto,
   AdminDashboardSummaryDto,
   AdminUserListPayloadDto,
   AdminUserQueryDto,
@@ -101,17 +93,6 @@ export class AdminUsersController {
         this.adminUsers.updateUserAccessPolicy(principal, id, input, requestContextFromRequest(request)),
       ),
     );
-  }
-
-  @Get('audit')
-  @ApiOkDataResponse(AdminAuditLogListPayloadDto)
-  @RequireRoles(AdminRole)
-  @RequirePermissions(AdminAuditReadPermission)
-  async listAudit(
-    @CurrentUser() principal: AuthenticatedPrincipal,
-    @Query() query: AdminAuditQueryDto,
-  ): Promise<OkResponse<AdminAuditLogListPayload>> {
-    return createOkResponse(await executeAdminUseCase(() => this.adminUsers.listAudit(principal, query)));
   }
 
   @Get('dashboard/summary')

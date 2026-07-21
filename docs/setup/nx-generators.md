@@ -54,7 +54,11 @@ Use `pnpm nrb setup --list` to inspect the current and available selections.
 
 `@repo/tooling:library` supports backend, frontend, and common runtimes plus
 semantic roles `common`, `util`, `ui`, `sdk`, `feature-main`,
-`feature-shared`, `data-access`, `test-util`, and `asset`.
+`feature-admin`, `feature-shared`, `data-access`, `test-util`, and `asset`.
+
+`feature-admin` is backend-only and generates the privileged domain boundary at
+`libs/backend/feature/<scope>/admin/lib`; API applications compose it while the
+domain's normal runtime remains in `feature-main`.
 
 It derives the required `libs/backend/**`, `libs/frontend/**`, or
 `libs/common/**` path, Nx boundary tags, public TypeScript alias, build/test

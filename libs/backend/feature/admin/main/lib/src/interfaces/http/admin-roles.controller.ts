@@ -11,6 +11,7 @@ import {
   type AuthenticatedRequest,
 } from '@app/backend-feature-auth-shared';
 import {
+  AdminRbacGuard,
   AdminRole,
   AdminRolesReadPermission,
   AdminRolesWritePermission,
@@ -19,7 +20,6 @@ import {
 } from '@app/backend-feature-admin-shared';
 import { AdminRolesUseCase } from '../../application';
 import type { AdminRbacCatalog, AdminRoleView, AdminUserView } from '../../domain';
-import { AdminRbacGuard } from './admin-rbac.guard';
 import { executeAdminUseCase, requestContextFromRequest } from './admin-http';
 import {
   AdminRbacCatalogPayloadDto,
@@ -54,8 +54,11 @@ export class AdminRolesController {
   async createRole(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Body() input: CreateAdminRoleDto,
+    @Req() request: AuthenticatedRequest = {},
   ): Promise<OkResponse<AdminRoleView>> {
-    return createOkResponse(await executeAdminUseCase(() => this.adminRoles.createRole(principal, input)));
+    return createOkResponse(
+      await executeAdminUseCase(() => this.adminRoles.createRole(principal, input, requestContextFromRequest(request))),
+    );
   }
 
   @Patch('roles/:id')
@@ -66,8 +69,13 @@ export class AdminRolesController {
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Param('id') id: string,
     @Body() input: UpdateAdminRoleDto,
+    @Req() request: AuthenticatedRequest = {},
   ): Promise<OkResponse<AdminRoleView>> {
-    return createOkResponse(await executeAdminUseCase(() => this.adminRoles.updateRole(principal, id, input)));
+    return createOkResponse(
+      await executeAdminUseCase(() =>
+        this.adminRoles.updateRole(principal, id, input, requestContextFromRequest(request)),
+      ),
+    );
   }
 
   @Put('roles/:id/permissions')
@@ -78,8 +86,13 @@ export class AdminRolesController {
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Param('id') id: string,
     @Body() input: SetAdminRolePermissionsDto,
+    @Req() request: AuthenticatedRequest = {},
   ): Promise<OkResponse<AdminRoleView>> {
-    return createOkResponse(await executeAdminUseCase(() => this.adminRoles.setRolePermissions(principal, id, input)));
+    return createOkResponse(
+      await executeAdminUseCase(() =>
+        this.adminRoles.setRolePermissions(principal, id, input, requestContextFromRequest(request)),
+      ),
+    );
   }
 
   @Put('users/:id/roles')

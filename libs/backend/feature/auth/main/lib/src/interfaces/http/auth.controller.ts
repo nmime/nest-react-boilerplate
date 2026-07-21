@@ -1,4 +1,18 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Optional,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { supportedLocales } from '@app/backend-common-i18n';
 import { ApiOkDataResponse, ApiExceptions, ApiProblemTypes, ApiSessionCookieAuth } from '@app/backend-common-swagger';
@@ -15,6 +29,7 @@ import {
 } from '@app/backend-feature-auth-shared';
 import {
   AuthService,
+  AuthLoginAnalyticsService,
   BetterAuthTelegramSessionService,
   ExternalAuthService,
   type ExternalAuthLoginResult,
@@ -75,6 +90,9 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly externalAuth: ExternalAuthService,
     private readonly betterAuthTelegramSession: BetterAuthTelegramSessionService,
+    @Optional()
+    @Inject(AuthLoginAnalyticsService)
+    private readonly loginAnalytics: Pick<AuthLoginAnalyticsService, 'record'> = NoopAuthLoginAnalytics,
   ) {}
 
   @Post('register')
@@ -83,17 +101,67 @@ export class AuthController {
     @Body() input: RegisterDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<AuthSessionView>> {
-    const session = await this.auth.register(input);
-    await establishRequestSession(request, session);
-    return createOkResponse(session);
+    try {
+      const session = await this.auth.register(input);
+      await establishRequestSession(request, session);
+      await this.loginAnalytics.record({
+        request,
+        tenantId: session.user.tenantId,
+        userId: session.user.id,
+        identifier: input.email,
+        eventType: 'registration',
+        outcome: 'success',
+        provider: 'password',
+        channel: 'password',
+        language: session.user.locale,
+      });
+      return createOkResponse(session);
+    } catch (error) {
+      await this.loginAnalytics.record({
+        request,
+        tenantId: input.tenantId,
+        identifier: input.email,
+        eventType: 'registration',
+        outcome: 'failure',
+        provider: 'password',
+        channel: 'password',
+        failureCode: 'registration_failed',
+      });
+      throw error;
+    }
   }
 
   @Post('login')
   @ApiOkDataResponse(AuthSessionViewDto)
   async login(@Body() input: LoginDto, @Req() request: AuthenticatedRequest): Promise<OkResponse<AuthSessionView>> {
-    const session = await this.auth.login(input);
-    await establishRequestSession(request, session);
-    return createOkResponse(session);
+    try {
+      const session = await this.auth.login(input);
+      await establishRequestSession(request, session);
+      await this.loginAnalytics.record({
+        request,
+        tenantId: session.user.tenantId,
+        userId: session.user.id,
+        identifier: input.email,
+        eventType: 'login',
+        outcome: 'success',
+        provider: 'password',
+        channel: 'password',
+        language: session.user.locale,
+      });
+      return createOkResponse(session);
+    } catch (error) {
+      await this.loginAnalytics.record({
+        request,
+        tenantId: input.tenantId,
+        identifier: input.email,
+        eventType: 'login',
+        outcome: 'failure',
+        provider: 'password',
+        channel: 'password',
+        failureCode: 'credentials_rejected',
+      });
+      throw error;
+    }
   }
 
   @Post('refresh')
@@ -113,14 +181,22 @@ export class AuthController {
     @Body() input: TelegramTmaDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<ExternalAuthLoginResult>> {
-    const betterAuthProfile = await this.betterAuthTelegramSession.requireTelegramProfile(request.headers);
-    const result = await this.externalAuth.telegramTma({
-      ...input,
-      betterAuthProviderSubject: betterAuthProfile.providerSubject,
-      principal: request.user ?? request.auth ?? null,
-    });
-    await establishExternalSessionIfPresent(request, result);
-    return createOkResponse(result);
+    try {
+      const betterAuthProfile = await this.betterAuthTelegramSession.requireTelegramProfile(request.headers);
+      const result = await this.externalAuth.telegramTma({
+        ...input,
+        betterAuthProviderSubject: betterAuthProfile.providerSubject,
+        principal: request.user ?? request.auth ?? null,
+      });
+      await establishExternalSessionIfPresent(request, result);
+      if (result.session) {
+        await this.recordExternalLogin(request, result.session, 'telegram', 'telegram_tma');
+      }
+      return createOkResponse(result);
+    } catch (error) {
+      await this.recordExternalFailure(request, input.tenantId, 'telegram', 'telegram_tma');
+      throw error;
+    }
   }
 
   @Post('telegram/oidc/session')
@@ -129,14 +205,22 @@ export class AuthController {
     @Body() input: TelegramOidcSessionDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<ExternalAuthLoginResult>> {
-    const profile = await this.betterAuthTelegramSession.requireTelegramProfile(request.headers);
-    const result = await this.externalAuth.telegramOidcSession({
-      ...input,
-      principal: request.user ?? request.auth ?? null,
-      profile,
-    });
-    await establishExternalSessionIfPresent(request, result);
-    return createOkResponse(result);
+    try {
+      const profile = await this.betterAuthTelegramSession.requireTelegramProfile(request.headers);
+      const result = await this.externalAuth.telegramOidcSession({
+        ...input,
+        principal: request.user ?? request.auth ?? null,
+        profile,
+      });
+      await establishExternalSessionIfPresent(request, result);
+      if (result.session) {
+        await this.recordExternalLogin(request, result.session, 'telegram', 'telegram_oidc');
+      }
+      return createOkResponse(result);
+    } catch (error) {
+      await this.recordExternalFailure(request, input.tenantId, 'telegram', 'telegram_oidc');
+      throw error;
+    }
   }
 
   @Post('telegram/bot-link')
@@ -166,16 +250,24 @@ export class AuthController {
     @Req() request: AuthenticatedRequest,
     @Res() response: AuthenticatedResponse,
   ): Promise<void> {
-    const result = await this.externalAuth.discordCallback({
-      ...input,
-      principal: request.user ?? request.auth ?? null,
-    });
-    await establishExternalSessionIfPresent(request, result);
-    if (result.returnUrl) {
-      response.redirect?.(result.returnUrl, 302);
-      return;
+    try {
+      const result = await this.externalAuth.discordCallback({
+        ...input,
+        principal: request.user ?? request.auth ?? null,
+      });
+      await establishExternalSessionIfPresent(request, result);
+      if (result.session) {
+        await this.recordExternalLogin(request, result.session, 'discord', 'discord_oauth');
+      }
+      if (result.returnUrl) {
+        response.redirect?.(result.returnUrl, 302);
+        return;
+      }
+      response.send?.(createOkResponse(result));
+    } catch (error) {
+      await this.recordExternalFailure(request, input.tenantId, 'discord', 'discord_oauth');
+      throw error;
     }
-    response.send?.(createOkResponse(result));
   }
 
   @Get('provider-identities')
@@ -308,4 +400,44 @@ export class AuthController {
     await clearRequestSession(request, response);
     return createOkResponse({ loggedOut: true });
   }
+
+  private recordExternalLogin(
+    request: AuthenticatedRequest,
+    session: AuthSessionView,
+    provider: string,
+    channel: string,
+  ): Promise<void> {
+    return this.loginAnalytics.record({
+      request,
+      tenantId: session.user.tenantId,
+      userId: session.user.id,
+      identifier: session.user.email,
+      eventType: 'login',
+      outcome: 'success',
+      provider,
+      channel,
+      language: session.user.locale,
+    });
+  }
+
+  private recordExternalFailure(
+    request: AuthenticatedRequest,
+    tenantId: string | null | undefined,
+    provider: string,
+    channel: string,
+  ): Promise<void> {
+    return this.loginAnalytics.record({
+      request,
+      tenantId,
+      eventType: 'login',
+      outcome: 'failure',
+      provider,
+      channel,
+      failureCode: 'provider_authentication_failed',
+    });
+  }
 }
+
+const NoopAuthLoginAnalytics: Pick<AuthLoginAnalyticsService, 'record'> = {
+  record: () => Promise.resolve(),
+};

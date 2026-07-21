@@ -16,6 +16,10 @@ x-backend-env: &backend-env
   AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-nest-react-boilerplate}
   AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
   AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}
+  AUTH_GEOIP_DATABASE_PATH: ${AUTH_GEOIP_DATABASE_PATH:-}
+  AUTH_LOGIN_NETWORK_RETENTION_DAYS: ${AUTH_LOGIN_NETWORK_RETENTION_DAYS:-30}
+  AUTH_LOGIN_EVENT_RETENTION_DAYS: ${AUTH_LOGIN_EVENT_RETENTION_DAYS:-365}
+  AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET: ${AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET:-}
   BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-local-better-auth-secret-change-me-32-chars}
   BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3003}
   BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-http://localhost:4201}
@@ -336,6 +340,24 @@ services:
       args:
         NX_PROJECT: notification-scheduler
         BUILD_OUTPUT: dist/apps/backend/notification/notification-scheduler
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  notification-consumer:
+    profiles: [notification-consumer]
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: notification-consumer
+        BUILD_OUTPUT: dist/apps/backend/notification/notification-consumer
     restart: unless-stopped
     environment: *backend-env
     depends_on:

@@ -60,5 +60,6 @@ export async function deliverNotification(
     createdAt: delivery.createdAt,
     status: sendResult.status,
     error: sendResult.errorReason ? { reason: sendResult.errorReason, message: sendResult.errorMessage } : null,
+    retryAfterSeconds: sendResult.retryAfterSeconds,
   };
 }

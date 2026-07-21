@@ -1,8 +1,10 @@
 import { BetterAuthInstanceToken, getBaseUrl } from './better-auth.module';
-import { Controller, Inject, Req, Res, All, HttpCode, HttpException, Logger } from '@nestjs/common';
+import { Controller, Inject, Req, Res, All, HttpCode, HttpException, Logger, Optional } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Auth } from 'better-auth';
 import { BaseException, InternalException } from '@app/backend-common-exception';
+import { DefaultAuthTenantId, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
+import { AuthLoginAnalyticsService } from './auth-login-analytics.service';
 
 const UnsafeForwardedResponseHeaders = new Set([
   'connection',
@@ -20,7 +22,10 @@ const UnsafeForwardedResponseHeaders = new Set([
 @Controller('api/auth')
 export class BetterAuthApiController {
   private static readonly log = new Logger(BetterAuthApiController.name);
-  constructor(@Inject(BetterAuthInstanceToken) private readonly auth: Auth) {}
+  constructor(
+    @Inject(BetterAuthInstanceToken) private readonly auth: Auth,
+    @Optional() private readonly loginAnalytics?: AuthLoginAnalyticsService,
+  ) {}
 
   @All('*')
   @HttpCode(200)
@@ -103,12 +108,15 @@ export class BetterAuthApiController {
           jsonBody = this.unwrapContext(jsonBody as Record<string, unknown>);
         }
 
+        await this.recordSuccessfulSession(req, jsonBody);
+
         res.send(jsonBody);
       } else {
         const textBody = await baResponse.text();
         res.type('text/plain').send(textBody);
       }
     } catch (error: unknown) {
+      await this.recordFailedSession(req);
       const err = error instanceof Error ? error : new Error(String(error));
 
       if (error instanceof BaseException || error instanceof HttpException) {
@@ -168,4 +176,80 @@ export class BetterAuthApiController {
   private getBaseUrl(): string {
     return getBaseUrl();
   }
+
+  private async recordSuccessfulSession(req: FastifyRequest, body: unknown): Promise<void> {
+    const route = betterAuthSessionRoute(req.url);
+    const record = asRecord(body);
+    const session = asRecord(record?.session);
+    const user = asRecord(record?.user);
+    if (!route || (!session && !user)) {
+      return;
+    }
+    const requestBody = asRecord(req.body);
+    await this.loginAnalytics?.record({
+      request: req as unknown as AuthenticatedRequest,
+      tenantId:
+        stringValue(user?.tenantId) ??
+        stringValue(session?.tenantId) ??
+        stringValue(requestBody?.tenantId) ??
+        DefaultAuthTenantId,
+      userId: stringValue(user?.id) ?? stringValue(session?.userId),
+      identifier: stringValue(user?.email) ?? stringValue(requestBody?.email),
+      sessionId: stringValue(session?.id),
+      eventType: route.eventType,
+      outcome: 'success',
+      provider: route.provider,
+      channel: route.channel,
+      language: stringValue(user?.locale),
+    });
+  }
+
+  private async recordFailedSession(req: FastifyRequest): Promise<void> {
+    const route = betterAuthSessionRoute(req.url);
+    if (!route) {
+      return;
+    }
+    const requestBody = asRecord(req.body);
+    await this.loginAnalytics?.record({
+      request: req as unknown as AuthenticatedRequest,
+      tenantId: stringValue(requestBody?.tenantId) ?? DefaultAuthTenantId,
+      identifier: stringValue(requestBody?.email),
+      eventType: route.eventType,
+      outcome: 'failure',
+      provider: route.provider,
+      channel: route.channel,
+      failureCode: 'better_auth_rejected',
+    });
+  }
+}
+
+const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+  value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
+const stringValue = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim() ? value : undefined;
+
+function betterAuthSessionRoute(url: string | undefined): {
+  eventType: 'login' | 'registration';
+  provider: string;
+  channel: string;
+} | null {
+  const path = (url ?? '').split('?')[0] ?? '';
+  const signUp = path.includes('/sign-up/');
+  const signIn = path.includes('/sign-in/');
+  const callback = path.includes('/callback/');
+  if (!signUp && !signIn && !callback) {
+    return null;
+  }
+  const provider =
+    path
+      .split('/')
+      .filter(Boolean)
+      .at(-1)
+      ?.replace(/[^a-z0-9_-]/giu, '')
+      .slice(0, 32) || 'unknown';
+  return {
+    eventType: signUp ? 'registration' : 'login',
+    provider,
+    channel: `better_auth_${provider}`.slice(0, 64),
+  };
 }

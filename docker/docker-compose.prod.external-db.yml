@@ -24,6 +24,9 @@ services:
   notification-scheduler:
     secrets: [database_url]
 
+  notification-consumer:
+    secrets: [database_url]
+
 secrets:
   database_url:
     file: ${DATABASE_URL_FILE:-./secrets/database_url.txt}

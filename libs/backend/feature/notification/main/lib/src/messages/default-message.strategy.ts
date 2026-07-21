@@ -9,6 +9,7 @@ import {
   type NotificationDataValue,
   type NotificationDeliveryChannel,
   type NotificationEmailChannelContent,
+  type NotificationPushChannelContent,
   type NotificationMessageButton,
   type NotificationRecord,
 } from '@app/common-notifications';
@@ -77,7 +78,41 @@ export class DefaultMessageStrategy extends BaseMessageStrategy {
         useFormat: true,
         templateEngine: templateChannel.engine,
       });
-      return subject && text ? { kind: 'email', subject, text } : undefined;
+      const html = this.renderString({
+        template: templateChannel.content.html,
+        language,
+        data,
+        useFormat: true,
+        templateEngine: templateChannel.engine,
+      });
+      const attachments = localizedValue(templateChannel.content.attachments, language);
+      return subject && text ? { kind: 'email', subject, text, html, attachments } : undefined;
+    }
+
+    if (this.channel === NotificationChannel.Push && isPushChannelContent(templateChannel.content)) {
+      const subject = this.renderString({
+        template: templateChannel.content.subject,
+        language,
+        data,
+        useFormat: true,
+        templateEngine: templateChannel.engine,
+      });
+      const text = this.renderString({
+        template: templateChannel.content.body,
+        language,
+        data,
+        useFormat: true,
+        templateEngine: templateChannel.engine,
+      });
+      const image = this.renderString({
+        template: templateChannel.content.image,
+        language,
+        data,
+        useFormat: false,
+        templateEngine: templateChannel.engine,
+      });
+      const actions = localizedValue(templateChannel.content.actions, language);
+      return text ? { kind: 'push', subject, text, image, actions } : undefined;
     }
 
     return undefined;
@@ -175,6 +210,14 @@ function isBotChannelContent(value: unknown): value is NotificationBotChannelCon
 
 function isEmailChannelContent(value: unknown): value is NotificationEmailChannelContent {
   return isRecord(value) && isLocalizedStrings(value['subject']) && isLocalizedStrings(value['body']);
+}
+
+function isPushChannelContent(value: unknown): value is NotificationPushChannelContent {
+  return isRecord(value) && isLocalizedStrings(value['body']);
+}
+
+function localizedValue<T>(values: Record<string, T> | undefined, language?: string): T | undefined {
+  return values?.[language ?? ''] ?? values?.[defaultLanguage] ?? values?.['default'];
 }
 
 function mergeNotificationData(

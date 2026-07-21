@@ -3,6 +3,7 @@
     "sourceTag": "scope:admin",
     "onlyDependOnLibsWithTags": [
       "scope:admin",
+      "scope:audit-log",
       "scope:auth",
       "scope:feature-flags",
       "scope:notification",
@@ -48,7 +49,20 @@
     "sourceTag": "scope:notification",
     "onlyDependOnLibsWithTags": [
       "scope:notification",
+      "scope:admin",
+      "scope:audit-log",
       "scope:telegram",
+      "scope:auth",
+      "scope:feature-flags",
+      "scope:postgres",
+      "scope:shared"
+    ]
+  },
+  {
+    "sourceTag": "scope:audit-log",
+    "onlyDependOnLibsWithTags": [
+      "scope:audit-log",
+      "scope:admin",
       "scope:auth",
       "scope:feature-flags",
       "scope:postgres",

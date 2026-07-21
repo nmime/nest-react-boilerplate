@@ -13,7 +13,7 @@ const publicDomainModes = new Set(['single-domain', 'per-app-domains']);
 const frontendApiBaseUrlModes = new Set(['same-origin', 'split-origin']);
 const frontendApiBaseUrlKeys = ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL'];
 const tlsModes = new Set(['automatic', 'provided', 'external']);
-const supportedProfiles = new Set(['discord', 'notification-scheduler', 'telegram']);
+const supportedProfiles = new Set(['discord', 'notification-consumer', 'notification-scheduler', 'telegram']);
 const primaryUpstreams = {
   'landing-app': 'landing-app:8080',
   'site-app': 'site-app:80',
@@ -250,7 +250,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   for (const profile of profiles) {
     if (!supportedProfiles.has(profile)) {
       fail(
-        `Unsupported production profile "${profile}". Supported profiles: discord, notification-scheduler, telegram.`,
+        `Unsupported production profile "${profile}". Supported profiles: discord, notification-consumer, notification-scheduler, telegram.`,
       );
     }
   }

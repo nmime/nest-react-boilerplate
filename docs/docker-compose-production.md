@@ -222,15 +222,22 @@ install -m 600 /dev/null docker/secrets/database_url.txt
 Do not put database credentials in `.env.production`, Compose YAML, shell
 history, or Git. The external model contains no PostgreSQL service or volume.
 
-## 5. Enable optional applications
+## 5. Enable optional applications and notification runtimes
 
-Enable Telegram, Discord, or both:
+Notification sending requires both background runtimes. Add Telegram and/or
+Discord only when those provider applications are also required:
 
 ```dotenv
-COMPOSE_PROFILES=telegram
-# COMPOSE_PROFILES=discord
-# COMPOSE_PROFILES=telegram,discord
+COMPOSE_PROFILES=notification-consumer,notification-scheduler
+# COMPOSE_PROFILES=notification-consumer,notification-scheduler,telegram
+# COMPOSE_PROFILES=discord,notification-consumer,notification-scheduler,telegram
 ```
+
+Create `docker/secrets/notification_payload_encryption_key.txt` for both
+runtimes. Configure the selected scheduler provider secrets only: Resend,
+MailPace, Telegram, Discord, FCM, and/or APNs. Static CSV audiences additionally
+require production S3 settings because the API stores the bounded upload object
+for asynchronous consumer validation.
 
 The wrapper enables the matching Compose services and only then imports their
 Caddy host/routes. Disabled optional domains do not trigger certificate

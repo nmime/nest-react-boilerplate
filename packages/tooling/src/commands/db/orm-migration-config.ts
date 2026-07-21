@@ -12,17 +12,27 @@ require("tsconfig-paths").register({ baseUrl: workspaceRoot, paths: tsconfig.com
 const { MikroORM } = require("@mikro-orm/core");
 const {
   AuthUserEntitySchema,
+  AuthLoginEventEntitySchema,
   authMigrationOptions,
   authMigrations,
   AuthMigrationsTableName,
 } = require("@app/backend-postgres-main-auth");
 const { FeatureFlagEntitySchema } = require("@app/backend-postgres-main-feature-flags");
 const {
+  NotificationAudienceSnapshotEntitySchema,
+  NotificationAudienceSnapshotMemberEntitySchema,
+  NotificationBroadcastCommandEntitySchema,
+  NotificationBroadcastEntitySchema,
+  NotificationBroadcastSegmentEntitySchema,
   NotificationDeliveryEntitySchema,
   NotificationEntitySchema,
   notificationMigrations,
-  NotificationTemplateChannelEntitySchema,
+  NotificationSegmentEntitySchema,
+  NotificationSegmentMemberEntitySchema,
+  NotificationSegmentUploadEntitySchema,
   NotificationTemplateEntitySchema,
+  NotificationTemplateVersionChannelEntitySchema,
+  NotificationTemplateVersionEntitySchema,
 } = require("@app/backend-postgres-main-notification");
 const { createPostgresMikroOrmOptions } = require("@app/backend-postgres-main");
 export const authMigrationTableName = AuthMigrationsTableName;
@@ -31,11 +41,21 @@ export function createAuthMigrationOrmOptions(env = process.env) {
     {
       entities: [
         AuthUserEntitySchema,
+        AuthLoginEventEntitySchema,
         FeatureFlagEntitySchema,
         NotificationDeliveryEntitySchema,
         NotificationEntitySchema,
-        NotificationTemplateChannelEntitySchema,
         NotificationTemplateEntitySchema,
+        NotificationTemplateVersionEntitySchema,
+        NotificationTemplateVersionChannelEntitySchema,
+        NotificationSegmentEntitySchema,
+        NotificationSegmentMemberEntitySchema,
+        NotificationSegmentUploadEntitySchema,
+        NotificationBroadcastEntitySchema,
+        NotificationBroadcastSegmentEntitySchema,
+        NotificationAudienceSnapshotEntitySchema,
+        NotificationAudienceSnapshotMemberEntitySchema,
+        NotificationBroadcastCommandEntitySchema,
       ],
       autoLoadEntities: false,
       allowGlobalContext: true,

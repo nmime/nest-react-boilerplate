@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Migration20260715100000CreateNotifications } from './Migration20260715100000CreateNotifications';
 import { Migration20260720130000AddNotificationDeliveryClaim } from './Migration20260720130000AddNotificationDeliveryClaim';
 import { Migration20260721120000NotificationProvidersAndSensitivePayload } from './Migration20260721120000NotificationProvidersAndSensitivePayload';
+import { Migration20260721160000AdminNotificationBroadcasts } from './Migration20260721160000AdminNotificationBroadcasts';
 import { notificationMigrations } from './index';
 
 function collectSql(migration: { addSql(sql: string): void }, run: () => void): string {
@@ -43,7 +44,9 @@ describe('Notification delivery-claim migration', () => {
       undefined as never,
       undefined as never,
     );
-    const sql = collectSql(migration, () => migration.up());
+    const sql = collectSql(migration, () => {
+      migration.up();
+    });
 
     expect(sql).toContain('add column if not exists "sensitive_data" jsonb not null default \'{}\'::jsonb');
     expect(sql).toContain("when 'bot' then 'telegram-bot'");
@@ -52,5 +55,22 @@ describe('Notification delivery-claim migration', () => {
     expect(notificationMigrations.indexOf(Migration20260720130000AddNotificationDeliveryClaim)).toBeLessThan(
       notificationMigrations.indexOf(Migration20260721120000NotificationProvidersAndSensitivePayload),
     );
+  });
+
+  it('backfills immutable template versions before removing mutable channels', () => {
+    const migration = new Migration20260721160000AdminNotificationBroadcasts(undefined as never, undefined as never);
+    const sql = collectSql(migration, () => {
+      migration.up();
+    });
+
+    expect(sql).toContain('insert into "notification_template_version_channels"');
+    expect(sql).toContain('drop table "notification_template_channels"');
+    expect(sql.indexOf('insert into "notification_template_version_channels"')).toBeLessThan(
+      sql.indexOf('drop table "notification_template_channels"'),
+    );
+    expect(sql).toContain('add column if not exists "template_version_id" uuid not null');
+    expect(
+      notificationMigrations.indexOf(Migration20260721120000NotificationProvidersAndSensitivePayload),
+    ).toBeLessThan(notificationMigrations.indexOf(Migration20260721160000AdminNotificationBroadcasts));
   });
 });

@@ -21,9 +21,11 @@ describe('notification contracts', () => {
   it('exposes terminal and retryable delivery states', () => {
     expect(NotificationStatus).toEqual({
       Pending: 'pending',
+      Paused: 'paused',
       Sent: 'sent',
       Error: 'error',
       Rejected: 'rejected',
+      Cancelled: 'cancelled',
     });
   });
 

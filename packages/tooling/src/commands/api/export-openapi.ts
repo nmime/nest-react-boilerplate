@@ -74,7 +74,10 @@ async function main() {
     AUTH_OAUTH_ENABLED: "false",
     PORT: args.port,
   };
-  const command = ["pnpm", "exec", "nx", "serve", args.app, "--skip-nx-cache"];
+  // Nx content hashes already invalidate changed application and dependency
+  // builds. Reusing valid cache entries keeps contract export practical in a
+  // large workspace while still rebuilding every changed source.
+  const command = ["pnpm", "exec", "nx", "serve", args.app];
   const url = `http://127.0.0.1:${args.port}/docs/openapi.json`;
   if (args.dryRun) {
     console.log(JSON.stringify({ status: "dry-run", command, url, output: args.output }, null, 2));
@@ -94,7 +97,9 @@ async function main() {
   });
   try {
     let body = "";
-    for (let attempt = 0; attempt < 60; attempt += 1) {
+    // A clean Nx graph can legitimately need more than one minute to compile
+    // all transitive projects before the API starts listening.
+    for (let attempt = 0; attempt < 180; attempt += 1) {
       try {
         const response = await fetch(url);
         if (response.ok) {

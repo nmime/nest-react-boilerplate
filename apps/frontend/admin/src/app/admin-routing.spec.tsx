@@ -81,6 +81,10 @@ describe('admin route base handling', () => {
         'admin:users:read',
         'admin:roles:read',
         'admin:audit:read',
+        'admin:auth-login-analytics:read',
+        'admin:notification-templates:read',
+        'admin:notification-segments:read',
+        'admin:notification-broadcasts:read',
       ],
     });
 
@@ -93,6 +97,10 @@ describe('admin route base handling', () => {
     expect(html).toContain('href="/admin/users"');
     expect(html).toContain('href="/admin/roles"');
     expect(html).toContain('href="/admin/audit"');
+    expect(html).toContain('href="/admin/auth/login-analytics"');
+    expect(html).toContain('href="/admin/notifications/templates"');
+    expect(html).toContain('href="/admin/notifications/segments"');
+    expect(html).toContain('href="/admin/notifications/broadcasts"');
     expect(html).toContain('data-current="true"');
   });
 
@@ -171,5 +179,33 @@ describe('admin frontend CASL RBAC gating', () => {
     expect(access.canAccessAdmin).toBe(true);
     expect(access.canReadDashboard).toBe(true);
     expect(access.canReadProfile).toBe(true);
+    expect(access.canReadNotificationTemplates).toBe(true);
+    expect(access.canReadNotificationSegments).toBe(true);
+    expect(access.canReadNotificationBroadcasts).toBe(true);
+    expect(access.canReadAuthLoginAnalytics).toBe(true);
+  });
+
+  it('keeps notification write, test, send, and approval hints independent', () => {
+    const access = createAdminAccess({
+      subject: 'admin-id',
+      roles: ['admin'],
+      permissions: [
+        'admin:notification-templates:read',
+        'admin:notification-templates:test',
+        'admin:notification-segments:read',
+        'admin:notification-broadcasts:read',
+        'admin:notification-broadcasts:send',
+      ],
+    });
+
+    expect(access.canReadNotificationTemplates).toBe(true);
+    expect(access.canWriteNotificationTemplates).toBe(false);
+    expect(access.canTestNotificationTemplates).toBe(true);
+    expect(access.canReadNotificationSegments).toBe(true);
+    expect(access.canWriteNotificationSegments).toBe(false);
+    expect(access.canReadNotificationBroadcasts).toBe(true);
+    expect(access.canWriteNotificationBroadcasts).toBe(false);
+    expect(access.canSendNotificationBroadcasts).toBe(true);
+    expect(access.canApproveNotificationBroadcasts).toBe(false);
   });
 });

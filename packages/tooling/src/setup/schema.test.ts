@@ -131,6 +131,7 @@ describe('schema — constants', () => {
       'auth-app-api',
       'discord-app-api',
       'telegram-bot-api',
+      'notification-consumer',
       'notification-scheduler',
       'fullstack-e2e',
     ] as const;
@@ -187,6 +188,10 @@ describe('catalog — appCatalog', () => {
     assert.deepEqual(appCatalog['admin-app'].requiresApps, ['admin-app-api', 'auth-app-api']);
   });
 
+  it('admin-app-api requires notifications for its broadcast surface', () => {
+    assert.ok(appCatalog['admin-app-api'].requiresCapabilities.includes('notifications'));
+  });
+
   it('mobile-app requires both APIs used by its authenticated runtime', () => {
     assert.deepEqual(appCatalog['mobile-app'].requiresApps, ['auth-app-api', 'user-app-api']);
   });
@@ -222,7 +227,12 @@ describe('catalog — appCatalog', () => {
       'user-app',
       'user-app-api',
     ]);
-    assert.deepEqual(optional, ['discord-app-api', 'notification-scheduler', 'telegram-bot-api']);
+    assert.deepEqual(optional, [
+      'discord-app-api',
+      'notification-consumer',
+      'notification-scheduler',
+      'telegram-bot-api',
+    ]);
   });
 
   it('uses landing-app as the apex and app IDs for every other deployable hostname', () => {
@@ -276,9 +286,12 @@ describe('catalog — capabilityCatalog', () => {
     }
   });
 
-  it('notifications requires its PostgreSQL queue and notification scheduler', () => {
-    assert.deepEqual(capabilityCatalog['notifications'].requiresCapabilities, ['postgres']);
-    assert.deepEqual(capabilityCatalog['notifications'].requiresApps, ['notification-scheduler']);
+  it('notifications requires its persistence, object storage, consumer, and scheduler', () => {
+    assert.deepEqual(capabilityCatalog['notifications'].requiresCapabilities, ['postgres', 's3']);
+    assert.deepEqual(capabilityCatalog['notifications'].requiresApps, [
+      'notification-consumer',
+      'notification-scheduler',
+    ]);
   });
 
   it('every capability references valid IDs', () => {
@@ -391,7 +404,10 @@ describe('catalog — validateSelection', () => {
 
   it('no issues when all deps satisfied', () => {
     assert.deepEqual(
-      validateSelection(['admin-app', 'admin-app-api', 'auth-app-api'], ['authz', 'design-tokens', 'postgres']),
+      validateSelection(
+        ['admin-app', 'admin-app-api', 'auth-app-api', 'notification-consumer', 'notification-scheduler'],
+        ['authz', 'design-tokens', 'notifications', 'postgres', 's3'],
+      ),
       [],
     );
   });
@@ -415,9 +431,12 @@ describe('catalog — expandDependencies', () => {
   });
 
   it('adds transitive app dependencies', () => {
-    const { apps } = expandDependencies(['admin-app'], []);
+    const { apps, capabilities } = expandDependencies(['admin-app'], []);
     assert.ok(apps.includes('admin-app'));
     assert.ok(apps.includes('admin-app-api'));
+    assert.ok(apps.includes('notification-consumer'));
+    assert.ok(apps.includes('notification-scheduler'));
+    assert.ok(capabilities.includes('notifications'));
   });
 
   it('adds transitive capability dependencies', () => {

@@ -1,0 +1,11 @@
+{
+  "admin.action.notificationTemplates": "Шаблоны сообщений",
+  "admin.action.notificationSegments": "Аудитории",
+  "admin.action.notificationBroadcasts": "Рассылки",
+  "admin.notification.description": "Создавайте локализованные сообщения, выбирайте аудитории и управляйте надёжными рассылками через email, ботов и push.",
+  "admin.notification.common.success": "Операция с уведомлениями выполнена.",
+  "admin.notification.common.failed": "Операция с уведомлениями не выполнена.",
+  "admin.permission.notificationTemplatesMissing": "Нет разрешения на просмотр шаблонов уведомлений.",
+  "admin.permission.notificationSegmentsMissing": "Нет разрешения на просмотр сегментов уведомлений.",
+  "admin.permission.notificationBroadcastsMissing": "Нет разрешения на просмотр рассылок уведомлений."
+}

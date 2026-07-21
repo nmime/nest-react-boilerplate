@@ -23,7 +23,11 @@ The wizard guides you through:
 3. **Capability toggles** — enable/disable cross-cutting features.
 4. **Options** — prune stale setup-managed artifacts, force overwrites, dry-run mode.
 
-Required dependencies are auto-enabled. For example, selecting `admin-app` adds `admin-app-api`, `auth-app-api`, `authz`, and PostgreSQL; selecting notifications adds PostgreSQL plus `notification-scheduler`.
+Required dependencies are auto-enabled. For example, selecting `admin-app` adds
+`admin-app-api`, `auth-app-api`, `authz`, the notifications capability, PostgreSQL,
+S3, `notification-consumer`, and `notification-scheduler`. Selecting notifications
+directly adds the same persistence, object-storage, consumer, and scheduler
+dependencies.
 
 On rerun, the wizard loads the resolved current selection. Press Enter to keep
 an item, answer `y` to add it, or `n` to remove it. A removal that would break

@@ -1,6 +1,6 @@
 {{- $root := . -}}
 {{- range $name, $app := .Values.apps }}
-{{- if $app.enabled }}
+{{- if and $app.enabled (ne $app.kind "background") }}
 ---
 apiVersion: v1
 kind: Service

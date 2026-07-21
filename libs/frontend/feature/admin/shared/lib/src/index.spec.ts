@@ -43,8 +43,18 @@ describe('@app/frontend-feature-admin-shared access policy', () => {
       canReadRoles: false,
       canWriteRoles: false,
       canReadAudit: false,
+      canReadAuthLoginAnalytics: false,
       canReadSettings: false,
       canUpdateSettings: false,
+      canReadNotificationTemplates: false,
+      canWriteNotificationTemplates: false,
+      canTestNotificationTemplates: false,
+      canReadNotificationSegments: false,
+      canWriteNotificationSegments: false,
+      canReadNotificationBroadcasts: false,
+      canWriteNotificationBroadcasts: false,
+      canSendNotificationBroadcasts: false,
+      canApproveNotificationBroadcasts: false,
     });
   });
 

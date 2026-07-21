@@ -537,7 +537,7 @@ validate_configuration() {
   validate_secret_file SESSION_SECRET_FILE
   validate_secret_file BETTER_AUTH_SECRET_FILE
   validate_secret_file AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE
-  if [[ "${configured_profiles}" == *,notification-scheduler,* ]]; then
+  if [[ "${configured_profiles}" == *,notification-scheduler,* || "${configured_profiles}" == *,notification-consumer,* ]]; then
     validate_secret_file NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE
     local notification_encryption_key
     notification_encryption_key="$(environment_value NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE)"

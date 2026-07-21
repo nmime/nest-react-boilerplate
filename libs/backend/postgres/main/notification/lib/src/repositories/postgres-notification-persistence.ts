@@ -27,6 +27,8 @@ import {
   type NotificationSensitiveData,
   NotificationStatus,
   NotificationTemplateEngine,
+  NotificationTemplateSource,
+  NotificationTemplateStatus,
   type NotificationTemplateChannelRecord,
   type NotificationTemplateRecord,
   type PendingNotificationDelivery,
@@ -35,8 +37,9 @@ import { NotificationPayloadCryptoService } from '../notification-payload-crypto
 import {
   NotificationDeliveryEntity,
   NotificationEntity,
-  NotificationTemplateChannelEntity,
   NotificationTemplateEntity,
+  NotificationTemplateVersionChannelEntity,
+  NotificationTemplateVersionEntity,
 } from '../infrastructure/data-access/entities';
 
 const defaultDeliveryChannels: NotificationDeliveryChannel[] = [NotificationChannel.Bot];
@@ -78,41 +81,63 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
       let template = await em.findOne(NotificationTemplateEntity, { code: params.code });
       if (template) {
         template.description = params.description ?? null;
+        template.name = template.name || params.code;
+        template.source = NotificationTemplateSource.Code;
+        template.status = NotificationTemplateStatus.Published;
         template.updatedAt = now;
       } else {
         template = new NotificationTemplateEntity({
           code: params.code,
+          name: params.code,
           description: params.description,
+          source: NotificationTemplateSource.Code,
+          status: NotificationTemplateStatus.Published,
           createdAt: now,
           updatedAt: now,
         });
         em.persist(template);
       }
 
-      const existingChannels = await em.find(NotificationTemplateChannelEntity, { templateId: template.id });
-      const requestedChannels = new Set(params.channels.map((channel) => channel.channel));
-      const channels = params.channels.map((paramsChannel) => {
-        const existing = existingChannels.find((channel) => channel.channel === paramsChannel.channel);
-        if (existing) {
-          existing.engine = paramsChannel.engine ?? NotificationTemplateEngine.StringFormat;
-          existing.content = paramsChannel.content;
-          existing.updatedAt = now;
-          return existing;
-        }
-        return new NotificationTemplateChannelEntity({
+      const currentVersion = template.currentVersionId
+        ? await em.findOne(NotificationTemplateVersionEntity, { id: template.currentVersionId })
+        : null;
+      const currentVersionChannels = currentVersion
+        ? await em.find(NotificationTemplateVersionChannelEntity, { templateVersionId: currentVersion.id })
+        : [];
+      const unchanged =
+        currentVersion?.publishedAt &&
+        normalizedChannels(currentVersionChannels) === normalizedChannels(params.channels);
+      let version = currentVersion;
+      let versionChannels = currentVersionChannels;
+      if (!unchanged) {
+        const latest = await em.findOne(
+          NotificationTemplateVersionEntity,
+          { templateId: template.id },
+          { orderBy: { version: 'DESC' } },
+        );
+        const nextVersion = new NotificationTemplateVersionEntity({
           templateId: template.id,
-          channel: paramsChannel.channel,
-          engine: paramsChannel.engine,
-          content: paramsChannel.content,
+          version: (latest?.version ?? 0) + 1,
+          publishedAt: now,
           createdAt: now,
           updatedAt: now,
         });
-      });
-      const removedChannels = existingChannels.filter((channel) => !requestedChannels.has(channel.channel));
-      em.persist(channels);
-      em.remove(removedChannels);
+        version = nextVersion;
+        versionChannels = params.channels.map(
+          (channel) =>
+            new NotificationTemplateVersionChannelEntity({
+              templateVersionId: nextVersion.id,
+              channel: channel.channel,
+              engine: channel.engine,
+              content: channel.content,
+              createdAt: now,
+            }),
+        );
+        template.currentVersionId = version.id;
+        em.persist([version, ...versionChannels]);
+      }
       await em.flush();
-      return mapTemplate(template, channels);
+      return mapTemplate(template, versionChannels, version ?? undefined);
     });
   }
 
@@ -188,21 +213,21 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
         { id: { $in: notificationIds } },
         { populate: ['template'] },
       );
-      const templateIds = [...new Set(notifications.map((notification) => notification.template.id))];
-      const templateChannels = await em.find(NotificationTemplateChannelEntity, {
-        templateId: { $in: templateIds },
+      const versionIds = [...new Set(notifications.map((notification) => notification.templateVersionId))];
+      const versionChannels = await em.find(NotificationTemplateVersionChannelEntity, {
+        templateVersionId: { $in: versionIds },
       });
-
-      const channelsByTemplateId = groupTemplateChannels(templateChannels);
+      const versions = await em.find(NotificationTemplateVersionEntity, { id: { $in: versionIds } });
       const notificationsById = new Map(
         notifications.map((notification) => [
           notification.id,
           mapNotification(
             notification,
-            channelsByTemplateId.get(notification.template.id) ?? [],
+            versionChannels.filter((channel) => channel.templateVersionId === notification.templateVersionId),
             isEncryptedPayload(notification.sensitiveData)
               ? this.payloadCrypto.decrypt(notification.sensitiveData, payloadAad(notification))
               : null,
+            versions.find((version) => version.id === notification.templateVersionId),
           ),
         ]),
       );
@@ -244,7 +269,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
         } else if (result.status === NotificationStatus.Pending) {
           const retryDelaySeconds = Math.min(
             retryMaxDelaySeconds,
-            retryBaseDelaySeconds * 2 ** Math.max(0, delivery.attempts - 1),
+            Math.max(result.retryAfterSeconds ?? 0, retryBaseDelaySeconds * 2 ** Math.max(0, delivery.attempts - 1)),
           );
           delivery.sendAfter = new Date(delivery.updatedAt.getTime() + retryDelaySeconds * 1000);
         }
@@ -266,6 +291,9 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
     em: EntityManager,
     params: CreateTemplateNotificationParams<T>,
   ): Promise<NotificationRecord<T>> {
+    // The deprecated channels field remains a supported wire-compatibility input;
+    // all new callers should provide explicit channel/provider deliveries.
+    // eslint-disable-next-line sonarjs/deprecation
     const routes = resolveRoutes(params.deliveries, params.channels);
     const channels = routes.map((route) => route.channel);
     const inAppVisible = params.inAppVisible ?? true;
@@ -278,15 +306,24 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
       throw new NotificationTemplateNotFoundError(params.templateCode);
     }
 
-    const templateChannels = await em.find(NotificationTemplateChannelEntity, { templateId: template.id });
+    if (!template.currentVersionId) {
+      throw new InvalidNotificationTemplateError(`${template.code} has no published version`);
+    }
+    const templateVersion = await em.findOne(NotificationTemplateVersionEntity, { id: template.currentVersionId });
+    if (!templateVersion?.publishedAt) {
+      throw new InvalidNotificationTemplateError(`${template.code} has no published version`);
+    }
+    const effectiveChannels = await em.find(NotificationTemplateVersionChannelEntity, {
+      templateVersionId: templateVersion.id,
+    });
     for (const channel of channels) {
-      if (!templateChannels.some((templateChannel) => templateChannel.channel === channel)) {
+      if (!effectiveChannels.some((templateChannel) => templateChannel.channel === channel)) {
         throw new NotificationTemplateChannelNotFoundError(template.code, channel);
       }
     }
     if (
       inAppVisible &&
-      !templateChannels.some((templateChannel) => templateChannel.channel === NotificationChannel.InApp)
+      !effectiveChannels.some((templateChannel) => templateChannel.channel === NotificationChannel.InApp)
     ) {
       throw new NotificationTemplateChannelNotFoundError(template.code, NotificationChannel.InApp);
     }
@@ -296,6 +333,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
       targetType: params.targetType,
       targetId: params.targetId,
       template,
+      templateVersionId: templateVersion.id,
       data: params.data,
       extra: params.extra,
       inAppVisible,
@@ -322,7 +360,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
 
     em.persist([notification, ...deliveries]);
     await em.flush();
-    return mapNotification(notification, templateChannels, null);
+    return mapNotification(notification, effectiveChannels, null, templateVersion);
   }
 }
 
@@ -369,24 +407,19 @@ function isProviderCompatible(route: NotificationDeliveryRoute): boolean {
 }
 
 function defaultProvider(channel: NotificationDeliveryChannel): NotificationDeliveryProvider {
-  if (channel === NotificationChannel.Bot) return NotificationDeliveryProvider.TelegramBot;
-  if (channel === NotificationChannel.Email) return NotificationDeliveryProvider.Resend;
-  return NotificationDeliveryProvider.GoogleFcm;
-}
-
-function groupTemplateChannels(
-  channels: NotificationTemplateChannelEntity[],
-): Map<string, NotificationTemplateChannelEntity[]> {
-  const result = new Map<string, NotificationTemplateChannelEntity[]>();
-  for (const channel of channels) {
-    result.set(channel.templateId, [...(result.get(channel.templateId) ?? []), channel]);
+  if (channel === NotificationChannel.Bot) {
+    return NotificationDeliveryProvider.TelegramBot;
   }
-  return result;
+  if (channel === NotificationChannel.Email) {
+    return NotificationDeliveryProvider.Resend;
+  }
+  return NotificationDeliveryProvider.GoogleFcm;
 }
 
 function mapTemplate(
   template: NotificationTemplateEntity,
-  channels: NotificationTemplateChannelEntity[],
+  channels: NotificationTemplateVersionChannelEntity[],
+  version?: NotificationTemplateVersionEntity,
 ): NotificationTemplateRecord {
   const channelRecords: Partial<Record<NotificationChannel, NotificationTemplateChannelRecord>> = {};
   for (const channel of channels) {
@@ -401,24 +434,33 @@ function mapTemplate(
     id: template.id,
     code: template.code,
     description: template.description,
+    source: template.source,
+    name: template.name,
+    status: template.status,
+    versionId: version?.id,
+    version: version?.version,
+    variablesSchema: version?.variablesSchema,
     channels: channelRecords,
   };
 }
 
 function mapNotification<T>(
   notification: NotificationEntity<T>,
-  channels: NotificationTemplateChannelEntity[],
+  channels: NotificationTemplateVersionChannelEntity[],
   sensitiveData: NotificationSensitiveData | null,
+  version?: NotificationTemplateVersionEntity,
 ): NotificationRecord<T> {
   return {
     id: notification.id,
     targetType: notification.targetType,
     targetId: notification.targetId,
-    template: mapTemplate(notification.template, channels),
+    template: mapTemplate(notification.template, channels, version),
     data: notification.data,
     sensitiveData,
     extra: notification.extra,
     inAppVisible: notification.inAppVisible,
+    broadcastId: notification.broadcastId,
+    templateVersionId: notification.templateVersionId,
     createdAt: notification.createdAt,
   };
 }
@@ -434,12 +476,27 @@ function mapDelivery(delivery: NotificationDeliveryEntity): NotificationDelivery
     error: delivery.error,
     attempts: delivery.attempts,
     provider: delivery.provider,
+    broadcastId: delivery.broadcastId,
     priority: delivery.priority,
     sendAfter: delivery.sendAfter,
     sentAt: delivery.sentAt,
     createdAt: delivery.createdAt,
     updatedAt: delivery.updatedAt,
   };
+}
+
+function normalizedChannels(
+  channels: Array<NotificationTemplateVersionChannelEntity | UpsertNotificationTemplateParams['channels'][number]>,
+): string {
+  return JSON.stringify(
+    channels
+      .map((channel) => ({
+        channel: channel.channel,
+        engine: channel.engine ?? NotificationTemplateEngine.StringFormat,
+        content: channel.content,
+      }))
+      .sort((left, right) => left.channel.localeCompare(right.channel)),
+  );
 }
 
 function payloadAad<T>(notification: NotificationEntity<T>): string {
@@ -454,7 +511,6 @@ function isEncryptedPayload(value: NotificationEntity['sensitiveData']): value i
 } {
   return (
     typeof value === 'object' &&
-    value !== null &&
     typeof value['ciphertext'] === 'string' &&
     typeof value['iv'] === 'string' &&
     typeof value['authTag'] === 'string' &&

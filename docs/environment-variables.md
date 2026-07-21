@@ -58,20 +58,24 @@ loads `DATABASE_URL` from the selected bundled/external database overlay.
 
 ## Auth and sessions
 
-| Variable                                       | When required                             | Purpose                                                                                 |
-| ---------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------- |
-| `AUTH_JWT_SECRET`                              | Production auth/API verification          | JWT signing key.                                                                        |
-| `SESSION_SECRET`                               | Production browser sessions               | Session signing key.                                                                    |
-| `BETTER_AUTH_SECRET`                           | Better Auth                               | Better Auth cookie/state secret.                                                        |
-| `BETTER_AUTH_URL`                              | Better Auth                               | Public Better Auth origin.                                                              |
-| `BETTER_AUTH_TRUSTED_ORIGINS`                  | Browser auth                              | Comma-separated origins accepted by Better Auth.                                        |
-| `AUTH_ALLOWED_RETURN_URLS`                     | External browser auth                     | Comma-separated absolute frontend origins accepted as post-auth returns.                |
-| `AUTH_JWT_ISSUER`                              | Optional                                  | JWT issuer. Defaults to the auth API domain contract.                                   |
-| `AUTH_JWT_AUDIENCE`                            | Optional                                  | JWT audience used by protected APIs.                                                    |
-| `AUTH_PERSISTENCE`                             | Optional                                  | `postgres` for the real persistence path; memory is test/development only.              |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED`       | Social provider token storage             | Must be `true` outside local/test when provider access or refresh tokens are persisted. |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY` / `_FILE` | When provider-token encryption is enabled | 32-byte base64 key supplied inline or through the deployment secret-file path.          |
-| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID`        | Optional                                  | Key identifier stored with encrypted provider-token records to support rotation.        |
+| Variable                                       | When required                             | Purpose                                                                                                           |
+| ---------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `AUTH_JWT_SECRET`                              | Production auth/API verification          | JWT signing key.                                                                                                  |
+| `SESSION_SECRET`                               | Production browser sessions               | Session signing key.                                                                                              |
+| `BETTER_AUTH_SECRET`                           | Better Auth                               | Better Auth cookie/state secret.                                                                                  |
+| `BETTER_AUTH_URL`                              | Better Auth                               | Public Better Auth origin.                                                                                        |
+| `BETTER_AUTH_TRUSTED_ORIGINS`                  | Browser auth                              | Comma-separated origins accepted by Better Auth.                                                                  |
+| `AUTH_ALLOWED_RETURN_URLS`                     | External browser auth                     | Comma-separated absolute frontend origins accepted as post-auth returns.                                          |
+| `AUTH_JWT_ISSUER`                              | Optional                                  | JWT issuer. Defaults to the auth API domain contract.                                                             |
+| `AUTH_JWT_AUDIENCE`                            | Optional                                  | JWT audience used by protected APIs.                                                                              |
+| `AUTH_PERSISTENCE`                             | Optional                                  | `postgres` for the real persistence path; memory is test/development only.                                        |
+| `AUTH_GEOIP_DATABASE_PATH`                     | Optional                                  | Absolute path to an operator-mounted GeoIP2/GeoLite2 City MMDB. Empty disables enrichment without blocking login. |
+| `AUTH_LOGIN_NETWORK_RETENTION_DAYS`            | Optional                                  | Days to retain exact IP address and user agent; defaults to 30.                                                   |
+| `AUTH_LOGIN_EVENT_RETENTION_DAYS`              | Optional                                  | Days to retain the append-only login event and coarse dimensions; defaults to 365.                                |
+| `AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET`          | Optional secret                           | Dedicated HMAC key for IP/identifier correlation. Falls back to `AUTH_JWT_SECRET`.                                |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED`       | Social provider token storage             | Must be `true` outside local/test when provider access or refresh tokens are persisted.                           |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY` / `_FILE` | When provider-token encryption is enabled | 32-byte base64 key supplied inline or through the deployment secret-file path.                                    |
+| `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID`        | Optional                                  | Key identifier stored with encrypted provider-token records to support rotation.                                  |
 
 Production Compose mounts `AUTH_JWT_SECRET_FILE`, `SESSION_SECRET_FILE`, and
 `BETTER_AUTH_SECRET_FILE`; `docker/secret-entrypoint.sh` loads them into the
@@ -144,9 +148,37 @@ provider uses `ANALYTICS_POSTHOG_API_KEY` and
 `ANALYTICS_PROVIDERS` selects the active provider set. Do not use the obsolete
 unprefixed PostHog key.
 
-The repository does not bundle SendGrid or another email-delivery SDK. Better
-Auth lifecycle hooks are the extension point; add the provider, schema,
-templates, deployment secrets, and tests as one product-owned integration.
+## Notifications
+
+Better Auth and custom authentication publish verification/reset messages
+through the notification queue; they do not call mail or bot SDKs directly.
+`AUTH_NOTIFICATION_PROVIDER` selects `telegram-bot`, `discord-bot`, `resend`, or
+`mailpace` for custom confirmation codes. Better Auth email links use
+`NOTIFICATION_EMAIL_PROVIDER` (`resend` or `mailpace`).
+
+| Variable                                                                               | Purpose                                                                                                                        |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `NOTIFICATION_PAYLOAD_ENCRYPTION_KEY` / `_FILE`                                        | Required 32-byte base64 or 64-character hex key shared by producers, consumer, and scheduler. Use the file form in production. |
+| `NOTIFICATION_EMAIL_FROM`                                                              | Verified sender used by Resend and MailPace.                                                                                   |
+| `RESEND_API_KEY` / `_FILE`                                                             | Resend credential; scheduler-only.                                                                                             |
+| `MAILPACE_SERVER_TOKEN` / `_FILE`                                                      | MailPace credential; scheduler-only.                                                                                           |
+| `NOTIFICATION_DELIVERIES_PER_ITERATION`                                                | Maximum delivery rows claimed by one scheduler iteration.                                                                      |
+| `NOTIFICATION_REQUESTS_PER_SECOND`                                                     | Provider request throttle.                                                                                                     |
+| `NOTIFICATION_BROADCAST_REQUIRE_INDEPENDENT_APPROVAL`                                  | Requires a different admin to approve a broadcast; production defaults to `true`.                                              |
+| `NOTIFICATION_CONSUMER_INTERVAL_MS`                                                    | Background consumer polling interval.                                                                                          |
+| `NOTIFICATION_MATERIALIZATION_CHUNK_SIZE`                                              | Maximum recipients materialized per consumer iteration.                                                                        |
+| `NOTIFICATION_CSV_MAX_BYTES` / `NOTIFICATION_CSV_MAX_ROWS`                             | Static-segment upload bounds.                                                                                                  |
+| `NOTIFICATION_FCM_PROJECT_ID`, `NOTIFICATION_FCM_CLIENT_EMAIL`                         | Firebase service-account identity for HTTP v1 push delivery.                                                                   |
+| `NOTIFICATION_FCM_PRIVATE_KEY` / `_FILE`                                               | Firebase service-account private key; scheduler-only.                                                                          |
+| `NOTIFICATION_FCM_TOKEN_URI`                                                           | OAuth token endpoint; defaults to Google's endpoint.                                                                           |
+| `NOTIFICATION_APNS_TEAM_ID`, `NOTIFICATION_APNS_KEY_ID`, `NOTIFICATION_APNS_BUNDLE_ID` | APNs token-auth identity and topic.                                                                                            |
+| `NOTIFICATION_APNS_PRIVATE_KEY` / `_FILE`                                              | APNs `.p8` private key; scheduler-only.                                                                                        |
+| `NOTIFICATION_APNS_SANDBOX`                                                            | Uses Apple's development endpoint when `true`.                                                                                 |
+
+Select both `notification-consumer` and `notification-scheduler` runtime
+profiles. The consumer needs PostgreSQL and configured S3 storage but receives
+no provider secret; the scheduler receives only the credentials for enabled
+providers. See [Notifications](notifications.md).
 
 ## OpenTelemetry and Prometheus
 

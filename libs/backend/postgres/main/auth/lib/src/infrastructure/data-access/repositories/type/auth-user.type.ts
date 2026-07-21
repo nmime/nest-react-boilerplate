@@ -11,6 +11,11 @@ export interface AuthUserListInput {
   status?: AuthUserEntity['status'];
   role?: string;
   permission?: string;
+  locale?: AuthUserEntity['locale'];
+  createdAfter?: Date;
+  createdBefore?: Date;
+  lastLoginAfter?: Date;
+  lastLoginBefore?: Date;
   limit?: number;
   offset?: number;
 }

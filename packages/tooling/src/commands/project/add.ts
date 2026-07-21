@@ -207,7 +207,7 @@ export async function runAddCommand(
 
   if (args.kind === "lib" && !args.libraryType) {
     process.stderr.write(
-      "Error: add lib requires --type (common | util | ui | sdk | feature-main | feature-shared | data-access | test-util | asset)\n",
+      "Error: add lib requires --type (common | util | ui | sdk | feature-main | feature-admin | feature-shared | data-access | test-util | asset)\n",
     );
     return 1;
   }
@@ -332,7 +332,7 @@ Options:
   --renderer <renderer> App runtime: vite, astro, vike, expo, nest-api, consumer, or scheduler.
   --port <number>       Optional local app port; omit it to select the first free canonical port.
   --type <type>         Semantic library type (common, util, ui, sdk, feature-main,
-                        feature-shared, data-access, test-util, or asset).
+                        feature-admin, feature-shared, data-access, test-util, or asset).
   --scope <scope>       Nx ownership scope tag for a library.
   --description <text>  Required concrete library responsibility for its README.
   --help, -h            Show this help message.

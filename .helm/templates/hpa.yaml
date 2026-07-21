@@ -1,7 +1,7 @@
 {{- if .Values.autoscaling.enabled }}
 {{- $root := . -}}
 {{- range $name, $app := .Values.apps }}
-{{- if $app.enabled }}
+{{- if and $app.enabled (ne $app.kind "background") }}
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler

@@ -132,7 +132,7 @@ describe('AuthUserRepository', () => {
         roles: { $contains: ['admin'] },
         permissions: { $contains: ['admin:users:read'] },
       },
-      { limit: 10, offset: 5, orderBy: { createdAt: 'DESC' } },
+      { limit: 10, offset: 5, orderBy: { createdAt: 'DESC', id: 'ASC' } },
     );
     expect(count).toHaveBeenCalledWith(AuthUserEntity, {
       tenantId: 'tenant-id',
@@ -151,7 +151,7 @@ describe('AuthUserRepository', () => {
     expect(find).toHaveBeenCalledWith(
       AuthUserEntity,
       { tenantId: DefaultAuthTenantId },
-      { limit: 100, offset: 0, orderBy: { createdAt: 'DESC' } },
+      { limit: 100, offset: 0, orderBy: { createdAt: 'DESC', id: 'ASC' } },
     );
   });
 

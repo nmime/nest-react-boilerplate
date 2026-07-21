@@ -1,6 +1,11 @@
 import { DynamicModule, Global, Module, type ModuleMetadata } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { NotificationRecipientResolver, NotificationService } from '@app/backend-feature-notification-shared';
+import { S3Module } from '@app/backend-common-s3';
+import {
+  NotificationAdminServiceInjectToken,
+  NotificationRecipientResolver,
+  NotificationService,
+} from '@app/backend-feature-notification-shared';
 import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
 import { NotificationPostgresModule } from '@app/backend-postgres-main-notification';
 import { PostgresMainModule, type PostgresMikroOrmOverrides } from '@app/backend-postgres-main';
@@ -9,11 +14,17 @@ import { NotificationController } from './controller';
 import { MessagesModule } from './messages';
 import {
   NotificationApplicationService,
+  NotificationAdminService,
+  AuthUsersNotificationSegmentResolver,
+  NotificationBroadcastSchedulerService,
+  NotificationConsumerService,
+  NotificationCsvService,
   NotificationDeliverySchedulerService,
   NotificationDeliveryPartitionService,
   NotificationHealthService,
   NotificationRecipientResolverService,
   NotificationStrategyResolverService,
+  NotificationSegmentResolverRegistry,
 } from './service';
 import {
   DiscordBotNotificationProvider,
@@ -21,6 +32,8 @@ import {
   NotificationProviderResolver,
   ResendEmailNotificationProvider,
   TelegramBotNotificationProvider,
+  GoogleFcmNotificationProvider,
+  AppleApnsNotificationProvider,
   TelegramChatNotificationStrategy,
   UserNotificationStrategy,
 } from './strategy';
@@ -31,6 +44,10 @@ export interface NotificationMainModuleOptions {
   postgres?: PostgresMikroOrmOverrides;
   /** Register delivery and partition jobs in a scheduler process. */
   enableScheduler?: boolean;
+  /** Register CSV, snapshot, and broadcast materialization work in a consumer process. */
+  enableConsumer?: boolean;
+  /** Register admin orchestration without exposing HTTP controllers. */
+  enableAdmin?: boolean;
   /** Expose the reference notification creation endpoints in this process. */
   exposeHttp?: boolean;
 }
@@ -39,11 +56,19 @@ export interface NotificationMainModuleOptions {
 @Module({})
 export class NotificationMainModule {
   static forRoot(options: NotificationMainModuleOptions = {}): DynamicModule {
-    if (process.env['NODE_ENV'] === 'test') {
+    if (
+      process.env['NODE_ENV'] === 'test' &&
+      !options.enableAdmin &&
+      !options.enableConsumer &&
+      !options.enableScheduler &&
+      !options.exposeHttp
+    ) {
       return { module: NotificationMainModule };
     }
 
     const enableScheduler = options.enableScheduler ?? false;
+    const enableConsumer = options.enableConsumer ?? false;
+    const enableAdmin = options.enableAdmin ?? false;
     const exposeHttp = options.exposeHttp ?? false;
 
     return {
@@ -54,6 +79,7 @@ export class NotificationMainModule {
         PostgresMainModule.forRoot(options.postgres),
         NotificationPostgresModule,
         ...(enableScheduler ? [AuthPostgresModule, MessagesModule] : []),
+        ...(enableConsumer || enableAdmin ? [AuthPostgresModule, S3Module.forRoot()] : []),
       ],
       controllers: exposeHttp ? [NotificationController] : [],
       providers: [
@@ -70,19 +96,38 @@ export class NotificationMainModule {
               TelegramChatNotificationStrategy,
               NotificationStrategyResolverService,
               NotificationDeliverySchedulerService,
+              NotificationBroadcastSchedulerService,
               NotificationDeliveryPartitionService,
               TelegramBotNotificationProvider,
               DiscordBotNotificationProvider,
               ResendEmailNotificationProvider,
               MailPaceEmailNotificationProvider,
+              GoogleFcmNotificationProvider,
+              AppleApnsNotificationProvider,
               NotificationProviderResolver,
+            ]
+          : []),
+        ...(enableConsumer || enableAdmin
+          ? [
+              AuthUsersNotificationSegmentResolver,
+              NotificationSegmentResolverRegistry,
+              NotificationCsvService,
+              ...(enableConsumer ? [NotificationConsumerService] : []),
+              ...(enableAdmin
+                ? [
+                    NotificationAdminService,
+                    { provide: NotificationAdminServiceInjectToken, useExisting: NotificationAdminService },
+                  ]
+                : []),
             ]
           : []),
       ],
       exports: [
         NotificationService,
         NotificationHealthService,
-        ...(enableScheduler ? [NotificationDeliverySchedulerService] : []),
+        ...(enableScheduler ? [NotificationDeliverySchedulerService, NotificationBroadcastSchedulerService] : []),
+        ...(enableConsumer ? [NotificationConsumerService] : []),
+        ...(enableAdmin ? [NotificationAdminServiceInjectToken] : []),
       ],
     };
   }

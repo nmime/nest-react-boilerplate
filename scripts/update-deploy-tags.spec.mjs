@@ -14,6 +14,8 @@ const images = [
   'auth-app-api',
   'discord-app-api',
   'telegram-bot-api',
+  'notification-scheduler',
+  'notification-consumer',
   'admin-app',
   'user-app',
   'landing-app',

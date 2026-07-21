@@ -11,6 +11,7 @@ import {
   type AuthenticatedRequest,
 } from '@app/backend-feature-auth-shared';
 import {
+  AdminRbacGuard,
   AdminRole,
   AdminSettingsReadPermission,
   AdminSettingsUpdatePermission,
@@ -21,7 +22,6 @@ import type {
   AdminProblemPresentationView,
   ResetAdminProblemPresentationResult,
 } from '../../domain';
-import { AdminRbacGuard } from './admin-rbac.guard';
 import { executeAdminUseCase, requestContextFromRequest } from './admin-http';
 import {
   AdminProblemPresentationCatalogDto,

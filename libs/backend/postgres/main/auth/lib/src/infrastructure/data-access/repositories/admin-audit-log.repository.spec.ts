@@ -1,21 +1,25 @@
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
-import { AdminAuditLogEntity, DefaultAuthTenantId } from '../entities';
-import { AdminAuditLogRepository } from './admin-audit-log.repository';
+import { AdminAuditLogEntity, DefaultAuthTenantId, TransactionalOutboxEventEntity } from '../entities';
+import { AdminAuditLogRepository, AdminAuditLogTransactionError } from './admin-audit-log.repository';
 
 function createEntityManagerMock() {
   const persist = vi.fn(() => undefined);
   const flush = vi.fn(() => Promise.resolve());
   const find = vi.fn(() => Promise.resolve<AdminAuditLogEntity[]>([]));
+  const findOne = vi.fn(() => Promise.resolve<AdminAuditLogEntity | null>(null));
   const count = vi.fn(() => Promise.resolve(0));
   const entityManager = {
     persist,
     flush,
     find,
+    findOne,
     count,
   } as unknown as EntityManager;
+  const transactional = vi.fn(async (handler: (manager: EntityManager) => Promise<unknown>) => handler(entityManager));
+  Object.assign(entityManager, { transactional });
 
-  return { persist, flush, find, count, entityManager };
+  return { persist, flush, find, findOne, count, transactional, entityManager };
 }
 
 describe('AdminAuditLogRepository', () => {
@@ -45,8 +49,61 @@ describe('AdminAuditLogRepository', () => {
       after: { status: 'disabled' },
       metadata: { requestId: 'req-1' },
     });
-    expect(persist).toHaveBeenCalledWith(entity);
+    expect(persist).toHaveBeenCalledWith([entity, expect.any(TransactionalOutboxEventEntity)]);
     expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it('records an audit entry in the same transaction as its mutation', async () => {
+    const { persist, flush, transactional, entityManager } = createEntityManagerMock();
+    const auditLogs = new AdminAuditLogRepository(entityManager);
+    const operation = vi.fn(async () => ({ id: 'broadcast-1', status: 'ready' }));
+
+    await expect(
+      auditLogs.recordTransactionally({
+        operation,
+        audit: (result) => ({
+          tenantId: '00000000-0000-4000-8000-000000000001',
+          action: 'admin.notification_broadcast.create',
+          resource: 'admin.notification-broadcasts',
+          targetUserId: result.id,
+          after: { status: result.status },
+        }),
+      }),
+    ).resolves.toEqual({ id: 'broadcast-1', status: 'ready' });
+
+    expect(transactional).toHaveBeenCalledTimes(1);
+    expect(operation).toHaveBeenCalledTimes(1);
+    expect(persist).toHaveBeenCalledWith([
+      expect.objectContaining({
+        resource: 'admin.notification-broadcasts',
+        targetUserId: 'broadcast-1',
+        after: { status: 'ready' },
+      }),
+      expect.any(TransactionalOutboxEventEntity),
+    ]);
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves domain failures and identifies audit transaction failures', async () => {
+    const { persist, flush, entityManager } = createEntityManagerMock();
+    const auditLogs = new AdminAuditLogRepository(entityManager);
+    const domainFailure = new Error('domain rejected');
+
+    await expect(
+      auditLogs.recordTransactionally({
+        operation: async () => Promise.reject(domainFailure),
+        audit: () => ({ action: 'admin.notification_broadcast.create', resource: 'admin.notification-broadcasts' }),
+      }),
+    ).rejects.toBe(domainFailure);
+    expect(persist).not.toHaveBeenCalled();
+
+    flush.mockRejectedValueOnce(new Error('audit insert failed'));
+    await expect(
+      auditLogs.recordTransactionally({
+        operation: async () => ({ id: 'broadcast-1' }),
+        audit: () => ({ action: 'admin.notification_broadcast.create', resource: 'admin.notification-broadcasts' }),
+      }),
+    ).rejects.toBeInstanceOf(AdminAuditLogTransactionError);
   });
 
   it('lists and counts with tenant-scoped filters, capped pagination, and deterministic ordering', async () => {
@@ -64,8 +121,11 @@ describe('AdminAuditLogRepository', () => {
         .list({
           tenantId: '00000000-0000-4000-8000-000000000001',
           action: 'admin.user.status.update',
+          resource: 'admin.users',
           actorUserId: '00000000-0000-4000-8000-000000000002',
           targetUserId: '00000000-0000-4000-8000-000000000003',
+          createdFrom: new Date('2026-07-01T00:00:00.000Z'),
+          createdTo: new Date('2026-07-21T00:00:00.000Z'),
           limit: 1_000,
           offset: -10,
         })
@@ -85,8 +145,13 @@ describe('AdminAuditLogRepository', () => {
       {
         tenantId: '00000000-0000-4000-8000-000000000001',
         action: 'admin.user.status.update',
+        resource: 'admin.users',
         actorUserId: '00000000-0000-4000-8000-000000000002',
         targetUserId: '00000000-0000-4000-8000-000000000003',
+        createdAt: {
+          $gte: new Date('2026-07-01T00:00:00.000Z'),
+          $lte: new Date('2026-07-21T00:00:00.000Z'),
+        },
       },
       { limit: 100, offset: 0, orderBy: { createdAt: 'DESC', id: 'DESC' } },
     );
@@ -107,6 +172,22 @@ describe('AdminAuditLogRepository', () => {
       { tenantId: DefaultAuthTenantId },
       { limit: 1, offset: 0, orderBy: { createdAt: 'DESC', id: 'DESC' } },
     );
+  });
+
+  it('gets a single audit entry by id and tenant together', async () => {
+    const entry = new AdminAuditLogEntity({
+      tenantId: '00000000-0000-4000-8000-000000000001',
+      action: 'admin.user.status.update',
+      resource: 'admin.users',
+    });
+    const { findOne, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entry);
+    const auditLogs = new AdminAuditLogRepository(entityManager);
+
+    await expect(auditLogs.findById(entry.id, entry.tenantId).then((result) => result._unsafeUnwrap())).resolves.toBe(
+      entry,
+    );
+    expect(findOne).toHaveBeenCalledWith(AdminAuditLogEntity, { id: entry.id, tenantId: entry.tenantId });
   });
 
   it('maps repository failures', async () => {

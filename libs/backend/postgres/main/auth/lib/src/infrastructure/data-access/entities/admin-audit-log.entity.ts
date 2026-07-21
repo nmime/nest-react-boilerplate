@@ -2,12 +2,31 @@ import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
 import { DefaultAuthTenantId } from './auth-user.entity';
 
-export type AdminAuditAction =
-  | 'admin.user.status.update'
-  | 'admin.user.access_policy.update'
-  | 'admin.user.roles.update'
-  | 'admin.problem_presentation.update'
-  | 'admin.problem_presentation.reset';
+export const AdminAuditActions = [
+  'admin.access',
+  'admin.role.create',
+  'admin.role.update',
+  'admin.role.permissions.update',
+  'admin.user.status.update',
+  'admin.user.access_policy.update',
+  'admin.user.roles.update',
+  'admin.problem_presentation.update',
+  'admin.problem_presentation.reset',
+  'admin.notification_template.create',
+  'admin.notification_template.update',
+  'admin.notification_template.publish',
+  'admin.notification_template.archive',
+  'admin.notification_template.test_send',
+  'admin.notification_segment.create',
+  'admin.notification_segment.update',
+  'admin.notification_segment.upload',
+  'admin.notification_segment.archive',
+  'admin.notification_broadcast.create',
+  'admin.notification_broadcast.update',
+  'admin.notification_broadcast.command',
+] as const;
+
+export type AdminAuditAction = (typeof AdminAuditActions)[number];
 
 export interface AdminAuditLogEntityInput {
   tenantId?: string;
@@ -91,6 +110,14 @@ export const AdminAuditLogEntitySchema = new EntitySchema<AdminAuditLogEntity>({
     {
       name: 'ix__admin_audit_logs__tenant_id_target_user_id',
       properties: ['tenantId', 'targetUserId'],
+    },
+    {
+      name: 'ix__admin_audit_logs__tenant_id_resource_created_at',
+      properties: ['tenantId', 'resource', 'createdAt'],
+    },
+    {
+      name: 'ix__admin_audit_logs__tenant_id_actor_user_id_created_at',
+      properties: ['tenantId', 'actorUserId', 'createdAt'],
     },
   ],
 });

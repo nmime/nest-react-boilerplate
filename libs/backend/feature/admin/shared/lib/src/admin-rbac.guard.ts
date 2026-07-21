@@ -1,12 +1,6 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
-import {
-  AdminAllResource,
-  AdminManageAction,
-  AdminRole,
-  adminPermissionToAbility,
-  canAdmin,
-  createAdminAbility,
-} from '@app/backend-feature-admin-shared';
+import { canAdmin, createAdminAbility } from './ability';
+import { AdminAllResource, AdminManageAction, AdminRole, adminPermissionToAbility } from './permissions';
 import {
   type AuthenticatedRequest,
   type PermissionEvaluationContext,

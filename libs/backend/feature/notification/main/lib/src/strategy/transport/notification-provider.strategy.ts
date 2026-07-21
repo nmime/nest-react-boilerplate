@@ -3,6 +3,7 @@ import type {
   NotificationErrorReason,
   NotificationExtra,
   NotificationMessageButton,
+  NotificationEmailAttachment,
   NotificationStatus,
 } from '@app/common-notifications';
 
@@ -17,9 +18,19 @@ export interface EmailNotificationMessage {
   kind: 'email';
   subject: string;
   text: string;
+  html?: string;
+  attachments?: NotificationEmailAttachment[];
 }
 
-export type NotificationRenderedMessage = BotNotificationMessage | EmailNotificationMessage;
+export interface PushNotificationMessage {
+  kind: 'push';
+  subject?: string;
+  text: string;
+  image?: string;
+  actions?: NotificationMessageButton[];
+}
+
+export type NotificationRenderedMessage = BotNotificationMessage | EmailNotificationMessage | PushNotificationMessage;
 
 export interface NotificationProviderSendInput {
   address: string;
@@ -33,6 +44,7 @@ export interface NotificationProviderSendResult {
   status: NotificationStatus;
   errorReason?: NotificationErrorReason;
   errorMessage?: string;
+  retryAfterSeconds?: number;
 }
 
 /**

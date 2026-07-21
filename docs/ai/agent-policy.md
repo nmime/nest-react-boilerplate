@@ -187,11 +187,16 @@ All exceptions flow through the `@app/backend-common-exception` library.
     uses alias `@app/frontend-feature-admin-shared`, and carries
     `platform:frontend`, `type:feature-shared`, `scope:admin`, and
     `fsd:layer:shared` tags.
-  - Backend admin shared lives at `libs/backend/feature/admin/shared/lib`, uses
-    alias `@app/backend-feature-admin-shared`, and carries `platform:backend`,
-    `type:feature-shared`, and `scope:admin` tags.
+- Backend admin shared lives at `libs/backend/feature/admin/shared/lib`, uses
+  alias `@app/backend-feature-admin-shared`, and carries `platform:backend`,
+  `type:feature-shared`, and `scope:admin` tags.
   - Respect platform boundaries: frontend code must not import backend admin
     libraries, and backend code must not import frontend admin libraries.
+- Domain-specific privileged HTTP surfaces live at
+  `libs/backend/feature/<domain>/admin/lib`, use the flattened
+  `@app/backend-feature-<domain>-admin` alias, and carry `type:feature-admin`.
+  Keep the admin API deployable as a composition root; do not place a domain's
+  controllers or DTOs in `admin/main` merely because they are admin-only.
 - Public package/path aliases in `tsconfig.base.json` are stable public API. Do
   not rename, remove, or repoint aliases unless the task explicitly includes an
   alias migration and all consumers/docs are updated.

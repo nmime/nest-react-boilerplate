@@ -43,9 +43,13 @@ import {
 } from './features/admin-auth';
 import { getPayloadTheme } from './features/admin-preferences';
 import { AuditPage } from './pages/audit';
+import { AuthLoginAnalyticsPage } from './pages/auth-login-analytics';
 import { DashboardPage } from './pages/dashboard';
 import { ForbiddenPage } from './pages/forbidden';
 import { NotFoundPage } from './pages/not-found';
+import { NotificationBroadcastsPage } from './pages/notification-broadcasts';
+import { NotificationSegmentsPage } from './pages/notification-segments';
+import { NotificationTemplatesPage } from './pages/notification-templates';
 import { ProfilePage } from './pages/profile';
 import { ProblemPresentationsPage } from './pages/problem-presentations';
 import { RolesPage } from './pages/roles';
@@ -92,11 +96,18 @@ function renderReadyAdminRoute(
       <ForbiddenPage reason={t('admin.permission.rolesMissing')} />
     );
   }
-  if (routePath === '/audit') {
+  if (routePath === '/audit' || routePath.startsWith('/audit/')) {
     return state.access.canReadAudit ? (
-      <AuditPage requestOptions={runtime.requestOptions} />
+      <AuditPage currentPath={routePath} requestOptions={runtime.requestOptions} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.auditMissing')} />
+    );
+  }
+  if (routePath === '/auth/login-analytics') {
+    return state.access.canReadAuthLoginAnalytics ? (
+      <AuthLoginAnalyticsPage requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.authLoginAnalyticsMissing')} />
     );
   }
   if (routePath === '/profile') {
@@ -111,6 +122,27 @@ function renderReadyAdminRoute(
       <ProblemPresentationsPage access={state.access} requestOptions={runtime.requestOptions} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.settingsMissing')} />
+    );
+  }
+  if (routePath === '/notifications/templates') {
+    return state.access.canReadNotificationTemplates ? (
+      <NotificationTemplatesPage access={state.access} requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.notificationTemplatesMissing')} />
+    );
+  }
+  if (routePath === '/notifications/segments') {
+    return state.access.canReadNotificationSegments ? (
+      <NotificationSegmentsPage access={state.access} requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.notificationSegmentsMissing')} />
+    );
+  }
+  if (routePath === '/notifications/broadcasts') {
+    return state.access.canReadNotificationBroadcasts ? (
+      <NotificationBroadcastsPage access={state.access} requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.notificationBroadcastsMissing')} />
     );
   }
   return <NotFoundPage />;

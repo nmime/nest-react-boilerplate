@@ -44,6 +44,14 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
     delivery: NotificationDeliveryRecord,
   ): Promise<ResolvedNotificationRecipient | null> {
     if (
+      delivery.channel === NotificationChannel.Push &&
+      targetType === NotificationTargetType.PushToken &&
+      (delivery.provider === NotificationDeliveryProvider.GoogleFcm ||
+        delivery.provider === NotificationDeliveryProvider.AppleApns)
+    ) {
+      return isPushToken(targetId) ? { address: targetId } : null;
+    }
+    if (
       (delivery.provider === NotificationDeliveryProvider.Resend ||
         delivery.provider === NotificationDeliveryProvider.MailPace) &&
       delivery.channel === NotificationChannel.Email
@@ -104,5 +112,18 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
 }
 
 function isEmailAddress(value: string): boolean {
-  return value.trim().length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value.trim());
+  return isStructurallyValidEmail(value.trim());
+}
+
+function isStructurallyValidEmail(value: string): boolean {
+  if (value.length === 0 || value.length > 320 || [...value].some((character) => /\s/u.test(character))) {
+    return false;
+  }
+  const at = value.indexOf('@');
+  const dot = value.lastIndexOf('.');
+  return at > 0 && at === value.lastIndexOf('@') && dot > at + 1 && dot < value.length - 1;
+}
+
+function isPushToken(value: string): boolean {
+  return value.length >= 16 && value.length <= 4096 && !/\s/u.test(value);
 }

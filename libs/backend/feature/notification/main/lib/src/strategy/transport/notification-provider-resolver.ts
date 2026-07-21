@@ -5,6 +5,8 @@ import {
   MailPaceEmailNotificationProvider,
   ResendEmailNotificationProvider,
   TelegramBotNotificationProvider,
+  GoogleFcmNotificationProvider,
+  AppleApnsNotificationProvider,
 } from './providers';
 import type { NotificationProviderStrategy } from './notification-provider.strategy';
 
@@ -17,12 +19,16 @@ export class NotificationProviderResolver {
     discord: DiscordBotNotificationProvider,
     resend: ResendEmailNotificationProvider,
     mailPace: MailPaceEmailNotificationProvider,
+    googleFcm: GoogleFcmNotificationProvider,
+    appleApns: AppleApnsNotificationProvider,
   ) {
     this.providers = new Map<NotificationDeliveryProvider, NotificationProviderStrategy>([
       [telegram.provider, telegram],
       [discord.provider, discord],
       [resend.provider, resend],
       [mailPace.provider, mailPace],
+      [googleFcm.provider, googleFcm],
+      [appleApns.provider, appleApns],
     ]);
   }
 

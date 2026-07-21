@@ -11,8 +11,18 @@ import {
   AdminRolesReadPermission,
   AdminRolesWritePermission,
   AdminAuditReadPermission,
+  AdminAuthLoginAnalyticsReadPermission,
   AdminSettingsReadPermission,
   AdminSettingsUpdatePermission,
+  AdminNotificationTemplatesReadPermission,
+  AdminNotificationTemplatesWritePermission,
+  AdminNotificationTemplatesTestPermission,
+  AdminNotificationSegmentsReadPermission,
+  AdminNotificationSegmentsWritePermission,
+  AdminNotificationBroadcastsReadPermission,
+  AdminNotificationBroadcastsWritePermission,
+  AdminNotificationBroadcastsSendPermission,
+  AdminNotificationBroadcastsApprovePermission,
   AdminManageAllPermission,
   normalizeStringList,
 } from '@app/common-authz';
@@ -32,8 +42,18 @@ export {
   AdminRolesReadPermission,
   AdminRolesWritePermission,
   AdminAuditReadPermission,
+  AdminAuthLoginAnalyticsReadPermission,
   AdminSettingsReadPermission,
   AdminSettingsUpdatePermission,
+  AdminNotificationTemplatesReadPermission,
+  AdminNotificationTemplatesWritePermission,
+  AdminNotificationTemplatesTestPermission,
+  AdminNotificationSegmentsReadPermission,
+  AdminNotificationSegmentsWritePermission,
+  AdminNotificationBroadcastsReadPermission,
+  AdminNotificationBroadcastsWritePermission,
+  AdminNotificationBroadcastsSendPermission,
+  AdminNotificationBroadcastsApprovePermission,
   AdminManageAllPermission,
   normalizeStringList,
 };
@@ -57,8 +77,18 @@ export interface AdminAccessPolicy {
   canReadRoles: boolean;
   canWriteRoles: boolean;
   canReadAudit: boolean;
+  canReadAuthLoginAnalytics: boolean;
   canReadSettings: boolean;
   canUpdateSettings: boolean;
+  canReadNotificationTemplates: boolean;
+  canWriteNotificationTemplates: boolean;
+  canTestNotificationTemplates: boolean;
+  canReadNotificationSegments: boolean;
+  canWriteNotificationSegments: boolean;
+  canReadNotificationBroadcasts: boolean;
+  canWriteNotificationBroadcasts: boolean;
+  canSendNotificationBroadcasts: boolean;
+  canApproveNotificationBroadcasts: boolean;
 }
 
 const hasPermission = (permissions: readonly string[], permission: string): boolean =>
@@ -68,43 +98,36 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
   const roles = normalizeStringList(principal?.roles);
   const permissions = normalizeStringList(principal?.permissions);
   const isAdmin = Boolean(principal?.subject && roles.includes(AdminRole));
-
-  const canReadProfile = isAdmin && hasPermission(permissions, AdminProfileReadPermission);
-  const canReadDashboard = isAdmin && hasPermission(permissions, AdminDashboardReadPermission);
-  const canReadUsers = isAdmin && hasPermission(permissions, AdminUsersReadPermission);
-  const canUpdateUserStatus = isAdmin && hasPermission(permissions, AdminUsersStatusUpdatePermission);
-  const canUpdateUserAccessPolicy = isAdmin && hasPermission(permissions, AdminUsersAccessPolicyUpdatePermission);
-  const canReadRoles = isAdmin && hasPermission(permissions, AdminRolesReadPermission);
-  const canWriteRoles = isAdmin && hasPermission(permissions, AdminRolesWritePermission);
-  const canReadAudit = isAdmin && hasPermission(permissions, AdminAuditReadPermission);
-  const canReadSettings = isAdmin && hasPermission(permissions, AdminSettingsReadPermission);
-  const canUpdateSettings = isAdmin && hasPermission(permissions, AdminSettingsUpdatePermission);
+  const capability = (permission: string): boolean => isAdmin && hasPermission(permissions, permission);
+  const capabilities = {
+    canReadProfile: capability(AdminProfileReadPermission),
+    canReadDashboard: capability(AdminDashboardReadPermission),
+    canReadUsers: capability(AdminUsersReadPermission),
+    canUpdateUserStatus: capability(AdminUsersStatusUpdatePermission),
+    canUpdateUserAccessPolicy: capability(AdminUsersAccessPolicyUpdatePermission),
+    canReadRoles: capability(AdminRolesReadPermission),
+    canWriteRoles: capability(AdminRolesWritePermission),
+    canReadAudit: capability(AdminAuditReadPermission),
+    canReadAuthLoginAnalytics: capability(AdminAuthLoginAnalyticsReadPermission),
+    canReadSettings: capability(AdminSettingsReadPermission),
+    canUpdateSettings: capability(AdminSettingsUpdatePermission),
+    canReadNotificationTemplates: capability(AdminNotificationTemplatesReadPermission),
+    canWriteNotificationTemplates: capability(AdminNotificationTemplatesWritePermission),
+    canTestNotificationTemplates: capability(AdminNotificationTemplatesTestPermission),
+    canReadNotificationSegments: capability(AdminNotificationSegmentsReadPermission),
+    canWriteNotificationSegments: capability(AdminNotificationSegmentsWritePermission),
+    canReadNotificationBroadcasts: capability(AdminNotificationBroadcastsReadPermission),
+    canWriteNotificationBroadcasts: capability(AdminNotificationBroadcastsWritePermission),
+    canSendNotificationBroadcasts: capability(AdminNotificationBroadcastsSendPermission),
+    canApproveNotificationBroadcasts: capability(AdminNotificationBroadcastsApprovePermission),
+  };
 
   return {
     isAuthenticated: isAdmin,
     roles,
     permissions,
-    canAccessAdmin:
-      canReadProfile ||
-      canReadDashboard ||
-      canReadUsers ||
-      canUpdateUserStatus ||
-      canUpdateUserAccessPolicy ||
-      canReadRoles ||
-      canWriteRoles ||
-      canReadAudit ||
-      canReadSettings ||
-      canUpdateSettings,
-    canReadProfile,
-    canReadDashboard,
-    canReadUsers,
-    canUpdateUserStatus,
-    canUpdateUserAccessPolicy,
-    canReadRoles,
-    canWriteRoles,
-    canReadAudit,
-    canReadSettings,
-    canUpdateSettings,
+    canAccessAdmin: Object.values(capabilities).some(Boolean),
+    ...capabilities,
   };
 };
 

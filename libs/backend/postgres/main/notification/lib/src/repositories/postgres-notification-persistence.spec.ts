@@ -14,8 +14,9 @@ import {
 import {
   NotificationDeliveryEntity,
   NotificationEntity,
-  NotificationTemplateChannelEntity,
   NotificationTemplateEntity,
+  NotificationTemplateVersionChannelEntity,
+  NotificationTemplateVersionEntity,
 } from '../infrastructure/data-access/entities';
 import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
 import { DeliveryClaimLeaseSeconds, PostgresNotificationPersistence } from './postgres-notification-persistence';
@@ -45,25 +46,30 @@ describe('PostgresNotificationPersistence', () => {
       description: 'Account link confirmation',
     });
     expect(Object.keys(template.channels)).toEqual([NotificationChannel.Bot, NotificationChannel.InApp]);
+    // Template identity and immutable version/channel rows are persisted in one transaction.
     expect(transaction.persist).toHaveBeenCalledTimes(2);
     expect(transaction.flush).toHaveBeenCalledOnce();
   });
 
-  it('replaces stale channels and updates existing channel content', async () => {
+  it('creates a new immutable version when code-owned channel content changes', async () => {
     const existingTemplate = new NotificationTemplateEntity({ code: 'security-alert' });
-    const existingBot = new NotificationTemplateChannelEntity({
+    const existingVersion = new NotificationTemplateVersionEntity({
       templateId: existingTemplate.id,
+      version: 1,
+      publishedAt: new Date('2026-07-20T00:00:00.000Z'),
+    });
+    existingTemplate.currentVersionId = existingVersion.id;
+    const existingBot = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: existingVersion.id,
       channel: NotificationChannel.Bot,
       content: { body: { en: 'Old' } },
     });
-    const staleEmail = new NotificationTemplateChannelEntity({
-      templateId: existingTemplate.id,
-      channel: NotificationChannel.Email,
-      content: { subject: { en: 'Old' }, body: { en: 'Old' } },
-    });
     const transaction = createTransactionEntityManager();
-    transaction.findOne.mockResolvedValue(existingTemplate);
-    transaction.find.mockResolvedValue([existingBot, staleEmail]);
+    transaction.findOne
+      .mockResolvedValueOnce(existingTemplate)
+      .mockResolvedValueOnce(existingVersion)
+      .mockResolvedValueOnce(existingVersion);
+    transaction.find.mockResolvedValue([existingBot]);
 
     const template = await createPersistence(transaction).upsertTemplate({
       code: existingTemplate.code,
@@ -80,7 +86,8 @@ describe('PostgresNotificationPersistence', () => {
       engine: NotificationTemplateEngine.Eta,
       content: { body: { en: 'New' } },
     });
-    expect(transaction.remove).toHaveBeenCalledWith([staleEmail]);
+    expect(template.version).toBe(2);
+    expect(transaction.remove).not.toHaveBeenCalled();
   });
 
   it('rejects empty, duplicate, and malformed channel sets before opening a transaction', async () => {
@@ -121,6 +128,7 @@ describe('PostgresNotificationPersistence', () => {
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       channel: NotificationChannel.Bot,
+      provider: NotificationDeliveryProvider.TelegramBot,
       status: NotificationStatus.Pending,
       createdAt: new Date('2026-07-16T09:00:00.000Z'),
     });
@@ -149,13 +157,14 @@ describe('PostgresNotificationPersistence', () => {
 
   it('persists an explicit provider and encrypts sensitive template values', async () => {
     const template = new NotificationTemplateEntity({ code: 'auth.email-verification-code' });
-    const emailChannel = new NotificationTemplateChannelEntity({
-      templateId: template.id,
+    const version = publishedVersion(template);
+    const emailChannel = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: version.id,
       channel: NotificationChannel.Email,
       content: { subject: { en: 'Verify' }, body: { en: 'Code: {code}' } },
     });
     const transaction = createTransactionEntityManager();
-    transaction.findOne.mockResolvedValue(template);
+    transaction.findOne.mockResolvedValueOnce(template).mockResolvedValueOnce(version);
     transaction.find.mockResolvedValue([emailChannel]);
 
     await createPersistence(transaction).create({
@@ -168,19 +177,20 @@ describe('PostgresNotificationPersistence', () => {
     });
 
     const persisted = transaction.persist.mock.calls[0]?.[0] as [NotificationEntity, NotificationDeliveryEntity];
-    expect(persisted[0].sensitiveData?.ciphertext).not.toContain('secret-code');
+    expect(persisted[0].sensitiveData.ciphertext).not.toContain('secret-code');
     expect(persisted[1].provider).toBe(NotificationDeliveryProvider.Resend);
   });
 
-  it('joins pending deliveries to notifications with grouped template channels', async () => {
+  it('joins pending deliveries to notifications with their pinned version channels', async () => {
     const template = new NotificationTemplateEntity({ code: 'welcome' });
-    const botChannel = new NotificationTemplateChannelEntity({
-      templateId: template.id,
+    const version = publishedVersion(template);
+    const botChannel = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: version.id,
       channel: NotificationChannel.Bot,
       content: { body: { en: 'Hi' } },
     });
-    const inAppChannel = new NotificationTemplateChannelEntity({
-      templateId: template.id,
+    const inAppChannel = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: version.id,
       channel: NotificationChannel.InApp,
       content: { body: { en: 'Hi' } },
     });
@@ -188,6 +198,7 @@ describe('PostgresNotificationPersistence', () => {
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       template,
+      templateVersionId: version.id,
     });
     const deliveryA = buildPendingDelivery('1', notification.id);
     const deliveryB = buildPendingDelivery('2', notification.id);
@@ -199,8 +210,11 @@ describe('PostgresNotificationPersistence', () => {
       if (entity === NotificationEntity) {
         return Promise.resolve([notification]);
       }
-      if (entity === NotificationTemplateChannelEntity) {
+      if (entity === NotificationTemplateVersionChannelEntity) {
         return Promise.resolve([botChannel, inAppChannel]);
+      }
+      if (entity === NotificationTemplateVersionEntity) {
+        return Promise.resolve([version]);
       }
       return Promise.resolve([]);
     });
@@ -239,8 +253,9 @@ describe('PostgresNotificationPersistence', () => {
 
   it('drops pending deliveries whose notification is missing', async () => {
     const template = new NotificationTemplateEntity({ code: 'welcome' });
-    const botChannel = new NotificationTemplateChannelEntity({
-      templateId: template.id,
+    const version = publishedVersion(template);
+    const botChannel = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: version.id,
       channel: NotificationChannel.Bot,
       content: { body: { en: 'Hi' } },
     });
@@ -248,6 +263,7 @@ describe('PostgresNotificationPersistence', () => {
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       template,
+      templateVersionId: version.id,
     });
     const presentDelivery = buildPendingDelivery('1', notification.id);
     const orphanDelivery = buildPendingDelivery('2', 'df6b6d7c-2f2b-4a2f-9c6c-2f2b4a2f9c6c');
@@ -259,8 +275,11 @@ describe('PostgresNotificationPersistence', () => {
       if (entity === NotificationEntity) {
         return Promise.resolve([notification]);
       }
-      if (entity === NotificationTemplateChannelEntity) {
+      if (entity === NotificationTemplateVersionChannelEntity) {
         return Promise.resolve([botChannel]);
+      }
+      if (entity === NotificationTemplateVersionEntity) {
+        return Promise.resolve([version]);
       }
       return Promise.resolve([]);
     });
@@ -291,8 +310,9 @@ describe('PostgresNotificationPersistence', () => {
 
   it('atomically claims fetched deliveries with SKIP LOCKED and a lease so concurrent workers cannot double-send', async () => {
     const template = new NotificationTemplateEntity({ code: 'welcome' });
-    const botChannel = new NotificationTemplateChannelEntity({
-      templateId: template.id,
+    const version = publishedVersion(template);
+    const botChannel = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: version.id,
       channel: NotificationChannel.Bot,
       content: { body: { en: 'Hi' } },
     });
@@ -300,6 +320,7 @@ describe('PostgresNotificationPersistence', () => {
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       template,
+      templateVersionId: version.id,
     });
     const delivery = buildPendingDelivery('1', notification.id);
     const now = new Date('2026-07-16T10:00:00.000Z');
@@ -311,8 +332,11 @@ describe('PostgresNotificationPersistence', () => {
       if (entity === NotificationEntity) {
         return Promise.resolve([notification]);
       }
-      if (entity === NotificationTemplateChannelEntity) {
+      if (entity === NotificationTemplateVersionChannelEntity) {
         return Promise.resolve([botChannel]);
+      }
+      if (entity === NotificationTemplateVersionEntity) {
+        return Promise.resolve([version]);
       }
       return Promise.resolve([]);
     });
@@ -361,6 +385,16 @@ function createReadPersistence(find: Mock, flush: Mock = vi.fn().mockResolvedVal
     transactional: vi.fn(async (callback: (tx: typeof transaction) => Promise<unknown>) => callback(transaction)),
   } as unknown as EntityManager;
   return new PostgresNotificationPersistence(root, notificationPayloadCrypto());
+}
+
+function publishedVersion(template: NotificationTemplateEntity): NotificationTemplateVersionEntity {
+  const version = new NotificationTemplateVersionEntity({
+    templateId: template.id,
+    version: 1,
+    publishedAt: new Date('2026-07-20T00:00:00.000Z'),
+  });
+  template.currentVersionId = version.id;
+  return version;
 }
 
 function buildPendingDelivery(id: string, notificationId: string): NotificationDeliveryEntity {

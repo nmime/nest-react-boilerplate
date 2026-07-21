@@ -1,3 +1,3 @@
 import type { adminApi } from '@app/frontend-api-client';
 
-export type AuditRow = adminApi.AdminAuditLogViewDto;
+export type AuditRow = adminApi.AuditLogAdminViewDto;

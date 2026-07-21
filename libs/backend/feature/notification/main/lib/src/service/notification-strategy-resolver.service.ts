@@ -13,6 +13,7 @@ export class NotificationStrategyResolverService {
   constructor(userStrategy: UserNotificationStrategy, telegramChatStrategy: TelegramChatNotificationStrategy) {
     this.register(NotificationTargetType.User, userStrategy);
     this.register(NotificationTargetType.Email, userStrategy);
+    this.register(NotificationTargetType.PushToken, userStrategy);
     this.register(NotificationTargetType.TelegramChat, telegramChatStrategy);
     this.register(NotificationTargetType.SystemTelegramChat, telegramChatStrategy);
   }

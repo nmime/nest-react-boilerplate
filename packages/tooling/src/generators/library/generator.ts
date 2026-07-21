@@ -16,7 +16,17 @@ import { findAdjacentOwner, validateName, generateNames } from '../names.ts';
 export interface LibraryGeneratorOptions {
   name: string;
   kind: 'backend' | 'frontend' | 'common';
-  type?: 'common' | 'util' | 'ui' | 'sdk' | 'feature-main' | 'feature-shared' | 'data-access' | 'test-util' | 'asset';
+  type?:
+    | 'common'
+    | 'util'
+    | 'ui'
+    | 'sdk'
+    | 'feature-main'
+    | 'feature-admin'
+    | 'feature-shared'
+    | 'data-access'
+    | 'test-util'
+    | 'asset';
   scope?: string;
   /** Concrete responsibility rendered into the local README. */
   description?: string;
@@ -44,7 +54,7 @@ function findExistingProject(tree: Tree, name: string): string | null {
 }
 
 function computeProjectName(kind: string, name: string, type: string, scope: string): string {
-  if (type === 'feature-main' || type === 'feature-shared') {
+  if (type === 'feature-main' || type === 'feature-admin' || type === 'feature-shared') {
     return `@app/${kind === 'common' ? 'common' : kind}-feature-${scope}-${type.replace('feature-', '')}`;
   }
   if (type === 'data-access') {
@@ -63,6 +73,9 @@ function computeDirectory(kind: string, name: string, type: string, scope: strin
   if (kind === 'backend') {
     if (type === 'feature-main') {
       return `libs/backend/feature/${scope}/main/lib`;
+    }
+    if (type === 'feature-admin') {
+      return `libs/backend/feature/${scope}/admin/lib`;
     }
     if (type === 'feature-shared') {
       return `libs/backend/feature/${scope}/shared/lib`;
@@ -618,6 +631,7 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
     'ui',
     'sdk',
     'feature-main',
+    'feature-admin',
     'feature-shared',
     'data-access',
     'test-util',
@@ -629,10 +643,16 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
   if (type === 'data-access' && options.kind !== 'backend') {
     throw new Error('The data-access library type is backend-only.');
   }
+  if (type === 'feature-admin' && options.kind !== 'backend') {
+    throw new Error('The feature-admin library type is backend-only.');
+  }
   if ((type === 'ui' || type === 'asset') && options.kind === 'backend') {
     throw new Error(`The ${type} library type cannot target the backend platform.`);
   }
-  if (options.kind === 'common' && ['ui', 'feature-main', 'feature-shared', 'data-access'].includes(type)) {
+  if (
+    options.kind === 'common' &&
+    ['ui', 'feature-main', 'feature-admin', 'feature-shared', 'data-access'].includes(type)
+  ) {
     throw new Error(`The ${type} library type must target the frontend or backend platform.`);
   }
 

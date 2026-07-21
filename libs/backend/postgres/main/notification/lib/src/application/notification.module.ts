@@ -1,13 +1,22 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
-import { NotificationPersistence } from '@app/backend-feature-notification-shared';
+import { NotificationBroadcastPersistence, NotificationPersistence } from '@app/backend-feature-notification-shared';
 import {
+  NotificationAudienceSnapshotEntitySchema,
+  NotificationAudienceSnapshotMemberEntitySchema,
+  NotificationBroadcastCommandEntitySchema,
+  NotificationBroadcastEntitySchema,
+  NotificationBroadcastSegmentEntitySchema,
   NotificationDeliveryEntitySchema,
   NotificationEntitySchema,
-  NotificationTemplateChannelEntitySchema,
+  NotificationSegmentEntitySchema,
+  NotificationSegmentMemberEntitySchema,
+  NotificationSegmentUploadEntitySchema,
   NotificationTemplateEntitySchema,
+  NotificationTemplateVersionChannelEntitySchema,
+  NotificationTemplateVersionEntitySchema,
 } from '../infrastructure/data-access/entities';
-import { PostgresNotificationPersistence } from '../repositories';
+import { PostgresNotificationBroadcastPersistence, PostgresNotificationPersistence } from '../repositories';
 import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
 
 @Module({
@@ -15,15 +24,31 @@ import { NotificationPayloadCryptoService } from '../notification-payload-crypto
     MikroOrmModule.forFeature([
       NotificationEntitySchema,
       NotificationTemplateEntitySchema,
-      NotificationTemplateChannelEntitySchema,
+      NotificationTemplateVersionEntitySchema,
+      NotificationTemplateVersionChannelEntitySchema,
       NotificationDeliveryEntitySchema,
+      NotificationSegmentEntitySchema,
+      NotificationSegmentMemberEntitySchema,
+      NotificationSegmentUploadEntitySchema,
+      NotificationBroadcastEntitySchema,
+      NotificationBroadcastSegmentEntitySchema,
+      NotificationAudienceSnapshotEntitySchema,
+      NotificationAudienceSnapshotMemberEntitySchema,
+      NotificationBroadcastCommandEntitySchema,
     ]),
   ],
   providers: [
     NotificationPayloadCryptoService,
     PostgresNotificationPersistence,
+    PostgresNotificationBroadcastPersistence,
     { provide: NotificationPersistence, useExisting: PostgresNotificationPersistence },
+    { provide: NotificationBroadcastPersistence, useExisting: PostgresNotificationBroadcastPersistence },
   ],
-  exports: [MikroOrmModule, NotificationPersistence, NotificationPayloadCryptoService],
+  exports: [
+    MikroOrmModule,
+    NotificationPersistence,
+    NotificationBroadcastPersistence,
+    NotificationPayloadCryptoService,
+  ],
 })
 export class NotificationPostgresModule {}

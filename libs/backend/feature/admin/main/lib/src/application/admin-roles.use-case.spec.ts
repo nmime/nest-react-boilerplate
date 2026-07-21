@@ -332,6 +332,9 @@ describe('AdminRolesUseCase', () => {
   it('sets permissions on a non-system role without invariant checks', async () => {
     const { roles, useCase } = createDeps();
     roles.findById.mockReturnValue(okAsync(role({ id: 'role-support', key: 'support', isSystem: false })));
+    roles.listRolesWithPermissions.mockReturnValue(
+      okAsync([{ role: role({ id: 'role-support', key: 'support', isSystem: false }), permissionKeys: [] }]),
+    );
     roles.setRolePermissions.mockReturnValue(
       okAsync({
         role: role({ id: 'role-support', key: 'support', isSystem: false }),

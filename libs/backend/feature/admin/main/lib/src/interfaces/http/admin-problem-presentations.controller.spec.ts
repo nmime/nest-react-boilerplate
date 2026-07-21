@@ -65,7 +65,11 @@ describe('AdminProblemPresentationsController', () => {
     };
 
     await expect(controller.update(principal, input, request)).resolves.toEqual({ data: presentation });
-    expect(presentations.update).toHaveBeenCalledWith(principal, input, { requestId: 'request-1' });
+    expect(presentations.update).toHaveBeenCalledWith(principal, input, {
+      requestId: 'request-1',
+      ipAddress: '127.0.0.1',
+      userAgent: 'Vitest',
+    });
   });
 
   it('resets a presentation with request audit context', async () => {
@@ -73,6 +77,10 @@ describe('AdminProblemPresentationsController', () => {
     const input = { expectedRevision: 3, ruleId };
 
     await expect(controller.reset(principal, input, request)).resolves.toEqual({ data: { ruleId } });
-    expect(presentations.reset).toHaveBeenCalledWith(principal, input, { requestId: 'request-1' });
+    expect(presentations.reset).toHaveBeenCalledWith(principal, input, {
+      requestId: 'request-1',
+      ipAddress: '127.0.0.1',
+      userAgent: 'Vitest',
+    });
   });
 });

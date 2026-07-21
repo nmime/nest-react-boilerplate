@@ -1,5 +1,7 @@
 export * from './admin-audit-log.entity';
 
+export * from './auth-login-event.entity';
+
 export * from './auth-user.entity';
 
 export * from './auth-tenant.entity';

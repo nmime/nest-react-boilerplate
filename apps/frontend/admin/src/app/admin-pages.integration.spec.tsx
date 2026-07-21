@@ -21,6 +21,7 @@ const adminAccess = createAdminAccess({
     'admin:users:access-policy:update',
     'admin:roles:read',
     'admin:audit:read',
+    'admin:auth-login-analytics:read',
     'admin:settings:read',
     'admin:settings:update',
   ],
@@ -348,27 +349,38 @@ describe('admin pages integration', () => {
       error: undefined,
       response: new Response(null, { status: 200 }),
     });
+    vi.spyOn(adminApi, 'auditLogAdminControllerMetadata').mockResolvedValue({
+      data: { actions: ['admin.user.status.update'], resources: ['admin.users'] },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
     const auditSpy = vi
-      .spyOn(adminApi, 'adminUsersControllerListAudit')
+      .spyOn(adminApi, 'auditLogAdminControllerList')
       .mockResolvedValueOnce({
         data: {
           items: [
             {
-              id: 'audit-1',
-              action: 'user.disabled',
-              actorId: 'admin-id',
+              id: '00000000-0000-4000-8000-000000000011',
+              tenantId: '00000000-0000-4000-8000-000000000001',
+              action: 'admin.user.status.update',
+              actorUserId: '00000000-0000-4000-8000-000000000002',
               createdAt: '2026-01-02T00:00:00.000Z',
-              metadata: { userId: 'user-1' },
-              resource: 'user',
-              targetUserId: 'user-1',
+              before: { status: 'active' },
+              after: { status: 'disabled' },
+              metadata: { reason: 'support request' },
+              resource: 'admin.users',
+              targetId: '00000000-0000-4000-8000-000000000003',
             },
             {
-              id: 'audit-2',
-              action: 'user.reviewed',
-              actorUserId: 'admin-id',
+              id: '00000000-0000-4000-8000-000000000012',
+              tenantId: '00000000-0000-4000-8000-000000000001',
+              action: 'admin.user.roles.update',
+              actorUserId: '00000000-0000-4000-8000-000000000002',
               createdAt: '2026-01-03T00:00:00.000Z',
+              before: {},
+              after: {},
               metadata: {},
-              resource: 'user',
+              resource: 'admin.users',
             },
           ],
           total: 1,
@@ -402,8 +414,8 @@ describe('admin pages integration', () => {
         access: adminAccess,
       }),
     );
-    expect(await screen.findByText('user.disabled')).toBeTruthy();
-    expect(screen.getByText('user-1')).toBeTruthy();
+    expect(await screen.findByText('admin.user.status.update')).toBeTruthy();
+    expect(screen.getByText('00000000-0000-4000-8000-000000000003')).toBeTruthy();
 
     cleanup();
     renderAdminRouteForTest(
@@ -418,7 +430,12 @@ describe('admin pages integration', () => {
   });
 
   it('renders audit request failures without masking the backend message', async () => {
-    vi.spyOn(adminApi, 'adminUsersControllerListAudit').mockRejectedValue(new Error('audit stream offline'));
+    vi.spyOn(adminApi, 'auditLogAdminControllerMetadata').mockResolvedValue({
+      data: { actions: [], resources: [] },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    vi.spyOn(adminApi, 'auditLogAdminControllerList').mockRejectedValue(new Error('audit stream offline'));
 
     renderAdminRouteForTest(
       renderAdminRoute('/admin/audit', {
@@ -694,5 +711,58 @@ describe('admin pages integration', () => {
     );
 
     expect(screen.getByText('content without app store')).toBeTruthy();
+  });
+
+  it('renders tenant login analytics with geo, language, timezone, and retained IP evidence', async () => {
+    vi.spyOn(adminApi, 'authLoginAnalyticsAdminControllerList').mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: '00000000-0000-4000-8000-000000000010',
+            tenantId: '00000000-0000-4000-8000-000000000001',
+            userId: '00000000-0000-4000-8000-000000000002',
+            eventType: 'login',
+            outcome: 'success',
+            provider: 'telegram',
+            channel: 'telegram_tma',
+            ipAddress: '203.0.113.10',
+            countryCode: 'UZ',
+            city: 'Tashkent',
+            timezone: 'Asia/Tashkent',
+            language: 'ru',
+            networkAnonymized: false,
+            occurredAt: '2026-07-21T09:00:00.000Z',
+          },
+        ],
+        total: 1,
+        limit: 25,
+        offset: 0,
+      },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+    vi.spyOn(adminApi, 'authLoginAnalyticsAdminControllerSummary').mockResolvedValue({
+      data: {
+        total: 1,
+        successful: 1,
+        failed: 0,
+        uniqueUsers: 1,
+        successRate: 100,
+        byCountry: [{ key: 'UZ', count: 1 }],
+        byLanguage: [{ key: 'ru', count: 1 }],
+        byTimezone: [{ key: 'Asia/Tashkent', count: 1 }],
+        byProvider: [{ key: 'telegram', count: 1 }],
+      },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    });
+
+    renderAdminRouteForTest(
+      renderAdminRoute('/admin/auth/login-analytics', { status: 'ready', payload, access: adminAccess }),
+    );
+    expect((await screen.findAllByText('Login analytics')).length).toBeGreaterThan(0);
+    expect(await screen.findByText('UZ · 1')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('row', { name: /telegram success/iu }));
+    expect(await screen.findByText('203.0.113.10')).toBeTruthy();
   });
 });

@@ -478,9 +478,9 @@ for (const { app, healthProvider, modulePath, configPath, localControllerPath } 
   has(appModule, healthProvider, `${app} imports app-specific health service wiring`);
   has(appModule, './health.config', `${app} imports health.config`);
   has(appModule, 'controllers: [BaseHealthController]', `${app} registers the shared health controller`);
-  has(
+  assert.match(
     appModule,
-    `providers: [${healthProvider}, HealthPrivateNetworkIpGuard]`,
+    new RegExp(`providers:\\s*\\[[\\s\\S]*?${healthProvider}[\\s\\S]*?HealthPrivateNetworkIpGuard[\\s\\S]*?\\]`),
     `${app} registers app-specific health provider wiring`,
   );
 
@@ -624,11 +624,11 @@ if (validateHelmStatic) {
   has(deploymentTemplate, 'containerPort: {{ $app.port }}', 'Helm deployment uses per-app container port');
   const apiEnvFromBlock = section(
     deploymentTemplate,
-    '{{- if eq $app.kind "backend" }}',
+    '{{- if or (eq $app.kind "backend") (eq $app.kind "background") }}',
     '{{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}',
   );
-  has(apiEnvFromBlock, 'envFrom:', 'Helm deployment gates backend env on API apps');
-  has(apiEnvFromBlock, 'secretRef:', 'Helm deployment gates backend secrets on API apps');
+  has(apiEnvFromBlock, 'envFrom:', 'Helm deployment gates backend env on backend processes');
+  has(apiEnvFromBlock, 'secretRef:', 'Helm deployment gates backend secrets on backend processes');
   has(read('.helm/templates/service.yaml'), 'targetPort: http', 'Helm service targets named container port');
   const migrationJobTemplate = read('.helm/templates/migration-job.yaml');
   has(migrationJobTemplate, '.Values.migrations.podSecurityContext', 'Helm migration job renders pod security context');

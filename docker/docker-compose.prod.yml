@@ -15,6 +15,10 @@ x-backend-env: &backend-env
   AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth-app-api.example.com}
   AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
   AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}
+  AUTH_GEOIP_DATABASE_PATH: ${AUTH_GEOIP_DATABASE_PATH:-}
+  AUTH_LOGIN_NETWORK_RETENTION_DAYS: ${AUTH_LOGIN_NETWORK_RETENTION_DAYS:-30}
+  AUTH_LOGIN_EVENT_RETENTION_DAYS: ${AUTH_LOGIN_EVENT_RETENTION_DAYS:-365}
+  AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET: ${AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET:-}
   BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://user-app.example.com}
   BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-https://user-app.example.com,https://example.com}
   AUTH_ALLOWED_RETURN_URLS: ${AUTH_ALLOWED_RETURN_URLS:?set comma-separated allowed auth return URL origins}
@@ -27,6 +31,18 @@ x-backend-env: &backend-env
   NOTIFICATION_DELIVERIES_PER_ITERATION: ${NOTIFICATION_DELIVERIES_PER_ITERATION:-50}
   NOTIFICATION_REQUESTS_PER_SECOND: ${NOTIFICATION_REQUESTS_PER_SECOND:-30}
   NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS: ${NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS:-6}
+  NOTIFICATION_BROADCAST_REQUIRE_INDEPENDENT_APPROVAL: ${NOTIFICATION_BROADCAST_REQUIRE_INDEPENDENT_APPROVAL:-false}
+  NOTIFICATION_CONSUMER_INTERVAL_MS: ${NOTIFICATION_CONSUMER_INTERVAL_MS:-1000}
+  NOTIFICATION_MATERIALIZATION_CHUNK_SIZE: ${NOTIFICATION_MATERIALIZATION_CHUNK_SIZE:-500}
+  NOTIFICATION_CSV_MAX_BYTES: ${NOTIFICATION_CSV_MAX_BYTES:-10485760}
+  NOTIFICATION_CSV_MAX_ROWS: ${NOTIFICATION_CSV_MAX_ROWS:-100000}
+  NOTIFICATION_FCM_PROJECT_ID: ${NOTIFICATION_FCM_PROJECT_ID:-}
+  NOTIFICATION_FCM_CLIENT_EMAIL: ${NOTIFICATION_FCM_CLIENT_EMAIL:-}
+  NOTIFICATION_FCM_TOKEN_URI: ${NOTIFICATION_FCM_TOKEN_URI:-https://oauth2.googleapis.com/token}
+  NOTIFICATION_APNS_TEAM_ID: ${NOTIFICATION_APNS_TEAM_ID:-}
+  NOTIFICATION_APNS_KEY_ID: ${NOTIFICATION_APNS_KEY_ID:-}
+  NOTIFICATION_APNS_BUNDLE_ID: ${NOTIFICATION_APNS_BUNDLE_ID:-}
+  NOTIFICATION_APNS_SANDBOX: ${NOTIFICATION_APNS_SANDBOX:-false}
   AUTH_TELEGRAM_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
   TELEGRAM_TMA_MAX_AGE_SECONDS: ${TELEGRAM_TMA_MAX_AGE_SECONDS:-300}
   TELEGRAM_OIDC_ENABLED: ${TELEGRAM_OIDC_ENABLED:-false}
@@ -161,7 +177,15 @@ x-notification-scheduler-service: &notification-scheduler-service
   logging: *default-logging
   networks: [app, database]
   secrets:
-    [notification_payload_encryption_key, telegram_bot_token, discord_bot_token, resend_api_key, mailpace_server_token]
+    [
+      notification_payload_encryption_key,
+      telegram_bot_token,
+      discord_bot_token,
+      resend_api_key,
+      mailpace_server_token,
+      notification_fcm_private_key,
+      notification_apns_private_key,
+    ]
   environment: *backend-env
   command: *backend-command
   depends_on:
@@ -306,13 +330,21 @@ services:
     <<: *notification-scheduler-service
     profiles: [notification-scheduler]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/notification-scheduler:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: notification-scheduler
-        BUILD_OUTPUT: dist/apps/backend/notification/notification-scheduler
+
+  notification-consumer:
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [app, database]
+    profiles: [notification-consumer]
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/notification-consumer:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    secrets: [notification_payload_encryption_key]
+    environment: *backend-env
+    command: *backend-command
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   admin-app:
     <<: *frontend-service
@@ -542,3 +574,7 @@ secrets:
     file: ${RESEND_API_KEY_FILE:-./secrets/resend_api_key.txt}
   mailpace_server_token:
     file: ${MAILPACE_SERVER_TOKEN_FILE:-./secrets/mailpace_server_token.txt}
+  notification_fcm_private_key:
+    file: ${NOTIFICATION_FCM_PRIVATE_KEY_FILE:-./secrets/notification_fcm_private_key.txt}
+  notification_apns_private_key:
+    file: ${NOTIFICATION_APNS_PRIVATE_KEY_FILE:-./secrets/notification_apns_private_key.txt}

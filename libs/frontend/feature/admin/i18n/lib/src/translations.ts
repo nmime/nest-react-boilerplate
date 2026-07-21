@@ -2,6 +2,9 @@ import enAdminAuditCatalog from '@app/i18n-en-admin/audit.json';
 import enAdminDashboardCatalog from '@app/i18n-en-admin/dashboard.json';
 import enAdminRolesCatalog from '@app/i18n-en-admin/roles.json';
 import enAdminProblemPresentationsCatalog from '@app/i18n-en-admin/problem-presentations.json';
+import enAdminNotificationsCatalog from '@app/i18n-en-admin/notifications.json';
+import enAdminNotificationNavigationCatalog from '@app/i18n-en-admin/notification-navigation.json';
+import enAdminLoginAnalyticsCatalog from '@app/i18n-en-admin/login-analytics.json';
 import enAdminCatalog from '@app/i18n-en-admin/shell.json';
 import enAdminUsersCatalog from '@app/i18n-en-admin/users.json';
 import enErrorsCatalog from '@app/i18n-en-common/errors.json';
@@ -10,6 +13,9 @@ import ruAdminAuditCatalog from '@app/i18n-ru-admin/audit.json';
 import ruAdminDashboardCatalog from '@app/i18n-ru-admin/dashboard.json';
 import ruAdminRolesCatalog from '@app/i18n-ru-admin/roles.json';
 import ruAdminProblemPresentationsCatalog from '@app/i18n-ru-admin/problem-presentations.json';
+import ruAdminNotificationsCatalog from '@app/i18n-ru-admin/notifications.json';
+import ruAdminNotificationNavigationCatalog from '@app/i18n-ru-admin/notification-navigation.json';
+import ruAdminLoginAnalyticsCatalog from '@app/i18n-ru-admin/login-analytics.json';
 import ruAdminCatalog from '@app/i18n-ru-admin/shell.json';
 import ruAdminUsersCatalog from '@app/i18n-ru-admin/users.json';
 import ruErrorsCatalog from '@app/i18n-ru-common/errors.json';
@@ -26,6 +32,9 @@ export const adminFrontendCatalogFileNames = [
   'admin/audit.json',
   'admin/roles.json',
   'admin/problem-presentations.json',
+  'admin/notifications.json',
+  'admin/notification-navigation.json',
+  'admin/login-analytics.json',
 ] as const;
 
 const enFiles = [
@@ -37,6 +46,9 @@ const enFiles = [
   ['admin/audit.json', enAdminAuditCatalog],
   ['admin/roles.json', enAdminRolesCatalog],
   ['admin/problem-presentations.json', enAdminProblemPresentationsCatalog],
+  ['admin/notifications.json', enAdminNotificationsCatalog],
+  ['admin/notification-navigation.json', enAdminNotificationNavigationCatalog],
+  ['admin/login-analytics.json', enAdminLoginAnalyticsCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const ruFiles = [
@@ -48,6 +60,9 @@ const ruFiles = [
   ['admin/audit.json', ruAdminAuditCatalog],
   ['admin/roles.json', ruAdminRolesCatalog],
   ['admin/problem-presentations.json', ruAdminProblemPresentationsCatalog],
+  ['admin/notifications.json', ruAdminNotificationsCatalog],
+  ['admin/notification-navigation.json', ruAdminNotificationNavigationCatalog],
+  ['admin/login-analytics.json', ruAdminLoginAnalyticsCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 export const adminFrontendTranslations = {

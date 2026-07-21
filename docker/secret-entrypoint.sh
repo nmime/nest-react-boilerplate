@@ -30,6 +30,8 @@ if [ "$(id -u)" -eq 0 ]; then
   load_secret DISCORD_PUBLIC_KEY /run/secrets/discord_public_key
   load_secret RESEND_API_KEY /run/secrets/resend_api_key
   load_secret MAILPACE_SERVER_TOKEN /run/secrets/mailpace_server_token
+  load_secret NOTIFICATION_FCM_PRIVATE_KEY /run/secrets/notification_fcm_private_key
+  load_secret NOTIFICATION_APNS_PRIVATE_KEY /run/secrets/notification_apns_private_key
 
   exec su-exec node "$@"
 fi

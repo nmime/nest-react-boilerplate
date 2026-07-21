@@ -57,12 +57,48 @@ export const AdminLayout = observer(function AdminLayout({
       variant: 'secondary',
     });
   }
+  if (access?.canReadAuthLoginAnalytics) {
+    navItems.push({
+      href: '/admin/auth/login-analytics',
+      isCurrent: path === '/auth/login-analytics',
+      label: t('admin.action.authLoginAnalytics'),
+      detail: t('admin.loginAnalytics.description'),
+      variant: 'secondary',
+    });
+  }
   if (access?.canReadSettings) {
     navItems.push({
       href: '/admin/settings/errors',
       isCurrent: path === '/settings/errors',
       label: t('admin.action.problemPresentations'),
       detail: t('admin.problemPresentations.description'),
+      variant: 'secondary',
+    });
+  }
+  if (access?.canReadNotificationTemplates) {
+    navItems.push({
+      href: '/admin/notifications/templates',
+      isCurrent: path === '/notifications/templates',
+      label: t('admin.action.notificationTemplates'),
+      detail: t('admin.notification.templates.title'),
+      variant: 'secondary',
+    });
+  }
+  if (access?.canReadNotificationSegments) {
+    navItems.push({
+      href: '/admin/notifications/segments',
+      isCurrent: path === '/notifications/segments',
+      label: t('admin.action.notificationSegments'),
+      detail: t('admin.notification.segments.title'),
+      variant: 'secondary',
+    });
+  }
+  if (access?.canReadNotificationBroadcasts) {
+    navItems.push({
+      href: '/admin/notifications/broadcasts',
+      isCurrent: path === '/notifications/broadcasts',
+      label: t('admin.action.notificationBroadcasts'),
+      detail: t('admin.notification.broadcasts.title'),
       variant: 'secondary',
     });
   }

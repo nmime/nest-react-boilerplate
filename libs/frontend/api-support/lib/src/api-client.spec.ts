@@ -165,6 +165,7 @@ describe('frontend API client', () => {
     ).toEqual({
       Accept: 'application/json',
       'Accept-Language': 'en',
+      'X-Client-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       'x-request-id': '1',
     });
   });

@@ -37,7 +37,11 @@ export const executeAdminUseCase = async <T>(handler: () => Promise<T>): Promise
   }
 };
 
-export const requestContextFromRequest = (request: AuthenticatedRequest): AdminRequestContext =>
-  createAdminRequestContext({
+export const requestContextFromRequest = (request: AuthenticatedRequest): AdminRequestContext => {
+  const userAgent = request.headers?.['user-agent'];
+  return createAdminRequestContext({
     requestId: requestContext.getRequestId() ?? normalizeRequestId(request.headers?.['x-request-id']),
+    ipAddress: request.ip ?? request.socket?.remoteAddress,
+    userAgent: (Array.isArray(userAgent) ? userAgent[0] : userAgent)?.slice(0, 512),
   });
+};

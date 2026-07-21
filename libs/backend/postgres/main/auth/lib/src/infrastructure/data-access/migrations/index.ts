@@ -17,6 +17,9 @@ import { Migration20260710120000AddAuthUserAvatar } from './Migration20260710120
 import { Migration20260716120000AddTelegramOidcChannel } from './Migration20260716120000AddTelegramOidcChannel';
 import { Migration20260719120000CreateProblemPresentationOverrides } from './Migration20260719120000CreateProblemPresentationOverrides';
 import { Migration20260720120000AddAuthRefreshTokenAuthContext } from './Migration20260720120000AddAuthRefreshTokenAuthContext';
+import { Migration20260721170000AddAdminAuditFilterIndexes } from './Migration20260721170000AddAdminAuditFilterIndexes';
+import { Migration20260721200000CreateAuthLoginAnalytics } from './Migration20260721200000CreateAuthLoginAnalytics';
+import { Migration20260721201000GrantAuthLoginAnalyticsRead } from './Migration20260721201000GrantAuthLoginAnalyticsRead';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
 
@@ -39,6 +42,9 @@ export const authMigrations = [
   Migration20260716120000AddTelegramOidcChannel,
   Migration20260719120000CreateProblemPresentationOverrides,
   Migration20260720120000AddAuthRefreshTokenAuthContext,
+  Migration20260721170000AddAdminAuditFilterIndexes,
+  Migration20260721200000CreateAuthLoginAnalytics,
+  Migration20260721201000GrantAuthLoginAnalyticsRead,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -68,3 +74,6 @@ export * from './Migration20260710120000AddAuthUserAvatar';
 export * from './Migration20260716120000AddTelegramOidcChannel';
 export * from './Migration20260719120000CreateProblemPresentationOverrides';
 export * from './Migration20260720120000AddAuthRefreshTokenAuthContext';
+export * from './Migration20260721170000AddAdminAuditFilterIndexes';
+export * from './Migration20260721200000CreateAuthLoginAnalytics';
+export * from './Migration20260721201000GrantAuthLoginAnalyticsRead';

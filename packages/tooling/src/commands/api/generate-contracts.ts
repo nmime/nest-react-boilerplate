@@ -122,7 +122,9 @@ async function fetchOpenApi({
     DATABASE_URL: "",
     PORT: String(port),
   };
-  const command = ["pnpm", "exec", "nx", "serve", app, "--skip-nx-cache"];
+  // Nx's content-addressed cache remains correct for contract generation and
+  // avoids recompiling the complete dependency graph for every API.
+  const command = ["pnpm", "exec", "nx", "serve", app];
   const readyAttempts = readPositiveIntegerEnv("OPENAPI_READY_ATTEMPTS", 240);
   const child = spawn(command[0], command.slice(1), {
     detached: process.platform !== "win32",

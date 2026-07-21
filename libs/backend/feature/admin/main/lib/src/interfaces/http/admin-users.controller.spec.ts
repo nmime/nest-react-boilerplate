@@ -387,12 +387,9 @@ describe('AdminUsersController', () => {
     expect(users.countUsers).not.toHaveBeenCalledWith(expect.objectContaining({ role: AdminRole, status: 'active' }));
   });
 
-  it('returns audit log, dashboard metrics, and 404 for missing users', async () => {
+  it('returns dashboard metrics and 404 for missing users', async () => {
     const { controller, users } = createController();
 
-    await expect(controller.listAudit(principal, {})).resolves.toMatchObject({
-      data: { total: 1, items: [expect.objectContaining({ id: 'audit-id' })] },
-    });
     await expect(controller.dashboardSummary(principal)).resolves.toMatchObject({
       data: {
         totalUsers: 1,

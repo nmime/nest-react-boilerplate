@@ -11,6 +11,9 @@ data:
   AUTH_JWT_ISSUER: {{ .Values.config.authJwtIssuer | quote }}
   AUTH_JWT_AUDIENCE: {{ .Values.config.authJwtAudience | quote }}
   AUTH_JWT_EXPIRES_IN_SECONDS: {{ .Values.config.authJwtExpiresInSeconds | quote }}
+  AUTH_GEOIP_DATABASE_PATH: {{ .Values.config.authGeoipDatabasePath | quote }}
+  AUTH_LOGIN_NETWORK_RETENTION_DAYS: {{ .Values.config.authLoginNetworkRetentionDays | quote }}
+  AUTH_LOGIN_EVENT_RETENTION_DAYS: {{ .Values.config.authLoginEventRetentionDays | quote }}
   BETTER_AUTH_URL: {{ .Values.config.betterAuthUrl | quote }}
   BETTER_AUTH_TRUSTED_ORIGINS: {{ .Values.config.betterAuthTrustedOrigins | quote }}
   AUTH_ALLOWED_RETURN_URLS: {{ .Values.config.authAllowedReturnUrls | quote }}
@@ -33,6 +36,25 @@ data:
   TELEGRAM_BOT_WEBHOOK_URL: {{ .Values.config.telegramBotWebhookUrl | quote }}
   TELEGRAM_MINI_APP_URL: {{ .Values.config.telegramMiniAppUrl | quote }}
   TELEGRAM_BOT_MENU_BUTTON_ENABLED: {{ .Values.config.telegramBotMenuButtonEnabled | quote }}
+  AUTH_NOTIFICATION_PROVIDER: {{ .Values.config.authNotificationProvider | quote }}
+  NOTIFICATION_EMAIL_PROVIDER: {{ .Values.config.notificationEmailProvider | quote }}
+  NOTIFICATION_EMAIL_FROM: {{ .Values.config.notificationEmailFrom | quote }}
+  NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_ID: {{ .Values.config.notificationPayloadEncryptionKeyId | quote }}
+  NOTIFICATION_DELIVERIES_PER_ITERATION: {{ .Values.config.notificationDeliveriesPerIteration | quote }}
+  NOTIFICATION_REQUESTS_PER_SECOND: {{ .Values.config.notificationRequestsPerSecond | quote }}
+  NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS: {{ .Values.config.notificationDeliveriesPartitionAheadMonths | quote }}
+  NOTIFICATION_BROADCAST_REQUIRE_INDEPENDENT_APPROVAL: {{ .Values.config.notificationBroadcastRequireIndependentApproval | quote }}
+  NOTIFICATION_CONSUMER_INTERVAL_MS: {{ .Values.config.notificationConsumerIntervalMs | quote }}
+  NOTIFICATION_MATERIALIZATION_CHUNK_SIZE: {{ .Values.config.notificationMaterializationChunkSize | quote }}
+  NOTIFICATION_CSV_MAX_BYTES: {{ .Values.config.notificationCsvMaxBytes | quote }}
+  NOTIFICATION_CSV_MAX_ROWS: {{ .Values.config.notificationCsvMaxRows | quote }}
+  NOTIFICATION_FCM_PROJECT_ID: {{ .Values.config.notificationFcmProjectId | quote }}
+  NOTIFICATION_FCM_CLIENT_EMAIL: {{ .Values.config.notificationFcmClientEmail | quote }}
+  NOTIFICATION_FCM_TOKEN_URI: {{ .Values.config.notificationFcmTokenUri | quote }}
+  NOTIFICATION_APNS_TEAM_ID: {{ .Values.config.notificationApnsTeamId | quote }}
+  NOTIFICATION_APNS_KEY_ID: {{ .Values.config.notificationApnsKeyId | quote }}
+  NOTIFICATION_APNS_BUNDLE_ID: {{ .Values.config.notificationApnsBundleId | quote }}
+  NOTIFICATION_APNS_SANDBOX: {{ .Values.config.notificationApnsSandbox | quote }}
   {{ if .Values.config.redisUrl }}
   REDIS_URL: {{ .Values.config.redisUrl | quote }}
   {{ end }}

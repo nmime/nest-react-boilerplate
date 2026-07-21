@@ -60,7 +60,7 @@ export class AuthUserRepository {
       this.entityManager.find(AuthUserEntity, this.toUserFilter(input), {
         limit: normalizePageLimit(input.limit),
         offset: normalizePageOffset(input.offset),
-        orderBy: { createdAt: 'DESC' },
+        orderBy: { createdAt: 'DESC', id: 'ASC' },
       }),
       mapAuthUserRepositoryError,
     );
@@ -303,6 +303,23 @@ export class AuthUserRepository {
       ...(input.status ? { status: input.status } : {}),
       ...(input.role ? { roles: { $contains: [input.role] } } : {}),
       ...(input.permission ? { permissions: { $contains: [input.permission] } } : {}),
+      ...(input.locale ? { locale: input.locale } : {}),
+      ...(input.createdAfter || input.createdBefore
+        ? {
+            createdAt: {
+              ...(input.createdAfter ? { $gte: input.createdAfter } : {}),
+              ...(input.createdBefore ? { $lte: input.createdBefore } : {}),
+            },
+          }
+        : {}),
+      ...(input.lastLoginAfter || input.lastLoginBefore
+        ? {
+            lastLoginAt: {
+              ...(input.lastLoginAfter ? { $gte: input.lastLoginAfter } : {}),
+              ...(input.lastLoginBefore ? { $lte: input.lastLoginBefore } : {}),
+            },
+          }
+        : {}),
     };
   }
 }

@@ -11,10 +11,16 @@ secrets:
   existingSecret: ''
   create: false
   authJwtSecret: ''
+  authLoginAnalyticsIpHashSecret: ''
   betterAuthSecret: ''
   databaseUrl: ''
   telegramBotToken: ''
   telegramOidcClientSecret: ''
+  notificationPayloadEncryptionKey: ''
+  resendApiKey: ''
+  mailpaceServerToken: ''
+  notificationFcmPrivateKey: ''
+  notificationApnsPrivateKey: ''
 
 config:
   nodeEnv: production
@@ -22,6 +28,9 @@ config:
   authJwtIssuer: https://auth-app-api.example.com
   authJwtAudience: nest-react-boilerplate-api
   authJwtExpiresInSeconds: '3600'
+  authGeoipDatabasePath: ''
+  authLoginNetworkRetentionDays: '30'
+  authLoginEventRetentionDays: '365'
   betterAuthUrl: https://user-app.example.com
   betterAuthTrustedOrigins: https://user-app.example.com,https://example.com
   authAllowedReturnUrls: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
@@ -51,6 +60,25 @@ config:
   telegramBotWebhookUrl: https://telegram-bot-api.example.com/telegram/webhook
   telegramMiniAppUrl: https://user-app.example.com/telegram-mini-app
   telegramBotMenuButtonEnabled: 'true'
+  authNotificationProvider: resend
+  notificationEmailProvider: resend
+  notificationEmailFrom: Example <no-reply@example.com>
+  notificationPayloadEncryptionKeyId: primary
+  notificationDeliveriesPerIteration: '50'
+  notificationRequestsPerSecond: '30'
+  notificationDeliveriesPartitionAheadMonths: '6'
+  notificationBroadcastRequireIndependentApproval: 'true'
+  notificationConsumerIntervalMs: '1000'
+  notificationMaterializationChunkSize: '500'
+  notificationCsvMaxBytes: '10485760'
+  notificationCsvMaxRows: '100000'
+  notificationFcmProjectId: ''
+  notificationFcmClientEmail: ''
+  notificationFcmTokenUri: https://oauth2.googleapis.com/token
+  notificationApnsTeamId: ''
+  notificationApnsKeyId: ''
+  notificationApnsBundleId: ''
+  notificationApnsSandbox: 'false'
 
 postgresql:
   host: postgresql
@@ -183,6 +211,34 @@ apps:
     resources:
       requests: { cpu: 50m, memory: 128Mi }
       limits: { cpu: 250m, memory: 256Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  notificationScheduler:
+    kind: background
+    enabled: false
+    replicas: 1
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/notification-scheduler
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  notificationConsumer:
+    kind: background
+    enabled: false
+    replicas: 1
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/notification-consumer
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
     podSecurityContext: {}
     securityContext: {}
   # telegramBotWorker is not deployed in Helm. It uses long-polling (local dev only).

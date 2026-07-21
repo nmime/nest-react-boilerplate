@@ -10,8 +10,18 @@ export const AdminUsersAccessPolicyUpdatePermission = 'admin:users:access-policy
 export const AdminRolesReadPermission = 'admin:roles:read';
 export const AdminRolesWritePermission = 'admin:roles:write';
 export const AdminAuditReadPermission = 'admin:audit:read';
+export const AdminAuthLoginAnalyticsReadPermission = 'admin:auth-login-analytics:read';
 export const AdminSettingsReadPermission = 'admin:settings:read';
 export const AdminSettingsUpdatePermission = 'admin:settings:update';
+export const AdminNotificationTemplatesReadPermission = 'admin:notification-templates:read';
+export const AdminNotificationTemplatesWritePermission = 'admin:notification-templates:write';
+export const AdminNotificationTemplatesTestPermission = 'admin:notification-templates:test';
+export const AdminNotificationSegmentsReadPermission = 'admin:notification-segments:read';
+export const AdminNotificationSegmentsWritePermission = 'admin:notification-segments:write';
+export const AdminNotificationBroadcastsReadPermission = 'admin:notification-broadcasts:read';
+export const AdminNotificationBroadcastsWritePermission = 'admin:notification-broadcasts:write';
+export const AdminNotificationBroadcastsSendPermission = 'admin:notification-broadcasts:send';
+export const AdminNotificationBroadcastsApprovePermission = 'admin:notification-broadcasts:approve';
 export const AdminManageAllPermission = 'admin:manage:all';
 
 // Single source of truth for every RBAC permission. Resource/action pairs are
@@ -79,6 +89,12 @@ export const permissionCatalog = [
     description: 'Read redacted admin audit events.',
   },
   {
+    key: AdminAuthLoginAnalyticsReadPermission,
+    resource: 'admin.auth-login-analytics',
+    action: 'read',
+    description: 'Read tenant-scoped authentication login, GeoIP, language, and timezone analytics.',
+  },
+  {
     key: AdminSettingsReadPermission,
     resource: 'admin.settings',
     action: 'read',
@@ -89,6 +105,60 @@ export const permissionCatalog = [
     resource: 'admin.settings',
     action: 'update',
     description: 'Update guarded admin settings.',
+  },
+  {
+    key: AdminNotificationTemplatesReadPermission,
+    resource: 'admin.notification-templates',
+    action: 'read',
+    description: 'Read notification templates and immutable versions.',
+  },
+  {
+    key: AdminNotificationTemplatesWritePermission,
+    resource: 'admin.notification-templates',
+    action: 'write',
+    description: 'Create, edit, publish, and archive admin-owned notification templates.',
+  },
+  {
+    key: AdminNotificationTemplatesTestPermission,
+    resource: 'admin.notification-templates',
+    action: 'test',
+    description: 'Queue auditable test deliveries from notification templates.',
+  },
+  {
+    key: AdminNotificationSegmentsReadPermission,
+    resource: 'admin.notification-segments',
+    action: 'read',
+    description: 'Read notification audience segments and resolver metadata.',
+  },
+  {
+    key: AdminNotificationSegmentsWritePermission,
+    resource: 'admin.notification-segments',
+    action: 'write',
+    description: 'Create, update, archive, estimate, and upload notification segments.',
+  },
+  {
+    key: AdminNotificationBroadcastsReadPermission,
+    resource: 'admin.notification-broadcasts',
+    action: 'read',
+    description: 'Read broadcast configuration, state, audience, and delivery statistics.',
+  },
+  {
+    key: AdminNotificationBroadcastsWritePermission,
+    resource: 'admin.notification-broadcasts',
+    action: 'write',
+    description: 'Create and update notification broadcast drafts and collect audiences.',
+  },
+  {
+    key: AdminNotificationBroadcastsSendPermission,
+    resource: 'admin.notification-broadcasts',
+    action: 'send',
+    description: 'Send, schedule, pause, resume, and cancel notification broadcasts.',
+  },
+  {
+    key: AdminNotificationBroadcastsApprovePermission,
+    resource: 'admin.notification-broadcasts',
+    action: 'approve',
+    description: 'Independently approve notification broadcasts.',
   },
   {
     key: AdminManageAllPermission,

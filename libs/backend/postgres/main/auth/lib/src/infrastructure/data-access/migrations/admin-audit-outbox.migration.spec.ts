@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Migration20260605143000CreateAdminAuditLogs } from './Migration20260605143000CreateAdminAuditLogs';
 import { Migration20260606120000CreateTransactionalOutboxEvents } from './Migration20260606120000CreateTransactionalOutboxEvents';
+import { Migration20260721170000AddAdminAuditFilterIndexes } from './Migration20260721170000AddAdminAuditFilterIndexes';
 import { authMigrations } from './index';
 
 function collectSql(migration: { addSql(sql: string): void; up(): void }) {
@@ -42,5 +43,15 @@ describe('admin audit/outbox migrations', () => {
     expect(authMigrations.indexOf(Migration20260605143000CreateAdminAuditLogs)).toBeLessThan(
       authMigrations.indexOf(Migration20260606120000CreateTransactionalOutboxEvents),
     );
+  });
+
+  it('adds tenant-scoped resource and actor filters for admin inspection', () => {
+    const sql = collectSql(
+      new Migration20260721170000AddAdminAuditFilterIndexes(undefined as never, undefined as never),
+    );
+
+    expect(sql).toContain('"tenant_id", "resource", "created_at"');
+    expect(sql).toContain('"tenant_id", "actor_user_id", "created_at"');
+    expect(authMigrations).toContain(Migration20260721170000AddAdminAuditFilterIndexes);
   });
 });

@@ -16,13 +16,32 @@ describe(ResendEmailNotificationProvider.name, () => {
       provider.send({
         address: 'user@example.com',
         deliveryId: 'delivery-1',
-        message: { kind: 'email', subject: 'Confirm', text: '123456' },
+        message: {
+          kind: 'email',
+          subject: 'Confirm',
+          text: '123456',
+          html: '<strong>123456</strong>',
+          attachments: [
+            {
+              cid: 'logo',
+              contentType: 'image/png',
+              filename: 'logo.png',
+              inline: true,
+              source: 'aGVsbG8=',
+            },
+          ],
+        },
       }),
     ).resolves.toEqual({ status: NotificationStatus.Sent });
     expect(fetch).toHaveBeenCalledWith(
       'https://api.resend.com/emails',
       expect.objectContaining({ headers: expect.objectContaining({ 'idempotency-key': 'notification-delivery-1' }) }),
     );
+    const request = fetch.mock.calls[0]?.[1] as RequestInit;
+    expect(JSON.parse(typeof request.body === 'string' ? request.body : '')).toMatchObject({
+      html: '<strong>123456</strong>',
+      attachments: [{ content: 'aGVsbG8=', filename: 'logo.png', content_id: 'logo' }],
+    });
   });
 
   it('marks an invalid provider request as a permanent rejection', async () => {

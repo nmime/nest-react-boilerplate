@@ -34,12 +34,27 @@ export class ResendEmailNotificationProvider extends NotificationProviderStrateg
           'idempotency-key': `notification-${input.deliveryId}`,
           'user-agent': 'nest-react-boilerplate/notification-scheduler',
         },
-        body: JSON.stringify({ from, to: [input.address], subject: input.message.subject, text: input.message.text }),
+        body: JSON.stringify({
+          from,
+          to: [input.address],
+          subject: input.message.subject,
+          text: input.message.text,
+          ...(input.message.html ? { html: input.message.html } : {}),
+          ...(input.message.attachments?.length
+            ? {
+                attachments: input.message.attachments.map((attachment) => ({
+                  filename: attachment.filename ?? attachment.cid,
+                  ...(isHttpsUrl(attachment.source) ? { path: attachment.source } : { content: attachment.source }),
+                  ...(attachment.cid ? { content_id: attachment.cid } : {}),
+                })),
+              }
+            : {}),
+        }),
       });
       if (response.ok) {
         return { status: NotificationStatus.Sent };
       }
-      return mapProviderResponse(response.status, await providerErrorMessage(response));
+      return mapProviderResponse(response.status, await providerErrorMessage(response), retryAfterSeconds(response));
     } catch (error) {
       this.logger.warn(`Resend notification request failed: ${toSafeErrorMessage(error)}`);
       return {
@@ -67,12 +82,17 @@ export function unsupportedChannel(): NotificationProviderSendResult {
   };
 }
 
-export function mapProviderResponse(status: number, message: string | undefined): NotificationProviderSendResult {
+export function mapProviderResponse(
+  status: number,
+  message: string | undefined,
+  retryAfter?: number,
+): NotificationProviderSendResult {
   if (status === 429) {
     return {
       status: NotificationStatus.Pending,
       errorReason: NotificationErrorReason.RateLimit,
       errorMessage: message,
+      retryAfterSeconds: retryAfter,
     };
   }
   if (status >= 500) {
@@ -89,9 +109,27 @@ export function mapProviderResponse(status: number, message: string | undefined)
   };
 }
 
+export function retryAfterSeconds(response: Response): number | undefined {
+  const value = Number(response.headers.get('retry-after'));
+  return Number.isFinite(value) && value > 0 ? Math.ceil(value) : undefined;
+}
+
+function isHttpsUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export async function providerErrorMessage(response: Response): Promise<string | undefined> {
   const body = (await response.json().catch(() => ({}))) as { message?: unknown; name?: unknown };
-  const value = typeof body.message === 'string' ? body.message : typeof body.name === 'string' ? body.name : undefined;
+  let value: string | undefined;
+  if (typeof body.message === 'string') {
+    value = body.message;
+  } else if (typeof body.name === 'string') {
+    value = body.name;
+  }
   return value?.slice(0, 500);
 }
 

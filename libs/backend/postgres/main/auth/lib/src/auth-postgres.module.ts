@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AuthTokenCleanupService } from './auth-token-cleanup.service';
 import {
   AdminAuditLogEntitySchema,
+  AuthLoginEventEntitySchema,
   AuthLinkTokenEntitySchema,
   AuthMethodEntitySchema,
   AuthPermissionEntitySchema,
@@ -22,6 +23,7 @@ import {
 } from './infrastructure/data-access/entities';
 import {
   AdminAuditLogRepository,
+  AuthLoginEventRepository,
   AdminUserMutationRepository,
   AuthLinkTokenRepository,
   AuthMethodRepository,
@@ -48,6 +50,7 @@ import {
       AuthLinkTokenEntitySchema,
       AuthProviderTokenEntitySchema,
       AdminAuditLogEntitySchema,
+      AuthLoginEventEntitySchema,
       TransactionalOutboxEventEntitySchema,
       AuthRoleEntitySchema,
       AuthPermissionEntitySchema,
@@ -65,6 +68,7 @@ import {
     AuthLinkTokenRepository,
     AuthProviderTokenRepository,
     AdminAuditLogRepository,
+    AuthLoginEventRepository,
     AdminUserMutationRepository,
     AuthRoleRepository,
     AuthUserRoleRepository,
@@ -80,6 +84,7 @@ import {
     AuthLinkTokenRepository,
     AuthProviderTokenRepository,
     AdminAuditLogRepository,
+    AuthLoginEventRepository,
     AdminUserMutationRepository,
     AuthRoleRepository,
     AuthUserRoleRepository,

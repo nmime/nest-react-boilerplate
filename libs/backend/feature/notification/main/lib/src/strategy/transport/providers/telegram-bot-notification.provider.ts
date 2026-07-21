@@ -29,6 +29,14 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
     if (!token) {
       return this.configurationError('BOT_TOKEN is required for Telegram notification delivery.');
     }
+    const invalidMessage = validateTelegramMessage(input.message);
+    if (invalidMessage) {
+      return {
+        status: NotificationStatus.Error,
+        errorReason: NotificationErrorReason.InvalidMessage,
+        errorMessage: invalidMessage,
+      };
+    }
 
     const method = input.message.image ? 'sendPhoto' : 'sendMessage';
     const payload = input.message.image
@@ -36,9 +44,9 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
           chat_id: input.address,
           photo: input.message.image,
           caption: input.message.text,
-          ...toTelegramOptions(input),
+          ...toTelegramOptions(input, false),
         }
-      : { chat_id: input.address, text: input.message.text, ...toTelegramOptions(input) };
+      : { chat_id: input.address, text: input.message.text, ...toTelegramOptions(input, true) };
 
     try {
       const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
@@ -50,7 +58,7 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
       if (response.ok && result.ok !== false) {
         return { status: NotificationStatus.Sent };
       }
-      return this.mapError(response.status, result.description);
+      return this.mapError(response.status, result.description, result.parameters?.retry_after);
     } catch (error) {
       this.logger.warn(`Telegram notification request failed: ${toSafeErrorMessage(error)}`);
       return {
@@ -61,13 +69,18 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
     }
   }
 
-  private mapError(status: number, description: string | undefined): NotificationProviderSendResult {
+  private mapError(
+    status: number,
+    description: string | undefined,
+    retryAfterSeconds?: number,
+  ): NotificationProviderSendResult {
     const message = description?.slice(0, 500);
     if (status === 429) {
       return {
         status: NotificationStatus.Pending,
         errorReason: NotificationErrorReason.RateLimit,
         errorMessage: message,
+        retryAfterSeconds,
       };
     }
     if (status >= 500) {
@@ -129,15 +142,24 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
   }
 }
 
-type TelegramResponse = { ok?: boolean; description?: string };
+type TelegramResponse = { ok?: boolean; description?: string; parameters?: { retry_after?: number } };
 
-function toTelegramOptions(input: NotificationProviderSendInput): Record<string, unknown> {
+function toTelegramOptions(input: NotificationProviderSendInput, includeLinkPreview: boolean): Record<string, unknown> {
   if (input.message.kind !== 'bot') {
     return {};
   }
+  const linkPreviewOptions =
+    includeLinkPreview &&
+    (input.extra?.disableWebPagePreview !== undefined || input.extra?.linkPreviewUrl !== undefined)
+      ? {
+          is_disabled: input.extra.disableWebPagePreview ?? false,
+          url: input.extra.linkPreviewUrl,
+        }
+      : undefined;
   return {
+    parse_mode: 'HTML',
     disable_notification: input.extra?.disableNotification,
-    link_preview_options: input.extra?.disableWebPagePreview ? { is_disabled: true } : undefined,
+    link_preview_options: linkPreviewOptions,
     reply_markup: input.message.buttons ? { inline_keyboard: toTelegramButtons(input.message.buttons) } : undefined,
   };
 }
@@ -145,13 +167,74 @@ function toTelegramOptions(input: NotificationProviderSendInput): Record<string,
 function toTelegramButtons(rows: NotificationMessageButton[][]): Record<string, unknown>[][] {
   return rows.map((row) =>
     row.map((button) => {
-      if (button.callback) return { text: button.text, callback_data: button.callback };
-      if (button.webApp) return { text: button.text, web_app: { url: button.webApp } };
-      if (button.url) return { text: button.text, url: button.url };
-      if (button.switchInlineQuery) return { text: button.text, switch_inline_query: button.switchInlineQuery };
-      return { text: button.text, callback_data: 'noop' };
+      const base = {
+        text: button.text,
+        ...(button.iconCustomEmojiId ? { icon_custom_emoji_id: button.iconCustomEmojiId } : {}),
+      };
+      if (button.callback) {
+        return { ...base, callback_data: button.callback };
+      }
+      if (button.webApp) {
+        return { ...base, web_app: { url: button.webApp } };
+      }
+      if (button.url) {
+        return { ...base, url: button.url };
+      }
+      if (button.switchInlineQuery !== undefined) {
+        return { ...base, switch_inline_query: button.switchInlineQuery };
+      }
+      throw new Error('Telegram button passed validation without an action.');
     }),
   );
+}
+
+function validateTelegramMessage(
+  message: Extract<NotificationProviderSendInput['message'], { kind: 'bot' }> & {
+    kind: 'bot';
+  },
+): string | undefined {
+  const maximumTextLength = message.image ? 1024 : 4096;
+  if (!message.text || message.text.length > maximumTextLength) {
+    return `Telegram message text must contain 1 to ${maximumTextLength} characters.`;
+  }
+  if ((message.buttons?.length ?? 0) > 100) {
+    return 'Telegram inline keyboards must not exceed 100 rows.';
+  }
+  for (const row of message.buttons ?? []) {
+    if (row.length === 0 || row.length > 8) {
+      return 'Telegram inline keyboard rows must contain 1 to 8 buttons.';
+    }
+    for (const button of row) {
+      const error = validateTelegramButton(button);
+      if (error) {
+        return error;
+      }
+    }
+  }
+  return undefined;
+}
+
+function validateTelegramButton(button: NotificationMessageButton): string | undefined {
+  const actions = [button.callback, button.webApp, button.url, button.switchInlineQuery].filter(
+    (value) => value !== undefined,
+  );
+  if (actions.length !== 1) {
+    return 'Every Telegram button must define exactly one action.';
+  }
+  if (!button.text.trim()) {
+    return 'Telegram button text must not be empty.';
+  }
+  const hasEmptyAction =
+    (button.callback !== undefined && !button.callback) ||
+    (button.webApp !== undefined && !button.webApp) ||
+    (button.url !== undefined && !button.url);
+  if (hasEmptyAction) {
+    return 'Telegram callback, web-app, and URL actions must not be empty.';
+  }
+  if (button.callback && Buffer.byteLength(button.callback, 'utf8') > 64) {
+    return 'Telegram callback data must not exceed 64 bytes.';
+  }
+  return undefined;
 }
 
 function toSafeErrorMessage(error: unknown): string {

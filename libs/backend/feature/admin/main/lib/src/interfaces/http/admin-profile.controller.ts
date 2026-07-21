@@ -9,9 +9,8 @@ import {
   RequirePermissions,
   RequireRoles,
 } from '@app/backend-feature-auth-shared';
-import { AdminProfileReadPermission, AdminRole } from '@app/backend-feature-admin-shared';
+import { AdminProfileReadPermission, AdminRbacGuard, AdminRole } from '@app/backend-feature-admin-shared';
 import { GetAdminProfileUseCase, type AdminProfilePayload } from '../../application';
-import { AdminRbacGuard } from './admin-rbac.guard';
 import { AdminProfilePayloadDto, AdminProfileViewDto, AuthenticatedPrincipalDto } from './dto';
 
 export const getAuthenticatedPrincipalDtoType = () => AuthenticatedPrincipalDto;

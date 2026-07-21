@@ -447,20 +447,25 @@ describe('planner — M1 validateSelection rejection', () => {
       'auth-app-api',
       'fullstack-e2e',
       'landing-app',
+      'notification-consumer',
+      'notification-scheduler',
       'user-app',
       'user-app-api',
     ]);
   });
 
   it('rejects config where expanded deps still have issues', () => {
-    // Notifications use the PostgreSQL queue and dedicated scheduler.
-    // Dependency expansion wires both from scratch.
+    // Notifications use the PostgreSQL queue, object storage, a dedicated
+    // consumer, and a dedicated scheduler. Dependency expansion wires all of
+    // them from scratch.
     const config = parseNrbConfig({
       schemaVersion,
       capabilities: ['notifications'],
     });
     const resolved = resolveConfig(config);
     assert.ok(resolved.capabilities.includes('postgres'));
+    assert.ok(resolved.capabilities.includes('s3'));
+    assert.ok(resolved.apps.includes('notification-consumer'));
     assert.ok(resolved.apps.includes('notification-scheduler'));
     assert.ok(!resolved.capabilities.includes('telegram-bot'));
     assert.ok(!resolved.capabilities.includes('redis'));
@@ -562,8 +567,8 @@ describe('planner — runtime workspace manifest', () => {
 
 describe('planner — concrete capability activation', () => {
   const summary = {
-    apps: ['notification-scheduler', 'user-app-api'],
-    capabilities: ['notifications', 'postgres'],
+    apps: ['notification-consumer', 'notification-scheduler', 'user-app-api'],
+    capabilities: ['notifications', 'postgres', 's3'],
     configHash: 'abc',
   };
 
@@ -572,10 +577,16 @@ describe('planner — concrete capability activation', () => {
     const notifications = manifest.capabilities.find((entry: { id: string }) => entry.id === 'notifications');
     assert.ok(notifications.projects.includes('@app/backend-feature-notification-main'));
     assert.ok(notifications.dockerServices.includes('notification-scheduler'));
+    assert.ok(notifications.dockerServices.includes('notification-consumer'));
     assert.ok(notifications.environmentVariables.includes('NOTIFICATION_REQUESTS_PER_SECOND'));
     assert.ok(
       notifications.generatedFiles.includes(
         'apps/backend/notification/notification-scheduler/src/capabilities.generated.ts',
+      ),
+    );
+    assert.ok(
+      notifications.generatedFiles.includes(
+        'apps/backend/notification/notification-consumer/src/capabilities.generated.ts',
       ),
     );
     assert.ok(
@@ -587,14 +598,17 @@ describe('planner — concrete capability activation', () => {
 
   it('generates producer wiring for APIs and delivery wiring for the scheduler', () => {
     const producer = generateBackendCapabilityModule('user-app-api', summary).content;
+    const consumer = generateBackendCapabilityModule('notification-consumer', summary).content;
     const scheduler = generateBackendCapabilityModule('notification-scheduler', summary).content;
     assert.match(producer, /enableScheduler: false/);
+    assert.match(consumer, /enableConsumer: true/);
     assert.match(scheduler, /enableScheduler: true/);
     assert.doesNotMatch(scheduler, /TelegramBotModule/);
   });
 
   it('generates compose and bootstrap activation environment', () => {
     const environment = generateComposeEnvironment(summary).content;
+    assert.match(environment, /COMPOSE_PROFILES=.*notification-consumer/);
     assert.match(environment, /COMPOSE_PROFILES=.*notification-scheduler/);
     assert.match(environment, /OTEL_ENABLED=false/);
   });

@@ -48,6 +48,18 @@ export const releaseImages = [
     'telegram-bot-api',
   ),
   image(
+    'notification-scheduler',
+    'backend',
+    `NX_PROJECT=notification-scheduler\nBUILD_OUTPUT=dist/apps/backend/notification/notification-scheduler\nPNPM_VERSION=${pnpmVersion}`,
+    'notification-scheduler',
+  ),
+  image(
+    'notification-consumer',
+    'backend',
+    `NX_PROJECT=notification-consumer\nBUILD_OUTPUT=dist/apps/backend/notification/notification-consumer\nPNPM_VERSION=${pnpmVersion}`,
+    'notification-consumer',
+  ),
+  image(
     'admin-app',
     'frontend',
     `NX_PROJECT=admin-app\nFRONTEND_OUTPUT=dist/apps/frontend/admin\nVITE_API_BASE_URL_MODE=same-origin\nPNPM_VERSION=${pnpmVersion}`,

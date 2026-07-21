@@ -15,7 +15,7 @@ import {
   RequiredPermissionsMetadataKey,
   RequiredRolesMetadataKey,
 } from '@app/backend-feature-auth-shared';
-import { AdminRbacGuard } from './admin-rbac.guard';
+import { AdminRbacGuard } from '@app/backend-feature-admin-shared';
 import { AdminProfileController } from './admin-profile.controller';
 import { AdminUsersController } from './admin-users.controller';
 

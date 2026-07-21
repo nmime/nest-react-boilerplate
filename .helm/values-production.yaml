@@ -27,6 +27,11 @@ imagePullSecrets:
   - name: ghcr-credentials
 
 config:
+  # Mount a licensed, regularly updated GeoIP2/GeoLite2 City MMDB and set this
+  # path to enable geo enrichment. Empty keeps geo fields unknown.
+  authGeoipDatabasePath: ''
+  authLoginNetworkRetentionDays: '30'
+  authLoginEventRetentionDays: '365'
   nodeEnv: production
   corsOrigins: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
   authJwtIssuer: https://auth-app-api.example.com
@@ -150,6 +155,40 @@ apps:
     replicas: 1
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/telegram-bot-api
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ''
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ['ALL'] }
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  notificationScheduler:
+    enabled: true
+    replicas: 1
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/notification-scheduler
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ''
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ['ALL'] }
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  notificationConsumer:
+    enabled: true
+    replicas: 1
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/notification-consumer
       tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
       digest: ''
       pullPolicy: IfNotPresent

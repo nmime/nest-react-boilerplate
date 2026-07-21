@@ -8,10 +8,21 @@ export class Migration20260715100000CreateNotifications extends Migration {
         "id" uuid not null,
         "code" varchar(128) not null,
         "description" text null,
+        "tenant_id" uuid null,
+        "name" varchar(160) not null,
+        "source" varchar(16) not null default 'code',
+        "status" varchar(16) not null default 'published',
+        "current_version_id" uuid null,
+        "created_by" varchar(160) null,
+        "updated_by" varchar(160) null,
         "created_at" timestamptz not null default now(),
         "updated_at" timestamptz not null default now(),
         constraint "pk__notification_templates" primary key ("id"),
-        constraint "uq__notification_templates__code" unique ("code")
+        constraint "uq__notification_templates__code" unique ("code"),
+        constraint "ck__notification_templates__source" check ("source" in ('code', 'admin')),
+        constraint "ck__notification_templates__status" check ("status" in ('draft', 'published', 'archived')),
+        constraint "ck__notification_templates__tenant"
+          check (("source" = 'code' and "tenant_id" is null) or ("source" = 'admin' and "tenant_id" is not null))
       );
     `);
 
@@ -53,7 +64,7 @@ export class Migration20260715100000CreateNotifications extends Migration {
         constraint "fk__notifications__template_id"
           foreign key ("template_id") references "notification_templates" ("id") on delete restrict,
         constraint "ck__notifications__target_type"
-          check ("target_type" in ('user', 'email', 'telegram-chat', 'system-telegram-chat'))
+          check ("target_type" in ('user', 'email', 'push-token', 'telegram-chat', 'system-telegram-chat'))
       );
     `);
     this.addSql('create index "ix__notifications__template_id" on "notifications" ("template_id");');
@@ -74,6 +85,7 @@ export class Migration20260715100000CreateNotifications extends Migration {
         "error" jsonb null,
         "attempts" int not null default 0,
         "provider" varchar(32) not null,
+        "broadcast_id" uuid null,
         "priority" int not null default 100,
         "send_after" timestamptz not null default now(),
         "sent_at" timestamptz null,
@@ -83,11 +95,11 @@ export class Migration20260715100000CreateNotifications extends Migration {
         constraint "uq__notification_deliveries__notification_id__channel"
           unique ("notification_id", "channel", "created_at"),
         constraint "ck__notification_deliveries__target_type"
-          check ("target_type" in ('user', 'email', 'telegram-chat', 'system-telegram-chat')),
+          check ("target_type" in ('user', 'email', 'push-token', 'telegram-chat', 'system-telegram-chat')),
         constraint "ck__notification_deliveries__channel"
           check ("channel" in ('bot', 'email', 'push')),
         constraint "ck__notification_deliveries__status"
-          check ("status" in ('pending', 'sent', 'error', 'rejected')),
+          check ("status" in ('pending', 'paused', 'sent', 'error', 'rejected', 'cancelled')),
         constraint "ck__notification_deliveries__provider"
           check ("provider" in ('telegram-bot', 'discord-bot', 'resend', 'mailpace', 'google-fcm', 'apple-apns')),
         constraint "ck__notification_deliveries__attempts" check ("attempts" >= 0)

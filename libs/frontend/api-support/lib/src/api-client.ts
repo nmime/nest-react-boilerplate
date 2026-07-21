@@ -69,6 +69,9 @@ const canonicalHeaderName = (header: string): string => {
   if (lowerHeader === 'content-type') {
     return 'Content-Type';
   }
+  if (lowerHeader === 'x-client-timezone') {
+    return 'X-Client-Timezone';
+  }
 
   return header;
 };
@@ -84,6 +87,10 @@ export const buildApiHeaders = ({
     Accept: 'application/json',
     'Accept-Language': getApiLocale(),
   };
+  const clientTimezone = getClientTimezone();
+  if (clientTimezone) {
+    headers['X-Client-Timezone'] = clientTimezone;
+  }
 
   if (authToken?.trim()) {
     headers.Authorization = `Bearer ${authToken.trim()}`;
@@ -99,7 +106,22 @@ export const buildApiHeaders = ({
   }
 
   headers['Accept-Language'] = getApiLocale();
+  if (clientTimezone) {
+    headers['X-Client-Timezone'] = clientTimezone;
+  }
   return headers;
+};
+
+export const getClientTimezone = (): string | undefined => {
+  if (typeof globalThis.window === 'undefined') {
+    return undefined;
+  }
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone.trim();
+    return timezone && timezone.length <= 64 ? timezone : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 const parseBody = async (response: Response): Promise<unknown> => {

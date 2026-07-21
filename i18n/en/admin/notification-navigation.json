@@ -1,0 +1,11 @@
+{
+  "admin.action.notificationTemplates": "Message templates",
+  "admin.action.notificationSegments": "Audiences",
+  "admin.action.notificationBroadcasts": "Broadcasts",
+  "admin.notification.description": "Create localized messages, select reusable audiences, and operate durable broadcasts across email, bots, and push.",
+  "admin.notification.common.success": "Notification operation completed.",
+  "admin.notification.common.failed": "Notification operation failed.",
+  "admin.permission.notificationTemplatesMissing": "Missing notification template read permission.",
+  "admin.permission.notificationSegmentsMissing": "Missing notification segment read permission.",
+  "admin.permission.notificationBroadcastsMissing": "Missing notification broadcast read permission."
+}

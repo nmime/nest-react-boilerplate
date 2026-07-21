@@ -27,6 +27,7 @@ export const backendAppIds = [
   'auth-app-api',
   'discord-app-api',
   'telegram-bot-api',
+  'notification-consumer',
   'notification-scheduler',
 ] as const;
 export type BackendAppId = (typeof backendAppIds)[number];

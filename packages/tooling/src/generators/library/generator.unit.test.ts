@@ -282,6 +282,14 @@ describe('library generator', () => {
         skipFormat: true,
       });
       await libraryGenerator(tree, {
+        name: 'billing-admin',
+        kind: 'backend',
+        type: 'feature-admin',
+        scope: 'billing',
+        description: 'Owns billing administration endpoints and privileged application orchestration.',
+        skipFormat: true,
+      });
+      await libraryGenerator(tree, {
         name: 'billing-store',
         kind: 'backend',
         type: 'data-access',
@@ -298,11 +306,15 @@ describe('library generator', () => {
       });
 
       assert.ok(tree.exists('libs/backend/feature/billing/main/lib/project.json'));
+      assert.ok(tree.exists('libs/backend/feature/billing/admin/lib/project.json'));
       assert.ok(tree.exists('libs/backend/postgres/main/billing/lib/project.json'));
       assert.ok(tree.exists('libs/frontend/feature/billing/shared/lib/project.json'));
       const tsconfig = JSON.parse(tree.read('tsconfig.base.json', 'utf8')!);
       assert.deepEqual(tsconfig.compilerOptions.paths['@app/backend-feature-billing-main'], [
         'libs/backend/feature/billing/main/lib/src/index.ts',
+      ]);
+      assert.deepEqual(tsconfig.compilerOptions.paths['@app/backend-feature-billing-admin'], [
+        'libs/backend/feature/billing/admin/lib/src/index.ts',
       ]);
       assert.deepEqual(tsconfig.compilerOptions.paths['@app/backend-postgres-main-billing'], [
         'libs/backend/postgres/main/billing/lib/src/index.ts',
@@ -317,6 +329,10 @@ describe('library generator', () => {
       const { libraryGenerator } = await import('./generator.js');
       await assert.rejects(
         () => libraryGenerator(tree, { name: 'bad', kind: 'frontend', type: 'data-access' }),
+        /backend-only/,
+      );
+      await assert.rejects(
+        () => libraryGenerator(tree, { name: 'bad-admin', kind: 'frontend', type: 'feature-admin' }),
         /backend-only/,
       );
       await assert.rejects(

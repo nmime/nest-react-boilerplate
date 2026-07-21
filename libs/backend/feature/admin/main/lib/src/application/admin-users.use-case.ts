@@ -11,8 +11,6 @@ import { AdminApplicationError } from './admin-errors';
 import {
   normalizeAdminPage,
   type AdminRequestContext,
-  type AdminAuditLogListPayload,
-  type AdminAuditQuery,
   type AdminDashboardSummary,
   type AdminUserListPayload,
   type AdminUserQuery,
@@ -116,26 +114,6 @@ export class AdminUsersUseCase {
     }
 
     return toAdminUserView(result.after);
-  }
-
-  async listAudit(principal: AuthenticatedPrincipal, query: AdminAuditQuery): Promise<AdminAuditLogListPayload> {
-    const { limit, offset } = normalizeAdminPage(query);
-    const filter = {
-      tenantId: resolveTenantId(principal),
-      action: query.action,
-      actorUserId: query.actorUserId,
-      targetUserId: query.targetUserId,
-      limit,
-      offset,
-    };
-    const [items, total] = await Promise.all([this.auditLogs.list(filter), this.auditLogs.count(filter)]);
-
-    return {
-      items: unwrapRepositoryResult<AdminAuditLogEntity[]>(items).map(toAdminAuditLogView),
-      total: unwrapRepositoryResult<number>(total),
-      limit,
-      offset,
-    };
   }
 
   async dashboardSummary(principal: AuthenticatedPrincipal): Promise<AdminDashboardSummary> {

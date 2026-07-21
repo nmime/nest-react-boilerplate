@@ -19,9 +19,11 @@ export function isNotificationDeliveryChannel(value: NotificationChannel): value
 
 export enum NotificationStatus {
   Pending = 'pending',
+  Paused = 'paused',
   Sent = 'sent',
   Error = 'error',
   Rejected = 'rejected',
+  Cancelled = 'cancelled',
 }
 
 export enum NotificationPriority {
@@ -33,6 +35,7 @@ export enum NotificationPriority {
 export enum NotificationTargetType {
   User = 'user',
   Email = 'email',
+  PushToken = 'push-token',
   TelegramChat = 'telegram-chat',
   SystemTelegramChat = 'system-telegram-chat',
 }
@@ -64,6 +67,7 @@ export enum NotificationErrorReason {
   NotFoundTargetStrategy = 'not-found-target-strategy',
   NotFoundMessageStrategy = 'not-found-message-strategy',
   NotFoundMessage = 'not-found-message',
+  InvalidMessage = 'invalid-message',
   UnsupportedChannel = 'unsupported-channel',
   InvalidRecipient = 'invalid-recipient',
   ProviderConfiguration = 'provider-configuration',
@@ -85,6 +89,7 @@ export interface NotificationExtra {
   useLanguage?: string;
   disableNotification?: boolean;
   disableWebPagePreview?: boolean;
+  linkPreviewUrl?: string;
 }
 
 /**
@@ -120,6 +125,7 @@ export interface NotificationEmailAttachment {
 export interface NotificationEmailChannelContent {
   subject: Record<string, string>;
   body: Record<string, string>;
+  html?: Record<string, string>;
   attachments?: Record<string, NotificationEmailAttachment[]>;
 }
 
@@ -177,6 +183,12 @@ export interface NotificationTemplateRecord {
   id: string;
   code: string;
   description: string | null;
+  source?: NotificationTemplateSource;
+  name?: string;
+  status?: NotificationTemplateStatus;
+  versionId?: string;
+  version?: number;
+  variablesSchema?: NotificationVariablesSchema;
   channels: Partial<Record<NotificationChannel, NotificationTemplateChannelRecord>>;
 }
 
@@ -189,6 +201,8 @@ export interface NotificationRecord<T = NotificationData> {
   sensitiveData: NotificationSensitiveData | null;
   extra: NotificationExtra | null;
   inAppVisible: boolean;
+  broadcastId?: string | null;
+  templateVersionId: string;
   createdAt: Date;
 }
 
@@ -202,6 +216,7 @@ export interface NotificationDeliveryRecord {
   error: NotificationError | null;
   attempts: number;
   provider: NotificationDeliveryProvider;
+  broadcastId?: string | null;
   priority: number;
   sendAfter: Date;
   sentAt: Date | null;
@@ -219,4 +234,171 @@ export interface NotificationDeliveryResult {
   createdAt: Date;
   status: NotificationStatus;
   error?: NotificationError | null;
+  retryAfterSeconds?: number;
+}
+
+export enum NotificationTemplateSource {
+  Code = 'code',
+  Admin = 'admin',
+}
+
+export enum NotificationTemplateStatus {
+  Draft = 'draft',
+  Published = 'published',
+  Archived = 'archived',
+}
+
+export type NotificationVariableType = 'string' | 'number' | 'boolean' | 'url' | 'date-time';
+
+export interface NotificationVariableDefinition {
+  type: NotificationVariableType;
+  required?: boolean;
+  example?: string | number | boolean;
+  sensitive?: boolean;
+}
+
+export type NotificationVariablesSchema = Record<string, NotificationVariableDefinition>;
+
+export enum NotificationSegmentKind {
+  Static = 'static',
+  Dynamic = 'dynamic',
+}
+
+export enum NotificationSegmentStatus {
+  Active = 'active',
+  Archived = 'archived',
+}
+
+export enum NotificationSegmentUploadStatus {
+  Pending = 'pending',
+  Processing = 'processing',
+  Completed = 'completed',
+  Failed = 'failed',
+}
+
+export enum NotificationAudienceSnapshotStatus {
+  Created = 'created',
+  Collecting = 'collecting',
+  Completed = 'completed',
+  Failed = 'failed',
+}
+
+export enum NotificationBroadcastStatus {
+  Draft = 'draft',
+  Collecting = 'collecting',
+  Ready = 'ready',
+  Scheduled = 'scheduled',
+  Sending = 'sending',
+  Paused = 'paused',
+  Completed = 'completed',
+  Cancelled = 'cancelled',
+  Failed = 'failed',
+}
+
+export interface NotificationAudienceMember {
+  targetType: NotificationTargetType;
+  targetId: string;
+  language?: string;
+  variables?: NotificationData;
+}
+
+export interface NotificationTemplateVersionRecord {
+  id: string;
+  templateId: string;
+  version: number;
+  variablesSchema: NotificationVariablesSchema;
+  channels: Partial<Record<NotificationChannel, NotificationTemplateChannelRecord>>;
+  publishedAt: Date | null;
+  publishedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface NotificationTemplateAdminRecord {
+  id: string;
+  tenantId: string | null;
+  code: string;
+  name: string;
+  description: string | null;
+  source: NotificationTemplateSource;
+  status: NotificationTemplateStatus;
+  currentVersionId: string | null;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  versions: NotificationTemplateVersionRecord[];
+}
+
+export interface NotificationSegmentRecord {
+  id: string;
+  tenantId: string;
+  name: string;
+  kind: NotificationSegmentKind;
+  resolverKey: string | null;
+  parameters: NotificationData;
+  status: NotificationSegmentStatus;
+  memberCount: number;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface NotificationSegmentUploadRecord {
+  id: string;
+  segmentId: string;
+  objectKey: string;
+  checksum: string;
+  status: NotificationSegmentUploadStatus;
+  totalRows: number;
+  validRows: number;
+  duplicateRows: number;
+  invalidRows: number;
+  errors: string[];
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface NotificationAudienceSnapshotRecord {
+  id: string;
+  broadcastId: string;
+  snapshotAt: Date;
+  status: NotificationAudienceSnapshotStatus;
+  resolvedCount: number;
+  distinctCount: number;
+  duplicateCount: number;
+  conflictCount: number;
+  invalidCount: number;
+  error: NotificationError | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface NotificationBroadcastRecord {
+  id: string;
+  tenantId: string;
+  name: string;
+  templateVersionId: string;
+  channel: NotificationDeliveryChannel;
+  provider: NotificationDeliveryProvider;
+  priority: number;
+  status: NotificationBroadcastStatus;
+  scheduledAt: Date | null;
+  globalVariables: NotificationData;
+  segmentIds: string[];
+  snapshot: NotificationAudienceSnapshotRecord | null;
+  snapshotCount: number;
+  queuedCount: number;
+  sentCount: number;
+  rejectedCount: number;
+  errorCount: number;
+  pendingCount: number;
+  cancelledCount: number;
+  materializedAt: Date | null;
+  createdBy: string;
+  approvedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }

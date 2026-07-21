@@ -12,11 +12,15 @@ type AuthAction = Extract<AuthUserTokenPurpose, 'email_verification' | 'password
 
 const actionTemplateCode: Record<AuthAction, string> = {
   email_verification: 'auth.email-verification-code',
+  // This is a public template identifier, not a credential.
+  // eslint-disable-next-line sonarjs/no-hardcoded-passwords
   password_reset: 'auth.password-reset-code',
 };
 
 const linkTemplateCode = {
   email_verification: 'auth.email-verification-link',
+  // This is a public template identifier, not a credential.
+  // eslint-disable-next-line sonarjs/no-hardcoded-passwords
   password_reset: 'auth.password-reset-link',
 } as const;
 
@@ -80,18 +84,18 @@ function configuredAuthRoute(): {
   channel: NotificationChannel.Bot | NotificationChannel.Email;
   provider: NotificationDeliveryProvider;
 } {
-  const value = (process.env.AUTH_NOTIFICATION_PROVIDER ?? process.env.NOTIFICATION_EMAIL_PROVIDER ?? 'resend')
+  const configured = (process.env.AUTH_NOTIFICATION_PROVIDER ?? process.env.NOTIFICATION_EMAIL_PROVIDER ?? 'resend')
     .trim()
     .toLowerCase();
-  switch (value) {
-    case NotificationDeliveryProvider.TelegramBot:
+  switch (configured) {
+    case 'telegram-bot':
       return { channel: NotificationChannel.Bot, provider: NotificationDeliveryProvider.TelegramBot };
-    case NotificationDeliveryProvider.DiscordBot:
+    case 'discord-bot':
       return { channel: NotificationChannel.Bot, provider: NotificationDeliveryProvider.DiscordBot };
-    case NotificationDeliveryProvider.MailPace:
-      return { channel: NotificationChannel.Email, provider: NotificationDeliveryProvider.MailPace };
-    case NotificationDeliveryProvider.Resend:
+    case 'resend':
       return { channel: NotificationChannel.Email, provider: NotificationDeliveryProvider.Resend };
+    case 'mailpace':
+      return { channel: NotificationChannel.Email, provider: NotificationDeliveryProvider.MailPace };
     default:
       throw new ServiceUnavailableException(
         'AUTH_NOTIFICATION_PROVIDER must be telegram-bot, discord-bot, resend, or mailpace.',

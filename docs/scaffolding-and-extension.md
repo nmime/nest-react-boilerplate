@@ -259,11 +259,14 @@ responsibility that is written into the generated local README:
 ```bash
 pnpm nrb add lib money --kind common --type util --scope shared --description "Normalizes monetary values for API and browser consumers." --dry-run
 pnpm nrb add lib billing --kind backend --type feature-main --scope billing --description "Owns billing use cases and exposes the Nest feature module to billing APIs." --dry-run
+pnpm nrb add lib billing-admin --kind backend --type feature-admin --scope billing --description "Owns billing administration endpoints and privileged application orchestration." --dry-run
 pnpm nrb add lib billing-ui --kind frontend --type ui --scope billing --description "Provides billing presentation primitives to the user and admin frontends." --dry-run
 ```
 
 Supported roles are `common`, `util`, `ui`, `sdk`, `feature-main`,
-`feature-shared`, `data-access`, `test-util`, and `asset`. Run without
+`feature-admin`, `feature-shared`, `data-access`, `test-util`, and `asset`.
+`feature-admin` is backend-only and owns a domain's privileged HTTP and
+application surface under `libs/backend/feature/<scope>/admin/lib`. Run without
 `--dry-run`, then run `pnpm run lib:configs:check`, the generated project's
 build/test targets, and the relevant boundary check. Generated libraries use
 the owning shared runtime manifest by default; run `pnpm install` only if a

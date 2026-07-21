@@ -42,9 +42,12 @@ import {
     },
     {
       provide: AdminRolesUseCase,
-      inject: [AuthRoleRepository, AdminUserMutationRepository],
-      useFactory: (roles: AuthRoleRepository, adminUserMutations: AdminUserMutationRepository) =>
-        new AdminRolesUseCase(roles, adminUserMutations),
+      inject: [AuthRoleRepository, AdminUserMutationRepository, AdminAuditLogRepository],
+      useFactory: (
+        roles: AuthRoleRepository,
+        adminUserMutations: AdminUserMutationRepository,
+        auditLogs: AdminAuditLogRepository,
+      ) => new AdminRolesUseCase(roles, adminUserMutations, auditLogs),
     },
     {
       provide: ProblemPresentationsUseCase,

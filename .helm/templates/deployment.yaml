@@ -42,15 +42,19 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if ne $app.kind "background" }}
           ports:
             - name: http
               containerPort: {{ $app.port }}
+          {{- end }}
+          {{- if ne $app.kind "background" }}
           env:
             # Keep the application listener aligned with the chart container
             # port. Nginx frontends ignore this variable.
             - name: PORT
               value: {{ $app.port | quote }}
-          {{- if eq $app.kind "backend" }}
+          {{- end }}
+          {{- if or (eq $app.kind "backend") (eq $app.kind "background") }}
           envFrom:
             - configMapRef:
                 name: {{ include "boilerplate.fullname" $root }}-config
@@ -64,6 +68,7 @@ spec:
               subPath: default.conf
               readOnly: true
           {{- end }}
+          {{- if ne $app.kind "background" }}
           readinessProbe:
             httpGet:
               path: {{ default (ternary "/ready" "/" (eq $app.kind "backend")) $app.readinessPath | quote }}
@@ -88,6 +93,7 @@ spec:
             periodSeconds: {{ default 10 $app.startupPeriodSeconds }}
             timeoutSeconds: {{ default 5 $app.startupTimeoutSeconds }}
             failureThreshold: {{ default 30 $app.startupFailureThreshold }}
+          {{- end }}
           resources:
             {{- toYaml $app.resources | nindent 12 }}
       {{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}

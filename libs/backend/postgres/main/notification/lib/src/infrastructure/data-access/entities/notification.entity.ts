@@ -1,17 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
-import type {
-  NotificationData,
-  NotificationExtra,
-  NotificationSensitiveData,
-  NotificationTargetType,
-} from '@app/common-notifications';
+import type { NotificationData, NotificationExtra, NotificationTargetType } from '@app/common-notifications';
 import { NotificationTemplateEntity } from './notification-template.entity';
 
 export interface NotificationEntityInput<T = NotificationData> {
   targetType: NotificationTargetType;
   targetId: string;
   template: NotificationTemplateEntity;
+  templateVersionId: string;
+  broadcastId?: string | null;
   data?: T | null;
   sensitiveData?: EncryptedNotificationPayload | null;
   extra?: NotificationExtra | null;
@@ -34,6 +31,8 @@ export class NotificationEntity<T = NotificationData> {
   targetType!: NotificationTargetType;
   targetId!: string;
   template!: NotificationTemplateEntity;
+  templateVersionId!: string;
+  broadcastId: string | null = null;
   data: T | null = null;
   sensitiveData: StoredNotificationSensitiveData = {};
   extra: NotificationExtra | null = null;
@@ -45,6 +44,8 @@ export class NotificationEntity<T = NotificationData> {
       this.targetType = input.targetType;
       this.targetId = input.targetId;
       this.template = input.template;
+      this.templateVersionId = input.templateVersionId;
+      this.broadcastId = input.broadcastId ?? null;
       this.data = input.data ?? null;
       this.sensitiveData = input.sensitiveData ?? {};
       this.extra = input.extra ?? null;
@@ -67,6 +68,8 @@ export const NotificationEntitySchema = new EntitySchema<NotificationEntity>({
       fieldName: 'template_id',
       deleteRule: 'restrict',
     },
+    templateVersionId: { type: 'uuid', fieldName: 'template_version_id' },
+    broadcastId: { type: 'uuid', fieldName: 'broadcast_id', nullable: true, default: null },
     data: { type: 'json', nullable: true, defaultRaw: 'NULL' },
     sensitiveData: { type: 'json', fieldName: 'sensitive_data', defaultRaw: "'{}'::jsonb" },
     extra: { type: 'json', nullable: true, defaultRaw: 'NULL' },
@@ -75,6 +78,8 @@ export const NotificationEntitySchema = new EntitySchema<NotificationEntity>({
   },
   indexes: [
     { name: 'ix__notifications__template_id', properties: ['template'] },
+    { name: 'ix__notifications__template_version_id', properties: ['templateVersionId'] },
+    { name: 'ix__notifications__broadcast_id', properties: ['broadcastId'] },
     { name: 'ix__notifications__created_at', properties: ['createdAt'] },
     {
       name: 'ix__notifications__target_type_target_id_in_app_visible_created_at_desc_id_desc',

@@ -75,6 +75,7 @@ module.exports = [
               sourceTag: 'type:app',
               onlyDependOnLibsWithTags: [
                 'type:feature-main',
+                'type:feature-admin',
                 'type:feature-shared',
                 'type:common',
                 'type:asset',
@@ -89,6 +90,7 @@ module.exports = [
               sourceTag: 'type:backend-app',
               onlyDependOnLibsWithTags: [
                 'type:feature-main',
+                'type:feature-admin',
                 'type:feature-shared',
                 'type:common',
                 'type:data-access',
@@ -100,6 +102,20 @@ module.exports = [
             {
               sourceTag: 'type:frontend-app',
               onlyDependOnLibsWithTags: ['type:feature-shared', 'type:ui', 'type:common', 'type:util', 'type:sdk'],
+            },
+            {
+              sourceTag: 'type:feature-admin',
+              onlyDependOnLibsWithTags: [
+                'type:feature-admin',
+                'type:feature-main',
+                'type:feature-shared',
+                'type:common',
+                'type:asset',
+                'type:data-access',
+                'type:test-util',
+                'type:util',
+                'type:sdk',
+              ],
             },
             {
               sourceTag: 'type:feature-main',
@@ -139,6 +155,7 @@ module.exports = [
               sourceTag: 'type:test-util',
               onlyDependOnLibsWithTags: [
                 'type:feature-main',
+                'type:feature-admin',
                 'type:feature-shared',
                 'type:common',
                 'type:data-access',

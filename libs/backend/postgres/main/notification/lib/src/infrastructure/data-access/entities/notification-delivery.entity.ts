@@ -17,6 +17,7 @@ export interface NotificationDeliveryEntityInput {
   error?: NotificationError | null;
   attempts?: number;
   provider: NotificationDeliveryProvider;
+  broadcastId?: string | null;
   priority?: number;
   sendAfter?: Date;
   sentAt?: Date | null;
@@ -34,6 +35,7 @@ export class NotificationDeliveryEntity {
   error: NotificationError | null = null;
   attempts = 0;
   provider!: NotificationDeliveryProvider;
+  broadcastId: string | null = null;
   priority: number = NotificationPriority.Default;
   sendAfter: Date = new Date();
   sentAt: Date | null = null;
@@ -53,6 +55,7 @@ export class NotificationDeliveryEntity {
       this.error = input.error ?? null;
       this.attempts = input.attempts ?? 0;
       this.provider = input.provider;
+      this.broadcastId = input.broadcastId ?? null;
       this.priority = input.priority ?? NotificationPriority.Default;
       this.sendAfter = input.sendAfter ?? new Date();
       this.sentAt = input.sentAt ?? null;
@@ -75,6 +78,7 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
     error: { type: 'json', nullable: true, defaultRaw: 'NULL' },
     attempts: { type: 'integer', default: 0 },
     provider: { type: 'varchar', length: 32 },
+    broadcastId: { type: 'uuid', fieldName: 'broadcast_id', nullable: true, default: null },
     priority: { type: 'int', default: NotificationPriority.Default },
     sendAfter: { type: 'timestamptz', fieldName: 'send_after', onCreate: () => new Date() },
     sentAt: { type: 'timestamptz', fieldName: 'sent_at', nullable: true, default: null },
@@ -89,6 +93,7 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
     },
   ],
   indexes: [
+    { name: 'ix__notification_deliveries__broadcast_id_status', properties: ['broadcastId', 'status'] },
     {
       name: 'ix__notification_deliveries__target_type_status_send_after_target_id_priority_desc_id',
       columns: [

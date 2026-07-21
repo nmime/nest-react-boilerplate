@@ -94,12 +94,13 @@ Current `libs/common` placement decisions:
 - `libs/backend/common/response/lib` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
 - `libs/backend/common/swagger/lib` centralizes OpenAPI/Swagger setup with bearer security and problem response schemas.
 - `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.
-- `libs/common/notifications` defines framework-neutral notification domain contracts. Application ports are notification-feature-owned, PostgreSQL implements them, and Telegram is the only active transport.
+- `libs/common/notifications` defines framework-neutral notification domain contracts. Application ports are notification-feature-owned, PostgreSQL implements them, and provider strategies currently cover Telegram Bot, Discord Bot, Resend, MailPace, FCM, and APNs behind the provider resolver.
 - `libs/backend/common/validation/lib` creates `createValidationPipe` validation exceptions backed by RFC 9457 Problem Details. Validation failures use the `errors[]` extension with field `detail` and JSON Pointer `pointer` entries.
 - `libs/backend/feature/auth/shared/lib` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable bearer guard/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
 - `libs/backend/feature/auth/main/lib` contains register/login/me/logout controllers and JWT/password application services.
 - `libs/backend/feature/user/shared/lib` and `libs/backend/feature/user/main/lib` contain the protected user profile feature.
-- Admin shared code is split by runtime: `libs/frontend/feature/admin/shared/lib` (`@app/frontend-feature-admin-shared`) contains frontend-safe admin contracts, while `libs/backend/feature/admin/shared/lib` (`@app/backend-feature-admin-shared`) contains backend admin RBAC/permission logic. `libs/backend/feature/admin/main/lib` contains the protected admin API orchestration.
+- Admin shared code is split by runtime: `libs/frontend/feature/admin/shared/lib` (`@app/frontend-feature-admin-shared`) contains frontend-safe admin contracts, while `libs/backend/feature/admin/shared/lib` (`@app/backend-feature-admin-shared`) contains backend admin RBAC, permission logic, and the reusable admin guard. `libs/backend/feature/admin/main/lib` owns only cross-cutting admin profile, dashboard, role, user, and settings orchestration.
+- Domain administration belongs to `libs/backend/feature/<domain>/admin/lib`, tagged `type:feature-admin`. `@app/backend-feature-notification-admin` owns notification templates, segments, and broadcast HTTP; `@app/backend-feature-audit-log-admin` owns read-only audit inspection and its admin-facing writer. `admin-app-api` is a thin composition root that imports these domain modules instead of owning or reaching through their controllers.
 - Bot behavior is feature code: Discord logic lives in `@app/backend-feature-discord-bot`, Telegram runtime logic in `@app/backend-feature-telegram-bot`, and the narrow sibling transport contract in `@app/backend-feature-telegram-shared`. Deployable bot APIs stay under `apps/backend/<scope>/<app>`.
 - `libs/frontend/api-support` is the frontend-safe non-UI utility boundary for API request state: locale getters, `apiFetch`/`apiRequest`, header construction, URL resolution, and fallback API error copy. It is the only non-test frontend source that may call raw `fetch`.
 - `libs/frontend/api-client` is the generated/typed SDK layer. It wraps backend OpenAPI clients and may depend on API support, shared contracts, and common utilities, but not on React UI.
@@ -116,6 +117,7 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `platform:backend`, `platform:frontend`, `platform:shared` describe runtime surface.
 - `type:backend-app` and `type:frontend-app` mark deployable applications and keep app-specific constraints explicit; apps should not also carry a generic `type:app` tag.
 - `type:feature-main` is reserved for backend feature modules that own controllers, use cases, and application-facing orchestration.
+- `type:feature-admin` is reserved for backend domain administration modules. These libraries own privileged controllers, admin DTOs, and admin-only orchestration while deployable admin APIs remain thin composition roots.
 - `type:feature-shared` is for feature-level contracts/services shared by multiple apps or feature-main libs within the same runtime platform. Admin uses both frontend and backend feature-shared libraries; keep their `platform:*` tags separate.
 - `type:data-access` is reserved for database modules with entities, repositories, and persistence adapters.
 - `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses; test utilities should not also carry `type:common`.
@@ -231,6 +233,11 @@ graph TD
   UserApp --> ConsumerPact[apps/frontend/app/contracts/consumers/frontend-auth.pact.json]
   ConsumerPact --> AuthApi[auth-app-api]
   AdminApi[admin-app-api] --> Bootstrap[@app/backend-common-bootstrap]
+  AdminApi --> AdminMain[@app/backend-feature-admin-main]
+  AdminApi --> NotificationAdmin[@app/backend-feature-notification-admin]
+  AdminApi --> AuditAdmin[@app/backend-feature-audit-log-admin]
+  NotificationAdmin --> NotificationMain[@app/backend-feature-notification-main]
+  NotificationAdmin --> AuditAdmin
   UserApi[user-app-api] --> Bootstrap
   AuthApi --> Bootstrap
   Bootstrap --> Exception[@app/backend-common-exception]

@@ -20,6 +20,13 @@ x-backend-env: &backend-env
   AUTH_ALLOWED_RETURN_URLS: ${AUTH_ALLOWED_RETURN_URLS:?set comma-separated allowed auth return URL origins}
   AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED: ${AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED:-true}
   AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID: ${AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID:-primary}
+  AUTH_NOTIFICATION_PROVIDER: ${AUTH_NOTIFICATION_PROVIDER:-resend}
+  NOTIFICATION_EMAIL_PROVIDER: ${NOTIFICATION_EMAIL_PROVIDER:-resend}
+  NOTIFICATION_EMAIL_FROM: ${NOTIFICATION_EMAIL_FROM:-}
+  NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_ID: ${NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_ID:-primary}
+  NOTIFICATION_DELIVERIES_PER_ITERATION: ${NOTIFICATION_DELIVERIES_PER_ITERATION:-50}
+  NOTIFICATION_REQUESTS_PER_SECOND: ${NOTIFICATION_REQUESTS_PER_SECOND:-30}
+  NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS: ${NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS:-6}
   AUTH_TELEGRAM_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
   TELEGRAM_TMA_MAX_AGE_SECONDS: ${TELEGRAM_TMA_MAX_AGE_SECONDS:-300}
   TELEGRAM_OIDC_ENABLED: ${TELEGRAM_OIDC_ENABLED:-false}
@@ -133,7 +140,7 @@ x-backend-service: &backend-service
   restart: unless-stopped
   logging: *default-logging
   networks: [app, database]
-  secrets: [auth_jwt_secret, session_secret, better_auth_secret, redis_password]
+  secrets: [auth_jwt_secret, session_secret, better_auth_secret, redis_password, notification_payload_encryption_key]
   environment: *backend-env
   command: *backend-command
   depends_on:
@@ -148,6 +155,20 @@ x-frontend-service: &frontend-service
   logging: *default-logging
   networks: [app]
   healthcheck: *frontend-healthcheck
+
+x-notification-scheduler-service: &notification-scheduler-service
+  restart: unless-stopped
+  logging: *default-logging
+  networks: [app, database]
+  secrets:
+    [notification_payload_encryption_key, telegram_bot_token, discord_bot_token, resend_api_key, mailpace_server_token]
+  environment: *backend-env
+  command: *backend-command
+  depends_on:
+    redis:
+      condition: service_healthy
+    migrate:
+      condition: service_completed_successfully
 
 x-site-healthcheck: &site-healthcheck
   test:
@@ -218,6 +239,7 @@ services:
       - session_secret
       - better_auth_secret
       - auth_provider_token_encryption_key
+      - notification_payload_encryption_key
       - redis_password
     ports:
       - target: 80
@@ -237,7 +259,15 @@ services:
       DISCORD_REGISTRATION_GUILD_ID: ${DISCORD_REGISTRATION_GUILD_ID:-}
       DISCORD_WEB_APP_BASE_URL: ${DISCORD_WEB_APP_BASE_URL:-https://user-app.example.com}
       DISCORD_DEFAULT_TENANT_ID: ${DISCORD_DEFAULT_TENANT_ID:-}
-    secrets: [auth_jwt_secret, session_secret, redis_password, discord_bot_token, discord_public_key]
+    secrets:
+      [
+        auth_jwt_secret,
+        session_secret,
+        redis_password,
+        notification_payload_encryption_key,
+        discord_bot_token,
+        discord_public_key,
+      ]
     ports:
       - target: 80
         published: '${DISCORD_APP_API_PORT:-3007}'
@@ -257,12 +287,32 @@ services:
       TELEGRAM_BOT_SESSION_TTL_SECONDS: ${TELEGRAM_BOT_SESSION_TTL_SECONDS:-1209600}
       TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: ${TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS:-1000}
       TELEGRAM_BOT_RATE_LIMIT: ${TELEGRAM_BOT_RATE_LIMIT:-3}
-    secrets: [auth_jwt_secret, session_secret, redis_password, telegram_bot_token, telegram_bot_webhook_secret]
+    secrets:
+      [
+        auth_jwt_secret,
+        session_secret,
+        redis_password,
+        notification_payload_encryption_key,
+        telegram_bot_token,
+        telegram_bot_webhook_secret,
+      ]
     ports:
       - target: 80
         published: '${TELEGRAM_BOT_API_PORT:-3013}'
         host_ip: 127.0.0.1
         protocol: tcp
+
+  notification-scheduler:
+    <<: *notification-scheduler-service
+    profiles: [notification-scheduler]
+    image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/notification-scheduler:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: notification-scheduler
+        BUILD_OUTPUT: dist/apps/backend/notification/notification-scheduler
 
   admin-app:
     <<: *frontend-service
@@ -470,6 +520,8 @@ secrets:
     file: ${BETTER_AUTH_SECRET_FILE:-./secrets/better_auth_secret.txt}
   auth_provider_token_encryption_key:
     file: ${AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE:-./secrets/auth_provider_token_encryption_key.txt}
+  notification_payload_encryption_key:
+    file: ${NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE:-./secrets/notification_payload_encryption_key.txt}
   redis_password:
     file: ${REDIS_PASSWORD_FILE:-./secrets/redis_password.txt}
   grafana_admin_password:
@@ -486,3 +538,7 @@ secrets:
     file: ${DISCORD_CLIENT_SECRET_FILE:-./secrets/discord_client_secret.txt}
   discord_public_key:
     file: ${DISCORD_PUBLIC_KEY_FILE:-./secrets/discord_public_key.txt}
+  resend_api_key:
+    file: ${RESEND_API_KEY_FILE:-./secrets/resend_api_key.txt}
+  mailpace_server_token:
+    file: ${MAILPACE_SERVER_TOKEN_FILE:-./secrets/mailpace_server_token.txt}

@@ -16,7 +16,7 @@ import { cloneStyleBaseName, findAdjacentOwner, validateName, generateNames } fr
 export interface ApplicationGeneratorOptions {
   name: string;
   kind: 'frontend' | 'backend';
-  renderer?: 'vite' | 'astro' | 'vike' | 'expo' | 'nest-api' | 'worker';
+  renderer?: 'vite' | 'astro' | 'vike' | 'expo' | 'nest-api' | 'consumer' | 'scheduler';
   port?: number;
   /** Compatibility input rejected at runtime; custom roots violate ownership. */
   directory?: string;
@@ -116,7 +116,7 @@ function createBackendApp(
   names: ReturnType<typeof generateNames>,
   dir: string,
   tags: string[],
-  renderer: 'nest-api' | 'worker',
+  renderer: 'nest-api' | 'consumer' | 'scheduler',
   port: number,
 ): void {
   const projectName = names.kebab;
@@ -271,9 +271,10 @@ void bootstrapNestApi(${names.pascal}Module, {
 import { ${names.pascal}Module } from "./${names.kebab}.module";
 
 async function bootstrap(): Promise<void> {
-  await NestFactory.createApplicationContext(${names.pascal}Module, {
+  const application = await NestFactory.createApplicationContext(${names.pascal}Module, {
     logger: ["error", "warn", "log"],
   });
+  application.enableShutdownHooks();
 }
 
 void bootstrap();
@@ -281,8 +282,9 @@ void bootstrap();
     );
   }
 
-  // A generated API includes the repository-standard health surface. Workers
-  // keep a minimal application-context module without HTTP controllers.
+  // A generated API includes the repository-standard health surface.
+  // Consumers use a minimal application context, while schedulers also own
+  // the process-level ScheduleModule bootstrap.
   tree.write(
     `${srcRoot}/${names.kebab}.module.ts`,
     renderer === 'nest-api'
@@ -300,7 +302,14 @@ import { ${names.pascal}HealthServiceProvider } from "./health.config";
 })
 export class ${names.pascal}Module {}
 `
-      : `import { Module } from "@nestjs/common";
+      : renderer === 'scheduler'
+        ? `import { Module } from "@nestjs/common";
+import { ScheduleModule } from "@nestjs/schedule";
+
+@Module({ imports: [ScheduleModule.forRoot()] })
+export class ${names.pascal}Module {}
+`
+        : `import { Module } from "@nestjs/common";
 
 @Module({})
 export class ${names.pascal}Module {}
@@ -1180,7 +1189,7 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
 
   const renderer = options.renderer ?? (options.kind === 'frontend' ? 'vite' : 'nest-api');
   const frontendRenderers = ['vite', 'astro', 'vike', 'expo'];
-  const backendRenderers = ['nest-api', 'worker'];
+  const backendRenderers = ['nest-api', 'consumer', 'scheduler'];
   const allowedRenderers = options.kind === 'frontend' ? frontendRenderers : backendRenderers;
   if (!allowedRenderers.includes(renderer)) {
     throw new Error(
@@ -1189,14 +1198,15 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
   }
 
   const usedPorts = collectUsedAppPorts(tree);
-  if (renderer === 'worker' && options.port !== undefined) {
-    throw new Error('Worker applications do not expose an HTTP port; omit --port.');
+  const isBackendProcess = renderer === 'consumer' || renderer === 'scheduler';
+  if (isBackendProcess && options.port !== undefined) {
+    throw new Error('Consumer and scheduler applications do not expose an HTTP port; omit --port.');
   }
-  const port = options.port ?? (renderer === 'worker' ? 3100 : nextAvailablePort(options.kind, usedPorts));
+  const port = options.port ?? (isBackendProcess ? 3100 : nextAvailablePort(options.kind, usedPorts));
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('Application port must be an integer between 1 and 65535.');
   }
-  if (renderer !== 'worker' && options.port !== undefined && usedPorts.has(port)) {
+  if (!isBackendProcess && options.port !== undefined && usedPorts.has(port)) {
     throw new Error(`Application port ${port} is already used by another app. Choose a free port or omit --port.`);
   }
 
@@ -1238,7 +1248,7 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
   const tags = computeAppTags(options.kind, names.kebab);
 
   if (options.kind === 'backend') {
-    createBackendApp(tree, names, dir, tags, renderer as 'nest-api' | 'worker', port);
+    createBackendApp(tree, names, dir, tags, renderer as 'nest-api' | 'consumer' | 'scheduler', port);
   } else {
     createFrontendApp(tree, names, dir, tags, renderer as 'vite' | 'astro' | 'vike' | 'expo', port);
   }

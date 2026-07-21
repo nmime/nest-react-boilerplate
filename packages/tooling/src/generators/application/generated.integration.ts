@@ -9,7 +9,7 @@ import { applicationGenerator } from './generator.js';
 
 const workspaceRoot = process.cwd();
 const frontendNames = ['nrb-canary-vite', 'nrb-canary-astro', 'nrb-canary-vike', 'nrb-canary-expo'] as const;
-const backendNames = ['nrb-canary-api', 'nrb-canary-worker'] as const;
+const backendNames = ['nrb-canary-api', 'nrb-canary-consumer', 'nrb-canary-scheduler'] as const;
 const libraryProjects = [
   '@app/backend-nrb-canary-backend-lib',
   '@app/frontend-nrb-canary-frontend-lib',
@@ -29,7 +29,8 @@ const dependencySources = new Map<string, string>([
   ['apps/frontend/nrb-canary-vike', 'apps/frontend/site/node_modules'],
   ['apps/frontend/nrb-canary-expo', 'apps/frontend/mobile/node_modules'],
   ['apps/backend/nrb/nrb-canary-api', 'apps/backend/auth/auth-app-api/node_modules'],
-  ['apps/backend/nrb/nrb-canary-worker', 'apps/backend/auth/auth-app-api/node_modules'],
+  ['apps/backend/nrb/nrb-canary-consumer', 'apps/backend/auth/auth-app-api/node_modules'],
+  ['apps/backend/nrb/nrb-canary-scheduler', 'apps/backend/auth/auth-app-api/node_modules'],
 ]);
 
 function isGeneratedPath(path: string): boolean {
@@ -185,9 +186,15 @@ void test(
       skipFormat: true,
     });
     await applicationGenerator(tree, {
-      name: 'nrb-canary-worker',
+      name: 'nrb-canary-consumer',
       kind: 'backend',
-      renderer: 'worker',
+      renderer: 'consumer',
+      skipFormat: true,
+    });
+    await applicationGenerator(tree, {
+      name: 'nrb-canary-scheduler',
+      kind: 'backend',
+      renderer: 'scheduler',
       skipFormat: true,
     });
     await libraryGenerator(tree, {

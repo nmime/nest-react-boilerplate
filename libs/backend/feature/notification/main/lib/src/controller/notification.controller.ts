@@ -28,6 +28,7 @@ export class NotificationController {
       targetType: body.targetType,
       targetId: body.targetId,
       templateCode: body.templateCode,
+      deliveries: body.deliveries,
       channels: body.channels,
       inAppVisible: body.inAppVisible,
       data: body.data,
@@ -43,6 +44,7 @@ export class NotificationController {
   async createTemplateNotificationsBatch(@Body() body: CreateNotificationBatchRequestDto): Promise<{ ids: string[] }> {
     const notifications = await this.notificationService.createTemplateNotificationsBatch({
       targetType: body.targetType,
+      deliveries: body.deliveries,
       channels: body.channels,
       inAppVisible: body.inAppVisible,
       priority: body.priority,
@@ -50,6 +52,7 @@ export class NotificationController {
       items: body.items.map((item) => ({
         targetId: item.targetId,
         templateCode: item.templateCode,
+        deliveries: item.deliveries,
         channels: item.channels,
         inAppVisible: item.inAppVisible,
         data: item.data,

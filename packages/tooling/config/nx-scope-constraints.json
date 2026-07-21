@@ -46,7 +46,14 @@
   },
   {
     "sourceTag": "scope:notification",
-    "onlyDependOnLibsWithTags": ["scope:notification", "scope:telegram", "scope:auth", "scope:postgres", "scope:shared"]
+    "onlyDependOnLibsWithTags": [
+      "scope:notification",
+      "scope:telegram",
+      "scope:auth",
+      "scope:feature-flags",
+      "scope:postgres",
+      "scope:shared"
+    ]
   },
   {
     "sourceTag": "scope:telegram",

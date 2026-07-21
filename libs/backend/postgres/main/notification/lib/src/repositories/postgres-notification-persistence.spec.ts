@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { InvalidNotificationTemplateError } from '@app/backend-feature-notification-shared';
 import {
   NotificationChannel,
+  NotificationDeliveryProvider,
   NotificationErrorReason,
   NotificationStatus,
   NotificationTargetType,
@@ -16,6 +17,7 @@ import {
   NotificationTemplateChannelEntity,
   NotificationTemplateEntity,
 } from '../infrastructure/data-access/entities';
+import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
 import { DeliveryClaimLeaseSeconds, PostgresNotificationPersistence } from './postgres-notification-persistence';
 
 describe('PostgresNotificationPersistence', () => {
@@ -143,6 +145,31 @@ describe('PostgresNotificationPersistence', () => {
       sendAfter: new Date('2026-07-16T10:00:30.000Z'),
     });
     expect(transaction.flush).toHaveBeenCalledOnce();
+  });
+
+  it('persists an explicit provider and encrypts sensitive template values', async () => {
+    const template = new NotificationTemplateEntity({ code: 'auth.email-verification-code' });
+    const emailChannel = new NotificationTemplateChannelEntity({
+      templateId: template.id,
+      channel: NotificationChannel.Email,
+      content: { subject: { en: 'Verify' }, body: { en: 'Code: {code}' } },
+    });
+    const transaction = createTransactionEntityManager();
+    transaction.findOne.mockResolvedValue(template);
+    transaction.find.mockResolvedValue([emailChannel]);
+
+    await createPersistence(transaction).create({
+      targetType: NotificationTargetType.Email,
+      targetId: 'user@example.com',
+      templateCode: template.code,
+      deliveries: [{ channel: NotificationChannel.Email, provider: NotificationDeliveryProvider.Resend }],
+      inAppVisible: false,
+      sensitiveData: { code: 'secret-code' },
+    });
+
+    const persisted = transaction.persist.mock.calls[0]?.[0] as [NotificationEntity, NotificationDeliveryEntity];
+    expect(persisted[0].sensitiveData?.ciphertext).not.toContain('secret-code');
+    expect(persisted[1].provider).toBe(NotificationDeliveryProvider.Resend);
   });
 
   it('joins pending deliveries to notifications with grouped template channels', async () => {
@@ -294,11 +321,14 @@ describe('PostgresNotificationPersistence', () => {
     const transactional = vi.fn(async (callback: (tx: typeof transaction) => Promise<unknown>) =>
       callback(transaction),
     );
-    const persistence = new PostgresNotificationPersistence({
-      find,
-      flush,
-      transactional,
-    } as unknown as EntityManager);
+    const persistence = new PostgresNotificationPersistence(
+      {
+        find,
+        flush,
+        transactional,
+      } as unknown as EntityManager,
+      notificationPayloadCrypto(),
+    );
 
     const pending = await persistence.findPendingDeliveries({
       targetType: NotificationTargetType.TelegramChat,
@@ -330,7 +360,7 @@ function createReadPersistence(find: Mock, flush: Mock = vi.fn().mockResolvedVal
     flush,
     transactional: vi.fn(async (callback: (tx: typeof transaction) => Promise<unknown>) => callback(transaction)),
   } as unknown as EntityManager;
-  return new PostgresNotificationPersistence(root);
+  return new PostgresNotificationPersistence(root, notificationPayloadCrypto());
 }
 
 function buildPendingDelivery(id: string, notificationId: string): NotificationDeliveryEntity {
@@ -339,6 +369,7 @@ function buildPendingDelivery(id: string, notificationId: string): NotificationD
     targetType: NotificationTargetType.TelegramChat,
     targetId: '123',
     channel: NotificationChannel.Bot,
+    provider: NotificationDeliveryProvider.TelegramBot,
     status: NotificationStatus.Pending,
     createdAt: new Date('2026-07-16T09:00:00.000Z'),
   });
@@ -350,7 +381,13 @@ function createPersistence(transaction: ReturnType<typeof createTransactionEntit
   const root = {
     transactional: transaction.transactional,
   } as unknown as EntityManager;
-  return new PostgresNotificationPersistence(root);
+  return new PostgresNotificationPersistence(root, notificationPayloadCrypto());
+}
+
+function notificationPayloadCrypto(): NotificationPayloadCryptoService {
+  return new NotificationPayloadCryptoService({
+    NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
+  });
 }
 
 function createTransactionEntityManager() {

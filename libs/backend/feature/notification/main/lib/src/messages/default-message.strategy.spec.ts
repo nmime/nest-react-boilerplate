@@ -14,6 +14,7 @@ describe(DefaultMessageStrategy.name, () => {
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       data: { name: 'Ada' },
+      sensitiveData: null,
       extra: null,
       inAppVisible: true,
       createdAt: new Date(),
@@ -33,6 +34,7 @@ describe(DefaultMessageStrategy.name, () => {
     };
 
     expect(new DefaultMessageStrategy(notification, NotificationChannel.Bot).getMessage('en')).toEqual({
+      kind: 'bot',
       text: 'Hello Ada',
       image: undefined,
       buttons: undefined,

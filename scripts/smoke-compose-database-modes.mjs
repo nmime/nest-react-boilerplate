@@ -25,6 +25,9 @@ const authSecretPath = join(tempDir, 'auth_jwt_secret.txt');
 const sessionSecretPath = join(tempDir, 'session_secret.txt');
 const betterAuthSecretPath = join(tempDir, 'better_auth_secret.txt');
 const authProviderEncryptionKeyPath = join(tempDir, 'auth_provider_token_encryption_key.txt');
+const notificationPayloadEncryptionKeyPath = join(tempDir, 'notification_payload_encryption_key.txt');
+const resendApiKeyPath = join(tempDir, 'resend_api_key.txt');
+const mailPaceServerTokenPath = join(tempDir, 'mailpace_server_token.txt');
 const redisPasswordPath = join(tempDir, 'redis_password.txt');
 const postgresPasswordPath = join(tempDir, 'postgres_password.txt');
 const databaseUrlPath = join(tempDir, 'database_url.txt');
@@ -45,6 +48,9 @@ for (const [path, value] of [
   [sessionSecretPath, runtimeSecret()],
   [betterAuthSecretPath, runtimeSecret()],
   [authProviderEncryptionKeyPath, randomBytes(32).toString('base64')],
+  [notificationPayloadEncryptionKeyPath, randomBytes(32).toString('base64')],
+  [resendApiKeyPath, ''],
+  [mailPaceServerTokenPath, ''],
   [redisPasswordPath, runtimeSecret()],
   [postgresPasswordPath, databasePassword],
   [databaseUrlPath, externalDatabaseUrl.toString()],
@@ -65,6 +71,9 @@ const commonEnv = {
   SESSION_SECRET_FILE: sessionSecretPath,
   BETTER_AUTH_SECRET_FILE: betterAuthSecretPath,
   AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE: authProviderEncryptionKeyPath,
+  NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE: notificationPayloadEncryptionKeyPath,
+  RESEND_API_KEY_FILE: resendApiKeyPath,
+  MAILPACE_SERVER_TOKEN_FILE: mailPaceServerTokenPath,
   REDIS_PASSWORD_FILE: redisPasswordPath,
   POSTGRES_PASSWORD_FILE: postgresPasswordPath,
   DATABASE_URL_FILE: databaseUrlPath,

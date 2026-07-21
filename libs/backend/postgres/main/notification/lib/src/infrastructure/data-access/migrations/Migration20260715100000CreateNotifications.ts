@@ -42,9 +42,10 @@ export class Migration20260715100000CreateNotifications extends Migration {
       create table "notifications" (
         "id" uuid not null,
         "target_type" varchar(32) not null,
-        "target_id" varchar(64) not null,
+        "target_id" varchar(320) not null,
         "template_id" uuid not null,
         "data" jsonb null,
+        "sensitive_data" jsonb not null default '{}'::jsonb,
         "extra" jsonb null,
         "in_app_visible" boolean not null default true,
         "created_at" timestamptz not null default now(),
@@ -52,7 +53,7 @@ export class Migration20260715100000CreateNotifications extends Migration {
         constraint "fk__notifications__template_id"
           foreign key ("template_id") references "notification_templates" ("id") on delete restrict,
         constraint "ck__notifications__target_type"
-          check ("target_type" in ('user', 'telegram-chat', 'system-telegram-chat'))
+          check ("target_type" in ('user', 'email', 'telegram-chat', 'system-telegram-chat'))
       );
     `);
     this.addSql('create index "ix__notifications__template_id" on "notifications" ("template_id");');
@@ -67,12 +68,12 @@ export class Migration20260715100000CreateNotifications extends Migration {
         "id" bigint not null default nextval('notification_deliveries_id_seq'),
         "notification_id" uuid not null,
         "target_type" varchar(32) not null,
-        "target_id" varchar(64) not null,
+        "target_id" varchar(320) not null,
         "channel" varchar(32) not null,
         "status" varchar(32) not null default 'pending',
         "error" jsonb null,
         "attempts" int not null default 0,
-        "provider" varchar(32) null,
+        "provider" varchar(32) not null,
         "priority" int not null default 100,
         "send_after" timestamptz not null default now(),
         "sent_at" timestamptz null,
@@ -82,11 +83,13 @@ export class Migration20260715100000CreateNotifications extends Migration {
         constraint "uq__notification_deliveries__notification_id__channel"
           unique ("notification_id", "channel", "created_at"),
         constraint "ck__notification_deliveries__target_type"
-          check ("target_type" in ('user', 'telegram-chat', 'system-telegram-chat')),
+          check ("target_type" in ('user', 'email', 'telegram-chat', 'system-telegram-chat')),
         constraint "ck__notification_deliveries__channel"
           check ("channel" in ('bot', 'email', 'push')),
         constraint "ck__notification_deliveries__status"
           check ("status" in ('pending', 'sent', 'error', 'rejected')),
+        constraint "ck__notification_deliveries__provider"
+          check ("provider" in ('telegram-bot', 'discord-bot', 'resend', 'mailpace', 'google-fcm', 'apple-apns')),
         constraint "ck__notification_deliveries__attempts" check ("attempts" >= 0)
       ) partition by range ("created_at");
     `);

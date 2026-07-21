@@ -18,6 +18,7 @@ import {
   NotificationPriority,
   NotificationTargetType,
 } from '@app/common-notifications';
+import { NotificationDeliveryRouteDto } from './notification-delivery-route.dto';
 
 export class BatchItemDto {
   @IsString()
@@ -30,6 +31,12 @@ export class BatchItemDto {
   @IsIn(notificationDeliveryChannels, { each: true })
   @IsOptional()
   channels?: NotificationDeliveryChannel[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NotificationDeliveryRouteDto)
+  @IsOptional()
+  deliveries?: NotificationDeliveryRouteDto[];
 
   @IsBoolean()
   @IsOptional()
@@ -60,6 +67,12 @@ export class CreateNotificationBatchRequestDto {
   @IsIn(notificationDeliveryChannels, { each: true })
   @IsOptional()
   channels?: NotificationDeliveryChannel[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NotificationDeliveryRouteDto)
+  @IsOptional()
+  deliveries?: NotificationDeliveryRouteDto[];
 
   @IsBoolean()
   @IsOptional()

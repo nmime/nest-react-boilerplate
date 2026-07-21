@@ -6,7 +6,7 @@
   <h1>Nest React Boilerplate</h1>
 
   <p>
-    <strong>A production-shaped Nx foundation for web, mobile, APIs, workers, and integrations.</strong>
+    <strong>A production-shaped Nx foundation for web, mobile, APIs, consumers, schedulers, and integrations.</strong>
     <br />
     Select only the product surfaces you need, keep runtime ownership explicit, and ship through one typed platform.
   </p>
@@ -219,7 +219,7 @@ Testing spans unit and integration suites, Storybook interaction and visual chec
 ```text
 apps/
 ├── frontend/                 # Vite, Astro, Vike, and Expo deployables
-├── backend/<scope>/          # NestJS APIs, bots, workers, and schedulers
+├── backend/<scope>/          # NestJS APIs, consumers, and schedulers
 └── e2e/                      # Cross-application Playwright projects
 
 libs/

@@ -1,0 +1,57 @@
+{
+  "name": "notification-scheduler",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/backend/notification/notification-scheduler/src",
+  "projectType": "application",
+  "tags": ["platform:backend", "type:backend-app", "scope:notification"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/backend/notification/notification-scheduler",
+        "main": "apps/backend/notification/notification-scheduler/src/main.ts",
+        "tsConfig": "apps/backend/notification/notification-scheduler/tsconfig.app.json",
+        "assets": [],
+        "generatePackageJson": true,
+        "updateBuildableProjectDepsInPackageJson": true,
+        "excludeLibsInPackageJson": true,
+        "generateLockfile": true,
+        "rootDir": "."
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "notification-scheduler:build",
+        "runBuildTargetDependencies": true
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "notification-scheduler:build:development"
+        },
+        "production": {
+          "buildTarget": "notification-scheduler:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend/notification/notification-scheduler",
+        "command": "vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/backend/notification/notification-scheduler"]
+    }
+  }
+}

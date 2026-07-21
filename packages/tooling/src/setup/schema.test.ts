@@ -131,6 +131,7 @@ describe('schema — constants', () => {
       'auth-app-api',
       'discord-app-api',
       'telegram-bot-api',
+      'notification-scheduler',
       'fullstack-e2e',
     ] as const;
     assert.deepEqual([...appIds].sort(), [...expected].sort());
@@ -200,7 +201,7 @@ describe('catalog — appCatalog', () => {
     assert.ok(e.requiresCapabilities.includes('postgres'));
   });
 
-  it('classifies only Telegram and Discord as optional applications', () => {
+  it('classifies integrations and the notification scheduler as optional applications', () => {
     const reference = Object.values(appCatalog)
       .filter((entry) => entry.classification === 'reference')
       .map((entry) => entry.id)
@@ -221,13 +222,13 @@ describe('catalog — appCatalog', () => {
       'user-app',
       'user-app-api',
     ]);
-    assert.deepEqual(optional, ['discord-app-api', 'telegram-bot-api']);
+    assert.deepEqual(optional, ['discord-app-api', 'notification-scheduler', 'telegram-bot-api']);
   });
 
   it('uses landing-app as the apex and app IDs for every other deployable hostname', () => {
     const hostnames = new Set<string>();
     for (const entry of Object.values(appCatalog)) {
-      if (entry.platform === 'e2e') {
+      if (entry.publicHostname === null) {
         assert.equal(entry.publicHostname, null);
         continue;
       }
@@ -275,9 +276,9 @@ describe('catalog — capabilityCatalog', () => {
     }
   });
 
-  it('notifications requires its PostgreSQL queue and Telegram worker', () => {
-    assert.deepEqual(capabilityCatalog['notifications'].requiresCapabilities, ['postgres', 'telegram-bot']);
-    assert.deepEqual(capabilityCatalog['notifications'].requiresApps, ['telegram-bot-api']);
+  it('notifications requires its PostgreSQL queue and notification scheduler', () => {
+    assert.deepEqual(capabilityCatalog['notifications'].requiresCapabilities, ['postgres']);
+    assert.deepEqual(capabilityCatalog['notifications'].requiresApps, ['notification-scheduler']);
   });
 
   it('every capability references valid IDs', () => {
@@ -379,10 +380,11 @@ describe('catalog — validateSelection', () => {
     );
   });
 
-  it('reports capability dependencies for notifications without its queue and worker', () => {
+  it('reports capability dependencies for notifications without its queue and scheduler', () => {
     const issues = validateSelection([], ['notifications']);
     assert.ok(
-      issues.some((i) => i.message.includes('postgres')) && issues.some((i) => i.message.includes('telegram-bot-api')),
+      issues.some((i) => i.message.includes('postgres')) &&
+        issues.some((i) => i.message.includes('notification-scheduler')),
       `Got: ${issues.map((i) => i.message).join('; ')}`,
     );
   });
@@ -422,7 +424,7 @@ describe('catalog — expandDependencies', () => {
     const { capabilities } = expandDependencies([], ['notifications']);
     assert.ok(capabilities.includes('notifications'));
     assert.ok(capabilities.includes('postgres'));
-    assert.ok(capabilities.includes('telegram-bot'));
+    assert.ok(!capabilities.includes('telegram-bot'));
   });
 
   it('handles deep transitive chains', () => {

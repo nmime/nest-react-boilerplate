@@ -8,6 +8,7 @@ import {
   NotificationTemplateEntitySchema,
 } from '../infrastructure/data-access/entities';
 import { PostgresNotificationPersistence } from '../repositories';
+import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
 
 @Module({
   imports: [
@@ -19,9 +20,10 @@ import { PostgresNotificationPersistence } from '../repositories';
     ]),
   ],
   providers: [
+    NotificationPayloadCryptoService,
     PostgresNotificationPersistence,
     { provide: NotificationPersistence, useExisting: PostgresNotificationPersistence },
   ],
-  exports: [MikroOrmModule, NotificationPersistence],
+  exports: [MikroOrmModule, NotificationPersistence, NotificationPayloadCryptoService],
 })
 export class NotificationPostgresModule {}

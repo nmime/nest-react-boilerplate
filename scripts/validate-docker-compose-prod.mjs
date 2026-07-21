@@ -81,6 +81,9 @@ has(prodCompose, 'requirepass %s', 'Redis requires its generated password');
 for (const expected of [
   'load_secret SESSION_SECRET /run/secrets/session_secret',
   'load_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY /run/secrets/auth_provider_token_encryption_key',
+  'load_secret NOTIFICATION_PAYLOAD_ENCRYPTION_KEY /run/secrets/notification_payload_encryption_key',
+  'load_secret RESEND_API_KEY /run/secrets/resend_api_key',
+  'load_secret MAILPACE_SERVER_TOKEN /run/secrets/mailpace_server_token',
   'load_secret REDIS_PASSWORD /run/secrets/redis_password',
 ]) {
   has(secretEntrypoint, expected, `secret entrypoint ${expected}`);
@@ -176,6 +179,9 @@ for (const expected of [
   'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
   'BETTER_AUTH_SECRET_FILE=./secrets/better_auth_secret.txt',
   'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE=./secrets/auth_provider_token_encryption_key.txt',
+  'NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE=./secrets/notification_payload_encryption_key.txt',
+  'RESEND_API_KEY_FILE=./secrets/resend_api_key.txt',
+  'MAILPACE_SERVER_TOKEN_FILE=./secrets/mailpace_server_token.txt',
   'AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED=true',
   'REDIS_PASSWORD_FILE=./secrets/redis_password.txt',
   'POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt',

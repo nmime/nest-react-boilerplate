@@ -252,7 +252,7 @@ describe("runAddCommand", () => {
     });
 
     const status = await runAddCommand(
-      makeContext(["app", "x", "--kind", "backend", "--renderer", "worker"]),
+      makeContext(["app", "x", "--kind", "backend", "--renderer", "scheduler"]),
       runner,
     );
     assert.equal(status, 1);
@@ -291,6 +291,17 @@ describe("runAddCommand", () => {
     );
     assert.equal(
       await runAddCommand(makeContext(["app", "billing-api", "--kind", "backend"]), runner),
+      1,
+    );
+  });
+
+  it("rejects the removed generic backend worker renderer", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(
+        makeContext(["app", "billing-worker", "--kind", "backend", "--renderer", "worker"]),
+        runner,
+      ),
       1,
     );
   });

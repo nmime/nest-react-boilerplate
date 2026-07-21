@@ -21,13 +21,14 @@ selection in `.nrb/workspace.json`, and it can be rerun to add or remove apps.
 
 ## Backend applications
 
-| ID                 | Nx project root                          | Runtime                          | Class     | Template hostname              | Required selection                               |
-| ------------------ | ---------------------------------------- | -------------------------------- | --------- | ------------------------------ | ------------------------------------------------ |
-| `admin-app-api`    | `apps/backend/admin/admin-app-api`       | NestJS + Fastify API             | Reference | `admin-app-api.example.com`    | `postgres` capability, `authz` capability        |
-| `user-app-api`     | `apps/backend/user/user-app-api`         | NestJS + Fastify API             | Reference | `user-app-api.example.com`     | `postgres` capability                            |
-| `auth-app-api`     | `apps/backend/auth/auth-app-api`         | NestJS + Fastify API             | Reference | `auth-app-api.example.com`     | `postgres` capability                            |
-| `discord-app-api`  | `apps/backend/discord/discord-app-api`   | NestJS + Fastify integration API | Optional  | `discord-app-api.example.com`  | `discord-bot` capability, `postgres` capability  |
-| `telegram-bot-api` | `apps/backend/telegram/telegram-bot-api` | NestJS + Fastify bot API         | Optional  | `telegram-bot-api.example.com` | `telegram-bot` capability, `postgres` capability |
+| ID                       | Nx project root                                    | Runtime                          | Class     | Template hostname              | Required selection                               |
+| ------------------------ | -------------------------------------------------- | -------------------------------- | --------- | ------------------------------ | ------------------------------------------------ |
+| `admin-app-api`          | `apps/backend/admin/admin-app-api`                 | NestJS + Fastify API             | Reference | `admin-app-api.example.com`    | `postgres` capability, `authz` capability        |
+| `user-app-api`           | `apps/backend/user/user-app-api`                   | NestJS + Fastify API             | Reference | `user-app-api.example.com`     | `postgres` capability                            |
+| `auth-app-api`           | `apps/backend/auth/auth-app-api`                   | NestJS + Fastify API             | Reference | `auth-app-api.example.com`     | `postgres` capability                            |
+| `discord-app-api`        | `apps/backend/discord/discord-app-api`             | NestJS + Fastify integration API | Optional  | `discord-app-api.example.com`  | `discord-bot` capability, `postgres` capability  |
+| `telegram-bot-api`       | `apps/backend/telegram/telegram-bot-api`           | NestJS + Fastify bot API         | Optional  | `telegram-bot-api.example.com` | `telegram-bot` capability, `postgres` capability |
+| `notification-scheduler` | `apps/backend/notification/notification-scheduler` | NestJS scheduled-job process     | Optional  | Not deployable                 | `postgres` capability                            |
 
 ## End-to-end projects
 

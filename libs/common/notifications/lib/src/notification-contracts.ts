@@ -32,6 +32,7 @@ export enum NotificationPriority {
 
 export enum NotificationTargetType {
   User = 'user',
+  Email = 'email',
   TelegramChat = 'telegram-chat',
   SystemTelegramChat = 'system-telegram-chat',
 }
@@ -42,11 +43,12 @@ export enum NotificationTemplateEngine {
 }
 
 export enum NotificationDeliveryProvider {
-  Telegram = 'telegram',
+  TelegramBot = 'telegram-bot',
+  DiscordBot = 'discord-bot',
   Resend = 'resend',
   MailPace = 'mailpace',
-  Firebase = 'firebase',
-  Apple = 'apple',
+  GoogleFcm = 'google-fcm',
+  AppleApns = 'apple-apns',
 }
 
 export enum NotificationErrorReason {
@@ -63,6 +65,9 @@ export enum NotificationErrorReason {
   NotFoundMessageStrategy = 'not-found-message-strategy',
   NotFoundMessage = 'not-found-message',
   UnsupportedChannel = 'unsupported-channel',
+  InvalidRecipient = 'invalid-recipient',
+  ProviderConfiguration = 'provider-configuration',
+  ProviderRejected = 'provider-rejected',
   UnknownError = 'unknown-error',
 }
 
@@ -81,6 +86,13 @@ export interface NotificationExtra {
   disableNotification?: boolean;
   disableWebPagePreview?: boolean;
 }
+
+/**
+ * Confidential values are encrypted by the notification persistence adapter.
+ * They are intentionally separate from ordinary template data so bearer links,
+ * OTPs, and similar credentials never land in plaintext JSONB columns.
+ */
+export type NotificationSensitiveData = NotificationData;
 
 export interface NotificationMessageButton {
   text: string;
@@ -174,6 +186,7 @@ export interface NotificationRecord<T = NotificationData> {
   targetId: string;
   template: NotificationTemplateRecord;
   data: T | null;
+  sensitiveData: NotificationSensitiveData | null;
   extra: NotificationExtra | null;
   inAppVisible: boolean;
   createdAt: Date;
@@ -188,7 +201,7 @@ export interface NotificationDeliveryRecord {
   status: NotificationStatus;
   error: NotificationError | null;
   attempts: number;
-  provider: NotificationDeliveryProvider | null;
+  provider: NotificationDeliveryProvider;
   priority: number;
   sendAfter: Date;
   sentAt: Date | null;

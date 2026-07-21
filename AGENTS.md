@@ -72,7 +72,7 @@ Always-loaded policy for human and AI contributors to
   existing product code in place; app, library, and feature roots are never
   overwritten by generators.
 - No deployable is the repository's default application. Admin, user, landing,
-  site, mobile, API, worker, and newly generated apps keep separate
+  site, mobile, API, consumer, scheduler, and newly generated apps keep separate
   product/runtime ownership; do not invent an additional generic deployable.
 - Generated roots include their own `AGENTS.md` and `README.md`; read the nearest
   versions before completing product-specific routing, contracts, persistence,

@@ -65,6 +65,12 @@ services:
       postgres:
         condition: service_healthy
 
+  notification-scheduler:
+    secrets: [postgres_password]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres-data:
 

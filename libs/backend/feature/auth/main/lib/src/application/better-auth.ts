@@ -5,6 +5,7 @@ import { multiTenantPlugin } from './plugins/multi-tenant';
 import { rbacPlugin } from './plugins/rbac';
 import { telegramPlugin } from './plugins/telegram';
 import { createTelegramOidcConfig } from './telegram-oidc';
+import { AuthNotificationPublisher } from './auth-notification.publisher';
 
 export interface BetterAuthConfigOptions {
   secret?: string;
@@ -22,6 +23,7 @@ export interface BetterAuthConfigOptions {
   discordRedirectUri?: string;
   sessionCookieName?: string;
   sessionMaxAge?: number;
+  notificationPublisher?: AuthNotificationPublisher;
 }
 
 export function getBetterAuthConfig(_orm: unknown, options: BetterAuthConfigOptions = {}): Auth {
@@ -35,6 +37,11 @@ export function getBetterAuthConfig(_orm: unknown, options: BetterAuthConfigOpti
 
   const baseURL = getBaseUrl();
   const telegramOidc = resolveTelegramOidcConfig(options);
+  // Account-recovery email is a security boundary: never acknowledge the
+  // request while silently dropping a credential.  A missing notification
+  // capability therefore fails the Better Auth action explicitly through the
+  // publisher rather than becoming a successful no-op.
+  const notificationPublisher = options.notificationPublisher ?? new AuthNotificationPublisher();
 
   const opts: BetterAuthOptions = {
     database,
@@ -48,10 +55,22 @@ export function getBetterAuthConfig(_orm: unknown, options: BetterAuthConfigOpti
       minPasswordLength: 8,
       maxPasswordLength: 128,
       requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
-      sendResetPassword: async () => {
-        // Fail closed until the product wires an email transport. Logging the
-        // Better-Auth reset URL would disclose the bearer reset token.
-        throw new Error('Password reset delivery is not configured.');
+      sendResetPassword: async ({ user, url }) => {
+        await notificationPublisher.publishBetterAuthLink({
+          email: user.email,
+          purpose: 'password_reset',
+          actionUrl: url,
+        });
+      },
+    },
+
+    emailVerification: {
+      sendVerificationEmail: async ({ user, url }) => {
+        await notificationPublisher.publishBetterAuthLink({
+          email: user.email,
+          purpose: 'email_verification',
+          actionUrl: url,
+        });
       },
     },
 

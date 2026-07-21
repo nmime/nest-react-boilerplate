@@ -1,4 +1,15 @@
-import { IsArray, IsBoolean, IsDateString, IsEnum, IsIn, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import {
   notificationDeliveryChannels,
   type NotificationData,
@@ -7,6 +18,7 @@ import {
   NotificationPriority,
   NotificationTargetType,
 } from '@app/common-notifications';
+import { NotificationDeliveryRouteDto } from './notification-delivery-route.dto';
 
 export class CreateNotificationRequestDto {
   @IsEnum(NotificationTargetType)
@@ -22,6 +34,12 @@ export class CreateNotificationRequestDto {
   @IsIn(notificationDeliveryChannels, { each: true })
   @IsOptional()
   channels?: NotificationDeliveryChannel[];
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NotificationDeliveryRouteDto)
+  @IsOptional()
+  deliveries?: NotificationDeliveryRouteDto[];
 
   @IsBoolean()
   @IsOptional()

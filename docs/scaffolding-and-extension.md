@@ -41,7 +41,8 @@ Application and library roots and Nx ownership tags are derived by the
 generators; custom `--directory` and `--tags` escape hatches are rejected.
 HTTP application ports are selected from the first free canonical range value;
 an explicit `--port` is accepted only when it does not collide with an existing
-application. Workers reject `--port` because they do not expose HTTP.
+application. Consumers and schedulers reject `--port` because they do not
+expose HTTP.
 
 ## Fresh clone to verified product workspace
 
@@ -186,11 +187,21 @@ Choose one renderer and inspect the plan first:
 # Frontend renderers: vite, astro, vike, expo
 pnpm nrb add app customer-portal --kind frontend --renderer vite --dry-run
 
-# Backend renderers: nest-api, worker
+# Backend renderers: nest-api, consumer, scheduler
 pnpm nrb add app billing-app-api \
   --kind backend \
   --renderer nest-api \
   --port 3200 \
+  --dry-run
+
+pnpm nrb add app billing-consumer \
+  --kind backend \
+  --renderer consumer \
+  --dry-run
+
+pnpm nrb add app billing-scheduler \
+  --kind backend \
+  --renderer scheduler \
   --dry-run
 ```
 

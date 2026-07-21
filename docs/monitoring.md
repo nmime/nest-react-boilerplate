@@ -16,7 +16,7 @@ as `x-request-id`. Use that ID to correlate logs and traces for one request.
 
 ```mermaid
 flowchart LR
-  APIs["NestJS APIs and workers"] -->|"OTLP HTTP :4318 or gRPC :4317"| Collector["OpenTelemetry Collector"]
+  APIs["NestJS APIs, consumers, and schedulers"] -->|"OTLP HTTP :4318 or gRPC :4317"| Collector["OpenTelemetry Collector"]
   Collector -->|"Prometheus format :9464/metrics"| Prometheus["Prometheus"]
   Prometheus --> Grafana["Grafana"]
   Prometheus --> Alertmanager["Alertmanager"]

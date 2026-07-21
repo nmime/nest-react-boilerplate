@@ -153,7 +153,7 @@ All exceptions flow through the `@app/backend-common-exception` library.
 ## Monorepo Layout
 
 - Backend deployables live under `apps/backend/<scope>/**`, so APIs, consumers,
-  workers, schedulers, and other backend runtimes stay beside their feature
+  and schedulers stay beside their feature
   scope. This repo does not use a top-level `services/` tree.
 - Frontend deployables live under `apps/frontend/**`. Current renderers are Vite
   React SPAs for `admin-app` and `user-app`, Astro + React islands for

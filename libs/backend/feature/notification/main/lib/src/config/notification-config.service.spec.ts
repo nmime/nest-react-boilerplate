@@ -3,7 +3,7 @@ import { NotificationConfigService } from './notification-config.service';
 import { NotificationHealthConfigService } from './notification-health-config.service';
 
 describe('notification configuration', () => {
-  it('reads worker settings through the shared configuration service', () => {
+  it('reads scheduler settings through the shared configuration service', () => {
     const values = new Map<string, unknown>([
       ['BOT_TOKEN', 'token'],
       ['NOTIFICATION_DELIVERIES_PER_ITERATION', 75],
@@ -40,16 +40,16 @@ describe('notification configuration', () => {
 
   it('keeps safe standalone defaults when notification settings are absent', () => {
     const get = vi.fn((_key: string, fallback: unknown) => fallback);
-    const workerConfig = new NotificationConfigService({ get } as never);
+    const schedulerConfig = new NotificationConfigService({ get } as never);
     const healthConfig = new NotificationHealthConfigService({ get } as never);
 
-    expect(workerConfig.botToken).toBe('');
-    expect(workerConfig.send).toEqual({
+    expect(schedulerConfig.botToken).toBe('');
+    expect(schedulerConfig.send).toEqual({
       deliveriesPerIteration: 50,
       requestsPerSecond: 30,
       timeouts: { idleTimeout: 10000, afterMassSend: 1000 },
     });
-    expect(workerConfig.deliveriesPartitionAheadMonths).toBe(6);
+    expect(schedulerConfig.deliveriesPartitionAheadMonths).toBe(6);
     expect(healthConfig.responsibleTag).toBe('');
     expect(healthConfig.alertIntervalMinutes).toBe(30);
     expect(healthConfig.errorThreshold).toBe(0);

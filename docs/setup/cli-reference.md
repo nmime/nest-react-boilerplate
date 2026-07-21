@@ -126,19 +126,19 @@ pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> --descrip
 pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--dry-run]
 ```
 
-| Flag                    | Type    | Description                                                        |
-| ----------------------- | ------- | ------------------------------------------------------------------ |
-| `--dry-run`             | boolean | Show what would be done.                                           |
-| `--kind <kind>`         | string  | Required app/lib platform.                                         |
-| `--renderer <renderer>` | string  | `vite`, `astro`, `vike`, `expo`, `nest-api`, or `worker`.          |
-| `--port <port>`         | number  | Explicit free local port; omitted means first free canonical port. |
-| `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.           |
-| `--scope <scope>`       | string  | Owning domain scope for a library.                                 |
-| `--description <text>`  | string  | Required concrete library responsibility written to its README.    |
-| `--api-app <name>`      | string  | Required API application that owns a feature.                      |
-| `--frontend-app <name>` | string  | Required frontend application that hosts a feature.                |
-| `--help`, `-h`          | boolean | Show usage.                                                        |
-| `--`                    |         | Pass remaining args to the underlying generator.                   |
+| Flag                    | Type    | Description                                                              |
+| ----------------------- | ------- | ------------------------------------------------------------------------ |
+| `--dry-run`             | boolean | Show what would be done.                                                 |
+| `--kind <kind>`         | string  | Required app/lib platform.                                               |
+| `--renderer <renderer>` | string  | `vite`, `astro`, `vike`, `expo`, `nest-api`, `consumer`, or `scheduler`. |
+| `--port <port>`         | number  | Explicit free local port; omitted means first free canonical port.       |
+| `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.                 |
+| `--scope <scope>`       | string  | Owning domain scope for a library.                                       |
+| `--description <text>`  | string  | Required concrete library responsibility written to its README.          |
+| `--api-app <name>`      | string  | Required API application that owns a feature.                            |
+| `--frontend-app <name>` | string  | Required frontend application that hosts a feature.                      |
+| `--help`, `-h`          | boolean | Show usage.                                                              |
+| `--`                    |         | Pass remaining args to the underlying generator.                         |
 
 Examples:
 

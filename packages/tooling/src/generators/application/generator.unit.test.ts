@@ -138,23 +138,58 @@ describe('application generator', () => {
       assert.doesNotMatch(readme, /^Nx tags:/m);
     });
 
-    it('creates an application-context worker without HTTP bootstrap', async () => {
+    it('creates an application-context consumer without HTTP bootstrap', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');
 
       await applicationGenerator(tree, {
-        name: 'billing-worker',
+        name: 'billing-consumer',
         kind: 'backend',
-        renderer: 'worker',
+        renderer: 'consumer',
         skipFormat: true,
       });
 
-      const main = tree.read('apps/backend/billing/billing-worker/src/main.ts', 'utf8')!;
+      const main = tree.read('apps/backend/billing/billing-consumer/src/main.ts', 'utf8')!;
       assert.match(main, /createApplicationContext/);
+      assert.match(main, /enableShutdownHooks/);
       assert.equal(main.includes('bootstrapNestApi'), false);
     });
 
-    it('rejects an HTTP port for a worker process', async () => {
+    it('creates a scheduler with process-level ScheduleModule ownership', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, {
+        name: 'billing-scheduler',
+        kind: 'backend',
+        renderer: 'scheduler',
+        skipFormat: true,
+      });
+
+      const module = tree.read('apps/backend/billing/billing-scheduler/src/billing-scheduler.module.ts', 'utf8')!;
+      assert.match(module, /ScheduleModule\.forRoot\(\)/);
+    });
+
+    it('rejects an HTTP port for consumer and scheduler processes', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      for (const renderer of ['consumer', 'scheduler'] as const) {
+        await assert.rejects(
+          () =>
+            applicationGenerator(tree, {
+              name: `billing-${renderer}`,
+              kind: 'backend',
+              renderer,
+              port: 3110,
+              skipFormat: true,
+            }),
+          /do not expose an HTTP port/,
+        );
+      }
+    });
+
+    it('rejects the removed generic worker renderer', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');
 
@@ -163,11 +198,10 @@ describe('application generator', () => {
           applicationGenerator(tree, {
             name: 'billing-worker',
             kind: 'backend',
-            renderer: 'worker',
-            port: 3110,
+            renderer: 'worker' as never,
             skipFormat: true,
           }),
-        /do not expose an HTTP port/,
+        /Unsupported backend renderer/,
       );
     });
     it('creates project.json with correct structure', async () => {

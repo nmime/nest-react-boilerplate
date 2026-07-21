@@ -18,6 +18,7 @@ if [ "$(id -u)" -eq 0 ]; then
   load_secret SESSION_SECRET /run/secrets/session_secret
   load_secret BETTER_AUTH_SECRET /run/secrets/better_auth_secret
   load_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY /run/secrets/auth_provider_token_encryption_key
+  load_secret NOTIFICATION_PAYLOAD_ENCRYPTION_KEY /run/secrets/notification_payload_encryption_key
   load_secret REDIS_PASSWORD /run/secrets/redis_password
   load_secret DATABASE_URL /run/secrets/database_url
   load_secret POSTGRES_PASSWORD /run/secrets/postgres_password
@@ -27,6 +28,8 @@ if [ "$(id -u)" -eq 0 ]; then
   load_secret DISCORD_BOT_TOKEN /run/secrets/discord_bot_token
   load_secret DISCORD_CLIENT_SECRET /run/secrets/discord_client_secret
   load_secret DISCORD_PUBLIC_KEY /run/secrets/discord_public_key
+  load_secret RESEND_API_KEY /run/secrets/resend_api_key
+  load_secret MAILPACE_SERVER_TOKEN /run/secrets/mailpace_server_token
 
   exec su-exec node "$@"
 fi

@@ -34,6 +34,7 @@ import {
 } from '../infrastructure';
 import { createAuthSession } from './auth-session.factory';
 import { EffectivePermissionService } from './effective-permission.service';
+import { AuthNotificationPublisher } from './auth-notification.publisher';
 import {
   normalizeEmail,
   AuthJwtSigningError,
@@ -106,6 +107,8 @@ export class AuthService {
     private readonly social?: SocialAuthStore,
     @Optional()
     private readonly effectivePermissions?: EffectivePermissionService,
+    @Optional()
+    private readonly authNotifications?: AuthNotificationPublisher,
   ) {}
 
   async register(input: RegisterUserInput): Promise<AuthSessionView> {
@@ -382,7 +385,17 @@ export class AuthService {
       userId: user.value.id,
       purpose,
     });
-    return issued.isOk() ? issued.value.token : null;
+    if (issued.isErr()) {
+      return null;
+    }
+    if (this.authNotifications) {
+      await this.authNotifications.publishUserAction({
+        userId: user.value.id,
+        purpose,
+        token: issued.value.token,
+      });
+    }
+    return issued.value.token;
   }
 
   private async recordPasswordMethod(user: AuthUserRecord): Promise<void> {

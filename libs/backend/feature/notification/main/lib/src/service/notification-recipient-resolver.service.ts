@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { ExternalIdentityRepository } from '@app/backend-postgres-main-auth';
+import { AuthUserRepository, ExternalIdentityRepository } from '@app/backend-postgres-main-auth';
 import {
   NotificationRecipientResolver,
   type ResolvedNotificationRecipient,
 } from '@app/backend-feature-notification-shared';
 import {
   NotificationChannel,
-  type NotificationDeliveryChannel,
+  NotificationDeliveryProvider,
+  type NotificationDeliveryRecord,
   NotificationTargetType,
 } from '@app/common-notifications';
 
@@ -30,23 +31,34 @@ export class NotificationRecipientLookupError extends Error {
 
 @Injectable()
 export class NotificationRecipientResolverService extends NotificationRecipientResolver {
-  constructor(private readonly externalIdentityRepository: ExternalIdentityRepository) {
+  constructor(
+    private readonly externalIdentityRepository: ExternalIdentityRepository,
+    private readonly authUserRepository: AuthUserRepository,
+  ) {
     super();
   }
 
   async resolve(
     targetType: NotificationTargetType,
     targetId: string,
-    channel: NotificationDeliveryChannel,
+    delivery: NotificationDeliveryRecord,
   ): Promise<ResolvedNotificationRecipient | null> {
-    if (channel !== NotificationChannel.Bot) {
+    if (
+      (delivery.provider === NotificationDeliveryProvider.Resend ||
+        delivery.provider === NotificationDeliveryProvider.MailPace) &&
+      delivery.channel === NotificationChannel.Email
+    ) {
+      return this.resolveEmail(targetType, targetId);
+    }
+    if (delivery.channel !== NotificationChannel.Bot) {
       return null;
     }
-    if (
-      targetType === NotificationTargetType.TelegramChat ||
-      targetType === NotificationTargetType.SystemTelegramChat
-    ) {
+
+    if (delivery.provider === NotificationDeliveryProvider.TelegramBot && this.isTelegramTarget(targetType)) {
       return { address: targetId };
+    }
+    if (targetType !== NotificationTargetType.User) {
+      return null;
     }
 
     const identitiesResult = await this.externalIdentityRepository.findByUser(targetId);
@@ -55,9 +67,42 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
       // delivery is retried instead of being permanently marked as an incorrect target.
       throw new NotificationRecipientLookupError(targetType, targetId, identitiesResult.error.message);
     }
-    const telegramIdentity = identitiesResult.value.find((identity) => identity.provider === 'telegram');
-    return telegramIdentity
-      ? { address: telegramIdentity.providerSubject, language: telegramIdentity.locale ?? undefined }
-      : null;
+    const provider = delivery.provider === NotificationDeliveryProvider.TelegramBot ? 'telegram' : 'discord';
+    if (
+      delivery.provider !== NotificationDeliveryProvider.TelegramBot &&
+      delivery.provider !== NotificationDeliveryProvider.DiscordBot
+    ) {
+      return null;
+    }
+    const identity = identitiesResult.value.find((item) => item.provider === provider);
+    return identity ? { address: identity.providerSubject, language: identity.locale ?? undefined } : null;
   }
+
+  private async resolveEmail(
+    targetType: NotificationTargetType,
+    targetId: string,
+  ): Promise<ResolvedNotificationRecipient | null> {
+    if (targetType === NotificationTargetType.Email) {
+      return isEmailAddress(targetId) ? { address: targetId.trim().toLowerCase() } : null;
+    }
+    if (targetType !== NotificationTargetType.User) {
+      return null;
+    }
+    const userResult = await this.authUserRepository.findById(targetId);
+    if (userResult.isErr()) {
+      throw new NotificationRecipientLookupError(targetType, targetId, userResult.error.message);
+    }
+    const user = userResult.value;
+    return user?.email && isEmailAddress(user.email) ? { address: user.email, language: user.locale } : null;
+  }
+
+  private isTelegramTarget(targetType: NotificationTargetType): boolean {
+    return (
+      targetType === NotificationTargetType.TelegramChat || targetType === NotificationTargetType.SystemTelegramChat
+    );
+  }
+}
+
+function isEmailAddress(value: string): boolean {
+  return value.trim().length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value.trim());
 }

@@ -9,7 +9,7 @@ import {
   type PendingNotificationDelivery,
 } from '@app/common-notifications';
 import { MessageStrategyResolver } from '../messages';
-import { ChannelStrategyResolver } from '../strategy/transport';
+import { NotificationProviderResolver } from '../strategy/transport';
 import { NotificationConfigService } from '../config/notification-config.service';
 import { NotificationRecipientLookupError } from './notification-recipient-resolver.service';
 import { NotificationStrategyResolverService } from './notification-strategy-resolver.service';
@@ -25,7 +25,7 @@ export class NotificationDeliverySchedulerService {
     notificationConfig: NotificationConfigService,
     private readonly notificationPersistence: NotificationPersistence,
     private readonly targetStrategyResolver: NotificationStrategyResolverService,
-    private readonly channelStrategyResolver: ChannelStrategyResolver,
+    private readonly notificationProviderResolver: NotificationProviderResolver,
     private readonly messageStrategyResolver: MessageStrategyResolver,
     private readonly recipientResolver: NotificationRecipientResolver,
   ) {
@@ -93,7 +93,7 @@ export class NotificationDeliverySchedulerService {
     try {
       return await strategy.handleNotification({
         pending,
-        channelStrategyResolver: this.channelStrategyResolver,
+        notificationProviderResolver: this.notificationProviderResolver,
         messageStrategyResolver: this.messageStrategyResolver,
         recipientResolver: this.recipientResolver,
       });

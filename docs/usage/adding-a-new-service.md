@@ -8,7 +8,10 @@ tree.
 
 - `nest-api` creates an HTTP NestJS/Fastify deployable with the repository
   bootstrap and standard health surface.
-- `worker` creates a Nest application-context process without HTTP transport.
+- `consumer` creates a Nest application-context event/queue consumer without
+  HTTP transport.
+- `scheduler` creates a Nest application-context scheduled-job process and
+  owns `ScheduleModule.forRoot()`.
 
 The first name segment is the backend scope. For example,
 `billing-app-api` is generated at
@@ -29,12 +32,17 @@ pnpm nrb add app billing-app-api \
   --port 3200
 ```
 
-For a worker:
+For a consumer or scheduler:
 
 ```bash
-pnpm nrb add app billing-worker \
+pnpm nrb add app billing-consumer \
   --kind backend \
-  --renderer worker \
+  --renderer consumer \
+  --dry-run
+
+pnpm nrb add app billing-scheduler \
+  --kind backend \
+  --renderer scheduler \
   --dry-run
 ```
 

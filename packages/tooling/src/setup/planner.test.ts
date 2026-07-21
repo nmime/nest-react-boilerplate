@@ -453,16 +453,16 @@ describe('planner — M1 validateSelection rejection', () => {
   });
 
   it('rejects config where expanded deps still have issues', () => {
-    // Notifications use the final PostgreSQL queue and the currently implemented
-    // Telegram delivery worker. Dependency expansion wires both from scratch.
+    // Notifications use the PostgreSQL queue and dedicated scheduler.
+    // Dependency expansion wires both from scratch.
     const config = parseNrbConfig({
       schemaVersion,
       capabilities: ['notifications'],
     });
     const resolved = resolveConfig(config);
     assert.ok(resolved.capabilities.includes('postgres'));
-    assert.ok(resolved.capabilities.includes('telegram-bot'));
-    assert.ok(resolved.apps.includes('telegram-bot-api'));
+    assert.ok(resolved.apps.includes('notification-scheduler'));
+    assert.ok(!resolved.capabilities.includes('telegram-bot'));
     assert.ok(!resolved.capabilities.includes('redis'));
   });
 });
@@ -562,8 +562,8 @@ describe('planner — runtime workspace manifest', () => {
 
 describe('planner — concrete capability activation', () => {
   const summary = {
-    apps: ['user-app-api', 'telegram-bot-api'],
-    capabilities: ['notifications', 'postgres', 'telegram-bot'],
+    apps: ['notification-scheduler', 'user-app-api'],
+    capabilities: ['notifications', 'postgres'],
     configHash: 'abc',
   };
 
@@ -571,30 +571,31 @@ describe('planner — concrete capability activation', () => {
     const manifest = JSON.parse(generateCapabilitiesManifest(summary).content);
     const notifications = manifest.capabilities.find((entry: { id: string }) => entry.id === 'notifications');
     assert.ok(notifications.projects.includes('@app/backend-feature-notification-main'));
-    assert.ok(notifications.dockerServices.includes('telegram-bot-api'));
+    assert.ok(notifications.dockerServices.includes('notification-scheduler'));
     assert.ok(notifications.environmentVariables.includes('NOTIFICATION_REQUESTS_PER_SECOND'));
     assert.ok(
-      notifications.generatedFiles.includes('apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts'),
+      notifications.generatedFiles.includes(
+        'apps/backend/notification/notification-scheduler/src/capabilities.generated.ts',
+      ),
     );
     assert.ok(
       notifications.backendWiring.some((wiring: { moduleExpression: string }) =>
-        wiring.moduleExpression.includes('TelegramBotModule'),
+        wiring.moduleExpression.includes('enableScheduler: true'),
       ),
     );
   });
 
-  it('generates producer wiring for APIs and worker wiring for Telegram', () => {
+  it('generates producer wiring for APIs and delivery wiring for the scheduler', () => {
     const producer = generateBackendCapabilityModule('user-app-api', summary).content;
-    const worker = generateBackendCapabilityModule('telegram-bot-api', summary).content;
-    assert.match(producer, /enableWorker: false/);
-    assert.match(worker, /enableWorker: true/);
-    assert.match(worker, /import \{ TelegramBotModule \} from '@app\/backend-feature-telegram-bot'/);
-    assert.match(worker, /imports: \[TelegramBotModule\]/);
+    const scheduler = generateBackendCapabilityModule('notification-scheduler', summary).content;
+    assert.match(producer, /enableScheduler: false/);
+    assert.match(scheduler, /enableScheduler: true/);
+    assert.doesNotMatch(scheduler, /TelegramBotModule/);
   });
 
   it('generates compose and bootstrap activation environment', () => {
     const environment = generateComposeEnvironment(summary).content;
-    assert.match(environment, /COMPOSE_PROFILES=.*telegram-bot-api/);
+    assert.match(environment, /COMPOSE_PROFILES=.*notification-scheduler/);
     assert.match(environment, /OTEL_ENABLED=false/);
   });
 });

@@ -83,6 +83,9 @@ for (const requirement of [
   'previous-image-tag',
   'configure_secret SESSION_SECRET_FILE session_secret.txt hex',
   'configure_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE auth_provider_token_encryption_key.txt base64-32',
+  'configure_secret NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE notification_payload_encryption_key.txt base64-32',
+  'configure_secret RESEND_API_KEY_FILE resend_api_key.txt empty',
+  'configure_secret MAILPACE_SERVER_TOKEN_FILE mailpace_server_token.txt empty',
   'configure_secret REDIS_PASSWORD_FILE redis_password.txt hex',
   'configure_secret TELEGRAM_BOT_WEBHOOK_SECRET_FILE telegram_bot_webhook_secret.txt hex',
 ]) {

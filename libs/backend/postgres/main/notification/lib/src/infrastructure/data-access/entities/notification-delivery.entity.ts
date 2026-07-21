@@ -16,7 +16,7 @@ export interface NotificationDeliveryEntityInput {
   status: NotificationStatus;
   error?: NotificationError | null;
   attempts?: number;
-  provider?: NotificationDeliveryProvider | null;
+  provider: NotificationDeliveryProvider;
   priority?: number;
   sendAfter?: Date;
   sentAt?: Date | null;
@@ -33,7 +33,7 @@ export class NotificationDeliveryEntity {
   status!: NotificationStatus;
   error: NotificationError | null = null;
   attempts = 0;
-  provider: NotificationDeliveryProvider | null = null;
+  provider!: NotificationDeliveryProvider;
   priority: number = NotificationPriority.Default;
   sendAfter: Date = new Date();
   sentAt: Date | null = null;
@@ -52,7 +52,7 @@ export class NotificationDeliveryEntity {
       this.status = input.status;
       this.error = input.error ?? null;
       this.attempts = input.attempts ?? 0;
-      this.provider = input.provider ?? null;
+      this.provider = input.provider;
       this.priority = input.priority ?? NotificationPriority.Default;
       this.sendAfter = input.sendAfter ?? new Date();
       this.sentAt = input.sentAt ?? null;
@@ -69,12 +69,12 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
     id: { type: 'bigint', primary: true, autoincrement: true },
     notificationId: { type: 'uuid', fieldName: 'notification_id' },
     targetType: { type: 'varchar', length: 32, fieldName: 'target_type' },
-    targetId: { type: 'varchar', length: 64, fieldName: 'target_id' },
+    targetId: { type: 'varchar', length: 320, fieldName: 'target_id' },
     channel: { type: 'varchar', length: 32 },
     status: { type: 'varchar', length: 32 },
     error: { type: 'json', nullable: true, defaultRaw: 'NULL' },
     attempts: { type: 'integer', default: 0 },
-    provider: { type: 'varchar', length: 32, nullable: true, default: null },
+    provider: { type: 'varchar', length: 32 },
     priority: { type: 'int', default: NotificationPriority.Default },
     sendAfter: { type: 'timestamptz', fieldName: 'send_after', onCreate: () => new Date() },
     sentAt: { type: 'timestamptz', fieldName: 'sent_at', nullable: true, default: null },

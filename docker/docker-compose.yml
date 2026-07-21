@@ -29,6 +29,17 @@ x-backend-env: &backend-env
   EXTERNAL_AUTH_STEP_UP_MAX_AGE_SECONDS: ${EXTERNAL_AUTH_STEP_UP_MAX_AGE_SECONDS:-900}
   AUTH_TELEGRAM_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
   TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
+  AUTH_NOTIFICATION_PROVIDER: ${AUTH_NOTIFICATION_PROVIDER:-resend}
+  NOTIFICATION_EMAIL_PROVIDER: ${NOTIFICATION_EMAIL_PROVIDER:-resend}
+  NOTIFICATION_EMAIL_FROM: ${NOTIFICATION_EMAIL_FROM:-}
+  NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: ${NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:-}
+  NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_ID: ${NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_ID:-primary}
+  RESEND_API_KEY: ${RESEND_API_KEY:-}
+  MAILPACE_SERVER_TOKEN: ${MAILPACE_SERVER_TOKEN:-}
+  NOTIFICATION_DELIVERIES_PER_ITERATION: ${NOTIFICATION_DELIVERIES_PER_ITERATION:-50}
+  NOTIFICATION_REQUESTS_PER_SECOND: ${NOTIFICATION_REQUESTS_PER_SECOND:-30}
+  NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS: ${NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS:-6}
   TELEGRAM_TMA_MAX_AGE_SECONDS: ${TELEGRAM_TMA_MAX_AGE_SECONDS:-300}
   TELEGRAM_OIDC_ENABLED: ${TELEGRAM_OIDC_ENABLED:-false}
   TELEGRAM_OIDC_CLIENT_ID: ${TELEGRAM_OIDC_CLIENT_ID:-}
@@ -314,6 +325,24 @@ services:
         published: '${TELEGRAM_BOT_API_PORT:-3013}'
         protocol: tcp
     healthcheck: *backend-healthcheck
+
+  notification-scheduler:
+    profiles: [notification-scheduler]
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: notification-scheduler
+        BUILD_OUTPUT: dist/apps/backend/notification/notification-scheduler
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   admin-app:
     profiles: [admin-app]

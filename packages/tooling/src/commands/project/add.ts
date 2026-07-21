@@ -26,7 +26,7 @@ interface AddArgs {
   apiApp?: string;
   frontendApp?: string;
   entityKind?: "frontend" | "backend" | "common";
-  renderer?: "vite" | "astro" | "vike" | "expo" | "nest-api" | "worker";
+  renderer?: "vite" | "astro" | "vike" | "expo" | "nest-api" | "consumer" | "scheduler";
   port?: number;
   libraryType?: string;
   scope?: string;
@@ -228,13 +228,18 @@ export async function runAddCommand(
 
   if (args.kind === "app" && !args.renderer) {
     process.stderr.write(
-      `Error: ${args.entityKind} applications require --renderer (${args.entityKind === "frontend" ? "vite | astro | vike | expo" : "nest-api | worker"})\n`,
+      `Error: ${args.entityKind} applications require --renderer (${args.entityKind === "frontend" ? "vite | astro | vike | expo" : "nest-api | consumer | scheduler"})\n`,
     );
     return 1;
   }
 
-  if (args.kind === "app" && args.entityKind === "backend" && args.renderer && !["nest-api", "worker"].includes(args.renderer)) {
-    process.stderr.write('Error: backend applications support --renderer "nest-api" or "worker"\n');
+  if (
+    args.kind === "app" &&
+    args.entityKind === "backend" &&
+    args.renderer &&
+    !["nest-api", "consumer", "scheduler"].includes(args.renderer)
+  ) {
+    process.stderr.write('Error: backend applications support --renderer "nest-api", "consumer", or "scheduler"\n');
     return 1;
   }
 
@@ -324,7 +329,7 @@ Options:
   --api-app <name>      Required API application that owns a feature.
   --frontend-app <name> Required frontend application that hosts a feature.
   --kind <kind>         App/lib platform: frontend, backend, or common.
-  --renderer <renderer> App runtime: vite, astro, vike, expo, nest-api, or worker.
+  --renderer <renderer> App runtime: vite, astro, vike, expo, nest-api, consumer, or scheduler.
   --port <number>       Optional local app port; omit it to select the first free canonical port.
   --type <type>         Semantic library type (common, util, ui, sdk, feature-main,
                         feature-shared, data-access, test-util, or asset).

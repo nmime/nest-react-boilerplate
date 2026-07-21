@@ -537,6 +537,20 @@ describe('AuthService', () => {
     });
     expect(verificationToken).toEqual(expect.any(String));
     expect(resetToken).toEqual(expect.any(String));
+
+    const publishUserAction = vi.fn().mockResolvedValue(undefined);
+    const notifyingActionService = new AuthService(users as never, new InMemoryAuthTokenStore(), undefined, undefined, {
+      publishUserAction,
+    } as never);
+    const deliveredResetToken = await notifyingActionService.issuePasswordResetToken({
+      email: 'active@example.com',
+    });
+    expect(publishUserAction).toHaveBeenCalledWith({
+      userId: activeRecord.id,
+      purpose: 'password_reset',
+      token: deliveredResetToken,
+    });
+
     const issueFailureTokens: Partial<AuthTokenStore> = {
       issueUserActionToken: () => errAsync({ code: 'token_store_error', message: 'issue failed' }),
     };

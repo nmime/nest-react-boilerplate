@@ -6,6 +6,7 @@ import { BetterAuthApiController } from './application/better-auth-api.controlle
 import { BetterAuthModule } from './application/better-auth.module';
 import {
   AuthService,
+  AuthNotificationPublisher,
   BetterAuthTelegramSessionService,
   EffectivePermissionService,
   ExternalAuthService,
@@ -85,6 +86,7 @@ export class AuthMainModule {
       controllers: [AuthController, BetterAuthApiController, ProblemPresentationsController],
       providers: [
         AuthService,
+        AuthNotificationPublisher,
         ExternalAuthService,
         BetterAuthTelegramSessionService,
         EffectivePermissionService,

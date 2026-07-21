@@ -22,14 +22,15 @@ runtime manifest unless a maintainer explicitly introduces a package boundary.
 
 `@repo/tooling:application` supports:
 
-| Kind     | Renderer   | Generated contract                                       |
-| -------- | ---------- | -------------------------------------------------------- |
-| frontend | `vite`     | React/Vite app, Vitest, browser e2e coverage target      |
-| frontend | `astro`    | Astro standalone Node output and renderer smoke test     |
-| frontend | `vike`     | Vike React SSR app and production build contract         |
-| frontend | `expo`     | Expo Router/React Native app and web export contract     |
-| backend  | `nest-api` | NestJS/Fastify API with standard health endpoints        |
-| backend  | `worker`   | NestJS application-context worker without HTTP transport |
+| Kind     | Renderer    | Generated contract                                         |
+| -------- | ----------- | ---------------------------------------------------------- |
+| frontend | `vite`      | React/Vite app, Vitest, browser e2e coverage target        |
+| frontend | `astro`     | Astro standalone Node output and renderer smoke test       |
+| frontend | `vike`      | Vike React SSR app and production build contract           |
+| frontend | `expo`      | Expo Router/React Native app and web export contract       |
+| backend  | `nest-api`  | NestJS/Fastify API with standard health endpoints          |
+| backend  | `consumer`  | NestJS application-context event/queue consumer            |
+| backend  | `scheduler` | NestJS application-context scheduler with `ScheduleModule` |
 
 Frontend roots are `apps/frontend/<name>`. Backend roots are
 `apps/backend/<first-name-segment>/<name>`. Every generated root includes a

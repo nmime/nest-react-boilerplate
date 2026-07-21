@@ -8,10 +8,11 @@ import {
   type NotificationData,
   type NotificationDataValue,
   type NotificationDeliveryChannel,
+  type NotificationEmailChannelContent,
   type NotificationMessageButton,
   type NotificationRecord,
 } from '@app/common-notifications';
-import type { MassSenderMessage } from '../strategy/transport';
+import type { NotificationRenderedMessage } from '../strategy/transport';
 import { BaseMessageStrategy } from './base-message.strategy';
 
 const defaultLanguage = 'en';
@@ -26,43 +27,60 @@ export class DefaultMessageStrategy extends BaseMessageStrategy {
     super();
   }
 
-  getMessage(language?: string): MassSenderMessage | undefined {
-    if (this.channel !== NotificationChannel.Bot) {
-      return undefined;
-    }
-
+  getMessage(language?: string): NotificationRenderedMessage | undefined {
     const templateChannel = this.notification.template.channels[this.channel];
-    if (!templateChannel || !isBotChannelContent(templateChannel.content)) {
+    if (!templateChannel) {
       return undefined;
     }
 
-    const content = templateChannel.content;
-    const data = this.notification.data ?? undefined;
-    const text = this.renderString({
-      template: content.body,
-      language,
-      data,
-      useFormat: true,
-      templateEngine: templateChannel.engine,
-    });
-    if (!text) {
-      return undefined;
+    const data = mergeNotificationData(this.notification.data, this.notification.sensitiveData);
+    if (this.channel === NotificationChannel.Bot && isBotChannelContent(templateChannel.content)) {
+      const content = templateChannel.content;
+      const text = this.renderString({
+        template: content.body,
+        language,
+        data,
+        useFormat: true,
+        templateEngine: templateChannel.engine,
+      });
+      if (!text) {
+        return undefined;
+      }
+      const image = this.renderString({
+        template: content.image,
+        language,
+        data,
+        useFormat: false,
+        templateEngine: templateChannel.engine,
+      });
+      const buttons = this.renderButtons({
+        template: content.buttons,
+        language,
+        data,
+        templateEngine: templateChannel.engine,
+      });
+      return { kind: 'bot', image, text, buttons };
     }
 
-    const image = this.renderString({
-      template: content.image,
-      language,
-      data,
-      useFormat: false,
-      templateEngine: templateChannel.engine,
-    });
-    const buttons = this.renderButtons({
-      template: content.buttons,
-      language,
-      data,
-      templateEngine: templateChannel.engine,
-    });
-    return { image, text, buttons };
+    if (this.channel === NotificationChannel.Email && isEmailChannelContent(templateChannel.content)) {
+      const subject = this.renderString({
+        template: templateChannel.content.subject,
+        language,
+        data,
+        useFormat: true,
+        templateEngine: templateChannel.engine,
+      });
+      const text = this.renderString({
+        template: templateChannel.content.body,
+        language,
+        data,
+        useFormat: true,
+        templateEngine: templateChannel.engine,
+      });
+      return subject && text ? { kind: 'email', subject, text } : undefined;
+    }
+
+    return undefined;
   }
 
   private prepareData(data: NotificationData, language?: string): NotificationData {
@@ -153,6 +171,20 @@ function isBotChannelContent(value: unknown): value is NotificationBotChannelCon
     isLocalizedStrings(value['body']) &&
     (value['image'] === undefined || isLocalizedStrings(value['image']))
   );
+}
+
+function isEmailChannelContent(value: unknown): value is NotificationEmailChannelContent {
+  return isRecord(value) && isLocalizedStrings(value['subject']) && isLocalizedStrings(value['body']);
+}
+
+function mergeNotificationData(
+  data: NotificationData | null,
+  sensitiveData: NotificationData | null,
+): NotificationData | undefined {
+  if (!data && !sensitiveData) {
+    return undefined;
+  }
+  return { ...(data ?? {}), ...(sensitiveData ?? {}) };
 }
 
 function isLocalizedStrings(value: unknown): value is Record<string, string> {

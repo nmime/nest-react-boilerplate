@@ -13,7 +13,7 @@ const publicDomainModes = new Set(['single-domain', 'per-app-domains']);
 const frontendApiBaseUrlModes = new Set(['same-origin', 'split-origin']);
 const frontendApiBaseUrlKeys = ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL'];
 const tlsModes = new Set(['automatic', 'provided', 'external']);
-const supportedProfiles = new Set(['discord', 'telegram']);
+const supportedProfiles = new Set(['discord', 'notification-scheduler', 'telegram']);
 const primaryUpstreams = {
   'landing-app': 'landing-app:8080',
   'site-app': 'site-app:80',
@@ -249,10 +249,12 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   const profiles = unique([...splitList(effectiveEnvironment.COMPOSE_PROFILES), ...options.profiles]).sort();
   for (const profile of profiles) {
     if (!supportedProfiles.has(profile)) {
-      fail(`Unsupported production profile "${profile}". Supported profiles: discord, telegram.`);
+      fail(
+        `Unsupported production profile "${profile}". Supported profiles: discord, notification-scheduler, telegram.`,
+      );
     }
   }
-  if (domainMode === 'single-domain' && profiles.length > 0) {
+  if (domainMode === 'single-domain' && profiles.some((profile) => profile === 'telegram' || profile === 'discord')) {
     fail(
       'Optional Telegram/Discord profiles require per-app-domains (or an operator-owned external proxy) because their user app and API must both remain publicly reachable.',
     );

@@ -148,6 +148,17 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     requiresApps: [],
     conflictsWithCapabilities: [],
   },
+  'notification-scheduler': {
+    id: 'notification-scheduler',
+    label: 'Notification Scheduler',
+    platform: 'backend',
+    classification: 'optional',
+    runtime: 'NestJS scheduled-job process',
+    publicHostname: null,
+    requiresCapabilities: ['postgres'],
+    requiresApps: [],
+    conflictsWithCapabilities: [],
+  },
   /* --- E2E --- */
   'fullstack-e2e': {
     id: 'fullstack-e2e',
@@ -218,6 +229,10 @@ export const backendCapabilityModuleCatalog: Readonly<Partial<Record<AppId, Read
     'telegram-bot-api': {
       path: 'apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts',
       className: 'TelegramBotApiCapabilitiesModule',
+    },
+    'notification-scheduler': {
+      path: 'apps/backend/notification/notification-scheduler/src/capabilities.generated.ts',
+      className: 'NotificationSchedulerCapabilitiesModule',
     },
   } as const;
 
@@ -301,8 +316,8 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     id: 'notifications',
     label: 'Notifications',
     activation: 'nest-module',
-    requiresCapabilities: ['postgres', 'telegram-bot'],
-    requiresApps: ['telegram-bot-api'],
+    requiresCapabilities: ['postgres'],
+    requiresApps: ['notification-scheduler'],
     conflictsWith: [],
     ownedProjects: [
       '@app/common-notifications',
@@ -310,31 +325,29 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
       '@app/backend-feature-notification-main',
       '@app/backend-postgres-main-notification',
     ],
-    dockerServices: ['postgres', 'telegram-bot-api'],
+    dockerServices: ['postgres', 'notification-scheduler'],
     environmentVariables: [
       'NOTIFICATION_DELIVERIES_PER_ITERATION',
       'NOTIFICATION_REQUESTS_PER_SECOND',
       'NOTIFICATION_DELIVERIES_PARTITION_AHEAD_MONTHS',
+      'NOTIFICATION_EMAIL_PROVIDER',
+      'NOTIFICATION_EMAIL_FROM',
+      'NOTIFICATION_PAYLOAD_ENCRYPTION_KEY',
+      'RESEND_API_KEY',
+      'MAILPACE_SERVER_TOKEN',
     ],
     backendWiring: [
       {
-        hosts: ['admin-app-api', 'user-app-api', 'auth-app-api', 'discord-app-api'],
+        hosts: ['admin-app-api', 'user-app-api', 'auth-app-api', 'discord-app-api', 'telegram-bot-api'],
         importName: 'NotificationMainModule',
         importPath: '@app/backend-feature-notification-main',
-        moduleExpression: 'NotificationMainModule.forRoot({ enableWorker: false, exposeHttp: false })',
+        moduleExpression: 'NotificationMainModule.forRoot({ enableScheduler: false, exposeHttp: false })',
       },
       {
-        hosts: ['telegram-bot-api'],
+        hosts: ['notification-scheduler'],
         importName: 'NotificationMainModule',
         importPath: '@app/backend-feature-notification-main',
-        moduleExpression:
-          'NotificationMainModule.forRoot({ imports: [TelegramBotModule], enableWorker: true, exposeHttp: false })',
-        additionalImports: [
-          {
-            importName: 'TelegramBotModule',
-            importPath: '@app/backend-feature-telegram-bot',
-          },
-        ],
+        moduleExpression: 'NotificationMainModule.forRoot({ enableScheduler: true, exposeHttp: false })',
       },
     ],
   },

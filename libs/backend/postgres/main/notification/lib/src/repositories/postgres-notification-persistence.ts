@@ -11,6 +11,7 @@ import {
   type CreateTemplateNotificationParams,
   type FindPendingNotificationDeliveriesParams,
   type FindRecentNotificationDeliveryErrorsParams,
+  type NotificationDeliveryRoute,
   type UpsertNotificationTemplateParams,
 } from '@app/backend-feature-notification-shared';
 import {
@@ -23,12 +24,14 @@ import {
   type NotificationDeliveryResult,
   NotificationPriority,
   type NotificationRecord,
+  type NotificationSensitiveData,
   NotificationStatus,
   NotificationTemplateEngine,
   type NotificationTemplateChannelRecord,
   type NotificationTemplateRecord,
   type PendingNotificationDelivery,
 } from '@app/common-notifications';
+import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
 import {
   NotificationDeliveryEntity,
   NotificationEntity,
@@ -50,6 +53,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
   constructor(
     @Inject(EntityManager)
     private readonly entityManager: EntityManager,
+    private readonly payloadCrypto: NotificationPayloadCryptoService,
   ) {
     super();
   }
@@ -130,11 +134,13 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
           targetType: params.targetType,
           targetId: item.targetId,
           templateCode: item.templateCode,
+          deliveries: item.deliveries ?? params.deliveries,
           channels: item.channels ?? params.channels,
           inAppVisible: item.inAppVisible ?? params.inAppVisible,
           priority: item.priority ?? params.priority,
           sendAfter: item.sendAfter ?? params.sendAfter,
           data: item.data,
+          sensitiveData: item.sensitiveData,
           extra: item.extra,
         });
         records.push(record);
@@ -191,7 +197,13 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
       const notificationsById = new Map(
         notifications.map((notification) => [
           notification.id,
-          mapNotification(notification, channelsByTemplateId.get(notification.template.id) ?? []),
+          mapNotification(
+            notification,
+            channelsByTemplateId.get(notification.template.id) ?? [],
+            isEncryptedPayload(notification.sensitiveData)
+              ? this.payloadCrypto.decrypt(notification.sensitiveData, payloadAad(notification))
+              : null,
+          ),
         ]),
       );
 
@@ -254,7 +266,8 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
     em: EntityManager,
     params: CreateTemplateNotificationParams<T>,
   ): Promise<NotificationRecord<T>> {
-    const channels = uniqueChannels(params.channels ?? defaultDeliveryChannels);
+    const routes = resolveRoutes(params.deliveries, params.channels);
+    const channels = routes.map((route) => route.channel);
     const inAppVisible = params.inAppVisible ?? true;
     if (channels.length === 0 && !inAppVisible) {
       throw new EmptyNotificationAudienceError();
@@ -288,15 +301,18 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
       inAppVisible,
       createdAt,
     });
-    const deliveries = channels.map(
-      (channel) =>
+    if (params.sensitiveData) {
+      notification.sensitiveData = this.payloadCrypto.encrypt(params.sensitiveData, payloadAad(notification));
+    }
+    const deliveries = routes.map(
+      (route) =>
         new NotificationDeliveryEntity({
           notificationId: notification.id,
           targetType: params.targetType,
           targetId: params.targetId,
-          channel,
+          channel: route.channel,
           status: NotificationStatus.Pending,
-          provider: defaultProvider(channel),
+          provider: route.provider,
           priority: params.priority ?? NotificationPriority.Default,
           sendAfter: params.sendAfter ?? createdAt,
           createdAt,
@@ -306,16 +322,56 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
 
     em.persist([notification, ...deliveries]);
     await em.flush();
-    return mapNotification(notification, templateChannels);
+    return mapNotification(notification, templateChannels, null);
   }
 }
 
-function uniqueChannels(channels: NotificationDeliveryChannel[]): NotificationDeliveryChannel[] {
-  return [...new Set(channels)];
+function resolveRoutes(
+  deliveries: NotificationDeliveryRoute[] | undefined,
+  channels: NotificationDeliveryChannel[] | undefined,
+): NotificationDeliveryRoute[] {
+  const requested =
+    deliveries ??
+    (channels ?? defaultDeliveryChannels).map((channel) => ({
+      channel,
+      provider: defaultProvider(channel),
+    }));
+  const byChannel = new Map<NotificationDeliveryChannel, NotificationDeliveryRoute>();
+  for (const route of requested) {
+    if (!isProviderCompatible(route)) {
+      throw new InvalidNotificationTemplateError(`${route.provider} cannot deliver the ${route.channel} channel`);
+    }
+    const existing = byChannel.get(route.channel);
+    if (existing && existing.provider !== route.provider) {
+      throw new InvalidNotificationTemplateError(`only one provider can be selected for ${route.channel}`);
+    }
+    byChannel.set(route.channel, route);
+  }
+  return [...byChannel.values()];
 }
 
-function defaultProvider(channel: NotificationDeliveryChannel): NotificationDeliveryProvider | null {
-  return channel === NotificationChannel.Bot ? NotificationDeliveryProvider.Telegram : null;
+function isProviderCompatible(route: NotificationDeliveryRoute): boolean {
+  if (route.channel === NotificationChannel.Bot) {
+    return (
+      route.provider === NotificationDeliveryProvider.TelegramBot ||
+      route.provider === NotificationDeliveryProvider.DiscordBot
+    );
+  }
+  if (route.channel === NotificationChannel.Email) {
+    return (
+      route.provider === NotificationDeliveryProvider.Resend || route.provider === NotificationDeliveryProvider.MailPace
+    );
+  }
+  return (
+    route.provider === NotificationDeliveryProvider.GoogleFcm ||
+    route.provider === NotificationDeliveryProvider.AppleApns
+  );
+}
+
+function defaultProvider(channel: NotificationDeliveryChannel): NotificationDeliveryProvider {
+  if (channel === NotificationChannel.Bot) return NotificationDeliveryProvider.TelegramBot;
+  if (channel === NotificationChannel.Email) return NotificationDeliveryProvider.Resend;
+  return NotificationDeliveryProvider.GoogleFcm;
 }
 
 function groupTemplateChannels(
@@ -352,6 +408,7 @@ function mapTemplate(
 function mapNotification<T>(
   notification: NotificationEntity<T>,
   channels: NotificationTemplateChannelEntity[],
+  sensitiveData: NotificationSensitiveData | null,
 ): NotificationRecord<T> {
   return {
     id: notification.id,
@@ -359,6 +416,7 @@ function mapNotification<T>(
     targetId: notification.targetId,
     template: mapTemplate(notification.template, channels),
     data: notification.data,
+    sensitiveData,
     extra: notification.extra,
     inAppVisible: notification.inAppVisible,
     createdAt: notification.createdAt,
@@ -382,4 +440,24 @@ function mapDelivery(delivery: NotificationDeliveryEntity): NotificationDelivery
     createdAt: delivery.createdAt,
     updatedAt: delivery.updatedAt,
   };
+}
+
+function payloadAad<T>(notification: NotificationEntity<T>): string {
+  return `notification:${notification.id}:${notification.targetType}:${notification.targetId}`;
+}
+
+function isEncryptedPayload(value: NotificationEntity['sensitiveData']): value is {
+  ciphertext: string;
+  iv: string;
+  authTag: string;
+  keyId: string;
+} {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof value['ciphertext'] === 'string' &&
+    typeof value['iv'] === 'string' &&
+    typeof value['authTag'] === 'string' &&
+    typeof value['keyId'] === 'string'
+  );
 }

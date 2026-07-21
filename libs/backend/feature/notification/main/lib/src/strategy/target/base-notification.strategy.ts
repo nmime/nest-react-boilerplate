@@ -7,11 +7,11 @@ import {
   type PendingNotificationDelivery,
 } from '@app/common-notifications';
 import type { MessageStrategyResolver } from '../../messages';
-import type { ChannelStrategyResolver } from '../transport';
+import type { NotificationProviderResolver } from '../transport';
 
 export interface HandleNotificationParams {
   pending: PendingNotificationDelivery;
-  channelStrategyResolver: ChannelStrategyResolver;
+  notificationProviderResolver: NotificationProviderResolver;
   messageStrategyResolver: MessageStrategyResolver;
   recipientResolver: NotificationRecipientResolver;
 }
@@ -32,11 +32,7 @@ export async function deliverNotification(
     error: { reason, message },
   });
 
-  const recipient = await params.recipientResolver.resolve(
-    notification.targetType,
-    notification.targetId,
-    delivery.channel,
-  );
+  const recipient = await params.recipientResolver.resolve(notification.targetType, notification.targetId, delivery);
   if (!recipient) {
     logger.warn(`Notification recipient not found for ${notification.targetType}/${notification.targetId}`);
     return fail(NotificationErrorReason.IncorrectTarget);
@@ -48,15 +44,16 @@ export async function deliverNotification(
     return fail(NotificationErrorReason.NotFoundMessage);
   }
 
-  const channelStrategy = params.channelStrategyResolver.resolve(delivery.channel);
-  if (!channelStrategy) {
+  const provider = params.notificationProviderResolver.resolve(delivery.provider);
+  if (!provider) {
     return fail(NotificationErrorReason.UnsupportedChannel);
   }
 
-  const sendResult = await channelStrategy.send({
-    telegramId: recipient.address,
+  const sendResult = await provider.send({
+    address: recipient.address,
     message,
     extra: notification.extra,
+    deliveryId: delivery.id,
   });
   return {
     id: delivery.id,

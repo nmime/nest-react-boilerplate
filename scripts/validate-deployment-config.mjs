@@ -293,6 +293,7 @@ has(
 for (const expected of [
   'SESSION_SECRET_FILE=./secrets/session_secret.txt',
   'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE=./secrets/auth_provider_token_encryption_key.txt',
+  'NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE=./secrets/notification_payload_encryption_key.txt',
   'REDIS_PASSWORD_FILE=./secrets/redis_password.txt',
 ]) {
   has(productionEnvExample, expected, `production env example reads ${expected} from a Docker secret file`);

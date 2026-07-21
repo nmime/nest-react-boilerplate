@@ -104,6 +104,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
       'mobile-app',
       'discord-app-api',
       'telegram-bot-api',
+      'notification-scheduler',
       'fullstack-e2e',
     ],
     capabilities: [

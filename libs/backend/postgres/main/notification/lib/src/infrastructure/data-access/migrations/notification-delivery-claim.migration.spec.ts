@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Migration20260715100000CreateNotifications } from './Migration20260715100000CreateNotifications';
 import { Migration20260720130000AddNotificationDeliveryClaim } from './Migration20260720130000AddNotificationDeliveryClaim';
+import { Migration20260721120000NotificationProvidersAndSensitivePayload } from './Migration20260721120000NotificationProvidersAndSensitivePayload';
 import { notificationMigrations } from './index';
 
 function collectSql(migration: { addSql(sql: string): void }, run: () => void): string {
@@ -34,6 +35,22 @@ describe('Notification delivery-claim migration', () => {
   it('runs after the notifications table is created', () => {
     expect(notificationMigrations.indexOf(Migration20260715100000CreateNotifications)).toBeLessThan(
       notificationMigrations.indexOf(Migration20260720130000AddNotificationDeliveryClaim),
+    );
+  });
+
+  it('migrates legacy delivery providers and adds encrypted sensitive payload storage', () => {
+    const migration = new Migration20260721120000NotificationProvidersAndSensitivePayload(
+      undefined as never,
+      undefined as never,
+    );
+    const sql = collectSql(migration, () => migration.up());
+
+    expect(sql).toContain('add column if not exists "sensitive_data" jsonb not null default \'{}\'::jsonb');
+    expect(sql).toContain("when 'bot' then 'telegram-bot'");
+    expect(sql).toContain('alter column "provider" set not null');
+    expect(sql).toContain("'resend', 'mailpace', 'google-fcm', 'apple-apns'");
+    expect(notificationMigrations.indexOf(Migration20260720130000AddNotificationDeliveryClaim)).toBeLessThan(
+      notificationMigrations.indexOf(Migration20260721120000NotificationProvidersAndSensitivePayload),
     );
   });
 });

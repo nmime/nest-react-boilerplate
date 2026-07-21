@@ -21,8 +21,8 @@
     },
     "renderer": {
       "type": "string",
-      "description": "Runtime template. Frontend: vite, astro, vike, expo. Backend: nest-api, worker.",
-      "enum": ["vite", "astro", "vike", "expo", "nest-api", "worker"],
+      "description": "Runtime template. Frontend: vite, astro, vike, expo. Backend: nest-api, consumer, scheduler.",
+      "enum": ["vite", "astro", "vike", "expo", "nest-api", "consumer", "scheduler"],
       "x-priority": "important"
     },
     "port": {

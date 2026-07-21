@@ -1,5 +1,5 @@
-import type { MassSenderMessage } from '../strategy/transport';
+import type { NotificationRenderedMessage } from '../strategy/transport';
 
 export abstract class BaseMessageStrategy {
-  abstract getMessage(langCode: string | undefined): MassSenderMessage | undefined;
+  abstract getMessage(langCode: string | undefined): NotificationRenderedMessage | undefined;
 }

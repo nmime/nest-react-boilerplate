@@ -24,13 +24,13 @@ describe('NotificationMainModule', () => {
     expect(definition.controllers).toHaveLength(1);
   });
 
-  it('imports selected worker transport modules into its own DI scope', () => {
+  it('imports selected scheduler transport modules into its own DI scope', () => {
     process.env['NODE_ENV'] = 'development';
     class SelectedTransportModule {}
 
     const definition = NotificationMainModule.forRoot({
       imports: [SelectedTransportModule],
-      enableWorker: true,
+      enableScheduler: true,
     });
 
     expect(definition.imports).toContain(SelectedTransportModule);

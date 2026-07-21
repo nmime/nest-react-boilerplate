@@ -245,6 +245,7 @@ ensure_secret_material() {
   configure_secret AUTH_JWT_SECRET_FILE auth_jwt_secret.txt hex
   configure_secret BETTER_AUTH_SECRET_FILE better_auth_secret.txt base64
   configure_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE auth_provider_token_encryption_key.txt base64-32
+  configure_secret NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE notification_payload_encryption_key.txt base64-32
   configure_secret REDIS_PASSWORD_FILE redis_password.txt hex
   configure_secret GRAFANA_ADMIN_PASSWORD_FILE grafana_admin_password.txt base64
   configure_secret POSTGRES_PASSWORD_FILE postgres_password.txt base64
@@ -259,6 +260,8 @@ ensure_secret_material() {
   configure_secret DISCORD_BOT_TOKEN_FILE discord_bot_token.txt empty
   configure_secret DISCORD_CLIENT_SECRET_FILE discord_client_secret.txt empty
   configure_secret DISCORD_PUBLIC_KEY_FILE discord_public_key.txt empty
+  configure_secret RESEND_API_KEY_FILE resend_api_key.txt empty
+  configure_secret MAILPACE_SERVER_TOKEN_FILE mailpace_server_token.txt empty
 }
 
 initialize() {
@@ -534,6 +537,25 @@ validate_configuration() {
   validate_secret_file SESSION_SECRET_FILE
   validate_secret_file BETTER_AUTH_SECRET_FILE
   validate_secret_file AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE
+  if [[ "${configured_profiles}" == *,notification-scheduler,* ]]; then
+    validate_secret_file NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE
+    local notification_encryption_key
+    notification_encryption_key="$(environment_value NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE)"
+    if ! grep -Eq '^[0-9A-Fa-f]{64}$|^[A-Za-z0-9+/]{43}=$|^[A-Za-z0-9+/]{44}$' "${notification_encryption_key}"; then
+      die 'NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE must contain 32-byte base64 or 64-character hex material'
+    fi
+    case "$(environment_value NOTIFICATION_EMAIL_PROVIDER)" in
+      resend) validate_secret_file RESEND_API_KEY_FILE ;;
+      mailpace) validate_secret_file MAILPACE_SERVER_TOKEN_FILE ;;
+      *) die 'NOTIFICATION_EMAIL_PROVIDER must be resend or mailpace' ;;
+    esac
+    case "$(environment_value AUTH_NOTIFICATION_PROVIDER)" in
+      telegram-bot) validate_secret_file TELEGRAM_BOT_TOKEN_FILE ;;
+      discord-bot) validate_secret_file DISCORD_BOT_TOKEN_FILE ;;
+      resend|mailpace) ;;
+      *) die 'AUTH_NOTIFICATION_PROVIDER must be telegram-bot, discord-bot, resend, or mailpace' ;;
+    esac
+  fi
   validate_secret_file REDIS_PASSWORD_FILE
   validate_secret_file GRAFANA_ADMIN_PASSWORD_FILE
   validate_generated_secret_contracts

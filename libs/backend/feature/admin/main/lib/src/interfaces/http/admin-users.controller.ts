@@ -6,7 +6,6 @@ import {
   CurrentUser,
   RequirePermissions,
   RequireRoles,
-  SessionAuthGuard,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
 } from '@app/backend-feature-auth-shared';
@@ -34,7 +33,7 @@ import {
 @ApiExceptions(400, 401, 403, 404, 429, 500)
 @ApiBearerAuth()
 @ApiSessionCookieAuth()
-@UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
+@UseGuards(new AdminRbacGuard())
 @Controller('admin')
 export class AdminUsersController {
   constructor(private readonly adminUsers: AdminUsersUseCase) {}

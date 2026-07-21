@@ -27,5 +27,9 @@
   "admin.audit.detail.error": "Не удалось загрузить детали события аудита",
   "admin.audit.detail.before": "До",
   "admin.audit.detail.after": "После",
-  "admin.audit.detail.metadata": "Метаданные"
+  "admin.audit.detail.metadata": "Метаданные",
+  "admin.audit.resourceHistory.title": "История аудита записи",
+  "admin.audit.resourceHistory.emptyTitle": "Изменений не зафиксировано",
+  "admin.audit.resourceHistory.emptyDescription": "Административные изменения этой записи появятся здесь.",
+  "admin.audit.resourceHistory.viewAll": "Открыть полную историю аудита"
 }

@@ -5,7 +5,6 @@ import { createOkResponse, type OkResponse } from '@app/backend-common-response'
 import {
   CurrentUser,
   type AuthenticatedPrincipal,
-  SessionAuthGuard,
   RequirePermissions,
   RequireRoles,
 } from '@app/backend-feature-auth-shared';
@@ -18,7 +17,7 @@ export const getAdminProfileViewDtoType = () => AdminProfileViewDto;
 
 @ApiExceptions(400, 401, 403, 429, 500)
 @Controller('admin/profile')
-@UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
+@UseGuards(new AdminRbacGuard())
 export class AdminProfileController {
   constructor(private readonly getProfile: GetAdminProfileUseCase) {}
 

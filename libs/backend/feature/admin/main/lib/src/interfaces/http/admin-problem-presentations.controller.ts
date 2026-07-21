@@ -6,7 +6,6 @@ import {
   CurrentUser,
   RequirePermissions,
   RequireRoles,
-  SessionAuthGuard,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
 } from '@app/backend-feature-auth-shared';
@@ -34,7 +33,7 @@ import {
 @ApiExceptions(400, 401, 403, 404, 409, 429, 500)
 @ApiBearerAuth()
 @ApiSessionCookieAuth()
-@UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
+@UseGuards(new AdminRbacGuard())
 @Controller('admin/settings/problem-presentations')
 export class AdminProblemPresentationsController {
   constructor(private readonly presentations: ProblemPresentationsUseCase) {}

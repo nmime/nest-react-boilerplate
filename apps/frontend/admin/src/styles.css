@@ -338,6 +338,24 @@
   top: 1rem;
 }
 
+.admin-user-side-panel {
+  align-self: start;
+  display: grid;
+  gap: 1rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.admin-user-side-panel .admin-detail-panel {
+  position: static;
+}
+
+.admin-resource-history-link {
+  display: inline-flex;
+  font-weight: 800;
+  margin-top: 0.85rem;
+}
+
 .admin-filter-card .xr-card__body,
 .admin-table-card .xr-card__body,
 .admin-detail-panel .xr-card__body,
@@ -633,7 +651,8 @@
   }
 
   .admin-sidebar,
-  .admin-detail-panel {
+  .admin-detail-panel,
+  .admin-user-side-panel {
     position: static;
   }
 

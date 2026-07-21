@@ -25,6 +25,8 @@
   "admin.users.detail.emptyEyebrow": "No user selected",
   "admin.users.detail.emptyTitle": "Select a user to review profile and access details.",
   "admin.users.detail.lastLogin": "Last login",
+  "admin.users.detail.locale": "Language",
+  "admin.users.detail.viewLoginHistory": "View login, location, language, and timezone history",
   "admin.users.detail.tenant": "Tenant {{tenantId}}",
   "admin.users.notice.statusUpdateRequested": "User status updated.",
   "admin.users.notice.accessPolicyUpdateRequested": "Access policy updated.",

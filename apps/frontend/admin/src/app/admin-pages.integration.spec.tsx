@@ -408,7 +408,7 @@ describe('admin pages integration', () => {
 
     cleanup();
     renderAdminRouteForTest(
-      renderAdminRoute('/admin/audit', {
+      renderAdminRoute('/admin/audit?resource=admin.users&targetId=00000000-0000-4000-8000-000000000003', {
         status: 'ready',
         payload,
         access: adminAccess,
@@ -416,6 +416,13 @@ describe('admin pages integration', () => {
     );
     expect(await screen.findByText('admin.user.status.update')).toBeTruthy();
     expect(screen.getByText('00000000-0000-4000-8000-000000000003')).toBeTruthy();
+    expect(auditSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        resource: 'admin.users',
+        targetId: '00000000-0000-4000-8000-000000000003',
+      }),
+      undefined,
+    );
 
     cleanup();
     renderAdminRouteForTest(
@@ -426,7 +433,9 @@ describe('admin pages integration', () => {
       }),
     );
     expect(await screen.findByText('No audit events')).toBeTruthy();
-    expect(auditSpy).toHaveBeenCalledTimes(2);
+    await waitFor(() => {
+      expect(auditSpy).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('renders audit request failures without masking the backend message', async () => {
@@ -714,7 +723,7 @@ describe('admin pages integration', () => {
   });
 
   it('renders tenant login analytics with geo, language, timezone, and retained IP evidence', async () => {
-    vi.spyOn(adminApi, 'authLoginAnalyticsAdminControllerList').mockResolvedValue({
+    const loginListSpy = vi.spyOn(adminApi, 'authLoginAnalyticsAdminControllerList').mockResolvedValue({
       data: {
         items: [
           {
@@ -758,11 +767,19 @@ describe('admin pages integration', () => {
     });
 
     renderAdminRouteForTest(
-      renderAdminRoute('/admin/auth/login-analytics', { status: 'ready', payload, access: adminAccess }),
+      renderAdminRoute('/admin/auth/login-analytics?userId=00000000-0000-4000-8000-000000000002', {
+        status: 'ready',
+        payload,
+        access: adminAccess,
+      }),
     );
     expect((await screen.findAllByText('Login analytics')).length).toBeGreaterThan(0);
     expect(await screen.findByText('UZ · 1')).toBeTruthy();
     fireEvent.click(await screen.findByRole('row', { name: /telegram success/iu }));
     expect(await screen.findByText('203.0.113.10')).toBeTruthy();
+    expect(loginListSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: '00000000-0000-4000-8000-000000000002' }),
+      undefined,
+    );
   });
 });

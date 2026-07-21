@@ -43,6 +43,7 @@ import {
   UiStatusTag,
   UiTextarea,
 } from '@app/frontend-ui-web';
+import { ResourceAuditLogCard } from '../../entities/admin-audit';
 import type { AdminAccess } from '../../entities/admin-session';
 import { UserDetailCard, type UserRow, type UserStatus } from '../../entities/admin-user';
 import {
@@ -396,9 +397,22 @@ export const UsersPage = ({
             onPageChange={setPage}
           />
         </div>
-        <UiCard className="admin-detail-panel" title={t('admin.users.detail.title')}>
-          <UserDetailCard detail={detail} t={t} />
-        </UiCard>
+        <div className="admin-user-side-panel">
+          <UiCard className="admin-detail-panel" title={t('admin.users.detail.title')}>
+            <UserDetailCard detail={detail} t={t} />
+            {detail.data && access.canReadAuthLoginAnalytics ? (
+              <a
+                className="admin-resource-history-link"
+                href={`/admin/auth/login-analytics?userId=${encodeURIComponent(detail.data.id)}`}
+              >
+                {t('admin.users.detail.viewLoginHistory')}
+              </a>
+            ) : null}
+          </UiCard>
+          {detail.data && access.canReadAudit ? (
+            <ResourceAuditLogCard requestOptions={requestOptions} resource="admin.users" targetId={detail.data.id} />
+          ) : null}
+        </div>
       </div>
       {statusTarget ? (
         <UiConfirmDialog

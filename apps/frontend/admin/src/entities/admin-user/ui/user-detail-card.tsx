@@ -1,7 +1,7 @@
 import type { adminApi } from '@app/frontend-api-client';
 import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
 import { UiAvatar, UiEmptyState, UiLoading, UiResourceError, UiStatusTag } from '@app/frontend-ui-web';
-import { errorText, join, statusLabelKey, statusTone } from '../../../shared';
+import { errorText, formatDate, join, statusLabelKey, statusTone } from '../../../shared';
 
 export const UserDetailCard = ({
   detail,
@@ -64,6 +64,14 @@ export const UserDetailCard = ({
         <div>
           <dt>{t('admin.users.column.status')}</dt>
           <dd>{t(statusLabelKey[detail.data.status])}</dd>
+        </div>
+        <div>
+          <dt>{t('admin.users.detail.locale')}</dt>
+          <dd>{detail.data.locale ?? '—'}</dd>
+        </div>
+        <div>
+          <dt>{t('admin.users.detail.lastLogin')}</dt>
+          <dd>{formatDate(detail.data.lastLoginAt)}</dd>
         </div>
         <div>
           <dt>{t('admin.users.column.roles')}</dt>

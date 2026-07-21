@@ -12,7 +12,7 @@ import {
   UiSelect,
   UiStatCard,
 } from '@app/frontend-ui-web';
-import { errorText, formatDate, pageSize, totalPages } from '../../shared';
+import { errorText, formatDate, pageSize, paramsFromPath, totalPages } from '../../shared';
 
 type LoginEvent = adminApi.AuthLoginAnalyticsEventDto;
 
@@ -38,6 +38,21 @@ const emptyFilters: LoginFilters = {
   occurredTo: '',
 };
 
+const filtersFromPath = (path: string): LoginFilters => {
+  const params = paramsFromPath(path);
+  return {
+    ...emptyFilters,
+    outcome: params.get('outcome') ?? emptyFilters.outcome,
+    provider: params.get('provider') ?? '',
+    countryCode: params.get('countryCode') ?? '',
+    language: params.get('language') ?? '',
+    timezone: params.get('timezone') ?? '',
+    userId: params.get('userId') ?? '',
+    occurredFrom: params.get('occurredFrom') ?? '',
+    occurredTo: params.get('occurredTo') ?? '',
+  };
+};
+
 const isoDate = (value: string): string | undefined => {
   if (!value) {
     return undefined;
@@ -54,11 +69,14 @@ const dimensionsText = (items: Array<{ key: string; count: number }>): string =>
         .map((item) => `${item.key} · ${item.count}`)
         .join('  /  ');
 
-export const AuthLoginAnalyticsPage = ({ requestOptions }: Readonly<{ requestOptions?: ApiClientRequestOptions }>) => {
+export const AuthLoginAnalyticsPage = ({
+  currentPath = '/auth/login-analytics',
+  requestOptions,
+}: Readonly<{ currentPath?: string; requestOptions?: ApiClientRequestOptions }>) => {
   const { t } = useI18n();
   const [page, setPage] = useState(1);
-  const [draft, setDraft] = useState<LoginFilters>(emptyFilters);
-  const [filters, setFilters] = useState<LoginFilters>(emptyFilters);
+  const [draft, setDraft] = useState<LoginFilters>(() => filtersFromPath(currentPath));
+  const [filters, setFilters] = useState<LoginFilters>(() => filtersFromPath(currentPath));
   const [selected, setSelected] = useState<LoginEvent>();
   const queryFilters = useMemo<adminApi.AdminAuthLoginAnalyticsQuery>(
     () => ({

@@ -15,7 +15,6 @@ import {
   CurrentUser,
   RequirePermissions,
   RequireRoles,
-  SessionAuthGuard,
   type AuthenticatedPrincipal,
 } from '@app/backend-feature-auth-shared';
 import {
@@ -30,7 +29,7 @@ import { AuditLogAdminPersistenceError, AuditLogAdminService } from './audit-log
 @ApiExceptions(400, 401, 403, 404, 429, 500)
 @ApiBearerAuth()
 @ApiSessionCookieAuth()
-@UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
+@UseGuards(new AdminRbacGuard())
 @RequireRoles(AdminRole)
 @RequirePermissions(AdminAuditReadPermission)
 @Controller('admin/audit')

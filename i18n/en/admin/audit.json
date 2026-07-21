@@ -27,5 +27,9 @@
   "admin.audit.detail.error": "Audit event details could not be loaded",
   "admin.audit.detail.before": "Before",
   "admin.audit.detail.after": "After",
-  "admin.audit.detail.metadata": "Metadata"
+  "admin.audit.detail.metadata": "Metadata",
+  "admin.audit.resourceHistory.title": "Record audit history",
+  "admin.audit.resourceHistory.emptyTitle": "No recorded changes",
+  "admin.audit.resourceHistory.emptyDescription": "Administrative changes for this record will appear here.",
+  "admin.audit.resourceHistory.viewAll": "View complete audit history"
 }

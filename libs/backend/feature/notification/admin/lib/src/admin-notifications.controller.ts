@@ -22,7 +22,6 @@ import {
   CurrentUser,
   RequirePermissions,
   RequireRoles,
-  SessionAuthGuard,
   type AuthenticatedPrincipal,
 } from '@app/backend-feature-auth-shared';
 import {
@@ -82,7 +81,7 @@ import {
 @ApiExceptions(400, 401, 403, 404, 409, 429, 500)
 @ApiBearerAuth()
 @ApiSessionCookieAuth()
-@UseGuards(new SessionAuthGuard(), new AdminRbacGuard())
+@UseGuards(new AdminRbacGuard())
 @RequireRoles(AdminRole)
 @Controller('admin')
 export class AdminNotificationsController {

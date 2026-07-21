@@ -39,6 +39,7 @@ const fullAccess = createAdminAccess({
     'admin:roles:read',
     'admin:roles:write',
     'admin:audit:read',
+    'admin:auth-login-analytics:read',
   ],
 });
 
@@ -49,6 +50,8 @@ const activeUser = {
   status: 'active' as const,
   roles: ['user'],
   permissions: ['profile:read'],
+  locale: 'en',
+  lastLoginAt: '2026-07-21T09:00:00.000Z',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -135,6 +138,9 @@ const openActionsMenu = () => {
 describe('admin users page interactions', () => {
   beforeEach(() => {
     installRadixPointerMocks();
+    vi.spyOn(adminApi, 'auditLogAdminControllerList').mockResolvedValue(
+      ok({ items: [], total: 0, limit: 10, offset: 0 }),
+    );
   });
 
   afterEach(() => {
@@ -195,6 +201,11 @@ describe('admin users page interactions', () => {
     }
     fireEvent.click(emailCell);
     expect(await screen.findByText('Current access')).toBeTruthy();
+    expect(screen.getByText('2026-07-21T09:00:00.000Z')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /location, language, and timezone history/iu }).getAttribute('href')).toBe(
+      '/admin/auth/login-analytics?userId=user-1',
+    );
+    expect(await screen.findByText('Record audit history')).toBeTruthy();
 
     openActionsMenu();
     fireEvent.click(await screen.findByRole('menuitem', { name: 'Change status' }));

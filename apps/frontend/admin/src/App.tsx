@@ -98,14 +98,14 @@ function renderReadyAdminRoute(
   }
   if (routePath === '/audit' || routePath.startsWith('/audit/')) {
     return state.access.canReadAudit ? (
-      <AuditPage currentPath={routePath} requestOptions={runtime.requestOptions} />
+      <AuditPage currentPath={path} requestOptions={runtime.requestOptions} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.auditMissing')} />
     );
   }
   if (routePath === '/auth/login-analytics') {
     return state.access.canReadAuthLoginAnalytics ? (
-      <AuthLoginAnalyticsPage requestOptions={runtime.requestOptions} />
+      <AuthLoginAnalyticsPage currentPath={path} requestOptions={runtime.requestOptions} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.authLoginAnalyticsMissing')} />
     );

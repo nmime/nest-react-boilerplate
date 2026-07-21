@@ -25,6 +25,8 @@
   "admin.users.detail.emptyEyebrow": "Пользователь не выбран",
   "admin.users.detail.emptyTitle": "Выберите пользователя, чтобы просмотреть профиль и параметры доступа.",
   "admin.users.detail.lastLogin": "Последний вход",
+  "admin.users.detail.locale": "Язык",
+  "admin.users.detail.viewLoginHistory": "Открыть историю входов, географии, языка и часового пояса",
   "admin.users.detail.tenant": "Тенант {{tenantId}}",
   "admin.users.notice.statusUpdateRequested": "Статус пользователя обновлен.",
   "admin.users.notice.accessPolicyUpdateRequested": "Политика доступа обновлена.",

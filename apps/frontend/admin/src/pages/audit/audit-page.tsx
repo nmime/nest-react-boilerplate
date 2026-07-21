@@ -13,7 +13,7 @@ import {
   UiStatCard,
 } from '@app/frontend-ui-web';
 import type { AuditRow } from '../../entities/admin-audit';
-import { errorText, formatDate, pageSize, totalPages } from '../../shared';
+import { errorText, formatDate, pageSize, paramsFromPath, totalPages } from '../../shared';
 
 type AuditAction = NonNullable<adminApi.AdminAuditListQuery['action']>;
 type AuditResource = NonNullable<adminApi.AdminAuditListQuery['resource']>;
@@ -43,13 +43,14 @@ export const AuditPage = ({
   requestOptions,
 }: Readonly<{ currentPath?: string; requestOptions?: ApiClientRequestOptions }>) => {
   const { t } = useI18n();
+  const initialParams = paramsFromPath(currentPath);
   const [page, setPage] = useState(1);
-  const [action, setAction] = useState('all');
-  const [resource, setResource] = useState('all');
-  const [actorInput, setActorInput] = useState('');
-  const [targetInput, setTargetInput] = useState('');
-  const [actorUserId, setActorUserId] = useState('');
-  const [targetId, setTargetId] = useState('');
+  const [action, setAction] = useState(initialParams.get('action') ?? 'all');
+  const [resource, setResource] = useState(initialParams.get('resource') ?? 'all');
+  const [actorInput, setActorInput] = useState(initialParams.get('actorUserId') ?? '');
+  const [targetInput, setTargetInput] = useState(initialParams.get('targetId') ?? '');
+  const [actorUserId, setActorUserId] = useState(initialParams.get('actorUserId') ?? '');
+  const [targetId, setTargetId] = useState(initialParams.get('targetId') ?? '');
   const [selected, setSelected] = useState(() => auditEntryIdFromPath(currentPath));
   const metadata = useQuery({
     queryKey: [...adminApi.getAuditLogAdminControllerMetadataQueryKey(), requestOptions] as const,
@@ -71,6 +72,7 @@ export const AuditPage = ({
     [action, actorUserId, availableActions, availableResources, page, resource, targetId],
   );
   const audit = useQuery({
+    enabled: metadata.isSuccess,
     queryKey: [...adminApi.getAuditLogAdminControllerListQueryKey(params), requestOptions] as const,
     queryFn: () => throwOnOpenApiErrorData(adminApi.auditLogAdminControllerList(params, requestOptions)),
     retry: false,

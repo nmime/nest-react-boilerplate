@@ -89,6 +89,12 @@ describe('admin-app-api health e2e', () => {
     });
   });
 
+  it('protects composed admin feature routes with the global authentication guard', async () => {
+    const response = await app.inject({ method: 'GET', url: '/admin/profile/me' });
+
+    expect(response.statusCode).toBe(401);
+  });
+
   it('GET /live and /ready return shared envelopes with dependencies', async () => {
     const liveResponse = await app.inject({ method: 'GET', url: '/live' });
     expect(liveResponse.statusCode).toBe(200);

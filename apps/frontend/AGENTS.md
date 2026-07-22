@@ -30,3 +30,11 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
 - Add a genuinely separate frontend only when it has distinct product or
   runtime ownership. Use `pnpm nrb add app ...`; do not add a generic shell
   beside the real applications.
+
+## Agent Workflows
+
+- Plan cross-owner frontend work with `$plan-frontend-change` before changing structure.
+- Use `$design-frontend-experience` for new visual direction or substantial UX changes.
+- Implement through `$develop-web-frontend` or `$develop-mobile-frontend`, then
+  prove the result with `$validate-frontend-quality`.
+- Use `$maintain-documentation` when behavior, commands, ownership, or agent routing changes.

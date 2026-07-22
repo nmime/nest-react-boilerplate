@@ -259,7 +259,8 @@ shared/public APIs.
 
 - Always run formatting or at least whitespace checks for edited Markdown/docs:
   - `pnpm exec prettier --check <files>` when dependencies are available.
-  - `pnpm run docs:check` for project-catalog parity, duplicate project metadata, tracked Markdown targets, anchors, and root script references.
+  - `pnpm run docs:check` for project-catalog parity, documentation-index reachability,
+    duplicate project metadata, workspace Markdown targets, anchors, and root script references.
   - grep gates for stale RFC/problem/exception-library wording when touching
     API, architecture, or AI guidance docs.
   - `git diff --check` for every change.
@@ -298,8 +299,10 @@ local checks instead.
   - dev: `pnpm run storybook`
   - build: `pnpm run storybook:build`
   - interaction tests: `pnpm run test:storybook`
-  - visual tests: `pnpm run test:visual` or `pnpm run test:visual:update` when
-    intentionally updating baselines
+  - visual tests: `pnpm run test:visual`; use `pnpm run test:visual:matrix` for
+    the desktop/mobile browser matrix, and use an update command only when the
+    resulting platform-specific PNGs will be manually reviewed
+  - complete visual gate: `pnpm run quality:visual`
 - For built frontend smoke coverage, use the tooling commands registered by
   `@repo/tooling`, including `testing frontend-static-smoke` and
   `testing frontend-browser-e2e-coverage` where appropriate.

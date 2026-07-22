@@ -163,7 +163,8 @@ describe('ProblemPresentationRepository', () => {
     await expect(
       repository.reset({ actorUserId, ruleId, expectedRevision: 3 }).then((result) => result._unsafeUnwrap()),
     ).resolves.toBe(true);
-    expect(persist.mock.calls[0]?.[0]?.[0]).toMatchObject({
+    const persisted = persist.mock.calls[0]?.[0] as [AdminAuditLogEntity];
+    expect(persisted[0]).toMatchObject({
       action: 'admin.problem_presentation.reset',
       after: {},
       resource: 'admin.settings',

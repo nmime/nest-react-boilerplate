@@ -15,27 +15,17 @@ import {
   UiTextarea,
 } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
-import { errorText } from '../../shared';
+import {
+  errorText,
+  getDefaultNotificationProvider,
+  getNotificationChannelOptions,
+  getNotificationProviderOptions,
+} from '../../shared';
 
 type BroadcastRow = adminApi.AdminNotificationBroadcastViewDto;
 type Channel = adminApi.CreateAdminNotificationBroadcastDto['channel'];
 type Provider = adminApi.CreateAdminNotificationBroadcastDto['provider'];
 type BroadcastCommand = Parameters<typeof adminApi.adminNotificationsControllerBroadcastCommand>[1];
-
-const providersByChannel: Record<Channel, { label: string; value: Provider }[]> = {
-  bot: [
-    { label: 'Telegram Bot', value: 'telegram-bot' },
-    { label: 'Discord Bot', value: 'discord-bot' },
-  ],
-  email: [
-    { label: 'Resend', value: 'resend' },
-    { label: 'MailPace', value: 'mailpace' },
-  ],
-  push: [
-    { label: 'Google FCM', value: 'google-fcm' },
-    { label: 'Apple APNs', value: 'apple-apns' },
-  ],
-};
 
 const parseObject = (value: string): Record<string, unknown> => {
   const parsed: unknown = JSON.parse(value || '{}');
@@ -125,7 +115,7 @@ export const NotificationBroadcastsPage = ({
   const selectChannel = (value: string) => {
     const next = value as Channel;
     setChannel(next);
-    const nextProvider = providersByChannel[next][0]?.value;
+    const nextProvider = getDefaultNotificationProvider(next);
     if (nextProvider) {
       setProvider(nextProvider);
     }
@@ -184,7 +174,7 @@ export const NotificationBroadcastsPage = ({
             <UiSelect
               label={t('admin.notification.templates.channel')}
               onValueChange={selectChannel}
-              options={Object.keys(providersByChannel).map((value) => ({ label: value, value }))}
+              options={getNotificationChannelOptions(t)}
               value={channel}
             />
             <UiSelect
@@ -192,7 +182,7 @@ export const NotificationBroadcastsPage = ({
               onValueChange={(value) => {
                 setProvider(value as Provider);
               }}
-              options={providersByChannel[channel]}
+              options={getNotificationProviderOptions(channel, t)}
               value={provider}
             />
             <UiInput

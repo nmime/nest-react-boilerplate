@@ -48,8 +48,23 @@ describe('shadcn/ui frontend foundation', () => {
       css: 'libs/frontend/ui-web/lib/src/styles.css',
       cssVariables: true,
     });
-    expect(componentsJson.aliases.ui).toBe('@app/frontend-ui-web');
-    expect(componentsJson.aliases.utils).toBe('@app/frontend-ui-web');
+    expect(componentsJson.aliases.components).toBe('@app/frontend-ui-web/component');
+    expect(componentsJson.aliases.ui).toBe('@app/frontend-ui-web/component');
+    expect(componentsJson.aliases.utils).toBe('@app/frontend-ui-web/util');
+    expect(componentsJson.aliases.hooks).toBe('@app/frontend-ui-web/hooks');
     expect(componentsJson.iconLibrary).toBe('lucide');
+
+    const frontendWorkspaceConfig = JSON.parse(readFileSync(join(packageRoot, '../../components.json'), 'utf8')) as {
+      aliases: Record<string, string>;
+      iconLibrary: string;
+      tailwind: { css: string; cssVariables: boolean };
+    };
+
+    expect(frontendWorkspaceConfig.tailwind).toMatchObject({
+      css: 'ui-web/lib/src/styles.css',
+      cssVariables: true,
+    });
+    expect(frontendWorkspaceConfig.aliases).toEqual(componentsJson.aliases);
+    expect(frontendWorkspaceConfig.iconLibrary).toBe(componentsJson.iconLibrary);
   });
 });

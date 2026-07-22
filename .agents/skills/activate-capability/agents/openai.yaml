@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Activate Capability'
+  short_description: 'Wire an optional capability into selected apps'
+  default_prompt: 'Use $activate-capability to activate this capability in the selected applications.'

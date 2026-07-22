@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Source-owned Web UI'
+  short_description: 'Review approved UI source and preserve template boundaries'
+  default_prompt: 'Use $shadcn-ui to select, inspect, integrate, and validate source-owned web UI while keeping Aceternity research-only in the template.'

@@ -14,7 +14,12 @@ import {
   UiTextarea,
 } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
-import { errorText } from '../../shared';
+import {
+  errorText,
+  getDefaultNotificationProvider,
+  getNotificationChannelOptions,
+  getNotificationProviderOptions,
+} from '../../shared';
 
 type Channel = adminApi.AdminNotificationTemplateChannelInputDto['channel'];
 type Provider = adminApi.TestSendAdminNotificationTemplateDto['provider'];
@@ -26,22 +31,6 @@ const parseObject = (value: string): Record<string, unknown> => {
     throw new Error('invalid_json');
   }
   return parsed as Record<string, unknown>;
-};
-
-const providersByChannel: Record<Channel, { label: string; value: Provider }[]> = {
-  bot: [
-    { label: 'Telegram Bot', value: 'telegram-bot' },
-    { label: 'Discord Bot', value: 'discord-bot' },
-  ],
-  email: [
-    { label: 'Resend', value: 'resend' },
-    { label: 'MailPace', value: 'mailpace' },
-  ],
-  push: [
-    { label: 'Google FCM', value: 'google-fcm' },
-    { label: 'Apple APNs', value: 'apple-apns' },
-  ],
-  in_app: [],
 };
 
 const targetTypeForProvider = (provider: Provider): adminApi.TestSendAdminNotificationTemplateDto['targetType'] => {
@@ -144,7 +133,7 @@ export const NotificationTemplatesPage = ({
   const selectChannel = (value: string) => {
     const next = value as Channel;
     setChannel(next);
-    const nextProvider = providersByChannel[next][0]?.value;
+    const nextProvider = getDefaultNotificationProvider(next);
     if (nextProvider) {
       setProvider(nextProvider);
     }
@@ -219,7 +208,7 @@ export const NotificationTemplatesPage = ({
             <UiSelect
               label={t('admin.notification.templates.channel')}
               onValueChange={selectChannel}
-              options={['email', 'bot', 'push'].map((value) => ({ label: value, value }))}
+              options={getNotificationChannelOptions(t)}
               value={channel}
             />
             {channel !== 'bot' ? (
@@ -316,7 +305,7 @@ export const NotificationTemplatesPage = ({
             onValueChange={(value) => {
               setProvider(value as Provider);
             }}
-            options={providersByChannel[channel]}
+            options={getNotificationProviderOptions(channel, t)}
             value={provider}
           />
           <UiInput

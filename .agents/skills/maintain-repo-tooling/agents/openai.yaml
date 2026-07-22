@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Maintain Repo Tooling'
+  short_description: 'Build repository CLI commands and checks'
+  default_prompt: 'Use $maintain-repo-tooling to implement this repository tooling change.'

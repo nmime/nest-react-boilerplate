@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Initialize Product'
+  short_description: 'Initialize and verify a product workspace'
+  default_prompt: 'Use $initialize-product to initialize and verify this product workspace.'

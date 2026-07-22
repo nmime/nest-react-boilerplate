@@ -27,6 +27,42 @@ Use this checklist when changing the frontend/admin product shell, routing, auth
   app config.
 - Use real Radix imports for primitive behavior (`@radix-ui/react-slot`, `@radix-ui/react-label`, `@radix-ui/react-select`) rather than native-only lookalikes.
 
+## Source registry policy
+
+The pinned shadcn CLI is the only registry client. Its namespace model exposes
+source for review before installation; repository tooling narrows that model to
+three explicit sources and never accepts direct URLs, GitHub addresses,
+authenticated namespaces, or arbitrary CLI options.
+
+| Source     | Role                                         | Repository write policy                                                                                                        |
+| ---------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| shadcn     | Canonical controls and accessible primitives | Dry-run first; reviewed apply into `@app/frontend-ui-web`                                                                      |
+| Magic UI   | Optional motion and presentation effects     | MIT source may be applied after duplicate, path, dependency, CSS, asset, SSR, accessibility, reduced-motion, and bundle review |
+| Aceternity | Visual research and candidate discovery      | Non-persistent preview only; this template never applies, vendors, packages, or distributes its source                         |
+
+Use `pnpm run ui:registry:search -- --source <source>` for discovery and
+`pnpm run ui:registry:add -- --source <source> <item> --view` for a source-visible
+preview. Aceternity preview output is temporary research evidence and must not
+be saved into template source, patches, baselines, skills, or generated output.
+The apply command reruns a fail-closed preflight. Paid Magic UI Pro, Aceternity
+Pro, tokens, and private registries are intentionally unsupported.
+
+A downstream product generated from this template may make its own Aceternity
+decision. Its owner must review the then-current official licence and source,
+record that decision, install exact dependencies, define the product-local
+source boundary, adapt tokens and accessibility, and own testing and maintenance.
+That requires an explicit downstream policy change; this template does not grant
+rights, pre-approve use, or ship any Aceternity source or dependency.
+The upstream references are the
+[shadcn namespace contract](https://ui.shadcn.com/docs/registry/namespace),
+[Magic UI MIT repository](https://github.com/magicuidesign/magicui), and
+[Aceternity licence](https://ui.aceternity.com/licence).
+
+Do not import a registry item merely because it exists. Start from product
+intent, search existing source and exports, and keep product-specific blocks in
+the owning app. Promote only genuinely reusable, token-adapted primitives or
+effects to shared UI. React DOM registry source never belongs in Expo/native UI.
+
 ## UI/UX Pro Max priority hierarchy
 
 1. **Intent and task success:** preserve the requested flow and accepted product gates before restyling.

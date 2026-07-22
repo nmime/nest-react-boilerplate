@@ -14,8 +14,13 @@ pnpm exec nx serve user-app
 pnpm exec nx build user-app
 pnpm exec nx run user-app:test
 pnpm exec nx run user-app:e2e
+pnpm run test:storybook
 pnpm run frontend:fsd:check
 ```
+
+`storybook/home.stories.tsx` composes the account home screen with
+deterministic providers. Keep routing, authentication, API behavior, Telegram
+integration, and complete account flows in `user-app:e2e`.
 
 ## Telegram Mini App and browser shell
 

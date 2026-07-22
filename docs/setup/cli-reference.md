@@ -224,6 +224,14 @@ Existing features must be modified in place; regeneration is rejected.
 | -------------------- | ------------------------------------------------ |
 | `frontend:fsd:check` | Enforce strict Feature-Sliced Design boundaries. |
 
+## UI commands
+
+| Command                                       | Description                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ui:shadcn:add <component...>`                | Preview an official shadcn import into shared `ui-web`; pass `--apply` after source and dependency review.                                                                                                                                                                                                                                                   |
+| `ui:registry:search --source <source>`        | Search the explicit `shadcn`, `magicui`, or `aceternity` namespace without writing files. Supports bounded `--query`, `--type`, `--limit`, and `--offset` options.                                                                                                                                                                                           |
+| `ui:registry:add --source <source> <item...>` | Preview approved registry source with `--view` or `--diff`. Reviewed shadcn/Magic UI writes require `--apply` and a confined preflight. Aceternity is non-persistent research preview only: this template never writes or distributes it; every downstream product must make and implement its own licence, dependency, source-ownership, and test decision. |
+
 ## QA commands
 
 | Command                 | Description                                     |
@@ -244,12 +252,12 @@ Existing features must be modified in place; regeneration is rejected.
 
 ## Testing commands
 
-| Command                                 | Description                                     |
-| --------------------------------------- | ----------------------------------------------- |
-| `testing:storybook`                     | Run Storybook interaction tests.                |
-| `testing:storybook-visual`              | Run Storybook visual regression tests.          |
-| `testing:frontend-static-smoke`         | Smoke-test a built frontend from static assets. |
-| `testing:frontend-browser-e2e-coverage` | Run browser e2e smoke coverage.                 |
+| Command                                 | Description                                                                                         |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `testing:storybook`                     | Run Storybook interaction tests.                                                                    |
+| `testing:storybook-visual`              | Check or explicitly update tagged Storybook visual baselines; accepts `--projects` and `--stories`. |
+| `testing:frontend-static-smoke`         | Smoke-test a built frontend from static assets.                                                     |
+| `testing:frontend-browser-e2e-coverage` | Run browser e2e smoke coverage.                                                                     |
 
 ## Tooling commands
 

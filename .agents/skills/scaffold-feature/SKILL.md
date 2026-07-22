@@ -1,6 +1,9 @@
-# Scaffold a repository feature
+---
+name: scaffold-feature
+description: Scaffold a genuinely new application, library, or vertical feature through repository generators. Use when new ownership is required and dry-run, registration, contract generation, product completion, and broad verification are needed.
+---
 
-Use this workflow when creating an application, library, or vertical product feature in this repository.
+# Scaffold repository ownership
 
 ## Read first
 
@@ -27,9 +30,10 @@ Use this workflow when creating an application, library, or vertical product fea
 8. For a feature, replace the generic model fields with product invariants, review RBAC, validation, indexes, migration rollback, and repository error behavior. Never use `--force` or regenerate an existing product feature; modify its owning files in place.
 9. Compile the API, then run `pnpm api:contracts` and `pnpm api:clients`. Never hand-edit generated OpenAPI or client output.
 10. Register the generated FSD page through the owning app's public route boundary with translated copy.
-11. Add component and e2e coverage for auth, RBAC, validation, loading, empty, error, and success states.
+11. For a web app with a stable screen composition, add an app-owned `storybook/` story and explicitly register it in the shared web Storybook config. Keep Expo in the native lane.
+12. Add component and e2e coverage for auth, RBAC, validation, loading, empty, error, and success states. Do not use a screen story as proof of routing, production providers, authentication, API integration, or complete page flows.
 
-## Required verification
+## Verification
 
 ```bash
 pnpm run agent:verify

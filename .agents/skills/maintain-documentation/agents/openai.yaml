@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Maintain Documentation'
+  short_description: 'Keep canonical documentation complete and discoverable'
+  default_prompt: 'Use $maintain-documentation to update canonical repository docs and verify agent discoverability.'

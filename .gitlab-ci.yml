@@ -152,14 +152,42 @@ docker-fullstack:
 
 storybook-tests:
   stage: test
-  image: node:24.18.0-alpine
+  image: mcr.microsoft.com/playwright:v1.61.1-noble@sha256:5b8f294aff9041b7191c34a4bab3ac270157a28774d4b0660e9743297b697e48
   before_script:
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile
   script:
+    - pnpm run storybook:build
     - pnpm run test:storybook
+    - pnpm run test:visual
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/storybook-visual/
+      - test-results/storybook-visual/
+    expire_in: 7 days
   timeout: 30m
+
+visual-regression-matrix:
+  stage: test
+  image: mcr.microsoft.com/playwright:v1.61.1-noble@sha256:5b8f294aff9041b7191c34a4bab3ac270157a28774d4b0660e9743297b697e48
+  before_script:
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm run quality:visual
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/storybook-visual/
+      - test-results/storybook-visual/
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+  timeout: 45m
 
 dependency-review:
   stage: security

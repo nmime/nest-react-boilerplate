@@ -1,0 +1,14 @@
+{
+  "admin.notification.option.channel.bot": "Bot",
+  "admin.notification.option.channel.email": "Email",
+  "admin.notification.option.channel.push": "Push notification",
+  "admin.notification.option.provider.appleApns": "Apple APNs",
+  "admin.notification.option.provider.discordBot": "Discord Bot",
+  "admin.notification.option.provider.googleFcm": "Google FCM",
+  "admin.notification.option.provider.mailPace": "MailPace",
+  "admin.notification.option.provider.resend": "Resend",
+  "admin.notification.option.provider.telegramBot": "Telegram Bot",
+  "admin.notification.option.segment.authUsers": "Auth users",
+  "admin.notification.option.segment.dynamic": "Dynamic",
+  "admin.notification.option.segment.static": "Static"
+}

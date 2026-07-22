@@ -239,7 +239,10 @@ A generated app is complete only after the applicable items are explicit:
   request context where applicable.
 - **Frontend:** choose same-origin or split-origin API routing, register routes
   through the owning app boundary, preserve FSD imports, i18n, accessibility,
-  loading/empty/error states, and generated-client ownership.
+  loading/empty/error states, and generated-client ownership. For a web app
+  with a stable screen composition, add an app-owned `storybook/` story and
+  explicitly register its glob in the shared web Storybook config. Keep Expo in
+  the native test lane.
 - **Local runtime:** add Compose/dev-orchestrator wiring only if the app must run
   in the selected local stack. Optional apps must remain opt-in.
 - **Production runtime:** add Docker build/image ownership, Helm Deployment and
@@ -247,7 +250,9 @@ A generated app is complete only after the applicable items are explicit:
   TLS certificate/SAN, and observability. A source scaffold alone is not a
   deployed service.
 - **Contracts and tests:** regenerate OpenAPI/clients after API changes and add
-  unit, component, integration, and e2e coverage proportional to the surface.
+  unit, component, Storybook interaction, integration, and e2e coverage
+  proportional to the surface. Screen stories do not replace routing,
+  authentication, provider, API, or complete-flow browser tests.
 
 Use [Adding a New Service](usage/adding-a-new-service.md) for backend details.
 

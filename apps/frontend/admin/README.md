@@ -21,8 +21,13 @@ pnpm exec nx serve admin-app
 pnpm exec nx build admin-app
 pnpm exec nx run admin-app:test
 pnpm exec nx run admin-app:e2e
+pnpm run test:storybook
 pnpm run frontend:fsd:check
 ```
+
+`storybook/dashboard.stories.tsx` composes the static dashboard and RBAC-aware
+shell with deterministic providers. Keep routing, session/API behavior, and
+complete admin flows in `admin-app:e2e`.
 
 ## Docs
 

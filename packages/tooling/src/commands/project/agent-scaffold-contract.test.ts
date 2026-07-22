@@ -73,4 +73,54 @@ describe("agent scaffold contract", () => {
     );
     assert.equal(read("CODEX.md"), "# Codex instructions\n\nUse the canonical repository instructions in [AGENTS.md](AGENTS.md).\n");
   });
+
+  it("routes frontend and backend agents through matching skill chains", () => {
+    const frontendApps = read("apps/frontend/AGENTS.md");
+    const frontendLibraries = read("libs/frontend/AGENTS.md");
+    const backendApps = read("apps/backend/AGENTS.md");
+    const backendLibraries = read("libs/backend/AGENTS.md");
+    const commonLibraries = read("libs/common/AGENTS.md");
+    const e2eApps = read("apps/e2e/AGENTS.md");
+    const catalog = read("docs/agent-skills.md");
+    const workflows = read("docs/ai/agent-workflows.md");
+
+    for (const [name, content] of [
+      ["frontend apps", frontendApps],
+      ["frontend libraries", frontendLibraries],
+    ] as const) {
+      assert.match(content, /\$plan-frontend-change/u, `${name} must route frontend planning`);
+      assert.match(content, /\$validate-frontend-quality/u, `${name} must route frontend quality`);
+    }
+    assert.match(frontendApps, /\$develop-web-frontend/u);
+    assert.match(frontendApps, /\$develop-mobile-frontend/u);
+
+    for (const [name, content] of [
+      ["backend apps", backendApps],
+      ["backend libraries", backendLibraries],
+    ] as const) {
+      assert.match(content, /\$plan-backend-change/u, `${name} must route backend planning`);
+      assert.match(content, /\$validate-backend-quality/u, `${name} must route backend quality`);
+      assert.match(content, /\$develop-backend-api/u, `${name} must route API development`);
+      assert.match(content, /\$develop-background-process/u, `${name} must route process development`);
+    }
+
+    for (const content of [commonLibraries, e2eApps]) {
+      assert.match(content, /\$validate-frontend-quality/u);
+      assert.match(content, /\$validate-backend-quality/u);
+    }
+
+    for (const skill of [
+      "plan-frontend-change",
+      "develop-web-frontend",
+      "develop-mobile-frontend",
+      "validate-frontend-quality",
+      "plan-backend-change",
+      "develop-backend-api",
+      "develop-background-process",
+      "validate-backend-quality",
+    ]) {
+      assert.match(catalog, new RegExp(`\\.agents/skills/${skill}/SKILL\\.md`, "u"));
+      assert.match(workflows, new RegExp(`\\$${skill}`, "u"));
+    }
+  });
 });

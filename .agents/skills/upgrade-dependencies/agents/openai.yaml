@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Upgrade Dependencies'
+  short_description: 'Upgrade dependencies with lockfile discipline'
+  default_prompt: 'Use $upgrade-dependencies to perform and verify this dependency upgrade.'

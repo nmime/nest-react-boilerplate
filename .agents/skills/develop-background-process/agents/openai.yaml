@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Develop Background Process'
+  short_description: 'Build consumers and schedulers safely'
+  default_prompt: 'Use $develop-background-process to implement this background process.'

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { afterEach, beforeEach, test } from 'node:test';
-import { validateWorkspace } from './validate-doc-links.mjs';
+import { collectTrackedMarkdown, validateWorkspace } from './validate-doc-links.mjs';
 
 let workspaceRoot;
 
@@ -111,6 +112,44 @@ test('rejects copied scope values in leaf agent instructions', () => {
 
   assert.equal(result.failures.length, 1);
   assert.match(result.failures[0], /duplicated scope value/);
+});
+
+test('requires every documentation file to be reachable from the documentation index', () => {
+  write('docs/README.md', '# Documentation\n\n[Guide](guide.md)\n');
+  write('docs/guide.md', '# Guide\n\n[Deep dive](nested/deep-dive.md)\n');
+  write('docs/nested/deep-dive.md', '# Deep dive\n');
+  write('docs/orphan.md', '# Orphan\n');
+
+  const result = validateWorkspace({
+    workspaceRoot,
+    markdownFiles: [
+      resolve(workspaceRoot, 'docs/README.md'),
+      resolve(workspaceRoot, 'docs/guide.md'),
+      resolve(workspaceRoot, 'docs/nested/deep-dive.md'),
+      resolve(workspaceRoot, 'docs/orphan.md'),
+    ],
+  });
+
+  assert.equal(result.failures.length, 1);
+  assert.match(result.failures[0], /docs\/orphan\.md:1: documentation is not reachable/);
+});
+
+test('collects untracked documentation and repo-local skill files', () => {
+  write('README.md', '# Root\n');
+  execFileSync('git', ['init', '--quiet'], { cwd: workspaceRoot });
+  execFileSync('git', ['add', 'README.md'], { cwd: workspaceRoot });
+  write('docs/README.md', '# Documentation\n\n[Guide](guide.md)\n');
+  write('docs/guide.md', '# Guide\n');
+  write('.agents/skills/example/SKILL.md', '# Example\n');
+
+  const files = collectTrackedMarkdown(workspaceRoot).map((file) =>
+    relative(workspaceRoot, file).replaceAll('\\', '/'),
+  );
+
+  assert.ok(files.includes('README.md'));
+  assert.ok(files.includes('docs/README.md'));
+  assert.ok(files.includes('docs/guide.md'));
+  assert.ok(files.includes('.agents/skills/example/SKILL.md'));
 });
 
 function write(path, content) {

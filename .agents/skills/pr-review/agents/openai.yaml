@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Review Changes'
+  short_description: 'Review changes against repository contracts'
+  default_prompt: 'Use $pr-review to review this change and report severity-ranked findings.'

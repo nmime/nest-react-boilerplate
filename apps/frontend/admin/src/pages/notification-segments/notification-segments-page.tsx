@@ -14,7 +14,7 @@ import {
   UiTextarea,
 } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
-import { errorText } from '../../shared';
+import { errorText, getNotificationSegmentKindOptions } from '../../shared';
 
 type SegmentRow = adminApi.AdminNotificationSegmentViewDto;
 type SegmentKind = adminApi.CreateAdminNotificationSegmentDto['kind'];
@@ -146,17 +146,18 @@ export const NotificationSegmentsPage = ({
               onValueChange={(value) => {
                 setKind(value as SegmentKind);
               }}
-              options={[
-                { label: 'dynamic', value: 'dynamic' },
-                { label: 'static', value: 'static' },
-              ]}
+              options={getNotificationSegmentKindOptions(t)}
               value={kind}
             />
             {kind === 'dynamic' ? (
               <UiSelect
                 label={t('admin.notification.segments.resolver')}
                 onValueChange={setResolverKey}
-                options={resolverOptions.length ? resolverOptions : [{ label: 'Auth users', value: 'auth-users' }]}
+                options={
+                  resolverOptions.length
+                    ? resolverOptions
+                    : [{ label: t('admin.notification.option.segment.authUsers'), value: 'auth-users' }]
+                }
                 value={resolverKey}
               />
             ) : null}

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Change Internationalization'
+  short_description: 'Maintain locale catalogs and translated copy'
+  default_prompt: 'Use $change-i18n to implement this internationalization change.'

@@ -13,6 +13,7 @@ import { runBranchCleanup } from './commands/git/branch-cleanup';
 import { runWebpCommand } from './commands/images/webp';
 import { runChangedFormatCheck, runStaticCheck } from './commands/tooling/static-check';
 import { runBunCompatibilityCommand } from './commands/tooling/bun-compat';
+import { runShadcnAddCommand, runUiRegistryAddCommand, runUiRegistrySearchCommand } from './commands/ui/shadcn-add';
 import { run } from './runtime/process';
 
 export interface CommandContext {
@@ -48,6 +49,24 @@ register(
 );
 register('images:webp', 'Find PNG/JPG/JPEG assets and convert them to WebP.', ({ argv, workspaceRoot }) =>
   runWebpCommand({ argv, workspaceRoot }),
+);
+register(
+  'ui:shadcn:add',
+  'Preview or add an official shadcn component only to the shared web UI package.',
+  runShadcnAddCommand,
+  true,
+);
+register(
+  'ui:registry:add',
+  'Preview or add source from an approved free UI registry under shared web UI policy.',
+  runUiRegistryAddCommand,
+  true,
+);
+register(
+  'ui:registry:search',
+  'Search an explicitly selected approved UI registry without writing source.',
+  runUiRegistrySearchCommand,
+  true,
 );
 
 register('frontend:fsd:check', 'Enforce strict frontend Feature-Sliced Design boundaries.', ({ argv, workspaceRoot }) =>

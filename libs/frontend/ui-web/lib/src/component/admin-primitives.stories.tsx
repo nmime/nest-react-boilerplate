@@ -121,6 +121,7 @@ const AdminPrimitiveShowcase = () => (
 const meta = {
   title: 'Components/AdminPrimitives',
   component: AdminPrimitiveShowcase,
+  tags: ['visual'],
   parameters: {
     layout: 'padded',
   },
@@ -137,6 +138,7 @@ export const KitchenSink: Story = {
 
     await userEvent.type(search, 'ada');
     await expect(canvas.getByRole('table', { name: 'Admin users' })).toBeVisible();
+    document.documentElement.setAttribute('data-visual-ready', 'true');
   },
 };
 

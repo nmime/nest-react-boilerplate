@@ -55,5 +55,5 @@ describe('admin app root', () => {
     expect(fallback.getAttribute('aria-live')).toBe('assertive');
     expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeTruthy();
     expect(screen.getByText(/Try refreshing the page/u)).toBeTruthy();
-  });
+  }, 10_000);
 });

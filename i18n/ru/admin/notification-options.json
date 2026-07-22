@@ -1,0 +1,14 @@
+{
+  "admin.notification.option.channel.bot": "Бот",
+  "admin.notification.option.channel.email": "Электронная почта",
+  "admin.notification.option.channel.push": "Push-уведомление",
+  "admin.notification.option.provider.appleApns": "Apple APNs",
+  "admin.notification.option.provider.discordBot": "Бот Discord",
+  "admin.notification.option.provider.googleFcm": "Google FCM",
+  "admin.notification.option.provider.mailPace": "MailPace",
+  "admin.notification.option.provider.resend": "Resend",
+  "admin.notification.option.provider.telegramBot": "Бот Telegram",
+  "admin.notification.option.segment.authUsers": "Пользователи аутентификации",
+  "admin.notification.option.segment.dynamic": "Динамический",
+  "admin.notification.option.segment.static": "Статический"
+}

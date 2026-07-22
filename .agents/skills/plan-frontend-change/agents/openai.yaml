@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Plan Frontend Change'
+  short_description: 'Plan frontend work across the correct owners'
+  default_prompt: 'Use $plan-frontend-change to plan this frontend change with explicit scope, states, risks, and validation.'

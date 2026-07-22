@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Validate Frontend Quality'
+  short_description: 'Run risk-based frontend quality gates'
+  default_prompt: 'Use $validate-frontend-quality to select and run the frontend quality gates for this change.'

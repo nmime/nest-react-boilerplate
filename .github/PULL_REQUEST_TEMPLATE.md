@@ -64,6 +64,7 @@ Thanks for contributing! Fill out every relevant section before requesting revie
 - [ ] `pnpm run test` passes
 - [ ] `pnpm run test:e2e` passes when frontend app or API behavior changed
 - [ ] `pnpm run storybook:build` / `pnpm run test:storybook` pass when shared UI/design-system behavior changed
+- [ ] `pnpm run test:visual` passes and every changed baseline PNG was intentionally reviewed when rendered UI changed
 - [ ] `pnpm run build` passes
 - [ ] Documentation updated when architecture, commands, or public behavior changed
 - [ ] Commit messages follow Conventional Commits (`type(scope): subject`)

@@ -173,8 +173,10 @@ export const thinLocaleCatalogFileNames = [
   "admin/audit.json",
   "admin/roles.json",
   "admin/notifications.json",
+  "admin/notification-options.json",
   "admin/notification-navigation.json",
   "admin/problem-presentations.json",
+  "admin/login-analytics.json",
   "user/shell.json",
   "user/site.json",
   "user/mobile.json",
@@ -420,6 +422,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkExportedSymbolTokenConventions(workspaceRoot),
     ...checkLocalBarrelExportConventions(workspaceRoot),
     ...checkDuplicatedLibrarySourceLibPaths(workspaceRoot),
+    ...checkFrontendUiOwnership(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
     ...checkStaleSlashStyleAliasImports(workspaceRoot),
     ...checkForbiddenSocialAuthImports(workspaceRoot),
@@ -1087,6 +1090,26 @@ export function checkDuplicatedLibrarySourceLibPaths(
   }
 
   return failures;
+}
+
+export function checkFrontendUiOwnership(workspaceRoot: string): CheckFailure[] {
+  const roots = ["apps/frontend", "libs/frontend"]
+    .map((root) => resolve(workspaceRoot, root))
+    .filter((root) => existsSync(root));
+
+  return roots.flatMap((root) =>
+    walk(root)
+      .map((file) => relativeToWorkspace(workspaceRoot, file))
+      .filter((file) => /(?:^|\/)components\/ui\//u.test(file))
+      .map((file) => ({
+        command: "frontend shared UI ownership",
+        file,
+        status: 1,
+        stdout: "",
+        stderr:
+          "App-local or generic components/ui source duplicates the design system. Move reusable React DOM UI to libs/frontend/ui-web/lib/src/component and export it through @app/frontend-ui-web.",
+      })),
+  );
 }
 
 export function checkStaleSlashStyleAliasImports(

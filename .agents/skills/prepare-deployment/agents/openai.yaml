@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Prepare Deployment'
+  short_description: 'Prepare deployment configuration without release'
+  default_prompt: 'Use $prepare-deployment to prepare and verify this deployment configuration.'

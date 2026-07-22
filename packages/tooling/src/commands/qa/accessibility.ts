@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /// <reference lib="dom" />
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createReadStream } from "node:fs";
 import { createServer } from "node:http";
+import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { envList, parseArgs, writeJson } from "./runtime-utils.ts";
 
@@ -20,6 +21,7 @@ const out = args.options.get("report") ?? "test-results/accessibility/report.jso
 const urls = envList("A11Y_URLS");
 const profiles = envList("A11Y_PROFILES", ["desktop", "mobile"]);
 const strictAxe = process.env.A11Y_STRICT_AXE !== "0";
+const requireFromTooling = createRequire(import.meta.url);
 
 if (dryRun) {
   writeJson(out, { status: "dry-run", urls, profiles, strictAxe });
@@ -62,20 +64,19 @@ async function serveDir(dir: string): Promise<StaticServer> {
   return { url: `http://127.0.0.1:${address.port}`, close: () => new Promise<void>((resolveClose) => { server.close(() => resolveClose()); }) };
 }
 
-async function loadAxeSource(): Promise<string | null> {
-  const candidates = [process.env.AXE_CORE_PATH, "node_modules/axe-core/axe.min.js", ".cache/qa/axe.min.js"].filter((candidate): candidate is string => Boolean(candidate));
-  for (const candidate of candidates) if (existsSync(candidate)) return readFileSync(candidate, "utf8");
+function installedAxeCorePath(): string | undefined {
   try {
-    const response = await fetch("https://unpkg.com/axe-core@4.10.2/axe.min.js", { signal: AbortSignal.timeout(15000) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const source = await response.text();
-    mkdirSync(".cache/qa", { recursive: true });
-    writeFileSync(".cache/qa/axe.min.js", source);
-    return source;
-  } catch (error) {
-    if (strictAxe) throw new Error(`axe-core is required for accessibility checks. Install axe-core, set AXE_CORE_PATH, or allow CDN access. Cause: ${error instanceof Error ? error.message : String(error)}`);
-    return null;
+    return requireFromTooling.resolve("axe-core/axe.min.js");
+  } catch {
+    return undefined;
   }
+}
+
+function loadAxeSource(): string | null {
+  const candidates = [process.env.AXE_CORE_PATH, installedAxeCorePath()].filter((candidate): candidate is string => Boolean(candidate));
+  for (const candidate of candidates) if (existsSync(candidate)) return readFileSync(candidate, "utf8");
+  if (strictAxe) throw new Error("axe-core is required for accessibility checks. Restore the pinned @repo/tooling dependency or set AXE_CORE_PATH.");
+  return null;
 }
 
 const defaultTargetDirs = [
@@ -84,7 +85,7 @@ const defaultTargetDirs = [
   "dist/apps/frontend/landing",
 ];
 if (process.env.A11Y_INCLUDE_STORYBOOK === "1") {
-  defaultTargetDirs.push("dist/storybook/frontend-ui");
+  defaultTargetDirs.push("dist/storybook/frontend-ui-web");
 }
 
 const servers: StaticServer[] = [];
@@ -111,7 +112,7 @@ if (!urls.length) {
 }
 
 const { chromium, devices } = await import("@playwright/test");
-const axeSource = await loadAxeSource();
+const axeSource = loadAxeSource();
 const browser = await chromium.launch();
 const profileConfig: Record<string, Parameters<typeof browser.newContext>[0]> = { desktop: { viewport: { width: 1440, height: 1000 } }, mobile: devices["Pixel 7"] };
 const results: Record<string, unknown>[] = [];

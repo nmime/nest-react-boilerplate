@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Validate Backend Quality'
+  short_description: 'Run risk-based backend quality gates'
+  default_prompt: 'Use $validate-backend-quality to select and run the backend quality gates for this change.'

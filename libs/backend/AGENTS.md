@@ -35,3 +35,12 @@ and [AI agent policy](../../docs/ai/agent-policy.md).
   expose `HttpException.message` to clients.
 - Build public problem identifiers with `problemTypeForCode()`; repository and
   package names are never part of the wire-level `type` URI.
+
+## Agent Workflows
+
+- Use `$plan-backend-change` for cross-library ownership, transaction,
+  consistency, contract, persistence, or messaging decisions.
+- Implement with `$develop-backend-api` or `$develop-background-process` as
+  appropriate and finish shared backend changes with `$validate-backend-quality`.
+- Chain contract, auth, database, notification, tooling, deployment, and
+  documentation skills only for boundaries present in the actual change.

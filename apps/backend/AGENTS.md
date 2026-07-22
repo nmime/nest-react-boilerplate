@@ -27,3 +27,14 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
   Do not re-register it at the app level.
 - Read request-scoped data via:
   `import { requestContext } from '@app/backend-common-bootstrap'`.
+
+## Agent Workflows
+
+- Plan cross-owner backend work with `$plan-backend-change` before changing structure.
+- Implement through `$develop-backend-api` or `$develop-background-process` and
+  chain `$change-api-contract`, `$change-auth-access`, `$migrate-database`, or
+  `$extend-notifications` only when those boundaries actually change.
+- Prove backend behavior with `$validate-backend-quality`, then use
+  `$validate-change` for cross-runtime or repository-wide effects.
+- Use `$maintain-documentation` when behavior, commands, ownership, operations,
+  or agent routing changes.

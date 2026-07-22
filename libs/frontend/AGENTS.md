@@ -13,3 +13,6 @@ and [AI agent policy](../../docs/ai/agent-policy.md).
   `api-client`.
 - Put shared frontend runtime dependencies in `libs/frontend/package.json`, not
   individual library package manifests.
+- Use `$plan-frontend-change` for cross-library ownership decisions,
+  `$design-frontend-experience` for design-system changes, and
+  `$validate-frontend-quality` before handing off shared frontend changes.

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Extend Notifications'
+  short_description: 'Extend notification events and delivery'
+  default_prompt: 'Use $extend-notifications to implement this notification workflow.'

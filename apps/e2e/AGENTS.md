@@ -10,3 +10,6 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
   library should own them.
 - Prefer commands from [Command matrix](../../docs/command-matrix.md) and
   document new e2e coverage in [Testing](../../docs/testing.md).
+- Use `$validate-frontend-quality` for browser/native product journeys,
+  `$validate-backend-quality` for API/process/infrastructure behavior, and
+  `$validate-change` for fullstack or cross-runtime evidence.

@@ -112,7 +112,10 @@ New projects inherit 100% thresholds. A project with documented historical cover
 Generated OpenAPI clients under `generated/` and visual baseline PNGs under `packages/tooling/baselines/visual/` are intentionally tracked so consumers and visual regression tests are reproducible without extra generation steps. Treat changes to these files as generated artifacts:
 
 - regenerate API clients with `pnpm run api:clients`; verify with `pnpm run api:clients:check`;
-- update visual baselines only with `pnpm run test:visual:update`, then verify with `pnpm run test:visual`;
+- update the current platform's Chromium baselines only with
+  `pnpm run test:visual:update`, or the full browser/mobile set with
+  `pnpm run test:visual:update:matrix`; review every changed PNG, then run the
+  matching non-update command in the same operating-system environment;
 - review generated/binary diffs together with the source API/schema/story change that caused them.
 
 ## Tooling and migration rollback checks

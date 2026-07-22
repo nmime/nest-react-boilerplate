@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Change API Contract'
+  short_description: 'Update API contracts and generated clients'
+  default_prompt: 'Use $change-api-contract to update this API contract end to end.'

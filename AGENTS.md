@@ -130,6 +130,9 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 
 - Full agent policy: [docs/ai/agent-policy.md](docs/ai/agent-policy.md)
 - Retrieval map: [docs/ai/repo-map.md](docs/ai/repo-map.md)
+- Retrieval policy: [docs/ai/retrieval-policy.md](docs/ai/retrieval-policy.md)
+- Agent workflows and skills: [docs/ai/agent-workflows.md](docs/ai/agent-workflows.md), [docs/agent-skills.md](docs/agent-skills.md)
+- Documentation index: [docs/README.md](docs/README.md)
 - Architecture: [docs/architecture.md](docs/architecture.md)
 - Project catalog: [docs/project-catalog.md](docs/project-catalog.md)
 - Commands: [docs/command-matrix.md](docs/command-matrix.md)

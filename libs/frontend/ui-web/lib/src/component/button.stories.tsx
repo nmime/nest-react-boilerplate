@@ -10,6 +10,7 @@ const loadingLabel = ['Saving'].join('');
 const meta = {
   title: 'Components/UiButton',
   component: UiButton,
+  tags: ['visual'],
   parameters: {
     layout: 'centered',
   },
@@ -32,6 +33,7 @@ export const Primary: Story = {
     button.focus();
 
     await expect(button).toHaveFocus();
+    document.documentElement.setAttribute('data-visual-ready', 'true');
   },
 };
 

@@ -32,6 +32,39 @@ When the task involves request-scoped data, correlation IDs, or tracing:
    canonical import path (`@app/backend-common-bootstrap`) and `requestContext` API.
 2. Read `libs/backend/common/request-context/lib` source to verify current `requestContext` exports (bootstrap re-exports it via `@app/backend-common-bootstrap`), and the global CLS interceptor (`ClsInterceptor`) in `libs/backend/common/bootstrap/lib` that binds it to the async scope.
 
+### Frontend planning, design, development, and quality
+
+1. Select the exact deployable and renderer from the project catalog; no frontend is the default.
+2. Read the nearest frontend `AGENTS.md`, README, project config, routes/screens,
+   public UI exports, tests, and the frontend architecture/UX docs in the repo map.
+3. Use `$plan-frontend-change` for cross-owner scope, `$design-frontend-experience`
+   for new UX or visual direction, the matching web/native development skill for
+   implementation, and `$validate-frontend-quality` for risk-based proof.
+4. Verify responsive browser UI separately from Expo/React Native behavior and
+   verify app routing/providers/auth/API flows separately from Storybook compositions.
+
+### Backend planning, development, and quality
+
+1. Select the exact API, consumer, scheduler, or reusable library owner from the
+   project catalog; no backend deployable is the default.
+2. Read the nearest backend `AGENTS.md`, README, project config, composition
+   root, domain/persistence source, contracts, tests, and operations guidance.
+3. Use `$plan-backend-change` for cross-owner scope, the matching API/process
+   development skill for implementation, boundary skills for contracts, auth,
+   database, or notifications, and `$validate-backend-quality` for risk-based proof.
+4. Verify mocked/unit behavior separately from real infrastructure integration,
+   runtime e2e, controlled external canaries, and deployment evidence.
+
+### Documentation and agent guidance
+
+1. Start at the [Documentation index](../README.md), then follow the topical
+   owner or nested index. Do not scan every Markdown file for a narrow change.
+2. Use `$maintain-documentation` when changing durable guidance, README/AGENTS
+   routing, commands, runbooks, ADRs, or skill catalogs.
+3. Keep every document reachable from the documentation index and every skill
+   represented in both the skill catalog and workflow selector.
+4. Run `pnpm run docs:check`, plus `pnpm run agent:verify` when agent behavior changes.
+
 ## What belongs where
 
 | Context type                           | Location                                                      |

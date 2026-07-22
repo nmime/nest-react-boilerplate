@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Audit Project'
+  short_description: 'Audit a project against source-backed contracts'
+  default_prompt: 'Use $service-audit to audit this repository project and report evidence-backed gaps.'

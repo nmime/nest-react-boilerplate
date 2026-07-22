@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Plan Backend Change'
+  short_description: 'Plan backend work across the correct owners'
+  default_prompt: 'Use $plan-backend-change to plan this backend change with explicit ownership, contracts, failure modes, and validation.'

@@ -72,6 +72,7 @@
       "@app/frontend-runtime": ["libs/frontend/runtime/lib/src/index.ts"],
       "@app/frontend-ui-native": ["libs/frontend/ui-native/lib/src/index.ts"],
       "@app/frontend-ui-web": ["libs/frontend/ui-web/lib/src/index.ts"],
+      "@app/frontend-ui-web/*": ["libs/frontend/ui-web/lib/src/*"],
       "@app/i18n-en-admin/*": ["i18n/en/admin/*"],
       "@app/i18n-en-bots/*": ["i18n/en/bots/*"],
       "@app/i18n-en-common/*": ["i18n/en/common/*"],

@@ -14,8 +14,13 @@ pnpm exec nx build landing-app
 pnpm exec nx run landing-app:preview
 pnpm exec nx run landing-app:test
 pnpm exec nx run landing-app:e2e
+pnpm run test:storybook
 pnpm run frontend:fsd:check
 ```
+
+`storybook/home.stories.tsx` composes the React landing screen with
+deterministic providers. Keep Astro routing, generated HTML, and renderer smoke
+coverage in the landing build and e2e targets.
 
 ## Docs
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Develop Web Frontend'
+  short_description: 'Build web UI in the correct frontend scope'
+  default_prompt: 'Use $develop-web-frontend to implement this web frontend change.'

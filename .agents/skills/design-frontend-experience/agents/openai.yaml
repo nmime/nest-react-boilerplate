@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Design Frontend Experience'
+  short_description: 'Design intentional accessible product interfaces'
+  default_prompt: 'Use $design-frontend-experience to design an intentional accessible frontend experience for this product task.'

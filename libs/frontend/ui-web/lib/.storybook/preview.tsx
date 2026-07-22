@@ -2,7 +2,7 @@ import { useEffect, type JSX } from 'react';
 import type { Preview } from '@storybook/react-vite';
 import '../src/styles.css';
 
-const LandmarkGuard = ({ Story }: { Story: () => JSX.Element }) => {
+const LandmarkGuard = ({ Story, isAppComposition }: { Story: () => JSX.Element; isAppComposition: boolean }) => {
   useEffect(() => {
     const updateResizeHandles = () => {
       for (const handle of document.querySelectorAll<HTMLElement>('[role="separator"][aria-label$="resize handle"]')) {
@@ -20,7 +20,11 @@ const LandmarkGuard = ({ Story }: { Story: () => JSX.Element }) => {
       observer.disconnect();
     };
   }, []);
-  return (
+  return isAppComposition ? (
+    <div data-storybook-app-composition="">
+      <Story />
+    </div>
+  ) : (
     <main aria-label="Storybook preview content">
       <Story />
     </main>
@@ -28,7 +32,11 @@ const LandmarkGuard = ({ Story }: { Story: () => JSX.Element }) => {
 };
 
 const preview: Preview = {
-  decorators: [(Story) => <LandmarkGuard Story={Story} />],
+  decorators: [
+    (Story, context) => (
+      <LandmarkGuard isAppComposition={context.parameters['appComposition'] === true} Story={Story} />
+    ),
+  ],
   parameters: { layout: 'centered' },
 };
 

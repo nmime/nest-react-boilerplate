@@ -140,6 +140,14 @@ for (const required of ['pnpm run ci:pr', 'pnpm run deploy:validate']) {
   assert.ok(ci.includes(required), `ci.yml missing required gate: ${required}`);
 }
 const qualityPresets = workflows.find((workflow) => workflow.name === 'quality-presets.yml')?.text ?? '';
+assert.ok(
+  scripts['quality:visual']?.includes('pnpm run test:visual:matrix'),
+  'quality:visual must run the cross-browser/mobile visual regression matrix',
+);
+assert.ok(
+  qualityPresets.includes('pnpm run quality:visual'),
+  'scheduled quality workflow must run the pinned visual regression matrix',
+);
 const runtimeComposeProfiles =
   'COMPOSE_PROFILES: postgres,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app';
 for (const [workflowName, workflowText] of [
@@ -173,6 +181,9 @@ for (const required of [
   'pnpm run api:contracts:consumer',
   'pnpm run api:openapi:fuzz',
   'pnpm run test:property',
+  'pnpm run storybook:build',
+  'pnpm run test:storybook',
+  'pnpm run test:visual',
 ]) {
   assert.ok(ci.includes(required), `ci.yml missing non-runtime validation gate: ${required}`);
 }

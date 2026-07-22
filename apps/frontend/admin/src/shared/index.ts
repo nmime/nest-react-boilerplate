@@ -4,6 +4,8 @@ import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
 import type { adminApi } from '@app/frontend-api-client';
 import type { AdminAccessPolicy } from '@app/frontend-feature-admin-shared';
 
+export * from './notification-options';
+
 type UserStatus = 'active' | 'disabled' | 'invited';
 
 export type Translate = (key: TranslationKey, params?: TranslationParams) => string;

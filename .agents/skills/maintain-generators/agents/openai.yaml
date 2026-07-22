@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Maintain Generators'
+  short_description: 'Evolve repository generators and templates'
+  default_prompt: 'Use $maintain-generators to change and verify this repository generator.'

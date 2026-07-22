@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { TranslationKey } from '@app/frontend-runtime';
 import { createAdminAccess, normalizeClaimList } from '../entities/admin-session';
 import { getBrowserPath, stripSensitiveBrowserTokenParams } from '../features/admin-auth';
 import {
@@ -12,6 +13,10 @@ import {
   errorText,
   fallbackTranslate,
   formatDate,
+  getDefaultNotificationProvider,
+  getNotificationChannelOptions,
+  getNotificationProviderOptions,
+  getNotificationSegmentKindOptions,
   isUsersRoute,
   join,
   normalizeAdminPath,
@@ -20,6 +25,8 @@ import {
   routeUserId,
   totalPages,
 } from '../shared';
+
+const translateKey = (key: TranslationKey) => key;
 
 describe('shared helpers', () => {
   it('returns the fallback translation when the error is not an Error instance', () => {
@@ -139,6 +146,30 @@ describe('shared helpers', () => {
     expect(parseAdminUserRoleFilter('owner')).toBe('all');
     expect(parseAdminUserPermissionFilter('admin:roles:write')).toBe('admin:roles:write');
     expect(parseAdminUserPermissionFilter('admin:users:delete')).toBe('all');
+  });
+
+  it('keeps notification channels and their default providers aligned', () => {
+    expect(getNotificationChannelOptions(translateKey).map(({ value }) => value)).toEqual(['email', 'bot', 'push']);
+    expect(getDefaultNotificationProvider('email')).toBe('resend');
+    expect(getDefaultNotificationProvider('bot')).toBe('telegram-bot');
+    expect(getDefaultNotificationProvider('push')).toBe('google-fcm');
+    expect(getDefaultNotificationProvider('in_app')).toBeUndefined();
+  });
+
+  it('returns translated notification options without duplicate providers', () => {
+    const channels = ['email', 'bot', 'push'] as const;
+    const options = channels.flatMap((channel) => getNotificationProviderOptions(channel, translateKey));
+
+    expect(options).toHaveLength(6);
+    expect(new Set(options.map(({ value }) => value)).size).toBe(6);
+    expect(options[0]).toEqual({
+      label: 'admin.notification.option.provider.resend',
+      value: 'resend',
+    });
+    expect(getNotificationSegmentKindOptions(translateKey)).toEqual([
+      { label: 'admin.notification.option.segment.dynamic', value: 'dynamic' },
+      { label: 'admin.notification.option.segment.static', value: 'static' },
+    ]);
   });
 });
 

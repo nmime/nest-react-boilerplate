@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Change Auth Access'
+  short_description: 'Change authentication and authorization safely'
+  default_prompt: 'Use $change-auth-access to implement this authentication or access-control change.'

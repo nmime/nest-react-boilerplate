@@ -30,6 +30,7 @@
     "@types/istanbul-lib-coverage": "2.0.6",
     "@types/istanbul-lib-report": "3.0.3",
     "@types/istanbul-reports": "3.0.4",
+    "axe-core": "4.12.1",
     "fast-check": "4.9.0",
     "istanbul-lib-coverage": "3.2.2",
     "istanbul-lib-report": "3.0.1",

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Develop Backend API'
+  short_description: 'Build NestJS APIs within repository contracts'
+  default_prompt: 'Use $develop-backend-api to implement this backend API change.'

@@ -2,7 +2,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, relative, resolve } from 'node:path';
+import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ignoredDirectories = new Set([
@@ -33,11 +33,18 @@ export function collectTrackedMarkdown(workspaceRoot) {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return output
+    const tracked = output
       .split('\0')
       .filter(Boolean)
       .map((file) => resolve(workspaceRoot, file))
       .filter((file) => existsSync(file));
+    const docsRoot = resolve(workspaceRoot, 'docs');
+    const workingDocs = existsSync(docsRoot) ? collectMarkdownRecursively(docsRoot) : [];
+    const skillsRoot = resolve(workspaceRoot, '.agents/skills');
+    const workingSkills = existsSync(skillsRoot) ? collectMarkdownRecursively(skillsRoot) : [];
+    return [...new Set([...tracked, ...workingDocs, ...workingSkills])].sort((left, right) =>
+      left.localeCompare(right),
+    );
   } catch {
     return collectMarkdownRecursively(workspaceRoot);
   }
@@ -141,7 +148,56 @@ export function validateWorkspace({ workspaceRoot, markdownFiles = collectTracke
     }
   }
 
+  validateDocumentationReachability({ failures, markdownFiles, workspaceRoot });
+
   return { counts, failures };
+}
+
+function validateDocumentationReachability({ failures, markdownFiles, workspaceRoot }) {
+  const docsRoot = resolve(workspaceRoot, 'docs');
+  const indexPath = resolve(docsRoot, 'README.md');
+  const docsFiles = markdownFiles
+    .map((filePath) => resolve(filePath))
+    .filter((filePath) => {
+      const pathFromDocs = relative(docsRoot, filePath);
+      return pathFromDocs === '' || (!pathFromDocs.startsWith('..') && !pathFromDocs.includes(`..${sep}`));
+    })
+    .filter((filePath) => filePath.endsWith('.md'))
+    .sort((left, right) => left.localeCompare(right));
+  const docsSet = new Set(docsFiles);
+  if (!docsSet.has(indexPath)) return;
+
+  const reachable = new Set([indexPath]);
+  const pending = [indexPath];
+  while (pending.length > 0) {
+    const sourcePath = pending.shift();
+    const source = readFileSync(sourcePath, 'utf8');
+    for (const match of source.matchAll(markdownLinkPattern)) {
+      const rawHref = normalizeMarkdownHref(match[1] ?? '');
+      if (!rawHref || isExternalHref(rawHref)) continue;
+      const [rawPath] = splitHref(rawHref);
+      if (!rawPath) continue;
+      let targetPath = resolve(dirname(sourcePath), decodeHref(rawPath));
+      if (existsSync(targetPath) && statSync(targetPath).isDirectory()) {
+        targetPath = resolve(targetPath, 'README.md');
+      }
+      if (!docsSet.has(targetPath) || reachable.has(targetPath)) continue;
+      reachable.add(targetPath);
+      pending.push(targetPath);
+    }
+  }
+
+  for (const filePath of docsFiles) {
+    if (reachable.has(filePath)) continue;
+    failures.push(
+      formatFailure(
+        workspaceRoot,
+        filePath,
+        1,
+        'documentation is not reachable from docs/README.md or a linked nested index',
+      ),
+    );
+  }
 }
 
 function validateLibraryReadme({ content, failures, filePath, workspaceRoot }) {
@@ -299,7 +355,7 @@ function main() {
   }
 
   process.stdout.write(
-    `Documentation validation passed: ${result.counts.files} tracked Markdown files, ${result.counts.links} local links, ${result.counts.anchors} anchors, ${result.counts.scripts} root-script references.\n`,
+    `Documentation validation passed: ${result.counts.files} workspace Markdown files, ${result.counts.links} local links, ${result.counts.anchors} anchors, ${result.counts.scripts} root-script references.\n`,
   );
 }
 

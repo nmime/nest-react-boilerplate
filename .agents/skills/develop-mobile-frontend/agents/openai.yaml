@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Develop Mobile Frontend'
+  short_description: 'Build Expo UI in native frontend scope'
+  default_prompt: 'Use $develop-mobile-frontend to implement this mobile frontend change.'

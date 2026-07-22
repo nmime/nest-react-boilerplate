@@ -51,6 +51,10 @@ overrides:
   'multer@>=2.0.0-alpha.1 <2.2.0': '2.2.0'
   'webpack-dev-server@<5.2.5': '5.2.5'
   'http-proxy-middleware@>=2.0.0 <2.0.10': '2.0.10'
+  # The pinned shadcn CLI brings an MCP SDK range that still resolves the
+  # vulnerable v1 Node adapter. Keep its dev-tool dependency on a mature
+  # patched adapter while the SDK range catches up.
+  '@hono/node-server': '2.0.10'
 
 # react-native-worklets 0.10.0 imports these Babel packages from its compiled
 # plugin without declaring them. Keep the fix scoped to that exact release so

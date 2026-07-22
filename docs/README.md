@@ -16,6 +16,8 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Presets and Technologies](setup/presets-and-technologies.md) — preset matrix, supported apps/capabilities, dependency rules.
 - [CLI Reference](setup/cli-reference.md) — every `nrb` / `repo-tooling` command with flags and examples.
 - [Nx Generators](setup/nx-generators.md) — repository generators, generated contracts, and verification.
+- [Discord Bot Setup](setup/discord-bot.md) — select, configure, and validate the Discord bot integration.
+- [TypeScript 7 Upgrade](setup/upgrade-typescript-7.md) — staged compiler upgrade research and compatibility plan.
 
 ## Day-to-day usage
 
@@ -72,7 +74,9 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Local Verification](local-verification.md) — reproducible workstation checks.
 - [Bun Runtime Support](bun-runtime-research.md) — pinned Bun 1.3.14 compatibility contract, evidence, and adoption boundaries.
 - [CI Observability](ci-observability.md) — GitHub Actions pipelines and quality gates.
+- [CI Cache](ci-cache.md) — cache ownership, keys, restore behavior, and troubleshooting.
 - [Branch Protection](branch-protection.md) — repository governance and merge rules.
+- [Deployment Platforms](deployment-platforms.md) — supported deployment targets and platform boundaries.
 - [GitOps](../GITOPS.md) — infrastructure-as-code and continuous delivery.
 
 ### Operations deep dives
@@ -95,7 +99,11 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Security Baseline](../SECURITY.md) — reporting expectations and baseline controls.
 - [Auth Production Gap Register](auth-production-roadmap.md)
 - [Auth Tenant Hardening](auth-tenant-hardening.md)
+- [Auth Login Analytics](auth-login-analytics.md)
 - [Social Auth and Bots](social-auth-bots.md)
+- [Social Auth Live Test Guide](social-auth-live-test-guide.md)
+- [Security Platforms](security-platforms.md)
+- [Supply Chain Security](supply-chain.md)
 
 ## AI agent policy
 
@@ -138,4 +146,6 @@ copying project, hostname, port, command, or environment tables:
 
 `docs/project-catalog.md` is generated. Change the setup catalog or Nx project
 configuration, run `pnpm run docs:catalog`, and let `pnpm run docs:check` prove
-that the rendered catalog and all local links remain current.
+that the rendered catalog and all local links remain current. The same check
+requires every Markdown document under `docs/**` to be reachable from this
+index, directly or through a linked nested index.

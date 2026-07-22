@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Scaffold Ownership'
+  short_description: 'Generate new apps libraries and features safely'
+  default_prompt: 'Use $scaffold-feature to scaffold and complete this genuinely new repository owner.'

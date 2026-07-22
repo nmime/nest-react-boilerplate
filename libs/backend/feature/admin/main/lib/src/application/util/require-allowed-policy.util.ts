@@ -1,18 +1,13 @@
-import {
-  AdminManageAllPermission,
-  isAdminAssignablePermission,
-  isAdminAssignableRole,
-} from '@app/backend-feature-admin-shared';
+import { AdminManageAllPermission, isAdminAssignablePermission } from '@app/backend-feature-admin-shared';
 import { AdminApplicationError } from '../admin-errors';
 import type { UpdateAdminUserAccessPolicyCommand } from '../../domain';
 
 export const requireAllowedPolicy = (input: UpdateAdminUserAccessPolicyCommand): void => {
-  const unknownRoles = input.roles.filter((role) => !isAdminAssignableRole(role));
   const unknownPermissions = input.permissions.filter((permission) => !isAdminAssignablePermission(permission));
-  if (unknownRoles.length > 0 || unknownPermissions.length > 0) {
+  if (unknownPermissions.length > 0) {
     throw new AdminApplicationError(
       'invalid_access_policy',
-      'Access policy contains roles or permissions outside the admin catalog.',
+      'Access policy contains permissions outside the admin catalog.',
     );
   }
   // The break-glass `admin:manage:all` grant is provisioned out-of-band (the

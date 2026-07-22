@@ -1,5 +1,4 @@
 import { Controller, Get, Inject, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { CurrentUser, SessionAuthGuard, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
@@ -10,7 +9,6 @@ import {
 import { ProblemPresentationRuntimePayloadDto } from './problem-presentation-runtime.dto';
 
 @ApiExceptions(401, 429, 500)
-@ApiBearerAuth()
 @ApiSessionCookieAuth()
 @UseGuards(new SessionAuthGuard())
 @Controller('auth/problem-presentations')

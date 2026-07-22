@@ -70,7 +70,7 @@ BuildKit dependency cache and builds only the selected image targets.
   `.github/workflows/release-images.yml`; promotion pins selected workloads to
   their registry digest automatically;
 - a target namespace Secret named by `secrets.existingSecret` containing at
-  least `AUTH_JWT_SECRET` and `DATABASE_URL`;
+  least `SESSION_SECRET` and `DATABASE_URL`;
 - `ghcr-credentials` in the target namespace when images are private;
 - reachable PostgreSQL and Redis services;
 - ingress, DNS, and TLS configured for every enabled application domain.

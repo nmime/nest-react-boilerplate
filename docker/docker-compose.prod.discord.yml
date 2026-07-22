@@ -9,6 +9,6 @@ services:
       DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?set the derived Discord OAuth callback URL}
       DISCORD_SCOPES: ${DISCORD_SCOPES:-identify email guilds.join}
     secrets:
-      - auth_jwt_secret
+      - session_secret
       - better_auth_secret
       - discord_client_secret

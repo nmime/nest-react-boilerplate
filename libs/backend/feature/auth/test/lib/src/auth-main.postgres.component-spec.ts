@@ -11,7 +11,6 @@ import {
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
 import {
-  AuthRefreshTokenEntitySchema,
   AuthTenantEntitySchema,
   AuthTenantInvitationEntitySchema,
   AuthTenantMembershipEntitySchema,
@@ -30,15 +29,20 @@ import {
 
 interface AuthSessionResponse {
   data: {
-    accessToken: string;
-    refreshToken?: string;
     user: { email: string; displayName?: string | null };
   };
 }
 
 const passwordField = `${'pass'}${'word'}`;
 const componentCredential = ['component', 'credential'].join('-');
-const jwtSecret = ['component', 'integration', 'test', 'jwt', `${'sec'}${'ret'}`, 'at-least-32-characters'].join('-');
+const sessionSecret = [
+  'component',
+  'integration',
+  'test',
+  'session',
+  `${'sec'}${'ret'}`,
+  'at-least-32-characters',
+].join('-');
 
 const dockerAvailable = hasDockerRuntime();
 if (!dockerAvailable) {
@@ -55,7 +59,7 @@ describeIfDocker('AuthMainModule postgres component', () => {
   let orm: MikroORM;
 
   beforeAll(async () => {
-    process.env.AUTH_JWT_SECRET = jwtSecret;
+    process.env.SESSION_SECRET = sessionSecret;
     process.env.AUTH_PERSISTENCE = 'postgres';
     container = await startPostgresContainer();
 
@@ -71,7 +75,6 @@ describeIfDocker('AuthMainModule postgres component', () => {
               AuthTenantEntitySchema,
               AuthTenantMembershipEntitySchema,
               AuthTenantInvitationEntitySchema,
-              AuthRefreshTokenEntitySchema,
               AuthUserTokenEntitySchema,
             ],
             {
@@ -97,7 +100,6 @@ describeIfDocker('AuthMainModule postgres component', () => {
 
   afterEach(async () => {
     await orm.em.getConnection().execute('delete from auth_user_tokens');
-    await orm.em.getConnection().execute('delete from auth_refresh_tokens');
     await orm.em.getConnection().execute('delete from auth_users');
     orm.em.clear();
   });
@@ -106,7 +108,7 @@ describeIfDocker('AuthMainModule postgres component', () => {
     await app?.close();
     await moduleRef?.close();
     await stopPostgresContainer(container);
-    delete process.env.AUTH_JWT_SECRET;
+    delete process.env.SESSION_SECRET;
     delete process.env.AUTH_PERSISTENCE;
   });
 
@@ -123,8 +125,6 @@ describeIfDocker('AuthMainModule postgres component', () => {
       'display_name',
       `${'pass'}${'word'}_hash`,
       'status',
-      'roles',
-      'permissions',
       'locale',
       'last_login_at',
       'created_at',
@@ -140,10 +140,10 @@ describeIfDocker('AuthMainModule postgres component', () => {
       select table_name
       from information_schema.tables
       where table_schema = 'public'
-        and table_name in ('auth_refresh_tokens', 'auth_user_tokens')
+        and table_name in ('auth_user_tokens')
       order by table_name
     `)) as Array<{ table_name: string }>;
-    expect(tokenTables.map((row) => row.table_name)).toEqual(['auth_refresh_tokens', 'auth_user_tokens']);
+    expect(tokenTables.map((row) => row.table_name)).toEqual(['auth_user_tokens']);
   });
 
   it('registers and persists a user through controller/service/repository wiring', async () => {
@@ -163,8 +163,8 @@ describeIfDocker('AuthMainModule postgres component', () => {
       email: 'component@example.com',
       displayName: 'Component User',
     });
-    expect(body.data.accessToken.split('.')).toHaveLength(3);
-    expect(body.data.refreshToken).toEqual(expect.any(String));
+    expect(body.data).not.toHaveProperty('accessToken');
+    expect(body.data).not.toHaveProperty('refreshToken');
 
     const persisted = (await orm.em
       .getConnection()
@@ -173,53 +173,6 @@ describeIfDocker('AuthMainModule postgres component', () => {
       display_name: string;
     }>;
     expect(persisted).toEqual([{ email: 'component@example.com', display_name: 'Component User' }]);
-  });
-
-  it('persists and rotates refresh tokens through Postgres', async () => {
-    const httpServer = getHttpServer(app);
-    const email = 'refresh-component@example.com';
-    const register = await supertest(httpServer)
-      .post('/auth/register')
-      .send({ email, [passwordField]: componentCredential })
-      .expect(201);
-    const originalRefreshToken = (register.body as AuthSessionResponse).data.refreshToken;
-    expect(originalRefreshToken).toEqual(expect.any(String));
-
-    const issuedRows = (await orm.em.getConnection().execute(`
-      select token_hash, revoked_at, replaced_by_token_id
-      from auth_refresh_tokens
-    `)) as Array<{
-      token_hash: string;
-      revoked_at: Date | null;
-      replaced_by_token_id: string | null;
-    }>;
-    expect(issuedRows).toHaveLength(1);
-    expect(issuedRows[0]?.token_hash).not.toBe(originalRefreshToken);
-    expect(issuedRows[0]?.revoked_at).toBeNull();
-
-    const refresh = await supertest(httpServer)
-      .post('/auth/refresh')
-      .send({ refreshToken: originalRefreshToken })
-      .expect(201);
-    const rotatedRefreshToken = (refresh.body as AuthSessionResponse).data.refreshToken;
-    expect(rotatedRefreshToken).toEqual(expect.any(String));
-    expect(rotatedRefreshToken).not.toBe(originalRefreshToken);
-
-    await supertest(httpServer).post('/auth/refresh').send({ refreshToken: originalRefreshToken }).expect(401);
-
-    const rows = (await orm.em.getConnection().execute(`
-      select parent_token_id, revoked_at, replaced_by_token_id
-      from auth_refresh_tokens
-      order by (parent_token_id is not null) asc, created_at asc
-    `)) as Array<{
-      parent_token_id: string | null;
-      revoked_at: Date | null;
-      replaced_by_token_id: string | null;
-    }>;
-    expect(rows).toHaveLength(2);
-    expect(rows[0]?.revoked_at).not.toBeNull();
-    expect(rows[0]?.replaced_by_token_id).not.toBeNull();
-    expect(rows[1]?.parent_token_id).not.toBeNull();
   });
 
   it('rejects duplicate registration and logs in persisted users', async () => {
@@ -236,7 +189,7 @@ describeIfDocker('AuthMainModule postgres component', () => {
     expect(body.data.user.email).toBe(email);
   });
 
-  it('returns the token-protected me payload for a postgres-backed session', async () => {
+  it('rejects bearer-only access to a protected postgres-backed endpoint', async () => {
     const httpServer = getHttpServer(app);
     const register = await supertest(httpServer)
       .post('/auth/register')
@@ -245,17 +198,9 @@ describeIfDocker('AuthMainModule postgres component', () => {
         [passwordField]: componentCredential,
       })
       .expect(201);
-    const token = (register.body as AuthSessionResponse).data.accessToken;
+    expect((register.body as AuthSessionResponse).data).not.toHaveProperty('accessToken');
 
-    const me = await supertest(httpServer)
-      .get('/auth/me')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(200)
-      .expect(200);
-
-    expect((me.body as { data?: { principal?: { email?: string } } }).data?.principal?.email).toBe(
-      'me-component@example.com',
-    );
+    await supertest(httpServer).get('/auth/me').set('Authorization', 'Bearer header.payload.signature').expect(401);
   });
 });
 

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { normalizeEmail } from './email-address';
-import { AuthJwtSigningError, signDomainJwt } from './jwt-signer';
 import { hashPassword, verifyPassword } from './password.service';
 import { InvalidAuthTenantIdError, parseDomainTenantId } from './tenant-id';
 
@@ -25,12 +24,5 @@ describe('auth domain services', () => {
   it('parses tenant ids and reports invalid tenants as domain errors', () => {
     expect(parseDomainTenantId('11111111-1111-4111-8111-111111111111')).toBe('11111111-1111-4111-8111-111111111111');
     expect(() => parseDomainTenantId('not valid')).toThrow(InvalidAuthTenantIdError);
-  });
-
-  it('signs JWTs and reports missing configuration as a domain error', () => {
-    expect(() => signDomainJwt({ sub: 'user' }, {}, 60)).toThrow(AuthJwtSigningError);
-    expect(
-      signDomainJwt({ sub: 'user' }, { AUTH_JWT_SECRET: 'test-secret', NODE_ENV: 'test' }, 60).split('.'),
-    ).toHaveLength(3);
   });
 });

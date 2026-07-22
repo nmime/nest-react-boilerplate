@@ -12,9 +12,9 @@ import {
   toOpenApiFetchOptions,
 } from './service-options';
 
-const adminHealthPath = '/health';
-const adminLivePath = '/live';
-const adminReadyPath = '/ready';
+const adminHealthPath = '/admin/health';
+const adminLivePath = '/admin/live';
+const adminReadyPath = '/admin/ready';
 const adminProfileMePath = '/admin/profile/me';
 const adminUsersPath = '/admin/users';
 const adminUserPath = '/admin/users/{id}';
@@ -32,6 +32,8 @@ const adminAuthLoginAnalyticsSummaryPath = '/admin/auth/login-analytics/summary'
 const adminDashboardSummaryPath = '/admin/dashboard/summary';
 const adminProblemPresentationsPath = '/admin/settings/problem-presentations';
 const adminProblemPresentationResetPath = '/admin/settings/problem-presentations/reset';
+const adminFeatureFlagsPath = '/admin/feature-flags';
+const adminFeatureFlagPath = '/admin/feature-flags/{key}';
 const adminNotificationTemplatesPath = '/admin/notification-templates';
 const adminNotificationTemplatePath = '/admin/notification-templates/{id}';
 const adminNotificationTemplatePublishPath = '/admin/notification-templates/{id}/publish';
@@ -75,6 +77,9 @@ export type AdminProblemPresentationViewDto = components['schemas']['AdminProble
 export type AdminProblemPresentationCatalogDto = components['schemas']['AdminProblemPresentationCatalogDto'];
 export type UpdateAdminProblemPresentationDto = components['schemas']['UpdateAdminProblemPresentationDto'];
 export type ResetAdminProblemPresentationDto = components['schemas']['ResetAdminProblemPresentationDto'];
+export type AdminFeatureFlagViewDto = components['schemas']['AdminFeatureFlagViewDto'];
+export type AdminFeatureFlagListPayloadDto = components['schemas']['AdminFeatureFlagListPayloadDto'];
+export type UpsertAdminFeatureFlagDto = components['schemas']['UpsertAdminFeatureFlagDto'];
 export type AdminNotificationTemplateViewDto = components['schemas']['AdminNotificationTemplateViewDto'];
 export type AdminNotificationTemplateChannelInputDto =
   components['schemas']['AdminNotificationTemplateChannelInputDto'];
@@ -319,6 +324,26 @@ export type AdminProblemPresentationsControllerResetError = OpenApiError<
   typeof adminProblemPresentationsControllerReset
 >;
 
+export const adminFeatureFlagsControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(adminFeatureFlagsPath, toOpenApiFetchOptions(options));
+export type AdminFeatureFlagsControllerListResponse = OpenApiData<typeof adminFeatureFlagsControllerList>;
+export type AdminFeatureFlagsControllerListData = EnvelopeData<AdminFeatureFlagsControllerListResponse>;
+export type AdminFeatureFlagsControllerListError = OpenApiError<typeof adminFeatureFlagsControllerList>;
+
+export const adminFeatureFlagsControllerUpsert = (
+  key: string,
+  body: UpsertAdminFeatureFlagDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PUT(adminFeatureFlagPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { path: { key } },
+  });
+export type AdminFeatureFlagsControllerUpsertResponse = OpenApiData<typeof adminFeatureFlagsControllerUpsert>;
+export type AdminFeatureFlagsControllerUpsertData = EnvelopeData<AdminFeatureFlagsControllerUpsertResponse>;
+export type AdminFeatureFlagsControllerUpsertError = OpenApiError<typeof adminFeatureFlagsControllerUpsert>;
+
 export const adminNotificationsControllerListTemplates = (options?: ApiClientRequestOptions) =>
   client.GET(adminNotificationTemplatesPath, toOpenApiFetchOptions(options));
 export const adminNotificationsControllerGetTemplate = (id: string, options?: ApiClientRequestOptions) =>
@@ -490,6 +515,7 @@ export const getAuthLoginAnalyticsAdminControllerSummaryQueryKey = (params: Admi
   ['get', adminAuthLoginAnalyticsSummaryPath, params] as const;
 export const getAdminUsersControllerDashboardSummaryQueryKey = () => ['get', adminDashboardSummaryPath] as const;
 export const getAdminProblemPresentationsControllerListQueryKey = () => ['get', adminProblemPresentationsPath] as const;
+export const getAdminFeatureFlagsControllerListQueryKey = () => ['get', adminFeatureFlagsPath] as const;
 export const getAdminNotificationTemplatesQueryKey = () => ['get', adminNotificationTemplatesPath] as const;
 export const getAdminNotificationSegmentsQueryKey = () => ['get', adminNotificationSegmentsPath] as const;
 export const getAdminNotificationResolversQueryKey = () => ['get', adminNotificationResolversPath] as const;
@@ -505,6 +531,7 @@ export const getAdminProblemPresentationsControllerUpdateMutationKey = () =>
   ['put', adminProblemPresentationsPath] as const;
 export const getAdminProblemPresentationsControllerResetMutationKey = () =>
   ['put', adminProblemPresentationResetPath] as const;
+export const getAdminFeatureFlagsControllerUpsertMutationKey = () => ['put', adminFeatureFlagPath] as const;
 
 export const getAdminProfileControllerMeQueryOptions = (
   options?: ApiClientRequestOptions,

@@ -73,7 +73,6 @@ Copy the environment file and create secret storage:
 cp .env.production.example .env.production
 mkdir -p docker/secrets
 chmod 700 docker/secrets
-openssl rand -base64 48 > docker/secrets/auth_jwt_secret.txt
 openssl rand -base64 48 > docker/secrets/session_secret.txt
 openssl rand -base64 48 > docker/secrets/better_auth_secret.txt
 openssl rand -base64 32 > docker/secrets/auth_provider_token_encryption_key.txt
@@ -113,7 +112,7 @@ app-ID subdomain; API hostnames do not change. In particular, an app called
 generic name.
 
 The edge modes derive `CORS_ORIGINS`, `BETTER_AUTH_URL`,
-`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_ALLOWED_RETURN_URLS`, `AUTH_JWT_ISSUER`, Telegram webhook URLs, and bot
+`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_ALLOWED_RETURN_URLS`, Telegram webhook URLs, and bot
 web-app URLs from this mapping. Add exceptional origins through
 `CORS_EXTRA_ORIGINS` and `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS`. External-proxy mode
 can derive the same contract when `EXTERNAL_PROXY_PUBLIC_MODE` is set to

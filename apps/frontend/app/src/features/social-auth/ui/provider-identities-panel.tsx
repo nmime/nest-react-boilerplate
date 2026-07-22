@@ -58,7 +58,7 @@ function ProviderIdentitiesPanelBase({ onLink, t }: Readonly<ProviderIdentitiesP
     <UiCard className="user-settings__card" title={t('user.settings.connections.title')}>
       <p>{t('user.settings.connections.description')}</p>
       {!authStore.isAuthenticated ? (
-        <UiEmptyState description={t('user.state.missingToken')} title={t('user.profile.title')} />
+        <UiEmptyState description={t('user.state.unauthenticated')} title={t('user.profile.title')} />
       ) : null}
       {identitiesQuery.isLoading ? <UiLoading label={t('user.loadingProfile')} /> : null}
       {identitiesQuery.isError ? (

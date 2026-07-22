@@ -1,5 +1,6 @@
+import type { EntityManager } from '@mikro-orm/core';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import { AdminRole } from '@app/common-authz';
+import { AdminManageAllPermission, AdminRole } from '@app/common-authz';
 import type {
   AuthRoleRepository,
   AdminAuditLogRepository,
@@ -70,26 +71,33 @@ export class AdminRolesUseCase {
       throw new AdminApplicationError('invalid_access_policy', 'A role key is required.');
     }
     const requestedPermissions = requireKnownPermissions(input.permissions ?? []);
+    await this.requireDatabasePermissions(requestedPermissions);
+    this.requireNoManageAllForCustomRole(requestedPermissions);
 
-    return this.auditedRoleMutation(principal, 'admin.role.create', context, async () => {
-      const existing = unwrapRepositoryResult<AuthRoleEntity | null>(await this.roles.findByKey(key, tenantId));
+    return this.auditedRoleMutation(principal, 'admin.role.create', context, async (entityManager) => {
+      const existing = unwrapRepositoryResult<AuthRoleEntity | null>(
+        await this.roles.findByKey(key, tenantId, entityManager),
+      );
       if (existing) {
         throw new AdminApplicationError('conflict', `A role with key "${key}" already exists.`);
       }
       const created = unwrapRepositoryResult<AuthRoleEntity>(
-        await this.roles.createRole({
-          tenantId,
-          key,
-          label: input.label?.trim(),
-          description: input.description?.trim(),
-          isSystem: false,
-        }),
+        await this.roles.createRole(
+          {
+            tenantId,
+            key,
+            label: input.label?.trim(),
+            description: input.description?.trim(),
+            isSystem: false,
+          },
+          entityManager,
+        ),
       );
       if (requestedPermissions.length === 0) {
         return { before: {}, after: toAdminRoleView({ role: created, permissionKeys: [] }) };
       }
       const updated = unwrapRepositoryResult<AuthRoleWithPermissions | null>(
-        await this.roles.setRolePermissions(created.id, requestedPermissions, tenantId),
+        await this.roles.setRolePermissions(created.id, requestedPermissions, tenantId, undefined, entityManager),
       );
       if (!updated) {
         throw new AdminApplicationError('not_found', 'Role was not found.');
@@ -105,8 +113,8 @@ export class AdminRolesUseCase {
     context: AdminRequestContext = {},
   ): Promise<AdminRoleView> {
     const tenantId = resolveTenantId(principal);
-    return this.auditedRoleMutation(principal, 'admin.role.update', context, async () => {
-      const before = await this.roleViewFor(id, tenantId);
+    return this.auditedRoleMutation(principal, 'admin.role.update', context, async (entityManager) => {
+      const before = await this.roleViewFor(id, tenantId, entityManager);
       const updated = unwrapRepositoryResult<AuthRoleEntity | null>(
         await this.roles.updateRole(
           id,
@@ -115,12 +123,13 @@ export class AdminRolesUseCase {
             ...(input.description !== undefined ? { description: input.description.trim() } : {}),
           },
           tenantId,
+          entityManager,
         ),
       );
       if (!updated) {
         throw new AdminApplicationError('not_found', 'Role was not found.');
       }
-      return { before, after: await this.roleViewFor(updated.id, tenantId) };
+      return { before, after: await this.roleViewFor(updated.id, tenantId, entityManager) };
     });
   }
 
@@ -132,10 +141,13 @@ export class AdminRolesUseCase {
   ): Promise<AdminRoleView> {
     const tenantId = resolveTenantId(principal);
     const requestedPermissions = requireKnownPermissions(input.permissions);
+    await this.requireDatabasePermissions(requestedPermissions);
 
-    return this.auditedRoleMutation(principal, 'admin.role.permissions.update', context, async () => {
-      const before = await this.roleViewFor(id, tenantId);
-      const role = unwrapRepositoryResult<AuthRoleEntity | null>(await this.roles.findById(id, tenantId));
+    return this.auditedRoleMutation(principal, 'admin.role.permissions.update', context, async (entityManager) => {
+      const before = await this.roleViewFor(id, tenantId, entityManager);
+      const role = unwrapRepositoryResult<AuthRoleEntity | null>(
+        await this.roles.findById(id, tenantId, entityManager),
+      );
       if (!role) {
         throw new AdminApplicationError('not_found', 'Role was not found.');
       }
@@ -149,9 +161,11 @@ export class AdminRolesUseCase {
             `The admin role must retain its core management grants: ${missing.join(', ')}.`,
           );
         }
+      } else {
+        this.requireNoManageAllForCustomRole(requestedPermissions);
       }
-      const updated = unwrapRepositoryResult<AuthRoleWithPermissions | null>(
-        await this.roles.setRolePermissions(id, requestedPermissions, tenantId),
+      const updated = unwrapSensitiveMutationResult<AuthRoleWithPermissions | null>(
+        await this.roles.setRolePermissions(id, requestedPermissions, tenantId, principal.subject, entityManager),
       );
       if (!updated) {
         throw new AdminApplicationError('not_found', 'Role was not found.');
@@ -188,9 +202,9 @@ export class AdminRolesUseCase {
     return toAdminUserView(result.after);
   }
 
-  private async roleViewFor(id: string, tenantId: string): Promise<AdminRoleView> {
+  private async roleViewFor(id: string, tenantId: string, entityManager?: EntityManager): Promise<AdminRoleView> {
     const rolesWithPermissions = unwrapRepositoryResult<AuthRoleWithPermissions[]>(
-      await this.roles.listRolesWithPermissions(tenantId),
+      await this.roles.listRolesWithPermissions(tenantId, entityManager),
     );
     const match = rolesWithPermissions.find((entry) => entry.role.id === id);
     if (!match) {
@@ -215,17 +229,45 @@ export class AdminRolesUseCase {
     }
   }
 
+  private async requireDatabasePermissions(permissionKeys: readonly string[]): Promise<void> {
+    if (permissionKeys.length === 0) {
+      return;
+    }
+    const found = unwrapRepositoryResult<AuthPermissionEntity[]>(
+      await this.roles.findPermissionsByKeys(permissionKeys),
+    );
+    const foundKeys = new Set(found.map((permission) => permission.key));
+    const missing = permissionKeys.filter((key) => !foundKeys.has(key));
+    if (missing.length > 0) {
+      throw new AdminApplicationError(
+        'repository_error',
+        `RBAC permission catalog is missing database rows: ${missing.join(', ')}.`,
+      );
+    }
+  }
+
+  private requireNoManageAllForCustomRole(permissionKeys: readonly string[]): void {
+    if (permissionKeys.includes(AdminManageAllPermission)) {
+      throw new AdminApplicationError(
+        'invalid_access_policy',
+        'The break-glass admin:manage:all permission can only remain on the protected system admin role.',
+      );
+    }
+  }
+
   private async auditedRoleMutation(
     principal: AuthenticatedPrincipal,
     action: 'admin.role.create' | 'admin.role.update' | 'admin.role.permissions.update',
     context: AdminRequestContext,
-    operation: () => Promise<{ before: AdminRoleView | Record<string, never>; after: AdminRoleView }>,
+    operation: (
+      entityManager?: EntityManager,
+    ) => Promise<{ before: AdminRoleView | Record<string, never>; after: AdminRoleView }>,
   ): Promise<AdminRoleView> {
     if (!this.auditLogs) {
       return (await operation()).after;
     }
     const result = await this.auditLogs.recordTransactionally({
-      operation,
+      operation: (entityManager) => operation(entityManager),
       audit: ({ before, after }) => ({
         tenantId: resolveTenantId(principal),
         actorUserId: principal.subject,

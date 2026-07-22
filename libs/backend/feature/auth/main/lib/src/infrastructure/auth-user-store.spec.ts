@@ -133,63 +133,6 @@ describe('auth user stores', () => {
     expect(toAuthUserRecord(record)).toEqual(record);
   });
 
-  it('writes the access-policy cache through the Postgres store', async () => {
-    const repository = {
-      setAccessPolicy: vi.fn((id: string, policy: { roles?: string[]; permissions?: string[] }) =>
-        okAsync(id === record.id ? { ...record, ...policy } : null),
-      ),
-    };
-    const store = new PostgresAuthUserStore(repository as never);
-
-    expect(
-      (
-        await store.setAccessPolicy(record.id, {
-          roles: ['user', 'admin'],
-          permissions: ['profile:read', 'admin:manage:all'],
-        })
-      )._unsafeUnwrap(),
-    ).toMatchObject({
-      roles: ['user', 'admin'],
-      permissions: ['profile:read', 'admin:manage:all'],
-    });
-    expect(repository.setAccessPolicy).toHaveBeenCalledWith(
-      record.id,
-      {
-        roles: ['user', 'admin'],
-        permissions: ['profile:read', 'admin:manage:all'],
-      },
-      DefaultAuthTenantId,
-    );
-    expect((await store.setAccessPolicy('missing', { roles: [] }))._unsafeUnwrap()).toBeNull();
-  });
-
-  it('updates the in-memory access-policy cache and guards tenant/id mismatches', async () => {
-    const store = new InMemoryAuthUserStore();
-    const created = (await store.create(record))._unsafeUnwrap();
-
-    expect(
-      (
-        await store.setAccessPolicy(created.id, {
-          roles: ['user', 'admin'],
-          permissions: ['profile:read', 'admin:manage:all'],
-          status: 'disabled',
-        })
-      )._unsafeUnwrap(),
-    ).toMatchObject({
-      roles: ['user', 'admin'],
-      permissions: ['profile:read', 'admin:manage:all'],
-      status: 'disabled',
-    });
-    expect((await store.setAccessPolicy(created.id, {}))._unsafeUnwrap()).toMatchObject({
-      id: created.id,
-      roles: ['user', 'admin'],
-      permissions: ['profile:read', 'admin:manage:all'],
-      status: 'disabled',
-    });
-    expect((await store.setAccessPolicy('missing', { roles: [] }))._unsafeUnwrap()).toBeNull();
-    expect((await store.setAccessPolicy(created.id, { roles: [] }, 'other-tenant'))._unsafeUnwrap()).toBeNull();
-  });
-
   it('defaults missing tenant and invalid theme values when mapping records', () => {
     expect(
       toAuthUserRecord({

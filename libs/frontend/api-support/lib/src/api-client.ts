@@ -25,7 +25,6 @@ export class ApiError extends Error {
 export type ApiParseMode = 'json' | 'text' | 'void';
 
 export interface ApiFetchOptions extends Omit<RequestInit, 'body' | 'headers'> {
-  authToken?: string | null;
   baseUrl?: string;
   body?: BodyInit | null;
   fetchImpl?: typeof fetch;
@@ -77,10 +76,9 @@ const canonicalHeaderName = (header: string): string => {
 };
 
 export const buildApiHeaders = ({
-  authToken,
   headers: inputHeaders,
   hasJsonBody,
-}: Pick<ApiFetchOptions, 'authToken' | 'headers'> & {
+}: Pick<ApiFetchOptions, 'headers'> & {
   hasJsonBody: boolean;
 }): Record<string, string> => {
   const headers: Record<string, string> = {
@@ -92,9 +90,6 @@ export const buildApiHeaders = ({
     headers['X-Client-Timezone'] = clientTimezone;
   }
 
-  if (authToken?.trim()) {
-    headers.Authorization = `Bearer ${authToken.trim()}`;
-  }
   if (hasJsonBody) {
     headers['Content-Type'] = 'application/json';
   }
@@ -157,12 +152,12 @@ export const getApiErrorMessage = (status: number, body: unknown): string => {
 };
 
 export async function apiRequest(input: string | URL, options: ApiFetchOptions = {}): Promise<Response> {
-  const { authToken, baseUrl, body, fetchImpl = fetch, headers: inputHeaders, json, ...requestInit } = options;
+  const { baseUrl, body, fetchImpl = fetch, headers: inputHeaders, json, ...requestInit } = options;
   const hasJsonBody = json !== undefined;
   const request: RequestInit = {
     ...requestInit,
     credentials: requestInit.credentials ?? 'include',
-    headers: buildApiHeaders({ authToken, headers: inputHeaders, hasJsonBody }),
+    headers: buildApiHeaders({ headers: inputHeaders, hasJsonBody }),
   };
 
   if (hasJsonBody) {

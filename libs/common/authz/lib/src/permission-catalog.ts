@@ -22,6 +22,8 @@ export const AdminNotificationBroadcastsReadPermission = 'admin:notification-bro
 export const AdminNotificationBroadcastsWritePermission = 'admin:notification-broadcasts:write';
 export const AdminNotificationBroadcastsSendPermission = 'admin:notification-broadcasts:send';
 export const AdminNotificationBroadcastsApprovePermission = 'admin:notification-broadcasts:approve';
+export const AdminFeatureFlagsReadPermission = 'admin:feature-flags:read';
+export const AdminFeatureFlagsWritePermission = 'admin:feature-flags:write';
 export const AdminManageAllPermission = 'admin:manage:all';
 
 // Single source of truth for every RBAC permission. Resource/action pairs are
@@ -159,6 +161,18 @@ export const permissionCatalog = [
     resource: 'admin.notification-broadcasts',
     action: 'approve',
     description: 'Independently approve notification broadcasts.',
+  },
+  {
+    key: AdminFeatureFlagsReadPermission,
+    resource: 'admin.feature-flags',
+    action: 'read',
+    description: 'Read tenant-scoped runtime feature flags.',
+  },
+  {
+    key: AdminFeatureFlagsWritePermission,
+    resource: 'admin.feature-flags',
+    action: 'write',
+    description: 'Create and update tenant-scoped runtime feature flags.',
   },
   {
     key: AdminManageAllPermission,

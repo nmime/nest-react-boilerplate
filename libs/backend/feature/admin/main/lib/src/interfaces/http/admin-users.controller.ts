@@ -1,18 +1,15 @@
 import { Body, Controller, Get, Param, Patch, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import {
   CurrentUser,
   RequirePermissions,
-  RequireRoles,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
 } from '@app/backend-feature-auth-shared';
 import {
   AdminDashboardReadPermission,
   AdminRbacGuard,
-  AdminRole,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersReadPermission,
   AdminUsersStatusUpdatePermission,
@@ -31,7 +28,6 @@ import {
 } from './dto';
 
 @ApiExceptions(400, 401, 403, 404, 429, 500)
-@ApiBearerAuth()
 @ApiSessionCookieAuth()
 @UseGuards(new AdminRbacGuard())
 @Controller('admin')
@@ -40,7 +36,6 @@ export class AdminUsersController {
 
   @Get('users')
   @ApiOkDataResponse(AdminUserListPayloadDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminUsersReadPermission)
   async listUsers(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -51,7 +46,6 @@ export class AdminUsersController {
 
   @Get('users/:id')
   @ApiOkDataResponse(AdminUserViewDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminUsersReadPermission)
   async getUser(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -62,7 +56,6 @@ export class AdminUsersController {
 
   @Patch('users/:id/status')
   @ApiOkDataResponse(AdminUserViewDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminUsersWritePermission, AdminUsersStatusUpdatePermission)
   async updateUserStatus(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -79,7 +72,6 @@ export class AdminUsersController {
 
   @Patch('users/:id/access-policy')
   @ApiOkDataResponse(AdminUserViewDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminUsersWritePermission, AdminUsersAccessPolicyUpdatePermission)
   async updateUserAccessPolicy(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -96,7 +88,6 @@ export class AdminUsersController {
 
   @Get('dashboard/summary')
   @ApiOkDataResponse(AdminDashboardSummaryDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminDashboardReadPermission)
   async dashboardSummary(@CurrentUser() principal: AuthenticatedPrincipal): Promise<OkResponse<AdminDashboardSummary>> {
     return createOkResponse(await executeAdminUseCase(() => this.adminUsers.dashboardSummary(principal)));

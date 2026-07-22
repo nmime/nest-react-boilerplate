@@ -13,7 +13,7 @@ import {
   UiStatCard,
 } from '@app/frontend-ui-web';
 import type { AuditRow } from '../../entities/admin-audit';
-import { errorText, formatDate, pageSize, paramsFromPath, totalPages } from '../../shared';
+import { adminPaginationLabels, errorText, formatDate, pageSize, paramsFromPath, totalPages } from '../../shared';
 
 type AuditAction = NonNullable<adminApi.AdminAuditListQuery['action']>;
 type AuditResource = NonNullable<adminApi.AdminAuditListQuery['resource']>;
@@ -94,6 +94,7 @@ export const AuditPage = ({
     <UiSection
       className="admin-page admin-audit-page"
       eyebrow={t('admin.audit.eyebrow')}
+      headingLevel={1}
       title={t('admin.audit.title')}
     >
       <div className="admin-stat-grid xr-stat-grid">
@@ -230,6 +231,7 @@ export const AuditPage = ({
             />
           </UiCard>
           <UiPagination
+            {...adminPaginationLabels(t, page, audit.data?.limit ?? pageSize, audit.data?.total ?? 0)}
             currentPage={page}
             pageSize={audit.data?.limit ?? pageSize}
             totalItems={audit.data?.total ?? 0}

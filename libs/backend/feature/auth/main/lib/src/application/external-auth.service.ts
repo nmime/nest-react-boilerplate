@@ -21,7 +21,7 @@ import {
   type ExternalAuthProviderChannel,
   type LinkTokenResult,
 } from '@app/backend-feature-auth-shared';
-import { hashPassword, type JwtSigningEnvironment } from '../domain';
+import { hashPassword } from '../domain';
 import { AuthService } from './auth.service';
 import { parseTenantId } from './util/auth-error-adapter.util';
 import {
@@ -496,12 +496,8 @@ export class ExternalAuthService {
     });
   }
 
-  createSessionWithClaims(
-    user: AuthUserRecord,
-    claims: ExternalAuthSessionClaims,
-    env: JwtSigningEnvironment = process.env,
-  ): AuthSessionView {
-    return this.auth.createSession(user, env, undefined, claims);
+  createSessionWithClaims(user: AuthUserRecord, claims: ExternalAuthSessionClaims): AuthSessionView {
+    return this.auth.createSession(user, claims);
   }
 
   private async recordMethod(

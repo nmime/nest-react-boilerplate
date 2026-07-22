@@ -1,9 +1,8 @@
 import { AbilityBuilder, createMongoAbility, type MongoAbility } from '@casl/ability';
+import type { AuthenticatedRequest } from '@app/backend-feature-auth-shared';
 import { normalizeStringList } from './normalize';
 import {
-  AdminRole,
   adminPermissionToAbility,
-  adminRolePermissionMatrix,
   type AdminAction,
   type AdminPrincipalClaims,
   type AdminSubject,
@@ -11,23 +10,25 @@ import {
 
 export type AdminAbility = MongoAbility<[AdminAction, AdminSubject]>;
 
-const rolePermissionMatrix: Record<string, readonly string[]> = adminRolePermissionMatrix;
-
-const roleAllowsPermission = (roles: readonly string[], permission: string) =>
-  roles.some((role) => (rolePermissionMatrix[role] ?? []).includes(permission));
+/**
+ * Authorization state created by the database access guard. Authentication
+ * claims alone must never be used as the source of admin authorization.
+ */
+export interface AdminAuthorizedRequest extends AuthenticatedRequest {
+  adminAbility?: AdminAbility;
+}
 
 export const createAdminAbility = (principal?: AdminPrincipalClaims): AdminAbility => {
   const { can, build } = new AbilityBuilder<AdminAbility>(createMongoAbility);
-  const roles = normalizeStringList(principal?.roles);
   const permissions = normalizeStringList(principal?.permissions);
 
-  if (!principal?.subject || !roles.includes(AdminRole)) {
+  if (!principal?.subject) {
     return build();
   }
 
   for (const permission of permissions) {
     const abilityRule = adminPermissionToAbility(permission);
-    if (!abilityRule || !roleAllowsPermission(roles, permission)) {
+    if (!abilityRule) {
       continue;
     }
 

@@ -11,8 +11,6 @@ import {
   AuthPermissionEntitySchema,
   AuthProviderTokenEntity,
   AuthProviderTokenEntitySchema,
-  AuthRefreshTokenEntity,
-  AuthRefreshTokenEntitySchema,
   AuthRolePermissionEntity,
   AuthRolePermissionEntitySchema,
   AuthRoleEntitySchema,
@@ -60,17 +58,11 @@ describe('entity timestamp lifecycle hooks', () => {
   });
 
   it('drives token lifecycle create/update hooks', () => {
-    AuthRefreshTokenEntitySchema.init();
     AuthUserTokenEntitySchema.init();
     AuthLinkTokenEntitySchema.init();
     AuthProviderTokenEntitySchema.init();
 
-    for (const schema of [
-      AuthRefreshTokenEntitySchema,
-      AuthUserTokenEntitySchema,
-      AuthLinkTokenEntitySchema,
-      AuthProviderTokenEntitySchema,
-    ]) {
+    for (const schema of [AuthUserTokenEntitySchema, AuthLinkTokenEntitySchema, AuthProviderTokenEntitySchema]) {
       expect(invokeLifecycleHook(schema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
       expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onCreate)).toBeInstanceOf(Date);
       expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onUpdate)).toBeInstanceOf(Date);
@@ -92,11 +84,6 @@ describe('entity timestamp lifecycle hooks', () => {
 
 describe('entity constructor and field-default coverage', () => {
   it('hydrates timestamp-token entities with default field initializers', () => {
-    expect(new AuthRefreshTokenEntity()).toMatchObject({
-      parentTokenId: null,
-      revokedAt: null,
-      replacedByTokenId: null,
-    });
     expect(new AuthUserTokenEntity().consumedAt).toBeNull();
     expect(new AuthMethodEntity()).toMatchObject({
       amr: [],

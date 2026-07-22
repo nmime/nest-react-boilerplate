@@ -11,7 +11,7 @@ There is intentionally no repository-root API contract manifest or artifact dire
 - Nest controllers remain the source of truth for routes, request/response shapes, auth metadata, and documented problem responses.
 - OpenAPI JSON is committed under `apps/backend/*/*-app-api/contracts/openapi/` for review, audits, and external client generation.
 - Shared generated TypeScript contract types live in `libs/common/api-contracts` for DTO/path review.
-- Frontend service wrappers in `@app/frontend-api-client` hide endpoint path strings from apps while preserving typed `{ data, error, response }`, typed React Query helpers, bearer headers, base URLs, and locale handling.
+- Frontend service wrappers in `@app/frontend-api-client` hide endpoint path strings from apps while preserving typed `{ data, error, response }`, typed React Query helpers, cookie credentials, base URLs, and locale handling.
 
 ## Workflow
 
@@ -23,7 +23,7 @@ There is intentionally no repository-root API contract manifest or artifact dire
 ## Migration rules and pitfalls
 
 - Keep runtime behavior in controllers unchanged; Swagger DTO classes describe existing responses only.
-- Use `@ApiBearerAuth`, `@ApiExceptions`, and `@ApiOkDataResponse` on endpoints consumed by frontends.
+- Declare `@ApiSessionCookieAuth` on every protected first-party endpoint, plus `@ApiExceptions` and `@ApiOkDataResponse`. First-party auth, user, and admin APIs are session-cookie-only.
 - Import generated service functions/types from `@app/frontend-api-client` in frontend apps instead of re-declaring DTO/envelope types or importing `@app/common-api-contracts` directly.
 - Do not put endpoint path strings in app code; path strings belong in `libs/frontend/api-client` wrappers and generated artifacts.
 - Treat generated files as read-only; fix source decorators/DTOs, OpenAPI metadata, or generator scripts and regenerate.
@@ -54,7 +54,7 @@ There is intentionally no repository-root API contract manifest or artifact dire
 
 ```mermaid
 flowchart LR
-  Controllers[Nest controllers, DTOs, decorators<br/>@ApiBearerAuth / @ApiExceptions / @ApiOkDataResponse]
+  Controllers[Nest controllers, DTOs, decorators<br/>one auth scheme / @ApiExceptions / @ApiOkDataResponse]
   Swagger[Swagger export tooling]
   OpenApi[Committed OpenAPI JSON<br/>apps/backend/*/*-app-api/contracts/openapi/*.json]
   Manifest[packages/tooling/config/api-contracts.json<br/>schema + layout helpers]

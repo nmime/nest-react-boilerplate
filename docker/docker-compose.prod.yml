@@ -12,9 +12,6 @@ x-backend-env: &backend-env
   TRUST_PROXY: ${TRUST_PROXY:-true}
   CORS_ORIGINS: ${CORS_ORIGINS:?set comma-separated production origins}
   AUTH_PERSISTENCE: postgres
-  AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth-app-api.example.com}
-  AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
-  AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}
   AUTH_GEOIP_DATABASE_PATH: ${AUTH_GEOIP_DATABASE_PATH:-}
   AUTH_LOGIN_NETWORK_RETENTION_DAYS: ${AUTH_LOGIN_NETWORK_RETENTION_DAYS:-30}
   AUTH_LOGIN_EVENT_RETENTION_DAYS: ${AUTH_LOGIN_EVENT_RETENTION_DAYS:-365}
@@ -156,7 +153,7 @@ x-backend-service: &backend-service
   restart: unless-stopped
   logging: *default-logging
   networks: [app, database]
-  secrets: [auth_jwt_secret, session_secret, better_auth_secret, redis_password, notification_payload_encryption_key]
+  secrets: [session_secret, better_auth_secret, redis_password, notification_payload_encryption_key]
   environment: *backend-env
   command: *backend-command
   depends_on:
@@ -233,7 +230,6 @@ services:
     logging: *default-logging
     restart: 'no'
     networks: [app, database]
-    secrets: [auth_jwt_secret]
     environment: *backend-env
     command: *migrate-command
 
@@ -259,7 +255,6 @@ services:
     <<: *backend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/auth-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     secrets:
-      - auth_jwt_secret
       - session_secret
       - better_auth_secret
       - auth_provider_token_encryption_key
@@ -285,12 +280,12 @@ services:
       DISCORD_DEFAULT_TENANT_ID: ${DISCORD_DEFAULT_TENANT_ID:-}
     secrets:
       [
-        auth_jwt_secret,
         session_secret,
         redis_password,
         notification_payload_encryption_key,
         discord_bot_token,
         discord_public_key,
+        discord_custom_id_secret,
       ]
     ports:
       - target: 80
@@ -313,7 +308,6 @@ services:
       TELEGRAM_BOT_RATE_LIMIT: ${TELEGRAM_BOT_RATE_LIMIT:-3}
     secrets:
       [
-        auth_jwt_secret,
         session_secret,
         redis_password,
         notification_payload_encryption_key,
@@ -544,8 +538,6 @@ volumes:
   alertmanager-data:
 
 secrets:
-  auth_jwt_secret:
-    file: ${AUTH_JWT_SECRET_FILE:-./secrets/auth_jwt_secret.txt}
   session_secret:
     file: ${SESSION_SECRET_FILE:-./secrets/session_secret.txt}
   better_auth_secret:
@@ -570,6 +562,8 @@ secrets:
     file: ${DISCORD_CLIENT_SECRET_FILE:-./secrets/discord_client_secret.txt}
   discord_public_key:
     file: ${DISCORD_PUBLIC_KEY_FILE:-./secrets/discord_public_key.txt}
+  discord_custom_id_secret:
+    file: ${DISCORD_CUSTOM_ID_SECRET_FILE:-./secrets/discord_custom_id_secret.txt}
   resend_api_key:
     file: ${RESEND_API_KEY_FILE:-./secrets/resend_api_key.txt}
   mailpace_server_token:

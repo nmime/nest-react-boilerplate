@@ -265,7 +265,7 @@ project-owned behavior.
 
 ## Security and contribution
 
-Production examples avoid wildcard CORS, disable admin bootstrap and OpenAPI unless explicitly enabled, require deliberate frontend API origins, ignore URL bearer-token bootstrap outside development/test, and keep OAuth providers disabled until the owning product configures them.
+Production examples avoid wildcard CORS, disable admin bootstrap and OpenAPI unless explicitly enabled, require deliberate frontend API origins, use only server-managed HttpOnly cookie sessions for first-party authentication, and keep OAuth providers disabled until the owning product configures them.
 
 - Report security issues and review the baseline in [SECURITY.md](SECURITY.md).
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change.

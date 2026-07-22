@@ -36,17 +36,17 @@ describe('DiscordBotConfig', () => {
     ).toBe('guild');
   });
 
-  it('falls back to AUTH_APP_BASE_URL and AUTH_JWT_SECRET', () => {
+  it('falls back to AUTH_APP_BASE_URL and uses the dedicated custom-id secret', () => {
     const snapshot = new DiscordBotConfig().snapshot({
       DISCORD_APPLICATION_ID: '123456789012345678',
       DISCORD_PUBLIC_KEY: 'a'.repeat(64),
       AUTH_APP_BASE_URL: 'https://auth.example.test',
-      AUTH_JWT_SECRET: 'jwt-secret',
+      DISCORD_CUSTOM_ID_SECRET: 'custom-id-secret',
       DISCORD_DEFAULT_TENANT_ID: '11111111-1111-1111-1111-111111111111',
     });
 
     expect(snapshot.webAppBaseUrl).toBe('https://auth.example.test');
-    expect(snapshot.customIdSecret).toBe('jwt-secret');
+    expect(snapshot.customIdSecret).toBe('custom-id-secret');
     expect(snapshot.defaultTenantId).toBe('11111111-1111-1111-1111-111111111111');
   });
 

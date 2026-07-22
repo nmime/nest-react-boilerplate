@@ -7,16 +7,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
-import { AdminAuditReadPermission, AdminRbacGuard, AdminRole } from '@app/backend-feature-admin-shared';
-import {
-  CurrentUser,
-  RequirePermissions,
-  RequireRoles,
-  type AuthenticatedPrincipal,
-} from '@app/backend-feature-auth-shared';
+import { AdminAuditReadPermission, AdminRbacGuard } from '@app/backend-feature-admin-shared';
+import { CurrentUser, RequirePermissions, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import {
   AuditLogAdminIdParamDto,
   AuditLogAdminListPayloadDto,
@@ -27,10 +21,8 @@ import {
 import { AuditLogAdminPersistenceError, AuditLogAdminService } from './audit-log-admin.service';
 
 @ApiExceptions(400, 401, 403, 404, 429, 500)
-@ApiBearerAuth()
 @ApiSessionCookieAuth()
 @UseGuards(new AdminRbacGuard())
-@RequireRoles(AdminRole)
 @RequirePermissions(AdminAuditReadPermission)
 @Controller('admin/audit')
 export class AuditLogAdminController {

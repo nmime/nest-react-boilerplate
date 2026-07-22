@@ -23,6 +23,7 @@ export interface UiDataTableColumn<TRow extends UiDataTableRow> {
   header: ReactNode;
   headerClassName?: string;
   id: string;
+  mobileLabel?: string;
   render: (row: TRow) => ReactNode;
 }
 
@@ -43,6 +44,7 @@ export interface UiDataTableProps<TRow extends UiDataTableRow> extends UiDataTab
   isLoading?: boolean;
   loadingLabel?: string;
   onRowClick?: (row: TRow) => void;
+  responsive?: 'scroll' | 'stack';
   rowKey: (row: TRow) => string;
   rows: readonly TRow[];
 }
@@ -58,6 +60,9 @@ const getAlignmentClassName = (align: UiDataTableColumn<UiDataTableRow>['align']
 
   return undefined;
 };
+
+const getMobileLabel = <TRow extends UiDataTableRow>(column: UiDataTableColumn<TRow>): string | undefined =>
+  column.mobileLabel ?? (typeof column.header === 'string' ? column.header : undefined);
 
 export const UiTable = ({ className, ...props }: Readonly<TableHTMLAttributes<HTMLTableElement>>) => (
   <table className={cn('xr-table w-full caption-bottom text-sm', className)} data-slot="table" {...props} />
@@ -118,6 +123,7 @@ export const UiDataTable = <TRow extends UiDataTableRow>({
   isLoading = false,
   loadingLabel = 'Loading records',
   onRowClick,
+  responsive = 'stack',
   rowKey,
   rows,
   ...tableProps
@@ -144,7 +150,7 @@ export const UiDataTable = <TRow extends UiDataTableRow>({
   }
 
   return (
-    <div className="xr-table-wrap" data-admin-primitive="data-table">
+    <div className="xr-table-wrap" data-admin-primitive="data-table" data-layout={responsive}>
       <UiTable className={className} {...tableProps}>
         <UiTableHeader>
           <UiTableRow>
@@ -189,11 +195,23 @@ export const UiDataTable = <TRow extends UiDataTableRow>({
                 onKeyDown={handleKeyDown}
                 tabIndex={isInteractive ? 0 : undefined}
               >
-                {columns.map((column) => (
-                  <UiTableCell className={cn(getAlignmentClassName(column.align), column.className)} key={column.id}>
-                    {column.render(row)}
-                  </UiTableCell>
-                ))}
+                {columns.map((column) => {
+                  const mobileLabel = getMobileLabel(column);
+
+                  return (
+                    <UiTableCell
+                      className={cn(
+                        getAlignmentClassName(column.align),
+                        !mobileLabel && 'xr-table__cell--unlabelled',
+                        column.className,
+                      )}
+                      data-label={mobileLabel}
+                      key={column.id}
+                    >
+                      {column.render(row)}
+                    </UiTableCell>
+                  );
+                })}
               </UiTableRow>
             );
           })}

@@ -52,30 +52,18 @@ describe('frontend auth and locale state', () => {
     vi.restoreAllMocks();
   });
 
-  it('normalizes bearer tokens for auth shell state', () => {
-    const store = new AuthShellStore('  bearer-token  ');
+  it('tracks only session presence and never stores credentials', () => {
+    const store = new AuthShellStore();
 
-    expect(store.bearerToken).toBe('bearer-token');
-    expect(store.isAuthenticated).toBe(true);
-
-    store.setBearerToken('   ');
-    expect(store.bearerToken).toBeNull();
+    expect(store.sessionStatus).toBe('unknown');
     expect(store.isAuthenticated).toBe(false);
 
-    store.setBearerToken('\n next-token\t');
-    expect(store.bearerToken).toBe('next-token');
-
-    store.clearBearerToken();
-    expect(store.bearerToken).toBeNull();
-
-    store.setSession(' access-token ', ' refresh-token ');
-    expect(store.bearerToken).toBe('access-token');
-    expect(store.refreshToken).toBe('refresh-token');
+    store.markAuthenticated();
+    expect(store.sessionStatus).toBe('authenticated');
     expect(store.isAuthenticated).toBe(true);
 
     store.clearSession();
-    expect(store.bearerToken).toBeNull();
-    expect(store.refreshToken).toBeNull();
+    expect(store.sessionStatus).toBe('guest');
     expect(store.isAuthenticated).toBe(false);
   });
 
@@ -117,17 +105,16 @@ describe('frontend auth and locale state', () => {
     expect(detectBrowserLocale()).toBe('en');
   });
 
-  it('coordinates root store bearer token, locale, and theme state', () => {
+  it('coordinates root store session, locale, and theme state', () => {
     installStorage();
     setSystemTheme(false);
 
     const store = createRootStore({
-      initialBearerToken: '  root-token  ',
+      initiallyAuthenticated: true,
       initialLocale: 'ru',
       initialTheme: 'dark',
     });
 
-    expect(store.authShell.bearerToken).toBe('root-token');
     expect(store.authShell.isAuthenticated).toBe(true);
     expect(store.locale.locale).toBe('ru');
     expect(store.ui.theme).toBe('dark');

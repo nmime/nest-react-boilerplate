@@ -70,3 +70,22 @@ export const DisabledLink: Story = {
     variant: 'secondary',
   },
 };
+
+export const VariantAndSizeScale: Story = {
+  render: () => (
+    <div style={{ display: 'grid', gap: '1rem' }}>
+      <div style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <UiButton size="sm">Small action</UiButton>
+        <UiButton>Default action</UiButton>
+        <UiButton size="lg">Large action</UiButton>
+      </div>
+      <div style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <UiButton>Save changes</UiButton>
+        <UiButton variant="secondary">Cancel</UiButton>
+        <UiButton variant="outline">Review</UiButton>
+        <UiButton variant="ghost">More</UiButton>
+        <UiButton variant="destructive">Delete</UiButton>
+      </div>
+    </div>
+  ),
+};

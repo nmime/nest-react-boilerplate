@@ -6,9 +6,10 @@ import type { AuthenticatedRequest } from '@app/backend-feature-auth-shared';
 import { AuditLogAdminService } from './audit-log-admin.service';
 
 /** Fail-closed, pre-execution evidence for every authorized admin HTTP action.
- * Domain mutations additionally write their before/after audit in the same DB
- * transaction, so this interceptor is the systemic coverage net for reads and
- * future controllers rather than a replacement for transactional auditing. */
+ * Auth-owned mutations additionally write their before/after audit through the
+ * same transaction manager as the state change. This interceptor is therefore
+ * the systemic coverage net for reads, denied-after-audit failures, and future
+ * controllers rather than a replacement for transactional mutation evidence. */
 @Injectable()
 export class AdminAccessAuditInterceptor implements NestInterceptor {
   constructor(private readonly audit: AuditLogAdminService) {}
@@ -29,7 +30,7 @@ export class AdminAccessAuditInterceptor implements NestInterceptor {
           tenantId: principal.tenantId,
           actorUserId: principal.subject,
           action: 'admin.access',
-          resource: resourceForPath(path),
+          resource: adminAuditResourceForPath(path),
           metadata: {
             method: request.method ?? 'UNKNOWN',
             route: stripQuery(path),
@@ -46,14 +47,15 @@ export class AdminAccessAuditInterceptor implements NestInterceptor {
 }
 
 const stripQuery = (path: string): string => path.split('?')[0] ?? '/admin';
-const resourceForPath = (input: string): string => {
+export const adminAuditResourceForPath = (input: string): string => {
   const path = stripQuery(input);
   const mappings: Array<[string, string]> = [
     ['/admin/auth/login-analytics', 'admin.auth-login-analytics'],
     ['/admin/notification-templates', 'admin.notification-templates'],
     ['/admin/notification-segments', 'admin.notification-segments'],
     ['/admin/notification-broadcasts', 'admin.notification-broadcasts'],
-    ['/admin/problem-presentations', 'admin.settings'],
+    ['/admin/feature-flags', 'admin.feature-flags'],
+    ['/admin/settings/problem-presentations', 'admin.settings'],
     ['/admin/dashboard', 'admin.dashboard'],
     ['/admin/profile', 'admin.profile'],
     ['/admin/users', 'admin.users'],

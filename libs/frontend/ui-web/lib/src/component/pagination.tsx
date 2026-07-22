@@ -10,8 +10,14 @@ export interface UiPaginationProps {
   className?: string;
   currentPage: number;
   label?: string;
+  nextAriaLabel?: string;
+  nextLabel?: string;
   onPageChange: (page: number) => void;
+  pageAriaLabel?: (page: number) => string;
   pageSize?: number;
+  previousAriaLabel?: string;
+  previousLabel?: string;
+  summary?: ReactNode;
   totalItems?: number;
   totalPages: number;
 }
@@ -45,8 +51,14 @@ export const UiPagination = ({
   className,
   currentPage,
   label = 'Pagination',
+  nextAriaLabel = nextPageLabel,
+  nextLabel = 'Next',
   onPageChange,
+  pageAriaLabel = (page) => `Go to page ${page}`,
   pageSize,
+  previousAriaLabel = previousPageLabel,
+  previousLabel = 'Previous',
+  summary,
   totalItems,
   totalPages,
 }: Readonly<UiPaginationProps>) => {
@@ -57,28 +69,29 @@ export const UiPagination = ({
   return (
     <nav aria-label={label} className={cn('xr-pagination', className)} data-admin-primitive="pagination">
       <p aria-live="polite" className="xr-pagination__summary">
-        {renderSummary({
-          currentPage: safeCurrentPage,
-          pageSize,
-          totalItems,
-          totalPages: safeTotalPages,
-        })}
+        {summary ??
+          renderSummary({
+            currentPage: safeCurrentPage,
+            pageSize,
+            totalItems,
+            totalPages: safeTotalPages,
+          })}
       </p>
       <div className="xr-pagination__controls">
         <UiButton
-          aria-label={previousPageLabel}
+          aria-label={previousAriaLabel}
           disabled={safeCurrentPage <= 1}
           onClick={() => {
             onPageChange(safeCurrentPage - 1);
           }}
           variant="secondary"
         >
-          Previous
+          {previousLabel}
         </UiButton>
         {pages.map((page) => (
           <UiButton
             aria-current={page === safeCurrentPage ? 'page' : undefined}
-            aria-label={`Go to page ${page}`}
+            aria-label={pageAriaLabel(page)}
             className="xr-pagination__page"
             key={page}
             onClick={() => {
@@ -90,14 +103,14 @@ export const UiPagination = ({
           </UiButton>
         ))}
         <UiButton
-          aria-label={nextPageLabel}
+          aria-label={nextAriaLabel}
           disabled={safeCurrentPage >= safeTotalPages}
           onClick={() => {
             onPageChange(safeCurrentPage + 1);
           }}
           variant="secondary"
         >
-          Next
+          {nextLabel}
         </UiButton>
       </div>
     </nav>

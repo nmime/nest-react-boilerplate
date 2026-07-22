@@ -284,7 +284,6 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     domainMode === 'external-proxy' && !publicDomainMode
       ? {}
       : {
-          AUTH_JWT_ISSUER: authOrigin,
           AUTH_ALLOWED_RETURN_URLS: unique(exposedOrigins).join(','),
           AUTH_OAUTH_REDIRECT_URI: `${authOrigin}/oauth/callback`,
           BETTER_AUTH_TRUSTED_ORIGINS: unique([...exposedOrigins, ...extraTrustedOrigins]).join(','),
@@ -338,7 +337,6 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     for (const required of [
       'AUTH_ALLOWED_RETURN_URLS',
       'CORS_ORIGINS',
-      'AUTH_JWT_ISSUER',
       'BETTER_AUTH_URL',
       'BETTER_AUTH_TRUSTED_ORIGINS',
     ]) {

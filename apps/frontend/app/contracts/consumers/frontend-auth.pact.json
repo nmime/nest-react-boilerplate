@@ -26,55 +26,9 @@
         },
         "body": {
           "data": {
-            "accessToken": "jwt-token-for-contract-tests",
-            "tokenType": "Bearer",
-            "expiresIn": 3600,
             "user": {
               "id": "user-1",
               "email": "contract@example.com",
-              "theme": "system",
-              "roles": ["user"],
-              "permissions": [],
-              "tenantId": "00000000-0000-0000-0000-000000000000"
-            }
-          }
-        }
-      }
-    },
-    {
-      "description": "current user endpoint returns the authenticated user envelope",
-      "request": {
-        "method": "GET",
-        "path": "/auth/me",
-        "headers": {
-          "Authorization": "Bearer jwt-token-for-contract-tests"
-        }
-      },
-      "response": {
-        "status": 200,
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "body": {
-          "data": {
-            "principal": {
-              "subject": "user-1",
-              "email": "contract@example.com",
-              "displayName": "Contract User",
-              "locale": "en",
-              "theme": "system",
-              "issuer": "nest-react-boilerplate",
-              "audience": "nest-react-boilerplate-api",
-              "roles": ["user"],
-              "permissions": [],
-              "tokenId": "contract-token-id",
-              "tenantId": "00000000-0000-0000-0000-000000000000"
-            },
-            "user": {
-              "id": "user-1",
-              "email": "contract@example.com",
-              "displayName": "Contract User",
-              "locale": "en",
               "theme": "system",
               "roles": ["user"],
               "permissions": [],
@@ -106,11 +60,8 @@
               "displayName": "Contract User",
               "locale": "en",
               "theme": "system",
-              "issuer": "nest-react-boilerplate",
-              "audience": "nest-react-boilerplate-api",
               "roles": ["user"],
               "permissions": [],
-              "tokenId": "contract-token-id",
               "tenantId": "00000000-0000-0000-0000-000000000000"
             },
             "user": {

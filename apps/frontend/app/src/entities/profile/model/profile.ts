@@ -24,10 +24,7 @@ export interface AuthMePayload {
   theme?: UiTheme;
 }
 
-export interface AuthSessionPayload extends AuthMePayload {
-  accessToken?: string;
-  refreshToken?: string;
-}
+export type AuthSessionPayload = AuthMePayload;
 
 export type AuthPreferencesPayload = AuthMePayload;
 
@@ -39,11 +36,11 @@ export interface UserProfilePayload {
   theme?: UiTheme;
 }
 
-export type LocalePayload = AuthMePayload | AuthSessionPayload | UserProfilePayload | undefined;
+export type LocalePayload = AuthMePayload | UserProfilePayload | undefined;
 
 export type ProfileState =
   | { status: 'loading' }
-  | { status: 'missing-token'; reason: string }
+  | { status: 'unauthenticated'; reason: string }
   | { status: 'ready'; email?: string; subject: string }
   | { status: 'forbidden'; reason: string };
 

@@ -169,7 +169,6 @@ const createController = () => {
     listUsers: vi.fn((): TestResult<TestAuthUser[]> => okAsync([createUser()])),
     countUsers: vi.fn(() => okAsync(1)),
     findById: vi.fn((): TestResult<TestAuthUser | null> => okAsync(createUser())),
-    setAccessPolicy: vi.fn(() => okAsync(createUser({ status: 'disabled' }))),
   };
   const auditLogs = {
     record: vi.fn(() => okAsync(createAuditLog())),
@@ -181,13 +180,20 @@ const createController = () => {
       okAsync(createMutationResult()),
     ),
   };
+  const roles = {
+    findByKeys: vi.fn((keys: string[]) =>
+      okAsync(keys.filter((key) => key === 'user' || key === AdminRole).map((key) => ({ key }))),
+    ),
+    findPermissionsByKeys: vi.fn((keys: readonly string[]) => okAsync(keys.map((key) => ({ key })))),
+  };
 
   return {
     adminUserMutations,
     auditLogs,
     controller: new AdminUsersController(
-      new AdminUsersUseCase(users as never, auditLogs as never, adminUserMutations as never),
+      new AdminUsersUseCase(users as never, auditLogs as never, adminUserMutations as never, roles as never),
     ),
+    roles,
     users,
   };
 };
@@ -258,7 +264,7 @@ describe('AdminUsersController', () => {
   });
 
   it('updates status and emits a redacted audit event', async () => {
-    const { adminUserMutations, auditLogs, controller, users } = createController();
+    const { adminUserMutations, auditLogs, controller } = createController();
 
     await expect(
       controller.updateUserStatus(
@@ -279,12 +285,11 @@ describe('AdminUsersController', () => {
         metadata: { requestId: 'req-1', reason: 'Policy violation' },
       },
     });
-    expect(users.setAccessPolicy).not.toHaveBeenCalled();
     expect(auditLogs.record).not.toHaveBeenCalled();
   });
 
   it('updates access policy, rejects unknown grants, and never includes secrets in audit snapshots', async () => {
-    const { adminUserMutations, auditLogs, controller, users } = createController();
+    const { adminUserMutations, auditLogs, controller } = createController();
     adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
       okAsync(
         createMutationResult({
@@ -329,7 +334,6 @@ describe('AdminUsersController', () => {
     expect(JSON.stringify(adminUserMutations.mutateAccessPolicyWithAudit.mock.calls[0]?.[0])).not.toContain(
       'redacted-hash',
     );
-    expect(users.setAccessPolicy).not.toHaveBeenCalled();
     expect(auditLogs.record).not.toHaveBeenCalled();
 
     await expect(

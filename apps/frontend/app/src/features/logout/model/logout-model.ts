@@ -4,7 +4,7 @@ import { clearApiAuthRequired } from '@app/frontend-api-support';
 import { createMobxMutation, type AuthShellStore, type MobxMutation } from '@app/frontend-runtime';
 
 export interface LogoutModelOptions {
-  /** Clears the bearer/refresh session shell state client-side. */
+  /** Clears the session shell state client-side. */
   authStore: Pick<AuthShellStore, 'clearSession'>;
   /** Sends the logout request (kept injectable so specs can mock it). */
   logout: () => Promise<unknown>;
@@ -19,7 +19,7 @@ export interface SignOutOptions {
 /**
  * MobX model that owns the sign-out flow as observable server state via
  * `createMobxMutation`. The session is always cleared client-side, even when
- * the network request fails, so a stale bearer token can never survive logout.
+ * the network request fails, so stale authenticated UI state cannot survive logout.
  */
 export class LogoutModel {
   readonly mutation: MobxMutation;
@@ -42,12 +42,11 @@ export class LogoutModel {
 
   async signOut({ onSignedOut }: SignOutOptions = {}): Promise<void> {
     try {
-      // Send the request while the bearer token is still attached so the
-      // backend can revoke the server-side session.
+      // Let the backend destroy the server-side session before clearing UI state.
       await this.mutation.mutate();
     } catch {
       // Ignore request failures: the client-side session must be cleared even
-      // when the network call fails or the token is already invalid.
+      // when the network call fails or the session is already invalid.
     }
 
     this.authStore.clearSession();

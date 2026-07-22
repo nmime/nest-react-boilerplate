@@ -9,7 +9,6 @@ import * as userApi from './user';
 export type ApiServiceName = 'admin' | 'auth' | 'user';
 
 export interface ApiClientRuntimeConfig {
-  authToken?: string | null;
   baseUrls: Record<ApiServiceName, string>;
   fetchImpl?: typeof fetch;
   headers?: HeadersInit;
@@ -30,8 +29,6 @@ export interface ApiClientRegistry {
   readonly user: UserApiClient;
 }
 
-const normalizeAuthToken = (authToken?: string | null): string | undefined => authToken?.trim() || undefined;
-
 const readProblemPresentationItems = (value: unknown): unknown => {
   if (!value || typeof value !== 'object') {
     return undefined;
@@ -44,7 +41,6 @@ const buildServiceRequestOptions = (
   service: ApiServiceName,
   config: ApiClientRuntimeConfig,
 ): ApiClientRequestOptions => ({
-  authToken: normalizeAuthToken(config.authToken),
   baseUrl: config.baseUrls[service],
   fetchImpl: config.fetchImpl,
   headers: config.headers,
@@ -97,21 +93,14 @@ export const ApiClientProvider = ({
 }: ApiClientProviderProps) => {
   const registry = useMemo(
     () => createApiClientRegistry(config),
-    [
-      config.authToken,
-      config.baseUrls.admin,
-      config.baseUrls.auth,
-      config.baseUrls.user,
-      config.fetchImpl,
-      config.headers,
-    ],
+    [config.baseUrls.admin, config.baseUrls.auth, config.baseUrls.user, config.fetchImpl, config.headers],
   );
 
   useEffect(() => {
     let active = true;
     configureProblemPresentationOverrides([]);
 
-    if (!loadProblemPresentationOverrides || !registry.auth.requestOptions.authToken) {
+    if (!loadProblemPresentationOverrides) {
       return () => {
         active = false;
       };

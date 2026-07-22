@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
 import { useI18n } from '@app/frontend-runtime';
-import { UiCard, UiLoading, UiResourceError, UiSection, UiStatCard, UiStatusTag } from '@app/frontend-ui-web';
+import { UiCard, UiResourceError, UiSection, UiStatCard, UiStatusTag } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
 import { errorText, statusTone } from '../../shared';
 
@@ -38,7 +38,7 @@ const AccessSummaryCard = ({ access }: Readonly<{ access: AdminAccess }>) => {
       <p>
         {t('admin.dashboard.accessSummary', {
           roles: access.roles.join(', ') || t('admin.dashboard.access.none'),
-          permissions: access.permissions.join(', ') || t('admin.dashboard.access.none'),
+          permissions: access.permissions.length ? `${access.permissions.length}` : t('admin.dashboard.access.none'),
         })}
       </p>
       <div className="admin-chip-row" aria-label={t('admin.users.column.roles')}>
@@ -58,6 +58,7 @@ const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
     <UiSection
       className="admin-page admin-dashboard-page"
       eyebrow={t('admin.dashboard.eyebrow')}
+      headingLevel={1}
       title={t('admin.dashboard.title')}
     >
       <div className="admin-dashboard-hero">
@@ -123,6 +124,7 @@ const DashboardDataPage = ({
     <UiSection
       className="admin-page admin-dashboard-page"
       eyebrow={t('admin.dashboard.eyebrow')}
+      headingLevel={1}
       title={t('admin.dashboard.title')}
     >
       <div className="admin-stat-grid xr-stat-grid">
@@ -157,7 +159,6 @@ const DashboardDataPage = ({
           detail={t('admin.dashboard.summary.invitedUsersDetail')}
         />
       </div>
-      {summary.isLoading ? <UiLoading label={t('admin.dashboard.loadingSummary')} /> : null}
       {summary.error ? (
         <UiResourceError
           title={t('admin.dashboard.error.summaryRequestFailed')}

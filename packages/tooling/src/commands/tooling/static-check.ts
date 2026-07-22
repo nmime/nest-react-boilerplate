@@ -172,6 +172,8 @@ export const thinLocaleCatalogFileNames = [
   "admin/users.json",
   "admin/audit.json",
   "admin/roles.json",
+  "admin/navigation.json",
+  "admin/feature-flags.json",
   "admin/notifications.json",
   "admin/notification-options.json",
   "admin/notification-navigation.json",

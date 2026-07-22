@@ -11,7 +11,8 @@ import {
   UiSection,
   UiSelect,
   UiStatusTag,
-  UiTextarea,
+  UiTextField,
+  UiTextareaField,
 } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
 import { errorText, getNotificationSegmentKindOptions } from '../../shared';
@@ -126,6 +127,7 @@ export const NotificationSegmentsPage = ({
     <UiSection
       className="admin-page admin-notification-page"
       eyebrow={t('admin.notification.segments.eyebrow')}
+      headingLevel={1}
       title={t('admin.notification.segments.title')}
     >
       <p className="admin-page-description">{t('admin.notification.description')}</p>
@@ -133,8 +135,8 @@ export const NotificationSegmentsPage = ({
       {access.canWriteNotificationSegments ? (
         <UiCard className="admin-filter-card" title={t('admin.notification.segments.create')}>
           <div className="admin-notification-form-grid">
-            <UiInput
-              aria-label={t('admin.notification.templates.name')}
+            <UiTextField
+              label={t('admin.notification.templates.name')}
               onChange={(event) => {
                 setName(event.target.value);
               }}
@@ -161,8 +163,8 @@ export const NotificationSegmentsPage = ({
                 value={resolverKey}
               />
             ) : null}
-            <UiTextarea
-              aria-label={t('admin.notification.segments.parameters')}
+            <UiTextareaField
+              label={t('admin.notification.segments.parameters')}
               onChange={(event) => {
                 setParameters(event.target.value);
               }}

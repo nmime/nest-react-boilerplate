@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuthApiClient, useUserApiClient } from '@app/frontend-api-client';
@@ -6,21 +6,11 @@ import { apiRuntimeEvents, resetApiRuntimeForOnline } from '@app/frontend-api-su
 import { useAuthShellStore } from '@app/frontend-runtime';
 import { AppProviders } from './app-providers';
 
-const TokenSeeder = () => {
-  const authStore = useAuthShellStore();
-
-  useEffect(() => {
-    authStore.setBearerToken(' seeded-token ');
-  }, [authStore]);
-
-  return null;
-};
-
 const SessionSeeder = () => {
   const authStore = useAuthShellStore();
 
   useEffect(() => {
-    authStore.setSession(' expired-token ', ' refresh-token ');
+    authStore.markAuthenticated();
   }, [authStore]);
 
   return null;
@@ -34,7 +24,7 @@ const Probe = () => {
     <output data-testid="api-client-runtime">
       {JSON.stringify({
         authBaseUrl: authClient.requestOptions.baseUrl,
-        authToken: authClient.requestOptions.authToken,
+        hasCredentials: authClient.requestOptions.fetchImpl !== undefined,
         userBaseUrl: userClient.requestOptions.baseUrl,
       })}
     </output>
@@ -45,27 +35,7 @@ const AuthRequiredProbe = () => {
   const userClient = useUserApiClient();
 
   useEffect(() => {
-    void userClient.requestOptions.fetchImpl?.('https://api.example.test/profile/me', {
-      headers: { Authorization: 'Bearer expired-token' },
-    });
-  }, [userClient.requestOptions]);
-
-  return null;
-};
-
-const RefreshProbe = () => {
-  const userClient = useUserApiClient();
-  const requested = useRef(false);
-
-  useEffect(() => {
-    if (requested.current) {
-      return;
-    }
-    requested.current = true;
-
-    void userClient.requestOptions.fetchImpl?.('https://api.example.test/profile/me', {
-      headers: { Authorization: 'Bearer expired-token' },
-    });
+    void userClient.requestOptions.fetchImpl?.('https://api.example.test/profile/me', {});
   }, [userClient.requestOptions]);
 
   return null;
@@ -84,7 +54,7 @@ describe('user app API client provider wiring', () => {
   it('injects public generated clients with configured auth/user base URLs', async () => {
     render(
       <AppProviders>
-        <TokenSeeder />
+        <SessionSeeder />
         <Probe />
       </AppProviders>,
     );
@@ -93,7 +63,7 @@ describe('user app API client provider wiring', () => {
       expect(screen.getByTestId('api-client-runtime').textContent).toBe(
         JSON.stringify({
           authBaseUrl: '',
-          authToken: 'seeded-token',
+          hasCredentials: true,
           userBaseUrl: '',
         }),
       );
@@ -148,47 +118,6 @@ describe('user app API client provider wiring', () => {
 
     expect(await screen.findByText('Authentication required')).toBeTruthy();
     expect(window.location.pathname).toBe('/tma/auth');
-  });
-
-  it('refreshes expired sessions and retries protected requests', async () => {
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ message: 'expired' }), {
-          headers: { 'content-type': 'application/json' },
-          status: 401,
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ data: { accessToken: 'fresh-token' } }), {
-          headers: { 'content-type': 'application/json' },
-          status: 200,
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ data: { ok: true } }), {
-          headers: { 'content-type': 'application/json' },
-          status: 200,
-        }),
-      );
-    vi.stubGlobal('fetch', fetchMock);
-
-    render(
-      <AppProviders>
-        <SessionSeeder />
-        <RefreshProbe />
-      </AppProviders>,
-    );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(3);
-    });
-    const refreshRequest = fetchMock.mock.calls[1]?.[0];
-    expect(refreshRequest).toBeInstanceOf(Request);
-    expect((refreshRequest as Request).url).toContain('/auth/refresh');
-    const retryRequest = fetchMock.mock.calls[2]?.[0];
-    expect(retryRequest).toBeInstanceOf(Request);
-    expect((retryRequest as Request).headers.get('authorization')).toBe('Bearer fresh-token');
   });
 
   it('sanitizes auth redirect targets and clears already-auth-route events', async () => {

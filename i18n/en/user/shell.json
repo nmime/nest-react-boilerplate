@@ -32,7 +32,7 @@
   "user.form.registerPasswordPlaceholder": "minimum 8 characters",
   "user.error.profileRequestFailed": "Profile request failed.",
   "user.error.authenticationFailed": "Authentication failed.",
-  "user.state.missingToken": "Provide a token or use login/register.",
+  "user.state.unauthenticated": "Sign in or register to continue.",
   "user.state.ready": "Ready: {{subject}}",
   "user.state.forbidden": "Forbidden: {{reason}}",
   "user.loadingProfile": "Loading profile...",

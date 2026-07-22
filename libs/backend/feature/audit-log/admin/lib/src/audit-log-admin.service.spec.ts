@@ -1,3 +1,4 @@
+import type { EntityManager } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import { okAsync } from 'neverthrow';
 import {
@@ -8,6 +9,8 @@ import {
 import { AuditLogAdminPersistenceError, AuditLogAdminService } from './audit-log-admin.service';
 
 describe('AuditLogAdminService', () => {
+  const transactionalEntityManager = {} as EntityManager;
+
   it('keeps list and detail reads tenant scoped', async () => {
     const entry = new AdminAuditLogEntity({
       tenantId: '00000000-0000-4000-8000-000000000001',
@@ -35,14 +38,14 @@ describe('AuditLogAdminService', () => {
     const service = new AuditLogAdminService({} as AdminAuditLogRepository);
     expect(service.metadata()).toMatchObject({
       actions: expect.arrayContaining(['admin.notification_broadcast.command']),
-      resources: expect.arrayContaining(['admin.notification-broadcasts']),
+      resources: expect.arrayContaining(['admin.notification-broadcasts', 'admin.feature-flags']),
     });
   });
 
   it('runs a mutation and its audit record through one repository transaction', async () => {
     const recordTransactionally = vi.fn(
       async ({ operation, audit }: Parameters<AdminAuditLogRepository['recordTransactionally']>[0]) => {
-        const result = await operation();
+        const result = await operation(transactionalEntityManager);
         audit(result);
         return result;
       },
@@ -71,7 +74,7 @@ describe('AuditLogAdminService', () => {
     const repository = {
       recordTransactionally: vi.fn(
         async ({ operation, audit }: Parameters<AdminAuditLogRepository['recordTransactionally']>[0]) => {
-          const result = await operation();
+          const result = await operation(transactionalEntityManager);
           audit(result);
           throw new AdminAuditLogTransactionError(new Error('commit failed'));
         },
@@ -93,7 +96,8 @@ describe('AuditLogAdminService', () => {
 
     const operationFailure = new Error('domain rejected');
     repository.recordTransactionally = vi.fn(
-      async ({ operation }: Parameters<AdminAuditLogRepository['recordTransactionally']>[0]) => operation(),
+      async ({ operation }: Parameters<AdminAuditLogRepository['recordTransactionally']>[0]) =>
+        operation(transactionalEntityManager),
     ) as AdminAuditLogRepository['recordTransactionally'];
     await expect(
       service.recordMutation(

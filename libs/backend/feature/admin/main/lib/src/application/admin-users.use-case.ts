@@ -3,6 +3,9 @@ import type {
   AdminAuditLogRepository,
   AdminUserMutationRepository,
   AdminUserMutationResult,
+  AuthPermissionEntity,
+  AuthRoleEntity,
+  AuthRoleRepository,
   AuthUserRepository,
   AdminAuditLogEntity,
   AuthUserEntity,
@@ -26,6 +29,7 @@ export class AdminUsersUseCase {
     private readonly users: AuthUserRepository,
     private readonly auditLogs: AdminAuditLogRepository,
     private readonly adminUserMutations: AdminUserMutationRepository,
+    private readonly roles: AuthRoleRepository,
   ) {}
 
   async listUsers(principal: AuthenticatedPrincipal, query: AdminUserQuery): Promise<AdminUserListPayload> {
@@ -94,6 +98,8 @@ export class AdminUsersUseCase {
   ): Promise<AdminUserView> {
     requireAllowedPolicy(input);
     const tenantId = resolveTenantId(principal);
+    await this.requireKnownRoles(input.roles, tenantId);
+    await this.requireDatabasePermissions(input.permissions);
     const mutation = await this.adminUserMutations.mutateAccessPolicyWithAudit({
       tenantId,
       targetUserId: id,
@@ -135,5 +141,37 @@ export class AdminUsersUseCase {
       recentAuditEvents: unwrapRepositoryResult<number>(auditCount),
       recentAudit: unwrapRepositoryResult<AdminAuditLogEntity[]>(audit).map(toAdminAuditLogView),
     };
+  }
+
+  private async requireKnownRoles(roleKeys: readonly string[], tenantId: string): Promise<void> {
+    if (roleKeys.length === 0) {
+      return;
+    }
+    const found = unwrapRepositoryResult<AuthRoleEntity[]>(await this.roles.findByKeys(roleKeys, tenantId));
+    const foundKeys = new Set(found.map((role) => role.key));
+    const unknown = roleKeys.filter((key) => !foundKeys.has(key));
+    if (unknown.length > 0) {
+      throw new AdminApplicationError(
+        'invalid_access_policy',
+        `Unknown role keys for this tenant: ${unknown.join(', ')}.`,
+      );
+    }
+  }
+
+  private async requireDatabasePermissions(permissionKeys: readonly string[]): Promise<void> {
+    if (permissionKeys.length === 0) {
+      return;
+    }
+    const found = unwrapRepositoryResult<AuthPermissionEntity[]>(
+      await this.roles.findPermissionsByKeys(permissionKeys),
+    );
+    const foundKeys = new Set(found.map((permission) => permission.key));
+    const missing = permissionKeys.filter((key) => !foundKeys.has(key));
+    if (missing.length > 0) {
+      throw new AdminApplicationError(
+        'repository_error',
+        `RBAC permission catalog is missing database rows: ${missing.join(', ')}.`,
+      );
+    }
   }
 }

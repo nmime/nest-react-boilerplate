@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   configureApiLocale,
@@ -45,6 +45,7 @@ import { getPayloadTheme } from './features/admin-preferences';
 import { AuditPage } from './pages/audit';
 import { AuthLoginAnalyticsPage } from './pages/auth-login-analytics';
 import { DashboardPage } from './pages/dashboard';
+import { FeatureFlagsPage } from './pages/feature-flags';
 import { ForbiddenPage } from './pages/forbidden';
 import { NotFoundPage } from './pages/not-found';
 import { NotificationBroadcastsPage } from './pages/notification-broadcasts';
@@ -64,7 +65,6 @@ export interface AdminRouteRuntime {
 interface AdminAppProps {
   applyUserLocale: (locale: Locale) => void;
   applyUserTheme: (theme: UiTheme) => void;
-  bearerToken: string | null;
 }
 
 /* eslint-disable sonarjs/cognitive-complexity -- route matrix is explicit for RBAC auditability. */
@@ -124,6 +124,13 @@ function renderReadyAdminRoute(
       <ForbiddenPage reason={t('admin.permission.settingsMissing')} />
     );
   }
+  if (routePath === '/settings/feature-flags') {
+    return state.access.canReadFeatureFlags ? (
+      <FeatureFlagsPage access={state.access} requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.featureFlagsMissing')} />
+    );
+  }
   if (routePath === '/notifications/templates') {
     return state.access.canReadNotificationTemplates ? (
       <NotificationTemplatesPage access={state.access} requestOptions={runtime.requestOptions} />
@@ -157,7 +164,7 @@ export function renderAdminRoute(
 ): ReactElement {
   if (state.status === 'loading') {
     return (
-      <UiSection eyebrow={t('admin.loadingEyebrow')} title={t('admin.loadingProfile')}>
+      <UiSection eyebrow={t('admin.loadingEyebrow')} headingLevel={1} title={t('admin.loadingProfile')}>
         <UiLoading label={t('admin.loadingProfile')} />
       </UiSection>
     );
@@ -215,48 +222,46 @@ const ApiClientLocaleBridge = ({ children }: Readonly<{ children: ReactElement }
   return children;
 };
 
-const AdminWorkspace = ({ applyUserLocale, applyUserTheme, bearerToken }: Readonly<AdminAppProps>) => {
+const AdminWorkspace = ({ applyUserLocale, applyUserTheme }: Readonly<AdminAppProps>) => {
   const { locale, t } = useI18n();
   const authClient = useAuthApiClient();
   const adminClient = useAdminApiClient();
+  const queryClient = useQueryClient();
   const [path] = useState(getBrowserPath);
 
   const authMeQuery = useQuery({
+    placeholderData: (previousData) => previousData,
     queryFn: () => fetchAuthMe(authClient.api, authClient.requestOptions),
-    queryKey: [...authApi.getAuthControllerMeQueryKey(), locale, bearerToken],
+    queryKey: [...authApi.getAuthControllerMeQueryKey(), locale],
     retry: false,
     staleTime: 15_000,
   });
   const authLocale = normalizeLocale(authMeQuery.data?.user?.locale ?? authMeQuery.data?.principal.locale);
   const authTheme = getPayloadTheme(authMeQuery.data);
 
-  useEffect(() => {
-    if (authLocale) {
-      applyUserLocale(authLocale);
-    }
-  }, [applyUserLocale, authLocale]);
-  useEffect(() => {
-    if (authTheme) {
-      applyUserTheme(authTheme);
-    }
-  }, [applyUserTheme, authTheme]);
-
   const profileQuery = useQuery({
-    enabled: !authMeQuery.isLoading && (!authLocale || authLocale === locale),
+    enabled: !authMeQuery.isLoading,
+    placeholderData: (previousData) => previousData,
     queryFn: () => fetchAdminProfile(adminClient.api, adminClient.requestOptions),
-    queryKey: [...adminApi.getAdminProfileControllerMeQueryKey(), locale, bearerToken],
+    queryKey: [...adminApi.getAdminProfileControllerMeQueryKey(), locale],
     retry: false,
     staleTime: 15_000,
   });
-  const payloadLocale = normalizeLocale(
-    profileQuery.data?.profile?.locale ?? profileQuery.data?.principal?.locale ?? authLocale,
-  );
+  const profileLocale = normalizeLocale(profileQuery.data?.profile?.locale ?? profileQuery.data?.principal?.locale);
+  const profileTheme = getPayloadTheme(profileQuery.data);
+  const serverLocale = authLocale ?? profileLocale;
+  const serverTheme = authTheme ?? profileTheme;
 
   useEffect(() => {
-    if (payloadLocale) {
-      applyUserLocale(payloadLocale);
+    if (serverLocale) {
+      applyUserLocale(serverLocale);
     }
-  }, [applyUserLocale, payloadLocale]);
+  }, [applyUserLocale, serverLocale]);
+  useEffect(() => {
+    if (serverTheme) {
+      applyUserTheme(serverTheme);
+    }
+  }, [applyUserTheme, serverTheme]);
 
   const state = useMemo(
     () =>
@@ -271,20 +276,43 @@ const AdminWorkspace = ({ applyUserLocale, applyUserTheme, bearerToken }: Readon
   );
 
   const adminRequestOptions = adminClient.requestOptions;
+  const signOutMutation = useMutation({
+    mutationFn: () => throwOnOpenApiErrorData(authApi.authControllerLogout(authClient.requestOptions)),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: authApi.getAuthControllerMeQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: adminApi.getAdminProfileControllerMeQueryKey() }),
+      ]);
+    },
+    retry: false,
+  });
+  const renderedRoute = renderAdminRoute(path, state, t, {
+    requestOptions: adminRequestOptions,
+  });
+
+  if (state.status !== 'ready') {
+    return <main id="xr-content">{renderedRoute}</main>;
+  }
 
   return (
-    <AdminLayout access={state.status === 'ready' ? state.access : undefined} currentPath={path}>
-      {renderAdminRoute(path, state, t, {
-        requestOptions: adminRequestOptions,
-      })}
+    <AdminLayout
+      access={state.access}
+      currentPath={path}
+      isSigningOut={signOutMutation.isPending}
+      onSignOut={() => {
+        signOutMutation.mutate();
+      }}
+    >
+      {renderedRoute}
     </AdminLayout>
   );
 };
 
-const AdminRoot = ({ initialBearerToken }: Readonly<{ initialBearerToken: string | null }>) => {
-  const bearerToken = initialBearerToken;
+const AdminRoot = () => {
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
+  const explicitLocale = useRef<Locale | null>(null);
+  const explicitTheme = useRef<UiTheme | null>(null);
   const queryClient = useQueryClient();
   const authClient = useAuthApiClient();
 
@@ -298,6 +326,8 @@ const AdminRoot = ({ initialBearerToken }: Readonly<{ initialBearerToken: string
     onSuccess: (body, nextPreferences) => {
       const persistedLocale = normalizeLocale(body.locale);
       const persistedTheme = getPayloadTheme(body);
+      explicitLocale.current = persistedLocale ?? nextPreferences.locale ?? explicitLocale.current;
+      explicitTheme.current = persistedTheme ?? nextPreferences.theme ?? explicitTheme.current;
       /* v8 ignore next 6 -- preference mutation falls back through optional response/request/current values. */
       setUserLocale(persistedLocale ?? nextPreferences.locale ?? userLocale ?? null);
       /* v8 ignore next 3 -- preference mutation theme falls back through optional response/request/current values. */
@@ -313,14 +343,20 @@ const AdminRoot = ({ initialBearerToken }: Readonly<{ initialBearerToken: string
   });
 
   const applyUserLocale = useCallback((nextLocale: Locale) => {
-    setUserLocale(nextLocale);
+    if (!explicitLocale.current) {
+      setUserLocale(nextLocale);
+    }
   }, []);
   const applyUserTheme = useCallback((nextTheme: UiTheme) => {
-    setUserTheme(nextTheme);
+    if (!explicitTheme.current) {
+      setUserTheme(nextTheme);
+    }
   }, []);
 
   const persistUserLocale = useCallback(
     async (nextLocale: Locale) => {
+      explicitLocale.current = nextLocale;
+      setUserLocale(nextLocale);
       try {
         await preferencesMutation.mutateAsync({ locale: nextLocale });
       } catch {
@@ -331,6 +367,8 @@ const AdminRoot = ({ initialBearerToken }: Readonly<{ initialBearerToken: string
   );
   const persistUserTheme = useCallback(
     async (nextTheme: UiTheme) => {
+      explicitTheme.current = nextTheme;
+      setUserTheme(nextTheme);
       try {
         await preferencesMutation.mutateAsync({ theme: nextTheme });
       } catch {
@@ -349,20 +387,17 @@ const AdminRoot = ({ initialBearerToken }: Readonly<{ initialBearerToken: string
       userTheme={userTheme}
     >
       <ApiClientLocaleBridge>
-        <AdminWorkspace applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} bearerToken={bearerToken} />
+        <AdminWorkspace applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} />
       </ApiClientLocaleBridge>
     </FrontendI18nProvider>
   );
 };
 
-const AdminApiClientProvider = ({
-  children,
-  bearerToken,
-}: Readonly<{ children: ReactElement; bearerToken: string | null }>) => {
+const AdminApiClientProvider = ({ children }: Readonly<{ children: ReactElement }>) => {
   const runtimeFetch = useMemo(
     () =>
       createApiRuntimeFetch({
-        emitMissingTokenAuthRequired: true,
+        emitUnauthenticatedAuthRequired: true,
         redirectTo: '/admin',
         toastRules: () => [...adminApiToastRules, ...authApiToastRules, ...createDefaultApiToastRules()],
       }),
@@ -371,7 +406,6 @@ const AdminApiClientProvider = ({
 
   return (
     <ApiClientProvider
-      authToken={bearerToken}
       baseUrls={{
         admin: getConfiguredAdminApiBaseUrl(),
         auth: getConfiguredAuthApiBaseUrl(),
@@ -426,12 +460,11 @@ const ApiRuntimeOverlayProvider = observer(function ApiRuntimeOverlayProvider() 
 
 const App = ({ testChild }: Readonly<{ testChild?: ReactElement }> = {}) => (
   <FrontendStateProvider>
-    {/* Admin auth is httpOnly cookie sessions (credentials) with no client-side
-        bearer token or refresh; keep bearerToken null (unlike the user app). */}
-    <AdminApiClientProvider bearerToken={null}>
+    {/* Admin auth is exclusively an HttpOnly cookie session. */}
+    <AdminApiClientProvider>
       <FrontendQueryProvider>
         <UiErrorBoundary>
-          {testChild ?? <AdminRoot initialBearerToken={null} />}
+          {testChild ?? <AdminRoot />}
           <ApiRuntimeOverlayProvider />
         </UiErrorBoundary>
       </FrontendQueryProvider>

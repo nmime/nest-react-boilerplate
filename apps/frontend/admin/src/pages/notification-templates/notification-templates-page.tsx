@@ -6,12 +6,12 @@ import {
   UiButton,
   UiCard,
   UiDataTable,
-  UiInput,
   UiNotification,
   UiSection,
   UiSelect,
   UiStatusTag,
-  UiTextarea,
+  UiTextField,
+  UiTextareaField,
 } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
 import {
@@ -174,6 +174,7 @@ export const NotificationTemplatesPage = ({
     <UiSection
       className="admin-page admin-notification-page"
       eyebrow={t('admin.notification.templates.eyebrow')}
+      headingLevel={1}
       title={t('admin.notification.templates.title')}
     >
       <p className="admin-page-description">{t('admin.notification.description')}</p>
@@ -181,24 +182,24 @@ export const NotificationTemplatesPage = ({
       {access.canWriteNotificationTemplates ? (
         <UiCard className="admin-filter-card" title={t('admin.notification.templates.create')}>
           <div className="admin-notification-form-grid">
-            <UiInput
-              aria-label={t('admin.notification.templates.code')}
+            <UiTextField
+              label={t('admin.notification.templates.code')}
               onChange={(e) => {
                 setCode(e.target.value);
               }}
               placeholder={t('admin.notification.templates.code')}
               value={code}
             />
-            <UiInput
-              aria-label={t('admin.notification.templates.name')}
+            <UiTextField
+              label={t('admin.notification.templates.name')}
               onChange={(e) => {
                 setName(e.target.value);
               }}
               placeholder={t('admin.notification.templates.name')}
               value={name}
             />
-            <UiInput
-              aria-label={t('admin.notification.templates.description')}
+            <UiTextField
+              label={t('admin.notification.templates.description')}
               onChange={(e) => {
                 setDescription(e.target.value);
               }}
@@ -212,8 +213,8 @@ export const NotificationTemplatesPage = ({
               value={channel}
             />
             {channel !== 'bot' ? (
-              <UiInput
-                aria-label={t('admin.notification.templates.subjectEn')}
+              <UiTextField
+                label={t('admin.notification.templates.subjectEn')}
                 onChange={(e) => {
                   setSubjectEn(e.target.value);
                 }}
@@ -222,8 +223,8 @@ export const NotificationTemplatesPage = ({
               />
             ) : null}
             {channel !== 'bot' ? (
-              <UiInput
-                aria-label={t('admin.notification.templates.subjectRu')}
+              <UiTextField
+                label={t('admin.notification.templates.subjectRu')}
                 onChange={(e) => {
                   setSubjectRu(e.target.value);
                 }}
@@ -231,16 +232,16 @@ export const NotificationTemplatesPage = ({
                 value={subjectRu}
               />
             ) : null}
-            <UiTextarea
-              aria-label={t('admin.notification.templates.bodyEn')}
+            <UiTextareaField
+              label={t('admin.notification.templates.bodyEn')}
               onChange={(e) => {
                 setBodyEn(e.target.value);
               }}
               placeholder={t('admin.notification.templates.bodyEn')}
               value={bodyEn}
             />
-            <UiTextarea
-              aria-label={t('admin.notification.templates.bodyRu')}
+            <UiTextareaField
+              label={t('admin.notification.templates.bodyRu')}
               onChange={(e) => {
                 setBodyRu(e.target.value);
               }}
@@ -248,8 +249,8 @@ export const NotificationTemplatesPage = ({
               value={bodyRu}
             />
             {channel === 'email' ? (
-              <UiTextarea
-                aria-label={t('admin.notification.templates.htmlEn')}
+              <UiTextareaField
+                label={t('admin.notification.templates.htmlEn')}
                 onChange={(e) => {
                   setHtmlEn(e.target.value);
                 }}
@@ -258,8 +259,8 @@ export const NotificationTemplatesPage = ({
               />
             ) : null}
             {channel === 'email' ? (
-              <UiTextarea
-                aria-label={t('admin.notification.templates.htmlRu')}
+              <UiTextareaField
+                label={t('admin.notification.templates.htmlRu')}
                 onChange={(e) => {
                   setHtmlRu(e.target.value);
                 }}
@@ -268,8 +269,8 @@ export const NotificationTemplatesPage = ({
               />
             ) : null}
             {channel !== 'email' ? (
-              <UiInput
-                aria-label={t('admin.notification.templates.image')}
+              <UiTextField
+                label={t('admin.notification.templates.image')}
                 onChange={(e) => {
                   setImage(e.target.value);
                 }}
@@ -277,8 +278,8 @@ export const NotificationTemplatesPage = ({
                 value={image}
               />
             ) : null}
-            <UiTextarea
-              aria-label={t('admin.notification.templates.schema')}
+            <UiTextareaField
+              label={t('admin.notification.templates.schema')}
               onChange={(e) => {
                 setSchema(e.target.value);
               }}
@@ -293,8 +294,8 @@ export const NotificationTemplatesPage = ({
       ) : null}
       <UiCard className="admin-table-card" title={t('admin.notification.templates.title')}>
         <div className="admin-notification-testbar">
-          <UiTextarea
-            aria-label={t('admin.notification.templates.previewVariables')}
+          <UiTextareaField
+            label={t('admin.notification.templates.previewVariables')}
             onChange={(e) => {
               setPreviewVariables(e.target.value);
             }}
@@ -308,8 +309,8 @@ export const NotificationTemplatesPage = ({
             options={getNotificationProviderOptions(channel, t)}
             value={provider}
           />
-          <UiInput
-            aria-label={t('admin.notification.templates.target')}
+          <UiTextField
+            label={t('admin.notification.templates.target')}
             onChange={(e) => {
               setTarget(e.target.value);
             }}

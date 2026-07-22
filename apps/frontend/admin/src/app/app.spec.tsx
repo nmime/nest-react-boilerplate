@@ -8,6 +8,7 @@ import App, { getProfileState, renderAdminRoute } from '../App';
 import {
   type AdminProfilePayload,
   createAdminAccess,
+  fetchAdminProfile,
   getAuthApiBaseUrl,
   normalizeClaimList,
   getAdminApiBaseUrl,
@@ -78,8 +79,8 @@ function installRadixPointerMocks() {
   });
 }
 
-function chooseSelectOption(label: RegExp | string, option: string) {
-  const trigger = screen.getByRole('combobox', { name: label });
+function chooseThemeMenuOption(label: RegExp | string, option: string) {
+  const trigger = screen.getByRole('button', { name: label });
 
   installRadixPointerMocks();
   fireEvent.pointerDown(trigger, {
@@ -88,10 +89,11 @@ function chooseSelectOption(label: RegExp | string, option: string) {
     pointerType: 'mouse',
   });
 
-  const optionElement = document.querySelector<HTMLElement>(`[role="option"][data-value="${option}"]`);
+  fireEvent.click(screen.getByRole('menuitem', { name: option }));
+}
 
-  expect(optionElement).toBeTruthy();
-  fireEvent.click(optionElement as HTMLElement);
+function chooseLanguageMenuOption(label: RegExp | string, option: string) {
+  chooseThemeMenuOption(label, option);
 }
 
 const profilePayload = {
@@ -163,8 +165,7 @@ describe('App', () => {
 
     render(<App />);
 
-    expect((await screen.findAllByText('Admin dashboard')).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Users').length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/Admin dashboard|Панель администратора/u)).length).toBeGreaterThan(0);
     expect(getRequest(fetchImpl).url).toBe('https://auth.example.test/auth/me');
   });
 
@@ -231,8 +232,8 @@ describe('App', () => {
 
     expect((await screen.findAllByText(/Admin dashboard|Панель администратора/u)).length).toBeGreaterThan(0);
 
-    chooseSelectOption('Язык', 'en');
-    chooseSelectOption(/Тема|Theme/u, 'light');
+    chooseLanguageMenuOption('Язык', 'Английский');
+    chooseThemeMenuOption(/Тема|Theme/u, 'Light');
 
     await waitFor(() => {
       expect(getRequestsByPath(fetchImpl, '/auth/me/preferences', 'PATCH').length).toBeGreaterThan(0);
@@ -242,7 +243,7 @@ describe('App', () => {
     expect(bodies.some((body) => body.locale === 'en' || body.theme === 'light')).toBe(true);
   });
 
-  it('keeps previous local locale state when preference persistence fails', async () => {
+  it('keeps the latest local locale state when preference persistence fails', async () => {
     const fetchImpl = vi.fn((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : (input as Request).url;
       if (url.includes('/auth/me/preferences')) {
@@ -279,12 +280,12 @@ describe('App', () => {
     render(<App />);
 
     expect((await screen.findAllByText(/Admin dashboard|Панель администратора/u)).length).toBeGreaterThan(0);
-    chooseSelectOption('Язык', 'en');
+    chooseLanguageMenuOption('Язык', 'Английский');
 
     await waitFor(() => {
       expect(getRequestsByPath(fetchImpl, '/auth/me/preferences', 'PATCH')).toHaveLength(1);
     });
-    expect(await screen.findByRole('combobox', { name: 'Язык' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Language' })).toBeTruthy();
   });
 
   it('continues with the admin profile when auth me cannot be read', async () => {
@@ -321,8 +322,8 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('combobox', { name: 'Язык' })).toBeTruthy();
-    expect(screen.getByRole('combobox', { name: 'Тема' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Язык' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Тема' })).toBeTruthy();
   });
 
   it('renders forbidden state when profile request fails or principal lacks admin access', async () => {
@@ -331,6 +332,19 @@ describe('App', () => {
     render(<App />);
 
     expect((await screen.findAllByText('Forbidden')).length).toBeGreaterThan(0);
+  });
+
+  it('fails closed when the profile client resolves without a payload', async () => {
+    const client = {
+      adminProfileControllerMe: vi.fn().mockResolvedValue({
+        data: undefined,
+        response: new Response(null, { status: 200 }),
+      }),
+    };
+
+    await expect(fetchAdminProfile(client as Parameters<typeof fetchAdminProfile>[0])).rejects.toThrow(
+      'Admin profile response was empty.',
+    );
   });
 
   it('normalizes RBAC claims and renders page components', () => {
@@ -351,6 +365,7 @@ describe('App', () => {
     expect(
       renderAdminMarkup(<ProfilePage payload={{ principal: { roles: ['admin'], permissions: ['read'] } }} />),
     ).toContain('неизвестно');
+    expect(renderAdminMarkup(<ForbiddenPage reason="Denied" />)).toContain('<h1');
     expect(renderAdminMarkup(<ForbiddenPage reason="Denied" />)).toContain('Denied');
     expect(renderAdminMarkup(<NotFoundPage />)).toContain('Страница администратора не найдена');
     expect(getProfileState(false, {}, undefined, 'missing principal', 'failed')).toEqual({

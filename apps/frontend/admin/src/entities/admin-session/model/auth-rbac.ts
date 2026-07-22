@@ -34,9 +34,19 @@ export const getAdminApiBaseUrl = (env: FrontendEnv): string => getRequiredApiBa
 
 export const getAuthApiBaseUrl = (env: FrontendEnv): string => getRequiredApiBaseUrl(env, 'VITE_AUTH_API_BASE_URL');
 
+const requireAdminProfilePayload = (payload: unknown): AdminProfilePayload => {
+  if (payload === undefined) {
+    throw new Error('Admin profile response was empty.');
+  }
+
+  return payload as AdminProfilePayload;
+};
+
 export const fetchAdminProfile = async (
   adminClient: Pick<typeof adminApi, 'adminProfileControllerMe'>,
   requestOptions?: ApiClientRequestOptions,
 ): Promise<AdminProfilePayload> => {
-  return throwOnOpenApiErrorData(adminClient.adminProfileControllerMe(requestOptions));
+  return requireAdminProfilePayload(
+    await throwOnOpenApiErrorData(adminClient.adminProfileControllerMe(requestOptions)),
+  );
 };

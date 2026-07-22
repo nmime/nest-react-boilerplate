@@ -1,16 +1,14 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
-import { validateBearerAuthorization } from '@app/backend-feature-auth-shared';
 import { InMemoryAuthUserStore } from '../infrastructure/auth-user-store';
 import { AuthService } from './auth.service';
+import { toSessionPrincipal } from './auth-session.factory';
 
-const testJwtSecretValue = 'tenant-isolation-secret-with-enough-entropy';
 const tenantAId = '11111111-1111-4111-8111-111111111111';
 const tenantBId = '22222222-2222-4222-8222-222222222222';
 
 describe('AuthService tenant isolation', () => {
-  it('scopes registration, login, lookups, preferences, sessions, and JWT principals by tenant', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
+  it('scopes registration, login, lookups, preferences, and session principals by tenant', async () => {
     const service = new AuthService(new InMemoryAuthUserStore());
 
     const tenantASession = await service.register({
@@ -47,9 +45,7 @@ describe('AuthService tenant isolation', () => {
       }),
     ).rejects.toThrow('User was not found in tenant.');
 
-    const principal = validateBearerAuthorization(`Bearer ${tenantASession.accessToken}`, {
-      AUTH_JWT_SECRET: testJwtSecretValue,
-    });
+    const principal = toSessionPrincipal(tenantASession);
     expect(principal).toMatchObject({
       subject: tenantASession.user.id,
       tenantId: tenantAId,

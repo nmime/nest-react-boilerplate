@@ -24,9 +24,7 @@ type AuthControllerService = Pick<
   | 'issueEmailVerificationToken'
   | 'issuePasswordResetToken'
   | 'login'
-  | 'refreshSession'
   | 'register'
-  | 'revokeRefreshToken'
   | 'updateUserPreferences'
 >;
 
@@ -74,9 +72,6 @@ const sessionView = {
     roles: ['user', 'admin'],
     permissions: ['profile:read', 'admin:profile:read'],
   },
-  accessToken: 'access-token',
-  tokenType: 'Bearer',
-  expiresIn: 3600,
 } satisfies AuthSessionView;
 
 const externalIdentity = {
@@ -99,17 +94,13 @@ function createService(
     issueEmailVerificationToken: AuthControllerService['issueEmailVerificationToken'];
     issuePasswordResetToken: AuthControllerService['issuePasswordResetToken'];
     login: AuthControllerService['login'];
-    refreshSession: AuthControllerService['refreshSession'];
     register: AuthControllerService['register'];
-    revokeRefreshToken: AuthControllerService['revokeRefreshToken'];
     updateUserPreferences: AuthControllerService['updateUserPreferences'];
   }> = {},
 ): AuthControllerService {
   return {
     register: vi.fn(() => Promise.resolve(sessionView)),
     login: vi.fn(() => Promise.resolve(sessionView)),
-    refreshSession: vi.fn(() => Promise.resolve(sessionView)),
-    revokeRefreshToken: vi.fn(() => Promise.resolve(true)),
     issueEmailVerificationToken: vi.fn(() => Promise.resolve('verification-token')),
     issuePasswordResetToken: vi.fn(() => Promise.resolve('reset-token')),
     getUserById: vi.fn(() => Promise.resolve(sessionView.user)),
@@ -244,7 +235,7 @@ describe('AuthController', () => {
     expect(session.save).toHaveBeenCalledOnce();
   });
 
-  it('establishes the full session principal on login', async () => {
+  it('stores identity-only session data while exposing the resolved request principal', async () => {
     const service = createService();
     const controller = toController(service);
     const { request, session } = createRequest();
@@ -268,14 +259,14 @@ describe('AuthController', () => {
       email: sessionView.user.email,
       password: 'password123',
     });
-    expect(session.user).toEqual(expectedPrincipal);
+    expect(session.user).toEqual({ ...expectedPrincipal, roles: [], permissions: [] });
     expect(request.user).toEqual(expectedPrincipal);
     expect(request.auth).toEqual(expectedPrincipal);
     expect(session.regenerate).toHaveBeenCalledOnce();
     expect(session.save).toHaveBeenCalledOnce();
   });
 
-  it('preserves token metadata when updating preferences', async () => {
+  it('preserves session authentication metadata when updating preferences', async () => {
     const updatedUser = {
       ...sessionView.user,
       displayName: 'Ada Byron',
@@ -293,9 +284,10 @@ describe('AuthController', () => {
       displayName: 'Ada Lovelace',
       locale: Language.Ru,
       theme: AuthenticatedTheme.Dark,
-      issuer: 'issuer',
-      audience: ['web', 'mobile'],
-      tokenId: 'token-id',
+      amr: ['pwd'],
+      authProvider: AuthProvider.Password,
+      authChannel: AuthProviderChannel.Password,
+      authTime: 1_721_865_600,
       roles: ['user'],
       permissions: ['profile:read'],
     };
@@ -316,14 +308,19 @@ describe('AuthController', () => {
       displayName: 'Ada Byron',
       locale: 'en',
       theme: 'light',
-      issuer: 'issuer',
-      audience: ['web', 'mobile'],
-      tokenId: 'token-id',
+      amr: ['pwd'],
+      authProvider: AuthProvider.Password,
+      authChannel: AuthProviderChannel.Password,
+      authTime: 1_721_865_600,
+      roles: [],
+      permissions: [],
+    });
+    expect(request.user).toEqual({
+      ...session.user,
       roles: ['user', 'admin'],
       permissions: ['profile:read', 'admin:profile:read'],
     });
-    expect(request.user).toEqual(session.user);
-    expect(request.auth).toEqual(session.user);
+    expect(request.auth).toEqual(request.user);
     expect(session.save).toHaveBeenCalledOnce();
   });
 
@@ -389,7 +386,7 @@ describe('AuthController', () => {
     expect(jsonResponse.redirect).not.toHaveBeenCalled();
   });
 
-  it('routes refresh, external auth, provider identities, link tokens, and action-token requests', async () => {
+  it('routes external auth, provider identities, link tokens, and action-token requests', async () => {
     const service = createService();
     const externalAuth = createExternalAuthService();
     const controller = toController(service, externalAuth);
@@ -399,15 +396,6 @@ describe('AuthController', () => {
       roles: ['user'],
       permissions: ['profile:read'],
     };
-
-    const refreshFixture = createRequest();
-    await expect(controller.refresh({ refreshToken: 'refresh-token' }, refreshFixture.request)).resolves.toEqual({
-      data: sessionView,
-    });
-    expect(service.refreshSession).toHaveBeenCalledWith({
-      refreshToken: 'refresh-token',
-    });
-    expect(refreshFixture.session.regenerate).toHaveBeenCalledOnce();
 
     const tmaFixture = createRequest();
     await expect(controller.telegramTma({ initData: 'signed-init-data' }, tmaFixture.request)).resolves.toMatchObject({
@@ -565,20 +553,6 @@ describe('AuthController', () => {
     });
     expect(passthroughResponse.clearCookie).toHaveBeenCalledWith('custom.sid', {
       path: '/',
-    });
-  });
-
-  it('revokes a refresh token on logout when one is supplied', async () => {
-    const service = createService();
-    const controller = toController(service);
-    const { request } = createRequest();
-
-    await expect(controller.logout(request, {}, { refreshToken: 'refresh-token' })).resolves.toEqual({
-      data: { loggedOut: true },
-    });
-
-    expect(service.revokeRefreshToken).toHaveBeenCalledWith({
-      refreshToken: 'refresh-token',
     });
   });
 });

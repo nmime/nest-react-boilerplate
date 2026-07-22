@@ -7,7 +7,7 @@ describe('resolveBackendEnvironmentConfig', () => {
     const config = resolveBackendEnvironmentConfig(
       { appName: 'test-api', port: 3010 },
       {
-        AUTH_JWT_SECRET: 'development-secret',
+        SESSION_SECRET: 'development-secret',
         CORS_ORIGINS: 'https://admin-app.example.com, https://user-app.example.com',
         NODE_ENV: 'development',
         RATE_LIMIT_ENABLED: 'true',
@@ -54,7 +54,7 @@ describe('resolveBackendEnvironmentConfig', () => {
     const config = resolveBackendEnvironmentConfig(
       { appName: 'test-api', port: 3010 },
       {
-        AUTH_JWT_SECRET: 'x'.repeat(32),
+        SESSION_SECRET: 'x'.repeat(32),
         DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
         NODE_ENV: 'production',
         RATE_LIMIT_STORE: 'redis',
@@ -98,7 +98,7 @@ describe('resolveBackendEnvironmentConfig', () => {
   it('falls back to explicit options.port when no env variable is set', () => {
     const config = resolveBackendEnvironmentConfig(
       { appName: 'test-api', port: 3010 },
-      { AUTH_JWT_SECRET: 'development-secret' },
+      { SESSION_SECRET: 'development-secret' },
     );
     expect(config.port).toBe(3010);
     expect(config.portSource).toBe('configured');
@@ -120,7 +120,7 @@ describe('resolveBackendEnvironmentConfig', () => {
       resolveBackendEnvironmentConfig(
         { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: 'x'.repeat(32),
+          SESSION_SECRET: 'x'.repeat(32),
           DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
           NODE_ENV: 'production',
           RATE_LIMIT_STORE: 'auto',
@@ -134,7 +134,7 @@ describe('resolveBackendEnvironmentConfig', () => {
       resolveBackendEnvironmentConfig(
         { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: 'x'.repeat(32),
+          SESSION_SECRET: 'x'.repeat(32),
           DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
           NODE_ENV: 'production',
           RATE_LIMIT_IN_MEMORY_ALLOWED: 'true',
@@ -152,7 +152,7 @@ describe('resolveBackendEnvironmentConfig', () => {
       resolveBackendEnvironmentConfig(
         { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: 'x'.repeat(32),
+          SESSION_SECRET: 'x'.repeat(32),
           DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
           NODE_ENV: 'production',
           RATE_LIMIT_ENABLED: 'maybe',
@@ -164,7 +164,7 @@ describe('resolveBackendEnvironmentConfig', () => {
       resolveBackendEnvironmentConfig(
         { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: 'x'.repeat(32),
+          SESSION_SECRET: 'x'.repeat(32),
           DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
           NODE_ENV: 'production',
           RATE_LIMIT_STORE: 'redis',
@@ -176,7 +176,7 @@ describe('resolveBackendEnvironmentConfig', () => {
       resolveBackendEnvironmentConfig(
         { appName: 'test-api', port: 3010 },
         {
-          AUTH_JWT_SECRET: 'x'.repeat(32),
+          SESSION_SECRET: 'x'.repeat(32),
           DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/app',
           NODE_ENV: 'production',
           RATE_LIMIT_STORE: 'redis',

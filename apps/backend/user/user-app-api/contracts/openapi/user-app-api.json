@@ -292,9 +292,6 @@
           },
           {
             "__Host-nrb.sid": []
-          },
-          {
-            "bearer": []
           }
         ],
         "tags": ["Profile"]
@@ -311,11 +308,6 @@
   "servers": [],
   "components": {
     "securitySchemes": {
-      "bearer": {
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "type": "http"
-      },
       "nrb.sid": {
         "type": "apiKey",
         "in": "cookie",
@@ -347,22 +339,6 @@
             "type": "string",
             "enum": ["en", "ru"]
           },
-          "issuer": {
-            "type": "string"
-          },
-          "audience": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ]
-          },
           "roles": {
             "type": "array",
             "items": {
@@ -374,9 +350,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "tokenId": {
-            "type": "string"
           }
         },
         "required": ["subject", "roles", "permissions"]

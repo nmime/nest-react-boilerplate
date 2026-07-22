@@ -33,4 +33,27 @@ describe('UiPagination branch coverage', () => {
     rerender(<UiPagination currentPage={1} onPageChange={vi.fn()} pageSize={10} totalPages={2} />);
     expect(screen.getByText('Page 1 of 2')).toBeTruthy();
   });
+
+  it('accepts localized visible, summary, and accessible labels', () => {
+    render(
+      <UiPagination
+        currentPage={1}
+        label="Пагинация"
+        nextAriaLabel="Перейти на следующую страницу"
+        nextLabel="Вперёд"
+        onPageChange={vi.fn()}
+        pageAriaLabel={(page) => `Перейти на страницу ${page}`}
+        previousAriaLabel="Перейти на предыдущую страницу"
+        previousLabel="Назад"
+        summary="1-10 из 11"
+        totalPages={2}
+      />,
+    );
+
+    expect(screen.getByRole('navigation', { name: 'Пагинация' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Перейти на предыдущую страницу' }).textContent).toBe('Назад');
+    expect(screen.getByRole('button', { name: 'Перейти на следующую страницу' }).textContent).toBe('Вперёд');
+    expect(screen.getByRole('button', { name: 'Перейти на страницу 2' })).toBeTruthy();
+    expect(screen.getByText('1-10 из 11')).toBeTruthy();
+  });
 });

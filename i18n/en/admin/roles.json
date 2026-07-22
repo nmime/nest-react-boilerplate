@@ -4,6 +4,7 @@
   "admin.roles.loading": "Loading roles matrix",
   "admin.roles.emptyEyebrow": "No roles catalog entries",
   "admin.roles.emptyTitle": "No roles are available for this workspace.",
+  "admin.roles.permissionsDetail": "Database-backed grants available for role assignment.",
   "admin.roles.error.requestFailed": "Roles catalog request failed",
   "admin.roles.column.permission": "Permission",
   "admin.roles.column.resource": "Resource",

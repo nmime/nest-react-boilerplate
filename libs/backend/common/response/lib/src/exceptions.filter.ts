@@ -49,9 +49,6 @@ export class ExceptionsFilter implements ExceptionFilter {
 
     problemResponse.header?.('content-language', resolveProblemContentLanguage(problem, locale));
     problemResponse.header?.('vary', mergeVaryHeader(problemResponse.getHeader?.('vary')));
-    if (problem.status === Number(HttpStatus.UNAUTHORIZED)) {
-      problemResponse.header?.('www-authenticate', 'Bearer');
-    }
     if (requestId) {
       problemResponse.header?.('x-request-id', requestId);
     }

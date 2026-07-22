@@ -20,6 +20,7 @@ export * from './resource-error';
 export * from './search-filter-toolbar';
 export * from './section';
 export * from './select';
+export * from './selection-grid';
 export * from './switchers';
 export * from './stat-card';
 export * from './status-pill';

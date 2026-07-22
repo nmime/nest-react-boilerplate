@@ -55,7 +55,7 @@ describe('user-app-api health e2e', () => {
     });
   });
 
-  it('GET /live and /ready return ok without a MikroORM provider', async () => {
+  it('GET /live and /ready report the database-backed user API', async () => {
     const liveResponse = await app.inject({ method: 'GET', url: '/live' });
     expect(liveResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(liveResponse)).toMatchObject({
@@ -76,7 +76,7 @@ describe('user-app-api health e2e', () => {
             name: 'postgres',
             status: 'ok',
             required: false,
-            details: expect.objectContaining({ skipped: true }),
+            details: expect.objectContaining({ skipped: false }),
           }),
           expect.objectContaining({
             name: 'redis',

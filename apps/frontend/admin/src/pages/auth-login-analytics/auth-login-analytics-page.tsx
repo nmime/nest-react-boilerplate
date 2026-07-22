@@ -12,7 +12,7 @@ import {
   UiSelect,
   UiStatCard,
 } from '@app/frontend-ui-web';
-import { errorText, formatDate, pageSize, paramsFromPath, totalPages } from '../../shared';
+import { adminPaginationLabels, errorText, formatDate, pageSize, paramsFromPath, totalPages } from '../../shared';
 
 type LoginEvent = adminApi.AuthLoginAnalyticsEventDto;
 
@@ -114,6 +114,7 @@ export const AuthLoginAnalyticsPage = ({
     <UiSection
       className="admin-page admin-login-analytics-page"
       eyebrow={t('admin.loginAnalytics.eyebrow')}
+      headingLevel={1}
       title={t('admin.loginAnalytics.title')}
     >
       <p>{t('admin.loginAnalytics.description')}</p>
@@ -264,6 +265,7 @@ export const AuthLoginAnalyticsPage = ({
             />
           </UiCard>
           <UiPagination
+            {...adminPaginationLabels(t, page, events.data?.limit ?? pageSize, events.data?.total ?? 0)}
             currentPage={page}
             pageSize={events.data?.limit ?? pageSize}
             totalItems={events.data?.total ?? 0}

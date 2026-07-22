@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines session and principal contracts, access-policy defaults, bearer guards,
+Defines session and principal contracts, access-policy defaults, session guards,
 RBAC decorators, tenant context, and OAuth/OIDC provider flows.
 
 ## Commands

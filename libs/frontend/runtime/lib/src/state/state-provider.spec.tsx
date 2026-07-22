@@ -59,12 +59,12 @@ describe('frontend MobX state foundation', () => {
 
   it('keeps client-only shell state in MobX without server cache data', () => {
     const store = createRootStore({ initialTheme: 'dark' });
-    store.authShell.setBearerToken(' shell-token ');
+    store.authShell.markAuthenticated();
     store.ui.openModal('profile-menu');
     store.ui.toggleSidebar();
 
     expect(store.authShell.isAuthenticated).toBe(true);
-    expect(store.authShell.bearerToken).toBe('shell-token');
+    expect(store.authShell.sessionStatus).toBe('authenticated');
     expect(store.ui.activeModal).toBe('profile-menu');
     expect(store.ui.sidebarOpen).toBe(false);
     expect(store.ui.theme).toBe('dark');

@@ -54,6 +54,24 @@ describe('shared UI components', () => {
     expect(html).toContain('<button');
     expect(html).toContain('type="button"');
     expect(html).toContain('xr-button--primary');
+    expect(html).toContain('data-size="md"');
+    expect(html).toContain('data-variant="primary"');
+  });
+
+  it('exposes stable size hooks for reliable spacing', () => {
+    const html = renderToStaticMarkup(
+      <>
+        <UiButton size="sm">Small</UiButton>
+        <UiButton size="lg">Large</UiButton>
+        <UiButton aria-label="Icon action" size="icon">
+          +
+        </UiButton>
+      </>,
+    );
+
+    expect(html).toContain('data-size="sm"');
+    expect(html).toContain('data-size="lg"');
+    expect(html).toContain('data-size="icon"');
   });
 
   it('marks loading buttons as busy and disabled', () => {
@@ -140,12 +158,18 @@ describe('shared UI components', () => {
       </UiSection>,
     );
     const withoutEyebrow = renderToStaticMarkup(<UiSection title="Workspace">Section content</UiSection>);
+    const pageSection = renderToStaticMarkup(
+      <UiSection headingLevel={1} title="Workspace">
+        Page content
+      </UiSection>,
+    );
 
     expect(withEyebrow).toContain('Overview');
     expect(withEyebrow).toContain('xr-eyebrow');
     expect(withEyebrow).toContain('aria-labelledby="workspace-title"');
     expect(withoutEyebrow).toContain('Workspace');
     expect(withoutEyebrow).not.toContain('xr-eyebrow');
+    expect(pageSection).toContain('<h1');
   });
 
   it('renders stat cards and status pill tones', () => {

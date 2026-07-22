@@ -1,8 +1,7 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
-import { canAdmin, createAdminAbility } from './ability';
-import { AdminAllResource, AdminManageAction, AdminRole, adminPermissionToAbility } from './permissions';
+import { canAdmin, type AdminAuthorizedRequest } from './ability';
+import { AdminAllResource, AdminManageAction, adminPermissionToAbility } from './permissions';
 import {
-  type AuthenticatedRequest,
   type PermissionEvaluationContext,
   type PermissionEvaluationResult,
   RbacGuard,
@@ -16,29 +15,28 @@ export class AdminRbacGuard extends RbacGuard {
 
   protected override evaluateDomainPermission({
     permission,
-    principal,
-    requiredRoles,
+    request,
   }: PermissionEvaluationContext): PermissionEvaluationResult {
     const adminRule = adminPermissionToAbility(permission);
     if (adminRule) {
-      const adminAbility = createAdminAbility(principal);
+      const adminAbility = (request as AdminAuthorizedRequest).adminAbility;
+      if (!adminAbility) {
+        return false;
+      }
 
       return (
-        requiredRoles.includes(AdminRole) &&
-        (canAdmin(adminAbility, adminRule.action, adminRule.resource) ||
-          canAdmin(adminAbility, AdminManageAction, AdminAllResource))
+        canAdmin(adminAbility, adminRule.action, adminRule.resource) ||
+        canAdmin(adminAbility, AdminManageAction, AdminAllResource)
       );
     }
 
-    if (permission.startsWith('admin:')) {
-      return false;
-    }
-
-    return undefined;
+    // This guard is an admin-domain boundary. Never let an unmapped generic or
+    // misspelled permission fall through to string-based RBAC on an admin route.
+    return false;
   }
 
   private isAdminRoute(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const request = context.switchToHttp().getRequest<AdminAuthorizedRequest>();
     const requestPath = request.url ?? request.path ?? '';
 
     return context.getClass().name.startsWith('Admin') || requestPath === '/admin' || requestPath.startsWith('/admin/');

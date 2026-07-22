@@ -1,7 +1,5 @@
 import { DynamicModule, Global, Inject, Injectable, Module } from '@nestjs/common';
-import { NotificationService } from '@app/backend-feature-notification-shared';
 import { getBetterAuthConfig, getBaseUrl, type BetterAuthConfigOptions } from './better-auth';
-import { AuthNotificationPublisher } from './auth-notification.publisher';
 import type { Auth } from 'better-auth';
 
 export { getBaseUrl };
@@ -24,13 +22,8 @@ export class BetterAuthModule {
         },
         {
           provide: BetterAuthInstanceToken,
-          useFactory: (opts: BetterAuthConfigOptions, notifications?: NotificationService): Auth => {
-            return getBetterAuthConfig(null, {
-              ...opts,
-              notificationPublisher: new AuthNotificationPublisher(notifications),
-            });
-          },
-          inject: ['BETTER_AUTH_MODULE_OPTIONS', { token: NotificationService, optional: true }],
+          useFactory: (opts: BetterAuthConfigOptions): Auth => getBetterAuthConfig(null, opts),
+          inject: ['BETTER_AUTH_MODULE_OPTIONS'],
         },
       ],
       exports: [BetterAuthInstanceToken],

@@ -14,7 +14,6 @@ import {
 
 const mocks = vi.hoisted(() => {
   const builder = {
-    addBearerAuth: vi.fn(() => builder),
     addCookieAuth: vi.fn(() => builder),
     build: vi.fn(() => 'config'),
     setDescription: vi.fn(() => builder),
@@ -65,6 +64,7 @@ describe('common swagger', () => {
         },
       ),
     ).toEqual({
+      authSchemes: ['session-cookie'],
       description: 'description',
       enabled: true,
       path: 'openapi',
@@ -100,7 +100,7 @@ describe('common swagger', () => {
     ).toMatchObject({ enabled: true });
   });
 
-  it('creates bearer and session-cookie auth swagger docs with problem response support', () => {
+  it('creates session-cookie auth swagger docs with problem response support', () => {
     mocks.builder.addCookieAuth.mockClear();
     const app = testValue<Parameters<typeof setupSwagger>[0]>({});
 
@@ -115,7 +115,6 @@ describe('common swagger', () => {
     expect(mocks.builder.setTitle).toHaveBeenCalledWith('api');
     expect(mocks.builder.setVersion).toHaveBeenCalledWith('1.2.3');
     expect(mocks.builder.setDescription).toHaveBeenCalledWith('API docs');
-    expect(mocks.builder.addBearerAuth).toHaveBeenCalledOnce();
     expect(mocks.builder.addCookieAuth).toHaveBeenCalledWith(
       'nrb.sid',
       {
@@ -136,6 +135,18 @@ describe('common swagger', () => {
     expect(mocks.setup).toHaveBeenCalledWith('docs', app, 'document', {
       jsonDocumentUrl: 'docs/openapi.json',
     });
+  });
+
+  it('can publish a session-cookie-only API contract', () => {
+    mocks.builder.addCookieAuth.mockClear();
+
+    setupSwagger(testValue<Parameters<typeof setupSwagger>[0]>({}), {
+      authSchemes: ['session-cookie'],
+      enabled: true,
+      title: 'admin api',
+    });
+
+    expect(mocks.builder.addCookieAuth).toHaveBeenCalledTimes(2);
   });
 
   it('exports success and problem response schemas and decorators', () => {
@@ -186,6 +197,7 @@ describe('common swagger', () => {
 
   it('resolves explicit defaults and option descriptions', () => {
     expect(resolveSwaggerOptions({ title: 'api' }, {})).toEqual({
+      authSchemes: ['session-cookie'],
       enabled: false,
       path: 'docs',
       title: 'api',
@@ -206,6 +218,7 @@ describe('common swagger', () => {
         },
       ),
     ).toEqual({
+      authSchemes: ['session-cookie'],
       description: 'option docs',
       enabled: true,
       path: 'custom-docs',

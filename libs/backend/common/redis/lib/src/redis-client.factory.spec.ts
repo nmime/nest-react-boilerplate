@@ -42,8 +42,8 @@ describe('createRedisClient', () => {
     });
   });
 
-  it('builds a single client from a url and identifies it by url with default db', () => {
-    const client = createRedisClient(baseConfig({ url: 'redis://redis-a:6379', db: undefined }));
+  it('builds a single client from a url without requiring hosts and identifies it by url with default db', () => {
+    const client = createRedisClient(baseConfig({ url: 'redis://redis-a:6379', hosts: [], db: undefined }));
 
     expect(client.connectionId).toBe('single:redis://redis-a:6379/0');
     expect(createClientMock).toHaveBeenCalledWith({

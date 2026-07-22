@@ -14,9 +14,14 @@ import {
   AdminAuditLogEntity,
   AdminAuditLogEntitySchema,
   AdminUserMutationRepository,
+  AuthPermissionEntity,
   AuthPostgresModule,
+  AuthRoleEntity,
+  AuthRolePermissionEntity,
   AuthUserEntity,
   AuthUserEntitySchema,
+  AuthUserPermissionEntity,
+  AuthUserRoleEntity,
   AuthUserRepository,
   TransactionalOutboxEventEntity,
   TransactionalOutboxEventEntitySchema,
@@ -35,6 +40,44 @@ describeIfDocker('AuthUserRepository component', () => {
   let orm: MikroORM;
   let authUsers: AuthUserRepository;
   let adminUserMutations: AdminUserMutationRepository;
+
+  async function grantNormalizedRole(
+    user: AuthUserEntity,
+    roleKey: string,
+    permissionKeys: readonly string[],
+  ): Promise<void> {
+    let role = await orm.em.findOne(AuthRoleEntity, { tenantId: user.tenantId, key: roleKey });
+    if (!role) {
+      role = new AuthRoleEntity({ tenantId: user.tenantId, key: roleKey });
+      orm.em.persist(role);
+    }
+
+    const permissions: AuthPermissionEntity[] = [];
+    for (const key of permissionKeys) {
+      let permission = await orm.em.findOne(AuthPermissionEntity, { key });
+      if (!permission) {
+        const separator = key.lastIndexOf(':');
+        permission = new AuthPermissionEntity({
+          key,
+          resource: key.slice(0, separator).replaceAll(':', '.'),
+          action: key.slice(separator + 1),
+        });
+        orm.em.persist(permission);
+      }
+      permissions.push(permission);
+    }
+    await orm.em.flush();
+
+    if (!(await orm.em.findOne(AuthUserRoleEntity, { userId: user.id, roleId: role.id }))) {
+      orm.em.persist(new AuthUserRoleEntity({ userId: user.id, roleId: role.id, tenantId: user.tenantId }));
+    }
+    for (const permission of permissions) {
+      if (!(await orm.em.findOne(AuthRolePermissionEntity, { roleId: role.id, permissionId: permission.id }))) {
+        orm.em.persist(new AuthRolePermissionEntity({ roleId: role.id, permissionId: permission.id }));
+      }
+    }
+    await orm.em.flush();
+  }
 
   beforeAll(async () => {
     container = await startPostgresContainer();
@@ -64,6 +107,11 @@ describeIfDocker('AuthUserRepository component', () => {
   afterEach(async () => {
     await orm.em.nativeDelete(TransactionalOutboxEventEntity, {});
     await orm.em.nativeDelete(AdminAuditLogEntity, {});
+    await orm.em.nativeDelete(AuthUserRoleEntity, {});
+    await orm.em.nativeDelete(AuthUserPermissionEntity, {});
+    await orm.em.nativeDelete(AuthRolePermissionEntity, {});
+    await orm.em.nativeDelete(AuthRoleEntity, {});
+    await orm.em.nativeDelete(AuthPermissionEntity, {});
     await orm.em.nativeDelete(AuthUserEntity, {});
     orm.em.clear();
   });
@@ -78,15 +126,12 @@ describeIfDocker('AuthUserRepository component', () => {
     const created = await authUsers.createUser({
       email: 'user@example.com',
       displayName: 'Component User',
-      permissions: ['profile:read'],
-      roles: ['user'],
     });
 
     const user = created._unsafeUnwrap();
     expect(user.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u);
     expect(user.email).toBe('user@example.com');
-    expect(user.roles).toEqual(['user']);
-    expect(user.permissions).toEqual(['profile:read']);
+    await grantNormalizedRole(user, 'user', ['profile:read']);
 
     const found = await authUsers.findByEmail('user@example.com');
     expect(found._unsafeUnwrap()).toMatchObject({
@@ -99,20 +144,15 @@ describeIfDocker('AuthUserRepository component', () => {
     });
   });
 
-  it('updates access policy and records logins', async () => {
+  it('records logins and returns access from normalized grants', async () => {
     const user = (await authUsers.createUser({ email: 'admin@example.com' }))._unsafeUnwrap();
-    const policy = await authUsers.setAccessPolicy(user.id, {
-      permissions: ['admin:read'],
-      roles: ['admin'],
-      status: 'disabled',
-    });
+    await grantNormalizedRole(user, 'admin', ['admin:users:read']);
     const loggedInAt = new Date('2026-01-01T00:00:00.000Z');
     const login = await authUsers.recordLogin(user.id, loggedInAt);
 
-    expect(policy._unsafeUnwrap()).toMatchObject({
-      permissions: ['admin:read'],
+    expect(login._unsafeUnwrap()).toMatchObject({
+      permissions: ['admin:users:read'],
       roles: ['admin'],
-      status: 'disabled',
     });
     expect(login._unsafeUnwrap()?.lastLoginAt.toISOString()).toBe(loggedInAt.toISOString());
   });
@@ -142,7 +182,6 @@ describeIfDocker('AuthUserRepository component', () => {
 
     expect(found._unsafeUnwrap()).toBeNull();
     expect((await authUsers.findById('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
-    expect((await authUsers.setAccessPolicy('00000000-0000-4000-8000-000000000000', {}))._unsafeUnwrap()).toBeNull();
     expect((await authUsers.recordLogin('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
   });
 
@@ -162,17 +201,15 @@ describeIfDocker('AuthUserRepository component', () => {
     const user = (
       await authUsers.createUser({
         email: 'powerful-admin@example.com',
-        roles: ['admin'],
-        permissions: ['admin:users:write', 'admin:users:access-policy:update'],
       })
     )._unsafeUnwrap();
     const actor = (
       await authUsers.createUser({
         email: 'second-powerful-admin@example.com',
-        roles: ['admin'],
-        permissions: ['admin:users:write', 'admin:users:access-policy:update'],
       })
     )._unsafeUnwrap();
+    await grantNormalizedRole(user, 'admin', ['admin:users:write', 'admin:users:access-policy:update']);
+    await grantNormalizedRole(actor, 'admin', ['admin:users:write', 'admin:users:access-policy:update']);
 
     const mutation = await adminUserMutations.mutateAccessPolicyWithAudit({
       targetUserId: user.id,
@@ -201,26 +238,26 @@ describeIfDocker('AuthUserRepository component', () => {
     expect(await orm.em.count(TransactionalOutboxEventEntity, {})).toBe(1);
   });
 
-  it('blocks last powerful admin changes when another active admin lacks required permissions', async () => {
+  it('blocks last powerful admin changes when another active user lacks required permissions', async () => {
     const onlyPowerfulAdmin = (
       await authUsers.createUser({
         email: 'only-powerful-admin@example.com',
-        roles: ['admin'],
-        permissions: ['admin:users:write', 'admin:users:access-policy:update'],
       })
     )._unsafeUnwrap();
-    await authUsers.createUser({
-      email: 'role-only-admin@example.com',
-      roles: ['admin'],
-      permissions: ['admin:users:read'],
-    });
+    const nonPowerfulUser = (
+      await authUsers.createUser({
+        email: 'non-powerful-user@example.com',
+      })
+    )._unsafeUnwrap();
+    await grantNormalizedRole(onlyPowerfulAdmin, 'admin', ['admin:users:write', 'admin:users:access-policy:update']);
+    await grantNormalizedRole(nonPowerfulUser, 'member', ['admin:users:read']);
 
     const mutation = await adminUserMutations.mutateAccessPolicyWithAudit({
       targetUserId: onlyPowerfulAdmin.id,
       actorUserId: '00000000-0000-4000-8000-000000000099',
       action: 'admin.user.access_policy.update',
       policy: {
-        roles: ['admin'],
+        roles: ['member'],
         permissions: ['admin:users:write'],
       },
       audit: { metadata: { requestId: 'req-component' } },

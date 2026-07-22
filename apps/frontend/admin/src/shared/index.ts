@@ -57,6 +57,20 @@ export const errorText = (error: unknown, fallbackKey: TranslationKey, t: Transl
 
 export const totalPages = (total = 0, limit = pageSize): number => Math.max(1, Math.ceil(total / limit));
 
+export const adminPaginationLabels = (t: Translate, currentPage: number, limit: number, total: number) => {
+  const start = total === 0 ? 0 : (currentPage - 1) * limit + 1;
+  const end = Math.min(total, currentPage * limit);
+  return {
+    label: t('admin.pagination.label'),
+    nextAriaLabel: t('admin.pagination.nextAria'),
+    nextLabel: t('admin.pagination.next'),
+    pageAriaLabel: (page: number) => `${t('admin.pagination.pageAria')} ${page}`,
+    previousAriaLabel: t('admin.pagination.previousAria'),
+    previousLabel: t('admin.pagination.previous'),
+    summary: `${start}-${end} ${t('admin.pagination.of')} ${total}`,
+  };
+};
+
 export const join = (values?: readonly string[]): string => (values?.length ? values.join(', ') : '—');
 
 export const formatDate = (value?: string): string => {

@@ -158,7 +158,7 @@ const hmacValue = (value: string | null | undefined): string | undefined => {
   }
   const secret =
     process.env.AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET?.trim() ||
-    process.env.AUTH_JWT_SECRET?.trim() ||
+    process.env.SESSION_SECRET?.trim() ||
     'development-only-auth-login-analytics-secret';
   return createHmac('sha256', secret).update(normalized).digest('hex');
 };

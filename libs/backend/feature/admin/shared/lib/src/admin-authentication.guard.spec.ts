@@ -32,6 +32,14 @@ describe(AdminAuthenticationGuard.name, () => {
     );
   });
 
+  it('rejects a valid bearer token when no cookie session exists', () => {
+    const authorization = 'Bearer header.payload.signature';
+
+    expect(() =>
+      new AdminAuthenticationGuard(new Reflector()).canActivate(contextFor({ headers: { authorization } })),
+    ).toThrow(UnauthorizedException);
+  });
+
   it('keeps shared health routes available to probes', () => {
     const handler = () => undefined;
     Reflect.defineMetadata(HealthRouteMetadataKey, true, handler);

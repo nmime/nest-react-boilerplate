@@ -86,9 +86,7 @@ const jsonResponse = (body: unknown, status = 200): Response =>
   });
 
 const session: AuthSessionViewDto = {
-  accessToken: 'access-token',
-  expiresIn: 3600,
-  tokenType: 'Bearer',
+  authProvider: 'password',
   user: {
     email: 'ada@example.com',
     id: 'user-1',
@@ -159,7 +157,6 @@ describe('generated api clients', () => {
     const authFetch = mockFetch({ data: { principal: null, user: null } });
 
     await authControllerMe({
-      authToken: ' token-123 ',
       baseUrl: '/api/',
       fetchImpl: authFetch,
       headers: { 'x-request-id': 'req-1' },
@@ -171,7 +168,7 @@ describe('generated api clients', () => {
     expect(authRequest.method).toBe('GET');
     expect(authRequest.headers.get('accept')).toBe('application/json');
     expect(authRequest.headers.get('accept-language')).toBe('ru');
-    expect(authRequest.headers.get('authorization')).toBe('Bearer token-123');
+    expect(authRequest.headers.get('authorization')).toBeNull();
     expect(authRequest.headers.get('x-request-id')).toBe('req-1');
     expect(authRequest.signal.aborted).toBe(false);
     abortController.abort();
@@ -179,24 +176,22 @@ describe('generated api clients', () => {
 
     const userFetch = mockFetch({ data: { principal: null, profile: null } });
     await profileControllerMe({
-      authToken: 'user-token',
       baseUrl: 'https://api.example.test/root/',
       fetchImpl: userFetch,
     });
     const userRequest = firstRequest(userFetch);
     expect(userRequest.url).toBe('https://api.example.test/root/profile/me');
-    expect(userRequest.headers.get('authorization')).toBe('Bearer user-token');
+    expect(userRequest.headers.get('authorization')).toBeNull();
     expect(userRequest.headers.get('accept-language')).toBe('ru');
 
     const adminFetch = mockFetch({ data: { principal: null, profile: null } });
     await adminProfileControllerMe({
-      authToken: 'admin-token',
       baseUrl: 'https://admin.example.test',
       fetchImpl: adminFetch,
     });
     const adminRequest = firstRequest(adminFetch);
     expect(adminRequest.url).toBe('https://admin.example.test/admin/profile/me');
-    expect(adminRequest.headers.get('authorization')).toBe('Bearer admin-token');
+    expect(adminRequest.headers.get('authorization')).toBeNull();
     expect(adminRequest.headers.get('accept-language')).toBe('ru');
   });
 

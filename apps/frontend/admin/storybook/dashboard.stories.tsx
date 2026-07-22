@@ -50,9 +50,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole('heading', { name: 'Admin dashboard' })).toBeVisible();
-    await expect(
-      canvas.getAllByRole('link', { name: /Users/u }).some((link) => link.getAttribute('href') === '/admin/users'),
-    ).toBe(true);
+    await expect(canvas.getByRole('button', { name: 'Users' })).toHaveAttribute('aria-expanded', 'false');
     await expect(
       canvas.getAllByRole('link', { name: /Dashboard/u }).some((link) => link.getAttribute('aria-current') === 'page'),
     ).toBe(true);

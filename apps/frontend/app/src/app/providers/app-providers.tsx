@@ -1,17 +1,10 @@
 import { useMemo, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  ApiClientProvider,
-  authApi,
-  authApiToastRules,
-  throwOnOpenApiErrorData,
-  userApiToastRules,
-} from '@app/frontend-api-client';
+import { ApiClientProvider, authApiToastRules, userApiToastRules } from '@app/frontend-api-client';
 import {
   configureApiLocale,
   createDefaultApiToastRules,
   createApiRuntimeFetch,
-  createAuthRefreshFetch,
   useApiRuntimeOverlayModel,
 } from '@app/frontend-api-support';
 import {
@@ -20,7 +13,6 @@ import {
   FrontendQueryProvider,
   FrontendStateProvider,
   translate,
-  useAuthShellStore,
   useAppStore,
   useI18n,
   useStore,
@@ -43,37 +35,18 @@ const ApiClientLocaleBridge = ({ children }: Readonly<{ children: ReactNode }>) 
 const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
   children,
 }: Readonly<{ children: ReactNode }>) {
-  const authStore = useAuthShellStore();
   const runtimeFetch = useMemo(
     () =>
       createApiRuntimeFetch({
-        baseFetch: createAuthRefreshFetch({
-          clearAuth: () => {
-            authStore.clearSession();
-          },
-          refreshAccessToken: async () => {
-            const refreshToken = authStore.refreshToken;
-            if (!refreshToken) {
-              return null;
-            }
-
-            const session = await throwOnOpenApiErrorData(
-              authApi.authControllerRefresh({ refreshToken }, { baseUrl: getAuthApiBaseUrl() }),
-            );
-            authStore.setSession(session.accessToken, session.refreshToken ?? refreshToken);
-
-            return session.accessToken;
-          },
-        }),
+        emitUnauthenticatedAuthRequired: true,
         redirectTo: '/auth',
         toastRules: () => [...authApiToastRules, ...userApiToastRules, ...createDefaultApiToastRules()],
       }),
-    [authStore],
+    [],
   );
 
   return (
     <ApiClientProvider
-      authToken={authStore.bearerToken}
       baseUrls={{
         admin: '',
         auth: getAuthApiBaseUrl(),

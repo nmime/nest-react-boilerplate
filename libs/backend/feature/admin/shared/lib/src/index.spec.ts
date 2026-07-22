@@ -71,12 +71,14 @@ describe('@app/backend-feature-admin-shared CASL RBAC', () => {
       canUpdateUserAccessPolicy: false,
       canReadRoles: false,
       canReadAudit: false,
+      canReadFeatureFlags: false,
+      canWriteFeatureFlags: false,
       canReadSettings: false,
       canUpdateSettings: false,
     });
   });
 
-  it('keeps RBAC fail-closed without authenticated admin claims', () => {
+  it('keeps RBAC fail-closed without an authenticated identity', () => {
     expect(createAdminAccessPolicy()).toEqual({
       isAuthenticated: false,
       roles: [],
@@ -89,6 +91,8 @@ describe('@app/backend-feature-admin-shared CASL RBAC', () => {
       canUpdateUserAccessPolicy: false,
       canReadRoles: false,
       canReadAudit: false,
+      canReadFeatureFlags: false,
+      canWriteFeatureFlags: false,
       canReadSettings: false,
       canUpdateSettings: false,
     });
@@ -98,7 +102,7 @@ describe('@app/backend-feature-admin-shared CASL RBAC', () => {
         roles: ['support'],
         permissions: [AdminProfileReadPermission],
       }),
-    ).toMatchObject({ canAccessAdmin: false, canReadProfile: false });
+    ).toMatchObject({ canAccessAdmin: true, canReadProfile: true });
   });
 
   it('denies admin role alone without explicit permissions', () => {
@@ -116,18 +120,14 @@ describe('@app/backend-feature-admin-shared CASL RBAC', () => {
     });
   });
 
-  it('denies admin permissions when the admin role is absent', () => {
+  it('accepts database-resolved custom roles when their permissions are present', () => {
     expect(
       createAdminAccessPolicy({
         subject: 'support-id',
         roles: ['support'],
         permissions: [AdminUsersReadPermission, AdminAuditReadPermission],
       }),
-    ).toMatchObject({
-      canAccessAdmin: false,
-      canReadAudit: false,
-      canReadUsers: false,
-    });
+    ).toMatchObject({ canAccessAdmin: true, canReadAudit: true, canReadUsers: true });
   });
 
   it('ignores unknown admin permission strings while exposing catalog validation', () => {
@@ -249,6 +249,6 @@ describe('@app/backend-feature-admin-shared CASL RBAC', () => {
 
     expect(policy.roles).toEqual([]);
     expect(policy.permissions).toEqual([AdminDashboardReadPermission, AdminProfileReadPermission]);
-    expect(policy.canAccessAdmin).toBe(false);
+    expect(policy.canAccessAdmin).toBe(true);
   });
 });

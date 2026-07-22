@@ -9,7 +9,7 @@ Use split examples as starting points:
 - `.env.production.example` for production secret managers, Docker secret files,
   runtime environment injection, or Kubernetes Secret manifests.
 
-Production must provide `DATABASE_URL`, `AUTH_JWT_SECRET`, CORS origins, OAuth
+Production must provide `DATABASE_URL`, `SESSION_SECRET`, CORS origins, OAuth
 values when enabled, and frontend API URLs. Keep `POSTGRES_SYNCHRONIZE=false`;
 use migrations instead. Never commit `.env.production`, Docker secret files,
 Kubernetes Secret values, or PM2 runtime secrets.

@@ -63,8 +63,8 @@ export class ProviderIdentitiesModel {
 
 /**
  * Creates the {@link ProviderIdentitiesModel} bound to the active query client
- * and auth shell store. The api-client is read through a live ref so a
- * refreshed bearer token is always used by the next request.
+ * and auth shell store. The API client sends the browser's HttpOnly session
+ * cookie with each request.
  */
 export function useProviderIdentitiesModel(): ProviderIdentitiesModel {
   const queryClient = useQueryClient();

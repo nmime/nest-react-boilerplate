@@ -20,6 +20,11 @@ import { Migration20260720120000AddAuthRefreshTokenAuthContext } from './Migrati
 import { Migration20260721170000AddAdminAuditFilterIndexes } from './Migration20260721170000AddAdminAuditFilterIndexes';
 import { Migration20260721200000CreateAuthLoginAnalytics } from './Migration20260721200000CreateAuthLoginAnalytics';
 import { Migration20260721201000GrantAuthLoginAnalyticsRead } from './Migration20260721201000GrantAuthLoginAnalyticsRead';
+import { Migration20260721210000NormalizeRbacAccess } from './Migration20260721210000NormalizeRbacAccess';
+import { Migration20260722090000DropLegacyRefreshTokens } from './Migration20260722090000DropLegacyRefreshTokens';
+import { Migration20260722091000DropLegacyAuthUserAccessCache } from './Migration20260722091000DropLegacyAuthUserAccessCache';
+import { Migration20260722092000CreateCanonicalSessions } from './Migration20260722092000CreateCanonicalSessions';
+import { Migration20260722100000GrantFeatureFlagPermissions } from './Migration20260722100000GrantFeatureFlagPermissions';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
 
@@ -45,6 +50,11 @@ export const authMigrations = [
   Migration20260721170000AddAdminAuditFilterIndexes,
   Migration20260721200000CreateAuthLoginAnalytics,
   Migration20260721201000GrantAuthLoginAnalyticsRead,
+  Migration20260721210000NormalizeRbacAccess,
+  Migration20260722090000DropLegacyRefreshTokens,
+  Migration20260722091000DropLegacyAuthUserAccessCache,
+  Migration20260722092000CreateCanonicalSessions,
+  Migration20260722100000GrantFeatureFlagPermissions,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -77,3 +87,8 @@ export * from './Migration20260720120000AddAuthRefreshTokenAuthContext';
 export * from './Migration20260721170000AddAdminAuditFilterIndexes';
 export * from './Migration20260721200000CreateAuthLoginAnalytics';
 export * from './Migration20260721201000GrantAuthLoginAnalyticsRead';
+export * from './Migration20260721210000NormalizeRbacAccess';
+export * from './Migration20260722090000DropLegacyRefreshTokens';
+export * from './Migration20260722091000DropLegacyAuthUserAccessCache';
+export * from './Migration20260722092000CreateCanonicalSessions';
+export * from './Migration20260722100000GrantFeatureFlagPermissions';

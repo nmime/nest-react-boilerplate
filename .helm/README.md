@@ -19,7 +19,7 @@ routes.
   release image used by a Telegram-enabled Helm environment; runtime Helm
   values cannot retrofit a disabled button into an already-built bundle.
 - Create a Kubernetes Secret outside the chart and set `secrets.existingSecret`.
-  The Secret must provide `AUTH_JWT_SECRET`, `BETTER_AUTH_SECRET`, and `DATABASE_URL`. When enabling an optional bot API,
+  The Secret must provide `SESSION_SECRET`, `BETTER_AUTH_SECRET`, and `DATABASE_URL`. When enabling an optional bot API,
   include its documented Telegram or Discord runtime values in the same Secret.
   Telegram bot/TMA requires `TELEGRAM_BOT_TOKEN`; Telegram OIDC additionally
   requires `TELEGRAM_OIDC_CLIENT_SECRET`; webhook mode requires

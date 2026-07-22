@@ -1,14 +1,8 @@
 import { Controller, Get, InternalServerErrorException, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
-import { AdminAuthLoginAnalyticsReadPermission, AdminRbacGuard, AdminRole } from '@app/backend-feature-admin-shared';
-import {
-  CurrentUser,
-  RequirePermissions,
-  RequireRoles,
-  type AuthenticatedPrincipal,
-} from '@app/backend-feature-auth-shared';
+import { AdminAuthLoginAnalyticsReadPermission, AdminRbacGuard } from '@app/backend-feature-admin-shared';
+import { CurrentUser, RequirePermissions, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import {
   AuthLoginAnalyticsListPayloadDto,
   AuthLoginAnalyticsQueryDto,
@@ -20,10 +14,8 @@ import {
 } from './auth-login-analytics-admin.service';
 
 @ApiExceptions(400, 401, 403, 429, 500)
-@ApiBearerAuth()
 @ApiSessionCookieAuth()
 @UseGuards(new AdminRbacGuard())
-@RequireRoles(AdminRole)
 @RequirePermissions(AdminAuthLoginAnalyticsReadPermission)
 @Controller('admin/auth/login-analytics')
 export class AuthLoginAnalyticsAdminController {

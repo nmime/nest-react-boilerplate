@@ -1,5 +1,4 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import {
@@ -27,7 +26,6 @@ export class ProfileController {
 
   @Get('me')
   @ApiOkDataResponse(ProfilePayloadDto)
-  @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @RequirePermissions(UserProfileReadPermission)
   me(@CurrentUser() principal: AuthenticatedPrincipal): OkResponse<ProfilePayload> {

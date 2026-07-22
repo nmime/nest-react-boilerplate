@@ -12,7 +12,8 @@ import {
   UiSection,
   UiSelect,
   UiStatusTag,
-  UiTextarea,
+  UiTextField,
+  UiTextareaField,
 } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
 import {
@@ -149,6 +150,7 @@ export const NotificationBroadcastsPage = ({
     <UiSection
       className="admin-page admin-notification-page"
       eyebrow={t('admin.notification.broadcasts.eyebrow')}
+      headingLevel={1}
       title={t('admin.notification.broadcasts.title')}
     >
       <p className="admin-page-description">{t('admin.notification.description')}</p>
@@ -156,8 +158,8 @@ export const NotificationBroadcastsPage = ({
       {access.canWriteNotificationBroadcasts ? (
         <UiCard className="admin-filter-card" title={t('admin.notification.broadcasts.create')}>
           <div className="admin-notification-form-grid">
-            <UiInput
-              aria-label={t('admin.notification.templates.name')}
+            <UiTextField
+              label={t('admin.notification.templates.name')}
               onChange={(event) => {
                 setName(event.target.value);
               }}
@@ -185,8 +187,8 @@ export const NotificationBroadcastsPage = ({
               options={getNotificationProviderOptions(channel, t)}
               value={provider}
             />
-            <UiInput
-              aria-label={t('admin.notification.broadcasts.priority')}
+            <UiTextField
+              label={t('admin.notification.broadcasts.priority')}
               max={10}
               min={0}
               onChange={(event) => {
@@ -195,8 +197,8 @@ export const NotificationBroadcastsPage = ({
               type="number"
               value={priority}
             />
-            <UiTextarea
-              aria-label={t('admin.notification.broadcasts.variables')}
+            <UiTextareaField
+              label={t('admin.notification.broadcasts.variables')}
               onChange={(event) => {
                 setVariables(event.target.value);
               }}

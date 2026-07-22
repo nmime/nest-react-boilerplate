@@ -2,6 +2,7 @@ import { errAsync, okAsync, type ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import {
+  AdminManageAllPermission,
   AdminRole,
   AdminRolesReadPermission,
   AdminRolesWritePermission,
@@ -71,7 +72,7 @@ const createUser = () => ({
   updatedAt: new Date('2026-01-02T00:00:00.000Z'),
 });
 
-const createDeps = () => {
+const createDeps = (withAudit = false) => {
   const roles = {
     listRolesWithPermissions: vi.fn(() =>
       okAsync([
@@ -98,6 +99,7 @@ const createDeps = () => {
     findByKey: vi.fn((): TestResult<FakeRole | null> => okAsync(null)),
     findById: vi.fn((): TestResult<FakeRole | null> => okAsync(role())),
     findByKeys: vi.fn(() => okAsync([role({ key: UserRole }), role({ key: AdminRole })])),
+    findPermissionsByKeys: vi.fn((keys: readonly string[]) => okAsync(keys.map((key) => ({ key })))),
     createRole: vi.fn((): TestResult<FakeRole> => okAsync(role({ id: 'role-new', key: 'support', isSystem: false }))),
     updateRole: vi.fn((): TestResult<FakeRole | null> => okAsync(role())),
     setRolePermissions: vi.fn((): TestResult<{ role: FakeRole; permissionKeys: string[] } | null> =>
@@ -120,11 +122,23 @@ const createDeps = () => {
         }),
     ),
   };
+  const transactionalEntityManager = { transaction: 'role-audit' };
+  const auditLogs = {
+    recordTransactionally: vi.fn(async (input: { operation: (entityManager: unknown) => Promise<unknown> }) =>
+      input.operation(transactionalEntityManager),
+    ),
+  };
 
   return {
     roles,
     adminUserMutations,
-    useCase: new AdminRolesUseCase(roles as never, adminUserMutations as never),
+    auditLogs,
+    transactionalEntityManager,
+    useCase: new AdminRolesUseCase(
+      roles as never,
+      adminUserMutations as never,
+      withAudit ? (auditLogs as never) : undefined,
+    ),
   };
 };
 
@@ -159,16 +173,42 @@ describe('AdminRolesUseCase', () => {
       permissions: [AdminUsersReadPermission],
     });
 
-    expect(roles.findByKey).toHaveBeenCalledWith('support', tenantId);
-    expect(roles.createRole).toHaveBeenCalledWith({
+    expect(roles.findByKey).toHaveBeenCalledWith('support', tenantId, undefined);
+    expect(roles.createRole).toHaveBeenCalledWith(
+      {
+        tenantId,
+        key: 'support',
+        label: 'Support',
+        description: undefined,
+        isSystem: false,
+      },
+      undefined,
+    );
+    expect(roles.setRolePermissions).toHaveBeenCalledWith(
+      'role-new',
+      [AdminUsersReadPermission],
       tenantId,
-      key: 'support',
-      label: 'Support',
-      description: undefined,
-      isSystem: false,
-    });
-    expect(roles.setRolePermissions).toHaveBeenCalledWith('role-new', [AdminUsersReadPermission], tenantId);
+      undefined,
+      undefined,
+    );
     expect(created.id).toBe('role-new');
+  });
+
+  it('passes the audit transaction manager through every auth-owned role mutation', async () => {
+    const { auditLogs, roles, transactionalEntityManager, useCase } = createDeps(true);
+
+    await expect(useCase.updateRole(principal, 'role-admin', { label: 'Operations' }, context)).resolves.toMatchObject({
+      id: 'role-admin',
+    });
+
+    expect(auditLogs.recordTransactionally).toHaveBeenCalledTimes(1);
+    expect(roles.listRolesWithPermissions).toHaveBeenCalledWith(tenantId, transactionalEntityManager);
+    expect(roles.updateRole).toHaveBeenCalledWith(
+      'role-admin',
+      { label: 'Operations' },
+      tenantId,
+      transactionalEntityManager,
+    );
   });
 
   it('rejects duplicate role keys with a conflict', async () => {
@@ -190,6 +230,19 @@ describe('AdminRolesUseCase', () => {
     ).rejects.toThrow(/Unknown permission keys/);
   });
 
+  it('refuses a role mutation when a known catalog permission has no database row', async () => {
+    const { roles, useCase } = createDeps();
+    roles.findPermissionsByKeys.mockReturnValue(okAsync([]));
+
+    await expect(
+      useCase.createRole(principal, {
+        key: 'support',
+        permissions: [AdminUsersReadPermission],
+      }),
+    ).rejects.toThrow(/permission catalog is missing database rows/i);
+    expect(roles.createRole).not.toHaveBeenCalled();
+  });
+
   it("blocks stripping the admin role's core management grants", async () => {
     const { roles, useCase } = createDeps();
 
@@ -206,12 +259,22 @@ describe('AdminRolesUseCase', () => {
     roles.setRolePermissions.mockReturnValue(
       okAsync({
         role: role(),
-        permissionKeys: [AdminUsersWritePermission, AdminUsersAccessPolicyUpdatePermission, AdminRolesWritePermission],
+        permissionKeys: [
+          AdminUsersWritePermission,
+          AdminUsersAccessPolicyUpdatePermission,
+          AdminRolesWritePermission,
+          AdminManageAllPermission,
+        ],
       }),
     );
 
     const updated = await useCase.setRolePermissions(principal, 'role-admin', {
-      permissions: [AdminUsersWritePermission, AdminUsersAccessPolicyUpdatePermission, AdminRolesWritePermission],
+      permissions: [
+        AdminUsersWritePermission,
+        AdminUsersAccessPolicyUpdatePermission,
+        AdminRolesWritePermission,
+        AdminManageAllPermission,
+      ],
     });
 
     expect(updated.permissions).toContain(AdminRolesWritePermission);
@@ -300,7 +363,7 @@ describe('AdminRolesUseCase', () => {
       description: 'Ops team',
     });
 
-    expect(roles.updateRole).toHaveBeenCalledWith('role-admin', { description: 'Ops team' }, tenantId);
+    expect(roles.updateRole).toHaveBeenCalledWith('role-admin', { description: 'Ops team' }, tenantId, undefined);
     expect(updated.id).toBe('role-admin');
   });
 

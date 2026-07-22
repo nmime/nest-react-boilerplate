@@ -30,6 +30,7 @@ const pickPort = (envName: string, offset: number): string =>
   process.env[envName] ?? String(generatedPortBase + offset);
 const ports = {
   postgres: pickPort("POSTGRES_PORT", 0),
+  redis: pickPort("REDIS_PORT", 4),
   adminApi: pickPort("ADMIN_APP_API_PORT", 1),
   userApi: pickPort("USER_APP_API_PORT", 2),
   authApi: pickPort("AUTH_APP_API_PORT", 3),
@@ -55,6 +56,7 @@ const env = {
   COMPOSE_PROJECT_NAME:
     process.env.COMPOSE_PROJECT_NAME ?? `nrbsmoke${process.pid}`,
   POSTGRES_PORT: ports.postgres,
+  REDIS_PORT: ports.redis,
   ADMIN_APP_API_PORT: ports.adminApi,
   USER_APP_API_PORT: ports.userApi,
   AUTH_APP_API_PORT: ports.authApi,
@@ -65,7 +67,7 @@ const env = {
   MOBILE_APP_PORT: ports.mobileApp,
   COMPOSE_PROFILES:
     process.env.COMPOSE_PROFILES ??
-    ['postgres', ...backendServices, ...frontendServices].join(','),
+    ['postgres', 'redis', ...backendServices, ...frontendServices].join(','),
   // Keep memory bounded while allowing independent image targets to share the
   // BuildKit dependency layers during a single Compose invocation.
   COMPOSE_PARALLEL_LIMIT: composeParallelLimit,
@@ -74,11 +76,8 @@ const env = {
   NX_DAEMON: "false",
   NX_PARALLEL: process.env.NX_PARALLEL ?? "1",
   CORS_ORIGINS: process.env.CORS_ORIGINS ?? frontendOrigins,
-  AUTH_JWT_SECRET:
-    process.env.AUTH_JWT_SECRET ?? "docker-smoke-jwt-secret-change-me",
-  AUTH_JWT_ISSUER: process.env.AUTH_JWT_ISSUER ?? "nest-react-boilerplate",
-  AUTH_JWT_AUDIENCE:
-    process.env.AUTH_JWT_AUDIENCE ?? "nest-react-boilerplate-api",
+  SESSION_SECRET:
+    process.env.SESSION_SECRET ?? "docker-smoke-session-secret-change-me",
 };
 const probes: [string, string, string, number][] = [
   ["auth health", url(ports.authApi, "/health"), "auth-app-api", 200],
@@ -158,7 +157,7 @@ async function buildServices(services: string[]): Promise<void> {
 }
 
 async function composeUp() {
-  await run("docker", [...compose, "up", "--no-build", "-d", "postgres"], {
+  await run("docker", [...compose, "up", "--no-build", "-d", "postgres", "redis"], {
     stdio: "inherit",
     env,
   });

@@ -25,7 +25,7 @@ export const AuthPage = observer(function AuthPage({
     locale,
     messages: {
       authenticationFailed: t('user.error.authenticationFailed'),
-      missingToken: t('user.state.missingToken'),
+      unauthenticated: t('user.state.unauthenticated'),
       profileRequestFailed: t('user.error.profileRequestFailed'),
       profileUnknown: t('user.profile.unknown'),
     },

@@ -27,7 +27,7 @@ export class DiscordBotConfig {
         clean(env.DISCORD_COMMAND_REGISTRATION_SCOPE) === 'guild' || registrationGuildId ? 'guild' : 'global',
       webAppBaseUrl: clean(env.DISCORD_WEB_APP_BASE_URL ?? env.AUTH_APP_BASE_URL),
       defaultTenantId: clean(env.DISCORD_DEFAULT_TENANT_ID),
-      customIdSecret: requireConfig(env.DISCORD_CUSTOM_ID_SECRET ?? env.AUTH_JWT_SECRET, 'DISCORD_CUSTOM_ID_SECRET'),
+      customIdSecret: requireConfig(env.DISCORD_CUSTOM_ID_SECRET, 'DISCORD_CUSTOM_ID_SECRET'),
     };
   }
 }

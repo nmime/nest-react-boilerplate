@@ -49,12 +49,17 @@ const createDeps = () => {
         okAsync({ before: createUser(), after: createUser() }),
     ),
   };
+  const roles = {
+    findByKeys: vi.fn(() => okAsync([{ key: 'user' }])),
+    findPermissionsByKeys: vi.fn((keys: readonly string[]) => okAsync(keys.map((key) => ({ key })))),
+  };
 
   return {
     users,
     auditLogs,
     adminUserMutations,
-    useCase: new AdminUsersUseCase(users as never, auditLogs as never, adminUserMutations as never),
+    roles,
+    useCase: new AdminUsersUseCase(users as never, auditLogs as never, adminUserMutations as never, roles as never),
   };
 };
 
@@ -96,5 +101,20 @@ describe('AdminUsersUseCase', () => {
         context,
       ),
     ).rejects.toThrow(/was not found/);
+  });
+
+  it('refuses an access policy when a catalog permission was not seeded in the database', async () => {
+    const { adminUserMutations, roles, useCase } = createDeps();
+    roles.findPermissionsByKeys.mockReturnValue(okAsync([]));
+
+    await expect(
+      useCase.updateUserAccessPolicy(
+        principal,
+        'user-id',
+        { roles: ['user'], permissions: [UserProfileReadPermission], reason: 'Reset access' },
+        context,
+      ),
+    ).rejects.toThrow(/permission catalog is missing database rows/i);
+    expect(adminUserMutations.mutateAccessPolicyWithAudit).not.toHaveBeenCalled();
   });
 });

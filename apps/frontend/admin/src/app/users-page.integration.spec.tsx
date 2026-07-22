@@ -103,6 +103,32 @@ const rolesCatalog = {
   ],
 };
 
+const customRolesCatalog = {
+  ...rolesCatalog,
+  assignableRoles: [...rolesCatalog.assignableRoles, 'operations'],
+  assignablePermissions: [...rolesCatalog.assignablePermissions, 'admin:notification-templates:read'],
+  roles: [
+    ...rolesCatalog.roles,
+    {
+      id: 'role-operations',
+      role: 'operations',
+      label: 'Operations',
+      description: 'Operational administrators',
+      isSystem: false,
+      permissions: ['admin:notification-templates:read'],
+    },
+  ],
+  permissions: [
+    ...rolesCatalog.permissions,
+    {
+      permission: 'admin:notification-templates:read',
+      resource: 'admin.notification-templates',
+      action: 'read',
+      description: 'Read notification templates',
+    },
+  ],
+};
+
 const ok = <T,>(data: T, status = 200) => ({
   data,
   error: undefined,
@@ -406,6 +432,63 @@ describe('admin users page interactions', () => {
 
     expect(await screen.findByText('Select at least one role before updating access policy.')).toBeTruthy();
     expect(assignSpy).not.toHaveBeenCalled();
+  });
+
+  it('assigns database-created roles and the complete shared permission catalog', async () => {
+    mockList();
+    vi.spyOn(adminApi, 'adminUsersControllerRoles').mockResolvedValue(ok(customRolesCatalog));
+    const assignSpy = vi
+      .spyOn(adminApi, 'adminRolesControllerAssignUserRoles')
+      .mockResolvedValue(ok({ ...activeUser, roles: ['operations'] }));
+    const accessSpy = vi.spyOn(adminApi, 'adminUsersControllerUpdateUserAccessPolicy').mockResolvedValue(
+      ok({
+        ...activeUser,
+        roles: ['operations'],
+        permissions: ['admin:notification-templates:read'],
+      }),
+    );
+
+    renderUsersPage();
+    expect(await screen.findByText('user@example.com')).toBeTruthy();
+
+    openActionsMenu();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Assign roles' }));
+    let dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'user' }));
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'operations' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Assign roles' }));
+
+    await waitFor(() => {
+      expect(assignSpy).toHaveBeenCalledWith('user-1', { roles: ['operations'] }, undefined);
+    });
+
+    openActionsMenu();
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Edit access policy' }));
+    dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'user' }));
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'operations' }));
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'profile:read' }));
+    fireEvent.click(
+      within(dialog).getByRole('checkbox', {
+        name: 'admin:notification-templates:read',
+      }),
+    );
+    fireEvent.change(within(dialog).getByLabelText('Access policy audit reason'), {
+      target: { value: 'grant operations access' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Update access policy' }));
+
+    await waitFor(() => {
+      expect(accessSpy).toHaveBeenCalledWith(
+        'user-1',
+        {
+          roles: ['operations'],
+          permissions: ['admin:notification-templates:read'],
+          reason: 'grant operations access',
+        },
+        undefined,
+      );
+    });
   });
 
   it('surfaces a backend rejection of a role assignment', async () => {

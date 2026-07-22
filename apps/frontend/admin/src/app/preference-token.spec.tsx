@@ -81,8 +81,12 @@ describe('admin preference session handling', () => {
     expect(window.location.href).not.toContain('admin_token=');
     expect(window.location.href).not.toContain('token=');
     expect(window.location.search).toBe('?tab=profile');
-    fireEvent.click(screen.getByRole('combobox', { name: 'Theme' }));
-    fireEvent.click(await screen.findByRole('option', { name: 'Light' }));
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Theme' }), {
+      button: 0,
+      ctrlKey: false,
+      pointerType: 'mouse',
+    });
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Light' }));
 
     await waitFor(() => {
       expect(requests.some((request) => request.url.includes('preferences'))).toBe(true);

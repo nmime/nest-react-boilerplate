@@ -12,14 +12,18 @@ function createEntityManagerMock() {
   const persist = vi.fn(() => undefined);
   const flush = vi.fn(() => Promise.resolve());
   const findOne = vi.fn(() => Promise.resolve<AuthUserEntity | null>(null));
+  const execute = vi.fn((): Promise<Array<{ role_key: string | null; permission_key: string | null }>> =>
+    Promise.resolve([]),
+  );
   const entityManager = {
     create,
     persist,
     flush,
     findOne,
+    getConnection: () => ({ execute }),
   } as unknown as EntityManager;
 
-  return { create, persist, flush, findOne, entityManager };
+  return { create, persist, flush, findOne, execute, entityManager };
 }
 
 describe('AuthUserRepository', () => {
@@ -40,8 +44,8 @@ describe('AuthUserRepository', () => {
     expect(entity).toMatchObject({
       email: 'user@example.com',
       displayName: 'User',
-      permissions: ['profile:read'],
-      roles: ['user'],
+      permissions: [],
+      roles: [],
       locale: 'ru',
       theme: 'system',
       status: 'active',
@@ -61,13 +65,19 @@ describe('AuthUserRepository', () => {
 
   it('finds an auth user by email', async () => {
     const entity = new AuthUserEntity({ email: 'user@example.com' });
-    const { findOne, entityManager } = createEntityManagerMock();
+    const { findOne, execute, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(entity);
+    execute.mockResolvedValue([
+      { role_key: 'admin', permission_key: 'admin:users:read' },
+      { role_key: 'user', permission_key: 'profile:read' },
+    ]);
     const authUsers = new AuthUserRepository(entityManager);
 
     const result = await authUsers.findByEmail('user@example.com');
 
     expect(result._unsafeUnwrap()).toBe(entity);
+    expect(entity.roles).toEqual(['user', 'admin']);
+    expect(entity.permissions).toEqual(['profile:read', 'admin:users:read']);
     expect(findOne).toHaveBeenCalledWith(AuthUserEntity, {
       tenantId: DefaultAuthTenantId,
       email: { $ne: null, $eq: 'user@example.com' },
@@ -101,8 +111,8 @@ describe('AuthUserRepository', () => {
   it('lists and counts users with tenant-scoped allowlisted filters', async () => {
     const entity = new AuthUserEntity({ email: 'admin@example.com' });
     const { entityManager } = createEntityManagerMock();
-    const find = vi.fn(() => Promise.resolve([entity]));
-    const count = vi.fn(() => Promise.resolve(1));
+    const find = vi.fn((_entity: unknown, _filter: unknown, _options?: unknown) => Promise.resolve([entity]));
+    const count = vi.fn((_entity: unknown, _filter: unknown) => Promise.resolve(1));
     Object.assign(entityManager, { find, count });
     const authUsers = new AuthUserRepository(entityManager);
 
@@ -125,19 +135,19 @@ describe('AuthUserRepository', () => {
 
     expect(find).toHaveBeenCalledWith(
       AuthUserEntity,
-      {
+      expect.objectContaining({
         tenantId: 'tenant-id',
         $or: [{ email: { $ne: null, $ilike: '%Ada\\_\\%%' } }, { displayName: { $ilike: '%Ada\\_\\%%' } }],
         status: 'active',
-        roles: { $contains: ['admin'] },
-        permissions: { $contains: ['admin:users:read'] },
-      },
+      }),
       { limit: 10, offset: 5, orderBy: { createdAt: 'DESC', id: 'ASC' } },
     );
-    expect(count).toHaveBeenCalledWith(AuthUserEntity, {
-      tenantId: 'tenant-id',
-      roles: { $contains: ['admin'] },
-    });
+    const listFilter = find.mock.calls[0]?.[1];
+    const countFilter = count.mock.calls[0]?.[1];
+    expect(listFilter).not.toHaveProperty('roles');
+    expect(listFilter).not.toHaveProperty('permissions');
+    expect(count).toHaveBeenCalledWith(AuthUserEntity, expect.objectContaining({ tenantId: 'tenant-id' }));
+    expect(countFilter).not.toHaveProperty('roles');
   });
 
   it('defensively caps and clamps pagination at repository level', async () => {
@@ -153,64 +163,6 @@ describe('AuthUserRepository', () => {
       { tenantId: DefaultAuthTenantId },
       { limit: 100, offset: 0, orderBy: { createdAt: 'DESC', id: 'ASC' } },
     );
-  });
-
-  it('updates access policy fields', async () => {
-    const entity = new AuthUserEntity({ email: 'user@example.com' });
-    const { findOne, flush, entityManager } = createEntityManagerMock();
-    findOne.mockResolvedValue(entity);
-    const authUsers = new AuthUserRepository(entityManager);
-
-    const result = await authUsers.setAccessPolicy('user-id', {
-      permissions: ['admin:read'],
-      roles: ['admin'],
-      status: 'disabled',
-    });
-
-    expect(result._unsafeUnwrap()).toMatchObject({
-      permissions: ['admin:read'],
-      roles: ['admin'],
-      status: 'disabled',
-    });
-    expect(flush).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps existing access policy fields when no policy fields are supplied', async () => {
-    const entity = new AuthUserEntity({
-      email: 'user@example.com',
-      permissions: ['profile:read'],
-      roles: ['user'],
-      status: 'active',
-    });
-    const { findOne, flush, entityManager } = createEntityManagerMock();
-    findOne.mockResolvedValue(entity);
-    const authUsers = new AuthUserRepository(entityManager);
-
-    const result = await authUsers.setAccessPolicy('user-id', {});
-
-    expect(result._unsafeUnwrap()).toMatchObject({
-      permissions: ['profile:read'],
-      roles: ['user'],
-      status: 'active',
-    });
-    expect(flush).toHaveBeenCalledTimes(1);
-  });
-
-  it('maps repository errors when updating access policy', async () => {
-    const entity = new AuthUserEntity({ email: 'user@example.com' });
-    const { findOne, flush, entityManager } = createEntityManagerMock();
-    findOne.mockResolvedValue(entity);
-    flush.mockRejectedValue(new Error('policy update failed'));
-    const authUsers = new AuthUserRepository(entityManager);
-
-    const result = await authUsers.setAccessPolicy('user-id', {
-      roles: ['admin'],
-    });
-
-    expect(result._unsafeUnwrapErr()).toEqual({
-      code: 'repository_error',
-      message: 'policy update failed',
-    });
   });
 
   it('updates a persisted auth user locale', async () => {
@@ -303,7 +255,6 @@ describe('AuthUserRepository', () => {
 
     expect((await authUsers.findByEmail('missing@example.com'))._unsafeUnwrap()).toBeNull();
     expect((await authUsers.findById('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
-    expect((await authUsers.setAccessPolicy('00000000-0000-4000-8000-000000000000', {}))._unsafeUnwrap()).toBeNull();
     expect((await authUsers.setLocale('00000000-0000-4000-8000-000000000000', 'ru'))._unsafeUnwrap()).toBeNull();
     expect((await authUsers.recordLogin('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
   });

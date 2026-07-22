@@ -17,8 +17,8 @@ export interface UseLogoutResult {
 
 /**
  * Wires the observable {@link LogoutModel} to the active TanStack Query client,
- * auth api-client, and auth shell store. The api-client is read through a live
- * ref so a refreshed bearer token is always attached to the logout request.
+ * auth api-client, and auth shell store. The request uses the browser's
+ * HttpOnly session cookie through the shared API client.
  */
 export function useLogout({ navigate, redirectTo = '/auth' }: UseLogoutInput = {}): UseLogoutResult {
   const queryClient = useQueryClient();

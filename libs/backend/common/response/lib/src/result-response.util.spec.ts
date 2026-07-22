@@ -256,7 +256,7 @@ describe('exceptions response mapper', () => {
     }
   });
 
-  it('adds the Bearer challenge required by 401 responses', () => {
+  it('does not advertise a retired Bearer authentication scheme on 401 responses', () => {
     const restoreLogger = muteExceptionLogger();
     const json = vi.fn();
     const header = vi.fn(() => ({ json }));
@@ -271,7 +271,7 @@ describe('exceptions response mapper', () => {
 
     try {
       new ExceptionsFilter().catch(new UnauthorizedException('secret'), host as never);
-      expect(header).toHaveBeenCalledWith('www-authenticate', 'Bearer');
+      expect(header).not.toHaveBeenCalledWith('www-authenticate', expect.anything());
       expect(json.mock.calls[0]?.[0]).toMatchObject({ status: 401, type: 'about:blank' });
     } finally {
       restoreLogger();

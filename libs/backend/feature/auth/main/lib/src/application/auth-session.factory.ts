@@ -10,7 +10,6 @@ import {
   isLanguage,
   toAuthenticatedUserView,
 } from '@app/backend-feature-auth-shared';
-import { readExpiresInSeconds, signDomainJwt, type JwtSigningEnvironment } from '../domain';
 
 export interface AuthSessionUserRecord {
   id: string;
@@ -30,8 +29,6 @@ export interface AuthSessionUserRecord {
 
 export function createAuthSession(
   user: AuthSessionUserRecord,
-  env: JwtSigningEnvironment,
-  refreshToken?: string,
   claims: AuthMethodClaims = {
     amr: ['pwd'],
     authProvider: AuthProvider.Password,
@@ -39,39 +36,14 @@ export function createAuthSession(
     authTime: Math.floor(Date.now() / 1000),
   },
 ): AuthSessionView {
-  const expiresIn = readExpiresInSeconds(env.AUTH_JWT_EXPIRES_IN_SECONDS);
   const view = toAuthenticatedUserView(user);
   return {
     user: view,
-    accessToken: signDomainJwt(
-      {
-        sub: view.id,
-        tid: view.tenantId,
-        tenantId: view.tenantId,
-        email: view.email,
-        name: view.displayName,
-        locale: view.locale,
-        theme: view.theme,
-        roles: view.roles,
-        permissions: view.permissions,
-        ...(claims.amr ? { amr: claims.amr } : {}),
-        ...(claims.authProvider ? { auth_provider: claims.authProvider } : {}),
-        ...(claims.authChannel ? { auth_channel: claims.authChannel } : {}),
-        ...(claims.authTime ? { auth_time: claims.authTime } : {}),
-        ...(claims.externalIdentityId ? { external_identity_id: claims.externalIdentityId } : {}),
-        ...(view.avatarUrl ? { avatar_url: view.avatarUrl } : {}),
-      },
-      env,
-      expiresIn,
-    ),
-    tokenType: 'Bearer',
-    expiresIn,
     ...(claims.amr ? { amr: claims.amr } : {}),
     ...(claims.authProvider ? { authProvider: claims.authProvider } : {}),
     ...(claims.authChannel ? { authChannel: claims.authChannel } : {}),
     ...(claims.authTime ? { authTime: claims.authTime } : {}),
     ...(claims.externalIdentityId ? { externalIdentityId: claims.externalIdentityId } : {}),
-    ...(refreshToken ? { refreshToken } : {}),
   };
 }
 

@@ -66,9 +66,9 @@ describe('admin route base handling', () => {
     expect(html).not.toContain('href="/admin/tenants"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('href="#xr-content"');
-    expect(html).toContain('class="admin-shell"');
-    expect(html).toContain('class="admin-sidebar"');
-    expect(html).toContain('class="admin-main-panel"');
+    expect(html).toContain('xr-admin-console');
+    expect(html).toContain('xr-admin-console__sidebar');
+    expect(html).toContain('xr-admin-console__content');
   });
 
   it('renders the production admin sidebar for permissioned routes', () => {
@@ -82,6 +82,7 @@ describe('admin route base handling', () => {
         'admin:roles:read',
         'admin:audit:read',
         'admin:auth-login-analytics:read',
+        'admin:settings:read',
         'admin:notification-templates:read',
         'admin:notification-segments:read',
         'admin:notification-broadcasts:read',
@@ -101,7 +102,36 @@ describe('admin route base handling', () => {
     expect(html).toContain('href="/admin/notifications/templates"');
     expect(html).toContain('href="/admin/notifications/segments"');
     expect(html).toContain('href="/admin/notifications/broadcasts"');
+    expect(html).toContain('href="/admin/settings/errors"');
     expect(html).toContain('data-current="true"');
+  });
+
+  it('keeps login analytics visible only for its own capability', () => {
+    const analyticsOnlyAccess = createAdminAccess({
+      subject: 'admin-id',
+      roles: ['admin'],
+      permissions: ['admin:dashboard:read', 'admin:auth-login-analytics:read'],
+    });
+    const auditOnlyAccess = createAdminAccess({
+      subject: 'admin-id',
+      roles: ['admin'],
+      permissions: ['admin:dashboard:read', 'admin:audit:read'],
+    });
+
+    const analyticsNavigation = renderAdminMarkup(
+      <AdminLayout access={analyticsOnlyAccess} currentPath="/admin/auth/login-analytics">
+        <span>Analytics content</span>
+      </AdminLayout>,
+    );
+    const auditNavigation = renderAdminMarkup(
+      <AdminLayout access={auditOnlyAccess} currentPath="/admin/audit">
+        <span>Audit content</span>
+      </AdminLayout>,
+    );
+
+    expect(analyticsNavigation).toContain('href="/admin/auth/login-analytics"');
+    expect(auditNavigation).not.toContain('href="/admin/auth/login-analytics"');
+    expect(auditNavigation).toContain('href="/admin/audit"');
   });
 
   it('keeps user routes explicit and rejects unimplemented tenant routes', () => {
@@ -157,16 +187,16 @@ describe('admin frontend CASL RBAC gating', () => {
     );
   });
 
-  it('denies permissions without admin role in client-side hints', () => {
+  it('allows a database-resolved custom role when its permissions authorize the route', () => {
     const access = createAdminAccess({
       subject: 'support-id',
       roles: ['support'],
       permissions: ['admin:dashboard:read', 'admin:profile:read'],
     });
 
-    expect(access.canAccessAdmin).toBe(false);
-    expect(access.canReadDashboard).toBe(false);
-    expect(access.canReadProfile).toBe(false);
+    expect(access.canAccessAdmin).toBe(true);
+    expect(access.canReadDashboard).toBe(true);
+    expect(access.canReadProfile).toBe(true);
   });
 
   it('uses explicit manage/all for broad frontend admin access hints', () => {

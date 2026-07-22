@@ -2,7 +2,10 @@ import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { sessionCookieSecuritySchemes } from './swagger.const';
 
+export type SwaggerAuthScheme = 'session-cookie';
+
 export interface SetupSwaggerOptions {
+  authSchemes?: readonly SwaggerAuthScheme[];
   enabled?: boolean;
   path?: string;
   title: string;
@@ -22,7 +25,7 @@ export function resolveSwaggerOptions(
   options: SetupSwaggerOptions,
   env: Record<string, string | undefined> = process.env,
 ): Required<Pick<SetupSwaggerOptions, 'enabled' | 'path' | 'title' | 'version'>> &
-  Pick<SetupSwaggerOptions, 'description'> {
+  Pick<SetupSwaggerOptions, 'description'> & { authSchemes: readonly SwaggerAuthScheme[] } {
   const requestedEnabled = options.enabled ?? readBoolean(env.OPENAPI_ENABLED) ?? false;
   const enabled =
     env.NODE_ENV === 'production'
@@ -30,6 +33,7 @@ export function resolveSwaggerOptions(
       : requestedEnabled;
 
   return {
+    authSchemes: options.authSchemes ?? ['session-cookie'],
     enabled,
     path: options.path ?? env.OPENAPI_PATH ?? 'docs',
     title: env.OPENAPI_TITLE ?? options.title,
@@ -46,10 +50,12 @@ export function setupSwagger(app: INestApplication, options: SetupSwaggerOptions
     return;
   }
 
-  const builder = new DocumentBuilder().setTitle(resolved.title).setVersion(resolved.version).addBearerAuth();
+  const builder = new DocumentBuilder().setTitle(resolved.title).setVersion(resolved.version);
 
-  for (const { description, name } of sessionCookieSecuritySchemes) {
-    builder.addCookieAuth(name, { description, type: 'apiKey' }, name);
+  if (resolved.authSchemes.includes('session-cookie')) {
+    for (const { description, name } of sessionCookieSecuritySchemes) {
+      builder.addCookieAuth(name, { description, type: 'apiKey' }, name);
+    }
   }
 
   if (resolved.description) {

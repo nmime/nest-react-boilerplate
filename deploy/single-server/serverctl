@@ -242,7 +242,6 @@ configure_secret() {
 ensure_secret_material() {
   require_command openssl
   configure_secret SESSION_SECRET_FILE session_secret.txt hex
-  configure_secret AUTH_JWT_SECRET_FILE auth_jwt_secret.txt hex
   configure_secret BETTER_AUTH_SECRET_FILE better_auth_secret.txt base64
   configure_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE auth_provider_token_encryption_key.txt base64-32
   configure_secret NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE notification_payload_encryption_key.txt base64-32
@@ -260,6 +259,7 @@ ensure_secret_material() {
   configure_secret DISCORD_BOT_TOKEN_FILE discord_bot_token.txt empty
   configure_secret DISCORD_CLIENT_SECRET_FILE discord_client_secret.txt empty
   configure_secret DISCORD_PUBLIC_KEY_FILE discord_public_key.txt empty
+  configure_secret DISCORD_CUSTOM_ID_SECRET_FILE discord_custom_id_secret.txt hex
   configure_secret RESEND_API_KEY_FILE resend_api_key.txt empty
   configure_secret MAILPACE_SERVER_TOKEN_FILE mailpace_server_token.txt empty
 }
@@ -488,7 +488,6 @@ validate_secret_minimum_length() {
 validate_generated_secret_contracts() {
   local encryption_key webhook_secret
   validate_secret_minimum_length SESSION_SECRET_FILE 32
-  validate_secret_minimum_length AUTH_JWT_SECRET_FILE 32
   validate_secret_minimum_length BETTER_AUTH_SECRET_FILE 32
   validate_secret_minimum_length REDIS_PASSWORD_FILE 32
   validate_secret_minimum_length GRAFANA_ADMIN_PASSWORD_FILE 32
@@ -533,7 +532,6 @@ validate_configuration() {
       die "${frontend_api_base_url} must be empty in same-origin mode"
   done
 
-  validate_secret_file AUTH_JWT_SECRET_FILE
   validate_secret_file SESSION_SECRET_FILE
   validate_secret_file BETTER_AUTH_SECRET_FILE
   validate_secret_file AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE
@@ -580,6 +578,7 @@ validate_configuration() {
     validate_secret_file DISCORD_BOT_TOKEN_FILE
     validate_secret_file DISCORD_CLIENT_SECRET_FILE
     validate_secret_file DISCORD_PUBLIC_KEY_FILE
+    validate_secret_file DISCORD_CUSTOM_ID_SECRET_FILE
     [[ "$(environment_value DISCORD_CLIENT_ID)" != example-* ]] || die 'set DISCORD_CLIENT_ID for the discord profile'
     [[ "$(environment_value DISCORD_APPLICATION_ID)" != example-* ]] || die 'set DISCORD_APPLICATION_ID for the discord profile'
   fi

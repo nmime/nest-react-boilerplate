@@ -5,6 +5,7 @@
   "admin.description": "Review administrative data and control role-based access.",
   "admin.action.dashboard": "Dashboard",
   "admin.action.profile": "Profile",
+  "admin.action.featureFlags": "Feature flags",
   "admin.action.users": "Users",
   "admin.action.roles": "Roles",
   "admin.action.audit": "Audit",
@@ -35,6 +36,7 @@
   "admin.notFound.description": "Choose dashboard or profile.",
   "admin.permission.dashboardMissing": "Missing admin dashboard permission.",
   "admin.permission.profileMissing": "Missing admin profile permission.",
+  "admin.permission.featureFlagsMissing": "Missing feature flag permission.",
   "admin.loadingProfile": "Loading admin profile...",
   "admin.loadingEyebrow": "Loading",
   "admin.error.profileRequestFailed": "Profile request failed."

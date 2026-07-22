@@ -1,24 +1,14 @@
 import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
-import {
-  AuthenticatedTheme,
-  DefaultAuthTenantId,
-  createDefaultAccessPolicy,
-  validateBearerAuthorization,
-} from '@app/backend-feature-auth-shared';
+import { AuthenticatedTheme, DefaultAuthTenantId, createDefaultAccessPolicy } from '@app/backend-feature-auth-shared';
 import type { AuthTokenStore, AuthUserRecord, AuthUserStore } from '../infrastructure';
 import { InMemoryAuthUserStore } from '../infrastructure/auth-user-store';
 import { InMemoryAuthRoleStore } from '../infrastructure/auth-role-store';
 import { InMemoryAuthTokenStore } from '../infrastructure/auth-token-store';
 import { hashPassword, normalizeEmail, verifyPassword } from '../domain';
-import { AuthService, signJwt } from './auth.service';
+import { AuthService } from './auth.service';
 import { EffectivePermissionService } from './effective-permission.service';
-
-const testJwtSecretValue = 'TEST_JWT_SECRET_VALUE_at_least_32_chars';
-const authorizationScheme = 'Bearer';
-
-const bearerAuthorization = (token: string): string => [authorizationScheme, token].join(' ');
 
 const createUserRecord = (overrides: Partial<AuthUserRecord> = {}): AuthUserRecord => ({
   id: 'user-id',
@@ -39,8 +29,7 @@ const createUserRecord = (overrides: Partial<AuthUserRecord> = {}): AuthUserReco
 });
 
 describe('AuthService', () => {
-  it('registers, logs in, records sessions, and signs verifiable JWTs', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
+  it('registers, logs in, and returns credential-free session views', async () => {
     const service = new AuthService(new InMemoryAuthUserStore());
 
     const registered = await service.register({
@@ -56,17 +45,14 @@ describe('AuthService', () => {
       roles: ['user'],
       permissions: ['profile:read'],
     });
-    expect(registered.tokenType).toBe('Bearer');
-    expect(
-      validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-      }),
-    ).toMatchObject({
-      subject: registered.user.id,
+    expect(registered).toMatchObject({
       amr: ['pwd'],
       authProvider: 'password',
       authChannel: 'password',
     });
+    expect(registered).not.toHaveProperty('accessToken');
+    expect(registered).not.toHaveProperty('refreshToken');
+    expect(registered).not.toHaveProperty('tokenType');
 
     const loggedIn = await service.login({
       email: 'user@example.com',
@@ -79,8 +65,7 @@ describe('AuthService', () => {
     await expect(service.getUserById('missing')).resolves.toBeNull();
   });
 
-  it('bootstraps by ROLE and refreshes the jsonb cache identically to the shared matrix', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
+  it('bootstraps normalized roles and returns the shared-matrix projection', async () => {
     const previousEnabled = process.env.ADMIN_BOOTSTRAP_ENABLED;
     const previousEmails = process.env.ADMIN_BOOTSTRAP_EMAILS;
     process.env.ADMIN_BOOTSTRAP_ENABLED = 'true';
@@ -122,15 +107,7 @@ describe('AuthService', () => {
     expect(persistedAdmin?.roles).toEqual(adminPolicy.roles);
     expect(persistedAdmin?.permissions).toEqual(adminPolicy.permissions);
 
-    // JWT claims stay identical in shape and content.
-    expect(
-      validateBearerAuthorization(bearerAuthorization(adminSession.accessToken), {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-      }),
-    ).toMatchObject({
-      roles: adminPolicy.roles,
-      permissions: adminPolicy.permissions,
-    });
+    expect(adminSession).not.toHaveProperty('accessToken');
 
     if (previousEnabled === undefined) {
       delete process.env.ADMIN_BOOTSTRAP_ENABLED;
@@ -144,8 +121,7 @@ describe('AuthService', () => {
     }
   });
 
-  it('persists normalized locale/theme in sessions, JWT principals, and updates', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
+  it('persists normalized locale/theme in session views and updates', async () => {
     const service = new AuthService(new InMemoryAuthUserStore());
 
     const registered = await service.register({
@@ -157,16 +133,6 @@ describe('AuthService', () => {
 
     expect(registered.user.locale).toBe('ru');
     expect(registered.user.theme).toBe('dark');
-    expect(
-      validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-      }).locale,
-    ).toBe('ru');
-    expect(
-      validateBearerAuthorization(bearerAuthorization(registered.accessToken), {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-      }).theme,
-    ).toBe('dark');
 
     await expect(service.updateUserLocale(registered.user.id, 'en-US')).resolves.toMatchObject({ locale: 'en' });
     await expect(
@@ -179,16 +145,22 @@ describe('AuthService', () => {
       locale: 'en',
       theme: 'light',
     });
+    await expect(
+      service.updateUserPreferences(registered.user.id, { locale: 'ru', theme: undefined }),
+    ).resolves.toMatchObject({ locale: 'ru', theme: 'light' });
+    await expect(
+      service.updateUserPreferences(registered.user.id, { locale: undefined, theme: 'dark' }),
+    ).resolves.toMatchObject({ locale: 'ru', theme: 'dark' });
     await expect(service.updateUserPreferences(registered.user.id, { theme: 'dark' })).resolves.toMatchObject({
-      locale: 'en',
+      locale: 'ru',
       theme: 'dark',
     });
     await expect(service.updateUserPreferences(registered.user.id, {})).resolves.toMatchObject({
-      locale: 'en',
+      locale: 'ru',
       theme: 'dark',
     });
     await expect(service.getUserById(registered.user.id)).resolves.toMatchObject({
-      locale: 'en',
+      locale: 'ru',
       theme: 'dark',
     });
     await expect(service.updateUserLocale(registered.user.id, 'fr-FR')).rejects.toThrow(BadRequestException);
@@ -213,7 +185,6 @@ describe('AuthService', () => {
   });
 
   it('rejects duplicate registrations and invalid credentials', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
     const service = new AuthService(new InMemoryAuthUserStore());
     await service.register({ email: 'a@example.com', password: 'password123' });
 
@@ -226,7 +197,6 @@ describe('AuthService', () => {
   });
 
   it('maps store failures, inactive users, and fallback login records', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
     const failingStore = {
       findByEmail: () => errAsync({ code: 'repository_error' as const, message: 'find failed' }),
       create: () =>
@@ -235,7 +205,6 @@ describe('AuthService', () => {
           message: 'create failed',
         }),
       findById: () => errAsync({ code: 'repository_error' as const, message: 'id failed' }),
-      setAccessPolicy: () => okAsync(null),
       setLocale: () => okAsync(null),
       setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
@@ -304,7 +273,6 @@ describe('AuthService', () => {
       findByEmail: () => okAsync(activeRecord),
       create: () => okAsync(activeRecord),
       findById: () => okAsync(activeRecord),
-      setAccessPolicy: () => okAsync(null),
       setLocale: () => okAsync(null),
       setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
@@ -313,212 +281,18 @@ describe('AuthService', () => {
     expect(fallbackLogin.user.id).toBe('active-id');
   });
 
-  it('signs optional issuer/audience and falls back invalid expiry', () => {
-    const token = signJwt(
-      { sub: 'user' },
-      {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-        AUTH_JWT_ISSUER: 'issuer',
-        AUTH_JWT_AUDIENCE: 'audience',
-      },
-      60,
-    );
-    expect(token.split('.')).toHaveLength(3);
-
+  it('creates credential-free server session views', () => {
     const service = new AuthService(new InMemoryAuthUserStore());
     const baseUser = createUserRecord({ id: 'id', passwordHash: 'hash', permissions: [], roles: [] });
-    expect(
-      service.createSession(baseUser, {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-        AUTH_JWT_EXPIRES_IN_SECONDS: '60',
-      }).expiresIn,
-    ).toBe(60);
-
-    const session = service.createSession(
-      createUserRecord({ id: 'id', passwordHash: 'hash', permissions: [], roles: [] }),
-      {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-        AUTH_JWT_EXPIRES_IN_SECONDS: 'bad',
-      },
-    );
-    expect(session.expiresIn).toBe(3600);
-    expect(
-      service.createSession(createUserRecord({ id: 'id', passwordHash: 'hash', permissions: [], roles: [] }), {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-        AUTH_JWT_EXPIRES_IN_SECONDS: '0',
-      }).expiresIn,
-    ).toBe(3600);
+    const session = service.createSession(baseUser);
+    expect(session.user.id).toBe('id');
+    expect(session).not.toHaveProperty('accessToken');
+    expect(session).not.toHaveProperty('refreshToken');
+    expect(session).not.toHaveProperty('expiresIn');
   });
 
-  it('rotates the refresh token when the user is still active', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
-    const activeRecord = {
-      id: 'active-id',
-      tenantId: DefaultAuthTenantId,
-      email: 'active@example.com',
-      displayName: null,
-      passwordHash: 'hash',
-      roles: ['user'],
-      permissions: ['profile:read'],
-      locale: null,
-      theme: AuthenticatedTheme.System,
-      status: 'active' as const,
-      lastLoginAt: null,
-    };
-    const rotate = vi.fn(() =>
-      okAsync({
-        id: 'new-id',
-        tenantId: DefaultAuthTenantId,
-        userId: 'active-id',
-        token: 'next-refresh-token',
-        tokenHash: 'next-hash',
-        familyId: 'family',
-        expiresAt: new Date(Date.now() + 60_000),
-      }),
-    );
-    const users = { findById: () => okAsync(activeRecord) };
-    const tokens = {
-      findRefreshToken: () =>
-        okAsync({
-          id: 'old-id',
-          tenantId: DefaultAuthTenantId,
-          userId: 'active-id',
-          tokenHash: 'old-hash',
-          familyId: 'family',
-          parentTokenId: null,
-          expiresAt: new Date(Date.now() + 60_000),
-          revokedAt: null,
-          replacedByTokenId: null,
-        }),
-      rotateRefreshToken: rotate,
-    };
-    const service = new AuthService(users as never, tokens as never);
-
-    const session = await service.refreshSession({ refreshToken: 'token' });
-    expect(session.user.id).toBe('active-id');
-    expect(session.refreshToken).toBe('next-refresh-token');
-    expect(rotate).toHaveBeenCalledTimes(1);
-  });
-
-  it('preserves the original authTime and method across refresh so step-up is not reset', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
-    vi.useFakeTimers();
-    try {
-      const loginAt = new Date('2026-01-01T00:00:00.000Z');
-      vi.setSystemTime(loginAt);
-      const service = new AuthService(new InMemoryAuthUserStore());
-      const login = await service.register({ email: 'stepup@example.com', password: 'password123' });
-      expect(login.refreshToken).toBeDefined();
-      const originalAuthTime = Math.floor(loginAt.getTime() / 1000);
-      expect(login.authTime).toBe(originalAuthTime);
-
-      // Two hours later the client refreshes the access token without re-authenticating.
-      vi.setSystemTime(new Date(loginAt.getTime() + 2 * 60 * 60 * 1000));
-      const refreshed = await service.refreshSession({ refreshToken: login.refreshToken as string });
-
-      // auth_time must reflect the last real authentication event, not the refresh
-      // time — otherwise a refresh (or a stolen refresh token) silently satisfies
-      // the recent-auth (step-up) gate. The authentication method must also survive.
-      expect(refreshed.authTime).toBe(originalAuthTime);
-      expect(refreshed.amr).toEqual(login.amr);
-      expect(refreshed.authProvider).toBe(login.authProvider);
-      expect(refreshed.authChannel).toBe(login.authChannel);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('does not rotate the refresh token when the user is inactive', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
-    const disabledRecord = {
-      id: 'disabled-id',
-      tenantId: DefaultAuthTenantId,
-      email: 'disabled@example.com',
-      displayName: null,
-      passwordHash: 'hash',
-      roles: ['user'],
-      permissions: ['profile:read'],
-      locale: null,
-      theme: AuthenticatedTheme.System,
-      status: 'disabled' as const,
-      lastLoginAt: null,
-    };
-    const rotate = vi.fn(() => okAsync(null));
-    const users = { findById: () => okAsync(disabledRecord) };
-    const tokens = {
-      findRefreshToken: () =>
-        okAsync({
-          id: 'old-id',
-          tenantId: DefaultAuthTenantId,
-          userId: 'disabled-id',
-          tokenHash: 'old-hash',
-          familyId: 'family',
-          parentTokenId: null,
-          expiresAt: new Date(Date.now() + 60_000),
-          revokedAt: null,
-          replacedByTokenId: null,
-        }),
-      rotateRefreshToken: rotate,
-    };
-    const service = new AuthService(users as never, tokens as never);
-
-    await expect(service.refreshSession({ refreshToken: 'token' })).rejects.toThrow('Invalid refresh token');
-    expect(rotate).not.toHaveBeenCalled();
-  });
-
-  it('handles refresh-token, revocation, and user-action token fallback branches', async () => {
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
+  it('handles user-action token fallback branches', async () => {
     const activeRecord = createUserRecord({ id: 'active-id' });
-    const rotateMissing = vi.fn(() => okAsync(null));
-    const missingUsers: Partial<AuthUserStore> = {};
-    const missingTokens: Partial<AuthTokenStore> = {
-      findRefreshToken: () => okAsync(null),
-      rotateRefreshToken: rotateMissing,
-    };
-    const missingRefreshService = new AuthService(missingUsers as AuthUserStore, missingTokens as AuthTokenStore);
-
-    await expect(missingRefreshService.refreshSession({ refreshToken: 'missing-token' })).rejects.toThrow(
-      'Invalid refresh token',
-    );
-    expect(rotateMissing).toHaveBeenCalledWith('missing-token', DefaultAuthTenantId);
-
-    const activeUsers: Partial<AuthUserStore> = {
-      findById: () => okAsync(activeRecord),
-    };
-    const unrotatableTokens: Partial<AuthTokenStore> = {
-      findRefreshToken: () =>
-        okAsync({
-          id: 'old-id',
-          tenantId: DefaultAuthTenantId,
-          userId: activeRecord.id,
-          tokenHash: 'old-hash',
-          familyId: 'family',
-          parentTokenId: null,
-          expiresAt: new Date(Date.now() + 60_000),
-          revokedAt: null,
-          replacedByTokenId: null,
-        }),
-      rotateRefreshToken: () => okAsync(null),
-    };
-    const unrotatableService = new AuthService(activeUsers as AuthUserStore, unrotatableTokens as AuthTokenStore);
-    await expect(unrotatableService.refreshSession({ refreshToken: 'stale-token' })).rejects.toThrow(
-      'Invalid refresh token',
-    );
-
-    const revokeFailureTokens: Partial<AuthTokenStore> = {
-      revokeRefreshToken: () => errAsync({ code: 'token_store_error', message: 'offline' }),
-    };
-    const revokeFailureService = new AuthService(missingUsers as AuthUserStore, revokeFailureTokens as AuthTokenStore);
-    await expect(revokeFailureService.revokeRefreshToken({ refreshToken: 'token' })).resolves.toBe(false);
-    const revokeSuccessTokens: Partial<AuthTokenStore> = {
-      revokeRefreshToken: () => okAsync(true),
-    };
-    await expect(
-      new AuthService(missingUsers as AuthUserStore, revokeSuccessTokens as AuthTokenStore).revokeRefreshToken({
-        refreshToken: 'token',
-      }),
-    ).resolves.toBe(true);
-
     const tokenStore = new InMemoryAuthTokenStore();
     const users = {
       findByEmail: vi.fn().mockReturnValueOnce(okAsync(null)).mockReturnValue(okAsync(activeRecord)),
@@ -600,21 +374,18 @@ describe('AuthService', () => {
     ).rejects.toThrow(NotFoundException);
   });
 
-  it('records password methods, handles missing refresh issuance, and maps session signing errors', async () => {
+  it('records password methods and maps unexpected session errors', async () => {
     const social = {
       upsertMethod: vi.fn(() => okAsync({})),
     };
-    const tokens = {
-      issueRefreshToken: vi.fn(() => errAsync({ code: 'token_store_error', message: 'issue failed' })),
-    };
-    const service = new AuthService(new InMemoryAuthUserStore(), tokens as never, social as never);
+    const service = new AuthService(new InMemoryAuthUserStore(), undefined, social as never);
 
     const registered = await service.register({
       email: 'social@example.com',
       password: 'password123',
     });
 
-    expect(registered.refreshToken).toBeUndefined();
+    expect(registered).not.toHaveProperty('refreshToken');
     expect(social.upsertMethod).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'password',
@@ -639,12 +410,6 @@ describe('AuthService', () => {
     });
 
     expect(() =>
-      service.createUserSession(createUserRecord(), {
-        AUTH_JWT_SECRET: 'short',
-        NODE_ENV: 'production',
-      }),
-    ).toThrow(UnauthorizedException);
-    expect(() =>
       service.createSession({
         ...createUserRecord(),
         get id(): string {
@@ -654,26 +419,11 @@ describe('AuthService', () => {
     ).toThrow('unexpected user shape');
   });
 
-  it('normalizes email, hashes passwords, and requires JWT secret', () => {
+  it('normalizes email and hashes passwords', () => {
     const encoded = hashPassword('password123', 'fixed-salt');
     expect(normalizeEmail(' USER@EXAMPLE.COM ')).toBe('user@example.com');
     expect(verifyPassword('password123', encoded)).toBe(true);
     expect(verifyPassword('wrongpass', encoded)).toBe(false);
     expect(verifyPassword('password123', 'bad-format')).toBe(false);
-    expect(() => signJwt({ sub: 'user' }, {}, 60)).toThrow(UnauthorizedException);
-    expect(() => signJwt({ sub: 'user' }, { AUTH_JWT_SECRET: 'short', NODE_ENV: 'production' }, 60)).toThrow(
-      UnauthorizedException,
-    );
-    expect(() =>
-      signJwt(
-        {
-          get sub() {
-            throw new Error('unexpected jwt payload');
-          },
-        },
-        { AUTH_JWT_SECRET: testJwtSecretValue },
-        60,
-      ),
-    ).toThrow('unexpected jwt payload');
   });
 });

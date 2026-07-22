@@ -1,5 +1,4 @@
 export * from './api-client';
-export * from './auth-middleware';
 export * from './error-normalization';
 export * from './frontend-env';
 export * from './openapi-runtime';

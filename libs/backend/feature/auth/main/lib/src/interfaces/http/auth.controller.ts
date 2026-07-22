@@ -13,12 +13,12 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { supportedLocales } from '@app/backend-common-i18n';
 import { ApiOkDataResponse, ApiExceptions, ApiProblemTypes, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import {
   CurrentUser,
+  Public,
   setSessionPrincipal,
   SessionAuthGuard,
   type AuthenticatedPrincipal,
@@ -39,7 +39,6 @@ import {
   DiscordCallbackQueryDto,
   LinkTokenDto,
   LoginDto,
-  RefreshTokenDto,
   RegisterDto,
   TelegramBotLinkDto,
   TelegramOidcSessionDto,
@@ -79,10 +78,6 @@ export * from './dto';
 export * from './type/auth-http.type';
 export { SessionCookieName };
 
-function hasRefreshTokenInput(input: Partial<RefreshTokenDto> | undefined): input is RefreshTokenDto {
-  return typeof input?.refreshToken === 'string';
-}
-
 @ApiExceptions(400, 401, 403, 409, 429, 500)
 @Controller('auth')
 export class AuthController {
@@ -96,6 +91,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Public()
   @ApiOkDataResponse(AuthSessionViewDto)
   async register(
     @Body() input: RegisterDto,
@@ -132,6 +128,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Public()
   @ApiOkDataResponse(AuthSessionViewDto)
   async login(@Body() input: LoginDto, @Req() request: AuthenticatedRequest): Promise<OkResponse<AuthSessionView>> {
     try {
@@ -164,18 +161,8 @@ export class AuthController {
     }
   }
 
-  @Post('refresh')
-  @ApiOkDataResponse(AuthSessionViewDto)
-  async refresh(
-    @Body() input: RefreshTokenDto,
-    @Req() request: AuthenticatedRequest,
-  ): Promise<OkResponse<AuthSessionView>> {
-    const session = await this.auth.refreshSession(input);
-    await establishRequestSession(request, session);
-    return createOkResponse(session);
-  }
-
   @Post('telegram/tma')
+  @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)
   async telegramTma(
     @Body() input: TelegramTmaDto,
@@ -200,6 +187,7 @@ export class AuthController {
   }
 
   @Post('telegram/oidc/session')
+  @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)
   async telegramOidcSession(
     @Body() input: TelegramOidcSessionDto,
@@ -224,12 +212,14 @@ export class AuthController {
   }
 
   @Post('telegram/bot-link')
+  @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)
   async telegramBotLink(@Body() input: TelegramBotLinkDto): Promise<OkResponse<ExternalAuthLoginResult>> {
     return createOkResponse(await this.externalAuth.telegramBotLink(input));
   }
 
   @Post('discord/authorization-request')
+  @Public()
   @ApiOkDataResponse(DiscordAuthorizationRequestResultDto)
   discordAuthorizationRequest(
     @Body() input: DiscordAuthorizationRequestDto,
@@ -244,6 +234,7 @@ export class AuthController {
   }
 
   @Get('discord/callback')
+  @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)
   async discordCallback(
     @Query() input: DiscordCallbackQueryDto,
@@ -272,7 +263,6 @@ export class AuthController {
 
   @Get('provider-identities')
   @ApiOkDataResponse(ProviderIdentitiesPayloadDto)
-  @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async providerIdentities(
@@ -286,7 +276,6 @@ export class AuthController {
   @Delete('provider-identities/:identityId')
   @ApiOkDataResponse(UnlinkProviderIdentityPayloadDto)
   @ApiProblemTypes('step-up-required', 'last-auth-method-unlink-forbidden')
-  @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async unlinkProviderIdentity(
@@ -298,7 +287,6 @@ export class AuthController {
 
   @Post('link-tokens')
   @ApiOkDataResponse(LinkTokenResultDto)
-  @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async createLinkToken(
@@ -319,6 +307,7 @@ export class AuthController {
   }
 
   @Post('email-verification-token')
+  @Public()
   @ApiOkDataResponse(UserActionTokenPayloadDto)
   async requestEmailVerification(
     @Body() input: UserActionTokenRequestDto,
@@ -328,6 +317,7 @@ export class AuthController {
   }
 
   @Post('password-reset-token')
+  @Public()
   @ApiOkDataResponse(UserActionTokenPayloadDto)
   async requestPasswordReset(@Body() input: UserActionTokenRequestDto): Promise<OkResponse<UserActionTokenPayload>> {
     await this.auth.issuePasswordResetToken(input);
@@ -336,7 +326,6 @@ export class AuthController {
 
   @Get('me')
   @ApiOkDataResponse(MePayloadDto)
-  @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async me(@CurrentUser() principal: AuthenticatedPrincipal): Promise<OkResponse<MePayload>> {
@@ -348,7 +337,6 @@ export class AuthController {
 
   @Patch('me/locale')
   @ApiOkDataResponse(AuthenticatedUserViewDto)
-  @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async updateLocale(
@@ -364,7 +352,6 @@ export class AuthController {
 
   @Patch('me/preferences')
   @ApiOkDataResponse(AuthenticatedUserViewDto)
-  @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async updatePreferences(
@@ -379,6 +366,7 @@ export class AuthController {
   }
 
   @Get('locales')
+  @Public()
   @ApiOkDataResponse(SupportedLocalesPayloadDto)
   locales(): OkResponse<SupportedLocalesPayload> {
     return createOkResponse({ supportedLocales });
@@ -386,17 +374,12 @@ export class AuthController {
 
   @Post('logout')
   @ApiOkDataResponse(LogoutPayloadDto)
-  @ApiBearerAuth()
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
   async logout(
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: AuthenticatedResponse,
-    @Body() input?: Partial<RefreshTokenDto>,
   ): Promise<OkResponse<LogoutPayload>> {
-    if (hasRefreshTokenInput(input)) {
-      await this.auth.revokeRefreshToken(input);
-    }
     await clearRequestSession(request, response);
     return createOkResponse({ loggedOut: true });
   }

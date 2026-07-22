@@ -31,7 +31,7 @@ describe('BetterAuthApiController', () => {
   });
 
   describe('unwrapContext', () => {
-    it('extracts user, session, token from newSession context', () => {
+    it('extracts user and session metadata without credential material', () => {
       const wrapper = {
         operationId: 'signUpWithEmailAndPassword',
         context: {
@@ -46,8 +46,8 @@ describe('BetterAuthApiController', () => {
       };
       const result = (controller as any).unwrapContext(wrapper);
       expect(result.user).toEqual({ id: 'u1', email: 'a@b.c', name: 'Alice' });
-      expect(result.session).toEqual({ id: 's1', token: 'tok1' });
-      expect(result.token).toBe('tok1');
+      expect(result.session).toEqual({ id: 's1' });
+      expect(result).not.toHaveProperty('token');
     });
 
     it('extracts user, session from session context (get-session)', () => {
@@ -62,7 +62,7 @@ describe('BetterAuthApiController', () => {
       };
       const result = (controller as any).unwrapContext(wrapper);
       expect(result.user).toEqual({ id: 'u2', email: 'bob@b.c', name: 'Bob' });
-      expect(result.session).toEqual({ id: 's2', token: 'tok2' });
+      expect(result.session).toEqual({ id: 's2' });
     });
 
     it('returns success field for sign-out', () => {
@@ -106,7 +106,7 @@ describe('BetterAuthApiController', () => {
       const result = (controller as any).unwrapContext(wrapper);
       expect(result.user).toEqual({ id: 'new' });
       expect(result.session).toEqual({ id: 'new' });
-      expect(result.token).toBe('new');
+      expect(result).not.toHaveProperty('token');
     });
   });
 
@@ -204,7 +204,8 @@ describe('BetterAuthApiController', () => {
       const body = mockRes.getBody();
       expect(body).toHaveProperty('user');
       expect(body).toHaveProperty('session');
-      expect(body).toHaveProperty('token');
+      expect(body).not.toHaveProperty('token');
+      expect((body as any).session).not.toHaveProperty('token');
       expect((body as any).user.email).toBe('a@b.c');
     });
 

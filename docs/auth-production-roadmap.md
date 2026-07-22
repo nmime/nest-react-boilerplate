@@ -7,18 +7,19 @@ launch.
 
 ## Implemented foundation
 
-- Password registration/login issues access and refresh tokens and establishes
-  the request session.
-- Refresh tokens are hashed, tenant-scoped, rotated, replay-detected by family,
-  revocable, and persisted in PostgreSQL in production. Authentication context
-  is carried across rotation so refresh cannot reset the recent-auth/step-up
-  clock.
+- Password registration/login establishes a PostgreSQL-backed application
+  session identified only by a secure HttpOnly cookie. Authentication rotates
+  the opaque session id, logout destroys it server-side, and protected requests
+  reload active-account and effective RBAC state from PostgreSQL.
 - Email-verification and password-reset token issuance/consumption primitives
   have in-memory and PostgreSQL stores, expiry indexes, and cleanup jobs.
-- Better Auth provides the browser-session boundary, trusted-origin policy, and
-  disabled-by-default Telegram OIDC integration. Discord OAuth and Telegram
-  flows preserve state, return-URL, signed-token, account-linking, and encrypted
-  provider-token invariants described in [Social Auth and Bots](social-auth-bots.md).
+- Better Auth provides the provider-verification boundary, trusted-origin
+  policy, and disabled-by-default Telegram OIDC integration. Its provider
+  cookie cannot authorize first-party APIs; verified identities are projected
+  into the same application session used by password authentication. Discord
+  OAuth and Telegram flows preserve state, return-URL, signed-token,
+  account-linking, and encrypted provider-token invariants described in
+  [Social Auth and Bots](social-auth-bots.md).
 - Admin user/role mutations are tenant-scoped and transactionally write audit
   plus outbox records.
 
@@ -33,9 +34,10 @@ storage or framework hooks exist:
   screens without exposing token values in logs.
 - Choose account lockout or adaptive abuse controls beyond the shared rate
   limiter, and test distributed enforcement with the production Redis mode.
-- Add product-owned audit events and monitoring for login, logout, refresh
-  replay, recovery, verification, and failed-auth activity; current admin audit
-  records cover admin mutations, not the entire auth lifecycle.
+- Add product-owned audit events and monitoring for logout, session revocation,
+  recovery, verification, and failed-auth activity. Login analytics and admin
+  audit records exist, but they intentionally do not turn every ordinary read
+  into a business audit event.
 - Define user-facing session inventory, remote revocation, recovery, and support
   procedures if the product requires them.
 - Exercise provider callback allowlists, secret rotation, outage behavior, and

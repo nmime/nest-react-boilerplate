@@ -21,7 +21,6 @@ const bundledProject = `nrbbundled${suffix}`;
 const externalProject = `nrbexternal${suffix}`;
 const externalContainer = `nrb-external-postgres-${suffix}`;
 const tempDir = mkdtempSync(join(tmpdir(), 'nrb-compose-modes-'));
-const authSecretPath = join(tempDir, 'auth_jwt_secret.txt');
 const sessionSecretPath = join(tempDir, 'session_secret.txt');
 const betterAuthSecretPath = join(tempDir, 'better_auth_secret.txt');
 const authProviderEncryptionKeyPath = join(tempDir, 'auth_provider_token_encryption_key.txt');
@@ -44,7 +43,6 @@ externalDatabaseUrl.port = '5432';
 externalDatabaseUrl.pathname = databaseName;
 
 for (const [path, value] of [
-  [authSecretPath, runtimeSecret()],
   [sessionSecretPath, runtimeSecret()],
   [betterAuthSecretPath, runtimeSecret()],
   [authProviderEncryptionKeyPath, randomBytes(32).toString('base64')],
@@ -67,7 +65,6 @@ const bundledFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.bundled-db
 const externalFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.external-db.yml', ...sourceBuildFiles];
 const commonEnv = {
   ...process.env,
-  AUTH_JWT_SECRET_FILE: authSecretPath,
   SESSION_SECRET_FILE: sessionSecretPath,
   BETTER_AUTH_SECRET_FILE: betterAuthSecretPath,
   AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE: authProviderEncryptionKeyPath,

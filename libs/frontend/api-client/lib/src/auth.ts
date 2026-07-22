@@ -14,7 +14,6 @@ import {
 
 const authRegisterPath = '/auth/register';
 const authLoginPath = '/auth/login';
-const authRefreshPath = '/auth/refresh';
 const authMePath = '/auth/me';
 const authUpdateLocalePath = '/auth/me/locale';
 const authUpdatePreferencesPath = '/auth/me/preferences';
@@ -37,7 +36,6 @@ export type AuthenticatedUserViewDto = components['schemas']['AuthenticatedUserV
 export type AuthSessionViewDto = components['schemas']['AuthSessionViewDto'];
 export type RegisterDto = components['schemas']['RegisterDto'];
 export type LoginDto = components['schemas']['LoginDto'];
-export type RefreshTokenDto = components['schemas']['RefreshTokenDto'];
 export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
 export type MePayloadDto = components['schemas']['MePayloadDto'];
 export type UpdateLocaleDto = components['schemas']['UpdateLocaleDto'];
@@ -69,12 +67,6 @@ export const authControllerLogin = (body: LoginDto, options?: ApiClientRequestOp
 export type AuthControllerLoginResponse = OpenApiData<typeof authControllerLogin>;
 export type AuthControllerLoginData = EnvelopeData<AuthControllerLoginResponse>;
 export type AuthControllerLoginError = OpenApiError<typeof authControllerLogin>;
-
-export const authControllerRefresh = (body: RefreshTokenDto, options?: ApiClientRequestOptions) =>
-  client.POST(authRefreshPath, { ...toOpenApiFetchOptions(options), body });
-export type AuthControllerRefreshResponse = OpenApiData<typeof authControllerRefresh>;
-export type AuthControllerRefreshData = EnvelopeData<AuthControllerRefreshResponse>;
-export type AuthControllerRefreshError = OpenApiError<typeof authControllerRefresh>;
 
 export const authControllerMe = (options?: ApiClientRequestOptions) =>
   client.GET(authMePath, toOpenApiFetchOptions(options));

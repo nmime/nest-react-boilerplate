@@ -63,8 +63,8 @@ Probe policy:
 
 - Helmet security middleware
 - raw request-body capture for webhook/signature use cases
-- cookie parsing signed with `SESSION_SECRET`, falling back to
-  `AUTH_JWT_SECRET`; production requires at least one 32-character secret
+- cookie parsing signed with the dedicated `SESSION_SECRET`; production
+  requires it to contain at least 32 characters
 - deny-all `robots.txt` responses
 - extended query parsing and trust-proxy configuration
 - request IDs and structured completion logs
@@ -108,14 +108,13 @@ treating the shared URL builder as a complete flow.
 ```http
 POST /auth/register
 POST /auth/login
-POST /auth/refresh
 GET /auth/me
 POST /auth/logout
 ```
 
 The full surface also includes Telegram (`/auth/telegram/*`), Discord OAuth (`/auth/discord/*`), provider-identities, link/email-verification/password-reset tokens, locale, profile preference, and problem-presentation routes; see `libs/backend/feature/auth/main/lib/src/interfaces/http`.
 
-Register/login accept JSON `{ "email": "user@example.com", "password": "password123", "displayName": "User" }` (display name is optional for login). Successful responses return `{ data: { user, accessToken, tokenType: "Bearer", expiresIn } }`, plus an optional `refreshToken` (consumed by `POST /auth/refresh`) and optional session metadata (`amr`, `authProvider`, `authChannel`, `authTime`, `externalIdentityId`). Use the bearer token against `GET /profile/me` on `user-app-api` and `GET /admin/profile/me` on `admin-app-api`.
+Register/login accept JSON `{ "email": "user@example.com", "password": "password123", "displayName": "User" }` (display name is optional for login). Successful responses return `{ data: { user, amr, authProvider, authChannel, authTime, externalIdentityId? } }` and establish the same server-side session through an HttpOnly cookie. Auth, user, and admin APIs all accept only that cookie session and deliberately reject bearer credentials. The persisted session contains identity and authentication-method metadata only; protected requests reload active-account state and effective RBAC from PostgreSQL before authorization.
 
 Admin access is fail-closed. Bootstrap requires `ADMIN_BOOTSTRAP_ENABLED=true` (and, for non-default tenants, `ADMIN_BOOTSTRAP_TENANT_IDS`); `ADMIN_BOOTSTRAP_EMAILS` does not grant admin by itself. A matching registered email then receives the `admin` role, which grants the full admin permission catalog (dashboard, profile, users, roles, audit, and settings permissions plus the break-glass `admin:manage:all`) as defined in the role-permission matrix.
 
@@ -134,7 +133,7 @@ sequenceDiagram
   participant Store as @app/backend-postgres-main*
   Browser->>Client: call service wrapper/query helper
   Client->>Support: generated openapi-fetch request
-  Support->>Support: add base URL, bearer token, Accept-Language
+  Support->>Support: add base URL, cookie credentials, Accept-Language
   Support->>Api: HTTP request
   Api->>Bootstrap: request ID, CORS, validation, filters
   Bootstrap->>Controller: validated DTO and route metadata

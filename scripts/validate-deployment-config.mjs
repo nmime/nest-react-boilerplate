@@ -225,8 +225,8 @@ assert.ok(
 );
 has(
   devBackendEnv,
-  'AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-secret}',
-  'dev Compose uses an intentionally short dev JWT default',
+  'SESSION_SECRET: ${SESSION_SECRET:-local-session-secret-change-me-32-chars}',
+  'dev Compose uses a dedicated session secret default',
 );
 has(devBackendEnv, 'REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}', 'dev Compose passes the Redis service URL');
 has(devBackendEnv, 'NATS_SERVERS: ${NATS_SERVERS:-nats://nats:4222}', 'dev Compose passes the NATS service URL');
@@ -240,19 +240,14 @@ has(
   'AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED: ${AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED:-false}',
   'dev Compose keeps provider token storage opt-in',
 );
-const jwtSecretDefault = devBackendEnv.match(/AUTH_JWT_SECRET:\s*\$\{AUTH_JWT_SECRET:-([^}]+)\}/)?.[1];
-assert.ok(jwtSecretDefault, 'Missing local Docker AUTH_JWT_SECRET default');
+const sessionSecretDefault = devBackendEnv.match(/SESSION_SECRET:\s*\$\{SESSION_SECRET:-([^}]+)\}/)?.[1];
+assert.ok(sessionSecretDefault, 'Missing local Docker SESSION_SECRET default');
 assert.ok(
-  jwtSecretDefault.trim().length < 32,
-  'Local Docker AUTH_JWT_SECRET default must fail the production minimum length.',
+  sessionSecretDefault.trim().length >= 32,
+  'Local Docker SESSION_SECRET default must satisfy the production minimum length.',
 );
 const envExample = read('.env.example');
-const envExampleJwtSecret = envExample.match(/^AUTH_JWT_SECRET=(.+)$/m)?.[1];
-assert.ok(envExampleJwtSecret, 'Missing .env.example AUTH_JWT_SECRET placeholder');
-assert.ok(
-  envExampleJwtSecret.trim().length < 32,
-  '.env.example AUTH_JWT_SECRET placeholder must fail the production minimum length.',
-);
+assert.ok(/^SESSION_SECRET=/m.test(envExample), 'Missing .env.example SESSION_SECRET setting');
 const productionEnvExample = read('.env.production.example');
 const servicePortAssignments = {
   ADMIN_APP_API_PORT: 3001,
@@ -285,11 +280,6 @@ for (const [path, port] of [
   has(read(path), `port: ${port}`, `${path} explicit port ${port}`);
 }
 has(read('apps/frontend/site/project.json'), 'SITE_APP_PORT=4203', 'site start target explicitly assigns port 4203');
-has(
-  productionEnvExample,
-  'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
-  'production env example reads JWT secret from a Docker secret file',
-);
 for (const expected of [
   'SESSION_SECRET_FILE=./secrets/session_secret.txt',
   'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE=./secrets/auth_provider_token_encryption_key.txt',
@@ -298,10 +288,7 @@ for (const expected of [
 ]) {
   has(productionEnvExample, expected, `production env example reads ${expected} from a Docker secret file`);
 }
-assert.ok(
-  !/^AUTH_JWT_SECRET=/m.test(productionEnvExample),
-  'Production env example must not provide an inline JWT secret placeholder.',
-);
+assert.ok(!/AUTH_JWT_/u.test(productionEnvExample), 'Production env example must not configure JWT auth.');
 has(productionEnvExample, 'RATE_LIMIT_STORE=redis', 'production env example forces shared Redis rate limiting');
 has(productionEnvExample, 'REDIS_URL=redis://redis:6379/0', 'production env example points at Compose Redis');
 has(
@@ -477,7 +464,11 @@ for (const { app, healthProvider, modulePath, configPath, localControllerPath } 
   has(appModule, '@app/backend-common-health', `${app} imports shared health wiring from @app/backend-common-health`);
   has(appModule, healthProvider, `${app} imports app-specific health service wiring`);
   has(appModule, './health.config', `${app} imports health.config`);
-  has(appModule, 'controllers: [BaseHealthController]', `${app} registers the shared health controller`);
+  assert.match(
+    appModule,
+    /controllers:\s*\[[^\]]*BaseHealthController[^\]]*\]/,
+    `${app} registers the shared health controller`,
+  );
   assert.match(
     appModule,
     new RegExp(`providers:\\s*\\[[\\s\\S]*?${healthProvider}[\\s\\S]*?HealthPrivateNetworkIpGuard[\\s\\S]*?\\]`),
@@ -527,7 +518,7 @@ has(prodSiteBuild, 'target: site-runtime', 'site-app production source-build use
 const dockerSmoke = read('packages/tooling/src/commands/docker/smoke.ts');
 has(
   dockerSmoke,
-  "['postgres', ...backendServices, ...frontendServices].join(',')",
+  "['postgres', 'redis', ...backendServices, ...frontendServices].join(',')",
   'Docker smoke activates every dependency profile used by the tested stack',
 );
 has(dockerSmoke, 'async function buildServices', 'Docker smoke retries transient image-build failures');
@@ -542,11 +533,11 @@ has(
 has(fullstackCompose, 'async function buildServices', 'Full-stack e2e retries transient image-build failures');
 has(fullstackCompose, "'compose', '--parallel'", 'Full-stack e2e batches image builds through Compose parallel mode');
 has(fullstackCompose, 'const composeParallelLimit', 'Full-stack e2e caps Compose build concurrency');
-const smokeJwtSecretDefault = dockerSmoke.match(/AUTH_JWT_SECRET:[\s\S]*?\?\?\s*"([^"]+)"/)?.[1];
-assert.ok(smokeJwtSecretDefault, 'Docker smoke script must set an AUTH_JWT_SECRET default');
+const smokeSessionSecretDefault = dockerSmoke.match(/SESSION_SECRET:[\s\S]*?\?\?\s*"([^"]+)"/)?.[1];
+assert.ok(smokeSessionSecretDefault, 'Docker smoke script must set a SESSION_SECRET default');
 assert.ok(
-  smokeJwtSecretDefault.length >= 32,
-  'Docker smoke AUTH_JWT_SECRET default must satisfy the production minimum length.',
+  smokeSessionSecretDefault.length >= 32,
+  'Docker smoke SESSION_SECRET default must satisfy the production minimum length.',
 );
 
 const assertNginxRoutes = (text, { helm = false } = {}) => {
@@ -556,6 +547,7 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
     'frontend nginx listen port',
   );
   has(text, helm ? '.Values.frontendNginx.healthPath' : '/nginx-health', 'nginx health route');
+  has(text, 'add_header Vary "Accept" always;', 'SPA and API cache entries vary by negotiated media type');
   before(text, 'location = /admin {', 'location ^~ /admin/ {', 'exact /admin SPA route precedes /admin API prefix');
   before(text, 'location = /admin/ {', 'location ^~ /admin/ {', 'exact /admin/ SPA route precedes /admin API prefix');
   for (const adminSpaRoute of ['dashboard', 'dashboard/', 'profile', 'profile/']) {

@@ -6,7 +6,6 @@ import {
   AuthProviderChannel,
   DefaultAuthTenantId,
   ExternalAuthIntent,
-  validateBearerAuthorization,
 } from '@app/backend-feature-auth-shared';
 import { AuthService } from './auth.service';
 import { InMemoryAuthUserStore } from '../infrastructure/auth-user-store';
@@ -41,7 +40,6 @@ vi.mock('arctic', () => ({
   generateState: arcticMocks.generateState,
 }));
 
-const testJwtSecretValue = 'testJwtSecretValue_at_least_32_chars';
 const botToken = '123456:telegram-bot-token';
 const discordAccessValue = ['discord', 'access', 'value'].join('-');
 const discordRefreshValue = ['discord', 'refresh', 'value'].join('-');
@@ -131,7 +129,6 @@ describe('ExternalAuthService', () => {
   beforeEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    process.env.AUTH_JWT_SECRET = testJwtSecretValue;
     process.env.TELEGRAM_BOT_TOKEN = botToken;
     process.env.DISCORD_CLIENT_ID = 'discord-client-id';
     process.env.DISCORD_CLIENT_SECRET = 'discord-client-secret';
@@ -193,16 +190,13 @@ describe('ExternalAuthService', () => {
       providerSubject: '42',
       channel: 'telegram_oidc',
     });
-    expect(
-      validateBearerAuthorization(`Bearer ${result.session?.accessToken}`, {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-      }),
-    ).toMatchObject({
+    expect(result.session).toMatchObject({
       amr: ['telegram'],
       authProvider: 'telegram',
       authChannel: 'telegram_oidc',
       externalIdentityId: result.identity?.id,
     });
+    expect(result.session).not.toHaveProperty('accessToken');
   });
 
   it('returns needs-link for a verified Telegram OIDC profile when auto provision is disabled', async () => {
@@ -1286,21 +1280,15 @@ describe('ExternalAuthService', () => {
         authTime: 1_797_204_800,
         externalIdentityId: 'external-identity-id',
       },
-      { AUTH_JWT_SECRET: testJwtSecretValue },
     );
 
     expect(external.user.email).toBeNull();
-    expect(
-      validateBearerAuthorization(`Bearer ${external.accessToken}`, {
-        AUTH_JWT_SECRET: testJwtSecretValue,
-      }),
-    ).toMatchObject({
+    expect(external).toMatchObject({
       amr: ['telegram'],
       authChannel: 'telegram_tma',
       authProvider: 'telegram',
-      email: null,
       externalIdentityId: 'external-identity-id',
-      subject: 'external-user-id',
     });
+    expect(external).not.toHaveProperty('accessToken');
   });
 });

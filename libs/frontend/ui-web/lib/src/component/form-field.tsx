@@ -1,7 +1,8 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
-import { useId, type InputHTMLAttributes, type ReactNode } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react';
 import { UiInput } from './input';
 import { UiLabel } from './label';
+import { UiTextarea } from './textarea';
 import { cn } from '../util/cn';
 
 export interface UiTextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'children'> {
@@ -37,6 +38,54 @@ export const UiTextField = ({
         aria-invalid={error ? true : inputProps['aria-invalid']}
         className={inputClassName}
         id={inputId}
+      />
+      {hint ? (
+        <p className="xr-field__hint m-0 text-sm text-[var(--xr-color-muted)]" id={hintId}>
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="xr-field__error m-0 text-sm text-[var(--xr-color-warning)]" id={errorId} role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
+export interface UiTextareaFieldProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'children'> {
+  error?: string;
+  hint?: ReactNode;
+  label: string;
+  textareaClassName?: string;
+}
+
+export const UiTextareaField = ({
+  className,
+  error,
+  hint,
+  id,
+  label,
+  textareaClassName,
+  ...textareaProps
+}: Readonly<UiTextareaFieldProps>) => {
+  const generatedId = useId();
+  const generatedHintId = useId();
+  const generatedErrorId = useId();
+  const textareaId = id ?? generatedId;
+  const hintId = hint ? `${textareaId}-${generatedHintId}-hint` : undefined;
+  const errorId = error ? `${textareaId}-${generatedErrorId}-error` : undefined;
+  const describedBy = [textareaProps['aria-describedby'], hintId, errorId].filter(Boolean).join(' ');
+
+  return (
+    <div className={cn('xr-field grid min-w-0 gap-2', className)}>
+      <UiLabel htmlFor={textareaId}>{label}</UiLabel>
+      <UiTextarea
+        {...textareaProps}
+        aria-describedby={describedBy || undefined}
+        aria-invalid={error ? true : textareaProps['aria-invalid']}
+        className={textareaClassName}
+        id={textareaId}
       />
       {hint ? (
         <p className="xr-field__hint m-0 text-sm text-[var(--xr-color-muted)]" id={hintId}>

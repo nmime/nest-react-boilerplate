@@ -1,7 +1,6 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PublicAuthMetadataKey } from './access-control.decorators';
-import { validateBearerAuthorization } from './bearer-auth.guard';
 import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-control.types';
 import { assertRequestTenantMatchesPrincipal, normalizeTenantId } from './tenant-context';
 
@@ -17,13 +16,18 @@ export class SessionAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const principal =
-      getSessionPrincipal(request) ?? validateBearerAuthorization(readAuthorizationHeader(request), process.env);
+    const principal = readSessionPrincipal(request);
+    if (!principal) {
+      throw new UnauthorizedException();
+    }
 
     assertRequestTenantMatchesPrincipal(request, principal);
-    request.user = principal;
-    request.auth = principal;
-    return request.user === principal && request.auth === principal;
+    const resolved = request.user ?? request.auth;
+    const requestPrincipal =
+      resolved?.subject === principal.subject && resolved.tenantId === principal.tenantId ? resolved : principal;
+    request.user = requestPrincipal;
+    request.auth = requestPrincipal;
+    return request.user === requestPrincipal && request.auth === requestPrincipal;
   }
 
   private isPublicRoute(context: ExecutionContext): boolean {
@@ -38,7 +42,14 @@ export class SessionAuthGuard implements CanActivate {
 
 export function setSessionPrincipal(request: AuthenticatedRequest, principal: AuthenticatedPrincipal): void {
   if (request.session) {
-    request.session.user = principal;
+    // A server-side session proves identity and authentication context only.
+    // Authorization guards replace these empty access arrays from normalized
+    // RBAC tables on every protected request.
+    request.session.user = {
+      ...principal,
+      roles: [],
+      permissions: [],
+    };
   }
 
   request.tenantId = principal.tenantId;
@@ -55,19 +66,7 @@ export function clearSessionPrincipal(request: AuthenticatedRequest): void {
   delete request.auth;
 }
 
-function readAuthorizationHeader(request: AuthenticatedRequest): string | undefined {
-  const directHeader = request.headers?.authorization ?? request.headers?.Authorization;
-  if (Array.isArray(directHeader)) {
-    return directHeader[0];
-  }
-  if (typeof directHeader === 'string') {
-    return directHeader;
-  }
-
-  return request.get?.('authorization') ?? request.get?.('Authorization');
-}
-
-function getSessionPrincipal(request: AuthenticatedRequest): AuthenticatedPrincipal | undefined {
+export function readSessionPrincipal(request: AuthenticatedRequest): AuthenticatedPrincipal | undefined {
   const principal = request.session?.user;
   return isAuthenticatedPrincipal(principal) ? principal : undefined;
 }

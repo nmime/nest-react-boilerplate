@@ -22,10 +22,11 @@ Checkbox.displayName = 'Checkbox';
 export interface UiCheckboxProps extends Omit<ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>, 'children'> {
   description?: ReactNode;
   label: ReactNode;
+  labelHidden?: boolean;
 }
 
 export const UiCheckbox = forwardRef<ComponentRef<typeof CheckboxPrimitive.Root>, UiCheckboxProps>(
-  ({ className, description, id, label, ...props }, ref) => {
+  ({ className, description, id, label, labelHidden = false, ...props }, ref) => {
     const generatedId = useId();
     const controlId = id ?? generatedId;
     const descriptionId = description ? `${controlId}-description` : undefined;
@@ -33,7 +34,7 @@ export const UiCheckbox = forwardRef<ComponentRef<typeof CheckboxPrimitive.Root>
     return (
       <div className="xr-choice">
         <Checkbox {...props} aria-describedby={descriptionId} className={className} id={controlId} ref={ref} />
-        <div className="xr-choice__copy">
+        <div className={cn('xr-choice__copy', labelHidden && !description && 'sr-only')}>
           <UiLabel htmlFor={controlId}>{label}</UiLabel>
           {description ? (
             <p className="xr-choice__description" id={descriptionId}>

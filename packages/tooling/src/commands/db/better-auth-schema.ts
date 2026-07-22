@@ -54,8 +54,6 @@ export async function applyBetterAuthSchema(
     const pluginColumns = [
       { name: "tenantId", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "tenantId" varchar(128) NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'` },
       { name: "status", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "status" varchar(32) NOT NULL DEFAULT 'active'` },
-      { name: "roles", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "roles" json NOT NULL DEFAULT '[]'` },
-      { name: "permissions", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "permissions" json NOT NULL DEFAULT '[]'` },
       { name: "locale", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "locale" varchar(16) NOT NULL DEFAULT 'en'` },
       { name: "theme", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "theme" varchar(16) NOT NULL DEFAULT 'system'` },
     ];
@@ -67,6 +65,8 @@ export async function applyBetterAuthSchema(
         result.skipped.push(`user.${col.name}`);
       }
     }
+    await client.query(`ALTER TABLE "user" DROP COLUMN IF EXISTS "roles"`);
+    await client.query(`ALTER TABLE "user" DROP COLUMN IF EXISTS "permissions"`);
     await client.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS "uq__user__email"
         ON "user" (lower("email"))

@@ -235,21 +235,26 @@ export async function closeRedisClient(client: RedisClientLike): Promise<unknown
 }
 
 function createSingleClient(config: RedisConnectionConfig): RedisClientLike {
-  const host = firstHost(config.hosts);
-  const client = config.url
-    ? createClient({
+  if (config.url) {
+    return toAdapter(
+      createClient({
         url: config.url,
         password: config.password,
         database: config.db,
-      })
-    : createClient({
-        socket: {
-          host: host.host,
-          port: host.port,
-        },
-        password: config.password,
-        database: config.db,
-      });
+      }),
+      config,
+    );
+  }
+
+  const host = firstHost(config.hosts);
+  const client = createClient({
+    socket: {
+      host: host.host,
+      port: host.port,
+    },
+    password: config.password,
+    database: config.db,
+  });
 
   return toAdapter(client, config);
 }

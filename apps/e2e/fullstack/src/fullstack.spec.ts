@@ -16,13 +16,12 @@ interface HealthResponse {
 
 interface SessionResponse {
   data: {
-    accessToken: string;
     user: { email: string | null; roles: string[]; permissions: string[] };
   };
 }
 
 interface BetterAuthSessionResponse {
-  session: { token: string };
+  session: Record<string, unknown>;
   user: { email: string; name: string };
 }
 
@@ -32,9 +31,17 @@ interface ExternalAuthSessionResponse {
   };
 }
 
-const authorizationScheme = 'Bearer';
+interface AdminUsersResponse {
+  data: {
+    items: Array<{ email: string; id: string; permissions: string[]; roles: string[] }>;
+  };
+}
 
-const bearerAuthorization = (token: string): string => [authorizationScheme, token].join(' ');
+interface AdminAuditResponse {
+  data: {
+    items: Array<{ action: string; resource: string; targetId?: string }>;
+  };
+}
 
 const authPassword = 'fullstack-secret';
 
@@ -175,20 +182,22 @@ test('health endpoints and frontends are reachable through the Docker stack', as
   await gotoWithRetry(page, urls.adminApp);
   await expect(
     page.getByRole('heading', {
-      level: 1,
-      name: 'Operate the product platform with a fail-closed admin experience.',
+      name: 'Authentication required',
     }),
   ).toBeVisible();
 });
 
 test('registered users can log in through the user frontend same-origin proxies', async ({ page }) => {
   const email = `fullstack-${Date.now()}@example.com`;
-  const session = await register(urls.userApp, email);
+  await register(urls.userApp, email);
 
-  const profile = await fetch(`${urls.userApp}/profile/me`, {
-    headers: { Authorization: bearerAuthorization(session.data.accessToken) },
+  const loginResponse = await page.context().request.post(`${urls.authApi}/auth/login`, {
+    data: { email, password: authPassword },
   });
-  expect(profile.status).toBe(200);
+  expect(successfulAuthStatuses).toContain(loginResponse.status());
+
+  const profile = await page.context().request.get(`${urls.userApp}/profile/me`);
+  expect(profile.status()).toBe(200);
   expect(await profile.text()).toContain(email);
 
   await gotoWithRetry(page, `${urls.userApp}/auth`);
@@ -197,6 +206,23 @@ test('registered users can log in through the user frontend same-origin proxies'
   await page.getByRole('button', { name: 'Login' }).click();
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();
   await expect(page).not.toHaveURL(/token=/u);
+
+  const localePreference = await page.context().request.patch(`${urls.authApi}/auth/me/preferences`, {
+    data: { locale: 'ru' },
+  });
+  expect(localePreference.status()).toBe(200);
+  const themePreference = await page.context().request.patch(`${urls.authApi}/auth/me/preferences`, {
+    data: { theme: 'dark' },
+  });
+  expect(themePreference.status()).toBe(200);
+  await expect(
+    page
+      .context()
+      .request.get(`${urls.authApi}/auth/me`)
+      .then((response) => response.json()),
+  ).resolves.toMatchObject({
+    data: { user: { locale: 'ru', theme: 'dark' } },
+  });
 });
 
 test('Telegram TMA establishes Better Auth and application sessions through the same-origin proxy', async ({
@@ -252,7 +278,10 @@ test('Telegram TMA establishes Better Auth and application sessions through the 
       name: 'Fullstack Telegram',
     },
   });
-  expect(betterAuthSession.session.token).toBeTruthy();
+  expect(betterAuthSession.session).not.toHaveProperty('token');
+  expect(betterAuthSession.session).not.toHaveProperty('accessToken');
+  expect(betterAuthSession.session).not.toHaveProperty('refreshToken');
+  expect(betterAuthSession.session).not.toHaveProperty('idToken');
 
   const applicationAuthResponse = await request.post(`${urls.userApp}/auth/telegram/tma`, {
     data: { initData },
@@ -260,11 +289,9 @@ test('Telegram TMA establishes Better Auth and application sessions through the 
   expect(successfulAuthStatuses).toContain(applicationAuthResponse.status());
   const applicationAuth = (await applicationAuthResponse.json()) as ExternalAuthSessionResponse;
   expect(applicationAuth.data.session.user.email).toBeNull();
-  expect(applicationAuth.data.session.accessToken).toBeTruthy();
+  expect(applicationAuth.data.session).not.toHaveProperty('accessToken');
 
-  const identitiesResponse = await request.get(`${urls.userApp}/auth/provider-identities`, {
-    headers: { Authorization: bearerAuthorization(applicationAuth.data.session.accessToken) },
-  });
+  const identitiesResponse = await request.get(`${urls.userApp}/auth/provider-identities`);
   expect(identitiesResponse.status()).toBe(200);
   await expect(identitiesResponse.json()).resolves.toMatchObject({
     data: {
@@ -279,19 +306,100 @@ test('Telegram TMA establishes Better Auth and application sessions through the 
   });
 });
 
-test('admin API accepts bearer tokens while production admin frontend ignores URL tokens', async ({ page }) => {
+test('admin API accepts only its cookie session and ignores browser URL tokens', async ({ page }) => {
+  const targetEmail = `role-target-${Date.now()}@example.com`;
+  await register(urls.userApp, targetEmail);
   const session = await register(urls.userApp, 'admin@example.com');
   expect(session.data.user.roles).toContain('admin');
   expect(session.data.user.permissions).toContain('admin:profile:read');
 
-  const adminProfile = await fetch(`${urls.adminApp}/admin/profile/me`, {
-    headers: { Authorization: bearerAuthorization(session.data.accessToken) },
+  const bearerProfile = await fetch(`${urls.adminApi}/admin/profile/me`, {
+    headers: { Authorization: 'Bearer header.payload.signature' },
   });
-  expect(adminProfile.status).toBe(200);
+  expect(bearerProfile.status).toBe(401);
+
+  const loginResponse = await page.context().request.post(`${urls.authApi}/auth/login`, {
+    data: { email: 'admin@example.com', password: authPassword },
+  });
+  expect(successfulAuthStatuses).toContain(loginResponse.status());
+  const adminProfile = await page.context().request.get(`${urls.adminApi}/admin/profile/me`);
+  expect(adminProfile.status()).toBe(200);
   expect(await adminProfile.text()).toContain('admin@example.com');
 
+  const rolesNavigation = await page.context().request.get(`${urls.adminApp}/admin/roles`, {
+    headers: { Accept: 'text/html' },
+  });
+  expect(rolesNavigation.status()).toBe(200);
+  expect(rolesNavigation.headers()['content-type']).toContain('text/html');
+  expect(rolesNavigation.headers().vary).toContain('Accept');
+
+  const sameOriginRoles = await page.context().request.get(`${urls.adminApp}/admin/roles`, {
+    headers: { Accept: 'application/json' },
+  });
+  expect(sameOriginRoles.status()).toBe(200);
+  expect(sameOriginRoles.headers()['content-type']).toContain('application/json');
+  await expect(sameOriginRoles.json()).resolves.toMatchObject({
+    data: { roles: expect.any(Array), permissions: expect.any(Array) },
+  });
+
+  const usersResponse = await page.context().request.get(`${urls.adminApi}/admin/users?search=${targetEmail}`);
+  expect(usersResponse.status()).toBe(200);
+  const users = (await usersResponse.json()) as AdminUsersResponse;
+  const targetUser = users.data.items.find((user) => user.email === targetEmail);
+  expect(targetUser).toBeDefined();
+  if (!targetUser) {
+    throw new Error(`Admin users response did not include ${targetEmail}.`);
+  }
+
+  const roleKey = `operations.${Date.now()}`;
+  const createRoleResponse = await page.context().request.post(`${urls.adminApi}/admin/roles`, {
+    data: {
+      key: roleKey,
+      label: 'Fullstack operations',
+      permissions: ['admin:dashboard:read'],
+    },
+  });
+  expect(successfulAuthStatuses).toContain(createRoleResponse.status());
+
+  const assignRoleResponse = await page
+    .context()
+    .request.put(`${urls.adminApi}/admin/users/${targetUser.id}/roles`, { data: { roles: ['user', roleKey] } });
+  expect(assignRoleResponse.status()).toBe(200);
+  await expect(assignRoleResponse.json()).resolves.toMatchObject({
+    data: { roles: ['user', roleKey] },
+  });
+
+  const persistedUserResponse = await page.context().request.get(`${urls.adminApi}/admin/users/${targetUser.id}`);
+  expect(persistedUserResponse.status()).toBe(200);
+  await expect(persistedUserResponse.json()).resolves.toMatchObject({
+    data: { email: targetEmail, roles: ['user', roleKey] },
+  });
+
+  const featureFlagResponse = await page
+    .context()
+    .request.put(`${urls.adminApi}/admin/feature-flags/fullstack.roleassignment`, {
+      data: { description: 'Fullstack admin proof', enabled: true, value: true },
+    });
+  expect(featureFlagResponse.status()).toBe(200);
+  await expect(featureFlagResponse.json()).resolves.toMatchObject({
+    data: { key: 'fullstack.roleassignment', value: true },
+  });
+
+  const roleAuditResponse = await page
+    .context()
+    .request.get(`${urls.adminApi}/admin/audit?action=admin.user.roles.update&targetId=${targetUser.id}`);
+  expect(roleAuditResponse.status()).toBe(200);
+  const roleAudit = (await roleAuditResponse.json()) as AdminAuditResponse;
+  expect(roleAudit.data.items).toContainEqual(
+    expect.objectContaining({
+      action: 'admin.user.roles.update',
+      resource: 'admin.users',
+      targetId: targetUser.id,
+    }),
+  );
+
   await page.context().clearCookies();
-  await gotoWithRetry(page, `${urls.adminApp}/profile?admin_token=${session.data.accessToken}`);
+  await gotoWithRetry(page, `${urls.adminApp}/profile?admin_token=ignored`);
   await expect(page).not.toHaveURL(/admin_token=|token=/u);
   await expect(page.getByRole('region', { name: 'Access denied' })).toBeVisible();
 });

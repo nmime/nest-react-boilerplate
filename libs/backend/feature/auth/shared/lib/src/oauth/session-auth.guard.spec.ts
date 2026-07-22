@@ -1,4 +1,3 @@
-import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { UnauthorizedException, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -14,22 +13,6 @@ const principal: AuthenticatedPrincipal = {
   roles: ['user'],
   permissions: ['profile:read'],
 };
-
-function signBearerToken(secret: string): string {
-  const token = [
-    Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'),
-    Buffer.from(
-      JSON.stringify({
-        sub: principal.subject,
-        exp: Math.floor(Date.now() / 1000) + 60,
-        roles: principal.roles,
-        permissions: principal.permissions,
-      }),
-    ).toString('base64url'),
-  ];
-  const signature = createHmac('sha256', secret).update(token.join('.')).digest('base64url');
-  return `${token.join('.')}.${signature}`;
-}
 
 const createContext = (request: AuthenticatedRequest, handler: () => undefined = () => undefined): ExecutionContext => {
   const context = {
@@ -54,39 +37,33 @@ const createContext = (request: AuthenticatedRequest, handler: () => undefined =
 
 describe('SessionAuthGuard', () => {
   it('accepts a persisted session principal', () => {
-    const request: AuthenticatedRequest = { session: {} };
-    setSessionPrincipal(request, principal);
+    const identityPrincipal = { ...principal, roles: [], permissions: [] };
+    const request: AuthenticatedRequest = { session: { user: identityPrincipal } };
 
     expect(new SessionAuthGuard().canActivate(createContext(request))).toBe(true);
-    expect(request.user).toEqual(principal);
+    expect(request.user).toEqual(identityPrincipal);
   });
 
-  it('falls back to bearer validation when no session is available', () => {
-    process.env.AUTH_JWT_SECRET = 'session-guard-test-secret-123456789';
-    const token = [
-      Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'),
-      Buffer.from(
-        JSON.stringify({
-          sub: principal.subject,
-          email: principal.email,
-          exp: Math.floor(Date.now() / 1000) + 60,
-          roles: principal.roles,
-          permissions: principal.permissions,
-        }),
-      ).toString('base64url'),
-    ];
-    const signature = createHmac('sha256', process.env.AUTH_JWT_SECRET).update(token.join('.')).digest('base64url');
+  it('preserves access already resolved by a database guard for the same identity', () => {
     const request: AuthenticatedRequest = {
-      headers: { authorization: `Bearer ${token.join('.')}.${signature}` },
+      session: { user: { ...principal, roles: [], permissions: [] } },
+      user: principal,
     };
 
     expect(new SessionAuthGuard().canActivate(createContext(request))).toBe(true);
-    expect(request.user).toMatchObject({ subject: principal.subject });
+    expect(request.user).toBe(principal);
+    expect(request.auth).toBe(principal);
   });
 
-  it('rejects requests without a session or bearer token', () => {
-    process.env.AUTH_JWT_SECRET = 'session-guard-test-secret-123456789';
+  it('rejects bearer credentials when no session is available', () => {
+    const request: AuthenticatedRequest = {
+      headers: { authorization: 'Bearer header.payload.signature' },
+    };
 
+    expect(() => new SessionAuthGuard().canActivate(createContext(request))).toThrow(UnauthorizedException);
+  });
+
+  it('rejects requests without a session', () => {
     expect(() => new SessionAuthGuard().canActivate(createContext({}))).toThrow(UnauthorizedException);
   });
 
@@ -97,15 +74,12 @@ describe('SessionAuthGuard', () => {
     expect(new SessionAuthGuard(new Reflector()).canActivate(createContext({}, handler))).toBe(true);
   });
 
-  it('reads a bearer token from an array authorization header', () => {
-    const secret = 'session-guard-test-secret-123456789';
-    process.env.AUTH_JWT_SECRET = secret;
+  it('rejects an array authorization header without a session', () => {
     const request: AuthenticatedRequest = {
-      headers: { authorization: [`Bearer ${signBearerToken(secret)}`] },
+      headers: { authorization: ['Bearer header.payload.signature'] },
     };
 
-    expect(new SessionAuthGuard().canActivate(createContext(request))).toBe(true);
-    expect(request.user?.subject).toBe(principal.subject);
+    expect(() => new SessionAuthGuard().canActivate(createContext(request))).toThrow(UnauthorizedException);
   });
 });
 
@@ -119,6 +93,15 @@ describe('session principal lifecycle helpers', () => {
     expect(request.tenantId).toBe(principal.tenantId);
     expect(request.user).toEqual(principal);
     expect(request.auth).toEqual(principal);
+  });
+
+  it('persists identity metadata without authorization grants', () => {
+    const request: AuthenticatedRequest = { session: {} };
+
+    setSessionPrincipal(request, principal);
+
+    expect(request.session?.user).toEqual({ ...principal, roles: [], permissions: [] });
+    expect(request.user).toEqual(principal);
   });
 
   it('clears the persisted session and request principal fields', () => {

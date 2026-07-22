@@ -46,7 +46,7 @@ and coarse aggregate dimensions remain until the whole event is deleted after
 `AUTH_LOGIN_EVENT_RETENTION_DAYS` (365 by default). Cleanup runs at most hourly,
 opportunistically after new events, so no extra scheduler application is
 required. A dedicated `AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET` is preferred; the
-JWT secret is the fallback.
+session secret is the fallback.
 
 ## Admin contract
 

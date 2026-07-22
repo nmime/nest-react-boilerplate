@@ -12,7 +12,7 @@ afterEach(() => {
 
 describe('AuthLoginAnalyticsService', () => {
   it('enriches and persists request evidence, then runs bounded retention', async () => {
-    process.env.AUTH_JWT_SECRET = 'unit-test-secret';
+    process.env.SESSION_SECRET = 'unit-test-session-secret';
     process.env.AUTH_LOGIN_NETWORK_RETENTION_DAYS = '7';
     process.env.AUTH_LOGIN_EVENT_RETENTION_DAYS = '90';
     const entity = new AuthLoginEventEntity({

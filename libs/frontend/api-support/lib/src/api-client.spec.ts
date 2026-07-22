@@ -63,13 +63,12 @@ describe('frontend API client', () => {
     });
   });
 
-  it('sets JSON and authorization headers consistently', async () => {
+  it('sets JSON session-request headers consistently', async () => {
     setApiLocale('ru');
     configureApiLocale({ locale: 'ru' });
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}));
 
     await apiFetch('profile/me', {
-      authToken: ' token ',
       baseUrl: 'https://api.example.test/',
       fetchImpl,
       json: { displayName: 'Ada' },
@@ -85,7 +84,6 @@ describe('frontend API client', () => {
     expect(request.headers).toMatchObject({
       Accept: 'application/json',
       'Accept-Language': 'ru',
-      Authorization: 'Bearer token',
       'Content-Type': 'application/json',
     });
   });
@@ -158,7 +156,6 @@ describe('frontend API client', () => {
     expect(resolveApiUrl('/profile', '')).toBe('/profile');
     expect(
       buildApiHeaders({
-        authToken: null,
         hasJsonBody: false,
         headers: { 'Accept-Language': 'ru', 'x-request-id': '1' },
       }),

@@ -266,7 +266,6 @@ const lastMiddleware = (): TestMiddleware => {
 
 describe('bootstrapNestApi', () => {
   const originalEnvironment = {
-    authJwtSecret: process.env.AUTH_JWT_SECRET,
     databaseUrl: process.env.DATABASE_URL,
     host: process.env.HOST,
     nodeEnv: process.env.NODE_ENV as string | undefined,
@@ -290,7 +289,6 @@ describe('bootstrapNestApi', () => {
   };
 
   beforeEach(() => {
-    delete process.env.AUTH_JWT_SECRET;
     delete process.env.DATABASE_URL;
     delete process.env.HOST;
     delete process.env.NODE_ENV;
@@ -315,7 +313,6 @@ describe('bootstrapNestApi', () => {
   });
 
   afterEach(() => {
-    process.env.AUTH_JWT_SECRET = originalEnvironment.authJwtSecret ?? '';
     process.env.DATABASE_URL = originalEnvironment.databaseUrl ?? '';
     process.env.HOST = originalEnvironment.host ?? '';
     process.env.NODE_ENV = originalEnvironment.nodeEnv ?? '';
@@ -611,14 +608,14 @@ describe('bootstrapNestApi', () => {
     process.env.DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/app';
     process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = 'true';
     await expect(bootstrapNestApi(TestModule, { appName: 'test-api', port: 3010 })).rejects.toThrow(
-      'SESSION_SECRET or AUTH_JWT_SECRET must be configured in production.',
+      'SESSION_SECRET must be configured in production.',
     );
 
     vi.clearAllMocks();
     process.env.SESSION_SECRET = 'short';
     process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = 'true';
     await expect(bootstrapNestApi(TestModule, { appName: 'test-api', port: 3010 })).rejects.toThrow(
-      'SESSION_SECRET or AUTH_JWT_SECRET must be at least 32 characters in production.',
+      'SESSION_SECRET must be at least 32 characters in production.',
     );
   });
 

@@ -9,6 +9,7 @@ export const AdminAuditResources = [
   'admin.notification-templates',
   'admin.notification-segments',
   'admin.notification-broadcasts',
+  'admin.feature-flags',
 ] as const;
 
 export type AdminAuditResource = (typeof AdminAuditResources)[number];

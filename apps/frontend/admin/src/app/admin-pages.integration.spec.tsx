@@ -180,7 +180,6 @@ describe('admin pages integration', () => {
         <AdminLayout access={adminAccess} currentPath={path}>
           {renderAdminRoute(path, { status: 'ready', payload, access: adminAccess }, undefined, {
             requestOptions: {
-              authToken: 'token',
               baseUrl: 'https://admin.example.test',
             },
           })}
@@ -222,7 +221,6 @@ describe('admin pages integration', () => {
     renderAdminRouteForTest(
       renderAdminRoute('/admin', { status: 'ready', payload, access: adminAccess }, undefined, {
         requestOptions: {
-          authToken: 'token',
           baseUrl: 'https://admin.example.test',
         },
       }),

@@ -29,10 +29,12 @@ describe("better-auth-schema source", () => {
   it("adds plugin columns with IF NOT EXISTS for idempotency", () => {
     assert.match(source, /ADD COLUMN IF NOT EXISTS "tenantId"/);
     assert.match(source, /ADD COLUMN IF NOT EXISTS "status"/);
-    assert.match(source, /ADD COLUMN IF NOT EXISTS "roles"/);
-    assert.match(source, /ADD COLUMN IF NOT EXISTS "permissions"/);
     assert.match(source, /ADD COLUMN IF NOT EXISTS "locale"/);
     assert.match(source, /ADD COLUMN IF NOT EXISTS "theme"/);
+    assert.doesNotMatch(source, /ADD COLUMN IF NOT EXISTS "roles"/);
+    assert.doesNotMatch(source, /ADD COLUMN IF NOT EXISTS "permissions"/);
+    assert.match(source, /DROP COLUMN IF EXISTS "roles"/);
+    assert.match(source, /DROP COLUMN IF EXISTS "permissions"/);
   });
 
   it("wraps all DDL in a transaction with BEGIN/COMMIT/ROLLBACK", () => {
@@ -69,11 +71,11 @@ describe("better-auth-schema source", () => {
     assert.match(source, /ADD COLUMN IF NOT EXISTS "updatedAt"/);
   });
 
-  it("creates user table with plugin columns (status, roles, permissions, locale, theme)", () => {
+  it("creates profile plugin columns without a second RBAC store", () => {
     assert.match(source, /"tenantId" varchar\(128\)/);
     assert.match(source, /"status" varchar\(32\)/);
-    assert.match(source, /"roles" json/);
-    assert.match(source, /"permissions" json/);
+    assert.doesNotMatch(source, /"roles" json/);
+    assert.doesNotMatch(source, /"permissions" json/);
     assert.match(source, /"locale" varchar\(16\)/);
     assert.match(source, /"theme" varchar\(16\)/);
   });

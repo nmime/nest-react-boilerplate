@@ -10,6 +10,7 @@ import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-cont
 export interface PermissionEvaluationContext {
   permission: string;
   principal: AuthenticatedPrincipal;
+  request: AuthenticatedRequest;
   requiredRoles: readonly string[];
 }
 
@@ -37,7 +38,8 @@ export class RbacGuard implements CanActivate {
     if (requiredRoles.length > 0 && !hasAnyRole(principal, requiredRoles)) {
       throw new ForbiddenException('Required role is missing.');
     }
-    if (!this.hasAllPermissions(principal, requiredPermissions, requiredRoles)) {
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    if (!this.hasAllPermissions(principal, request, requiredPermissions, requiredRoles)) {
       throw new ForbiddenException('Required permission is missing.');
     }
 
@@ -81,6 +83,7 @@ export class RbacGuard implements CanActivate {
 
   private hasAllPermissions(
     principal: AuthenticatedPrincipal,
+    request: AuthenticatedRequest,
     permissions: string[],
     requiredRoles: string[],
   ): boolean {
@@ -88,6 +91,7 @@ export class RbacGuard implements CanActivate {
       const domainResult = this.evaluateDomainPermission({
         permission,
         principal,
+        request,
         requiredRoles,
       });
 

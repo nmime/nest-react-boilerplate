@@ -16,7 +16,7 @@ globs: apps/backend/**/*, libs/backend/**/*
 - Port/Adapter: use InMemory* for dev, Postgres* for prod
 - Global validation pipe: transform, whitelist, forbidNonWhitelisted
 - RFC 9457 error responses via ClientDataValidationException
-- JWT guards: BearerAuthGuard, RbacGuard, SessionAuthGuard
+- Authentication guards: SessionAuthGuard plus database-backed RBAC guards
 - DTOs with class-validator decorators
 - Use @Public() to mark unauthenticated routes
 

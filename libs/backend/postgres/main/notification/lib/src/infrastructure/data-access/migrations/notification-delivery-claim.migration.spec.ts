@@ -49,12 +49,29 @@ describe('Notification delivery-claim migration', () => {
     });
 
     expect(sql).toContain('add column if not exists "sensitive_data" jsonb not null default \'{}\'::jsonb');
+    expect(sql).toContain('drop constraint if exists "ck__notification_deliveries__provider"');
     expect(sql).toContain("when 'bot' then 'telegram-bot'");
     expect(sql).toContain('alter column "provider" set not null');
     expect(sql).toContain("'resend', 'mailpace', 'google-fcm', 'apple-apns'");
     expect(notificationMigrations.indexOf(Migration20260720130000AddNotificationDeliveryClaim)).toBeLessThan(
       notificationMigrations.indexOf(Migration20260721120000NotificationProvidersAndSensitivePayload),
     );
+  });
+
+  it('restores the base notification constraints on rollback without dropping base-owned columns', () => {
+    const migration = new Migration20260721120000NotificationProvidersAndSensitivePayload(
+      undefined as never,
+      undefined as never,
+    );
+    const sql = collectSql(migration, () => {
+      migration.down();
+    });
+
+    expect(sql).toContain('drop constraint if exists "ck__notifications__target_type"');
+    expect(sql).toContain("'push-token', 'telegram-chat'");
+    expect(sql).toContain('add constraint "ck__notification_deliveries__provider"');
+    expect(sql).not.toContain('drop column if exists "sensitive_data"');
+    expect(sql).not.toContain('alter column "provider" drop not null');
   });
 
   it('backfills immutable template versions before removing mutable channels', () => {

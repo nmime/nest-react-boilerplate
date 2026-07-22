@@ -46,18 +46,6 @@ export class LoginDto {
   password!: string;
 }
 
-export class RefreshTokenDto {
-  @ApiPropertyOptional({ format: 'uuid' })
-  @IsOptional()
-  @IsUUID()
-  tenantId?: string;
-
-  @ApiProperty({ writeOnly: true })
-  @IsString()
-  @MinLength(16)
-  refreshToken!: string;
-}
-
 export class UserActionTokenRequestDto {
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()

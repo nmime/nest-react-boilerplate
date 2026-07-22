@@ -17,12 +17,9 @@ export interface AssignBootstrapRolesInput {
 }
 
 /**
- * Resolves a user's effective {roleKeys, permissionKeys} from the normalized
- * RBAC tables and refreshes the denormalized `auth_users.roles/permissions`
- * jsonb cache the JWT/session hot path reads. The resolved arrays are ordered
- * canonically (catalog order) so the cache stays byte-for-byte identical to
- * what `createDefaultAccessPolicy` produced from the shared matrix — the
- * token/session shape is therefore unchanged.
+ * Resolves a user's effective {roleKeys, permissionKeys} exclusively from the
+ * normalized RBAC tables and projects them into the returned domain record.
+ * No second authorization copy is persisted on `auth_users`.
  */
 @Injectable()
 export class EffectivePermissionService {
@@ -46,8 +43,7 @@ export class EffectivePermissionService {
     };
   }
 
-  // Assign bootstrap roles to a user, then refresh the jsonb cache and return
-  // the updated record. Used by the account-creation paths.
+  // Assign bootstrap roles to a user, then return the normalized projection.
   async assignRolesAndRefresh(input: AssignBootstrapRolesInput): Promise<AuthUserRecord | null> {
     const assigned = await this.roles.assignRoles({
       userId: input.userId,
@@ -62,26 +58,14 @@ export class EffectivePermissionService {
     return this.refresh(input.userId, input.tenantId);
   }
 
-  // Recompute the effective access from the normalized tables and write it back
-  // into the denormalized jsonb cache. If the normalized tables resolve no
-  // roles (e.g. a tenant whose system roles are not seeded yet), the cache is
-  // left untouched so previously persisted claims are never silently wiped.
+  // Recompute the effective access from normalized tables for the returned
+  // record. The database user row contains profile/status fields only.
   async refresh(userId: string, tenantId: string): Promise<AuthUserRecord | null> {
     const access = await this.resolveEffectiveAccess(userId, tenantId);
-    if (access.roleKeys.length === 0) {
-      const current = await this.users.findById(userId, tenantId);
-      return current.isOk() ? current.value : null;
+    const current = await this.users.findById(userId, tenantId);
+    if (current.isErr()) {
+      throw new ConflictException(current.error.message);
     }
-
-    const updated = await this.users.setAccessPolicy(
-      userId,
-      { roles: access.roleKeys, permissions: access.permissionKeys },
-      tenantId,
-    );
-    if (updated.isErr()) {
-      throw new ConflictException(updated.error.message);
-    }
-
-    return updated.value;
+    return current.value ? { ...current.value, roles: access.roleKeys, permissions: access.permissionKeys } : null;
   }
 }

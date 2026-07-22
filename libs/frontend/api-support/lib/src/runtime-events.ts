@@ -14,7 +14,7 @@ export type ApiRuntimeEvent =
     }
   | {
       type: 'auth-required';
-      reason: 'missing-token' | 'refresh-failed' | 'retry-rejected';
+      reason: 'unauthenticated' | 'missing-token' | 'refresh-failed' | 'retry-rejected';
       error?: NormalizedApiErrorSnapshot;
       redirectTo?: string;
     }

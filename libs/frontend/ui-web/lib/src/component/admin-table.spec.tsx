@@ -43,6 +43,19 @@ describe('UiDataTable branch coverage', () => {
     expect(screen.getByRole('cell', { name: 'usr_1' }).className).toContain('text-right');
   });
 
+  it('exposes compact column labels for the responsive record layout', () => {
+    render(
+      <UiDataTable
+        columns={[{ header: 'Name', id: 'name', render: (row) => row.name }]}
+        rowKey={(row) => row.id}
+        rows={rows}
+      />,
+    );
+
+    expect(screen.getByRole('cell', { name: 'Ada' }).getAttribute('data-label')).toBe('Name');
+    expect(document.querySelector('[data-admin-primitive="data-table"]')?.getAttribute('data-layout')).toBe('stack');
+  });
+
   it('invokes the row click handler on pointer clicks', () => {
     const onRowClick = vi.fn();
 

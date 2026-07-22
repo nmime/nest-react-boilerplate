@@ -203,7 +203,7 @@ application stack with staging-specific secrets, databases, and domain names.
 
 2. **Fill in staging-specific values** in `.env.staging`:
    - `DATABASE_URL` — point to the staging database instance.
-   - `SESSION_SECRET`, `BETTER_AUTH_SECRET`, and `AUTH_JWT_SECRET` — use unique secrets (never reuse production values).
+   - `SESSION_SECRET` and `BETTER_AUTH_SECRET` — use unique secrets (never reuse production values).
    - Domain names — change all `example.com` references to `staging.example.com`.
    - Bot tokens — use staging/test bot credentials if available.
 

@@ -43,19 +43,8 @@ export interface CreateAuthUserInput {
   theme?: UserThemePreference | null;
 }
 
-export interface AuthUserAccessPolicyUpdate {
-  roles?: string[];
-  permissions?: string[];
-  status?: AuthUserRecord['status'];
-}
-
 export interface AuthUserStore {
   create(input: CreateAuthUserInput): ResultAsync<AuthUserRecord, AuthUserStoreError>;
-  setAccessPolicy(
-    id: string,
-    policy: AuthUserAccessPolicyUpdate,
-    tenantId?: string,
-  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   findByEmail(
     email: string | null | undefined,
     tenantId?: string,
@@ -119,16 +108,6 @@ export class PostgresAuthUserStore implements AuthUserStore {
 
   create(input: CreateAuthUserInput): ResultAsync<AuthUserRecord, AuthUserStoreError> {
     return this.repository.createUser(input).map(toAuthUserRecord);
-  }
-
-  setAccessPolicy(
-    id: string,
-    policy: AuthUserAccessPolicyUpdate,
-    tenantId: string = DefaultAuthTenantId,
-  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
-    return this.repository
-      .setAccessPolicy(id, policy, tenantId)
-      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   findByEmail(
@@ -226,25 +205,6 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       this.idsByTenantEmail.set(key, record.id);
     }
     return okAsync(record);
-  }
-
-  setAccessPolicy(
-    id: string,
-    policy: AuthUserAccessPolicyUpdate,
-    tenantId: string = DefaultAuthTenantId,
-  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
-    const record = this.usersById.get(id);
-    if (!record || record.tenantId !== tenantId) {
-      return okAsync(null);
-    }
-    const updated: AuthUserRecord = {
-      ...record,
-      ...(policy.roles ? { roles: [...policy.roles] } : {}),
-      ...(policy.permissions ? { permissions: [...policy.permissions] } : {}),
-      ...(policy.status ? { status: policy.status } : {}),
-    };
-    this.usersById.set(id, updated);
-    return okAsync(updated);
   }
 
   findByEmail(

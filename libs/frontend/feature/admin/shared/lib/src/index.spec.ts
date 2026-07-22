@@ -44,6 +44,8 @@ describe('@app/frontend-feature-admin-shared access policy', () => {
       canWriteRoles: false,
       canReadAudit: false,
       canReadAuthLoginAnalytics: false,
+      canReadFeatureFlags: false,
+      canWriteFeatureFlags: false,
       canReadSettings: false,
       canUpdateSettings: false,
       canReadNotificationTemplates: false,
@@ -70,7 +72,7 @@ describe('@app/frontend-feature-admin-shared access policy', () => {
     expect(policy.canAccessAdmin).toBe(true);
   });
 
-  it('fails closed when subject or admin role is missing', () => {
+  it('fails closed when subject is missing while allowing DB-resolved custom roles', () => {
     expect(
       createAdminAccessPolicy({
         permissions: [AdminManageAllPermission],
@@ -83,7 +85,7 @@ describe('@app/frontend-feature-admin-shared access policy', () => {
         permissions: [AdminManageAllPermission],
         roles: ['user'],
       }).canAccessAdmin,
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('treats manage-all as a frontend-safe wildcard access claim', () => {

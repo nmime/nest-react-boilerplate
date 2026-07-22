@@ -1,4 +1,5 @@
 import {
+  AdminManageAllPermission,
   AdminRolesWritePermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersWritePermission,
@@ -11,4 +12,5 @@ export const adminRoleInvariantPermissions = [
   AdminUsersWritePermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminRolesWritePermission,
+  AdminManageAllPermission,
 ] as const;

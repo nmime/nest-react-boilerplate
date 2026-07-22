@@ -23,6 +23,8 @@ import {
   AdminNotificationBroadcastsWritePermission,
   AdminNotificationBroadcastsSendPermission,
   AdminNotificationBroadcastsApprovePermission,
+  AdminFeatureFlagsReadPermission,
+  AdminFeatureFlagsWritePermission,
   AdminManageAllPermission,
   defaultRolePermissions,
   permissionCatalog,
@@ -56,6 +58,8 @@ export {
   AdminNotificationBroadcastsWritePermission,
   AdminNotificationBroadcastsSendPermission,
   AdminNotificationBroadcastsApprovePermission,
+  AdminFeatureFlagsReadPermission,
+  AdminFeatureFlagsWritePermission,
   AdminManageAllPermission,
 };
 
@@ -87,6 +91,7 @@ export const adminResources = [
   'admin.notification-templates',
   'admin.notification-segments',
   'admin.notification-broadcasts',
+  'admin.feature-flags',
 ] as const;
 
 export type AdminAction = (typeof adminActions)[number];

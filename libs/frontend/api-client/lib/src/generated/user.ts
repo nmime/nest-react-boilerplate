@@ -95,11 +95,8 @@ export interface components {
       displayName?: string;
       /** @enum {string} */
       locale?: 'en' | 'ru';
-      issuer?: string;
-      audience?: string | string[];
       roles: string[];
       permissions: string[];
-      tokenId?: string;
     };
     UserProfileViewDto: {
       id: string;

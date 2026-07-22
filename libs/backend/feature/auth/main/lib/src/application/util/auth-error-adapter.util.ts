@@ -1,11 +1,5 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import {
-  AuthJwtSigningError,
-  InvalidAuthTenantIdError,
-  parseDomainTenantId,
-  signDomainJwt,
-  type JwtSigningEnvironment,
-} from '../../domain';
+import { BadRequestException } from '@nestjs/common';
+import { InvalidAuthTenantIdError, parseDomainTenantId } from '../../domain';
 
 export function parseTenantId(value: string | null | undefined): string {
   try {
@@ -17,18 +11,6 @@ export function parseTenantId(value: string | null | undefined): string {
     }
 
     /* v8 ignore next -- parseDomainTenantId currently has no non-domain error path. */
-    throw error;
-  }
-}
-
-export function signJwt(payload: Record<string, unknown>, env: JwtSigningEnvironment, expiresIn?: number): string {
-  try {
-    return signDomainJwt(payload, env, expiresIn);
-  } catch (error) {
-    if (error instanceof AuthJwtSigningError) {
-      throw new UnauthorizedException(error.message);
-    }
-
     throw error;
   }
 }

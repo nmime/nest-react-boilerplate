@@ -19,5 +19,5 @@
     "typescript": "6.0.3",
     "vitest": "4.1.10"
   },
-  "description": "NestJS + Fastify auth API (login, register, JWT, OAuth, password reset)"
+  "description": "NestJS + Fastify auth API (cookie sessions, register, OAuth, password reset)"
 }

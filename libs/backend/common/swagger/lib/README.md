@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Centralizes Swagger/OpenAPI document setup, bearer security, operation
+Centralizes Swagger/OpenAPI document setup, session-cookie security, operation
 decorators, schema helpers, and standard Problem Details responses.
 
 ## Commands

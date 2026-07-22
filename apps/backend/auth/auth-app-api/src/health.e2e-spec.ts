@@ -29,8 +29,6 @@ interface HealthEnvelope {
 
 interface AuthSessionResponse {
   data: {
-    accessToken: string;
-    refreshToken?: string;
     user: {
       email: string;
       locale?: string;
@@ -38,10 +36,6 @@ interface AuthSessionResponse {
     };
   };
 }
-
-const authorizationScheme = 'Bearer';
-
-const bearerAuthorization = (token: string): string => [authorizationScheme, token].join(' ');
 
 const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
 
@@ -131,7 +125,7 @@ describe('auth-app-api e2e', () => {
 
   beforeAll(async () => {
     process.env.AUTH_PERSISTENCE = 'memory';
-    process.env.AUTH_JWT_SECRET = 'e2e-secret';
+    process.env.SESSION_SECRET = 'e2e-test-session-secret-at-least-32-characters';
     const moduleRef = await Test.createTestingModule({
       imports: [AuthAppApiModule],
     })
@@ -150,7 +144,7 @@ describe('auth-app-api e2e', () => {
   afterAll(async () => {
     await app.getHttpAdapter().close();
     delete process.env.AUTH_PERSISTENCE;
-    delete process.env.AUTH_JWT_SECRET;
+    delete process.env.SESSION_SECRET;
   }, 30_000);
 
   it('GET / returns localized RFC 9457 problem details with an occurrence URI', async () => {
@@ -212,7 +206,7 @@ describe('auth-app-api e2e', () => {
     });
   });
 
-  it('supports session-only and bearer-only callers for auth self endpoints', async () => {
+  it('uses only DB-backed cookie sessions for auth self endpoints', async () => {
     const password = `e2e-${Date.now().toString(36)}-secret`;
     const register = await app.inject({
       method: 'POST',
@@ -230,7 +224,8 @@ describe('auth-app-api e2e', () => {
     expect(registerCookieHeader).toContain('nrb.sid=');
     expect(registerBody.data.user.email).toBe('e2e@example.com');
     expect(registerBody.data.user.theme).toBe('system');
-    expect(registerBody.data.refreshToken).toEqual(expect.any(String));
+    expect(registerBody.data).not.toHaveProperty('accessToken');
+    expect(registerBody.data).not.toHaveProperty('refreshToken');
 
     const sessionOnlyMe = await app.inject({
       method: 'GET',
@@ -251,60 +246,31 @@ describe('auth-app-api e2e', () => {
       method: 'GET',
       url: '/auth/me',
       headers: {
-        authorization: bearerAuthorization(registerBody.data.accessToken),
+        authorization: 'Bearer header.payload.signature',
       },
     });
-    expect(bearerOnlyMe.statusCode).toBe(200);
-    const bearerOnlyMeBody = bearerOnlyMe.json<{
-      data?: { principal?: { email?: string; theme?: UserThemePreference } };
-    }>();
-    expect(bearerOnlyMeBody.data?.principal?.email).toBe('e2e@example.com');
+    expect(bearerOnlyMe.statusCode).toBe(401);
 
     const crossTenant = await app.inject({
       method: 'GET',
       url: '/auth/me',
       headers: {
-        authorization: bearerAuthorization(registerBody.data.accessToken),
+        cookie: registerCookieHeader,
         'x-tenant-id': '22222222-2222-4222-8222-222222222222',
       },
     });
     expect(crossTenant.statusCode).toBe(401);
 
-    const refreshed = await app.inject({
-      method: 'POST',
-      url: '/auth/refresh',
-      headers: { 'content-type': 'application/json' },
-      payload: JSON.stringify({ refreshToken: registerBody.data.refreshToken }),
-    });
-    expect(refreshed.statusCode).toBe(201);
-    const refreshedBody = refreshed.json<AuthSessionResponse>();
-    expect(refreshedBody.data.accessToken).toEqual(expect.any(String));
-    expect(refreshedBody.data.refreshToken).toEqual(expect.any(String));
-    expect(refreshedBody.data.refreshToken).not.toBe(registerBody.data.refreshToken);
-
-    const replayedRefresh = await app.inject({
-      method: 'POST',
-      url: '/auth/refresh',
-      headers: { 'content-type': 'application/json' },
-      payload: JSON.stringify({ refreshToken: registerBody.data.refreshToken }),
-    });
-    expect(replayedRefresh.statusCode).toBe(401);
-
     const bearerOnlyPreferences = await app.inject({
       method: 'PATCH',
       url: '/auth/me/preferences',
       headers: {
-        authorization: bearerAuthorization(registerBody.data.accessToken),
+        authorization: 'Bearer header.payload.signature',
         'content-type': 'application/json',
       },
       payload: JSON.stringify({ locale: 'ru', theme: 'dark' }),
     });
-    expect(bearerOnlyPreferences.statusCode).toBe(200);
-    const bearerOnlyPreferencesBody = bearerOnlyPreferences.json<{
-      data?: { locale?: string; theme?: UserThemePreference };
-    }>();
-    expect(bearerOnlyPreferencesBody.data?.locale).toBe('ru');
-    expect(bearerOnlyPreferencesBody.data?.theme).toBe('dark');
+    expect(bearerOnlyPreferences.statusCode).toBe(401);
 
     const sessionOnlyPreferences = await app.inject({
       method: 'PATCH',
@@ -330,17 +296,12 @@ describe('auth-app-api e2e', () => {
       method: 'PATCH',
       url: '/auth/me/locale',
       headers: {
-        authorization: bearerAuthorization(registerBody.data.accessToken),
+        authorization: 'Bearer header.payload.signature',
         'content-type': 'application/json',
       },
       payload: JSON.stringify({ locale: 'ru' }),
     });
-    expect(bearerOnlyLocale.statusCode).toBe(200);
-    const bearerOnlyLocaleBody = bearerOnlyLocale.json<{
-      data?: { locale?: string; theme?: UserThemePreference };
-    }>();
-    expect(bearerOnlyLocaleBody.data?.locale).toBe('ru');
-    expect(bearerOnlyLocaleBody.data?.theme).toBe('light');
+    expect(bearerOnlyLocale.statusCode).toBe(401);
 
     const sessionOnlyLocale = await app.inject({
       method: 'PATCH',
@@ -403,20 +364,16 @@ describe('auth-app-api e2e', () => {
       payload: JSON.stringify({ email: 'e2e@example.com', password }),
     });
     expect(login.statusCode).toBe(201);
-    const loginBody = login.json<AuthSessionResponse>();
-    expect(loginBody.data.user.email).toBe('e2e@example.com');
+    expect(login.json<AuthSessionResponse>().data.user.email).toBe('e2e@example.com');
 
     const bearerOnlyLogout = await app.inject({
       method: 'POST',
       url: '/auth/logout',
       headers: {
-        authorization: bearerAuthorization(loginBody.data.accessToken),
-        'content-type': 'application/json',
+        authorization: 'Bearer header.payload.signature',
       },
-      payload: JSON.stringify({ refreshToken: loginBody.data.refreshToken }),
     });
-    expect(bearerOnlyLogout.statusCode).toBe(201);
-    expect(bearerOnlyLogout.json()).toEqual({ data: { loggedOut: true } });
+    expect(bearerOnlyLogout.statusCode).toBe(401);
 
     const sessionOnlyLogout = await app.inject({
       method: 'POST',

@@ -40,7 +40,7 @@ protected branches, or merge blocking.
 
 ## Secured components
 
-- JWT sessions: min 32-char secret, token cleanup, timing-safe comparisons
-- OAuth2: state hash verification, session cookies with HttpOnly
+- First-party sessions: PostgreSQL-backed opaque IDs, HttpOnly cookies, rotation on authentication, and fail-closed account/RBAC reloads
+- OAuth2/OIDC providers: state hash verification, PKCE where supported, signed-token validation, and isolated provider cookies/credentials
 - RBAC: seeded role/permission catalog
 - Network policies, PDB, HPA, rate limiting in production Helm values

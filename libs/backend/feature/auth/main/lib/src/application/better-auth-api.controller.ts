@@ -3,7 +3,7 @@ import { Controller, Inject, Req, Res, All, HttpCode, HttpException, Logger, Opt
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Auth } from 'better-auth';
 import { BaseException, InternalException } from '@app/backend-common-exception';
-import { DefaultAuthTenantId, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
+import { DefaultAuthTenantId, Public, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
 import { AuthLoginAnalyticsService } from './auth-login-analytics.service';
 
 const UnsafeForwardedResponseHeaders = new Set([
@@ -20,6 +20,7 @@ const UnsafeForwardedResponseHeaders = new Set([
 ]);
 
 @Controller('api/auth')
+@Public()
 export class BetterAuthApiController {
   private static readonly log = new Logger(BetterAuthApiController.name);
   constructor(
@@ -107,6 +108,7 @@ export class BetterAuthApiController {
         if (jsonBody && typeof jsonBody === 'object' && 'operationId' in jsonBody) {
           jsonBody = this.unwrapContext(jsonBody as Record<string, unknown>);
         }
+        jsonBody = stripCredentialFields(jsonBody);
 
         await this.recordSuccessfulSession(req, jsonBody);
 
@@ -138,7 +140,7 @@ export class BetterAuthApiController {
 
   /**
    * Unwrap Better-Auth's internal context wrapper into a clean response body
-   * with only user, session, and token fields.
+   * with only user and session metadata. Credential material is cookie-only.
    */
   private unwrapContext(ctx: Record<string, unknown>): Record<string, unknown> {
     const context = (ctx.context ?? {}) as Record<string, unknown>;
@@ -150,12 +152,8 @@ export class BetterAuthApiController {
       out.user = newSession.user || session.user;
     }
     if (newSession.session || session.session) {
-      out.session = newSession.session || session.session;
+      out.session = stripCredentialFields(newSession.session || session.session);
     }
-    if (newSession.token || session.token) {
-      out.token = newSession.token || session.token;
-    }
-
     // For sign-out and similar endpoints that don't return user/session
     if (Object.keys(out).length === 0) {
       for (const key of ['success', 'error', 'message']) {
@@ -227,6 +225,22 @@ const asRecord = (value: unknown): Record<string, unknown> | undefined =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
 const stringValue = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value : undefined;
+
+const BetterAuthCredentialFields = new Set(['token', 'accessToken', 'refreshToken', 'idToken']);
+
+function stripCredentialFields(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(stripCredentialFields);
+  }
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !BetterAuthCredentialFields.has(key))
+      .map(([key, nested]) => [key, stripCredentialFields(nested)]),
+  );
+}
 
 function betterAuthSessionRoute(url: string | undefined): {
   eventType: 'login' | 'registration';

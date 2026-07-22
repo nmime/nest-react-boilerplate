@@ -30,22 +30,11 @@ export class AuthenticatedPrincipalDto {
   @ApiPropertyOptional({ enum: userThemePreferences })
   theme?: string;
 
-  @ApiPropertyOptional()
-  issuer?: string;
-
-  @ApiPropertyOptional({
-    oneOf: [{ type: 'string' }, { items: { type: 'string' }, type: 'array' }],
-  })
-  audience?: string | string[];
-
   @ApiProperty({ items: { type: 'string' }, type: 'array' })
   roles!: string[];
 
   @ApiProperty({ items: { type: 'string' }, type: 'array' })
   permissions!: string[];
-
-  @ApiPropertyOptional()
-  tokenId?: string;
 }
 
 export class AuthenticatedUserViewDto {
@@ -83,18 +72,6 @@ export class AuthenticatedUserViewDto {
 }
 
 export class AuthSessionViewDto {
-  @ApiProperty()
-  accessToken!: string;
-
-  @ApiProperty({ enum: ['Bearer'] })
-  tokenType!: 'Bearer';
-
-  @ApiProperty()
-  expiresIn!: number;
-
-  @ApiPropertyOptional({ writeOnly: true })
-  refreshToken?: string;
-
   @ApiProperty({ type: () => AuthenticatedUserViewDto })
   user!: AuthenticatedUserViewDto;
 

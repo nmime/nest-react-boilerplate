@@ -58,11 +58,8 @@ export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
         return false;
       }
 
-      const deleted = result.value.refreshTokensDeleted + result.value.userTokensDeleted;
-      if (deleted > 0) {
-        this.logger.log(
-          `Auth token cleanup deleted ${result.value.refreshTokensDeleted} refresh tokens and ${result.value.userTokensDeleted} user action tokens.`,
-        );
+      if (result.value.userTokensDeleted > 0) {
+        this.logger.log(`Auth token cleanup deleted ${result.value.userTokensDeleted} expired user action tokens.`);
       }
       return true;
     } finally {

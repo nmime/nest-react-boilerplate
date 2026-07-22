@@ -32,9 +32,17 @@ export class FeatureFlagRepository {
   findByKey(
     key: string,
     tenantId: string = DefaultFeatureFlagTenantId,
+    entityManager: EntityManager = this.entityManager,
   ): ResultAsync<FeatureFlagEntity | null, FeatureFlagRepositoryError> {
+    return ResultAsync.fromPromise(entityManager.findOne(FeatureFlagEntity, { key, tenantId }), mapRepositoryError);
+  }
+
+  list(
+    context: FeatureFlagContext = {},
+    entityManager: EntityManager = this.entityManager,
+  ): ResultAsync<FeatureFlagEntity[], FeatureFlagRepositoryError> {
     return ResultAsync.fromPromise(
-      this.entityManager.findOne(FeatureFlagEntity, { key, tenantId }),
+      entityManager.find(FeatureFlagEntity, { tenantId: resolveTenantId(context) }, { orderBy: { key: 'ASC' } }),
       mapRepositoryError,
     );
   }
@@ -57,13 +65,16 @@ export class FeatureFlagRepository {
     }));
   }
 
-  upsert(input: FeatureFlagUpsertInput): ResultAsync<FeatureFlagEntity, FeatureFlagRepositoryError> {
-    return ResultAsync.fromPromise(this.persistFlag(input), mapRepositoryError);
+  upsert(
+    input: FeatureFlagUpsertInput,
+    entityManager: EntityManager = this.entityManager,
+  ): ResultAsync<FeatureFlagEntity, FeatureFlagRepositoryError> {
+    return ResultAsync.fromPromise(this.persistFlag(input, entityManager), mapRepositoryError);
   }
 
-  private async persistFlag(input: FeatureFlagUpsertInput): Promise<FeatureFlagEntity> {
+  private async persistFlag(input: FeatureFlagUpsertInput, entityManager: EntityManager): Promise<FeatureFlagEntity> {
     const tenantId = input.tenantId ?? DefaultFeatureFlagTenantId;
-    const existing = await this.entityManager.findOne(FeatureFlagEntity, {
+    const existing = await entityManager.findOne(FeatureFlagEntity, {
       key: input.key,
       tenantId,
     });
@@ -72,13 +83,13 @@ export class FeatureFlagRepository {
       existing.value = input.value;
       existing.description = input.description ?? existing.description;
       existing.enabled = input.enabled ?? existing.enabled;
-      await this.entityManager.flush();
+      await entityManager.flush();
       return existing;
     }
 
     const entity = new FeatureFlagEntity({ ...input, tenantId });
-    this.entityManager.persist(entity);
-    await this.entityManager.flush();
+    entityManager.persist(entity);
+    await entityManager.flush();
 
     return entity;
   }

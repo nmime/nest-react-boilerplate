@@ -15,23 +15,21 @@ type ButtonSize = NonNullable<VariantProps<typeof buttonVariants>['size']>;
 
 export const buttonVariants = cva(
   [
-    'xr-button inline-flex max-w-full min-w-0 items-center justify-center gap-2 rounded-[var(--xr-radius-md)] border text-center text-sm font-semibold no-underline shadow-sm transition-[background-color,border-color,box-shadow,color,opacity,transform] duration-150 ease-out',
+    'xr-button inline-flex max-w-full min-w-0 items-center justify-center gap-2 rounded-[var(--xr-radius-md)] border text-center text-sm font-semibold no-underline transition-[background-color,border-color,box-shadow,color,opacity] duration-150 ease-out',
     'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
     'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
   ],
   {
     variants: {
       variant: {
-        primary:
-          'xr-button--primary border-transparent bg-primary text-primary-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0',
+        primary: 'xr-button--primary border-transparent bg-primary text-primary-foreground',
         secondary:
-          'xr-button--secondary border-border bg-secondary text-secondary-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0',
+          'xr-button--secondary border-border bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground',
         outline:
-          'xr-button--outline border-input bg-background text-foreground hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground active:translate-y-0',
+          'xr-button--outline border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
         ghost:
           'xr-button--ghost border-transparent bg-transparent text-foreground shadow-none hover:bg-accent hover:text-accent-foreground',
-        destructive:
-          'xr-button--destructive border-transparent bg-destructive text-destructive-foreground hover:-translate-y-0.5 hover:shadow-md active:translate-y-0',
+        destructive: 'xr-button--destructive border-transparent bg-destructive text-destructive-foreground',
         link: 'xr-button--link h-auto border-transparent bg-transparent p-0 text-primary shadow-none underline-offset-4 hover:underline',
       },
       size: {
@@ -153,7 +151,9 @@ export const UiButton = ({
         aria-busy={isLoading || undefined}
         aria-disabled={isUnavailable || undefined}
         className={buttonClassName}
+        data-size={size}
         data-slot="button"
+        data-variant={variant}
         href={href}
         onClick={handleClick}
         rel={getAccessibleRel(rel, target)}
@@ -173,7 +173,9 @@ export const UiButton = ({
       {...buttonProps}
       aria-busy={isLoading || undefined}
       className={buttonClassName}
+      data-size={size}
       data-slot="button"
+      data-variant={variant}
       disabled={asChild ? undefined : isUnavailable}
       onClick={onClick}
       type={asChild ? undefined : type}

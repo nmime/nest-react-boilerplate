@@ -4,6 +4,7 @@
   "admin.roles.loading": "Загрузка матрицы ролей",
   "admin.roles.emptyEyebrow": "Нет записей каталога ролей",
   "admin.roles.emptyTitle": "В этой рабочей области пока нет доступных ролей.",
+  "admin.roles.permissionsDetail": "Разрешения из базы данных, доступные для назначения ролям.",
   "admin.roles.error.requestFailed": "Не удалось запросить каталог ролей",
   "admin.roles.column.permission": "Разрешение",
   "admin.roles.column.resource": "Ресурс",

@@ -8,7 +8,7 @@ function createRepositoryMock(): {
   cleanupExpiredTokens: ReturnType<typeof vi.fn>;
   repository: AuthTokenRepository;
 } {
-  const cleanupExpiredTokens = vi.fn(() => okAsync({ refreshTokensDeleted: 0, userTokensDeleted: 0 }));
+  const cleanupExpiredTokens = vi.fn(() => okAsync({ userTokensDeleted: 0 }));
 
   return {
     cleanupExpiredTokens,
@@ -51,7 +51,7 @@ describe('AuthTokenCleanupService', () => {
   });
 
   it('logs deletion counts when tokens are removed', async () => {
-    const cleanupExpiredTokens = vi.fn(() => okAsync({ refreshTokensDeleted: 2, userTokensDeleted: 3 }));
+    const cleanupExpiredTokens = vi.fn(() => okAsync({ userTokensDeleted: 3 }));
     const repository = {
       cleanupExpiredTokens,
     } as unknown as AuthTokenRepository;

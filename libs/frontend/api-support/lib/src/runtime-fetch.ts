@@ -12,7 +12,7 @@ import { apiToastRuntime, resolveApiToastRules, type ApiToastRulesSource, type A
 
 export interface ApiRuntimeFetchOptions {
   baseFetch?: typeof fetch;
-  emitMissingTokenAuthRequired?: boolean;
+  emitUnauthenticatedAuthRequired?: boolean;
   eventHub?: ApiRuntimeEventHub;
   redirectTo?: string;
   toastRules?: ApiToastRulesSource;
@@ -39,8 +39,6 @@ const snapshotError = (error: NormalizedApiError) => ({
   type: error.type,
 });
 
-const hasAuthorization = (request: Request): boolean => Boolean(request.headers.get('Authorization')?.trim());
-
 const toRequest = (input: RequestInfo | URL, init?: RequestInit): Request => new Request(input, init);
 
 export const emitBrowserOfflineEvent = (eventHub: ApiRuntimeEventHub = apiRuntimeEvents): void => {
@@ -59,7 +57,7 @@ export const emitBrowserOfflineEvent = (eventHub: ApiRuntimeEventHub = apiRuntim
 export const createApiRuntimeFetch =
   ({
     baseFetch = globalThis.fetch.bind(globalThis),
-    emitMissingTokenAuthRequired = false,
+    emitUnauthenticatedAuthRequired = false,
     eventHub = apiRuntimeEvents,
     redirectTo = '/auth',
     toastRules,
@@ -100,12 +98,11 @@ export const createApiRuntimeFetch =
         });
       }
 
-      const requestHasAuthorization = hasAuthorization(request);
-      if (response.status === 401 && (requestHasAuthorization || emitMissingTokenAuthRequired)) {
+      if (response.status === 401 && emitUnauthenticatedAuthRequired) {
         eventHub.emit({
           type: 'auth-required',
           error: snapshotError(normalized),
-          reason: requestHasAuthorization ? 'refresh-failed' : 'missing-token',
+          reason: 'unauthenticated',
           redirectTo,
         });
       }

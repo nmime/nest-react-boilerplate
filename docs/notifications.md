@@ -148,7 +148,7 @@ The delivered providers are deliberately concrete and immutable per delivery:
 - `AppleApnsNotificationProvider` signs an ES256 provider token and sends the
   APNs HTTP/2 request to an explicit device token and bundle topic.
 
-`AUTH_NOTIFICATION_PROVIDER` selects where this project's own verification and reset codes go: `telegram-bot`, `discord-bot`, `resend`, or `mailpace`. `NOTIFICATION_EMAIL_PROVIDER` selects the email route used by Better Auth's verification/reset links (`resend` by default). Both flows publish through `NotificationService`; no auth bearer credential is logged or persisted in plaintext.
+`AUTH_NOTIFICATION_PROVIDER` selects where verification and reset codes go: `telegram-bot`, `discord-bot`, `resend`, or `mailpace`. When it is omitted, `NOTIFICATION_EMAIL_PROVIDER` selects the default email route (`resend` by default). The canonical auth flow publishes through `NotificationService`; no credential is logged or persisted in plaintext.
 
 Configure provider credentials only in the scheduler, plus the shared
 `NOTIFICATION_PAYLOAD_ENCRYPTION_KEY` in every producer, consumer, and scheduler.

@@ -7,6 +7,8 @@ import {
   AuthRoleEntitySchema,
   AuthRolePermissionEntity,
   AuthRolePermissionEntitySchema,
+  AuthUserPermissionEntity,
+  AuthUserPermissionEntitySchema,
   AuthUserRoleEntity,
   AuthUserRoleEntitySchema,
 } from './index';
@@ -51,7 +53,7 @@ describe('RBAC model entities', () => {
     });
   });
 
-  it('captures role/permission and user/role join input', () => {
+  it('captures role/permission, user/role, and direct user/permission join input', () => {
     expect(
       new AuthRolePermissionEntity({
         roleId: '11111111-1111-1111-1111-111111111111',
@@ -76,6 +78,19 @@ describe('RBAC model entities', () => {
       userId: '33333333-3333-3333-3333-333333333333',
       roleId: '44444444-4444-4444-4444-444444444444',
       grantedByUserId: '55555555-5555-5555-5555-555555555555',
+    });
+
+    expect(
+      new AuthUserPermissionEntity({
+        userId: '33333333-3333-3333-3333-333333333333',
+        permissionId: '66666666-6666-6666-6666-666666666666',
+        grantedByUserId: '55555555-5555-5555-5555-555555555555',
+      }),
+    ).toMatchObject({
+      userId: '33333333-3333-3333-3333-333333333333',
+      permissionId: '66666666-6666-6666-6666-666666666666',
+      grantedByUserId: '55555555-5555-5555-5555-555555555555',
+      tenantId: DefaultAuthTenantId,
     });
   });
 
@@ -116,6 +131,7 @@ describe('RBAC model entities', () => {
   it('registers composite primary keys and foreign-key column mappings', () => {
     AuthRolePermissionEntitySchema.init();
     AuthUserRoleEntitySchema.init();
+    AuthUserPermissionEntitySchema.init();
 
     const rolePermission = AuthRolePermissionEntitySchema.meta;
     expect(rolePermission.tableName).toBe('auth_role_permissions');
@@ -136,5 +152,24 @@ describe('RBAC model entities', () => {
     expect(userRole.properties.userId.fieldNames).toContain('auth_user_id');
     expect(userRole.properties.grantedByUserId.fieldNames).toContain('granted_by_user_id');
     expect(userRole.properties.grantedByUserId.nullable).toBe(true);
+
+    const userPermission = AuthUserPermissionEntitySchema.meta;
+    expect(userPermission.tableName).toBe('auth_user_permissions');
+    expect(userPermission.primaryKeys).toContain('userId');
+    expect(userPermission.primaryKeys).toContain('permissionId');
+    expect(userPermission.properties.userId.fieldNames).toContain('auth_user_id');
+    expect(userPermission.properties.permissionId.fieldNames).toContain('permission_id');
+    expect(userPermission.indexes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'ix__auth_user_permissions__permission_id',
+          properties: ['permissionId'],
+        }),
+        expect.objectContaining({
+          name: 'ix__auth_user_permissions__tenant_id',
+          properties: ['tenantId'],
+        }),
+      ]),
+    );
   });
 });

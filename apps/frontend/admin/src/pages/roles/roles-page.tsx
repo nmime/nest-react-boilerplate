@@ -1,29 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  AdminAuditReadPermission,
-  AdminDashboardReadPermission,
-  AdminManageAllPermission,
-  AdminNotificationBroadcastsApprovePermission,
-  AdminNotificationBroadcastsReadPermission,
-  AdminNotificationBroadcastsSendPermission,
-  AdminNotificationBroadcastsWritePermission,
-  AdminNotificationSegmentsReadPermission,
-  AdminNotificationSegmentsWritePermission,
-  AdminNotificationTemplatesReadPermission,
-  AdminNotificationTemplatesTestPermission,
-  AdminNotificationTemplatesWritePermission,
-  AdminProfileReadPermission,
-  AdminRolesReadPermission,
-  AdminRolesWritePermission,
-  AdminSettingsReadPermission,
-  AdminSettingsUpdatePermission,
-  AdminUsersAccessPolicyUpdatePermission,
-  AdminUsersReadPermission,
-  AdminUsersStatusUpdatePermission,
-  AdminUsersWritePermission,
-  UserProfileReadPermission,
-} from '@app/common-authz';
+import { isKnownPermission } from '@app/common-authz';
 import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
 import { useI18n } from '@app/frontend-runtime';
 import {
@@ -32,12 +9,12 @@ import {
   UiCheckbox,
   UiConfirmDialog,
   UiDataTable,
-  UiInput,
   UiNotification,
   UiSection,
   UiStatCard,
   UiStatusTag,
-  UiTextarea,
+  UiTextField,
+  UiTextareaField,
 } from '@app/frontend-ui-web';
 import { createRole, setRolePermissions, updateRole } from '../../features/role-management';
 import type { AdminAccess } from '../../entities/admin-session';
@@ -47,36 +24,7 @@ import { errorText } from '../../shared';
 type RoleColumn = adminApi.AdminRbacCatalogPayloadDto['roles'][number];
 type RolePermission = adminApi.SetAdminRolePermissionsDto['permissions'][number];
 
-// Permission identifiers come from the shared @app/common-authz catalog. The
-// `satisfies` check keeps them aligned with the generated DTO union so values
-// stay typed without an unchecked `as` cast.
-const rolePermissionValues = [
-  UserProfileReadPermission,
-  AdminDashboardReadPermission,
-  AdminProfileReadPermission,
-  AdminUsersReadPermission,
-  AdminUsersWritePermission,
-  AdminUsersStatusUpdatePermission,
-  AdminUsersAccessPolicyUpdatePermission,
-  AdminRolesReadPermission,
-  AdminRolesWritePermission,
-  AdminAuditReadPermission,
-  AdminSettingsReadPermission,
-  AdminSettingsUpdatePermission,
-  AdminNotificationTemplatesReadPermission,
-  AdminNotificationTemplatesWritePermission,
-  AdminNotificationTemplatesTestPermission,
-  AdminNotificationSegmentsReadPermission,
-  AdminNotificationSegmentsWritePermission,
-  AdminNotificationBroadcastsReadPermission,
-  AdminNotificationBroadcastsWritePermission,
-  AdminNotificationBroadcastsSendPermission,
-  AdminNotificationBroadcastsApprovePermission,
-  AdminManageAllPermission,
-] as const satisfies readonly RolePermission[];
-
-const isRolePermission = (value: string): value is RolePermission =>
-  rolePermissionValues.some((permission) => permission === value);
+const isRolePermission = (value: string): value is RolePermission => isKnownPermission(value);
 
 export const RolesPage = ({
   access,
@@ -189,6 +137,7 @@ export const RolesPage = ({
     <UiSection
       className="admin-page admin-roles-page"
       eyebrow={t('admin.roles.eyebrow')}
+      headingLevel={1}
       title={t('admin.roles.title')}
     >
       <div className="admin-stat-grid xr-stat-grid">
@@ -202,13 +151,14 @@ export const RolesPage = ({
           className="admin-stat-card"
           label={t('admin.users.filter.permission')}
           value={`${rows.length || '—'}`}
-          detail={t('admin.roles.emptyTitle')}
+          detail={t('admin.roles.permissionsDetail')}
         />
       </div>
       {notice ? <UiNotification message={notice.message} tone={notice.tone} /> : null}
       {canWriteRoles ? (
-        <UiCard className="admin-table-card" title={t('admin.roles.manage.title')}>
-          <div className="admin-table-toolbar">
+        <UiCard aria-label={t('admin.roles.manage.title')} className="admin-role-management-card">
+          <div className="admin-panel-heading">
+            <h3>{t('admin.roles.manage.title')}</h3>
             <UiButton
               onClick={() => {
                 setNewKey('');
@@ -240,7 +190,9 @@ export const RolesPage = ({
       ) : null}
       <UiCard className="admin-table-card" title={t('admin.roles.title')}>
         <UiDataTable<RoleRow>
+          className="admin-role-matrix"
           rows={rows}
+          responsive="scroll"
           rowKey={(row) => row.permission}
           isLoading={roles.isLoading}
           loadingLabel={t('admin.roles.loading')}
@@ -270,6 +222,7 @@ export const RolesPage = ({
               render: (row: RoleRow) => (
                 <UiCheckbox
                   disabled={!isRoleEditable(role) || permissionsMutation.isPending}
+                  labelHidden
                   checked={role.permissions.includes(row.permission)}
                   onCheckedChange={(checked: boolean | 'indeterminate') => {
                     togglePermission(role, row.permission, checked === true);
@@ -306,22 +259,22 @@ export const RolesPage = ({
           setCreateOpen(false);
         }}
       >
-        <UiInput
-          aria-label={t('admin.roles.field.key')}
+        <UiTextField
+          label={t('admin.roles.field.key')}
           value={newKey}
           onChange={(event) => {
             setNewKey(event.currentTarget.value);
           }}
         />
-        <UiInput
-          aria-label={t('admin.roles.field.label')}
+        <UiTextField
+          label={t('admin.roles.field.label')}
           value={newLabel}
           onChange={(event) => {
             setNewLabel(event.currentTarget.value);
           }}
         />
-        <UiTextarea
-          aria-label={t('admin.roles.field.description')}
+        <UiTextareaField
+          label={t('admin.roles.field.description')}
           value={newDescription}
           onChange={(event) => {
             setNewDescription(event.currentTarget.value);
@@ -350,15 +303,15 @@ export const RolesPage = ({
             setEditTarget(undefined);
           }}
         >
-          <UiInput
-            aria-label={t('admin.roles.field.label')}
+          <UiTextField
+            label={t('admin.roles.field.label')}
             value={editLabel}
             onChange={(event) => {
               setEditLabel(event.currentTarget.value);
             }}
           />
-          <UiTextarea
-            aria-label={t('admin.roles.field.description')}
+          <UiTextareaField
+            label={t('admin.roles.field.description')}
             value={editDescription}
             onChange={(event) => {
               setEditDescription(event.currentTarget.value);

@@ -6,21 +6,22 @@ import {
   AdminProfileReadPermission,
   AdminRole,
   AdminUsersReadPermission,
+  createAdminAbility,
+  type AdminAuthorizedRequest,
 } from '@app/backend-feature-admin-shared';
 import {
   type AuthenticatedPrincipal,
-  type AuthenticatedRequest,
   type PermissionEvaluationContext,
   DefaultAuthTenantId,
   RequiredPermissionsMetadataKey,
-  RequiredRolesMetadataKey,
 } from '@app/backend-feature-auth-shared';
 import { AdminRbacGuard } from '@app/backend-feature-admin-shared';
 import { AdminProfileController } from './admin-profile.controller';
+import { AdminFeatureFlagsController } from './admin-feature-flags.controller';
 import { AdminUsersController } from './admin-users.controller';
 
 function createContext(
-  request: AuthenticatedRequest,
+  request: AdminAuthorizedRequest,
   handler: () => undefined = () => undefined,
   controller: new () => unknown = class AdminTestController {},
 ): ExecutionContext {
@@ -44,16 +45,23 @@ function createPrincipal(partial: Partial<AuthenticatedPrincipal>): Authenticate
 
 function createGuardedHandler(permission: string): () => undefined {
   const handler = () => undefined;
-  Reflect.defineMetadata(RequiredRolesMetadataKey, [AdminRole], handler);
   Reflect.defineMetadata(RequiredPermissionsMetadataKey, [permission], handler);
 
   return handler;
+}
+
+function authorizedRequest(principal: AuthenticatedPrincipal): AdminAuthorizedRequest {
+  return {
+    user: principal,
+    adminAbility: createAdminAbility(principal),
+  };
 }
 
 describe('AdminRbacGuard', () => {
   it('wires admin controllers through the admin RBAC adapter', () => {
     expect(Reflect.getMetadata('__guards__', AdminProfileController)).toContainEqual(expect.any(AdminRbacGuard));
     expect(Reflect.getMetadata('__guards__', AdminUsersController)).toContainEqual(expect.any(AdminRbacGuard));
+    expect(Reflect.getMetadata('__guards__', AdminFeatureFlagsController)).toContainEqual(expect.any(AdminRbacGuard));
   });
 
   it('denies protected admin routes without permission metadata', () => {
@@ -102,7 +110,65 @@ describe('AdminRbacGuard', () => {
     );
   });
 
-  it('ignores admin permissions without the admin role', () => {
+  it('allows database-resolved custom roles with the required admin permission', () => {
+    const handler = createGuardedHandler(AdminUsersReadPermission);
+    const guard = new AdminRbacGuard(new Reflector());
+
+    expect(
+      guard.canActivate(
+        createContext(
+          authorizedRequest(
+            createPrincipal({
+              permissions: [AdminUsersReadPermission],
+              roles: ['support'],
+            }),
+          ),
+          handler,
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it('allows explicit manage/all admin permission for admin route permissions', () => {
+    const handler = createGuardedHandler(AdminProfileReadPermission);
+
+    expect(
+      new AdminRbacGuard(new Reflector()).canActivate(
+        createContext(
+          authorizedRequest(
+            createPrincipal({
+              permissions: [AdminManageAllPermission],
+              roles: [AdminRole],
+            }),
+          ),
+          handler,
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it('denies non-admin permissions instead of falling back to generic RBAC', () => {
+    class ExposedAdminRbacGuard extends AdminRbacGuard {
+      evaluate(context: PermissionEvaluationContext): boolean | undefined {
+        return this.evaluateDomainPermission(context);
+      }
+    }
+    const guard = new ExposedAdminRbacGuard(new Reflector());
+
+    expect(
+      guard.evaluate({
+        permission: 'profile:read',
+        principal: createPrincipal({
+          permissions: ['profile:read'],
+          roles: ['user'],
+        }),
+        request: {},
+        requiredRoles: ['user'],
+      }),
+    ).toBe(false);
+  });
+
+  it('fails closed when token claims exist without a database-derived CASL ability', () => {
     const handler = createGuardedHandler(AdminUsersReadPermission);
     const guard = new AdminRbacGuard(new Reflector());
 
@@ -119,44 +185,6 @@ describe('AdminRbacGuard', () => {
         ),
       ),
     ).toThrow(ForbiddenException);
-  });
-
-  it('allows explicit manage/all admin permission for admin route permissions', () => {
-    const handler = createGuardedHandler(AdminProfileReadPermission);
-
-    expect(
-      new AdminRbacGuard(new Reflector()).canActivate(
-        createContext(
-          {
-            user: createPrincipal({
-              permissions: [AdminManageAllPermission],
-              roles: [AdminRole],
-            }),
-          },
-          handler,
-        ),
-      ),
-    ).toBe(true);
-  });
-
-  it('defers non-admin permissions to the base RBAC evaluation', () => {
-    class ExposedAdminRbacGuard extends AdminRbacGuard {
-      evaluate(context: PermissionEvaluationContext): boolean | undefined {
-        return this.evaluateDomainPermission(context);
-      }
-    }
-    const guard = new ExposedAdminRbacGuard(new Reflector());
-
-    expect(
-      guard.evaluate({
-        permission: 'profile:read',
-        principal: createPrincipal({
-          permissions: ['profile:read'],
-          roles: ['user'],
-        }),
-        requiredRoles: ['user'],
-      }),
-    ).toBeUndefined();
   });
 
   it('treats the /admin root path as an admin route for non-admin classes', () => {

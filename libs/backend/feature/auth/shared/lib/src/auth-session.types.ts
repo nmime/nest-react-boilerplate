@@ -22,14 +22,7 @@ export interface AuthenticatedUserView {
   avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
 }
 
-export interface JwtTokenPair {
-  accessToken: string;
-  tokenType: 'Bearer';
-  expiresIn: number;
-  refreshToken?: string;
-}
-
-export interface AuthSessionView extends JwtTokenPair {
+export interface AuthSessionView {
   user: AuthenticatedUserView;
   amr?: string[];
   authProvider?: AuthProvider;

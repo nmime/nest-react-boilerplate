@@ -139,8 +139,8 @@ describe('AuthUserRoleRepository', () => {
       permissionKeys: ['profile:read', 'admin:manage:all'],
     });
     expect(execute).toHaveBeenCalledWith(
-      expect.stringContaining('auth_role_permissions'),
-      ['user-id', 'tenant-id'],
+      expect.stringMatching(/auth_role_permissions[\s\S]*auth_user_permissions/),
+      ['user-id', 'tenant-id', 'user-id', 'tenant-id'],
       'all',
     );
   });

@@ -30,7 +30,7 @@ HTTP tenant helpers live in `@app/backend-feature-auth-shared`:
 
 - `x-tenant-id` / `x-nrb-tenant-id` are authoritative when present.
 - `x-tenant-domain` / `x-nrb-tenant-domain` and `Host` are normalized as domain hints for future tenant lookup.
-- bearer/session guards reject a request when the requested tenant id does not match the authenticated principal.
+- session guards reject a request when the requested tenant id does not match the authenticated principal.
 
 ## Tenant FK policy
 
@@ -45,22 +45,27 @@ that requires a live inviter should validate it before creating an invitation.
 history can retain actor/resource identifiers after account or tenant deletion;
 audit mutation semantics are owned separately from tenant lifecycle scaffolding.
 
-## Token foundations
+## Session and one-time action-token foundations
 
-The auth feature includes an injectable token-store interface with both
-in-memory and PostgreSQL implementations:
+First-party authentication uses only the database-backed HttpOnly cookie
+session. The auth feature's separate token-store interface exists solely for
+single-use account actions and has in-memory and PostgreSQL implementations:
 
-- refresh-token issue, rotate, replay denial, and revocation hooks;
 - email verification token issue/consume hooks;
 - password reset token issue/consume hooks.
 
 `AUTH_PERSISTENCE=postgres` binds `PostgresAuthTokenStore` to the migrated
-`auth_refresh_tokens` and `auth_user_tokens` tables. Production rejects the
-in-memory mode; it remains available for tests and local development without a
-database. Refresh rotation/replay handling and user-action token consumption are
-therefore durable in the production configuration rather than extension stubs.
+`auth_user_tokens` table. Production rejects the in-memory mode; it remains
+available for tests and local development without a database. These opaque,
+hashed, tenant-bound tokens cannot authenticate an API request and are consumed
+once by the matching email-verification or password-reset operation.
 
-`AuthPostgresModule` also registers `AuthTokenCleanupService`, a lightweight background interval that calls `AuthTokenRepository.cleanupExpiredTokens()` to remove expired refresh and user-action tokens. It runs hourly and once on startup by default. Runtime overrides:
+`AuthPostgresModule` also registers `AuthTokenCleanupService`, a lightweight
+background interval that calls `AuthTokenRepository.cleanupExpiredTokens()` to
+remove expired user-action tokens. Migration
+`Migration20260722090000DropLegacyRefreshTokens` removes the retired
+first-party refresh-token table from upgraded and clean databases. Cleanup runs
+hourly and once on startup by default. Runtime overrides:
 
 - `AUTH_TOKEN_CLEANUP_ENABLED=false` disables the cleanup loop.
 - `AUTH_TOKEN_CLEANUP_INTERVAL_MS=60000` changes the interval; lower values are clamped to one minute.

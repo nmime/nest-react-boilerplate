@@ -4,9 +4,7 @@ import type { AdminApiSchemas, AuthApiContract, AuthApiSchemas, UserApiSchemas }
 describe('public api-contracts import surface', () => {
   it('exposes generated schemas and namespaced contracts from the stable alias', () => {
     const session = {
-      accessToken: 'access-token',
-      expiresIn: 3600,
-      tokenType: 'Bearer',
+      authProvider: 'password',
       user: {
         email: 'ada@example.com',
         id: 'user-1',
@@ -19,7 +17,7 @@ describe('public api-contracts import surface', () => {
     const profile = {} satisfies Partial<UserApiSchemas['ProfilePayloadDto']>;
     const admin = {} satisfies Partial<AdminApiSchemas['AdminProfilePayloadDto']>;
 
-    expect(session.tokenType).toBe('Bearer');
+    expect(session.authProvider).toBe('password');
     expect(profile).toEqual({});
     expect(admin).toEqual({});
   });

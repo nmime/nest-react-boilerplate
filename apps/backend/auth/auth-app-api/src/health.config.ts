@@ -45,7 +45,7 @@ function createHealthIndicators({ orm, redisHealth, natsHealth }: HealthIndicato
     new EnvHealthIndicator({
       name: 'config',
       required: false,
-      optionalVariables: ['AUTH_PERSISTENCE', 'AUTH_JWT_SECRET', 'DATABASE_URL', 'REDIS_URL', 'NATS_SERVERS'],
+      optionalVariables: ['AUTH_PERSISTENCE', 'SESSION_SECRET', 'DATABASE_URL', 'REDIS_URL', 'NATS_SERVERS'],
     }),
     new I18nAssetsHealthIndicator({
       rootPath: resolveI18nRootPath(),

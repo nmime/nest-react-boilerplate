@@ -14,7 +14,7 @@ const Probe = () => {
       {JSON.stringify({
         adminBaseUrl: adminClient.requestOptions.baseUrl,
         authBaseUrl: authClient.requestOptions.baseUrl,
-        authToken: authClient.requestOptions.authToken,
+        hasFetch: authClient.requestOptions.fetchImpl !== undefined,
       })}
     </output>
   );
@@ -53,7 +53,7 @@ describe('admin app API client provider wiring', () => {
       JSON.stringify({
         adminBaseUrl: '',
         authBaseUrl: '',
-        authToken: undefined,
+        hasFetch: true,
       }),
     );
   });

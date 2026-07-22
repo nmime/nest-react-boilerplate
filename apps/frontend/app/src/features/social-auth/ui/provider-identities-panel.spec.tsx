@@ -19,12 +19,8 @@ const renderPanel = (fetchMock: ReturnType<typeof vi.fn>) => {
   const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
   const onLink = vi.fn();
   const view = render(
-    <FrontendStateProvider initialBearerToken="session-token">
-      <ApiClientProvider
-        authToken="session-token"
-        baseUrls={{ admin: '', auth: 'https://auth-api', user: '' }}
-        fetchImpl={fetchMock}
-      >
+    <FrontendStateProvider initiallyAuthenticated>
+      <ApiClientProvider baseUrls={{ admin: '', auth: 'https://auth-api', user: '' }} fetchImpl={fetchMock}>
         <QueryClientProvider client={queryClient}>
           <FrontendI18nProvider userLocale="en">
             <ProviderIdentitiesPanel onLink={onLink} t={(key) => key} />

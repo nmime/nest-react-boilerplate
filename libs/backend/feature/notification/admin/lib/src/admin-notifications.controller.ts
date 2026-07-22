@@ -15,15 +15,10 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
+import { ApiHeader } from '@nestjs/swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
-import {
-  CurrentUser,
-  RequirePermissions,
-  RequireRoles,
-  type AuthenticatedPrincipal,
-} from '@app/backend-feature-auth-shared';
+import { CurrentUser, RequirePermissions, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import {
   AdminNotificationBroadcastsApprovePermission,
   AdminNotificationBroadcastsReadPermission,
@@ -35,7 +30,6 @@ import {
   AdminNotificationTemplatesTestPermission,
   AdminNotificationTemplatesWritePermission,
   AdminRbacGuard,
-  AdminRole,
 } from '@app/backend-feature-admin-shared';
 import { AuditLogAdminPersistenceError, AuditLogAdminService } from '@app/backend-feature-audit-log-admin';
 import {
@@ -79,10 +73,8 @@ import {
 } from './admin-notifications.dto';
 
 @ApiExceptions(400, 401, 403, 404, 409, 429, 500)
-@ApiBearerAuth()
 @ApiSessionCookieAuth()
 @UseGuards(new AdminRbacGuard())
-@RequireRoles(AdminRole)
 @Controller('admin')
 export class AdminNotificationsController {
   constructor(

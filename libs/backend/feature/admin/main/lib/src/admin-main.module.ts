@@ -8,13 +8,17 @@ import {
   AuthUserRepository,
   ProblemPresentationRepository,
 } from '@app/backend-postgres-main-auth';
+import { FeatureFlagRepository, FeatureFlagsPostgresModule } from '@app/backend-postgres-main-feature-flags';
 import {
+  AdminFeatureFlagsUseCase,
   GetAdminProfileUseCase,
   AdminRolesUseCase,
   AdminUsersUseCase,
   ProblemPresentationsUseCase,
 } from './application';
 import {
+  AdminDatabaseAccessGuard,
+  AdminFeatureFlagsController,
   AdminProblemPresentationsController,
   AdminProfileController,
   AdminRolesController,
@@ -22,23 +26,32 @@ import {
 } from './interfaces/http';
 
 @Module({
-  imports: [PostgresMainModule.forRoot(), AuthPostgresModule],
+  imports: [PostgresMainModule.forRoot(), AuthPostgresModule, FeatureFlagsPostgresModule],
   controllers: [
+    AdminFeatureFlagsController,
     AdminProfileController,
     AdminRolesController,
     AdminUsersController,
     AdminProblemPresentationsController,
   ],
   providers: [
+    AdminDatabaseAccessGuard,
+    {
+      provide: AdminFeatureFlagsUseCase,
+      inject: [FeatureFlagRepository, AdminAuditLogRepository],
+      useFactory: (featureFlags: FeatureFlagRepository, auditLogs: AdminAuditLogRepository) =>
+        new AdminFeatureFlagsUseCase(featureFlags, auditLogs),
+    },
     GetAdminProfileUseCase,
     {
       provide: AdminUsersUseCase,
-      inject: [AuthUserRepository, AdminAuditLogRepository, AdminUserMutationRepository],
+      inject: [AuthUserRepository, AdminAuditLogRepository, AdminUserMutationRepository, AuthRoleRepository],
       useFactory: (
         users: AuthUserRepository,
         auditLogs: AdminAuditLogRepository,
         adminUserMutations: AdminUserMutationRepository,
-      ) => new AdminUsersUseCase(users, auditLogs, adminUserMutations),
+        roles: AuthRoleRepository,
+      ) => new AdminUsersUseCase(users, auditLogs, adminUserMutations, roles),
     },
     {
       provide: AdminRolesUseCase,
@@ -55,5 +68,6 @@ import {
       useFactory: (presentations: ProblemPresentationRepository) => new ProblemPresentationsUseCase(presentations),
     },
   ],
+  exports: [AdminDatabaseAccessGuard],
 })
 export class AdminMainModule {}

@@ -24,6 +24,7 @@ export const AdminAuditActions = [
   'admin.notification_broadcast.create',
   'admin.notification_broadcast.update',
   'admin.notification_broadcast.command',
+  'admin.feature_flag.upsert',
 ] as const;
 
 export type AdminAuditAction = (typeof AdminAuditActions)[number];

@@ -1,7 +1,18 @@
 import type { EntityManager } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
-import { AuthPermissionEntity, AuthRoleEntity, AuthRolePermissionEntity, AuthUserRoleEntity } from '../../entities';
-import { reconcileUserRoles, resolveEffectiveAccess } from './reconcile-user-roles.util';
+import {
+  AuthPermissionEntity,
+  AuthRoleEntity,
+  AuthRolePermissionEntity,
+  AuthUserPermissionEntity,
+  AuthUserRoleEntity,
+} from '../../entities';
+import {
+  reconcileUserDirectPermissions,
+  reconcileUserRoles,
+  resolveEffectiveAccess,
+  resolveInheritedPermissionKeys,
+} from './reconcile-user-roles.util';
 
 const tenantId = '11111111-1111-4111-8111-111111111111';
 const userId = '22222222-2222-4222-8222-222222222222';
@@ -26,6 +37,7 @@ function permission(id: string, key: string): AuthPermissionEntity {
 function createFindMock(byEntity: {
   roles?: AuthRoleEntity[];
   userRoles?: AuthUserRoleEntity[];
+  userPermissions?: AuthUserPermissionEntity[];
   rolePermissions?: AuthRolePermissionEntity[];
   permissions?: AuthPermissionEntity[];
 }) {
@@ -35,6 +47,9 @@ function createFindMock(byEntity: {
     }
     if (entity === AuthUserRoleEntity) {
       return Promise.resolve(byEntity.userRoles ?? []);
+    }
+    if (entity === AuthUserPermissionEntity) {
+      return Promise.resolve(byEntity.userPermissions ?? []);
     }
     if (entity === AuthRolePermissionEntity) {
       return Promise.resolve(byEntity.rolePermissions ?? []);
@@ -82,6 +97,34 @@ describe('reconcileUserRoles', () => {
   });
 });
 
+describe('reconcileUserDirectPermissions', () => {
+  it('stores only direct exception grants in the normalized user-permission join', async () => {
+    const find = createFindMock({
+      permissions: [permission('perm-audit', 'admin:audit:read')],
+      userPermissions: [new AuthUserPermissionEntity({ userId, permissionId: 'perm-stale', tenantId })],
+    });
+    const persist = vi.fn();
+    const nativeDelete = vi.fn(() => Promise.resolve(1));
+    const em = { find, persist, nativeDelete } as unknown as EntityManager;
+
+    await reconcileUserDirectPermissions(em, tenantId, userId, actorUserId, ['admin:audit:read']);
+
+    expect(persist).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId,
+        permissionId: 'perm-audit',
+        tenantId,
+        grantedByUserId: actorUserId,
+      }),
+    );
+    expect(nativeDelete).toHaveBeenCalledWith(AuthUserPermissionEntity, {
+      userId,
+      tenantId,
+      permissionId: { $in: ['perm-stale'] },
+    });
+  });
+});
+
 describe('resolveEffectiveAccess', () => {
   it('returns empty access when the user has no assignments', async () => {
     const find = createFindMock({ userRoles: [] });
@@ -115,5 +158,32 @@ describe('resolveEffectiveAccess', () => {
       roleKeys: ['alpha-custom', 'zeta-custom'],
       permissionKeys: ['alpha:custom', 'zeta:custom'],
     });
+  });
+
+  it('unions direct exception grants with inherited role grants without changing the role set', async () => {
+    const find = createFindMock({
+      userRoles: [new AuthUserRoleEntity({ userId, roleId: 'role-support', tenantId })],
+      userPermissions: [new AuthUserPermissionEntity({ userId, permissionId: 'perm-audit', tenantId })],
+      roles: [role('role-support', 'support')],
+      rolePermissions: [new AuthRolePermissionEntity({ roleId: 'role-support', permissionId: 'perm-users' })],
+      permissions: [permission('perm-users', 'admin:users:read'), permission('perm-audit', 'admin:audit:read')],
+    });
+    const em = { find } as unknown as EntityManager;
+
+    await expect(resolveEffectiveAccess(em, tenantId, userId)).resolves.toEqual({
+      roleKeys: ['support'],
+      permissionKeys: ['admin:users:read', 'admin:audit:read'],
+    });
+    const inheritedOnlyEm = {
+      find: createFindMock({
+        userRoles: [new AuthUserRoleEntity({ userId, roleId: 'role-support', tenantId })],
+        roles: [role('role-support', 'support')],
+        rolePermissions: [new AuthRolePermissionEntity({ roleId: 'role-support', permissionId: 'perm-users' })],
+        permissions: [permission('perm-users', 'admin:users:read')],
+      }),
+    } as unknown as EntityManager;
+    await expect(resolveInheritedPermissionKeys(inheritedOnlyEm, tenantId, userId)).resolves.toEqual([
+      'admin:users:read',
+    ]);
   });
 });

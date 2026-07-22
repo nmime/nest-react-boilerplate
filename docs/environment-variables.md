@@ -60,25 +60,22 @@ loads `DATABASE_URL` from the selected bundled/external database overlay.
 
 | Variable                                       | When required                             | Purpose                                                                                                           |
 | ---------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `AUTH_JWT_SECRET`                              | Production auth/API verification          | JWT signing key.                                                                                                  |
-| `SESSION_SECRET`                               | Production browser sessions               | Session signing key.                                                                                              |
+| `SESSION_SECRET`                               | Production first-party sessions           | Server-session cookie signing key.                                                                                |
 | `BETTER_AUTH_SECRET`                           | Better Auth                               | Better Auth cookie/state secret.                                                                                  |
 | `BETTER_AUTH_URL`                              | Better Auth                               | Public Better Auth origin.                                                                                        |
 | `BETTER_AUTH_TRUSTED_ORIGINS`                  | Browser auth                              | Comma-separated origins accepted by Better Auth.                                                                  |
 | `AUTH_ALLOWED_RETURN_URLS`                     | External browser auth                     | Comma-separated absolute frontend origins accepted as post-auth returns.                                          |
-| `AUTH_JWT_ISSUER`                              | Optional                                  | JWT issuer. Defaults to the auth API domain contract.                                                             |
-| `AUTH_JWT_AUDIENCE`                            | Optional                                  | JWT audience used by protected APIs.                                                                              |
 | `AUTH_PERSISTENCE`                             | Optional                                  | `postgres` for the real persistence path; memory is test/development only.                                        |
 | `AUTH_GEOIP_DATABASE_PATH`                     | Optional                                  | Absolute path to an operator-mounted GeoIP2/GeoLite2 City MMDB. Empty disables enrichment without blocking login. |
 | `AUTH_LOGIN_NETWORK_RETENTION_DAYS`            | Optional                                  | Days to retain exact IP address and user agent; defaults to 30.                                                   |
 | `AUTH_LOGIN_EVENT_RETENTION_DAYS`              | Optional                                  | Days to retain the append-only login event and coarse dimensions; defaults to 365.                                |
-| `AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET`          | Optional secret                           | Dedicated HMAC key for IP/identifier correlation. Falls back to `AUTH_JWT_SECRET`.                                |
+| `AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET`          | Optional secret                           | Dedicated HMAC key for IP/identifier correlation. Falls back to `SESSION_SECRET`.                                 |
 | `AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED`       | Social provider token storage             | Must be `true` outside local/test when provider access or refresh tokens are persisted.                           |
 | `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY` / `_FILE` | When provider-token encryption is enabled | 32-byte base64 key supplied inline or through the deployment secret-file path.                                    |
 | `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID`        | Optional                                  | Key identifier stored with encrypted provider-token records to support rotation.                                  |
 
-Production Compose mounts `AUTH_JWT_SECRET_FILE`, `SESSION_SECRET_FILE`, and
-`BETTER_AUTH_SECRET_FILE`; `docker/secret-entrypoint.sh` loads them into the
+Production Compose mounts `SESSION_SECRET_FILE` and `BETTER_AUTH_SECRET_FILE`;
+`docker/secret-entrypoint.sh` loads them into the
 canonical runtime variables before Node starts. The single-server bootstrap
 generates these secrets on first initialization and preserves them on reruns.
 
@@ -150,11 +147,11 @@ unprefixed PostHog key.
 
 ## Notifications
 
-Better Auth and custom authentication publish verification/reset messages
-through the notification queue; they do not call mail or bot SDKs directly.
+Canonical authentication publishes verification/reset codes through the
+notification queue; it does not call mail or bot SDKs directly.
 `AUTH_NOTIFICATION_PROVIDER` selects `telegram-bot`, `discord-bot`, `resend`, or
-`mailpace` for custom confirmation codes. Better Auth email links use
-`NOTIFICATION_EMAIL_PROVIDER` (`resend` or `mailpace`).
+`mailpace`. When omitted, `NOTIFICATION_EMAIL_PROVIDER` selects the default
+email provider (`resend` or `mailpace`).
 
 | Variable                                                                               | Purpose                                                                                                                        |
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |

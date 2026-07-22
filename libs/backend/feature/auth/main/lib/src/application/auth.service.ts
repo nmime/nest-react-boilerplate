@@ -27,7 +27,6 @@ import {
   AuthTokenStoreInjectToken,
   type AuthTokenStore,
   type AuthUserTokenPurpose,
-  type RefreshTokenAuthContext,
   InMemoryAuthTokenStore,
   SocialAuthStoreInjectToken,
   type SocialAuthStore,
@@ -35,62 +34,24 @@ import {
 import { createAuthSession } from './auth-session.factory';
 import { EffectivePermissionService } from './effective-permission.service';
 import { AuthNotificationPublisher } from './auth-notification.publisher';
-import {
-  normalizeEmail,
-  AuthJwtSigningError,
-  type JwtSigningEnvironment,
-  hashPassword,
-  verifyPassword,
-} from '../domain';
-import type {
-  LoginInput,
-  RefreshSessionInput,
-  RegisterUserInput,
-  UserActionTokenInput,
-} from './type/auth-service.type';
+import { normalizeEmail, hashPassword, verifyPassword } from '../domain';
+import type { LoginInput, RegisterUserInput, UserActionTokenInput } from './type/auth-service.type';
 import { parseTenantId } from './util/auth-error-adapter.util';
 
-// Input DTOs and the JWT/tenant exception-translation helpers were decomposed
+// Input DTOs and tenant exception-translation helpers were decomposed
 // into role-based sibling files; they are re-exported here so the application
 // barrel stays stable.
 export * from './type/auth-service.type';
 export * from './util/auth-error-adapter.util';
 
-// Claims for a fresh password authentication (register/login). Computed once per
-// authentication so the value stored with the refresh-token family and the value
-// emitted in the access token share the exact same `auth_time`.
+// Authentication metadata for a fresh password session. `auth_time` records the
+// real login event and is preserved for step-up decisions during this session.
 function passwordAuthClaims(): AuthMethodClaims {
   return {
     amr: ['pwd'],
     authProvider: AuthProvider.Password,
     authChannel: AuthProviderChannel.Password,
     authTime: Math.floor(Date.now() / 1000),
-  };
-}
-
-// Project session claims onto the persisted refresh-token context (the persisted
-// subset excludes per-request members such as externalIdentityId).
-function claimsToRefreshTokenAuthContext(claims: AuthMethodClaims): RefreshTokenAuthContext {
-  return {
-    ...(claims.amr ? { amr: claims.amr } : {}),
-    ...(claims.authProvider ? { authProvider: claims.authProvider } : {}),
-    ...(claims.authChannel ? { authChannel: claims.authChannel } : {}),
-    ...(claims.authTime ? { authTime: claims.authTime } : {}),
-  };
-}
-
-// Rebuild session claims from a rotated token's stored context. A missing context
-// (legacy token issued before this was persisted) yields empty claims, so no
-// `auth_time` is emitted and step-up fails closed until re-authentication.
-function refreshTokenAuthContextToClaims(context: RefreshTokenAuthContext | null | undefined): AuthMethodClaims {
-  if (!context) {
-    return {};
-  }
-  return {
-    ...(context.amr ? { amr: context.amr } : {}),
-    ...(context.authProvider ? { authProvider: context.authProvider } : {}),
-    ...(context.authChannel ? { authChannel: context.authChannel } : {}),
-    ...(context.authTime ? { authTime: context.authTime } : {}),
   };
 }
 
@@ -122,10 +83,9 @@ export class AuthService {
       throw new ConflictException('Email is already registered for tenant.');
     }
 
-    // Assign bootstrap ROLES; the effective-permission resolver then refreshes
-    // the denormalized cache from the normalized RBAC tables. The user is
-    // created with the matrix-derived arrays up front so the cache is correct
-    // even when no resolver/DB is wired (pure in-memory unit tests).
+    // Assign bootstrap roles through the normalized RBAC store. The in-memory
+    // implementation receives the same matrix-derived projection so unit tests
+    // and non-Postgres adapters expose the same session view.
     const roleKeys = resolveBootstrapRoleKeys(email, process.env, tenantId);
     const created = await this.users.create({
       tenantId,
@@ -144,18 +104,12 @@ export class AuthService {
     await this.recordPasswordMethod(sessionUser);
 
     const claims = passwordAuthClaims();
-    return this.createSession(
-      sessionUser,
-      process.env,
-      await this.issueRefreshTokenForUser(sessionUser, claims),
-      claims,
-    );
+    return this.createSession(sessionUser, claims);
   }
 
-  // Assign the bootstrap roles to a freshly created user and refresh the
-  // denormalized jsonb cache from the normalized RBAC tables. When no resolver
-  // is wired (in-memory unit tests), the account already carries the
-  // matrix-derived arrays from `create`, so the record is returned unchanged.
+  // Assign bootstrap roles to a freshly created user and return its effective
+  // access projection. When no resolver is wired, the in-memory record already
+  // carries the matrix-derived session view.
   async bootstrapUserAccess(user: AuthUserRecord, roleKeys: readonly string[]): Promise<AuthUserRecord> {
     if (!this.effectivePermissions) {
       return user;
@@ -185,55 +139,7 @@ export class AuthService {
     const sessionUser = loggedIn.isOk() && loggedIn.value ? loggedIn.value : user.value;
     await this.recordPasswordMethod(sessionUser);
     const claims = passwordAuthClaims();
-    return this.createSession(
-      sessionUser,
-      process.env,
-      await this.issueRefreshTokenForUser(sessionUser, claims),
-      claims,
-    );
-  }
-
-  async refreshSession(input: RefreshSessionInput): Promise<AuthSessionView> {
-    const tenantId = parseTenantId(input.tenantId);
-    const existing = await this.tokens.findRefreshToken(input.refreshToken, tenantId);
-    if (existing.isErr() || !existing.value) {
-      // The token is not currently usable. Still attempt rotation so a replay of
-      // an already-rotated token can trigger refresh-token family reuse detection.
-      await this.tokens.rotateRefreshToken(input.refreshToken, tenantId);
-      throw new UnauthorizedException('Invalid refresh token.');
-    }
-
-    // Verify the user is active before rotating so a deactivated user's token is
-    // rejected without being rotated into an orphaned replacement.
-    const user = await this.users.findById(existing.value.userId, tenantId);
-    if (user.isErr() || !user.value || user.value.status !== 'active') {
-      throw new UnauthorizedException('Invalid refresh token.');
-    }
-
-    const rotated = await this.tokens.rotateRefreshToken(input.refreshToken, tenantId);
-    if (rotated.isErr() || !rotated.value) {
-      throw new UnauthorizedException('Invalid refresh token.');
-    }
-
-    // Re-emit the authentication context captured when this refresh-token family
-    // was first issued, so `auth_time` (and the authentication method) reflect the
-    // last real authentication event rather than the refresh time. Without this, a
-    // refresh — or a replayed stolen refresh token — silently resets `auth_time` to
-    // "now" and satisfies the recent-auth (step-up) gate. Legacy tokens issued
-    // before the context was stored carry no `auth_time` and therefore fail step-up
-    // closed until the user authenticates again.
-    const claims = refreshTokenAuthContextToClaims(rotated.value.authContext);
-    return this.createSession(user.value, process.env, rotated.value.token, claims);
-  }
-
-  async revokeRefreshToken(input: RefreshSessionInput): Promise<boolean> {
-    const tenantId = parseTenantId(input.tenantId);
-    const revoked = await this.tokens.revokeRefreshToken(input.refreshToken, tenantId);
-    if (revoked.isErr()) {
-      return false;
-    }
-
-    return revoked.value;
+    return this.createSession(sessionUser, claims);
   }
 
   async issueEmailVerificationToken(input: UserActionTokenInput): Promise<string | null> {
@@ -305,7 +211,7 @@ export class AuthService {
       theme?: UserThemePreference;
     } = {};
 
-    if (Object.hasOwn(input, 'locale')) {
+    if (input.locale !== undefined) {
       const locale = normalizeLocale(input.locale);
       if (!locale) {
         throw new BadRequestException('Unsupported locale.');
@@ -313,7 +219,7 @@ export class AuthService {
       preferences.locale = locale;
     }
 
-    if (Object.hasOwn(input, 'theme')) {
+    if (input.theme !== undefined) {
       const theme = normalizeUserThemePreference(input.theme);
       if (!theme) {
         throw new BadRequestException('Unsupported theme.');
@@ -334,8 +240,6 @@ export class AuthService {
 
   createSession(
     user: AuthUserRecord,
-    env: JwtSigningEnvironment = process.env,
-    refreshToken?: string,
     claims: AuthMethodClaims = {
       amr: ['pwd'],
       authProvider: AuthProvider.Password,
@@ -343,30 +247,11 @@ export class AuthService {
       authTime: Math.floor(Date.now() / 1000),
     },
   ): AuthSessionView {
-    try {
-      return createAuthSession(user, env, refreshToken, claims);
-    } catch (error) {
-      if (error instanceof AuthJwtSigningError) {
-        throw new UnauthorizedException(error.message);
-      }
-
-      throw error;
-    }
+    return createAuthSession(user, claims);
   }
 
-  createUserSession(user: AuthUserRecord, env: JwtSigningEnvironment = process.env): AuthSessionView {
-    return this.createSession(user, env);
-  }
-
-  private async issueRefreshTokenForUser(user: AuthUserRecord, claims?: AuthMethodClaims): Promise<string | undefined> {
-    const issued = await this.tokens.issueRefreshToken({
-      tenantId: user.tenantId,
-      userId: user.id,
-      // Persist the authentication context with the family so it can be re-emitted
-      // unchanged on every rotation (see refreshSession).
-      authContext: claims ? claimsToRefreshTokenAuthContext(claims) : null,
-    });
-    return issued.isOk() ? issued.value.token : undefined;
+  createUserSession(user: AuthUserRecord): AuthSessionView {
+    return this.createSession(user);
   }
 
   private async issueUserActionToken(

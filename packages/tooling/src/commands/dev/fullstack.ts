@@ -41,9 +41,7 @@ export function resolveFullstackSelection(workspaceRoot: string): FullstackSelec
 const env = {
   ...process.env,
   AUTH_PERSISTENCE: process.env.AUTH_PERSISTENCE ?? "postgres",
-  AUTH_JWT_SECRET: process.env.AUTH_JWT_SECRET ?? "local-dev-jwt-secret-change-me",
-  AUTH_JWT_ISSUER: process.env.AUTH_JWT_ISSUER ?? "nest-react-boilerplate-local",
-  AUTH_JWT_AUDIENCE: process.env.AUTH_JWT_AUDIENCE ?? "nest-react-boilerplate-api",
+  SESSION_SECRET: process.env.SESSION_SECRET ?? "local-dev-session-secret-change-me",
   DATABASE_URL: process.env.DATABASE_URL ?? "postgres://postgres:postgres@localhost:5432/nest_react_boilerplate",
   VITE_AUTH_API_BASE_URL: process.env.VITE_AUTH_API_BASE_URL ?? "http://localhost:3003",
   VITE_USER_API_BASE_URL: process.env.VITE_USER_API_BASE_URL ?? "http://localhost:3002",

@@ -43,6 +43,8 @@ export class AuthUserEntity {
   displayName = '';
   passwordHash = '';
   status: AuthUserStatus = 'active';
+  // Derived from normalized RBAC joins by repositories. These fields are part
+  // of the domain/API view but are deliberately not persisted on auth_users.
   roles: string[] = [];
   permissions: string[] = [];
   locale: Locale = 'en';
@@ -97,8 +99,8 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       default: '',
     },
     status: { type: 'varchar', length: 32, default: 'active' },
-    roles: { type: 'json', defaultRaw: "'[]'::jsonb" },
-    permissions: { type: 'json', defaultRaw: "'[]'::jsonb" },
+    roles: { type: 'json', persist: false },
+    permissions: { type: 'json', persist: false },
     locale: { type: 'varchar', length: 16, default: 'en' },
     theme: { type: 'varchar', length: 16, default: 'system' },
     lastLoginAt: {

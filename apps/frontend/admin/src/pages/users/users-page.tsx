@@ -10,43 +10,29 @@ import {
 } from '../../features/user-filtering';
 import { updateUserStatus } from '../../features/user-status-management';
 import { assignUserRoles } from '../../features/user-role-assignment';
-import {
-  AdminAuditReadPermission,
-  AdminDashboardReadPermission,
-  AdminManageAllPermission,
-  AdminProfileReadPermission,
-  AdminRole,
-  AdminRolesReadPermission,
-  AdminRolesWritePermission,
-  AdminSettingsReadPermission,
-  AdminSettingsUpdatePermission,
-  AdminUsersAccessPolicyUpdatePermission,
-  AdminUsersReadPermission,
-  AdminUsersStatusUpdatePermission,
-  AdminUsersWritePermission,
-  UserProfileReadPermission,
-  UserRole,
-} from '@app/common-authz';
+import { AdminRole, isKnownPermission, permissionCatalog, UserRole } from '@app/common-authz';
 import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
 import { useI18n } from '@app/frontend-runtime';
 import {
   AdminSearchFilterToolbar,
   UiActionsMenu,
+  UiButton,
   UiCard,
-  UiCheckbox,
   UiConfirmDialog,
   UiDataTable,
   UiNotification,
   UiPagination,
+  UiSelectionGrid,
   UiSection,
   UiSelect,
   UiStatusTag,
-  UiTextarea,
+  UiTextareaField,
 } from '@app/frontend-ui-web';
 import { ResourceAuditLogCard } from '../../entities/admin-audit';
 import type { AdminAccess } from '../../entities/admin-session';
 import { UserDetailCard, type UserRow, type UserStatus } from '../../entities/admin-user';
 import {
+  adminPaginationLabels,
   errorText,
   pageSize,
   paramsFromPath,
@@ -57,34 +43,11 @@ import {
   totalPages,
 } from '../../shared';
 
-type PolicyRole = adminApi.UpdateAdminUserAccessPolicyDto['roles'][number];
 type PolicyPermission = adminApi.UpdateAdminUserAccessPolicyDto['permissions'][number];
 
-// Roles/permissions come from the shared @app/common-authz catalog. The
-// `satisfies` checks keep them aligned with the generated DTO union so selected
-// values stay typed without an unchecked `as` cast.
-const policyRoleValues = [UserRole, AdminRole] as const satisfies readonly PolicyRole[];
-
-const policyPermissionValues = [
-  UserProfileReadPermission,
-  AdminDashboardReadPermission,
-  AdminProfileReadPermission,
-  AdminUsersReadPermission,
-  AdminUsersWritePermission,
-  AdminUsersStatusUpdatePermission,
-  AdminUsersAccessPolicyUpdatePermission,
-  AdminRolesReadPermission,
-  AdminRolesWritePermission,
-  AdminAuditReadPermission,
-  AdminSettingsReadPermission,
-  AdminSettingsUpdatePermission,
-  AdminManageAllPermission,
-] as const satisfies readonly PolicyPermission[];
-
-const isPolicyRole = (value: string): value is PolicyRole => policyRoleValues.some((role) => role === value);
-
-const isPolicyPermission = (value: string): value is PolicyPermission =>
-  policyPermissionValues.some((permission) => permission === value);
+const fallbackAssignableRoles = [UserRole, AdminRole] as const;
+const fallbackAssignablePermissions = permissionCatalog.map(({ key }) => key);
+const isPolicyPermission = (value: string): value is PolicyPermission => isKnownPermission(value);
 
 export const UsersPage = ({
   access,
@@ -184,7 +147,7 @@ export const UsersPage = ({
       currentStatus,
     }: {
       id: string;
-      roles: ('user' | 'admin')[];
+      roles: adminApi.UpdateAdminUserAccessPolicyDto['roles'];
       permissions: adminApi.UpdateAdminUserAccessPolicyDto['permissions'];
       reason: string;
       status?: UserStatus;
@@ -230,6 +193,8 @@ export const UsersPage = ({
     },
   });
   const rows = users.data?.items ?? [];
+  const assignableRoles = roles.data?.assignableRoles ?? fallbackAssignableRoles;
+  const assignablePermissions = roles.data?.assignablePermissions ?? fallbackAssignablePermissions;
   const roleOptions = [
     { label: t('admin.users.filter.allRoles'), value: 'all' },
     ...(roles.data?.assignableRoles ?? access.roles).map((value) => ({
@@ -250,10 +215,12 @@ export const UsersPage = ({
     <UiSection
       className="admin-page admin-users-page"
       eyebrow={t('admin.users.eyebrow')}
+      headingLevel={1}
       title={t('admin.users.title')}
     >
       <UiCard className="admin-filter-card" title={t('admin.users.searchLabel')}>
         <AdminSearchFilterToolbar
+          label={t('admin.common.searchFilters')}
           searchLabel={t('admin.users.searchLabel')}
           searchPlaceholder={t('admin.users.searchPlaceholder')}
           searchValue={search}
@@ -348,6 +315,8 @@ export const UsersPage = ({
                     const nextStatus = row.status === 'active' ? 'disabled' : 'active';
                     return (
                       <UiActionsMenu
+                        label={t('admin.common.actions')}
+                        trigger={<UiButton variant="secondary">{t('admin.common.actions')}</UiButton>}
                         items={[
                           {
                             label: t('admin.users.action.changeStatus'),
@@ -390,6 +359,7 @@ export const UsersPage = ({
             />
           </UiCard>
           <UiPagination
+            {...adminPaginationLabels(t, page, users.data?.limit ?? pageSize, users.data?.total ?? 0)}
             currentPage={page}
             pageSize={users.data?.limit ?? pageSize}
             totalItems={users.data?.total ?? 0}
@@ -442,8 +412,8 @@ export const UsersPage = ({
             setStatusTarget(undefined);
           }}
         >
-          <UiTextarea
-            aria-label={t('admin.users.statusDialog.reasonLabel')}
+          <UiTextareaField
+            label={t('admin.users.statusDialog.reasonLabel')}
             placeholder={t('admin.users.reasonPlaceholder')}
             value={reason}
             onChange={(event) => {
@@ -483,7 +453,7 @@ export const UsersPage = ({
               id: policyTarget.id,
               currentStatus: policyTarget.status,
               status: policyStatus,
-              roles: [...policyRoles].filter(isPolicyRole),
+              roles: assignableRoles.filter((value) => policyRoles.has(value)),
               permissions: [...policyPermissions].filter(isPolicyPermission),
               reason: reason.trim(),
             });
@@ -499,48 +469,24 @@ export const UsersPage = ({
             }}
             options={statusOptions}
           />
-          <div className="xr-card-grid">
-            {(roles.data?.assignableRoles ?? ['user', 'admin']).map((value) => (
-              <UiCheckbox
-                key={value}
-                label={value}
-                checked={policyRoles.has(value)}
-                onCheckedChange={(checked: boolean | 'indeterminate') => {
-                  setPolicyRoles((current) => {
-                    const next = new Set(current);
-                    if (checked) {
-                      next.add(value);
-                    } else {
-                      next.delete(value);
-                    }
-                    return next;
-                  });
-                }}
-              />
-            ))}
-          </div>
-          <div className="xr-card-grid">
-            {(roles.data?.assignablePermissions ?? access.permissions).map((value) => (
-              <UiCheckbox
-                key={value}
-                label={value}
-                checked={policyPermissions.has(value)}
-                onCheckedChange={(checked: boolean | 'indeterminate') => {
-                  setPolicyPermissions((current) => {
-                    const next = new Set(current);
-                    if (checked) {
-                      next.add(value);
-                    } else {
-                      next.delete(value);
-                    }
-                    return next;
-                  });
-                }}
-              />
-            ))}
-          </div>
-          <UiTextarea
-            aria-label={t('admin.users.policyDialog.reasonLabel')}
+          <UiSelectionGrid
+            label={t('admin.users.filter.role')}
+            onValuesChange={(values) => {
+              setPolicyRoles(new Set(values));
+            }}
+            options={assignableRoles.map((value) => ({ label: value, value }))}
+            values={[...policyRoles]}
+          />
+          <UiSelectionGrid
+            label={t('admin.users.filter.permission')}
+            onValuesChange={(values) => {
+              setPolicyPermissions(new Set(values));
+            }}
+            options={assignablePermissions.map((value) => ({ label: value, value }))}
+            values={[...policyPermissions]}
+          />
+          <UiTextareaField
+            label={t('admin.users.policyDialog.reasonLabel')}
             placeholder={t('admin.users.reasonPlaceholder')}
             value={reason}
             onChange={(event) => {
@@ -570,31 +516,19 @@ export const UsersPage = ({
             }
             rolesMutation.mutate({
               id: rolesTarget.id,
-              roles: [...assignedRoles].filter(isPolicyRole),
+              roles: assignableRoles.filter((value) => assignedRoles.has(value)),
             });
             setRolesTarget(undefined);
           }}
         >
-          <div className="xr-card-grid">
-            {(roles.data?.assignableRoles ?? ['user', 'admin']).map((value) => (
-              <UiCheckbox
-                key={value}
-                label={value}
-                checked={assignedRoles.has(value)}
-                onCheckedChange={(checked: boolean | 'indeterminate') => {
-                  setAssignedRoles((current) => {
-                    const next = new Set(current);
-                    if (checked) {
-                      next.add(value);
-                    } else {
-                      next.delete(value);
-                    }
-                    return next;
-                  });
-                }}
-              />
-            ))}
-          </div>
+          <UiSelectionGrid
+            label={t('admin.users.filter.role')}
+            onValuesChange={(values) => {
+              setAssignedRoles(new Set(values));
+            }}
+            options={assignableRoles.map((value) => ({ label: value, value }))}
+            values={[...assignedRoles]}
+          />
         </UiConfirmDialog>
       ) : null}
     </UiSection>

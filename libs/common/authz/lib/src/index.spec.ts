@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AdminAuthLoginAnalyticsReadPermission,
   AdminDashboardReadPermission,
+  AdminFeatureFlagsReadPermission,
+  AdminFeatureFlagsWritePermission,
   AdminManageAllPermission,
   AdminNotificationBroadcastsApprovePermission,
   AdminNotificationBroadcastsReadPermission,
@@ -52,6 +55,7 @@ describe('@app/common-authz permission catalog', () => {
       'admin:roles:read',
       AdminRolesWritePermission,
       'admin:audit:read',
+      AdminAuthLoginAnalyticsReadPermission,
       'admin:settings:read',
       AdminSettingsUpdatePermission,
       AdminNotificationTemplatesReadPermission,
@@ -63,6 +67,8 @@ describe('@app/common-authz permission catalog', () => {
       AdminNotificationBroadcastsWritePermission,
       AdminNotificationBroadcastsSendPermission,
       AdminNotificationBroadcastsApprovePermission,
+      AdminFeatureFlagsReadPermission,
+      AdminFeatureFlagsWritePermission,
       AdminManageAllPermission,
     ]);
   });
@@ -125,6 +131,7 @@ describe('@app/common-authz role matrix', () => {
       'admin:roles:read',
       AdminRolesWritePermission,
       'admin:audit:read',
+      AdminAuthLoginAnalyticsReadPermission,
       'admin:settings:read',
       AdminSettingsUpdatePermission,
       AdminNotificationTemplatesReadPermission,
@@ -136,6 +143,8 @@ describe('@app/common-authz role matrix', () => {
       AdminNotificationBroadcastsWritePermission,
       AdminNotificationBroadcastsSendPermission,
       AdminNotificationBroadcastsApprovePermission,
+      AdminFeatureFlagsReadPermission,
+      AdminFeatureFlagsWritePermission,
       AdminManageAllPermission,
     ]);
     expect(permissionsForRoles([UserRole])).toEqual([UserProfileReadPermission]);

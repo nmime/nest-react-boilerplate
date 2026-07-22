@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BaseHealthController, HealthService } from '@app/backend-common-health';
 import { AdminProfileController } from '@app/backend-feature-admin-main';
 import { AdminAppApiModule } from './admin-app-api.module';
+import { AdminHealthController } from './admin-health.controller';
 
 // The app imports the shared health controller from @app/backend-common-health instead
 // of declaring an app-local duplicate controller.
@@ -16,6 +17,7 @@ describe('AdminAppApiModule', () => {
       }).compile();
 
       expect(moduleRef.get(BaseHealthController)).toBeInstanceOf(BaseHealthController);
+      expect(moduleRef.get(AdminHealthController)).toBeInstanceOf(AdminHealthController);
       expect(moduleRef.get(HealthService).appName).toBe('admin-app-api');
       expect(moduleRef.get(AdminProfileController)).toBeInstanceOf(AdminProfileController);
     } finally {

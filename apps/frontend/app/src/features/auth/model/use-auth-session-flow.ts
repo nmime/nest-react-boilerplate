@@ -17,7 +17,7 @@ import { AuthMode } from './auth-model';
 
 export interface AuthSessionFlowMessages {
   authenticationFailed: string;
-  missingToken: string;
+  unauthenticated: string;
   profileRequestFailed: string;
   profileUnknown: string;
 }
@@ -50,18 +50,27 @@ export function useAuthSessionFlow({
   const authStore = useAuthShellStore();
   const authClient = useAuthApiClient();
   const userClient = useUserApiClient();
-  const bearerToken = authStore.bearerToken;
   const safeReturnUrl = returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : null;
 
   const authMeQuery = useQuery({
-    enabled: Boolean(bearerToken),
     queryFn: () => fetchAuthMe(authClient.api, authClient.requestOptions),
-    queryKey: [...authMeQueryKey(), locale, bearerToken],
+    queryKey: [...authMeQueryKey(), locale],
     retry: false,
     staleTime: 15_000,
   });
   const authLocale = getPayloadLocale(authMeQuery.data);
   const authTheme = getPayloadTheme(authMeQuery.data);
+
+  useEffect(() => {
+    if (authMeQuery.isLoading) {
+      return;
+    }
+    if (authMeQuery.data) {
+      authStore.markAuthenticated();
+    } else {
+      authStore.clearSession();
+    }
+  }, [authMeQuery.data, authMeQuery.isLoading, authStore]);
 
   useEffect(() => {
     if (authLocale) {
@@ -75,9 +84,9 @@ export function useAuthSessionFlow({
   }, [applyUserTheme, authTheme]);
 
   const profileQuery = useQuery({
-    enabled: Boolean(bearerToken) && !authMeQuery.isLoading && (!authLocale || authLocale === locale),
+    enabled: Boolean(authMeQuery.data) && !authMeQuery.isLoading && (!authLocale || authLocale === locale),
     queryFn: () => fetchUserProfile(userClient.api, userClient.requestOptions),
-    queryKey: [...profileQueryKey(), locale, bearerToken],
+    queryKey: [...profileQueryKey(), locale],
     retry: false,
     staleTime: 15_000,
   });
@@ -92,8 +101,13 @@ export function useAuthSessionFlow({
   const authMutation = useMutation({
     mutationFn: (input: Parameters<typeof createAuthSession>[2]) =>
       createAuthSession(authClient.api, authClient.requestOptions, input, locale),
+    onMutate: async () => {
+      // A fast login can overlap the anonymous session probe. Cancel that
+      // probe so its eventual 401 cannot clear the newly established session.
+      await queryClient.cancelQueries({ queryKey: authMeQueryKey() });
+    },
     onSuccess: (body) => {
-      authStore.setSession(body.accessToken, body.refreshToken);
+      authStore.markAuthenticated();
       clearApiAuthRequired();
       const nextLocale = getPayloadLocale(body);
       const nextTheme = getPayloadTheme(body);
@@ -120,10 +134,10 @@ export function useAuthSessionFlow({
       };
     }
 
-    if (!bearerToken) {
+    if (!authMeQuery.isLoading && !authMeQuery.data) {
       return {
-        status: 'missing-token' as const,
-        reason: messages.missingToken,
+        status: 'unauthenticated' as const,
+        reason: messages.unauthenticated,
       };
     }
 
@@ -137,7 +151,7 @@ export function useAuthSessionFlow({
   }, [
     authLocale,
     authMeQuery.isLoading,
-    bearerToken,
+    authMeQuery.data,
     authMutation.error,
     authMutation.isError,
     locale,

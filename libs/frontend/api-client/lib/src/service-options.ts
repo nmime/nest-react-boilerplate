@@ -38,17 +38,17 @@ const normalizeOpenApiBaseUrl = (baseUrl?: string): string => {
 
 export const toOpenApiFetchOptions = (
   options: ApiClientRequestOptions = {},
-): Omit<ApiClientRequestOptions, 'authToken' | 'fetchImpl'> & {
+): Omit<ApiClientRequestOptions, 'fetchImpl'> & {
   fetch: typeof fetch;
 } => {
-  const { authToken, baseUrl, fetchImpl, headers, ...requestOptions } = options;
+  const { baseUrl, fetchImpl, headers, ...requestOptions } = options;
 
   return {
     ...requestOptions,
     baseUrl: normalizeOpenApiBaseUrl(baseUrl),
     credentials: requestOptions.credentials ?? 'include',
     fetch: fetchImpl ?? globalThis.fetch,
-    headers: buildApiHeaders({ authToken, headers, hasJsonBody: false }),
+    headers: buildApiHeaders({ headers, hasJsonBody: false }),
   };
 };
 

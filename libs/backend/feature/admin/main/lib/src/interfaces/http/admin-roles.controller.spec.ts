@@ -3,6 +3,7 @@ import { okAsync, type ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import {
+  AdminManageAllPermission,
   AdminRole,
   AdminRolesReadPermission,
   AdminRolesWritePermission,
@@ -67,6 +68,7 @@ const createController = () => {
     findByKey: vi.fn((): TestResult<TestRole | null> => okAsync(null)),
     findById: vi.fn((): TestResult<TestRole | null> => okAsync(adminRole)),
     findByKeys: vi.fn(() => okAsync([{ ...adminRole, key: UserRole }, adminRole])),
+    findPermissionsByKeys: vi.fn((keys: readonly string[]) => okAsync(keys.map((key) => ({ key })))),
     createRole: vi.fn((): TestResult<TestRole> =>
       okAsync({
         ...adminRole,
@@ -146,12 +148,22 @@ describe('AdminRolesController', () => {
     roles.setRolePermissions.mockReturnValue(
       okAsync({
         role: adminRole,
-        permissionKeys: [AdminUsersWritePermission, AdminUsersAccessPolicyUpdatePermission, AdminRolesWritePermission],
+        permissionKeys: [
+          AdminUsersWritePermission,
+          AdminUsersAccessPolicyUpdatePermission,
+          AdminRolesWritePermission,
+          AdminManageAllPermission,
+        ],
       }),
     );
 
     const response = await controller.setRolePermissions(principal, 'role-admin', {
-      permissions: [AdminUsersWritePermission, AdminUsersAccessPolicyUpdatePermission, AdminRolesWritePermission],
+      permissions: [
+        AdminUsersWritePermission,
+        AdminUsersAccessPolicyUpdatePermission,
+        AdminRolesWritePermission,
+        AdminManageAllPermission,
+      ],
     });
 
     expect(response.data.permissions).toContain(AdminRolesWritePermission);

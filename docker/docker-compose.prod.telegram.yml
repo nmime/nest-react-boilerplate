@@ -7,7 +7,7 @@ services:
       TELEGRAM_OIDC_SCOPES: ${TELEGRAM_OIDC_SCOPES:-openid profile}
       TELEGRAM_TMA_MAX_AGE_SECONDS: ${TELEGRAM_TMA_MAX_AGE_SECONDS:-300}
     secrets:
-      - auth_jwt_secret
+      - session_secret
       - better_auth_secret
       - telegram_bot_token
       - telegram_oidc_client_secret

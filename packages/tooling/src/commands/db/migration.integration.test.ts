@@ -148,8 +148,8 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
         assert.ok(colNames.includes("email"));
         assert.ok(colNames.includes("emailVerified"));
         assert.ok(colNames.includes("status"));
-        assert.ok(colNames.includes("roles"));
-        assert.ok(colNames.includes("permissions"));
+        assert.ok(!colNames.includes("roles"), "Better Auth user roles cache should not exist");
+        assert.ok(!colNames.includes("permissions"), "Better Auth user permissions cache should not exist");
         assert.ok(colNames.includes("locale"));
         assert.ok(colNames.includes("theme"));
       } finally {
@@ -202,7 +202,7 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
         assert.ok(tables.has("auth_tenants"), "auth_tenants should exist");
         assert.ok(tables.has("auth_tenant_memberships"), "auth_tenant_memberships should exist");
         assert.ok(tables.has("auth_tenant_invitations"), "auth_tenant_invitations should exist");
-        assert.ok(tables.has("auth_refresh_tokens"), "auth_refresh_tokens should exist");
+        assert.ok(!tables.has("auth_refresh_tokens"), "retired auth_refresh_tokens should not exist");
         assert.ok(tables.has("auth_user_tokens"), "auth_user_tokens should exist");
         assert.ok(tables.has("admin_audit_logs"), "admin_audit_logs should exist");
         assert.ok(tables.has("transactional_outbox_events"), "transactional_outbox_events should exist");
@@ -211,6 +211,14 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
         assert.ok(tables.has("auth_methods"), "auth_methods should exist");
         assert.ok(tables.has("auth_link_tokens"), "auth_link_tokens should exist");
         assert.ok(tables.has("auth_provider_tokens"), "auth_provider_tokens should exist");
+        assert.ok(tables.has("fastify_sessions"), "canonical fastify_sessions should exist");
+
+        const authUserColumns = await pool.query(
+          `SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='auth_users'`,
+        );
+        const authUserColumnNames = new Set(authUserColumns.rows.map((row) => row.column_name));
+        assert.ok(!authUserColumnNames.has("roles"), "auth_users.roles legacy cache should not exist");
+        assert.ok(!authUserColumnNames.has("permissions"), "auth_users.permissions legacy cache should not exist");
 
         // Migration tracking
         assert.ok(tables.has("mikro_orm_migrations"), "mikro_orm_migrations should exist");

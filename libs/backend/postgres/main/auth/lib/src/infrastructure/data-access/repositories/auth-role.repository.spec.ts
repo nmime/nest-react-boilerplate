@@ -1,6 +1,15 @@
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
-import { AuthPermissionEntity, AuthRoleEntity, AuthRolePermissionEntity, DefaultAuthTenantId } from '../entities';
+import { AdminUsersAccessPolicyUpdatePermission, AdminUsersWritePermission } from '@app/common-authz';
+import {
+  AuthPermissionEntity,
+  AuthRoleEntity,
+  AuthRolePermissionEntity,
+  AuthUserEntity,
+  AuthUserPermissionEntity,
+  AuthUserRoleEntity,
+  DefaultAuthTenantId,
+} from '../entities';
 import { AuthRoleRepository } from './auth-role.repository';
 
 describe('AuthRoleRepository', () => {
@@ -198,7 +207,7 @@ describe('AuthRoleRepository role management', () => {
       roleId: 'role-admin',
       permissionId: { $in: ['perm-users-read'] },
     });
-    expect(flush).toHaveBeenCalledTimes(1);
+    expect(flush).toHaveBeenCalledTimes(2);
   });
 
   it('returns null when setting permissions for a missing role', async () => {
@@ -247,6 +256,37 @@ describe('AuthRoleRepository lookups and reconciliation edge cases', () => {
 
     expect(result._unsafeUnwrap()).toBe(permissions);
     expect(find).toHaveBeenCalledWith(AuthPermissionEntity, {});
+  });
+
+  it('looks up distinct catalog permissions from the database', async () => {
+    const permissions = [
+      new AuthPermissionEntity({
+        key: 'profile:read',
+        resource: 'profile',
+        action: 'read',
+      }),
+    ];
+    const find = vi.fn(() => Promise.resolve(permissions));
+    const repository = new AuthRoleRepository({
+      find,
+    } as unknown as EntityManager);
+
+    const result = await repository.findPermissionsByKeys(['profile:read', 'profile:read']);
+
+    expect(result._unsafeUnwrap()).toBe(permissions);
+    expect(find).toHaveBeenCalledWith(AuthPermissionEntity, {
+      key: { $in: ['profile:read'] },
+    });
+  });
+
+  it('does not query when no catalog permission keys were requested', async () => {
+    const find = vi.fn(() => Promise.resolve([]));
+    const repository = new AuthRoleRepository({
+      find,
+    } as unknown as EntityManager);
+
+    expect((await repository.findPermissionsByKeys([]))._unsafeUnwrap()).toEqual([]);
+    expect(find).not.toHaveBeenCalled();
   });
 
   it('persists a new role honouring explicit tenant and system flag', async () => {
@@ -434,5 +474,143 @@ describe('AuthRoleRepository lookups and reconciliation edge cases', () => {
     });
     expect(persist).not.toHaveBeenCalled();
     expect(nativeDelete).not.toHaveBeenCalled();
+  });
+
+  it('rehydrates every role member projection from normalized grants in the same transaction', async () => {
+    const role = new AuthRoleEntity({ key: 'support' });
+    role.id = 'role-support';
+    const permission = new AuthPermissionEntity({
+      key: 'admin:roles:write',
+      resource: 'admin.roles',
+      action: 'write',
+    });
+    permission.id = 'perm-roles-write';
+    const member = new AuthUserEntity({
+      email: 'support@example.com',
+      roles: [],
+      permissions: [],
+    });
+    member.id = 'user-support';
+    const assignment = new AuthUserRoleEntity({ userId: member.id, roleId: role.id });
+    const rolePermission = new AuthRolePermissionEntity({ roleId: role.id, permissionId: permission.id });
+    let rolePermissionReads = 0;
+    const find = vi.fn((entity: unknown) => {
+      if (entity === AuthPermissionEntity) {
+        return Promise.resolve([permission]);
+      }
+      if (entity === AuthRolePermissionEntity) {
+        rolePermissionReads += 1;
+        return Promise.resolve(rolePermissionReads === 1 ? [] : [rolePermission]);
+      }
+      if (entity === AuthUserRoleEntity) {
+        return Promise.resolve([assignment]);
+      }
+      if (entity === AuthUserPermissionEntity) {
+        return Promise.resolve([]);
+      }
+      if (entity === AuthRoleEntity) {
+        return Promise.resolve([role]);
+      }
+      if (entity === AuthUserEntity) {
+        return Promise.resolve([member]);
+      }
+      return Promise.resolve([]);
+    });
+    const persist = vi.fn();
+    const flush = vi.fn(() => Promise.resolve());
+    const txEm = {
+      findOne: vi.fn((entity: unknown) => Promise.resolve(entity === AuthRoleEntity ? role : null)),
+      find,
+      persist,
+      nativeDelete: vi.fn(() => Promise.resolve(0)),
+      flush,
+    } as unknown as EntityManager;
+    const repository = new AuthRoleRepository({
+      transactional: vi.fn((callback: (em: EntityManager) => unknown) => callback(txEm)),
+    } as unknown as EntityManager);
+
+    await expect(
+      repository.setRolePermissions(role.id, [permission.key]).then((result) => result._unsafeUnwrap()),
+    ).resolves.toEqual({
+      role,
+      permissionKeys: [permission.key],
+    });
+    expect(member.roles).toEqual(['support']);
+    expect(member.permissions).toEqual([permission.key]);
+    expect(persist).toHaveBeenCalledWith(expect.any(AuthRolePermissionEntity));
+    expect(flush).toHaveBeenCalledTimes(2);
+  });
+
+  it('blocks a role permission edit that would remove the actor’s own management access', async () => {
+    const role = new AuthRoleEntity({ key: 'ops' });
+    role.id = 'role-ops';
+    const usersWrite = new AuthPermissionEntity({
+      key: AdminUsersWritePermission,
+      resource: 'admin.users',
+      action: 'write',
+    });
+    usersWrite.id = 'perm-users-write';
+    const policyWrite = new AuthPermissionEntity({
+      key: AdminUsersAccessPolicyUpdatePermission,
+      resource: 'admin.users',
+      action: 'access-policy:update',
+    });
+    policyWrite.id = 'perm-access-policy';
+    const actor = new AuthUserEntity({
+      email: 'ops@example.com',
+      roles: ['ops'],
+      permissions: [AdminUsersWritePermission, AdminUsersAccessPolicyUpdatePermission],
+    });
+    actor.id = 'actor-id';
+    const assignment = new AuthUserRoleEntity({ userId: actor.id, roleId: role.id });
+    let rolePermissionReads = 0;
+    const find = vi.fn((entity: unknown) => {
+      if (entity === AuthPermissionEntity) {
+        return Promise.resolve([usersWrite, policyWrite]);
+      }
+      if (entity === AuthUserPermissionEntity) {
+        return Promise.resolve([]);
+      }
+      if (entity === AuthRolePermissionEntity) {
+        rolePermissionReads += 1;
+        return Promise.resolve(
+          rolePermissionReads === 1
+            ? [
+                new AuthRolePermissionEntity({ roleId: role.id, permissionId: usersWrite.id }),
+                new AuthRolePermissionEntity({ roleId: role.id, permissionId: policyWrite.id }),
+              ]
+            : [],
+        );
+      }
+      if (entity === AuthUserRoleEntity) {
+        return Promise.resolve([assignment]);
+      }
+      if (entity === AuthRoleEntity) {
+        return Promise.resolve([role]);
+      }
+      if (entity === AuthUserEntity) {
+        return Promise.resolve([actor]);
+      }
+      return Promise.resolve([]);
+    });
+    const txEm = {
+      findOne: vi.fn((entity: unknown) => Promise.resolve(entity === AuthRoleEntity ? role : actor)),
+      find,
+      persist: vi.fn(),
+      nativeDelete: vi.fn(() => Promise.resolve(2)),
+      flush: vi.fn(() => Promise.resolve()),
+      count: vi.fn(() => Promise.resolve(0)),
+    } as unknown as EntityManager;
+    const repository = new AuthRoleRepository({
+      transactional: vi.fn((callback: (em: EntityManager) => unknown) => callback(txEm)),
+    } as unknown as EntityManager);
+
+    const result = await repository.setRolePermissions(role.id, [], DefaultAuthTenantId, actor.id);
+
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: 'repository_error',
+      message: 'Administrators cannot remove their own active admin write access.',
+    });
+    expect(txEm.count).not.toHaveBeenCalled();
   });
 });

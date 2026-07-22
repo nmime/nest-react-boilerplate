@@ -1,17 +1,14 @@
 import { Body, Controller, Get, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import {
   CurrentUser,
   RequirePermissions,
-  RequireRoles,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
 } from '@app/backend-feature-auth-shared';
 import {
   AdminRbacGuard,
-  AdminRole,
   AdminRolesReadPermission,
   AdminRolesWritePermission,
   AdminUsersAccessPolicyUpdatePermission,
@@ -31,7 +28,6 @@ import {
 } from './dto';
 
 @ApiExceptions(400, 401, 403, 404, 409, 429, 500)
-@ApiBearerAuth()
 @ApiSessionCookieAuth()
 @UseGuards(new AdminRbacGuard())
 @Controller('admin')
@@ -40,7 +36,6 @@ export class AdminRolesController {
 
   @Get('roles')
   @ApiOkDataResponse(AdminRbacCatalogPayloadDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminRolesReadPermission)
   async listRoles(@CurrentUser() principal: AuthenticatedPrincipal): Promise<OkResponse<AdminRbacCatalog>> {
     return createOkResponse(await executeAdminUseCase(() => this.adminRoles.listRolesCatalog(principal)));
@@ -48,7 +43,6 @@ export class AdminRolesController {
 
   @Post('roles')
   @ApiOkDataResponse(AdminRoleViewDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminRolesWritePermission)
   async createRole(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -62,7 +56,6 @@ export class AdminRolesController {
 
   @Patch('roles/:id')
   @ApiOkDataResponse(AdminRoleViewDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminRolesWritePermission)
   async updateRole(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -79,7 +72,6 @@ export class AdminRolesController {
 
   @Put('roles/:id/permissions')
   @ApiOkDataResponse(AdminRoleViewDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminRolesWritePermission)
   async setRolePermissions(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -96,7 +88,6 @@ export class AdminRolesController {
 
   @Put('users/:id/roles')
   @ApiOkDataResponse(AdminUserViewDto)
-  @RequireRoles(AdminRole)
   @RequirePermissions(AdminUsersWritePermission, AdminUsersAccessPolicyUpdatePermission)
   async assignUserRoles(
     @CurrentUser() principal: AuthenticatedPrincipal,

@@ -106,10 +106,10 @@ describe('requireAllowedPolicy', () => {
     }).not.toThrow();
   });
 
-  it('rejects roles outside the admin catalog', () => {
+  it('defers custom role validation to the tenant-backed role repository', () => {
     expect(() => {
       requireAllowedPolicy({ roles: ['owner'], permissions: [], reason: 'Test policy update' });
-    }).toThrow(/outside the admin catalog/);
+    }).not.toThrow();
   });
 
   it('rejects permissions outside the admin catalog', () => {

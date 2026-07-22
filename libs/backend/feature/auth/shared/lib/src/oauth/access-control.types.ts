@@ -22,11 +22,8 @@ export interface AuthenticatedPrincipal {
   avatarUrl?: string;
   locale?: AuthenticatedLocale;
   theme?: AuthenticatedTheme;
-  issuer?: string;
-  audience?: string | string[];
   roles: string[];
   permissions: string[];
-  tokenId?: string;
   amr?: string[];
   authProvider?: AuthProvider;
   authChannel?: AuthProviderChannel;
@@ -70,11 +67,4 @@ export interface AuthenticatedRequest {
   url?: string;
   user?: AuthenticatedPrincipal;
   auth?: AuthenticatedPrincipal;
-}
-
-export interface JwtValidationEnvironment {
-  AUTH_JWT_SECRET?: string;
-  AUTH_JWT_ISSUER?: string;
-  AUTH_JWT_AUDIENCE?: string;
-  NODE_ENV?: string;
 }

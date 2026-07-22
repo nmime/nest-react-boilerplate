@@ -7,10 +7,21 @@ export const ProfilePage = ({ payload }: Readonly<{ payload: AdminProfilePayload
   const { t } = useI18n();
   const profile = payload.profile;
   const unknown = t('admin.profile.unknown');
+  const roles = payload.principal?.roles ?? [];
+  const permissions = payload.principal?.permissions ?? [];
+  const permissionGroups = permissions.reduce<Map<string, string[]>>((groups, permission) => {
+    const parts = permission.split(':');
+    const group = parts.length > 1 ? parts.slice(0, -1).join(':') : permission;
+    const current = groups.get(group) ?? [];
+    current.push(permission);
+    groups.set(group, current);
+    return groups;
+  }, new Map());
   return (
     <UiSection
       className="admin-page admin-profile-page"
       eyebrow={t('admin.profile.eyebrow')}
+      headingLevel={1}
       title={t('admin.profile.title')}
     >
       <UiCard
@@ -28,7 +39,7 @@ export const ProfilePage = ({ payload }: Readonly<{ payload: AdminProfilePayload
         </div>
         <dl className="xr-profile-list">
           <div>
-            <dt>{t('user.form.email')}</dt>
+            <dt>{t('admin.users.column.email')}</dt>
             <dd>
               {t('admin.profile.emailLine', {
                 value: profile?.email ?? payload.principal?.email ?? unknown,
@@ -45,20 +56,43 @@ export const ProfilePage = ({ payload }: Readonly<{ payload: AdminProfilePayload
           </div>
           <div>
             <dt>{t('admin.users.column.roles')}</dt>
-            <dd>{join(payload.principal?.roles)}</dd>
+            <dd className="admin-chip-row">
+              {(roles.length ? roles : [unknown]).map((role) => (
+                <span className="admin-chip admin-chip--strong" key={role}>
+                  {role}
+                </span>
+              ))}
+            </dd>
           </div>
           <div>
             <dt>{t('admin.users.filter.permission')}</dt>
-            <dd>{join(payload.principal?.permissions)}</dd>
+            <dd>{permissions.length}</dd>
           </div>
         </dl>
-        <div className="admin-chip-row" aria-label={t('admin.users.filter.permission')}>
-          {(payload.principal?.permissions?.length ? payload.principal.permissions : [unknown]).map((permission) => (
-            <span className="admin-chip" key={permission}>
-              {permission}
-            </span>
-          ))}
-        </div>
+        <section className="admin-profile-permissions" aria-label={t('admin.users.filter.permission')}>
+          <div className="admin-profile-permissions__heading">
+            <h3>{t('admin.users.filter.permission')}</h3>
+            <span>{permissions.length}</span>
+          </div>
+          <div className="admin-profile-permissions__groups">
+            {permissionGroups.size ? (
+              [...permissionGroups].map(([group, groupPermissions]) => (
+                <div className="admin-profile-permission-group" key={group}>
+                  <strong>{group}</strong>
+                  <div className="admin-chip-row">
+                    {groupPermissions.map((permission) => (
+                      <code className="admin-profile-permission" key={permission}>
+                        {permission.split(':').at(-1)}
+                      </code>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>{join([unknown])}</p>
+            )}
+          </div>
+        </section>
       </UiCard>
     </UiSection>
   );

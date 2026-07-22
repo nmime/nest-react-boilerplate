@@ -35,7 +35,7 @@ export function ProfileStatusCard({ state, t }: Readonly<ProfileStatusCardProps>
           </dl>
         </div>
       ) : null}
-      {state.status === 'missing-token' ? (
+      {state.status === 'unauthenticated' ? (
         <div className="xr-state-panel xr-state-panel--empty">
           <UiEmptyState description={state.reason} title={t('user.profile.title')} />
         </div>

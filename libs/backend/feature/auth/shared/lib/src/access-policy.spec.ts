@@ -68,7 +68,7 @@ describe('canonical RBAC ordering', () => {
     ).toEqual([UserProfileReadPermission, AdminManageAllPermission, 'aaa:unknown', 'zzz:unknown']);
   });
 
-  it('is the identity for the seeded matrix so the jsonb cache stays identical', () => {
+  it('is the identity for the seeded matrix so every adapter returns the same projection', () => {
     const matrixPermissions = permissionsForRoles([UserRole, AdminRole]);
     // Feeding the matrix output back through the canonical ordering used by the
     // effective-permission resolver must reproduce it byte for byte.

@@ -24,7 +24,7 @@ import {
 } from '@app/backend-common-exception';
 import { ClsInterceptor } from './cls.interceptor';
 import { createRequestLocaleMiddleware, resolveLocaleFromRequest } from '@app/backend-common-i18n';
-import { setupSwagger } from '@app/backend-common-swagger';
+import { setupSwagger, type SwaggerAuthScheme } from '@app/backend-common-swagger';
 import { createValidationPipe } from '@app/backend-common-validation';
 import { createRequestLoggingMiddleware } from './request-logging.middleware';
 import { createLogger } from '@app/backend-common-logger';
@@ -44,6 +44,7 @@ export interface BootstrapNestApiOptions {
 }
 
 export interface BootstrapOpenApiOptions {
+  authSchemes?: readonly SwaggerAuthScheme[];
   enabled?: boolean;
   path?: string;
   title?: string;
@@ -223,7 +224,7 @@ class FastifyPostgresSessionStore {
       )
     `);
     await client.query(`
-      CREATE INDEX IF NOT EXISTS fastify_sessions_expire_idx
+      CREATE INDEX IF NOT EXISTS ix__fastify_sessions__expire
       ON fastify_sessions (expire)
     `);
   }
@@ -441,7 +442,7 @@ function ensureMinimumSessionSecretLength(secret: string, isProduction: boolean)
   }
 
   if (isProduction) {
-    throw new Error('SESSION_SECRET or AUTH_JWT_SECRET must be at least 32 characters in production.');
+    throw new Error('SESSION_SECRET must be at least 32 characters in production.');
   }
 
   const padded = `${secret}${DevelopmentSessionSecretPadding}`;
@@ -451,12 +452,12 @@ function ensureMinimumSessionSecretLength(secret: string, isProduction: boolean)
 }
 
 function resolveSessionSecret(isProduction: boolean, env: NodeJS.ProcessEnv): string {
-  const secret = readOptionalSecret(env.SESSION_SECRET) ?? readOptionalSecret(env.AUTH_JWT_SECRET);
+  const secret = readOptionalSecret(env.SESSION_SECRET);
   if (secret) {
     return ensureMinimumSessionSecretLength(secret, isProduction);
   }
   if (isProduction) {
-    throw new Error('SESSION_SECRET or AUTH_JWT_SECRET must be configured in production.');
+    throw new Error('SESSION_SECRET must be configured in production.');
   }
 
   return ensureMinimumSessionSecretLength('nrb-development-session-secret', false);
@@ -944,6 +945,7 @@ export async function bootstrapNestApi(
   }
 
   setupSwagger(app, {
+    authSchemes: options.openApi?.authSchemes,
     description: options.openApi?.description,
     enabled: options.openApi?.enabled,
     path: options.openApi?.path,

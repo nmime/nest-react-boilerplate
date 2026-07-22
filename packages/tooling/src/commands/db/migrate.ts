@@ -6,7 +6,7 @@
  * Applies both MikroORM auth migrations and Better-Auth core schema
  * in a single idempotent pass:
  *   1. Better-Auth core schema (user, session, account, verification) — idempotent DDL
- *   2. MikroORM auth migrations (auth_users, auth_refresh_tokens, etc.) — tracked in mikro_orm_migrations
+ *   2. MikroORM auth migrations (auth users, sessions, normalized RBAC, audit) — tracked in mikro_orm_migrations
  *
  * Safe to run on:
  *   - Fresh database: creates everything from scratch

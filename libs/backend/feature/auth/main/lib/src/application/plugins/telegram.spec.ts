@@ -55,6 +55,8 @@ describe('telegramPlugin TMA session', () => {
       },
       status: 'authenticated',
     });
+    expect(body).not.toHaveProperty('token');
+    expect(body).not.toHaveProperty('session');
     const cookie = first.headers.get('set-cookie');
     expect(cookie).toContain('better-auth.session_token=');
 

@@ -14,9 +14,8 @@ export * from './type/auth-user-role.type';
  * Reads and writes the normalized RBAC assignment tables (`auth_user_roles`)
  * and resolves a user's effective access by joining
  * `auth_user_roles -> auth_role_permissions -> auth_permissions` (with
- * `auth_roles` supplying the role key). The denormalized
- * `auth_users.roles/permissions` jsonb cache is written elsewhere; this
- * repository is the source of truth those caches are refreshed from.
+ * `auth_roles` supplying the role key). These normalized joins are the sole
+ * persisted authorization source of truth.
  */
 @Injectable()
 export class AuthUserRoleRepository {
@@ -102,7 +101,7 @@ export class AuthUserRoleRepository {
   private async queryEffectiveAccess(userId: string, tenantId: string): Promise<EffectiveAuthAccess> {
     const rows = (await this.entityManager
       .getConnection()
-      .execute(resolveEffectiveAccessSql, [userId, tenantId], 'all')) as EffectiveAccessRow[];
+      .execute(resolveEffectiveAccessSql, [userId, tenantId, userId, tenantId], 'all')) as EffectiveAccessRow[];
 
     return {
       roleKeys: distinctText(rows.map((row) => row.role_key)),

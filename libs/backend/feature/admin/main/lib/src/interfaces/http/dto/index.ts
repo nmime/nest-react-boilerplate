@@ -1,4 +1,5 @@
 export * from './admin-user-query.dto';
+export * from './admin-feature-flag.dto';
 export * from './update-admin-user-status.dto';
 export * from './update-admin-user-access-policy.dto';
 export * from './admin-user-view.dto';

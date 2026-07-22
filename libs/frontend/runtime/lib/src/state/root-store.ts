@@ -5,7 +5,7 @@ import { LocaleStore } from './locale-store';
 import { UiStore, type UiTheme } from './ui-store';
 
 export interface RootStoreOptions {
-  initialBearerToken?: string | null;
+  initiallyAuthenticated?: boolean;
   initialLocale?: Locale | null;
   initialTheme?: UiTheme | null;
 }
@@ -19,7 +19,7 @@ export class RootStore {
   constructor(options: RootStoreOptions = {}) {
     this.app = new AppStore();
     this.locale = new LocaleStore(options.initialLocale);
-    this.authShell = new AuthShellStore(options.initialBearerToken);
+    this.authShell = new AuthShellStore(options.initiallyAuthenticated);
     this.ui = new UiStore(options.initialTheme);
   }
 

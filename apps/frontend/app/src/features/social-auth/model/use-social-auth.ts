@@ -46,8 +46,8 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
 
   const finishExternalAuth = (result: Awaited<ReturnType<typeof submitTelegramTma>>) => {
     const session = getSessionFromExternalAuthResult(result);
-    if (session?.accessToken) {
-      authStore.setSession(session.accessToken, session.refreshToken);
+    if (session) {
+      authStore.markAuthenticated();
       clearApiAuthRequired();
       void queryClient.invalidateQueries({
         queryKey: authApi.getAuthControllerMeQueryKey(),

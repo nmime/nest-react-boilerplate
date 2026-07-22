@@ -1,20 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AdminDashboardReadPermission,
-  AdminAuditReadPermission,
-  AdminManageAllPermission,
-  AdminProfileReadPermission,
-  AdminRolesReadPermission,
-  AdminRolesWritePermission,
-  AdminSettingsReadPermission,
-  AdminSettingsUpdatePermission,
-  AdminUsersAccessPolicyUpdatePermission,
-  AdminUsersReadPermission,
-  AdminUsersStatusUpdatePermission,
-  AdminUsersWritePermission,
   createDefaultAccessPolicy,
   DefaultAuthTenantId,
   normalizeUserThemePreference,
+  permissionsForRoles,
   UserProfileReadPermission,
   toAuthenticatedUserView,
   UserRole,
@@ -42,21 +31,7 @@ describe('auth shared', () => {
       }),
     ).toEqual({
       roles: [UserRole, AdminRole],
-      permissions: [
-        UserProfileReadPermission,
-        AdminDashboardReadPermission,
-        AdminProfileReadPermission,
-        AdminUsersReadPermission,
-        AdminUsersWritePermission,
-        AdminUsersStatusUpdatePermission,
-        AdminUsersAccessPolicyUpdatePermission,
-        AdminRolesReadPermission,
-        AdminRolesWritePermission,
-        AdminAuditReadPermission,
-        AdminSettingsReadPermission,
-        AdminSettingsUpdatePermission,
-        AdminManageAllPermission,
-      ],
+      permissions: permissionsForRoles([UserRole, AdminRole]),
     });
   });
 

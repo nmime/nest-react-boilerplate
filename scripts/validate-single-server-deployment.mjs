@@ -88,6 +88,7 @@ for (const requirement of [
   'configure_secret MAILPACE_SERVER_TOKEN_FILE mailpace_server_token.txt empty',
   'configure_secret REDIS_PASSWORD_FILE redis_password.txt hex',
   'configure_secret TELEGRAM_BOT_WEBHOOK_SECRET_FILE telegram_bot_webhook_secret.txt hex',
+  'configure_secret DISCORD_CUSTOM_ID_SECRET_FILE discord_custom_id_secret.txt hex',
 ]) {
   assert.ok(controller.includes(requirement), `controller missing safety contract: ${requirement}`);
 }

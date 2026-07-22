@@ -3,7 +3,6 @@ export * from './access-control.types';
 export * from './auth-oauth.module';
 export * from './auth-oauth.service';
 export * from './auth-oauth.types';
-export * from './bearer-auth.guard';
 export * from './language.enum';
 export * from './rbac.guard';
 export * from './session-auth.guard';

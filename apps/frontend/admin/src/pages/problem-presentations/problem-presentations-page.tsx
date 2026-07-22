@@ -225,6 +225,7 @@ export const ProblemPresentationsPage = ({
     <UiSection
       className="admin-page admin-problem-presentations-page"
       eyebrow={t('admin.problemPresentations.eyebrow')}
+      headingLevel={1}
       title={t('admin.problemPresentations.title')}
     >
       <p className="admin-page-description">{t('admin.problemPresentations.description')}</p>

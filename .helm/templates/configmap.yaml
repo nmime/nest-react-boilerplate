@@ -8,9 +8,6 @@ metadata:
 data:
   NODE_ENV: {{ .Values.config.nodeEnv | quote }}
   CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}
-  AUTH_JWT_ISSUER: {{ .Values.config.authJwtIssuer | quote }}
-  AUTH_JWT_AUDIENCE: {{ .Values.config.authJwtAudience | quote }}
-  AUTH_JWT_EXPIRES_IN_SECONDS: {{ .Values.config.authJwtExpiresInSeconds | quote }}
   AUTH_GEOIP_DATABASE_PATH: {{ .Values.config.authGeoipDatabasePath | quote }}
   AUTH_LOGIN_NETWORK_RETENTION_DAYS: {{ .Values.config.authLoginNetworkRetentionDays | quote }}
   AUTH_LOGIN_EVENT_RETENTION_DAYS: {{ .Values.config.authLoginEventRetentionDays | quote }}
@@ -121,6 +118,9 @@ data:
       add_header X-Content-Type-Options "nosniff" always;
       add_header X-Frame-Options "SAMEORIGIN" always;
       add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      # SPA navigation and API requests can intentionally share paths such as
+      # /admin/roles. Keep their cache entries separate by negotiated media type.
+      add_header Vary "Accept" always;
       add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src {{ .Values.frontendNginx.cspConnectSrc }}; frame-ancestors 'self'; base-uri 'self'; form-action 'self'" always;
 
       location = {{ .Values.frontendNginx.healthPath }} {
@@ -130,6 +130,7 @@ data:
       }
 
       location = /index.html {
+        add_header Vary "Accept" always;
         add_header Cache-Control "private, no-cache, no-store, must-revalidate" always;
         add_header Expires "Sat, 01 Jan 2000 00:00:00 GMT" always;
         add_header Pragma "no-cache" always;

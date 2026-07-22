@@ -70,7 +70,7 @@ Follow [database migration standards](../database-migrations.md): explicit `NOT 
 
 ## 5. Product-specific callback handling
 
-Better Auth owns its provider callback under `/api/auth/callback/<provider>` or `/api/auth/oauth2/callback/<provider>` for generic OAuth. Its registered callback origin must equal `BETTER_AUTH_URL` and the frontend Better Auth base (user-app in same-origin mode, auth-app-api in split-origin mode), because state/session cookies are host-scoped. Do not add a second controller that exchanges the same code. If the application needs its tenant/RBAC JWT/session, add a narrow projection route under `/auth/<provider>/session` that:
+Better Auth owns its provider callback under `/api/auth/callback/<provider>` or `/api/auth/oauth2/callback/<provider>` for generic OAuth. Its registered callback origin must equal `BETTER_AUTH_URL` and the frontend Better Auth base (user-app in same-origin mode, auth-app-api in split-origin mode), because state/session cookies are host-scoped. Do not add a second controller that exchanges the same code. To establish the tenant/RBAC application session, add a narrow projection route under `/auth/<provider>/session` that:
 
 1. Reads the Better Auth cookie through the injected Better Auth instance.
 2. Requires a live Better Auth session.
@@ -91,7 +91,7 @@ async googleSession(@Req() request: AuthenticatedRequest) {
 Preserve the existing dual-session boundary:
 
 - Better Auth stores its user, provider account, OAuth state, and session in PostgreSQL and issues its secure cookie.
-- `ExternalAuthService` stores tenant-owned provider identities and issues the application access/session credentials used by the user/admin APIs.
+- `ExternalAuthService` stores tenant-owned provider identities and establishes the single first-party application session used by the auth, user, and admin APIs. Better Auth cookies never authorize those APIs directly.
 
 Do not replace the existing Better Auth `database`, `account`, `secret`, state-storage, trusted-origin, or session settings with an in-memory example.
 
@@ -113,7 +113,8 @@ const opts: BetterAuthOptions = {
 Before production, review:
 
 - **Session storage**: PostgreSQL for Better Auth plus the repository's application-session policy.
-- **Refresh tokens**: rotation and revocation.
+- **Application sessions**: lifetime, rolling renewal, logout, and server-side revocation policy.
+- **Provider credentials**: encryption, rotation, and revocation when an OAuth provider returns credentials that must be retained.
 - **Password reset**: email delivery and token expiry.
 - **Email verification**: rate limits and delivery.
 - **Rate limits**: per-provider and per-endpoint.
@@ -180,7 +181,7 @@ pnpm run check:fast
 - Verify ID-token/JWT signature, issuer, audience, expiry, algorithm, and provider subject before persistence.
 - Keep OAuth disabled unless provider configuration is explicitly supplied.
 - Use HTTPS for callback URLs in production.
-- Set appropriate `Authorization` headers and secure cookie flags.
+- Set provider-required outbound `Authorization` headers and secure cookie flags; never accept those provider credentials as first-party API authentication.
 - Follow [Auth Tenant Hardening](../auth-tenant-hardening.md) for multi-tenant setups.
 
 ## Next steps

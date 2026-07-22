@@ -14,7 +14,6 @@ load_secret() {
 }
 
 if [ "$(id -u)" -eq 0 ]; then
-  load_secret AUTH_JWT_SECRET /run/secrets/auth_jwt_secret
   load_secret SESSION_SECRET /run/secrets/session_secret
   load_secret BETTER_AUTH_SECRET /run/secrets/better_auth_secret
   load_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY /run/secrets/auth_provider_token_encryption_key
@@ -28,6 +27,7 @@ if [ "$(id -u)" -eq 0 ]; then
   load_secret DISCORD_BOT_TOKEN /run/secrets/discord_bot_token
   load_secret DISCORD_CLIENT_SECRET /run/secrets/discord_client_secret
   load_secret DISCORD_PUBLIC_KEY /run/secrets/discord_public_key
+  load_secret DISCORD_CUSTOM_ID_SECRET /run/secrets/discord_custom_id_secret
   load_secret RESEND_API_KEY /run/secrets/resend_api_key
   load_secret MAILPACE_SERVER_TOKEN /run/secrets/mailpace_server_token
   load_secret NOTIFICATION_FCM_PRIVATE_KEY /run/secrets/notification_fcm_private_key

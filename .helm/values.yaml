@@ -10,7 +10,7 @@ secrets:
   # supplying explicit non-placeholder values below.
   existingSecret: ''
   create: false
-  authJwtSecret: ''
+  sessionSecret: ''
   authLoginAnalyticsIpHashSecret: ''
   betterAuthSecret: ''
   databaseUrl: ''
@@ -25,9 +25,6 @@ secrets:
 config:
   nodeEnv: production
   corsOrigins: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
-  authJwtIssuer: https://auth-app-api.example.com
-  authJwtAudience: nest-react-boilerplate-api
-  authJwtExpiresInSeconds: '3600'
   authGeoipDatabasePath: ''
   authLoginNetworkRetentionDays: '30'
   authLoginEventRetentionDays: '365'

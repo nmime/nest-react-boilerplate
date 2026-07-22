@@ -133,9 +133,7 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
 
         return ctx.json({
           status: 'authenticated',
-          token: session.token,
           user,
-          session,
           identity: {
             provider: TelegramOidcProviderId,
             channel: 'telegram_tma',

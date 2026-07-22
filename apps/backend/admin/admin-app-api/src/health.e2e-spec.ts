@@ -3,10 +3,15 @@ import { MikroORM } from '@mikro-orm/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import type { Response as InjectResponse } from 'light-my-request';
+import { okAsync } from 'neverthrow';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ClsInterceptor } from '@app/backend-common-bootstrap';
 import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
 import { createValidationPipe } from '@app/backend-common-validation';
+import { AdminProfileReadPermission } from '@app/backend-feature-admin-shared';
+import { AuditLogAdminService } from '@app/backend-feature-audit-log-admin';
+import { DefaultAuthTenantId, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
+import { AuthUserRepository, AuthUserRoleRepository } from '@app/backend-postgres-main-auth';
 import { AdminAppApiModule } from './admin-app-api.module';
 
 interface HealthEnvelope {
@@ -42,6 +47,20 @@ describe('admin-app-api health e2e', () => {
       getRepository: () => ({}),
     },
   };
+  const authUsers = {
+    findById: vi.fn(() => okAsync({ status: 'active' })),
+  };
+  const userRoles = {
+    resolveEffectiveAccess: vi.fn(() =>
+      okAsync({
+        roleKeys: ['support'],
+        permissionKeys: [AdminProfileReadPermission],
+      }),
+    ),
+  };
+  const audit = {
+    record: vi.fn(() => Promise.resolve({})),
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -49,9 +68,33 @@ describe('admin-app-api health e2e', () => {
     })
       .overrideProvider(MikroORM)
       .useValue(ormMock)
+      .overrideProvider(AuthUserRepository)
+      .useValue(authUsers)
+      .overrideProvider(AuthUserRoleRepository)
+      .useValue(userRoles)
+      .overrideProvider(AuditLogAdminService)
+      .useValue(audit)
       .compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+    app
+      .getHttpAdapter()
+      .getInstance()
+      .addHook('onRequest', (request, _reply, done) => {
+        if (request.headers['x-test-admin-session'] !== 'active') {
+          done();
+          return;
+        }
+        (request as unknown as AuthenticatedRequest).session = {
+          user: {
+            subject: 'admin-id',
+            tenantId: DefaultAuthTenantId,
+            roles: ['admin'],
+            permissions: ['admin:manage:all'],
+          },
+        };
+        done();
+      });
     app.useGlobalPipes(createValidationPipe());
     await app.init();
   });
@@ -89,10 +132,48 @@ describe('admin-app-api health e2e', () => {
     });
   });
 
+  it('exposes namespaced health aliases for the same-origin admin frontend', async () => {
+    for (const url of ['/admin/health', '/admin/live', '/admin/ready']) {
+      // eslint-disable-next-line no-await-in-loop -- aliases are verified independently in deterministic order
+      const response = await app.inject({ method: 'GET', url });
+      expect(response.statusCode, url).toBe(200);
+    }
+  });
+
   it('protects composed admin feature routes with the global authentication guard', async () => {
     const response = await app.inject({ method: 'GET', url: '/admin/profile/me' });
 
     expect(response.statusCode).toBe(401);
+  });
+
+  it('rejects a valid bearer credential at the session-only admin boundary', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/profile/me',
+      headers: { authorization: 'Bearer header.payload.signature' },
+    });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('uses PostgreSQL-effective permissions rather than stale cookie-session claims', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/admin/profile/me',
+      headers: { 'x-test-admin-session': 'active' },
+    });
+    const body = response.json<{ data: { principal: { roles: string[]; permissions: string[] } } }>();
+
+    expect(response.statusCode).toBe(200);
+    expect(authUsers.findById).toHaveBeenCalledWith('admin-id', DefaultAuthTenantId);
+    expect(userRoles.resolveEffectiveAccess).toHaveBeenCalledWith('admin-id', DefaultAuthTenantId);
+    expect(body.data.principal).toMatchObject({
+      roles: ['support'],
+      permissions: [AdminProfileReadPermission],
+    });
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: DefaultAuthTenantId, resource: 'admin.profile' }),
+    );
   });
 
   it('GET /live and /ready return shared envelopes with dependencies', async () => {

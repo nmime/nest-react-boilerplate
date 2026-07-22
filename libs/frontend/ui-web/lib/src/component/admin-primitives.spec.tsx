@@ -386,6 +386,7 @@ describe('admin UI primitives', () => {
     render(
       <>
         <UiCheckbox checked label="Select row" onCheckedChange={vi.fn()} />
+        <UiCheckbox label="Matrix permission" labelHidden />
         <UiSwitch checked label="Enabled" onCheckedChange={vi.fn()} />
         <label htmlFor="notes">Notes</label>
         <UiTextarea id="notes" placeholder="Admin notes" />
@@ -398,6 +399,8 @@ describe('admin UI primitives', () => {
 
     expect(checkbox.tagName.toLowerCase()).toBe('button');
     expect(checkbox.className).toContain('xr-checkbox');
+    expect(screen.getByRole('checkbox', { name: 'Matrix permission' })).toBeTruthy();
+    expect(screen.getByText('Matrix permission').parentElement?.className).toContain('sr-only');
     expect(switchControl.tagName.toLowerCase()).toBe('button');
     expect(switchControl.className).toContain('xr-switch');
     expect(notes.className).toContain('xr-textarea');

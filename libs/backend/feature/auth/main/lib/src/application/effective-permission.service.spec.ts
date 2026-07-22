@@ -1,5 +1,5 @@
 import { ConflictException } from '@nestjs/common';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
 import {
   AdminRole,
@@ -37,7 +37,7 @@ describe('EffectivePermissionService', () => {
     expect(access.permissionKeys).toEqual([UserProfileReadPermission, 'admin:dashboard:read', 'admin:manage:all']);
   });
 
-  it('assigns roles and refreshes the jsonb cache to the shared-matrix arrays', async () => {
+  it('assigns roles and returns the shared-matrix projection', async () => {
     const users = new InMemoryAuthUserStore();
     const roles = new InMemoryAuthRoleStore();
     const service = new EffectivePermissionService(roles, users);
@@ -63,12 +63,12 @@ describe('EffectivePermissionService', () => {
     expect(refreshed?.roles).toEqual(adminPolicy.roles);
     expect(refreshed?.permissions).toEqual(adminPolicy.permissions);
 
-    const persisted = (await users.findById(created.id))._unsafeUnwrap();
-    expect(persisted?.roles).toEqual(adminPolicy.roles);
-    expect(persisted?.permissions).toEqual(adminPolicy.permissions);
+    const storedProfile = (await users.findById(created.id))._unsafeUnwrap();
+    expect(storedProfile?.roles).toEqual([]);
+    expect(storedProfile?.permissions).toEqual([]);
   });
 
-  it('never wipes the cache when the normalized tables resolve no roles', async () => {
+  it('returns an empty projection when normalized tables contain no grants', async () => {
     const users = new InMemoryAuthUserStore();
     const roles = new InMemoryAuthRoleStore();
     const service = new EffectivePermissionService(roles, users);
@@ -80,14 +80,10 @@ describe('EffectivePermissionService', () => {
         permissions: [UserProfileReadPermission],
       })
     )._unsafeUnwrap();
-    const setAccessPolicy = vi.spyOn(users, 'setAccessPolicy');
-
     const refreshed = await service.refresh(created.id, created.tenantId);
 
-    // No roles were assigned, so the resolver leaves the create-time arrays.
-    expect(setAccessPolicy).not.toHaveBeenCalled();
-    expect(refreshed?.roles).toEqual([UserRole]);
-    expect(refreshed?.permissions).toEqual([UserProfileReadPermission]);
+    expect(refreshed?.roles).toEqual([]);
+    expect(refreshed?.permissions).toEqual([]);
   });
 
   it('returns null when refreshing an unknown user with no resolved roles', async () => {
@@ -98,7 +94,7 @@ describe('EffectivePermissionService', () => {
     await expect(service.refresh('missing', DefaultAuthTenantId)).resolves.toBe(null);
   });
 
-  it('returns null when the current user lookup fails after resolving no roles', async () => {
+  it('maps user-store lookup failures to ConflictException', async () => {
     const roles = {
       resolveEffectiveAccess: () => okAsync({ roleKeys: [], permissionKeys: [] }),
     } as unknown as AuthRoleStore;
@@ -108,7 +104,7 @@ describe('EffectivePermissionService', () => {
 
     await expect(
       new EffectivePermissionService(roles, users).refresh('missing', DefaultAuthTenantId),
-    ).resolves.toBeNull();
+    ).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('maps store failures to ConflictException', async () => {
@@ -130,20 +126,6 @@ describe('EffectivePermissionService', () => {
     } as unknown as AuthRoleStore;
     await expect(
       new EffectivePermissionService(failingResolve, users).resolveEffectiveAccess('user-id', DefaultAuthTenantId),
-    ).rejects.toBeInstanceOf(ConflictException);
-
-    const resolvingRoles = {
-      resolveEffectiveAccess: () =>
-        okAsync({
-          roleKeys: [UserRole],
-          permissionKeys: [UserProfileReadPermission],
-        }),
-    } as unknown as AuthRoleStore;
-    const failingUsers = {
-      setAccessPolicy: () => errAsync(repositoryError),
-    } as unknown as AuthUserStore;
-    await expect(
-      new EffectivePermissionService(resolvingRoles, failingUsers).refresh('user-id', DefaultAuthTenantId),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 });

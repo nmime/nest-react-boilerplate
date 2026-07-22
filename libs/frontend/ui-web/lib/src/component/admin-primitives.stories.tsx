@@ -229,7 +229,7 @@ export const DisabledControls: Story = {
       </UiSearchFilterToolbar>
       <UiCheckbox disabled label="Require approval" />
       <UiSwitch disabled label="Enable notifications" />
-      <UiTextarea aria-label="Disabled notes" disabled value="Read-only notes" />
+      <UiTextarea aria-label="Disabled notes" disabled readOnly value="Read-only notes" />
       <UiPagination currentPage={1} onPageChange={() => undefined} pageSize={10} totalItems={10} totalPages={1} />
     </StoryFrame>
   ),

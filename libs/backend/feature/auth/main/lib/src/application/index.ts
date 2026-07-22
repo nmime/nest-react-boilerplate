@@ -15,5 +15,4 @@ export * from './better-auth-api.controller';
 export * from './better-auth-telegram-session.service';
 export * from './telegram-oidc';
 export * from './plugins/multi-tenant';
-export * from './plugins/rbac';
 export * from './plugins/telegram';

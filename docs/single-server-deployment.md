@@ -108,14 +108,14 @@ Choose either `single-domain` or `per-app-domains` for
 `PRIMARY_APP`. Set the real `PUBLIC_DOMAIN`, registry, verified full-SHA image tag,
 database mode, and optional profiles.
 
-The Compose wrapper derives CORS, Better Auth trusted origins/base URL, JWT
-issuer, OAuth callbacks, Discord interactions, Telegram webhook, and Telegram
-Mini App URL from that public mode. Do not duplicate or hand-maintain a second
-URL map in Nginx.
+The Compose wrapper derives CORS, Better Auth trusted origins/base URL, OAuth
+callbacks, Discord interactions, Telegram webhook, and Telegram Mini App URL
+from that public mode. Do not duplicate or hand-maintain a second URL map in
+Nginx.
 
 Every secret that can be created locally is generated independently with
-OpenSSL: session and JWT signing secrets, Better Auth state/cookie material,
-the 32-byte provider-token encryption key, Redis and bundled PostgreSQL
+OpenSSL: the session secret, Better Auth state/cookie material, the 32-byte
+provider-token encryption key, Redis and bundled PostgreSQL
 passwords, the Grafana administrator password, and the Telegram webhook
 verification secret. They are created once, never overwritten on reruns, owned
 by root, and converged to mode `0640` for the deployment user's protected

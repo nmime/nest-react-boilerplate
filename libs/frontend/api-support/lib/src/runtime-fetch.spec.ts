@@ -97,7 +97,7 @@ describe('createApiRuntimeFetch error paths', () => {
     });
   });
 
-  it('emits auth-required with refresh-failed when a 401 carries an Authorization header', async () => {
+  it('emits auth-required for an unauthenticated session response when enabled', async () => {
     const eventHub = createApiRuntimeEventHub();
     let reason: string | undefined;
     eventHub.subscribe((event) => {
@@ -109,20 +109,19 @@ describe('createApiRuntimeFetch error paths', () => {
     const baseFetch = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ message: 'Expired' }, 401));
     const runtimeFetch = createApiRuntimeFetch({
       baseFetch,
+      emitUnauthenticatedAuthRequired: true,
       eventHub,
       redirectTo: '/auth',
       toastRuntime,
     });
 
-    await runtimeFetch('https://api.example.test/profile', {
-      headers: { Authorization: 'Bearer stale' },
-    });
+    await runtimeFetch('https://api.example.test/profile');
 
     expect(eventHub.getState()).toMatchObject({
       authRequired: true,
       redirectTo: '/auth',
     });
-    expect(reason).toBe('refresh-failed');
+    expect(reason).toBe('unauthenticated');
   });
 
   it('does not emit auth-required for an unauthenticated 401 by default', async () => {

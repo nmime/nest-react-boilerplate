@@ -70,7 +70,7 @@ async function main() {
     OPENAPI_ENABLED: "true",
     OPENAPI_PATH: "docs",
     AUTH_PERSISTENCE: "memory",
-    AUTH_JWT_SECRET: process.env.AUTH_JWT_SECRET ?? "openapi-export-only",
+    SESSION_SECRET: process.env.SESSION_SECRET ?? "openapi-export-session-secret-only",
     AUTH_OAUTH_ENABLED: "false",
     PORT: args.port,
   };

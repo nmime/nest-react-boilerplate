@@ -17,13 +17,6 @@ const actionTemplateCode: Record<AuthAction, string> = {
   password_reset: 'auth.password-reset-code',
 };
 
-const linkTemplateCode = {
-  email_verification: 'auth.email-verification-link',
-  // This is a public template identifier, not a credential.
-  // eslint-disable-next-line sonarjs/no-hardcoded-passwords
-  password_reset: 'auth.password-reset-link',
-} as const;
-
 /** Publishes all account-recovery credentials through the durable notification feature. */
 @Injectable()
 export class AuthNotificationPublisher {
@@ -45,28 +38,6 @@ export class AuthNotificationPublisher {
       deliveries: [route],
       inAppVisible: false,
       sensitiveData: { code: params.token },
-    });
-  }
-
-  async publishBetterAuthLink(params: {
-    email: string;
-    purpose: keyof typeof linkTemplateCode;
-    actionUrl: string;
-  }): Promise<void> {
-    const notifications = this.requireNotifications();
-    const templateCode = linkTemplateCode[params.purpose];
-    await notifications.upsertTemplate({
-      code: templateCode,
-      description: `Better Auth ${params.purpose.replaceAll('_', ' ')} link.`,
-      channels: linkTemplateChannels(params.purpose),
-    });
-    await notifications.createTemplateNotification({
-      targetType: NotificationTargetType.Email,
-      targetId: params.email.trim().toLowerCase(),
-      templateCode,
-      deliveries: [{ channel: NotificationChannel.Email, provider: configuredEmailProvider() }],
-      inAppVisible: false,
-      sensitiveData: { actionUrl: params.actionUrl },
     });
   }
 
@@ -103,12 +74,6 @@ function configuredAuthRoute(): {
   }
 }
 
-function configuredEmailProvider(): NotificationDeliveryProvider.Resend | NotificationDeliveryProvider.MailPace {
-  return process.env.NOTIFICATION_EMAIL_PROVIDER?.trim().toLowerCase() === NotificationDeliveryProvider.MailPace
-    ? NotificationDeliveryProvider.MailPace
-    : NotificationDeliveryProvider.Resend;
-}
-
 function codeTemplateChannels(purpose: AuthAction): Array<{
   channel: NotificationChannel;
   content: NotificationTemplateChannelContent;
@@ -133,26 +98,6 @@ function codeTemplateChannels(purpose: AuthAction): Array<{
         body: {
           en: `Your ${action} code is {code}. Do not share this code with anyone.`,
           ru: `Ваш код для ${isReset ? 'сброса пароля' : 'подтверждения email'}: {code}. Никому не сообщайте этот код.`,
-        },
-      },
-    },
-  ];
-}
-
-function linkTemplateChannels(purpose: keyof typeof linkTemplateCode): Array<{
-  channel: NotificationChannel.Email;
-  content: NotificationTemplateChannelContent;
-}> {
-  const isReset = purpose === 'password_reset';
-  return [
-    {
-      channel: NotificationChannel.Email,
-      content: {
-        subject: { en: isReset ? 'Reset your password' : 'Verify your email address' },
-        body: {
-          en: isReset
-            ? 'Use this secure link to reset your password: {actionUrl}'
-            : 'Use this secure link to verify your email address: {actionUrl}',
         },
       },
     },

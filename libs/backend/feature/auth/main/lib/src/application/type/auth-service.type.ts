@@ -13,11 +13,6 @@ export interface LoginInput {
   password: string;
 }
 
-export interface RefreshSessionInput {
-  tenantId?: string | null;
-  refreshToken: string;
-}
-
 export interface UserActionTokenInput {
   tenantId?: string | null;
   email: string;

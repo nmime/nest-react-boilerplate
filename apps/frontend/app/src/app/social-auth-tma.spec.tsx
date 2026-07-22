@@ -91,10 +91,15 @@ const deferredResponse = () => {
 };
 
 const setFetch = (...responses: Response[]) => {
-  const fetchMock = vi.fn<typeof fetch>();
-  for (const response of responses) {
-    fetchMock.mockResolvedValueOnce(response);
-  }
+  const queue = [...responses];
+  const fetchMock = vi.fn<typeof fetch>((input) => {
+    const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+    if (pathname === '/auth/me') {
+      return Promise.resolve(jsonResponse({}, false, 401));
+    }
+    const response = queue.shift();
+    return response ? Promise.resolve(response) : Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+  });
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 };
@@ -304,9 +309,6 @@ describe('social auth and TMA UI', () => {
         data: {
           returnUrl: `${window.location.origin}/profile?from=tma`,
           session: {
-            accessToken: 'tma-session',
-            expiresIn: 3600,
-            tokenType: 'Bearer',
             user: {
               email: 'telegram@example.com',
               id: 'user-id',
@@ -341,13 +343,11 @@ describe('social auth and TMA UI', () => {
       returnUrl: `${window.location.origin}/profile`,
     });
     expect(Object.hasOwn(body, 'init' + 'DataUnsafe')).toBe(false);
-    await waitFor(() => {
-      expect(
-        fetchMock.mock.calls.some(
-          ([input]) => input instanceof Request && input.headers.get('authorization') === 'Bearer tma-session',
-        ),
-      ).toBe(true);
-    });
+    expect(
+      fetchMock.mock.calls.every(
+        ([input]) => !(input instanceof Request) || input.headers.get('authorization') === null,
+      ),
+    ).toBe(true);
   });
 
   it('starts Telegram link flow from /link/telegram instead of generic settings', async () => {
@@ -434,9 +434,6 @@ describe('social auth and TMA UI', () => {
       jsonResponse({
         data: {
           session: {
-            accessToken: 'discord-session',
-            expiresIn: 3600,
-            tokenType: 'Bearer',
             user: {
               email: 'discord@example.com',
               id: 'user-id',
@@ -480,9 +477,6 @@ describe('social auth and TMA UI', () => {
       jsonResponse({
         data: {
           session: {
-            accessToken: 'telegram-oidc-session',
-            expiresIn: 3600,
-            tokenType: 'Bearer',
             user: {
               email: null,
               id: 'user-id',
@@ -559,7 +553,10 @@ describe('social auth and TMA UI', () => {
   it('prevents double Discord authorization requests while loading', async () => {
     resetPath('/auth');
     const pending = deferredResponse();
-    const fetchMock = vi.fn<typeof fetch>().mockReturnValueOnce(pending.promise);
+    const fetchMock = vi.fn<typeof fetch>((input) => {
+      const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+      return pathname === '/auth/me' ? Promise.resolve(jsonResponse({}, false, 401)) : pending.promise;
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<App />);
@@ -570,7 +567,11 @@ describe('social auth and TMA UI', () => {
     fireEvent.click(discordButton);
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(
+        fetchMock.mock.calls.filter(([input]) =>
+          (input instanceof Request ? input.url : String(input)).includes('/auth/discord/authorization-request'),
+        ),
+      ).toHaveLength(1);
     });
     const loadingDiscordButton = await screen.findByRole('button', {
       name: /Waiting for Discord confirmation\./u,
@@ -588,9 +589,15 @@ describe('social auth and TMA UI', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Continue with Telegram' }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/oauth2'),
+        ),
+      ).toBe(true);
     });
-    const request = fetchMock.mock.calls[0]?.[0] as Request;
+    const request = fetchMock.mock.calls.find(([input]) =>
+      (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/oauth2'),
+    )?.[0] as Request;
     expect(new URL(request.url).pathname).toBe('/api/auth/sign-in/oauth2');
     expect(JSON.parse(await request.clone().text())).toMatchObject({
       callbackURL: 'https://app.local.test/auth/telegram/callback',

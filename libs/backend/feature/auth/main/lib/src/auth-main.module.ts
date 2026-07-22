@@ -1,7 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { PostgresMainModule, type PostgresMikroOrmOverrides } from '@app/backend-postgres-main';
 import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
-import { AuthController, ProblemPresentationsController } from './interfaces/http';
+import { AuthController, PersistentSessionAccessGuard, ProblemPresentationsController } from './interfaces/http';
 import { BetterAuthApiController } from './application/better-auth-api.controller';
 import { BetterAuthModule } from './application/better-auth.module';
 import {
@@ -93,6 +93,7 @@ export class AuthMainModule {
         ExternalAuthService,
         GeoIpResolverService,
         BetterAuthTelegramSessionService,
+        PersistentSessionAccessGuard,
         EffectivePermissionService,
         useMemory
           ? {
@@ -140,7 +141,13 @@ export class AuthMainModule {
               useClass: PostgresSocialAuthStore,
             },
       ],
-      exports: [AuthService, ExternalAuthService, BetterAuthTelegramSessionService, EffectivePermissionService],
+      exports: [
+        AuthService,
+        ExternalAuthService,
+        BetterAuthTelegramSessionService,
+        EffectivePermissionService,
+        PersistentSessionAccessGuard,
+      ],
     };
   }
 }

@@ -112,4 +112,63 @@ describe('frontend UI-web locale and theme switchers', () => {
     expect(document.documentElement.dataset['themePreference']).toBe('dark');
     expect(document.documentElement.dataset['theme']).toBe('dark');
   });
+
+  it('supports the compact theme menu used by console headers', () => {
+    const setItem = vi.fn();
+    const onThemeChange = vi.fn();
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: vi.fn(() => null),
+        setItem,
+      },
+    });
+
+    render(
+      <FrontendI18nProvider initialTheme="system" onThemeChange={onThemeChange}>
+        <ThemeSwitcher variant="menu" />
+      </FrontendI18nProvider>,
+    );
+
+    installRadixPointerMocks();
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Theme' }), {
+      button: 0,
+      ctrlKey: false,
+      pointerType: 'mouse',
+    });
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Dark' }));
+
+    expect(onThemeChange).toHaveBeenCalledWith('dark');
+    expect(setItem).toHaveBeenCalledWith('boilerplate.theme', 'dark');
+  });
+
+  it('supports the header language menu and localizes its visible state', () => {
+    const setItem = vi.fn();
+    const onLocaleChange = vi.fn();
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: vi.fn(() => null),
+        setItem,
+      },
+    });
+
+    render(
+      <FrontendI18nProvider initialLocale="en" onLocaleChange={onLocaleChange}>
+        <LanguageSwitcher variant="menu" />
+      </FrontendI18nProvider>,
+    );
+
+    installRadixPointerMocks();
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Language' }), {
+      button: 0,
+      ctrlKey: false,
+      pointerType: 'mouse',
+    });
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Russian' }));
+
+    expect(onLocaleChange).toHaveBeenCalledWith('ru');
+    expect(setItem).toHaveBeenCalledWith('boilerplate.locale', 'ru');
+    expect(screen.getByRole('button', { name: 'Язык' })).toBeTruthy();
+  });
 });

@@ -23,6 +23,8 @@ import {
   AdminNotificationBroadcastsWritePermission,
   AdminNotificationBroadcastsSendPermission,
   AdminNotificationBroadcastsApprovePermission,
+  AdminFeatureFlagsReadPermission,
+  AdminFeatureFlagsWritePermission,
   AdminManageAllPermission,
   normalizeStringList,
 } from '@app/common-authz';
@@ -54,6 +56,8 @@ export {
   AdminNotificationBroadcastsWritePermission,
   AdminNotificationBroadcastsSendPermission,
   AdminNotificationBroadcastsApprovePermission,
+  AdminFeatureFlagsReadPermission,
+  AdminFeatureFlagsWritePermission,
   AdminManageAllPermission,
   normalizeStringList,
 };
@@ -89,6 +93,8 @@ export interface AdminAccessPolicy {
   canWriteNotificationBroadcasts: boolean;
   canSendNotificationBroadcasts: boolean;
   canApproveNotificationBroadcasts: boolean;
+  canReadFeatureFlags: boolean;
+  canWriteFeatureFlags: boolean;
 }
 
 const hasPermission = (permissions: readonly string[], permission: string): boolean =>
@@ -97,8 +103,8 @@ const hasPermission = (permissions: readonly string[], permission: string): bool
 export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): AdminAccessPolicy => {
   const roles = normalizeStringList(principal?.roles);
   const permissions = normalizeStringList(principal?.permissions);
-  const isAdmin = Boolean(principal?.subject && roles.includes(AdminRole));
-  const capability = (permission: string): boolean => isAdmin && hasPermission(permissions, permission);
+  const isAuthenticated = Boolean(principal?.subject);
+  const capability = (permission: string): boolean => isAuthenticated && hasPermission(permissions, permission);
   const capabilities = {
     canReadProfile: capability(AdminProfileReadPermission),
     canReadDashboard: capability(AdminDashboardReadPermission),
@@ -120,10 +126,12 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
     canWriteNotificationBroadcasts: capability(AdminNotificationBroadcastsWritePermission),
     canSendNotificationBroadcasts: capability(AdminNotificationBroadcastsSendPermission),
     canApproveNotificationBroadcasts: capability(AdminNotificationBroadcastsApprovePermission),
+    canReadFeatureFlags: capability(AdminFeatureFlagsReadPermission),
+    canWriteFeatureFlags: capability(AdminFeatureFlagsWritePermission),
   };
 
   return {
-    isAuthenticated: isAdmin,
+    isAuthenticated,
     roles,
     permissions,
     canAccessAdmin: Object.values(capabilities).some(Boolean),

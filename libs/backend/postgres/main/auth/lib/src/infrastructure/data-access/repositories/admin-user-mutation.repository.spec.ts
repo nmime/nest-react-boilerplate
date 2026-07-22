@@ -6,6 +6,7 @@ import {
   AuthRoleEntity,
   AuthRolePermissionEntity,
   AuthUserEntity,
+  AuthUserPermissionEntity,
   AuthUserRoleEntity,
   TransactionalOutboxEventEntity,
 } from '../entities';
@@ -43,20 +44,104 @@ function createEntityManagerMock(
   } = {},
 ) {
   const user = input.user === undefined ? createPowerfulAdmin() : input.user;
-  const execute = vi.fn(() => Promise.resolve());
+  const permissionEntities = (user?.permissions ?? []).map((key, index) => {
+    const permission = new AuthPermissionEntity({
+      key,
+      resource: 'admin.users',
+      action: 'test',
+    });
+    permission.id = `permission-${index}`;
+    return permission;
+  });
+  const roleEntities = (user?.roles ?? []).map((key, index) => {
+    const role = new AuthRoleEntity({ key });
+    role.id = `role-${index}`;
+    return role;
+  });
+  let directAssignments = permissionEntities.map(
+    (permission) =>
+      new AuthUserPermissionEntity({
+        userId: user?.id ?? targetUserId,
+        permissionId: permission.id,
+        tenantId,
+      }),
+  );
+  let roleAssignments = roleEntities.map(
+    (role) =>
+      new AuthUserRoleEntity({
+        userId: user?.id ?? targetUserId,
+        roleId: role.id,
+        tenantId,
+      }),
+  );
+  const execute = vi.fn((sql: string) =>
+    Promise.resolve(
+      sql.includes('active_powerful_admin_count')
+        ? [{ active_powerful_admin_count: String(input.powerfulAdminCount ?? 2) }]
+        : [],
+    ),
+  );
   const findOne = vi.fn(() => Promise.resolve(user));
-  const count = vi.fn(() => Promise.resolve(input.powerfulAdminCount ?? 2));
-  const persist = vi.fn(() => undefined);
+  const find = vi.fn((entity: unknown, where: Record<string, unknown> = {}) => {
+    if (entity === AuthUserRoleEntity) {
+      return Promise.resolve(roleAssignments);
+    }
+    if (entity === AuthUserPermissionEntity) {
+      return Promise.resolve(directAssignments);
+    }
+    if (entity === AuthRoleEntity) {
+      const keys = (where.key as { $in?: string[] } | undefined)?.$in;
+      const ids = (where.id as { $in?: string[] } | undefined)?.$in;
+      return Promise.resolve(
+        roleEntities.filter((role) => (!keys || keys.includes(role.key)) && (!ids || ids.includes(role.id))),
+      );
+    }
+    if (entity === AuthPermissionEntity) {
+      const keys = (where.key as { $in?: string[] } | undefined)?.$in;
+      const ids = (where.id as { $in?: string[] } | undefined)?.$in;
+      return Promise.resolve(
+        permissionEntities.filter(
+          (permission) => (!keys || keys.includes(permission.key)) && (!ids || ids.includes(permission.id)),
+        ),
+      );
+    }
+    return Promise.resolve([]);
+  });
+  const persist = vi.fn((value: unknown) => {
+    if (
+      value instanceof AuthUserPermissionEntity &&
+      !directAssignments.some((row) => row.permissionId === value.permissionId)
+    ) {
+      directAssignments = [...directAssignments, value];
+    }
+    if (value instanceof AuthUserRoleEntity && !roleAssignments.some((row) => row.roleId === value.roleId)) {
+      roleAssignments = [...roleAssignments, value];
+    }
+  });
+  const nativeDelete = vi.fn(async (entity: unknown, where: Record<string, unknown>) => {
+    const permissionIds = (where.permissionId as { $in?: string[] } | undefined)?.$in;
+    if (entity === AuthUserPermissionEntity && permissionIds) {
+      directAssignments = directAssignments.filter((row) => !permissionIds.includes(row.permissionId));
+    }
+    const roleIds = (where.roleId as { $in?: string[] } | undefined)?.$in;
+    if (entity === AuthUserRoleEntity && roleIds) {
+      roleAssignments = roleAssignments.filter((row) => !roleIds.includes(row.roleId));
+    }
+    return 0;
+  });
   const flush = vi.fn(input.flush ?? (() => Promise.resolve()));
   const transactionalEntityManager = {
     getConnection: () => ({ execute }),
     findOne,
-    count,
+    find,
     persist,
+    nativeDelete,
     flush,
   } as unknown as EntityManager;
   const transactional = vi.fn(async (callback: (em: EntityManager) => unknown) => {
     const snapshot = user ? createPowerfulAdmin(user) : null;
+    const directAssignmentsSnapshot = [...directAssignments];
+    const roleAssignmentsSnapshot = [...roleAssignments];
 
     try {
       return await callback(transactionalEntityManager);
@@ -64,6 +149,8 @@ function createEntityManagerMock(
       if (user && snapshot) {
         Object.assign(user, snapshot);
       }
+      directAssignments = directAssignmentsSnapshot;
+      roleAssignments = roleAssignmentsSnapshot;
       throw error;
     }
   });
@@ -72,7 +159,6 @@ function createEntityManagerMock(
   } as unknown as EntityManager;
 
   return {
-    count,
     entityManager,
     execute,
     findOne,
@@ -98,8 +184,24 @@ describe('AdminUserMutationRepository', () => {
     expect(hasActivePowerfulAdminAccess(createPowerfulAdmin({ status: 'disabled' }))).toBe(false);
   });
 
+  it('counts powerful administrators from normalized role/direct grants, never the JSON cache', async () => {
+    const execute = vi.fn(() => Promise.resolve([{ active_powerful_admin_count: '2' }]));
+    const repository = new AdminUserMutationRepository({
+      getConnection: () => ({ execute }),
+    } as unknown as EntityManager);
+
+    await expect(repository.countActivePowerfulAdmins(tenantId)).resolves.toBe(2);
+
+    const [sql, parameters, mode] = execute.mock.calls[0] as unknown as [string, string[], string];
+    expect(sql).toContain('from "auth_user_permissions" up');
+    expect(sql).toContain('from "auth_user_roles" ur');
+    expect(sql).not.toContain('u."permissions"');
+    expect(parameters).toEqual([tenantId, AdminUsersWritePermissionName, AdminUsersAccessPolicyUpdatePermissionName]);
+    expect(mode).toBe('all');
+  });
+
   it('mutates user, audit log, and outbox row in one locked transaction', async () => {
-    const { entityManager, execute, findOne, count, persist, flush, user } = createEntityManagerMock({
+    const { entityManager, execute, findOne, persist, flush, user } = createEntityManagerMock({
       powerfulAdminCount: 2,
     });
     const repository = new AdminUserMutationRepository(entityManager);
@@ -125,14 +227,12 @@ describe('AdminUserMutationRepository', () => {
       { id: targetUserId, tenantId },
       { lockMode: LockMode.PESSIMISTIC_WRITE },
     );
-    expect(count).toHaveBeenCalledWith(AuthUserEntity, {
-      tenantId,
-      status: 'active',
-      roles: { $contains: [AdminRoleName] },
-      permissions: {
-        $contains: [AdminUsersWritePermissionName, AdminUsersAccessPolicyUpdatePermissionName],
-      },
-    });
+    expect(execute).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('from "auth_user_permissions" up'),
+      [tenantId, AdminUsersWritePermissionName, AdminUsersAccessPolicyUpdatePermissionName],
+      'all',
+    );
     expect(persist).toHaveBeenCalledWith([expect.any(AdminAuditLogEntity), expect.any(TransactionalOutboxEventEntity)]);
     expect(flush).toHaveBeenCalledTimes(1);
     expect(mutation?.auditLog).toMatchObject({
@@ -304,9 +404,10 @@ const permAccessPolicy = new AuthPermissionEntity({
 });
 permAccessPolicy.id = 'perm-access-policy';
 
-// Build a transactional EntityManager mock whose auth_user_roles reads return
-// `existingAssignments` on the first call (reconcile) and `finalAssignments` on
-// the second (effective-access resolution), simulating the post-reconcile state.
+// Build a transactional EntityManager mock that resolves the pre-mutation and
+// post-mutation access separately. The production repository refreshes the
+// JSON cache from normalized grants before evaluating safety, so this mock must
+// model the same sequence rather than relying on the user cache alone.
 function buildRoleMutationEm(input: {
   user: AuthUserEntity | null;
   powerfulAdminCount: number;
@@ -317,30 +418,76 @@ function buildRoleMutationEm(input: {
   finalRolePermissions: AuthRolePermissionEntity[];
   finalPermissions: AuthPermissionEntity[];
 }) {
+  const roleById = new Map(
+    [userRole, adminRole, ...input.desiredRoles, ...input.finalRoles].map((role) => [role.id, role]),
+  );
+  const permissionByKey = new Map(
+    [permProfile, permUsersWrite, permAccessPolicy, ...input.finalPermissions].map((permission) => [
+      permission.key,
+      permission,
+    ]),
+  );
+  const initialPermissions = (input.user?.permissions ?? []).map((key) => {
+    const known = permissionByKey.get(key);
+    if (known) {
+      return known;
+    }
+    const permission = new AuthPermissionEntity({ key, resource: 'test', action: 'test' });
+    permission.id = `permission-${key}`;
+    permissionByKey.set(key, permission);
+    return permission;
+  });
+  const initialRoles = input.existingAssignments
+    .map((assignment) => roleById.get(assignment.roleId))
+    .filter((role): role is AuthRoleEntity => Boolean(role));
+  const initialRolePermissions = input.existingAssignments.flatMap((assignment) =>
+    initialPermissions.map(
+      (permission) => new AuthRolePermissionEntity({ roleId: assignment.roleId, permissionId: permission.id }),
+    ),
+  );
+  const permissionById = new Map([...permissionByKey.values()].map((permission) => [permission.id, permission]));
   let userRoleReads = 0;
+  let effectiveRoleReads = 0;
+  let effectiveRolePermissionReads = 0;
   const persist = vi.fn();
   const nativeDelete = vi.fn(() => Promise.resolve(1));
   const flush = vi.fn(() => Promise.resolve());
-  const execute = vi.fn(() => Promise.resolve());
-  const count = vi.fn(() => Promise.resolve(input.powerfulAdminCount));
+  const execute = vi.fn((sql: string) =>
+    Promise.resolve(
+      sql.includes('active_powerful_admin_count')
+        ? [{ active_powerful_admin_count: String(input.powerfulAdminCount) }]
+        : [],
+    ),
+  );
   const findOne = vi.fn(() => Promise.resolve(input.user));
   const find = vi.fn((entity: unknown, where: Record<string, unknown>) => {
     if (entity === AuthRoleEntity) {
-      return Promise.resolve(where.key ? input.desiredRoles : input.finalRoles);
+      if (where.key) {
+        return Promise.resolve(input.desiredRoles);
+      }
+      effectiveRoleReads += 1;
+      return Promise.resolve(effectiveRoleReads === 1 ? initialRoles : input.finalRoles);
     }
     if (entity === AuthUserRoleEntity) {
       userRoleReads += 1;
-      return Promise.resolve(userRoleReads === 1 ? input.existingAssignments : input.finalAssignments);
+      return Promise.resolve(userRoleReads <= 2 ? input.existingAssignments : input.finalAssignments);
     }
     if (entity === AuthRolePermissionEntity) {
-      return Promise.resolve(input.finalRolePermissions);
+      effectiveRolePermissionReads += 1;
+      return Promise.resolve(effectiveRolePermissionReads === 1 ? initialRolePermissions : input.finalRolePermissions);
     }
-    return Promise.resolve(input.finalPermissions);
+    if (entity === AuthUserPermissionEntity) {
+      return Promise.resolve([]);
+    }
+    if (entity === AuthPermissionEntity) {
+      const ids = (where.id as { $in?: string[] } | undefined)?.$in;
+      return Promise.resolve(ids ? ids.flatMap((id) => permissionById.get(id) ?? []) : [...permissionById.values()]);
+    }
+    return Promise.resolve([]);
   });
   const txEm = {
     getConnection: () => ({ execute }),
     findOne,
-    count,
     find,
     persist,
     nativeDelete,

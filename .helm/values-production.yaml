@@ -34,9 +34,6 @@ config:
   authLoginEventRetentionDays: '365'
   nodeEnv: production
   corsOrigins: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
-  authJwtIssuer: https://auth-app-api.example.com
-  authJwtAudience: nest-react-boilerplate-api
-  authJwtExpiresInSeconds: '3600'
   betterAuthUrl: https://user-app.example.com
   betterAuthTrustedOrigins: https://user-app.example.com,https://example.com
   authAllowedReturnUrls: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com

@@ -154,7 +154,7 @@ async function runAuthRuntimeSmoke(workspaceRoot: string, environment: NodeJS.Pr
     environment: {
       ...environment,
       AUTH_APP_API_PORT: String(port),
-      AUTH_JWT_SECRET: smokeCredential,
+      SESSION_SECRET: smokeCredential,
       AUTH_PERSISTENCE: "memory",
       BETTER_AUTH_SECRET: smokeCredential,
       BETTER_AUTH_URL: baseUrl,

@@ -27,6 +27,8 @@ export interface AdminAccessPolicy {
   canReadAudit: boolean;
   canReadSettings: boolean;
   canUpdateSettings: boolean;
+  canReadFeatureFlags: boolean;
+  canWriteFeatureFlags: boolean;
 }
 
 export interface AdminProfileView {
@@ -60,6 +62,8 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
   const canReadAudit = canAdmin(ability, 'read', 'admin.audit');
   const canReadSettings = canAdmin(ability, 'read', 'admin.settings');
   const canUpdateSettings = canAdmin(ability, 'update', 'admin.settings');
+  const canReadFeatureFlags = canAdmin(ability, 'read', 'admin.feature-flags');
+  const canWriteFeatureFlags = canAdmin(ability, 'write', 'admin.feature-flags');
 
   return {
     isAuthenticated: Boolean(principal?.subject),
@@ -72,6 +76,8 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
       canReadRoles ||
       canReadAudit ||
       canReadSettings ||
+      canReadFeatureFlags ||
+      canWriteFeatureFlags ||
       canAdmin(ability, AdminManageAction, AdminAllResource),
     canReadDashboard,
     canReadProfile,
@@ -82,6 +88,8 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
     canReadAudit,
     canReadSettings,
     canUpdateSettings,
+    canReadFeatureFlags,
+    canWriteFeatureFlags,
   };
 };
 

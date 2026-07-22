@@ -1,6 +1,12 @@
 import type { EntityManager } from '@mikro-orm/core';
 import { permissionCatalog, roleKeys as systemRoleKeys } from '@app/common-authz';
-import { AuthPermissionEntity, AuthRoleEntity, AuthRolePermissionEntity, AuthUserRoleEntity } from '../../entities';
+import {
+  AuthPermissionEntity,
+  AuthRoleEntity,
+  AuthRolePermissionEntity,
+  AuthUserPermissionEntity,
+  AuthUserRoleEntity,
+} from '../../entities';
 
 // Insert the missing (user, role) rows and delete the removed ones so the
 // user's normalized assignments match exactly the desired role keys that resolve
@@ -43,8 +49,49 @@ export async function reconcileUserRoles(
   }
 }
 
+// Reconcile only the user's direct grants. Effective access is always the
+// union of these rows and the grants inherited from `auth_user_roles`.
+export async function reconcileUserDirectPermissions(
+  em: EntityManager,
+  tenantId: string,
+  userId: string,
+  actorUserId: string,
+  desiredPermissionKeys: readonly string[],
+): Promise<void> {
+  const distinctKeys = [...new Set(desiredPermissionKeys)];
+  const permissions =
+    distinctKeys.length === 0 ? [] : await em.find(AuthPermissionEntity, { key: { $in: distinctKeys } });
+  const desiredPermissionIds = new Set(permissions.map((permission) => permission.id));
+  const existing = await em.find(AuthUserPermissionEntity, { userId, tenantId });
+  const existingPermissionIds = new Set(existing.map((row) => row.permissionId));
+
+  for (const permission of permissions) {
+    if (!existingPermissionIds.has(permission.id)) {
+      em.persist(
+        new AuthUserPermissionEntity({
+          userId,
+          permissionId: permission.id,
+          tenantId,
+          grantedByUserId: actorUserId,
+        }),
+      );
+    }
+  }
+
+  const removedPermissionIds = existing
+    .map((row) => row.permissionId)
+    .filter((permissionId) => !desiredPermissionIds.has(permissionId));
+  if (removedPermissionIds.length > 0) {
+    await em.nativeDelete(AuthUserPermissionEntity, {
+      userId,
+      tenantId,
+      permissionId: { $in: removedPermissionIds },
+    });
+  }
+}
+
 // Resolve the canonical effective {roleKeys, permissionKeys} for a user from the
-// normalized RBAC join, ordered by catalog index so the jsonb cache stays
+// normalized RBAC join, ordered by catalog index so returned projections stay
 // byte-for-byte identical to what the shared matrix produces.
 export async function resolveEffectiveAccess(
   em: EntityManager,
@@ -53,10 +100,14 @@ export async function resolveEffectiveAccess(
 ): Promise<{ roleKeys: string[]; permissionKeys: string[] }> {
   const assignments = await em.find(AuthUserRoleEntity, { userId, tenantId });
   const roleIds = [...new Set(assignments.map((row) => row.roleId))];
-  const roles = roleIds.length === 0 ? [] : await em.find(AuthRoleEntity, { id: { $in: roleIds } });
-  const rolePermissions =
-    roleIds.length === 0 ? [] : await em.find(AuthRolePermissionEntity, { roleId: { $in: roleIds } });
-  const permissionIds = [...new Set(rolePermissions.map((row) => row.permissionId))];
+  const roles = roleIds.length === 0 ? [] : await em.find(AuthRoleEntity, { id: { $in: roleIds }, tenantId });
+  const inheritedPermissionKeys = await resolveRolePermissionKeys(
+    em,
+    roles.map((role) => role.id),
+  );
+  const directAssignments = await em.find(AuthUserPermissionEntity, { userId, tenantId });
+  const directPermissionIds = directAssignments.map((row) => row.permissionId);
+  const permissionIds = [...new Set([...inheritedPermissionKeys.ids, ...directPermissionIds])];
   const permissions =
     permissionIds.length === 0 ? [] : await em.find(AuthPermissionEntity, { id: { $in: permissionIds } });
 
@@ -70,6 +121,34 @@ export async function resolveEffectiveAccess(
       permissionKeyOrder,
     ),
   };
+}
+
+export async function resolveInheritedPermissionKeys(
+  em: EntityManager,
+  tenantId: string,
+  userId: string,
+): Promise<string[]> {
+  const assignments = await em.find(AuthUserRoleEntity, { userId, tenantId });
+  const roleIds = [...new Set(assignments.map((row) => row.roleId))];
+  const roles = roleIds.length === 0 ? [] : await em.find(AuthRoleEntity, { id: { $in: roleIds }, tenantId });
+  const inherited = await resolveRolePermissionKeys(
+    em,
+    roles.map((role) => role.id),
+  );
+  const permissions =
+    inherited.ids.length === 0 ? [] : await em.find(AuthPermissionEntity, { id: { $in: inherited.ids } });
+
+  return orderByCatalog(
+    permissions.map((permission) => permission.key),
+    permissionKeyOrder,
+  );
+}
+
+async function resolveRolePermissionKeys(em: EntityManager, roleIds: readonly string[]): Promise<{ ids: string[] }> {
+  const rolePermissions =
+    roleIds.length === 0 ? [] : await em.find(AuthRolePermissionEntity, { roleId: { $in: roleIds } });
+
+  return { ids: [...new Set(rolePermissions.map((row) => row.permissionId))] };
 }
 
 const roleKeyOrder = new Map<string, number>(systemRoleKeys.map((key, index) => [key, index]));

@@ -43,10 +43,11 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 - [ ] `CORS_ORIGINS` is a comma-separated allow-list of real HTTPS origins.
 - [ ] `AUTH_ALLOWED_RETURN_URLS` contains only the real absolute HTTPS frontend origins and is present in the auth runtime.
 - [ ] `PUBLIC_DOMAIN`, `PRIMARY_APP`, DNS, Caddy/external-proxy routes, Better
-      Auth URLs, JWT issuer, and TLS SANs describe the same app-ID host map.
-- [ ] `AUTH_JWT_SECRET` is generated with high entropy and stored in Docker
+      Auth URLs, cookie domains, and TLS SANs describe the same app-ID host map.
+- [ ] `SESSION_SECRET` is generated with high entropy and stored in Docker
       secret files, Kubernetes Secrets, Vault, or External Secrets Operator.
-- [ ] JWT issuer/audience values match the public auth/API hosts.
+- [ ] Session cookie domain, `SameSite`, `Secure`, and proxy settings match the
+      public auth/API hosts.
 - [ ] OAuth client secrets, database passwords, and TLS private keys are never
       committed and have a rotation path.
 - [ ] Managed PostgreSQL uses SSL with certificate validation where available.

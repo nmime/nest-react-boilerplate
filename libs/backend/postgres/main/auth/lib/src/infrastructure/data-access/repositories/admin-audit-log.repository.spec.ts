@@ -72,7 +72,7 @@ describe('AdminAuditLogRepository', () => {
     ).resolves.toEqual({ id: 'broadcast-1', status: 'ready' });
 
     expect(transactional).toHaveBeenCalledTimes(1);
-    expect(operation).toHaveBeenCalledTimes(1);
+    expect(operation).toHaveBeenCalledWith(entityManager);
     expect(persist).toHaveBeenCalledWith([
       expect.objectContaining({
         resource: 'admin.notification-broadcasts',

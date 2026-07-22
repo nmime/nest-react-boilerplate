@@ -75,7 +75,6 @@ describe('UserAppHealthServiceProvider', () => {
 
   it('degrades session config when no secret is configured', async () => {
     vi.stubEnv('SESSION_SECRET', '');
-    vi.stubEnv('AUTH_JWT_SECRET', '');
     vi.stubEnv('SESSION_COOKIE_NAME', '');
     const service = createService();
 

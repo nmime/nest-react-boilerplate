@@ -1,21 +1,57 @@
+import { Check, ChevronDown, Languages, Lightbulb, Monitor, Moon, Sun } from 'lucide-react';
 import { observer, supportedLocales, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
+import { UiButton } from './button';
+import { UiDropdownMenu } from './dropdown-menu';
 import { UiSelect } from './select';
 
-export const LanguageSwitcher = observer(function LanguageSwitcher() {
+export interface LanguageSwitcherProps {
+  compact?: boolean;
+  variant?: 'select' | 'menu';
+}
+
+export const LanguageSwitcher = observer(function LanguageSwitcher({
+  compact = false,
+  variant = 'select',
+}: Readonly<LanguageSwitcherProps>) {
   const { locale, setLocale, t } = useI18n();
+  const languageOptions = supportedLocales.map((nextLocale) => ({
+    label: (
+      <span className="xr-switcher-menu__option">
+        <span>{t(`common.language.${nextLocale}`)}</span>
+        {nextLocale === locale ? <Check aria-hidden="true" className="xr-switcher-menu__check" size={16} /> : null}
+      </span>
+    ),
+    onSelect: () => {
+      setLocale(nextLocale);
+    },
+  }));
+
+  if (variant === 'menu') {
+    return (
+      <UiDropdownMenu
+        className="xr-language-menu"
+        items={languageOptions}
+        label={t('common.language')}
+        trigger={
+          <UiButton aria-label={t('common.language')} className="xr-language-menu-trigger" size="sm" variant="ghost">
+            <Languages aria-hidden="true" size={17} strokeWidth={2} />
+            <span>{t(`common.language.${locale}`)}</span>
+            <ChevronDown aria-hidden="true" size={15} strokeWidth={2.2} />
+          </UiButton>
+        }
+      />
+    );
+  }
 
   return (
     <UiSelect
       aria-label={t('common.language')}
-      className="xr-language-switcher"
+      className={compact ? 'xr-language-switcher xr-switcher--compact' : 'xr-language-switcher'}
       label={t('common.language')}
       onValueChange={(value) => {
         setLocale(value as Locale);
       }}
-      options={supportedLocales.map((nextLocale) => ({
-        label: t(`common.language.${nextLocale}`),
-        value: nextLocale,
-      }))}
+      options={supportedLocales.map((nextLocale) => ({ label: t(`common.language.${nextLocale}`), value: nextLocale }))}
       value={locale}
     />
   );
@@ -23,8 +59,50 @@ export const LanguageSwitcher = observer(function LanguageSwitcher() {
 
 const supportedThemes: readonly UiTheme[] = ['system', 'light', 'dark'];
 
-export const ThemeSwitcher = observer(function ThemeSwitcher() {
+const themeIcons = {
+  dark: Moon,
+  light: Sun,
+  system: Monitor,
+} as const;
+
+export interface ThemeSwitcherProps {
+  variant?: 'select' | 'menu';
+}
+
+export const ThemeSwitcher = observer(function ThemeSwitcher({ variant = 'select' }: Readonly<ThemeSwitcherProps>) {
   const { setTheme, t, theme } = useI18n();
+  const themeOptions = supportedThemes.map((nextTheme) => {
+    const ThemeIcon = themeIcons[nextTheme];
+
+    return {
+      label: (
+        <span className="xr-switcher-menu__option">
+          <ThemeIcon aria-hidden="true" size={16} strokeWidth={2} />
+          <span>{t(`common.theme.${nextTheme}`)}</span>
+          {nextTheme === theme ? <Check aria-hidden="true" className="xr-switcher-menu__check" size={16} /> : null}
+        </span>
+      ),
+      onSelect: () => {
+        setTheme(nextTheme);
+      },
+    };
+  });
+
+  if (variant === 'menu') {
+    return (
+      <UiDropdownMenu
+        className="xr-theme-menu"
+        items={themeOptions}
+        label={t('common.theme')}
+        trigger={
+          <UiButton aria-label={t('common.theme')} className="xr-theme-menu-trigger" size="icon" variant="ghost">
+            <Lightbulb aria-hidden="true" size={18} strokeWidth={2} />
+            <span className="sr-only">{t(`common.theme.${theme}`)}</span>
+          </UiButton>
+        }
+      />
+    );
+  }
 
   return (
     <UiSelect

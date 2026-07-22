@@ -23,7 +23,11 @@ export interface AdminAuditLogListInput {
 }
 
 export interface AdminAuditLogTransactionalRecordInput<T> {
-  operation: () => Promise<T>;
+  // The operation receives the exact transactional EntityManager used for the
+  // audit row and outbox event. Callers that mutate auth-owned data must pass
+  // that manager through to their repository so the change and its evidence
+  // commit or roll back together.
+  operation: (entityManager: EntityManager) => Promise<T>;
   audit: (result: T) => AdminAuditLogEntityInput;
 }
 
@@ -57,7 +61,7 @@ export class AdminAuditLogRepository {
       return await this.entityManager.transactional(async (transactionalEntityManager) => {
         let result: T;
         try {
-          result = await input.operation();
+          result = await input.operation(transactionalEntityManager);
         } catch (cause) {
           throw new AdminAuditedOperationError(cause);
         }

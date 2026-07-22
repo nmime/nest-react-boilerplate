@@ -1,25 +1,36 @@
-import { type ExecutionContext, Injectable } from '@nestjs/common';
+import { type CanActivate, type ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { HealthRouteMetadataKey } from '@app/backend-common-health';
-import { SessionAuthGuard } from '@app/backend-feature-auth-shared';
+import {
+  assertRequestTenantMatchesPrincipal,
+  type AuthenticatedRequest,
+  readSessionPrincipal,
+} from '@app/backend-feature-auth-shared';
 
 /**
- * Authenticates every route composed into the admin API. Authorization stays
- * on the owning feature controller through AdminRbacGuard and its explicit
- * role/permission metadata.
+ * Authenticates the browser-admin API exclusively through its HttpOnly cookie
+ * session. Bearer credentials are deliberately ignored at this boundary.
+ * Authorization stays on the owning controller through AdminRbacGuard.
  */
 @Injectable()
-export class AdminAuthenticationGuard extends SessionAuthGuard {
-  constructor(private readonly metadata: Reflector) {
-    super(metadata);
-  }
+export class AdminAuthenticationGuard implements CanActivate {
+  constructor(private readonly metadata: Reflector) {}
 
-  override canActivate(context: ExecutionContext): boolean {
+  canActivate(context: ExecutionContext): boolean {
     if (this.isHealthRoute(context)) {
       return true;
     }
 
-    return super.canActivate(context);
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const principal = readSessionPrincipal(request);
+    if (!principal) {
+      throw new UnauthorizedException();
+    }
+
+    assertRequestTenantMatchesPrincipal(request, principal);
+    request.user = principal;
+    request.auth = principal;
+    return true;
   }
 
   private isHealthRoute(context: ExecutionContext): boolean {

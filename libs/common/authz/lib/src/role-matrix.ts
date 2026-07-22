@@ -17,6 +17,8 @@ import {
   AdminNotificationBroadcastsWritePermission,
   AdminNotificationBroadcastsSendPermission,
   AdminNotificationBroadcastsApprovePermission,
+  AdminFeatureFlagsReadPermission,
+  AdminFeatureFlagsWritePermission,
   AdminUsersAccessPolicyUpdatePermission,
   AdminUsersReadPermission,
   AdminUsersStatusUpdatePermission,
@@ -58,6 +60,8 @@ export const defaultRolePermissions = {
     AdminNotificationBroadcastsWritePermission,
     AdminNotificationBroadcastsSendPermission,
     AdminNotificationBroadcastsApprovePermission,
+    AdminFeatureFlagsReadPermission,
+    AdminFeatureFlagsWritePermission,
     AdminManageAllPermission,
   ],
 } as const satisfies Record<RoleKey, readonly PermissionKey[]>;

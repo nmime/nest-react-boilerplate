@@ -61,10 +61,7 @@ if (productionEnv !== undefined) {
 
 assert.ok(!prodCompose.includes('${IMAGE_TAG:-latest}'), 'production Compose must not default to IMAGE_TAG=latest');
 assert.ok(!/^IMAGE_TAG=latest$/m.test(productionEnvExample), 'production env example must not set IMAGE_TAG=latest');
-assert.ok(
-  !prodCompose.includes('AUTH_JWT_SECRET: ${AUTH_JWT_SECRET'),
-  'production Compose must not inline JWT secrets',
-);
+assert.ok(!prodCompose.includes('AUTH_JWT_'), 'production Compose must not configure JWT authentication');
 assert.ok(
   !prodCompose.includes('POSTGRES_PASSWORD: ${POSTGRES_PASSWORD'),
   'production Compose must not inline database passwords',
@@ -88,10 +85,7 @@ for (const expected of [
 ]) {
   has(secretEntrypoint, expected, `secret entrypoint ${expected}`);
 }
-assert.ok(
-  !/^AUTH_JWT_SECRET=/m.test(productionEnvExample),
-  'production env example must not include inline AUTH_JWT_SECRET',
-);
+assert.ok(!/AUTH_JWT_/u.test(productionEnvExample), 'production env example must not configure JWT authentication');
 assert.ok(
   !/^POSTGRES_PASSWORD=/m.test(productionEnvExample),
   'production env example must not include inline POSTGRES_PASSWORD',
@@ -178,7 +172,6 @@ assert.ok(!prodCompose.includes('\n    build:'), 'production Compose base must b
 
 for (const expected of [
   'SESSION_SECRET_FILE=./secrets/session_secret.txt',
-  'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
   'BETTER_AUTH_SECRET_FILE=./secrets/better_auth_secret.txt',
   'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE=./secrets/auth_provider_token_encryption_key.txt',
   'NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE=./secrets/notification_payload_encryption_key.txt',
@@ -194,6 +187,7 @@ for (const expected of [
   'DISCORD_BOT_TOKEN_FILE=./secrets/discord_bot_token.txt',
   'DISCORD_CLIENT_SECRET_FILE=./secrets/discord_client_secret.txt',
   'DISCORD_PUBLIC_KEY_FILE=./secrets/discord_public_key.txt',
+  'DISCORD_CUSTOM_ID_SECRET_FILE=./secrets/discord_custom_id_secret.txt',
   'IMAGE_TAG=sha-000000000000',
   'PUBLIC_DOMAIN=example.com',
   'PRIMARY_APP=landing-app',

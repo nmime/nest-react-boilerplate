@@ -20,15 +20,15 @@ This boilerplate ships with conservative production defaults for the Nest APIs a
 
 The auth feature exports reusable access-control primitives:
 
-- `BearerAuthGuard` verifies HMAC JWT bearer tokens with `AUTH_JWT_SECRET`.
+- `SessionAuthGuard` accepts only the HttpOnly server-session cookie.
 - `AUTH_PERSISTENCE=memory` is rejected in production; use the default `postgres` persistence with `DATABASE_URL`.
-- `AUTH_JWT_ISSUER` and `AUTH_JWT_AUDIENCE` are optional but should be set in production.
+- Protected auth, user, and admin requests reload account status and effective RBAC from PostgreSQL before authorization.
 - `RbacGuard` enforces `@RequireRoles()` and `@RequirePermissions()` metadata.
 - Role checks are any-of; permission checks require all listed permissions.
 - `@Public()` can mark health or intentionally anonymous routes.
 - `@CurrentUser()` reads the verified principal attached to `request.user` and `request.auth`.
 
-JWTs must not use `alg:none`. Unsupported algorithms, bad signatures, expired tokens, future `nbf` tokens, and issuer/audience mismatches are rejected.
+Bearer credentials are not a supported first-party authentication mechanism and are rejected even when syntactically valid.
 
 ## Backend environment validation
 
@@ -37,7 +37,7 @@ JWTs must not use `alg:none`. Unsupported algorithms, bad signatures, expired to
 Production startup requires:
 
 - `DATABASE_URL` for durable server-side sessions.
-- `SESSION_SECRET` or `AUTH_JWT_SECRET` with at least 32 characters.
+- `SESSION_SECRET` with at least 32 characters.
 - Valid positive integer `PORT`, `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, and `SESSION_COOKIE_MAX_AGE_SECONDS` values when set.
 - Valid `RATE_LIMIT_STORE` (`auto`, `memory`, or `redis`) and Redis connection settings when `RATE_LIMIT_STORE=redis` (uses `@redis/client` v6, supports standalone/cluster/Sentinel).
 - Redis/distributed rate limiting in production, unless `RATE_LIMIT_IN_MEMORY_ALLOWED=true` is set after equivalent ingress/API-gateway limits are configured.
@@ -89,7 +89,7 @@ Before deploying, provide values for:
 - `RATE_LIMIT_STORE=redis` with `REDIS_URL`/`REDIS_HOSTS`, or documented ingress/API-gateway limits plus `RATE_LIMIT_IN_MEMORY_ALLOWED=true` if using `memory`
 - `RATE_LIMIT_WINDOW_MS` and `RATE_LIMIT_MAX` if the production defaults need tuning
 - `TRUST_PROXY=false` unless explicitly set for a known proxy configuration
-- `AUTH_JWT_SECRET`, `AUTH_JWT_ISSUER`, `AUTH_JWT_AUDIENCE`
+- `SESSION_SECRET`, `BETTER_AUTH_SECRET`
 - OAuth issuer/client values if OAuth is enabled
 - Explicit `VITE_AUTH_API_BASE_URL`, `VITE_USER_API_BASE_URL`, and `VITE_ADMIN_API_BASE_URL` origins for split-origin frontend hosting, or `VITE_API_BASE_URL_MODE=same-origin` when a production reverse proxy intentionally serves API routes from the same origin. Direct frontend build targets default to same-origin only when no API mode or origins are configured; deployment env files should still make the intended topology explicit.
 - `DATABASE_URL` or `POSTGRES_*`

@@ -45,7 +45,7 @@ function createHealthIndicators({ orm, redisHealth, natsHealth }: HealthIndicato
     new EnvHealthIndicator({
       name: 'config',
       required: false,
-      optionalVariables: ['SESSION_SECRET', 'AUTH_JWT_SECRET', 'SESSION_COOKIE_NAME', 'REDIS_URL', 'NATS_SERVERS'],
+      optionalVariables: ['SESSION_SECRET', 'SESSION_COOKIE_NAME', 'REDIS_URL', 'NATS_SERVERS'],
     }),
     new I18nAssetsHealthIndicator({
       rootPath: resolveI18nRootPath(),
@@ -110,15 +110,14 @@ function createSessionConfigHealthIndicator(): HealthIndicator {
     required: false,
     check(): HealthIndicatorResult {
       const hasSessionSecret = hasValue(process.env.SESSION_SECRET);
-      const hasAuthSecret = hasValue(process.env.AUTH_JWT_SECRET);
 
       return {
         name: this.name,
-        status: hasSessionSecret || hasAuthSecret ? 'ok' : 'degraded',
+        status: hasSessionSecret ? 'ok' : 'degraded',
         required: false,
         details: {
           cookieNameConfigured: hasValue(process.env.SESSION_COOKIE_NAME),
-          secretConfigured: hasSessionSecret || hasAuthSecret,
+          secretConfigured: hasSessionSecret,
         },
       };
     },

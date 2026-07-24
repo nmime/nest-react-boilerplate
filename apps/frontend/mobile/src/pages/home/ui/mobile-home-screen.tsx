@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   langButtonTextActive: {
-    color: '#ffffff',
+    color: colors.primaryForeground,
   },
   eyebrow: {
     alignSelf: 'flex-start',

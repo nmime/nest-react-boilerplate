@@ -27,6 +27,13 @@ export const designColors = {
     // placeholder duplicating `foreground`); native now converges onto it.
     primary: '#2563eb',
     primaryForeground: '#ffffff',
+    // Semantic palette the web design system already renders (via its --xr-color-*
+    // HSL primitives); mirrored here as the canonical hex so native/mobile can
+    // reuse the same status colors instead of hard-coding their own.
+    primaryStrong: '#1d4ed8',
+    info: '#3b82f6',
+    success: '#15803d',
+    warning: '#e05d06',
     secondary: '#f1f5f9',
     secondaryForeground: '#0f172a',
     muted: '#f1f5f9',
@@ -47,6 +54,10 @@ export const designColors = {
     // Canonical brand primary in dark mode is the web app's sky accent.
     primary: '#0ea5e9',
     primaryForeground: '#0b1120',
+    primaryStrong: '#0284c7',
+    info: '#0ea5e9',
+    success: '#22c55e',
+    warning: '#f59e0b',
     secondary: '#1e293b',
     secondaryForeground: '#f8fafc',
     muted: '#1e293b',

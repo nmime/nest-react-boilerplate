@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
+import { designColors } from '@app/common-design-tokens';
 import { ApiClientProvider, authApiToastRules, userApiToastRules } from '@app/frontend-api-client';
 import {
   configureApiLocale,
@@ -119,7 +120,11 @@ const UserAppRouterProviders = observer(function UserAppRouterProviders() {
 
 export function AppProviders({ children }: Readonly<{ children?: ReactNode }> = {}) {
   return (
-    <MiniAppProvider backgroundColor="#f8fafc" bottomBarColor="#0f172a" headerColor="#2563eb">
+    <MiniAppProvider
+      backgroundColor={designColors.light.background}
+      bottomBarColor={designColors.light.foreground}
+      headerColor={designColors.light.ring}
+    >
       <FrontendStateProvider>
         <UserAppApiClientProvider>
           <FrontendQueryProvider>

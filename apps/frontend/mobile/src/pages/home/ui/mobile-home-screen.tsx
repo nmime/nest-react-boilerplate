@@ -97,8 +97,8 @@ const styles = StyleSheet.create({
     paddingVertical: designSpacing[2],
   },
   langButtonActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: colors.ring,
+    borderColor: colors.ring,
   },
   langButtonText: {
     color: colors.foreground,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     alignSelf: 'flex-start',
     borderRadius: designRadii.sm,
-    backgroundColor: '#dbeafe',
+    backgroundColor: colors.accent,
     color: '#1e3a8a',
     fontSize: 12,
     fontWeight: '700',
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     padding: designSpacing[5],
   },
   panelAccent: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.ring,
     height: 4,
     left: 0,
     position: 'absolute',

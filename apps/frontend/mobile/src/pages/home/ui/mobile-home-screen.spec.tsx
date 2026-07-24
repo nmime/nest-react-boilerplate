@@ -4,23 +4,18 @@ import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runti
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 import { MobileRuntimeProvider } from '../../../shared/mobile-runtime';
 
-vi.mock('@app/frontend-ui-native', () => ({
-  TamaguiProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  Theme: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  designColors: {
-    light: {
-      primary: '#0f172a',
-      primaryForeground: '#ffffff',
-      foreground: '#0f172a',
-      mutedForeground: '#64748b',
-      card: '#ffffff',
-      cardForeground: '#0f172a',
-      border: '#e2e8f0',
-    },
-  },
-  designRadii: { sm: 4, md: 8 },
-  designSpacing: { 2: 8, 3: 12, 4: 16, 5: 20, 6: 24 },
-}));
+vi.mock('@app/frontend-ui-native', async () => {
+  // Mock only the Tamagui React wrappers; use the REAL shared design tokens so
+  // native tests track the single source instead of encoding stale values.
+  const { designColors, designRadii, designSpacing } = await import('@app/common-design-tokens');
+  return {
+    TamaguiProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Theme: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    designColors,
+    designRadii,
+    designSpacing,
+  };
+});
 
 vi.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: { children: React.ReactNode }) => <>{children}</>,

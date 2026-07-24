@@ -9,7 +9,7 @@ import {
   socialAuthProviders,
   useProviderIdentitiesModel,
   type ProviderIdentity,
-} from '../model';
+} from '@app/frontend-feature-user-social-auth';
 
 interface ProviderIdentitiesPanelProps {
   onLink: (provider: SocialAuthProvider) => void;

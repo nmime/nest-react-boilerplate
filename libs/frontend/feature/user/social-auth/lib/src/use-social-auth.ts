@@ -2,8 +2,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi, useAuthApiClient } from '@app/frontend-api-client';
 import { clearApiAuthRequired } from '@app/frontend-api-support';
 import { useAuthShellStore } from '@app/frontend-runtime';
-import { profileQueryKey } from '../../../entities/profile';
-import { toAbsoluteSameOriginReturnUrl, toSameOriginReturnPath } from '../../../shared/lib';
+import { profileQueryKey } from '@app/frontend-feature-user-profile';
+import { toAbsoluteSameOriginReturnUrl, toSameOriginReturnPath } from './same-origin-return-url';
 import {
   providerIdentitiesQueryKey,
   requestDiscordAuthorization,
@@ -11,7 +11,7 @@ import {
   submitDiscordCallback,
   submitTelegramOidcSession,
   submitTelegramTma,
-} from '../api';
+} from './social-auth-api';
 import { getReturnUrlFromExternalAuthResult, getSessionFromExternalAuthResult } from './session';
 import { saveTelegramOidcState } from './telegram-oidc-state';
 import type { SocialAuthRequestInput } from './types';

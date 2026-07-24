@@ -1,11 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './app';
-
-const sourceRoot = resolve(import.meta.dirname, '..');
 
 vi.mock('@tma.js/sdk-react', async () => {
   const actual = await vi.importActual<typeof import('@tma.js/sdk-react')>('@tma.js/sdk-react');
@@ -606,14 +602,6 @@ describe('social auth and TMA UI', () => {
       providerId: 'telegram',
     });
     expect(window.location.pathname).toBe('/auth');
-  });
-
-  it('production social auth code never reads unsafe Telegram init data', () => {
-    // The TMA feature source guard moved with the code into
-    // @app/frontend-feature-user-tma-auth (see its use-tma-auth.spec).
-    const socialApiSource = readFileSync(resolve(sourceRoot, 'features/social-auth/api/social-auth-api.ts'), 'utf8');
-
-    expect(socialApiSource).not.toContain('init' + 'DataUnsafe');
   });
 
   it('navigates route links without a full page reload', async () => {

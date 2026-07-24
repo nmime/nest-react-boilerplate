@@ -9,7 +9,7 @@ import {
   type MobxMutation,
   type MobxQuery,
 } from '@app/frontend-runtime';
-import { fetchProviderIdentities, providerIdentitiesQueryKey, unlinkProviderIdentity } from '../api';
+import { fetchProviderIdentities, providerIdentitiesQueryKey, unlinkProviderIdentity } from './social-auth-api';
 
 type ProviderIdentitiesData = Awaited<ReturnType<typeof fetchProviderIdentities>>;
 

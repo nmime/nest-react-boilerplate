@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { toAbsoluteSameOriginReturnUrl, toSameOriginReturnPath } from './same-origin-return-url';
 
 const origin = 'https://app.example.test';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('same-origin return URL utilities', () => {
   it('converts safe application paths to absolute same-origin URLs', () => {
@@ -12,6 +16,12 @@ describe('same-origin return URL utilities', () => {
     expect(toAbsoluteSameOriginReturnUrl('https://app.example.test/profile', origin)).toBe(
       'https://app.example.test/profile',
     );
+  });
+
+  it('falls back to no origin (rejecting everything) when there is no browser location', () => {
+    vi.stubGlobal('location', undefined);
+    expect(toAbsoluteSameOriginReturnUrl('/settings')).toBeUndefined();
+    expect(toSameOriginReturnPath('/settings')).toBeNull();
   });
 
   it('normalizes returned URLs back to safe router paths', () => {
@@ -25,6 +35,8 @@ describe('same-origin return URL utilities', () => {
   it.each([
     'https://evil.example.test/',
     'https://user:password@app.example.test/',
+    'https://:password@app.example.test/',
+    'https://[',
     'javascript:alert(document.domain)',
     '//evil.example.test/profile',
     'https://app.example.test//evil.example.test/profile',

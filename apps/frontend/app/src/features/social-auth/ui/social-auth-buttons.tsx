@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
 import { UiButton, UiCard } from '../../../shared/ui';
-import type { SocialAuthIntent } from '../model';
+import type { SocialAuthIntent } from '@app/frontend-feature-user-social-auth';
 
 interface SocialAuthButtonsProps {
   isDiscordPending: boolean;

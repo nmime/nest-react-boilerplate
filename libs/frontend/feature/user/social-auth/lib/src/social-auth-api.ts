@@ -5,7 +5,7 @@ import {
   throwOnOpenApiErrorData,
   type AuthApiClient,
 } from '@app/frontend-api-client';
-import type { SocialAuthRequestInput } from '../model/types';
+import type { SocialAuthRequestInput } from './types';
 
 export const providerIdentitiesQueryKey = () => authApi.getAuthControllerProviderIdentitiesQueryKey();
 

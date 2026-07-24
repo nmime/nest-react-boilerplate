@@ -71,6 +71,7 @@
       "@app/frontend-feature-user-logout": ["libs/frontend/feature/user/logout/lib/src/index.ts"],
       "@app/frontend-feature-user-preferences": ["libs/frontend/feature/user/preferences/lib/src/index.ts"],
       "@app/frontend-feature-user-profile": ["libs/frontend/feature/user/profile/lib/src/index.ts"],
+      "@app/frontend-feature-user-tma-auth": ["libs/frontend/feature/user/tma-auth/lib/src/index.ts"],
       "@app/frontend-i18n-shared": ["libs/frontend/i18n/shared/lib/src/index.ts"],
       "@app/frontend-runtime": ["libs/frontend/runtime/lib/src/index.ts"],
       "@app/frontend-ui-native": ["libs/frontend/ui-native/lib/src/index.ts"],

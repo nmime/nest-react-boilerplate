@@ -608,12 +608,11 @@ describe('social auth and TMA UI', () => {
     expect(window.location.pathname).toBe('/auth');
   });
 
-  it('production TMA auth code only reads raw Telegram init data', () => {
-    const tmaFeatureSource = readFileSync(resolve(sourceRoot, 'features/tma-auth/model/use-tma-auth.ts'), 'utf8');
+  it('production social auth code never reads unsafe Telegram init data', () => {
+    // The TMA feature source guard moved with the code into
+    // @app/frontend-feature-user-tma-auth (see its use-tma-auth.spec).
     const socialApiSource = readFileSync(resolve(sourceRoot, 'features/social-auth/api/social-auth-api.ts'), 'utf8');
 
-    expect(tmaFeatureSource).toContain('retrieveRawInitData');
-    expect(tmaFeatureSource).not.toContain('init' + 'DataUnsafe');
     expect(socialApiSource).not.toContain('init' + 'DataUnsafe');
   });
 

@@ -20,6 +20,7 @@ const readBrowserStartParam = (): string | undefined => {
       undefined
     );
   } catch {
+    /* v8 ignore next -- URLSearchParams over location.search cannot throw; defensive fallback. */
     return undefined;
   }
 };

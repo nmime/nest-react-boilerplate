@@ -1,6 +1,6 @@
 import { observer, useAuthShellStore, type TranslationKey, type TranslationParams } from '@app/frontend-runtime';
 import { UiButton } from '../../../shared/ui';
-import { useLogout } from '../model';
+import { useLogout } from '@app/frontend-feature-user-logout';
 
 export interface LogoutButtonProps {
   navigate?: (to: string, options?: { replace?: boolean }) => void;

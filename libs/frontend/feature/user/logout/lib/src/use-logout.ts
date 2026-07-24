@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthApiClient } from '@app/frontend-api-client';
 import { useAuthShellStore } from '@app/frontend-runtime';
-import { requestLogout } from '../api';
+import { requestLogout } from './logout-api';
 import { LogoutModel } from './logout-model';
 
 export interface UseLogoutInput {

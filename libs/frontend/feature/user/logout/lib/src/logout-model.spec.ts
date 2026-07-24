@@ -70,6 +70,14 @@ describe('LogoutModel', () => {
     model.destroy();
   });
 
+  it('exposes the mutation pending flag', () => {
+    const { model } = setup(() => Promise.resolve({ ok: true }));
+
+    expect(model.isPending).toBe(false);
+
+    model.destroy();
+  });
+
   it('clears the session and navigates even when the logout request fails', async () => {
     const { clearSession, invalidateSpy, model, onSignedOut, order } = setup(() =>
       Promise.reject(new Error('network down')),

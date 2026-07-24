@@ -1,3 +1,5 @@
+import type { Locale } from '@app/frontend-runtime';
+
 export const mobileCapabilityCards = [
   {
     labelKey: 'mobile.card.account.label',
@@ -17,3 +19,9 @@ export const mobileCapabilityCards = [
 ] as const;
 
 export type MobileCapabilityCard = (typeof mobileCapabilityCards)[number];
+
+/** Locales offered by the home-screen switcher (drives the shared preference model). */
+export const mobileLocaleOptions: ReadonlyArray<{ locale: Locale; label: string }> = [
+  { locale: 'en', label: 'EN' },
+  { locale: 'ru', label: 'RU' },
+];

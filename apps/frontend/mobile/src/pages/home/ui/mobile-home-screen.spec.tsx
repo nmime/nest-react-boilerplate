@@ -1,7 +1,8 @@
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
+import { MobileRuntimeProvider } from '../../../shared/mobile-runtime';
 
 vi.mock('@app/frontend-ui-native', () => ({
   TamaguiProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -25,17 +26,27 @@ vi.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+const applyUserLocale = vi.fn();
+const persistUserLocale = vi.fn(() => Promise.resolve());
+
 describe('mobile home screen', () => {
   const renderScreen = async () => {
     const { MobileHomeScreen } = await import('./mobile-home-screen');
     return render(
       <FrontendStateProvider>
         <FrontendI18nProvider translations={userFrontendTranslations}>
-          <MobileHomeScreen />
+          <MobileRuntimeProvider value={{ applyUserLocale, persistUserLocale, userLocale: 'en' }}>
+            <MobileHomeScreen />
+          </MobileRuntimeProvider>
         </FrontendI18nProvider>
       </FrontendStateProvider>,
     );
   };
+
+  beforeEach(() => {
+    applyUserLocale.mockClear();
+    persistUserLocale.mockClear();
+  });
 
   afterEach(() => {
     cleanup();
@@ -67,5 +78,14 @@ describe('mobile home screen', () => {
 
     expect(screen.getByText('Your space')).toBeTruthy();
     expect(screen.getByText('Account essentials stay close at hand.')).toBeTruthy();
+  });
+
+  it('switches locale through the shared preference model', async () => {
+    await renderScreen();
+
+    fireEvent.click(screen.getByText('RU'));
+
+    expect(applyUserLocale).toHaveBeenCalledWith('ru');
+    expect(persistUserLocale).toHaveBeenCalledWith('ru');
   });
 });

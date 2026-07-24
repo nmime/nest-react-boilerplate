@@ -1,14 +1,22 @@
-import { ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { designColors, designRadii, designSpacing } from '@app/frontend-ui-native';
-import { useI18n } from '@app/frontend-runtime';
+import { useI18n, type Locale } from '@app/frontend-runtime';
 
-import { mobileCapabilityCards } from '../model/mobile-home.model';
+import { useMobileRuntime } from '../../../shared/mobile-runtime';
+import { mobileCapabilityCards, mobileLocaleOptions } from '../model/mobile-home.model';
 
 const colors = designColors.light;
 
 export function MobileHomeScreen() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const { applyUserLocale, persistUserLocale, userLocale } = useMobileRuntime();
+  const activeLocale = userLocale ?? locale;
+
+  const selectLocale = (next: Locale) => {
+    applyUserLocale(next);
+    void persistUserLocale(next);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -20,6 +28,24 @@ export function MobileHomeScreen() {
             {t('mobile.appName')}
           </Text>
           <Text style={styles.subtitle}>{t('mobile.subtitle')}</Text>
+          <View accessibilityRole="radiogroup" style={styles.langRow}>
+            {mobileLocaleOptions.map((option) => {
+              const selected = activeLocale === option.locale;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  key={option.locale}
+                  onPress={() => {
+                    selectLocale(option.locale);
+                  }}
+                  style={[styles.langButton, selected && styles.langButtonActive]}
+                >
+                  <Text style={[styles.langButtonText, selected && styles.langButtonTextActive]}>{option.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.panel}>
@@ -57,6 +83,30 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: designSpacing[6],
+  },
+  langRow: {
+    flexDirection: 'row',
+    gap: designSpacing[2],
+    marginTop: designSpacing[4],
+  },
+  langButton: {
+    borderColor: colors.border,
+    borderRadius: designRadii.sm,
+    borderWidth: 1,
+    paddingHorizontal: designSpacing[4],
+    paddingVertical: designSpacing[2],
+  },
+  langButtonActive: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  langButtonText: {
+    color: colors.foreground,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  langButtonTextActive: {
+    color: '#ffffff',
   },
   eyebrow: {
     alignSelf: 'flex-start',

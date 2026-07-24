@@ -1,20 +1,5 @@
-import type { ReactNode } from 'react';
-import { observer, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
-import { MiniAppShell, UiButton, UiCard, UiSection } from '../../../shared/ui';
-
-export interface UserHomePageProps {
-  applyUserLocale: (locale: Locale) => void;
-  applyUserTheme: (theme: UiTheme) => void;
-  actions?: Array<{
-    href: string;
-    isCurrent?: boolean;
-    label: string;
-    variant?: 'primary' | 'secondary';
-  }>;
-  activeRoute?: string;
-  children?: ReactNode;
-  onBack?: () => void;
-}
+import { observer, useI18n } from '@app/frontend-runtime';
+import { UiButton, UiCard, UiSection } from '../../../shared/ui';
 
 const homeDestinations = [
   {
@@ -39,7 +24,11 @@ const homeDestinations = [
   },
 ] as const;
 
-function UserHomeContent() {
+/**
+ * Content for the user home route (`/`). Rendered inside `UserShell`'s
+ * `<Outlet/>`; the surrounding chrome lives in the shell, not here.
+ */
+export const UserHomeContent = observer(function UserHomeContent() {
   const { t } = useI18n();
 
   return (
@@ -56,54 +45,5 @@ function UserHomeContent() {
         ))}
       </div>
     </UiSection>
-  );
-}
-
-export const UserHomePage = observer(function UserHomePage({
-  activeRoute = '/',
-  actions,
-  children,
-  onBack = () => {
-    globalThis.history.back();
-  },
-}: Readonly<UserHomePageProps>) {
-  const { t } = useI18n();
-  const productActions = actions ?? [
-    { href: '/', isCurrent: activeRoute === '/', label: t('user.nav.home') },
-    {
-      href: '/profile',
-      isCurrent: activeRoute === '/profile',
-      label: t('user.action.profile'),
-      variant: 'secondary' as const,
-    },
-    {
-      href: '/settings',
-      isCurrent: activeRoute === '/settings',
-      label: t('user.nav.settings'),
-      variant: 'secondary' as const,
-    },
-    {
-      href: '/tma',
-      isCurrent: activeRoute.startsWith('/tma'),
-      label: t('auth.provider.telegram'),
-      variant: 'secondary' as const,
-    },
-  ];
-
-  return (
-    <MiniAppShell
-      activePath={activeRoute}
-      actions={productActions}
-      appName={t('user.appName')}
-      description={t('user.description')}
-      eyebrow={t('user.eyebrow')}
-      heroActions={[]}
-      onBack={onBack}
-      shareText={t('user.description')}
-      shareTitle={t('user.appName')}
-      title={t('user.title')}
-    >
-      {children ?? <UserHomeContent />}
-    </MiniAppShell>
   );
 });

@@ -163,6 +163,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
+    await screen.findAllByRole('button', { name: 'Share' });
     const shell = document.querySelector<HTMLElement>('.xr-mini-app-shell');
     expect(shell?.dataset.miniAppEnvironment).toBe('telegram');
     expect(document.querySelector('.xr-header')).toBeTruthy();
@@ -194,7 +195,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
-    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Back' })).toBeTruthy();
     fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
     await waitFor(() => {
       expect(share).toHaveBeenCalledOnce();
@@ -619,7 +620,7 @@ describe('social auth and TMA UI', () => {
   it('navigates route links without a full page reload', async () => {
     render(<App />);
 
-    fireEvent.click(screen.getAllByRole('link', { name: 'Settings' })[0]);
+    fireEvent.click((await screen.findAllByRole('link', { name: 'Settings' }))[0]!);
 
     await waitFor(() => {
       expect(window.location.pathname).toBe('/settings');

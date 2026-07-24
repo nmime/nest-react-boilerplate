@@ -1,17 +1,25 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
+import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
-import { UserHomePage } from '../src/pages/user-home';
+import { createUserRouter } from '../src/app/router/user-route-tree';
 import userStyles from '../src/styles.css?inline';
 
-const UserHomeComposition = () => (
-  <FrontendStateProvider>
-    <FrontendI18nProvider initialLocale="en" translations={userFrontendTranslations}>
-      <UserHomePage applyUserLocale={() => undefined} applyUserTheme={() => undefined} />
-    </FrontendI18nProvider>
-  </FrontendStateProvider>
-);
+const UserHomeComposition = () => {
+  const router = createUserRouter(createMemoryHistory({ initialEntries: ['/'] }));
+
+  return (
+    <FrontendStateProvider>
+      <FrontendI18nProvider initialLocale="en" translations={userFrontendTranslations}>
+        <RouterProvider
+          context={{ applyUserLocale: () => undefined, applyUserTheme: () => undefined }}
+          router={router}
+        />
+      </FrontendI18nProvider>
+    </FrontendStateProvider>
+  );
+};
 
 const meta = {
   title: 'Applications/User/Home',

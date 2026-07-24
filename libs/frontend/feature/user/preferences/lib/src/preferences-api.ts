@@ -1,5 +1,5 @@
 import { authApi, throwOnOpenApiErrorData } from '@app/frontend-api-client';
-import type { AuthPreferencesPayload, UserPreferencePatch } from '../../../entities/profile';
+import type { AuthPreferencesPayload, UserPreferencePatch } from '@app/frontend-feature-user-profile';
 
 export async function updateUserPreferences(
   authClient: Pick<typeof authApi, 'authControllerUpdatePreferences'>,

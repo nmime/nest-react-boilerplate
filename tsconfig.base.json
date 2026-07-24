@@ -68,6 +68,7 @@
       "@app/frontend-feature-admin-shared": ["libs/frontend/feature/admin/shared/lib/src/index.ts"],
       "@app/frontend-feature-landing-i18n": ["libs/frontend/feature/landing/i18n/lib/src/index.ts"],
       "@app/frontend-feature-user-i18n": ["libs/frontend/feature/user/i18n/lib/src/index.ts"],
+      "@app/frontend-feature-user-preferences": ["libs/frontend/feature/user/preferences/lib/src/index.ts"],
       "@app/frontend-feature-user-profile": ["libs/frontend/feature/user/profile/lib/src/index.ts"],
       "@app/frontend-i18n-shared": ["libs/frontend/i18n/shared/lib/src/index.ts"],
       "@app/frontend-runtime": ["libs/frontend/runtime/lib/src/index.ts"],

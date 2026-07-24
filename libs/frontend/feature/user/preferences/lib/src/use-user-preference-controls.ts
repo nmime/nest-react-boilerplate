@@ -2,8 +2,8 @@ import { useCallback, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthApiClient } from '@app/frontend-api-client';
 import type { Locale, UiTheme } from '@app/frontend-runtime';
-import { getPayloadLocale, getPayloadTheme, profileQueryKey } from '../../../entities/profile';
-import { authPreferencesQueryKey, updateUserPreferences } from '../api';
+import { getPayloadLocale, getPayloadTheme, profileQueryKey } from '@app/frontend-feature-user-profile';
+import { authPreferencesQueryKey, updateUserPreferences } from './preferences-api';
 import type { UserPreferencePatch } from './preferences-model';
 
 export interface UserPreferenceControls {
@@ -25,13 +25,14 @@ export function useUserPreferenceControls(): UserPreferenceControls {
     mutationFn: (nextPreferences: UserPreferencePatch) =>
       updateUserPreferences(authClient.api, authClient.requestOptions, nextPreferences),
     onSuccess: (body, nextPreferences) => {
-      /* v8 ignore next 6 -- preference mutation falls back through optional response/request/current values. */
+      /* v8 ignore start -- preference mutation falls back through optional response/request/current values. */
       setUserLocale(getPayloadLocale(body) ?? nextPreferences.locale ?? userLocale ?? null);
       setUserTheme(getPayloadTheme(body) ?? nextPreferences.theme ?? userTheme ?? null);
       void queryClient.invalidateQueries({
         queryKey: authPreferencesQueryKey(),
       });
       void queryClient.invalidateQueries({ queryKey: profileQueryKey() });
+      /* v8 ignore stop */
     },
     retry: false,
   });

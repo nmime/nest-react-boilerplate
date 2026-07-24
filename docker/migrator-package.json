@@ -1,0 +1,26 @@
+{
+  "name": "db-migrator",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal dependency closure for the standalone DB migrator image (docker/migrator-run.mjs). Deliberately excludes the @repo/tooling CLI's dev/test deps.",
+  "dependencies": {
+    "@mikro-orm/core": "7.1.7",
+    "@mikro-orm/migrations": "7.1.7",
+    "@mikro-orm/nestjs": "7.0.2",
+    "@mikro-orm/postgresql": "7.1.7",
+    "@nestjs/common": "11.1.28",
+    "@swc-node/register": "1.12.1",
+    "@swc/helpers": "0.5.23",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.15.1",
+    "jiti": "2.7.0",
+    "joi": "18.2.3",
+    "neverthrow": "8.2.0",
+    "pg": "8.22.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "tsconfig-paths": "4.2.0",
+    "tslib": "2.8.1"
+  }
+}

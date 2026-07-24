@@ -93,7 +93,7 @@ migrations:
     tag: latest
     digest: ''
     pullPolicy: IfNotPresent
-  command: ['pnpm', 'db:migrate']
+  command: ['node', 'docker/migrator-run.mjs']
   backoffLimit: 2
   activeDeadlineSeconds: 600
   ttlSecondsAfterFinished: 3600

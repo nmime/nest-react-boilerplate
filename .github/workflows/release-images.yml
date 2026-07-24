@@ -126,8 +126,8 @@ jobs:
           file: Dockerfile
           target: workspace
           outputs: type=cacheonly
-          cache-from: type=gha,scope=release-workspace
-          cache-to: type=gha,mode=max,scope=release-workspace
+          cache-from: type=gha,scope=release-workspace-v2
+          cache-to: type=gha,mode=max,scope=release-workspace-v2
 
   build-scan-sign:
     name: Build, scan, and sign affected images
@@ -179,9 +179,9 @@ jobs:
           done
           docker buildx bake -f docker-bake.json "${NAMES[@]}" "${set_args[@]}" \
             --set "*.args.VITE_TELEGRAM_AUTH_ENABLED=${VITE_TELEGRAM_AUTH_ENABLED}" \
-            --set "*.cache-from=type=gha,scope=release-workspace" \
-            --set "*.cache-from=type=gha,scope=release-bake" \
-            --set "*.cache-to=type=gha,mode=max,scope=release-bake" \
+            --set "*.cache-from=type=gha,scope=release-workspace-v2" \
+            --set "*.cache-from=type=gha,scope=release-bake-v2" \
+            --set "*.cache-to=type=gha,mode=max,scope=release-bake-v2" \
             --set "*.attest=type=provenance,mode=max" \
             --set "*.attest=type=sbom" \
             --set "*.labels.org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
@@ -211,8 +211,11 @@ jobs:
             syft "$ref" -o "spdx-json=sboms/sbom-${name}.spdx.json"
             if trivy image --format sarif --output "sarifs/trivy-${name}.sarif" \
               --pkg-types os,library --severity CRITICAL,HIGH --exit-code 1 "$ref"; then
+              echo "::notice::scan PASS ${name}"
               cosign sign --yes "$ref"
             else
+              findings=$(jq '[.runs[].results[]?] | length' "sarifs/trivy-${name}.sarif" 2>/dev/null || echo '?')
+              echo "::error::scan FAIL ${name} (${findings} CRITICAL/HIGH findings)"
               scan_failed=1
             fi
             # Stamp a distinct CodeQL category per image (via automationDetails.id)

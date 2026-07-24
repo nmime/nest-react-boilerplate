@@ -142,8 +142,8 @@ has(
 before(
   migratorStage,
   'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
-  'CMD ["pnpm", "db:migrate"]',
-  'migrator entrypoint before db:migrate command',
+  'CMD ["node", "docker/migrator-run.mjs"]',
+  'migrator entrypoint before the standalone migration runner command',
 );
 
 // Backend images ship per-app production dependencies computed from each app's

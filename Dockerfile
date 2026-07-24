@@ -29,15 +29,34 @@ COPY libs ./libs
 COPY packages ./packages
 COPY i18n ./i18n
 
-FROM workspace AS migrator
-# Drop the unused npm CLI + corepack: their bundled tar/undici/brace-expansion
-# carry CVEs, and the runtime only ever invokes node/pnpm (globally installed).
+# Minimal migration dependency closure. Installing only docker/migrator-package.json
+# (MikroORM + pg + the loaders) from the warm offline store keeps the migrator off
+# the @repo/tooling CLI's heavy dev/test deps (playwright, nx, sharp, istanbul, ...)
+# that otherwise dominate this image's CVE surface.
+FROM workspace AS migrator-deps
+WORKDIR /migrator
+COPY docker/migrator-package.json ./package.json
+RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
+
+FROM node:${NODE_VERSION} AS migrator
+ENV CONTAINER=true \
+  NODE_ENV=production
+WORKDIR /app
 RUN apk add --no-cache su-exec \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+COPY --from=migrator-deps /migrator/node_modules ./node_modules
+# TypeScript sources the migration transpiles on the fly (@swc-node/register +
+# tsconfig-paths); source files carry no package CVEs.
+COPY packages/tooling ./packages/tooling
+COPY libs ./libs
+COPY config ./config
+COPY i18n ./i18n
+COPY tsconfig.base.json ./tsconfig.base.json
+COPY docker/migrator-run.mjs ./docker/migrator-run.mjs
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
-CMD ["pnpm", "db:migrate"]
+CMD ["node", "docker/migrator-run.mjs"]
 
 FROM workspace AS builder
 ARG NX_BUILD_PROJECTS
@@ -81,7 +100,21 @@ RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
 FROM builder AS backend-deps
 ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
 WORKDIR /workspace/${BUILD_OUTPUT}
-RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
+# Drop esbuild/drizzle-kit: they arrive as dead weight via better-auth's
+# drizzle-kit dependency (this app uses MikroORM, not drizzle), are never run at
+# runtime, and their bundled Go binaries carry the bulk of the image's CVEs.
+# find-my-way: the standalone install runs --ignore-workspace, so the root
+# pnpm-workspace.yaml `find-my-way: 9.7.0` override does not apply and fastify's
+# ^9.6.0 resolves to the vulnerable 9.6.x (CVE-2026-47219). The workspace stage
+# already installed the overridden 9.7.0, so overlay that real 9.7.0 code onto
+# the pruned 9.6.x path.
+RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
+  && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} + \
+  && for old in node_modules/.pnpm/find-my-way@9.6.*; do \
+       [ -d "$old" ] || continue; \
+       rm -rf "$old/node_modules/find-my-way"; \
+       cp -a /workspace/node_modules/.pnpm/find-my-way@9.7.0/node_modules/find-my-way "$old/node_modules/find-my-way"; \
+     done
 
 FROM node:${NODE_VERSION} AS backend
 ENV CONTAINER=true \
@@ -111,7 +144,8 @@ CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 # portable, production-only dependency graph derived from the reviewed root
 # lockfile and supply-chain policy.
 FROM builder AS site-deps
-RUN pnpm --filter site-app deploy --prod /site-deploy
+RUN pnpm --filter site-app deploy --prod /site-deploy \
+  && find /site-deploy/node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} + 2>/dev/null || true
 
 FROM node:${NODE_VERSION} AS site-runtime
 ENV CONTAINER=true \

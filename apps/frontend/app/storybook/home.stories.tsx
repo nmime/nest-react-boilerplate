@@ -12,10 +12,7 @@ const UserHomeComposition = () => {
   return (
     <FrontendStateProvider>
       <FrontendI18nProvider initialLocale="en" translations={userFrontendTranslations}>
-        <RouterProvider
-          context={{ applyUserLocale: () => undefined, applyUserTheme: () => undefined }}
-          router={router}
-        />
+        <RouterProvider router={router} />
       </FrontendI18nProvider>
     </FrontendStateProvider>
   );

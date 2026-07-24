@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { RouterProvider } from '@tanstack/react-router';
 import type { Locale, UiTheme } from '@app/frontend-runtime';
 import { createUserRouter } from './user-route-tree';
+import { UserRuntimeProvider } from './user-runtime-context';
 
 export interface UserRouterProps {
   applyUserLocale: (locale: Locale) => void;
@@ -9,12 +10,16 @@ export interface UserRouterProps {
 }
 
 /**
- * Mounts the user app's TanStack Router. `applyUserLocale`/`applyUserTheme`
- * are injected as router context (read by the auth/profile routes) and kept
- * current through the `RouterProvider` `context` prop.
+ * Mounts the user app's TanStack Router. `applyUserLocale`/`applyUserTheme` are
+ * provided above the router via a React runtime context, read by the
+ * auth/profile routes through `useUserRuntime`.
  */
 export function UserRouter({ applyUserLocale, applyUserTheme }: Readonly<UserRouterProps>) {
   const [router] = useState(createUserRouter);
 
-  return <RouterProvider context={{ applyUserLocale, applyUserTheme }} router={router} />;
+  return (
+    <UserRuntimeProvider value={{ applyUserLocale, applyUserTheme }}>
+      <RouterProvider router={router} />
+    </UserRuntimeProvider>
+  );
 }

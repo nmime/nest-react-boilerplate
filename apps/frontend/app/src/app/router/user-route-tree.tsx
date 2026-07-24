@@ -1,11 +1,4 @@
-import {
-  createBrowserHistory,
-  createRootRouteWithContext,
-  createRoute,
-  createRouter,
-  type RouterHistory,
-} from '@tanstack/react-router';
-import type { Locale, UiTheme } from '@app/frontend-runtime';
+import { createBrowserHistory, createRootRoute, createRoute, createRouter, type RouterHistory } from '@tanstack/react-router';
 import { AuthPage } from '../../pages/auth';
 import { AuthDiscordCallbackPage } from '../../pages/auth-discord-callback';
 import { AuthTelegramCallbackPage } from '../../pages/auth-telegram-callback';
@@ -15,14 +8,9 @@ import { TmaPage } from '../../pages/tma';
 import { UserHomeContent } from '../../pages/user-home';
 import { UserShell } from './user-shell';
 import { useUserNavigate } from './user-navigation';
+import { useUserRuntime } from './user-runtime-context';
 
-/** App-level values injected into the router by {@link UserRouter}. */
-export interface UserRouterContext {
-  applyUserLocale: (locale: Locale) => void;
-  applyUserTheme: (theme: UiTheme) => void;
-}
-
-const rootRoute = createRootRouteWithContext<UserRouterContext>()({
+const rootRoute = createRootRoute({
   component: UserShell,
   notFoundComponent: () => <UserHomeContent />,
 });
@@ -34,7 +22,7 @@ const indexRoute = createRoute({
 });
 
 function AuthRouteComponent() {
-  const { applyUserLocale, applyUserTheme } = rootRoute.useRouteContext();
+  const { applyUserLocale, applyUserTheme } = useUserRuntime();
   const navigate = useUserNavigate();
   return <AuthPage applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} navigate={navigate} />;
 }
@@ -64,7 +52,7 @@ const telegramCallbackRoute = createRoute({
 });
 
 function ProfileRouteComponent() {
-  const { applyUserLocale, applyUserTheme } = rootRoute.useRouteContext();
+  const { applyUserLocale, applyUserTheme } = useUserRuntime();
   return <ProfilePage applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} />;
 }
 
@@ -133,9 +121,6 @@ export const createUserRouter = (history: RouterHistory = createBrowserHistory()
     routeTree,
     history,
     trailingSlash: 'never',
-    // Placeholder context; the live callbacks are supplied by
-    // <RouterProvider context=...> in UserRouter before the first render.
-    context: { applyUserLocale: () => undefined, applyUserTheme: () => undefined },
     defaultPreload: false,
   });
 

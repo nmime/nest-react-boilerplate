@@ -1,76 +1,13 @@
-import { useCallback, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuthApiClient } from '@app/frontend-api-client';
-import type { Locale, UiTheme } from '@app/frontend-runtime';
-import { getPayloadLocale, getPayloadTheme, profileQueryKey } from '@app/frontend-feature-user-profile';
-import { authPreferencesQueryKey, updateUserPreferences } from './preferences-api';
-import type { UserPreferencePatch } from './preferences-model';
+import { profileQueryKey } from '@app/frontend-feature-user-profile';
+import { useSessionPreferenceControls } from '@app/frontend-feature-shared-preferences';
 
-export interface UserPreferenceControls {
-  applyUserLocale: (locale: Locale) => void;
-  applyUserTheme: (theme: UiTheme) => void;
-  persistUserLocale: (locale: Locale) => Promise<void>;
-  persistUserTheme: (theme: UiTheme) => Promise<void>;
-  userLocale: Locale | null;
-  userTheme: UiTheme | null;
-}
+export type { UserPreferenceControls } from '@app/frontend-feature-shared-preferences';
 
-export function useUserPreferenceControls(): UserPreferenceControls {
-  const [userLocale, setUserLocale] = useState<Locale | null>(null);
-  const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
-  const queryClient = useQueryClient();
-  const authClient = useAuthApiClient();
-
-  const preferencesMutation = useMutation({
-    mutationFn: (nextPreferences: UserPreferencePatch) =>
-      updateUserPreferences(authClient.api, authClient.requestOptions, nextPreferences),
-    onSuccess: (body, nextPreferences) => {
-      /* v8 ignore start -- preference mutation falls back through optional response/request/current values. */
-      setUserLocale(getPayloadLocale(body) ?? nextPreferences.locale ?? userLocale ?? null);
-      setUserTheme(getPayloadTheme(body) ?? nextPreferences.theme ?? userTheme ?? null);
-      void queryClient.invalidateQueries({
-        queryKey: authPreferencesQueryKey(),
-      });
-      void queryClient.invalidateQueries({ queryKey: profileQueryKey() });
-      /* v8 ignore stop */
-    },
-    retry: false,
-  });
-
-  const applyUserLocale = useCallback((nextLocale: Locale) => {
-    setUserLocale(nextLocale);
-  }, []);
-  const applyUserTheme = useCallback((nextTheme: UiTheme) => {
-    setUserTheme(nextTheme);
-  }, []);
-
-  const persistUserLocale = useCallback(
-    async (nextLocale: Locale) => {
-      try {
-        await preferencesMutation.mutateAsync({ locale: nextLocale });
-      } catch {
-        // Locale is still persisted locally; retry on the next explicit change.
-      }
-    },
-    [preferencesMutation],
-  );
-  const persistUserTheme = useCallback(
-    async (nextTheme: UiTheme) => {
-      try {
-        await preferencesMutation.mutateAsync({ theme: nextTheme });
-      } catch {
-        // Theme is still persisted locally; retry on the next explicit change.
-      }
-    },
-    [preferencesMutation],
-  );
-
-  return {
-    applyUserLocale,
-    applyUserTheme,
-    persistUserLocale,
-    persistUserTheme,
-    userLocale,
-    userTheme,
-  };
+/**
+ * Preference controls for the user web `app` and native `mobile` app: the shared
+ * session hook wired to invalidate the user profile query after a write. The
+ * admin console consumes the same shared hook with its own profile query key.
+ */
+export function useUserPreferenceControls() {
+  return useSessionPreferenceControls({ invalidateQueryKeys: () => [profileQueryKey()] });
 }

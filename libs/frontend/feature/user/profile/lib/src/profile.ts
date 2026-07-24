@@ -1,53 +1,27 @@
 import { getApiErrorDisplayMessage } from '@app/frontend-api-support';
-import { normalizeLocale, type Locale, type UiTheme } from '@app/frontend-runtime';
+import type { UserProfilePayload } from '@app/frontend-feature-shared-preferences';
 
-export interface AuthPrincipalPayload {
-  subject?: string;
-  email?: string;
-  locale?: Locale;
-  theme?: UiTheme;
-}
-
-export interface AuthUserPayload {
-  id?: string;
-  subject?: string;
-  email?: string | null;
-  locale?: Locale;
-  theme?: UiTheme;
-}
-
-export interface AuthMePayload {
-  principal?: AuthPrincipalPayload;
-  user?: AuthUserPayload | null;
-  profile?: AuthUserPayload | null;
-  locale?: Locale;
-  theme?: UiTheme;
-}
-
-export type AuthSessionPayload = AuthMePayload;
-
-export type AuthPreferencesPayload = AuthMePayload;
-
-export interface UserProfilePayload {
-  principal?: AuthPrincipalPayload;
-  profile?: AuthUserPayload | null;
-  user?: AuthUserPayload | null;
-  locale?: Locale;
-  theme?: UiTheme;
-}
-
-export type LocalePayload = AuthMePayload | UserProfilePayload | undefined;
+// The auth-session preference primitives (payload readers + payload/patch types)
+// now live in the shared session-preferences library so the admin console can
+// consume them too. They are re-exported here to keep this user-profile
+// boundary's public API stable for existing importers.
+export { getPayloadLocale, getPayloadTheme } from '@app/frontend-feature-shared-preferences';
+export type {
+  AuthPrincipalPayload,
+  AuthUserPayload,
+  AuthMePayload,
+  AuthSessionPayload,
+  AuthPreferencesPayload,
+  UserProfilePayload,
+  LocalePayload,
+  UserPreferencePatch,
+} from '@app/frontend-feature-shared-preferences';
 
 export type ProfileState =
   | { status: 'loading' }
   | { status: 'unauthenticated'; reason: string }
   | { status: 'ready'; email?: string; subject: string }
   | { status: 'forbidden'; reason: string };
-
-export interface UserPreferencePatch {
-  locale?: Locale;
-  theme?: UiTheme;
-}
 
 export const getProfileState = (
   loading: boolean,
@@ -76,35 +50,4 @@ export const getProfileState = (
       profileUnknownMessage,
     email: profile?.profile?.email ?? profile?.principal?.email,
   };
-};
-
-const normalizeTheme = (value: unknown): UiTheme | undefined => {
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  /* v8 ignore next 4 -- defensive theme guard branch permutations are covered by state/store tests. */
-  return normalized === 'system' || normalized === 'light' || normalized === 'dark' ? normalized : undefined;
-};
-
-const readTheme = (value: unknown): UiTheme | undefined =>
-  normalizeTheme(value && typeof value === 'object' ? (value as Record<string, unknown>)['theme'] : undefined);
-
-export const getPayloadLocale = (payload?: LocalePayload | null): Locale | undefined => {
-  const directLocale = payload && 'locale' in payload ? payload.locale : undefined;
-  const userLocale = payload && 'user' in payload ? payload.user?.locale : undefined;
-  const profileLocale = payload && 'profile' in payload ? payload.profile?.locale : undefined;
-  const principalLocale = payload && 'principal' in payload ? payload.principal?.locale : undefined;
-
-  return normalizeLocale(directLocale ?? userLocale ?? profileLocale ?? principalLocale ?? undefined);
-};
-
-export const getPayloadTheme = (payload?: LocalePayload | null): UiTheme | undefined => {
-  return (
-    readTheme(payload) ??
-    (payload && 'user' in payload ? readTheme(payload.user) : undefined) ??
-    (payload && 'profile' in payload ? readTheme(payload.profile) : undefined) ??
-    (payload && 'principal' in payload ? readTheme(payload.principal) : undefined)
-  );
 };

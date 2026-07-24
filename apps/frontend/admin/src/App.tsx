@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import {
@@ -33,6 +33,7 @@ import {
   type UiTheme,
 } from '@app/frontend-runtime';
 import { UiErrorBoundary, UiApiRuntimeOverlay } from '@app/frontend-ui-web';
+import { useSessionPreferenceControls } from '@app/frontend-feature-shared-preferences';
 import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
 import { createAdminAccess, fetchAdminProfile } from './entities/admin-session';
 import {
@@ -189,85 +190,24 @@ const AdminWorkspace = ({ applyUserLocale, applyUserTheme }: Readonly<AdminAppPr
 };
 
 const AdminRoot = () => {
-  const [userLocale, setUserLocale] = useState<Locale | null>(null);
-  const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
-  const explicitLocale = useRef<Locale | null>(null);
-  const explicitTheme = useRef<UiTheme | null>(null);
-  const queryClient = useQueryClient();
-  const authClient = useAuthApiClient();
-
-  const preferencesMutation = useMutation({
-    mutationFn: (nextPreferences: { locale?: Locale; theme?: UiTheme }) =>
-      throwOnOpenApiErrorData(
-        authApi.authControllerUpdatePreferences(nextPreferences, {
-          ...authClient.requestOptions,
-        }),
-      ),
-    onSuccess: (body, nextPreferences) => {
-      const persistedLocale = normalizeLocale(body.locale);
-      const persistedTheme = getPayloadTheme(body);
-      explicitLocale.current = persistedLocale ?? nextPreferences.locale ?? explicitLocale.current;
-      explicitTheme.current = persistedTheme ?? nextPreferences.theme ?? explicitTheme.current;
-      /* v8 ignore next 6 -- preference mutation falls back through optional response/request/current values. */
-      setUserLocale(persistedLocale ?? nextPreferences.locale ?? userLocale ?? null);
-      /* v8 ignore next 3 -- preference mutation theme falls back through optional response/request/current values. */
-      setUserTheme(persistedTheme ?? nextPreferences.theme ?? userTheme ?? null);
-      void queryClient.invalidateQueries({
-        queryKey: authApi.getAuthControllerMeQueryKey(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: adminApi.getAdminProfileControllerMeQueryKey(),
-      });
-    },
-    retry: false,
+  // The admin console shares the user apps' preference model. `guardExplicitOverrides`
+  // keeps a server-derived locale/theme from clobbering a choice the admin has
+  // explicitly made; the admin profile query is refreshed alongside auth/me.
+  const preferences = useSessionPreferenceControls({
+    guardExplicitOverrides: true,
+    invalidateQueryKeys: () => [adminApi.getAdminProfileControllerMeQueryKey()],
   });
-
-  const applyUserLocale = useCallback((nextLocale: Locale) => {
-    if (!explicitLocale.current) {
-      setUserLocale(nextLocale);
-    }
-  }, []);
-  const applyUserTheme = useCallback((nextTheme: UiTheme) => {
-    if (!explicitTheme.current) {
-      setUserTheme(nextTheme);
-    }
-  }, []);
-
-  const persistUserLocale = useCallback(
-    async (nextLocale: Locale) => {
-      explicitLocale.current = nextLocale;
-      setUserLocale(nextLocale);
-      try {
-        await preferencesMutation.mutateAsync({ locale: nextLocale });
-      } catch {
-        // Locale remains persisted locally and can be retried on the next switch.
-      }
-    },
-    [preferencesMutation],
-  );
-  const persistUserTheme = useCallback(
-    async (nextTheme: UiTheme) => {
-      explicitTheme.current = nextTheme;
-      setUserTheme(nextTheme);
-      try {
-        await preferencesMutation.mutateAsync({ theme: nextTheme });
-      } catch {
-        // Theme remains persisted locally and can be retried on the next switch.
-      }
-    },
-    [preferencesMutation],
-  );
 
   return (
     <FrontendI18nProvider
-      onLocaleChange={persistUserLocale}
-      onThemeChange={persistUserTheme}
+      onLocaleChange={preferences.persistUserLocale}
+      onThemeChange={preferences.persistUserTheme}
       translations={adminFrontendTranslations}
-      userLocale={userLocale}
-      userTheme={userTheme}
+      userLocale={preferences.userLocale}
+      userTheme={preferences.userTheme}
     >
       <ApiClientLocaleBridge>
-        <AdminWorkspace applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} />
+        <AdminWorkspace applyUserLocale={preferences.applyUserLocale} applyUserTheme={preferences.applyUserTheme} />
       </ApiClientLocaleBridge>
     </FrontendI18nProvider>
   );

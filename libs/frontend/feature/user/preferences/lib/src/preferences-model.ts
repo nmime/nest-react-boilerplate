@@ -1,11 +1,3 @@
-import type { Locale, UiTheme } from '@app/frontend-runtime';
-
-export interface AppliedUserPreferences {
-  locale: Locale | null;
-  theme: UiTheme | null;
-}
-
-export interface UserPreferencePatch {
-  locale?: Locale;
-  theme?: UiTheme;
-}
+// The preference patch type moved to the shared session-preferences library so
+// the admin console shares it. Re-exported to keep this boundary's API stable.
+export type { UserPreferencePatch } from '@app/frontend-feature-shared-preferences';

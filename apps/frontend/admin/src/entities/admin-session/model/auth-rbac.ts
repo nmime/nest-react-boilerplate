@@ -1,6 +1,7 @@
 import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
 import {
   createAdminAccessPolicy,
+  normalizeStringList,
   type AdminAccessPolicy,
   type AdminPrincipalClaims,
 } from '@app/frontend-feature-admin-shared';
@@ -15,18 +16,17 @@ export type AdminProfilePayload = Partial<Omit<adminApi.AdminProfilePayloadDto, 
 
 export type AdminAccess = AdminAccessPolicy;
 
-export const normalizeClaimList = (value: unknown): string[] => {
-  if (Array.isArray(value)) {
-    return [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length > 0))];
-  }
+// The canonical, fail-closed claim normalizer lives in @app/common-authz and is
+// re-exported by admin-shared. Kept as a named export here because policy/route
+// specs assert the normalizer directly.
+export const normalizeClaimList = normalizeStringList;
 
-  return [];
-};
-
+// `createAdminAccessPolicy` already normalizes roles/permissions internally, so
+// raw claim lists are passed straight through.
 export const createAdminAccess = (principal?: AdminPrincipal): AdminAccess =>
   createAdminAccessPolicy({
-    permissions: normalizeClaimList(principal?.permissions),
-    roles: normalizeClaimList(principal?.roles),
+    permissions: principal?.permissions,
+    roles: principal?.roles,
     subject: principal?.subject,
   } satisfies AdminPrincipalClaims);
 

@@ -67,6 +67,7 @@
       "@app/frontend-feature-admin-i18n": ["libs/frontend/feature/admin/i18n/lib/src/index.ts"],
       "@app/frontend-feature-admin-shared": ["libs/frontend/feature/admin/shared/lib/src/index.ts"],
       "@app/frontend-feature-landing-i18n": ["libs/frontend/feature/landing/i18n/lib/src/index.ts"],
+      "@app/frontend-feature-user-auth": ["libs/frontend/feature/user/auth/lib/src/index.ts"],
       "@app/frontend-feature-user-i18n": ["libs/frontend/feature/user/i18n/lib/src/index.ts"],
       "@app/frontend-feature-user-logout": ["libs/frontend/feature/user/logout/lib/src/index.ts"],
       "@app/frontend-feature-user-preferences": ["libs/frontend/feature/user/preferences/lib/src/index.ts"],

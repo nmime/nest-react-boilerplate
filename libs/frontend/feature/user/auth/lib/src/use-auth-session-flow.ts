@@ -1,7 +1,7 @@
 import { useEffect, useMemo, type SubmitEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthApiClient, useUserApiClient } from '@app/frontend-api-client';
-import { clearApiAuthRequired } from '@app/frontend-api-support';
+import { clearApiAuthRequired, getApiErrorDisplayMessage } from '@app/frontend-api-support';
 import { useAuthShellStore, type Locale, type UiTheme } from '@app/frontend-runtime';
 import {
   fetchUserProfile,
@@ -10,9 +10,8 @@ import {
   getProfileState,
   profileQueryKey,
   type ProfileState,
-} from '../../../entities/profile';
-import { getErrorReason } from '../../../shared/lib';
-import { authMeQueryKey, createAuthSession, fetchAuthMe } from '../api';
+} from '@app/frontend-feature-user-profile';
+import { authMeQueryKey, createAuthSession, fetchAuthMe } from './auth-api';
 import { AuthMode } from './auth-model';
 
 export interface AuthSessionFlowMessages {
@@ -130,7 +129,7 @@ export function useAuthSessionFlow({
     if (authMutation.isError) {
       return {
         status: 'forbidden' as const,
-        reason: getErrorReason(authMutation.error, messages.authenticationFailed),
+        reason: getApiErrorDisplayMessage(authMutation.error, messages.authenticationFailed),
       };
     }
 

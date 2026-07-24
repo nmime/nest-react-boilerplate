@@ -1,0 +1,25 @@
+{
+  "extends": "../../../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "allowJs": false,
+    "allowSyntheticDefaultImports": true,
+    "types": [
+      "node",
+      "vite/client"
+    ],
+    "lib": [
+      "es2022",
+      "dom"
+    ],
+    "moduleResolution": "bundler",
+    "module": "esnext"
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
+  ]
+}

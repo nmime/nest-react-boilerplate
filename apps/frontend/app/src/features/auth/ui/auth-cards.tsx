@@ -1,7 +1,7 @@
 import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
 import type { ReactNode, SubmitEvent } from 'react';
 import { UiButton, UiCard, UiForm, UiTextField } from '../../../shared/ui';
-import { AuthMode } from '../model';
+import { AuthMode } from '@app/frontend-feature-user-auth';
 
 export interface AuthCardsProps {
   isLoginPending: boolean;

@@ -1,5 +1,5 @@
+import { getApiErrorDisplayMessage } from '@app/frontend-api-support';
 import { normalizeLocale, type Locale, type UiTheme } from '@app/frontend-runtime';
-import { getErrorReason } from '../../../shared/lib';
 
 export interface AuthPrincipalPayload {
   subject?: string;
@@ -62,7 +62,7 @@ export const getProfileState = (
   if (error) {
     return {
       status: 'forbidden',
-      reason: getErrorReason(error, profileRequestFailedMessage),
+      reason: getApiErrorDisplayMessage(error, profileRequestFailedMessage),
     };
   }
 

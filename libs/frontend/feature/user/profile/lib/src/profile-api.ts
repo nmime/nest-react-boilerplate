@@ -1,5 +1,5 @@
 import { throwOnOpenApiErrorData, userApi } from '@app/frontend-api-client';
-import type { UserProfilePayload } from '../model/profile';
+import type { UserProfilePayload } from './profile';
 
 export async function fetchUserProfile(
   userClient: Pick<typeof userApi, 'profileControllerMe'>,

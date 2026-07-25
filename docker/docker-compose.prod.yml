@@ -168,6 +168,12 @@ x-frontend-service: &frontend-service
   logging: *default-logging
   networks: [app]
   healthcheck: *frontend-healthcheck
+  # Browser-safe runtime flags rendered into /runtime-config.js at container
+  # start, so toggling a feature never requires rebuilding the SPA image. Never
+  # place secrets here — the generated file is served to every browser.
+  environment:
+    TELEGRAM_AUTH_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
+    DISCORD_AUTH_ENABLED: ${DISCORD_AUTH_ENABLED:-false}
 
 x-notification-scheduler-service: &notification-scheduler-service
   restart: unless-stopped

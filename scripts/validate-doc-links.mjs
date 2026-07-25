@@ -29,7 +29,18 @@ function isWorkingSpecDoc(filePath, workspaceRoot) {
 }
 
 const markdownLinkPattern = /!?(?:\[[^\]]*\])\(([^)]+)\)/gu;
-const pnpmRunPattern = /\bpnpm\s+run\s+([@A-Za-z0-9_.:-]+)/gu;
+/**
+ * Documented root-script invocations, in both spellings docs actually use.
+ *
+ * `pnpm run <name>` is unambiguous. The bare `pnpm <name>` shorthand is only matched
+ * when the token is colon-namespaced, which every root script is and no pnpm builtin
+ * (`install`, `audit`, `exec`, `dlx`, `--filter`) is — without this half, a renamed
+ * script stayed documented under its old name and no gate noticed.
+ */
+const pnpmScriptPatterns = [
+  /\bpnpm\s+run\s+([@A-Za-z0-9_.:-]+)/gu,
+  /\bpnpm\s+(?![-@])([A-Za-z0-9_.-]+:[A-Za-z0-9_.:-]+)/gu,
+];
 const duplicatedProjectMetadataPattern =
   /^\s{0,3}(?:(?:[-*+]|>)\s+)?(?:\*\*|__)?(?:Path|Nx\s+project|Package|Project\s+type|Tags|Runtime|Local\s+URL|(?:(?:Default|Staging)\s+)?(?:Local\s+)?Ports?)(?:\*\*|__)?\s*:\s*(?:\*\*|__)?\s+\S/iu;
 const duplicatedProjectMapHeadingPattern = /^\s{0,3}#{1,6}\s+Project\s+names?\s+and\s+paths?\s*#*\s*$/iu;
@@ -143,19 +154,24 @@ export function validateWorkspace({ workspaceRoot, markdownFiles = collectTracke
       }
     }
 
-    for (const match of content.matchAll(pnpmRunPattern)) {
-      const script = match[1];
-      if (!script) continue;
-      counts.scripts += 1;
-      if (!rootScripts.has(script)) {
-        failures.push(
-          formatFailure(
-            workspaceRoot,
-            filePath,
-            lineNumber(content, match.index ?? 0),
-            `unknown root script "pnpm run ${script}"`,
-          ),
-        );
+    const seenScriptOffsets = new Set();
+    for (const pattern of pnpmScriptPatterns) {
+      for (const match of content.matchAll(pattern)) {
+        const script = match[1];
+        // `pnpm run x` matches both patterns; count and report it once.
+        if (!script || seenScriptOffsets.has(match.index ?? 0)) continue;
+        seenScriptOffsets.add(match.index ?? 0);
+        counts.scripts += 1;
+        if (!rootScripts.has(script)) {
+          failures.push(
+            formatFailure(
+              workspaceRoot,
+              filePath,
+              lineNumber(content, match.index ?? 0),
+              `unknown root script "pnpm ${script}"`,
+            ),
+          );
+        }
       }
     }
   }

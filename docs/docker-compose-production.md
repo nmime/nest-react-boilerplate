@@ -67,17 +67,28 @@ pnpm nrb init --name "Acme" --domain acme.example --owner acme-org --apex-app la
 `--apex-app` accepts exactly `landing-app` or `site-app`. The initializer updates
 `PRIMARY_APP` and every documented hostname together.
 
-Copy the environment file and create secret storage:
+Scaffold the environment file and secret storage. The recommended way is the
+init helper, which copies `.env.production` from the example, generates every
+locally-generatable secret (`0600`), and creates empty placeholder files for the
+externally-issued ones (`DATABASE_URL`, provider tokens, push keys) for you to
+fill. It is idempotent — existing secret files are never overwritten:
+
+```bash
+pnpm docker:prod:init                    # bundled-db by default
+pnpm docker:prod:init --database=external-db --profile=telegram,discord
+```
+
+Manual equivalent (must cover every secret the base stack mounts — note
+`notification_payload_encryption_key` and, for `bundled-db`, `postgres_password`):
 
 ```bash
 cp .env.production.example .env.production
-mkdir -p docker/secrets
-chmod 700 docker/secrets
-openssl rand -base64 48 > docker/secrets/session_secret.txt
-openssl rand -base64 48 > docker/secrets/better_auth_secret.txt
-openssl rand -base64 32 > docker/secrets/auth_provider_token_encryption_key.txt
-openssl rand -base64 32 > docker/secrets/redis_password.txt
-openssl rand -base64 32 > docker/secrets/grafana_admin_password.txt
+mkdir -p docker/secrets && chmod 700 docker/secrets
+for s in session_secret better_auth_secret; do openssl rand -base64 48 > "docker/secrets/$s.txt"; done
+for s in auth_provider_token_encryption_key notification_payload_encryption_key \
+         redis_password grafana_admin_password postgres_password; do
+  openssl rand -base64 32 > "docker/secrets/$s.txt"
+done
 chmod 600 .env.production docker/secrets/*.txt
 ```
 
@@ -268,7 +279,7 @@ both Caddyfiles, and the merged Compose models:
 
 ```bash
 pnpm run deploy:validate:docker
-pnpm run test:compose-production-config
+pnpm run test:deploy
 pnpm run docker:prod:config:check
 pnpm run docker:prod:config
 ```
@@ -276,11 +287,12 @@ pnpm run docker:prod:config
 The last command uses `.env.production`. It should render exactly one database
 mode and, unless `external-proxy` is selected, exactly one `edge` service.
 
-Backward-compatible database-specific render commands remain available:
+Render a specific database mode without editing `.env.production` by passing the
+axis flag directly:
 
 ```bash
-pnpm run docker:prod:bundled-db:config
-pnpm run docker:prod:external-db:config
+pnpm run docker:prod:config --database=bundled-db
+pnpm run docker:prod:config --database=external-db
 ```
 
 The validator also checks the explicit auth overlays

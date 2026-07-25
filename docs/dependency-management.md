@@ -7,7 +7,7 @@ Use this policy to keep dependency updates low-risk and reproducible.
 | Constraint | Version | Rationale                                                                       |
 | ---------- | ------- | ------------------------------------------------------------------------------- |
 | Node.js    | 24.18.0 | Current Node 24 LTS baseline; engines accept `>=24 <25`                         |
-| pnpm       | 11.11.0 | Workspace packageManager field; Docker aligned                                  |
+| pnpm       | 11.15.1 | Workspace packageManager field; Docker aligned                                  |
 | TypeScript | 6.0.3   | Pinned until NestJS/Nx support TS 7; workspace override enforces single version |
 | React      | 19.2.3  | All frontend apps and libs; matches the Expo 57 supported runtime               |
 | Nx         | 23.1.0  | All @nx/* packages aligned                                                      |
@@ -54,23 +54,38 @@ All workspace manifests must use the same version for shared direct dependencies
 - `better-auth`: pinned to **1.6.23** — overrides the stale `@better-auth/cli@1.4.21` transitive dependency to prevent installing `better-auth@1.4.21` (multiple CVEs). Single version enforced.
 - `drizzle-orm`: pinned to **0.45.2** — overrides the stale CLI transitive to prevent SQL injection in `drizzle-orm@0.41.0`. Single version enforced.
 - `typescript`: pinned to **6.0.3** across all workspaces until NestJS/Nx support TS 7.
-- `rxjs`, `tslib`, NestJS core/platform packages, `lodash`, `brace-expansion`, `picomatch`, `path-to-regexp`, `serialize-javascript`, `postcss`, `follow-redirects`, `axios`, `fast-uri`, `svgo`, `js-yaml`, `yaml`, `ajv`, `ws`, `tmp`, `uuid`, `qs`, `undici`, `happy-dom`, `esbuild`, `form-data`, `http-proxy-middleware`, `@opentelemetry/core`, `multer`: all security-pinned per advisory.
+- `@fastify/static`: pinned to **10.1.2** for CVE-2026-7120 and
+  CVE-2026-15074. Nest 11.1.28's peer metadata stops at 9.x, so
+  `peerDependencyRules.allowedVersions` records the exact tested 10.1.2 edge
+  until Nest widens that declaration.
+- Storybook packages stay version-aligned. `@storybook/csf-plugin` 10.5.4
+  publishes `esbuild` as an optional wildcard peer; the scoped
+  `peerDependencyRules.allowedVersions` entry records the tested 0.28.1 edge
+  after the vulnerable-esbuild override rewrites the lockfile peer snapshot.
+- `brace-expansion`: vulnerable 1.x/2.x/4.x/5.x resolutions are pinned to **5.0.8**
+  for CVE-2026-14257.
+- `js-yaml`: vulnerable 5.0.0–5.2.1 resolutions are pinned to **5.2.2** for
+  GHSA-pm4m-ph32-ghv5; the existing 3.x/4.x pins remain separate.
+- `rxjs`, `tslib`, NestJS core/platform packages, `lodash`, `picomatch`,
+  `path-to-regexp`, `serialize-javascript`, `postcss`, `follow-redirects`,
+  `axios`, `fast-uri`, `svgo`, `yaml`, `ajv`, `ws`, `tmp`, `uuid`, `qs`,
+  `undici`, `happy-dom`, `esbuild`, `form-data`, `http-proxy-middleware`,
+  `@opentelemetry/core`, `multer`: all security-pinned per advisory.
 
 ## Deferred major updates
 
-| Package               | Current | Latest  | Blocker                                                     | Revisit trigger                                      |
-| --------------------- | ------- | ------- | ----------------------------------------------------------- | ---------------------------------------------------- |
-| TypeScript            | 6.0.3   | 7.0.2   | typescript-eslint 8.65 declares TypeScript `<6.1.0`         | typescript-eslint release with a TS 7 peer range     |
-| Babel                 | 7.29.x  | 8.x     | Rollup, Jest, and Babel 7 plugins reject Babel 8            | All Babel consumers publish Babel 8 peer ranges      |
-| @fastify/static       | 9.3.0   | 10.x    | NestJS 11 platform and Swagger accept only 8.x or 9.x       | NestJS releases with @fastify/static 10 peer support |
-| @types/node           | 24.13.3 | 26.x    | Node 24 runtime; type definitions match the runtime major   | Runtime upgrade to Node 26                           |
-| React / React DOM     | 19.2.3  | 19.2.8  | Expo SDK 57 requires exactly 19.2.3                         | Expo package matrix moves to the newer patch         |
-| gesture-handler       | 2.32.0  | 3.1.0   | Expo SDK 57 requires `~2.32.0`                              | Expo package matrix includes 3.x                     |
-| reanimated            | 4.5.0   | 4.5.2   | Expo SDK 57 requires exactly 4.5.0                          | Expo package matrix moves to the newer patch         |
-| safe-area-context     | 5.7.0   | 5.8.0   | Expo SDK 57 requires `~5.7.0`                               | Expo package matrix moves to 5.8.x                   |
-| react-native-screens  | 4.25.2  | 4.26.2  | Expo SDK 57 requires exactly 4.25.2                         | Expo package matrix moves to 4.26.x                  |
-| react-native-worklets | 0.10.0  | 0.11.1  | Expo SDK 57 requires 0.10.0 in its supported package matrix | Expo package matrix includes 0.11.x                  |
-| happy-dom             | 20.10.6 | 20.11.0 | Vitest 4.1.10 declares the 20.10.6 peer version             | Vitest accepts the newer happy-dom release           |
+| Package               | Current | Latest  | Blocker                                                     | Revisit trigger                                  |
+| --------------------- | ------- | ------- | ----------------------------------------------------------- | ------------------------------------------------ |
+| TypeScript            | 6.0.3   | 7.0.2   | typescript-eslint 8.65 declares TypeScript `<6.1.0`         | typescript-eslint release with a TS 7 peer range |
+| Babel                 | 7.29.x  | 8.x     | Rollup, Jest, and Babel 7 plugins reject Babel 8            | All Babel consumers publish Babel 8 peer ranges  |
+| @types/node           | 24.13.3 | 26.x    | Node 24 runtime; type definitions match the runtime major   | Runtime upgrade to Node 26                       |
+| React / React DOM     | 19.2.3  | 19.2.8  | Expo SDK 57 requires exactly 19.2.3                         | Expo package matrix moves to the newer patch     |
+| gesture-handler       | 2.32.0  | 3.1.0   | Expo SDK 57 requires `~2.32.0`                              | Expo package matrix includes 3.x                 |
+| reanimated            | 4.5.0   | 4.5.2   | Expo SDK 57 requires exactly 4.5.0                          | Expo package matrix moves to the newer patch     |
+| safe-area-context     | 5.7.0   | 5.8.0   | Expo SDK 57 requires `~5.7.0`                               | Expo package matrix moves to 5.8.x               |
+| react-native-screens  | 4.25.2  | 4.26.2  | Expo SDK 57 requires exactly 4.25.2                         | Expo package matrix moves to 4.26.x              |
+| react-native-worklets | 0.10.0  | 0.11.1  | Expo SDK 57 requires 0.10.0 in its supported package matrix | Expo package matrix includes 0.11.x              |
+| happy-dom             | 20.10.6 | 20.11.0 | Vitest 4.1.10 declares the 20.10.6 peer version             | Vitest accepts the newer happy-dom release       |
 
 ## Build scripts
 

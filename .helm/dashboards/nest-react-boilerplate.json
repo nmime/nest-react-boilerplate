@@ -18,7 +18,7 @@
       "id": 1,
       "targets": [
         {
-          "expr": "sum by (deployment) (kube_deployment_status_replicas_available{deployment=~\".*(auth-api|user-api|admin-api|landing|site|user-frontend|mobile-frontend|admin-frontend)\"})",
+          "expr": "sum by (deployment) (kube_deployment_status_replicas_available{deployment=~\".*-(auth-app-api|user-app-api|admin-app-api|discord-app-api|telegram-bot-api|landing-app|site-app|mobile-app|user-app|admin-app)$\"})",
           "legendFormat": "{{deployment}}",
           "refId": "A"
         }
@@ -33,7 +33,7 @@
       "id": 2,
       "targets": [
         {
-          "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count[5m]))",
+          "expr": "sum by (service_name) (rate(http_server_duration_seconds_count[5m]))",
           "legendFormat": "{{service_name}}",
           "refId": "A"
         }
@@ -48,7 +48,7 @@
       "id": 3,
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_request_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(http_server_duration_seconds_bucket[5m])))",
           "legendFormat": "{{service_name}} p95",
           "refId": "A"
         }

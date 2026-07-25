@@ -1,5 +1,7 @@
 # @app/frontend-feature-user-profile
 
+## Purpose
+
 Platform-neutral user profile/session domain logic shared by the web `app` and
 native `mobile` frontends: profile payload types, `getProfileState`, locale/theme
 payload readers, and the `fetchUserProfile` data-access helper.

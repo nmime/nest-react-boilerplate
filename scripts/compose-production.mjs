@@ -13,6 +13,7 @@ const publicDomainModes = new Set(['single-domain', 'per-app-domains']);
 const frontendApiBaseUrlModes = new Set(['same-origin', 'split-origin']);
 const frontendApiBaseUrlKeys = ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL'];
 const tlsModes = new Set(['automatic', 'provided', 'external']);
+const imageSources = new Set(['local', 'registry']);
 const supportedProfiles = new Set(['discord', 'notification-consumer', 'notification-scheduler', 'telegram']);
 const primaryUpstreams = {
   'landing-app': 'landing-app:8080',
@@ -97,6 +98,7 @@ function parseArguments(argv) {
     envFile: defaultEnvFile,
     profiles: [],
     sourceBuild: action === 'build',
+    imageSource: undefined,
     tlsMode: undefined,
     composeArguments: [],
   };
@@ -125,6 +127,11 @@ function parseArguments(argv) {
     const tlsMode = readOption('--tls');
     if (tlsMode !== undefined) {
       options.tlsMode = tlsMode;
+      continue;
+    }
+    const imageSource = readOption('--images') ?? readOption('--image-source');
+    if (imageSource !== undefined) {
+      options.imageSource = imageSource;
       continue;
     }
     const envFile = readOption('--env-file');
@@ -209,6 +216,16 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     'COMPOSE_DOMAIN_MODE',
   );
   const tlsMode = requireMode(options.tlsMode ?? effectiveEnvironment.COMPOSE_TLS_MODE, tlsModes, 'COMPOSE_TLS_MODE');
+  // Image provenance: pull published images (default) or build them on this host.
+  // Deliberately defaulted rather than required so env files that predate the axis
+  // keep validating — serverctl re-validates every provisioned host on update.
+  const imageSource = requireMode(
+    options.imageSource ?? effectiveEnvironment.COMPOSE_IMAGE_SOURCE ?? 'registry',
+    imageSources,
+    'COMPOSE_IMAGE_SOURCE',
+  );
+  // `build` always needs the overlay, whatever the configured provenance is.
+  const sourceBuild = options.sourceBuild || imageSource === 'local';
   const frontendApiBaseUrlMode = requireMode(
     valueOrDefault(effectiveEnvironment, 'VITE_API_BASE_URL_MODE', 'same-origin').toLowerCase(),
     frontendApiBaseUrlModes,
@@ -325,7 +342,13 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     COMPOSE_DOMAIN_MODE: domainMode,
     COMPOSE_TLS_MODE: tlsMode,
     ...(domainMode === 'external-proxy' && publicDomainMode ? { EXTERNAL_PROXY_PUBLIC_MODE: publicDomainMode } : {}),
-    EDGE_OPTIONAL_ROUTES: profiles.length === 0 ? 'default' : profiles.join('-'),
+    // Only discord/telegram have Caddy site/route fragments; notification-* are
+    // background workers with no edge surface. Deriving the token from all
+    // profiles would name a nonexistent fragment (e.g. "discord-notification-consumer")
+    // and the edge would fail to start. Keep the fixed discord-first order so the
+    // combined value matches the shipped "discord-telegram" fragment.
+    EDGE_OPTIONAL_ROUTES:
+      ['discord', 'telegram'].filter((profile) => profiles.includes(profile)).join('-') || 'default',
     PRIMARY_APP: primaryApp,
     PRIMARY_APP_UPSTREAM: primaryUpstreams[primaryApp],
     PUBLIC_DOMAIN: baseDomain,
@@ -350,14 +373,20 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   if (profiles.includes('discord')) files.push('docker/docker-compose.prod.discord.yml');
   if (domainMode !== 'external-proxy') files.push('docker/docker-compose.prod.edge.yml');
   if (tlsMode === 'provided') files.push('docker/docker-compose.prod.edge-provided-tls.yml');
-  if (options.sourceBuild) files.push('docker/docker-compose.prod.build.yml');
+  if (sourceBuild) files.push('docker/docker-compose.prod.build.yml');
 
   const composeArgs = ['compose', '--env-file', options.envFile];
   for (const file of files) composeArgs.push('-f', file);
   for (const profile of profiles) composeArgs.push('--profile', profile);
   composeArgs.push(options.action);
   if (options.action === 'up') {
-    if (options.sourceBuild) composeArgs.push('--build');
+    // The parse-time guard only sees the explicit --source-build flag. Local image
+    // provenance derived from COMPOSE_IMAGE_SOURCE reaches here too, and emitting
+    // both flags makes Compose reject the invocation, so fail with the real reason.
+    if (sourceBuild && options.composeArguments.includes('--no-build')) {
+      fail('COMPOSE_IMAGE_SOURCE=local builds images, so --no-build cannot be passed to up.');
+    }
+    if (sourceBuild) composeArgs.push('--build');
     else if (!options.composeArguments.includes('--no-build')) composeArgs.push('--no-build');
   }
   composeArgs.push(...options.composeArguments);
@@ -373,7 +402,8 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     profiles,
     publicDomain: baseDomain,
     publicDomainMode,
-    sourceBuild: options.sourceBuild,
+    imageSource,
+    sourceBuild,
     tlsMode,
   };
 }

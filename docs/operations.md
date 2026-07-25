@@ -78,7 +78,7 @@ Mode-specific validation:
 ```bash
 pnpm run deploy:validate          # generic bundle; skips Helm render if Helm is missing
 pnpm run deploy:validate:docker   # Compose/static deployment checks
-pnpm run deploy:validate:pm2      # no-op until ecosystem.config.{js,cjs,mjs} exists
+pnpm run deploy:validate:pm2      # validates the shipped ecosystem.config.cjs contract
 pnpm run deploy:validate:gitops   # strict Helm plus Argo CD and Flux Kustomize validation
 pnpm run deploy:validate:helm     # strict Helm 4 render/lint path
 REQUIRE_HELM=true pnpm run deploy:validate

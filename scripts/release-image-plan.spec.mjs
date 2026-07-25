@@ -39,7 +39,7 @@ test('serializes the selected images to a GitHub matrix without internal project
     {
       name: 'site-app',
       target: 'site-runtime',
-      buildArgs: 'NX_PROJECT=site-app\nPNPM_VERSION=11.11.0',
+      buildArgs: 'NX_PROJECT=site-app\nPNPM_VERSION=11.15.1',
     },
   ]);
 });

@@ -3,19 +3,8 @@
   "compilerOptions": {
     "outDir": "../../../../../../dist/out-tsc/libs/frontend/feature/user/preferences",
     "declaration": true,
-    "types": [
-      "node",
-      "vite/client"
-    ]
+    "types": ["node", "vite/client"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
-  "exclude": [
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    "src/**/*.spec.tsx",
-    "src/**/*.test.tsx"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.spec.tsx", "src/**/*.test.tsx"]
 }

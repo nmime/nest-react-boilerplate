@@ -41,7 +41,9 @@ const messages = {
 
 const createWrapper = () => {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
-  return ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
 };
 
 const render = (over: Partial<Parameters<typeof useAuthSessionFlow>[0]> = {}) => {
@@ -50,7 +52,15 @@ const render = (over: Partial<Parameters<typeof useAuthSessionFlow>[0]> = {}) =>
   const navigate = vi.fn();
   const hook = renderHook(
     () =>
-      useAuthSessionFlow({ applyUserLocale, applyUserTheme, locale: 'en', messages, navigate, returnUrl: null, ...over }),
+      useAuthSessionFlow({
+        applyUserLocale,
+        applyUserTheme,
+        locale: 'en',
+        messages,
+        navigate,
+        returnUrl: null,
+        ...over,
+      }),
     { wrapper: createWrapper() },
   );
   return { applyUserLocale, applyUserTheme, navigate, ...hook };
@@ -73,7 +83,9 @@ beforeEach(() => {
 
 describe('useAuthSessionFlow', () => {
   it('marks the session authenticated and applies server locale/theme when ready', async () => {
-    authApiMock.authControllerMe.mockResolvedValue(ok({ principal: { subject: 's1', email: 'a@example.com' }, user: { locale: 'en', theme: 'dark' } }));
+    authApiMock.authControllerMe.mockResolvedValue(
+      ok({ principal: { subject: 's1', email: 'a@example.com' }, user: { locale: 'en', theme: 'dark' } }),
+    );
     profileControllerMe.mockResolvedValue(ok({ profile: { email: 'a@example.com', locale: 'en' } }));
 
     const { result, applyUserLocale, applyUserTheme } = render();
@@ -178,7 +190,10 @@ describe('useAuthSessionFlow', () => {
       expect(result.current.profileState.status).toBe('unauthenticated');
     });
     act(() => {
-      result.current.submitAuth(AuthMode.Register, submitEvent({ displayName: 'Ada', email: 'a@example.com', password: 'secret' }));
+      result.current.submitAuth(
+        AuthMode.Register,
+        submitEvent({ displayName: 'Ada', email: 'a@example.com', password: 'secret' }),
+      );
     });
     await waitFor(() => {
       expect(result.current.isRegisterPending).toBe(true);

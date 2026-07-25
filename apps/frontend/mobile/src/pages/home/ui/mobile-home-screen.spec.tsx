@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
-import { MobileRuntimeProvider } from '../../../shared/mobile-runtime';
+import { MobileRuntimeProvider } from '../../../shared';
 
 vi.mock('@app/frontend-ui-native', async () => {
   // Mock only the Tamagui React wrappers; use the REAL shared design tokens so

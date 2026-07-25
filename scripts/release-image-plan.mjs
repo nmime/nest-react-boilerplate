@@ -11,7 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
-const pnpmVersion = '11.11.0';
+const pnpmVersion = '11.15.1';
 
 const image = (name, target, buildArgs, project) => ({ name, target, buildArgs, ...(project ? { project } : {}) });
 

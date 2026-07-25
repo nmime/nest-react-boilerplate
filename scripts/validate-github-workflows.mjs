@@ -63,8 +63,21 @@ assert.ok(
   'CI cache documentation must prohibit secret-bearing cache paths',
 );
 assert.ok(release.includes('RELEASE_PROVIDER: github'), 'release.yml must select only the GitHub release provider');
-assert.ok(release.includes('GIT_AUTHOR_NAME: nmime'), 'release.yml must preserve the nmime release author');
-assert.ok(release.includes('GIT_COMMITTER_NAME: nmime'), 'release.yml must preserve the nmime release committer');
+// The release repository and identity are overridable via Actions variables so
+// forks/adopters can enable CD, but the upstream `nmime` default must be preserved
+// (unset variable => this repo keeps releasing exactly as before).
+assert.ok(
+  release.includes("vars.RELEASE_REPOSITORY || 'nmime/nest-react-boilerplate'"),
+  'release.yml must gate releases on RELEASE_REPOSITORY with the nmime default',
+);
+assert.ok(
+  release.includes("GIT_AUTHOR_NAME: ${{ vars.RELEASE_GIT_AUTHOR_NAME || 'nmime' }}"),
+  'release.yml must preserve the nmime release author default (overridable via RELEASE_GIT_AUTHOR_NAME)',
+);
+assert.ok(
+  release.includes("GIT_COMMITTER_NAME: ${{ vars.RELEASE_GIT_AUTHOR_NAME || 'nmime' }}"),
+  'release.yml must preserve the nmime release committer default (overridable via RELEASE_GIT_AUTHOR_NAME)',
+);
 for (const required of [
   '[extend]',
   'useDefault = true',

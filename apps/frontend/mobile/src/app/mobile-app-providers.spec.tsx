@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it } from 'vitest';
 import { useI18n } from '@app/frontend-runtime';
 import { MobileAppProviders } from './mobile-app-providers';
-import { useMobileRuntime } from '../shared/mobile-runtime';
+import { useMobileRuntime } from '../shared';
 
 function LocaleProbe() {
   const { locale } = useI18n();

@@ -4,7 +4,7 @@ GitHub-hosted Actions may be unavailable for this repository/account. When that 
 
 ## Canonical local gate
 
-Run the full gate from a clean `main` checkout with Node.js `>=24 <25` and pnpm `11.11.0`:
+Run the full gate from a clean `main` checkout with Node.js `>=24 <25` and pnpm `11.15.1`:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -80,7 +80,7 @@ When validating auth/session and preference-token fix-forward work, use the same
 
 ```bash
 nvm use 24.18.0
-pnpm --version # 11.11.0
+pnpm --version # 11.15.1
 pnpm install --frozen-lockfile
 pnpm run check:fast
 pnpm exec nx run @app/backend-common-bootstrap:test
@@ -122,7 +122,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 
 `pnpm run tooling:static-check` is the deterministic static gate for repo operational tooling. It runs `node --check` over `packages/tooling/bin/**/*.mjs` and `packages/tooling/src/commands/**/*.ts`, performs safe CLI import-smoke checks for help-only commands, and verifies root/package tooling script path references. It does not execute destructive, deploy, Docker, or runtime-heavy scripts. The root `check:fast` and `check` aggregates include it before broader lint/typecheck/test gates.
 
-`pnpm run db:migrations:rollback-check` (also exposed as `pnpm run test:migrations:rollback`) is the real rollback validation command. It starts disposable PostgreSQL through Testcontainers, runs auth migrations up/down/up, and requires Docker/Testcontainers. Keep it out of non-runtime PR jobs that cannot provide Docker, but run it from Docker-capable ops/scheduled CI or by configuring `QA_MIGRATION_ROLLBACK_COMMAND=pnpm run db:migrations:rollback-check` for the runtime ops gate. A synthetic world-class fallback must not be treated as real rollback evidence.
+`pnpm run db:migrations:rollback-check` is the real rollback validation command. It starts disposable PostgreSQL through Testcontainers, runs auth migrations up/down/up, and requires Docker/Testcontainers. Keep it out of non-runtime PR jobs that cannot provide Docker, but run it from Docker-capable ops/scheduled CI or by configuring `QA_MIGRATION_ROLLBACK_COMMAND=pnpm run db:migrations:rollback-check` for the runtime ops gate. A synthetic world-class fallback must not be treated as real rollback evidence.
 
 ## Script map
 
@@ -130,7 +130,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 - `pnpm run check`: full aggregate for formatting, tooling static validation, migrations, contracts, QA presets, lint, typecheck, and unit tests.
 - CI `Non-runtime validation gates`: focused PR/push job that runs `onboarding:verify`, `db:migrations:check`, `lib:configs:check`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, and `test:property` after `ci:pr` and lockfile installation.
 - `pnpm run tooling:static-check`: deterministic static syntax/import/reference validation for repo tooling scripts without running destructive or runtime-heavy commands.
-- `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation; also reachable through `pnpm run test:migrations:rollback`.
+- `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation.
 - `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.
 - `node scripts/validate-helm-rate-limit-config.mjs`: focused Helm values and ConfigMap assertions for Redis-backed API rate limiting.
 - `pnpm run test:coverage`: unit/component coverage gate.

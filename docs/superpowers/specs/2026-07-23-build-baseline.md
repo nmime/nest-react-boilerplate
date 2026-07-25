@@ -21,10 +21,10 @@ BuildKit: v0.29.0 (OrbStack `orbstack` builder, docker driver).
 ## Method
 
 1. Built the shared `workspace` target once (`docker buildx build --target
-   workspace --build-arg PNPM_VERSION=11.11.0 -t nrb-baseline/workspace -f
-   Dockerfile .`) to warm the dependency-install layer that CI already shares
+workspace --build-arg PNPM_VERSION=11.11.0 -t nrb-baseline/workspace -f
+Dockerfile .`) to warm the dependency-install layer that CI already shares
    across image builds — **73.4s**, matching `docker buildx history` (`1m
-   17s`).
+17s`).
 2. Built two backend images that share the same library graph
    (`auth-app-api`, `user-app-api`) against that warm workspace, each timed
    end-to-end with `date +%s` deltas per the brief.
@@ -39,30 +39,30 @@ BuildKit: v0.29.0 (OrbStack `orbstack` builder, docker driver).
    legitimately warm `workspace` layer, two corrections were applied before
    timing:
    - `docker buildx prune --filter type=exec.cachemount -f` — clears BuildKit
-     cache *mounts* only (the Nx local compute cache at `/workspace/.nx/cache`
+     cache _mounts_ only (the Nx local compute cache at `/workspace/.nx/cache`
      mounted by the `builder` stage), leaving the regular layer cache
      (including the warm `workspace` stage) untouched.
    - `--no-cache-filter builder,backend-deps,backend` on the two timed builds
      — forces those stages' `RUN` instructions to actually execute instead of
      reusing a matching layer from the earlier interrupted attempt; the
      `workspace` stage (not in the filter) still serves from cache.
-   Both timed builds were confirmed genuine by inspecting their logs: Nx
-   reported **`Cache: 0/30 hit (0%)`** (auth-app-api) and **`Cache: 0/29 hit
-   (0%)`** (user-app-api) — every shared-lib task actually recompiled, not
-   replayed from Nx's own cache. This mirrors real CI: per finding #7 in
-   `docs/superpowers/specs/2026-07-23-build-optimization-all-shapes-design.md`,
-   the Nx cache lives in a BuildKit cache *mount* that the project's
-   `cache-to: type=gha` strategy does not export, so each image build's
-   runner starts with that mount cold — exactly the state this measurement
-   reproduces locally.
+     Both timed builds were confirmed genuine by inspecting their logs: Nx
+     reported **`Cache: 0/30 hit (0%)`** (auth-app-api) and **`Cache: 0/29 hit
+(0%)`** (user-app-api) — every shared-lib task actually recompiled, not
+     replayed from Nx's own cache. This mirrors real CI: per finding #7 in
+     `docs/superpowers/specs/2026-07-23-build-optimization-all-shapes-design.md`,
+     the Nx cache lives in a BuildKit cache _mount_ that the project's
+     `cache-to: type=gha` strategy does not export, so each image build's
+     runner starts with that mount cold — exactly the state this measurement
+     reproduces locally.
 
 ## Results
 
-| image | build time, warm workspace (s) | image size |
-|---|---|---|
-| `nrb-baseline/workspace` (prime, one-time) | 73 | 5.51GB |
-| `nrb-baseline/auth-app-api` | 75 | 672MB |
-| `nrb-baseline/user-app-api` | 45 | 420MB |
+| image                                      | build time, warm workspace (s) | image size |
+| ------------------------------------------ | ------------------------------ | ---------- |
+| `nrb-baseline/workspace` (prime, one-time) | 73                             | 5.51GB     |
+| `nrb-baseline/auth-app-api`                | 75                             | 672MB      |
+| `nrb-baseline/user-app-api`                | 45                             | 420MB      |
 
 Raw command output:
 
@@ -133,7 +133,7 @@ not of whether that node was a cache hit.
 
 ### Fallback note: `--set '*.no-cache-filter=...'` is not a supported bake attribute
 
-The brief's `--no-cache-filter` `--set` was not *rejected* with an error in
+The brief's `--no-cache-filter` `--set` was not _rejected_ with an error in
 its plain `key=value` form — it was silently accepted and had no effect
 (confirmed: absent from `docker buildx bake --print` output; the indexed
 form `--set 'target.no-cache-filter[0]=builder'` fails outright with
@@ -154,6 +154,7 @@ To get a real, comparable "after" number without the unsupported
 also evict the deliberately-warm `workspace` layer, breaking the
 apples-to-apples setup), two corrections were applied, mirroring Task 1's
 method:
+
 - `docker buildx prune --filter type=exec.cachemount -f` — clears the Nx
   local compute cache mount (same as Task 1).
 - Reordered the (semantically identical) arg value to
@@ -188,14 +189,14 @@ per-image "before" builds.
 
 ### Results
 
-| | before (Task 1) | after (Task 4, Option A) |
-|---|---|---|
-| images built | 2, separately | 2, together in one bake |
-| compiles | 2 (once per image) | **1** (shared `builder` node) |
-| `nx run-many` invocations (grep proof) | 2 (one per `docker build`) | **1** |
-| gross Nx tasks run | 30 + 29 = 59 | 33 (deduplicated union) |
-| Nx cache hit | 0/30, 0/29 (0%) | 0/33 (0%) — genuine, comparable |
-| wall-clock | 75s + 45s = **120s** | **99s** |
+|                                        | before (Task 1)            | after (Task 4, Option A)        |
+| -------------------------------------- | -------------------------- | ------------------------------- |
+| images built                           | 2, separately              | 2, together in one bake         |
+| compiles                               | 2 (once per image)         | **1** (shared `builder` node)   |
+| `nx run-many` invocations (grep proof) | 2 (one per `docker build`) | **1**                           |
+| gross Nx tasks run                     | 30 + 29 = 59               | 33 (deduplicated union)         |
+| Nx cache hit                           | 0/30, 0/29 (0%)            | 0/33 (0%) — genuine, comparable |
+| wall-clock                             | 75s + 45s = **120s**       | **99s**                         |
 
 **Delta: 120s to 99s, a 21s / 17.5% reduction** on this narrowed two-app
 scope — even though the 99s still pays for two separate `backend-deps`

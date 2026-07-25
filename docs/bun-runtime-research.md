@@ -8,7 +8,7 @@
 ## Decision
 
 The repository supports Bun 1.3.14 as an alternative JavaScript runtime for a
-tested compatibility contract. Node.js 24 and pnpm 11.11.0 remain the canonical
+tested compatibility contract. Node.js 24 and pnpm 11.15.1 remain the canonical
 dependency-resolution, coverage, CI baseline, and deployment toolchain.
 
 The supported lane is pinned in `.bun-version` and runs locally and in CI with:
@@ -173,7 +173,7 @@ support remains partial; passing a few HTTP requests is not sufficient proof.
 
 ### Phase 0: supported alternative Bun runtime lane — implemented
 
-Node 24 and pnpm 11.11.0 remain canonical. The repository now includes:
+Node 24 and pnpm 11.15.1 remain canonical. The repository now includes:
 
 - the exact Bun 1.3.14 pin in `.bun-version`;
 - the stable `pnpm run bun:check` command, which forces Nx and child JavaScript

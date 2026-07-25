@@ -17,7 +17,9 @@ const { useUserPreferenceControls } = await import('./use-user-preference-contro
 
 const createWrapper = () => {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
-  return ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
 };
 
 describe('useUserPreferenceControls', () => {

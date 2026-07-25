@@ -9,6 +9,8 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
-  nest-react-boilerplate-dashboard.json: |-
-{{ .Files.Get "dashboards/nest-react-boilerplate.json" | indent 4 }}
+  {{- range $path, $bytes := .Files.Glob "dashboards/*.json" }}
+  {{ base $path }}: |-
+{{ $.Files.Get $path | indent 4 }}
+  {{- end }}
 {{- end }}

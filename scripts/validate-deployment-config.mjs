@@ -670,11 +670,7 @@ if (validateHelmStatic) {
   }
   has(releaseImagePlan, "'site-runtime'", 'release image plan uses the actual Vike runtime Docker target');
   has(releaseWorkflow, 'image-plan', 'release workflow selects affected images before build');
-  has(
-    releaseWorkflow,
-    'workspace-cache',
-    'release workflow primes a shared dependency cache before the bake build',
-  );
+  has(releaseWorkflow, 'workspace-cache', 'release workflow primes a shared dependency cache before the bake build');
   has(
     releaseWorkflow,
     'scope=release-workspace',

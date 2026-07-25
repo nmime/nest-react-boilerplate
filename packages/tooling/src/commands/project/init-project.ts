@@ -30,8 +30,8 @@ const SKIP_DIRS = new Set([
   "tmp", "playwright-report", "test-results",
 ]);
 const TEXT_EXTENSIONS = new Set([
-  "", ".cjs", ".css", ".html", ".js", ".json", ".md",
-  ".mjs", ".mts", ".ts", ".tsx", ".txt", ".yaml", ".yml",
+  "", ".caddy", ".cjs", ".conf", ".css", ".html", ".js", ".json", ".md",
+  ".mjs", ".mts", ".sh", ".tpl", ".ts", ".tsx", ".txt", ".yaml", ".yml",
 ]);
 
 // ---------------------------------------------------------------------------
@@ -162,7 +162,11 @@ function* walk(dir: string): Generator<string> {
     else if (stat.isFile()) {
       const dot = path.lastIndexOf(".");
       const name = basename(path);
-      const isEnvironmentExample = name.startsWith(".env.") && name.endsWith(".example");
+      // Both `.env.<mode>.example` (root) and `<name>.env.example` (single-server
+      // deploy templates) are template scaffolds and must be rewritten; real env
+      // files (`.env`, `.env.production`) never end in `.example` so stay untouched.
+      const isEnvironmentExample =
+        name.endsWith(".example") && (name.startsWith(".env.") || name.endsWith(".env.example"));
       if (isEnvironmentExample || TEXT_EXTENSIONS.has(dot === -1 ? "" : path.slice(dot))) yield path;
     }
   }

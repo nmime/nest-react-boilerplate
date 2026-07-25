@@ -4,7 +4,7 @@ ARG TARGETPLATFORM
 ARG TARGETARCH
 
 ARG NODE_VERSION=24.18.0-alpine
-ARG PNPM_VERSION=11.11.0
+ARG PNPM_VERSION=11.15.1
 
 FROM node:${NODE_VERSION} AS workspace
 ARG PNPM_VERSION
@@ -172,6 +172,14 @@ USER root
 RUN apk add --no-cache wget
 COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
+# Per-deployment runtime config: the nginx entrypoint runs /docker-entrypoint.d/
+# hooks (as uid 101) before starting, so flags come from the container
+# environment instead of the Vite build. Only runtime-config.js is made writable
+# by the runtime user — the rest of the bundle stays immutable.
+COPY docker/frontend-runtime-config.sh /docker-entrypoint.d/40-frontend-runtime-config.sh
+RUN chmod +x /docker-entrypoint.d/40-frontend-runtime-config.sh \
+  && touch /usr/share/nginx/html/runtime-config.js \
+  && chown 101:101 /usr/share/nginx/html/runtime-config.js
 USER 101
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

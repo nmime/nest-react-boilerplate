@@ -52,6 +52,18 @@ function createFixture(): string {
     "https://example.com/problems#resource-not-found\n",
   );
   writeFileSync(join(root, ".env"), "PRIVATE_URL=https://example.com\n");
+  writeFileSync(
+    join(root, "bootstrap.sh"),
+    "#!/usr/bin/env bash\nREPOSITORY_URL=https://github.com/your-github-org/nest-react-boilerplate.git\n",
+  );
+  writeFileSync(
+    join(root, "server.env.example"),
+    "PUBLIC_DOMAIN=example.com\nIMAGE_REGISTRY=ghcr.io/your-github-org/nest-react-boilerplate\n",
+  );
+  writeFileSync(
+    join(root, "spa.conf"),
+    'add_header Content-Security-Policy "connect-src https://auth-app-api.example.com";\n',
+  );
   execFileSync("git", ["init", "--quiet"], { cwd: root });
   return root;
 }
@@ -173,6 +185,34 @@ describe("project init", () => {
         name: string;
       };
       assert.equal(manifest.name, "acme-app");
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
+  });
+
+  it("rewrites shell scripts, nginx conf, and *.env.example deployment templates", () => {
+    const root = createFixture();
+    try {
+      execFileSync(
+        process.execPath,
+        [runner, command, "--name", "Acme App", "--domain", "acme.example", "--owner", "acme-org", "--force"],
+        { cwd: root, encoding: "utf8" },
+      );
+      assert.equal(
+        readFileSync(join(root, "bootstrap.sh"), "utf8"),
+        "#!/usr/bin/env bash\nREPOSITORY_URL=https://github.com/acme-org/acme-app.git\n",
+        "single-server bootstrap.sh must be re-pointed at the adopter's repository",
+      );
+      assert.equal(
+        readFileSync(join(root, "server.env.example"), "utf8"),
+        "PUBLIC_DOMAIN=acme.example\nIMAGE_REGISTRY=ghcr.io/acme-org/acme-app\n",
+        "*.env.example deployment templates must be rewritten like .env.*.example files",
+      );
+      assert.equal(
+        readFileSync(join(root, "spa.conf"), "utf8"),
+        'add_header Content-Security-Policy "connect-src https://auth-app-api.acme.example";\n',
+        "nginx .conf CSP hosts must be rewritten to the product domain",
+      );
     } finally {
       rmSync(root, { force: true, recursive: true });
     }

@@ -16,7 +16,7 @@ env:
   CI: 'true'
   NX_DAEMON: 'false'
   NODE_VERSION_FILE: .nvmrc
-  PNPM_VERSION: 11.11.0
+  PNPM_VERSION: 11.15.1
 
 jobs:
   visual-regression-matrix:

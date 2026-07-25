@@ -1,5 +1,7 @@
 # @app/frontend-feature-shared-preferences
 
+## Purpose
+
 Auth-session preference primitives shared by **every** frontend that talks to
 `/auth/me` — the user web `app`, the native `mobile` app, and the `admin`
 console:

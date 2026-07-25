@@ -1,5 +1,7 @@
 # @app/frontend-feature-user-social-auth
 
+## Purpose
+
 Platform-neutral social-auth (Telegram Mini App / Telegram OIDC / Discord)
 domain logic shared by the web `app` and native `mobile` frontends: provider
 types + identity normalization, the observable `ProviderIdentitiesModel`, the

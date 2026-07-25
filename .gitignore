@@ -95,3 +95,6 @@ backups/
 
 .env.production
 docker/secrets/
+# Generated runtime secrets emitted for non-container runtimes (PM2).
+.env.pm2-secrets
+*-secrets.env

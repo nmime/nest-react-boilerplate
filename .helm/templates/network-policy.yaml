@@ -44,6 +44,20 @@ spec:
       ports:
         - port: http
           protocol: TCP
+    {{- if .Values.networkPolicy.externalEgress.enabled }}
+    - to:
+        - ipBlock:
+            cidr: {{ .Values.networkPolicy.externalEgress.cidr }}
+            except:
+              {{- range .Values.networkPolicy.externalEgress.except }}
+              - {{ . }}
+              {{- end }}
+      ports:
+        {{- range .Values.networkPolicy.externalEgress.ports }}
+        - port: {{ . }}
+          protocol: TCP
+        {{- end }}
+    {{- end }}
 {{- range $name, $app := .Values.apps }}
 {{- if $app.enabled }}
 ---
@@ -97,6 +111,20 @@ spec:
           protocol: TCP
         - port: 443
           protocol: TCP
+    {{- if $.Values.networkPolicy.externalEgress.enabled }}
+    - to:
+        - ipBlock:
+            cidr: {{ $.Values.networkPolicy.externalEgress.cidr }}
+            except:
+              {{- range $.Values.networkPolicy.externalEgress.except }}
+              - {{ . }}
+              {{- end }}
+      ports:
+        {{- range $.Values.networkPolicy.externalEgress.ports }}
+        - port: {{ . }}
+          protocol: TCP
+        {{- end }}
+    {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

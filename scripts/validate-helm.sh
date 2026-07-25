@@ -80,4 +80,7 @@ fi
 echo "==> kubeconform"
 "${KUBECONFORM}" -strict -ignore-missing-schemas "${TMP_DIR}/production.yaml"
 
+echo "==> helm render assertions (node --test)"
+node --test "${ROOT_DIR}/scripts/helm-template.spec.mjs"
+
 echo "Helm validation passed. Rendered manifests are in ${TMP_DIR} until script exit."

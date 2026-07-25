@@ -96,7 +96,7 @@ jobs:
             echo "::error::No release images were found for $IMAGE_TAG"
             exit 1
           fi
-          python3 scripts/update-deploy-tags.py "$RELEASE_SHA" "${updates[@]}"
+          node scripts/update-deploy-tags.mjs "$RELEASE_SHA" "${updates[@]}"
           (IFS=,; echo "images=${promoted[*]}") >> "$GITHUB_OUTPUT"
           echo "count=${#promoted[@]}" >> "$GITHUB_OUTPUT"
 

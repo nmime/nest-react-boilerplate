@@ -35,7 +35,10 @@ describe('social-auth-api', () => {
     await expect(api.requestDiscordAuthorization(client as never, { intent: 'login' })).resolves.toEqual({
       authorizationUrl: 'https://d',
     });
-    expect(client.api.authControllerDiscordAuthorizationRequest).toHaveBeenCalledWith({ intent: 'login' }, client.requestOptions);
+    expect(client.api.authControllerDiscordAuthorizationRequest).toHaveBeenCalledWith(
+      { intent: 'login' },
+      client.requestOptions,
+    );
   });
 
   it('establishes then submits a Telegram Mini App session', async () => {
@@ -60,8 +63,12 @@ describe('social-auth-api', () => {
 
   it('submits the OIDC session, discord callback, identities, and unlink', async () => {
     const client = makeClient();
-    await expect(api.submitTelegramOidcSession(client as never, { intent: 'login' })).resolves.toEqual({ status: 'authenticated' });
-    await expect(api.submitDiscordCallback(client as never, { code: 'c', state: 's' } as never)).resolves.toEqual({ status: 'linked' });
+    await expect(api.submitTelegramOidcSession(client as never, { intent: 'login' })).resolves.toEqual({
+      status: 'authenticated',
+    });
+    await expect(api.submitDiscordCallback(client as never, { code: 'c', state: 's' } as never)).resolves.toEqual({
+      status: 'linked',
+    });
     await expect(api.fetchProviderIdentities(client as never)).resolves.toEqual({ identities: [] });
     await expect(api.unlinkProviderIdentity(client as never, 'id-1')).resolves.toEqual({ ok: true });
     expect(client.api.authControllerUnlinkProviderIdentity).toHaveBeenCalledWith('id-1', client.requestOptions);

@@ -1,5 +1,47 @@
 export type FrontendEnv = Readonly<Record<string, boolean | string | undefined>>;
 
+/**
+ * Per-deployment configuration injected before the app boots (see
+ * `public/runtime-config.js`, rewritten at container start). It lets one
+ * immutable image serve many environments, so feature flags no longer have to be
+ * baked in at Vite build time.
+ */
+export type FrontendRuntimeConfig = Readonly<Record<string, boolean | string | undefined>>;
+
+const runtimeConfigGlobalKey = '__APP_RUNTIME_CONFIG__';
+
+export const getFrontendRuntimeConfig = (): FrontendRuntimeConfig => {
+  const candidate = (globalThis as Record<string, unknown>)[runtimeConfigGlobalKey];
+
+  return typeof candidate === 'object' && candidate !== null ? (candidate as FrontendRuntimeConfig) : {};
+};
+
+const parseBooleanFlag = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'false') {
+    return false;
+  }
+
+  return undefined;
+};
+
+/**
+ * Resolve a boolean feature flag, preferring the runtime value over the value
+ * baked in at build time. Unset/unparsable runtime values fall through, so a
+ * deployment can only ever override a flag deliberately.
+ */
+export const resolveFeatureFlag = (runtimeValue: unknown, buildValue: unknown): boolean =>
+  parseBooleanFlag(runtimeValue) ?? parseBooleanFlag(buildValue) ?? false;
+
 export const frontendApiBaseUrlKeys = [
   'VITE_AUTH_API_BASE_URL',
   'VITE_USER_API_BASE_URL',

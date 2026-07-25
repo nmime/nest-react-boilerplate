@@ -29,7 +29,9 @@ const fail = () => ({ error: { detail: 'nope' }, response: new Response(null, { 
 
 const createWrapper = () => {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
-  return ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
 };
 
 beforeEach(() => {

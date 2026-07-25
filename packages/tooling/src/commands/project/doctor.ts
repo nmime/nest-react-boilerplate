@@ -79,11 +79,11 @@ export function checkJavaScriptRuntime(
 }
 
 export function checkPnpmVersion(version: string): DoctorCheck {
-  if (version !== "11.11.0") {
+  if (version !== "11.15.1") {
     return {
       name: "pnpm",
       status: "fail",
-      message: `pnpm ${version} — repository requires exactly 11.11.0`,
+      message: `pnpm ${version} — repository requires exactly 11.15.1`,
     };
   }
   return { name: "pnpm", status: "pass", message: `pnpm ${version}` };
@@ -98,7 +98,7 @@ function checkPnpm(runtime: JavaScriptRuntimeInfo = detectJavaScriptRuntime()): 
     return {
       name: "pnpm",
       status: "fail",
-      message: "pnpm not found — install pnpm 11.11.0 through Corepack",
+      message: "pnpm not found — install pnpm 11.15.1 through Corepack",
     };
   }
 }

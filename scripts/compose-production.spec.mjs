@@ -181,6 +181,60 @@ test('wires optional profiles into both services and edge routes', () => {
   );
 });
 
+test('edge routes ignore non-edge (notification) profiles that have no Caddy fragment', () => {
+  const invocation = buildComposeInvocation(
+    ['config', '--env-file=.env.production.example', '--profile=discord,notification-consumer,notification-scheduler'],
+    {},
+  );
+  // notification-* run as background workers; only discord/telegram have Caddy
+  // site/route fragments, so the edge token must not name a nonexistent fragment.
+  assert.equal(invocation.env.EDGE_OPTIONAL_ROUTES, 'discord');
+});
+
+test('edge routes fall back to default when only non-edge profiles are set', () => {
+  const invocation = buildComposeInvocation(
+    ['config', '--env-file=.env.production.example', '--profile=notification-consumer'],
+    {},
+  );
+  assert.equal(invocation.env.EDGE_OPTIONAL_ROUTES, 'default');
+});
+
+test('COMPOSE_IMAGE_SOURCE=local adds the build overlay and builds on up', () => {
+  const invocation = buildComposeInvocation(['up', '--env-file=.env.production.example', '--images=local'], {});
+  assert.ok(invocation.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(invocation.args.includes('--build'));
+  assert.equal(invocation.imageSource, 'local');
+});
+
+test('image source defaults to registry and never becomes a required env key', () => {
+  // Existing .env.production files predate COMPOSE_IMAGE_SOURCE; they must keep working.
+  const invocation = buildComposeInvocation(['up', '--env-file=.env.production.example'], {});
+  assert.equal(invocation.imageSource, 'registry');
+  assert.ok(!invocation.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(invocation.args.includes('--no-build'));
+});
+
+test('the build action still loads the build overlay regardless of image source', () => {
+  // package.json docker:prod:build passes no flags and is a doc-pinned CI gate.
+  const invocation = buildComposeInvocation(['build', '--env-file=.env.production.example'], {});
+  assert.ok(invocation.files.includes('docker/docker-compose.prod.build.yml'));
+});
+
+test('env-provided image source is honoured without a CLI flag', () => {
+  const invocation = buildComposeInvocation(['config', '--env-file=.env.production.example'], {
+    COMPOSE_IMAGE_SOURCE: 'local',
+  });
+  assert.equal(invocation.imageSource, 'local');
+  assert.ok(invocation.files.includes('docker/docker-compose.prod.build.yml'));
+});
+
+test('rejects an unknown image source', () => {
+  assert.throws(
+    () => buildComposeInvocation(['config', '--env-file=.env.production.example', '--images=ftp'], {}),
+    /COMPOSE_IMAGE_SOURCE/u,
+  );
+});
+
 test('rejects TLS ownership mismatches', () => {
   assert.throws(
     () =>

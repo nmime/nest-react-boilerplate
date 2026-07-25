@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { designColors, designRadii, designSpacing } from '@app/frontend-ui-native';
 import { useI18n, type Locale } from '@app/frontend-runtime';
 
-import { useMobileRuntime } from '../../../shared/mobile-runtime';
+import { useMobileRuntime } from '../../../shared';
 import { mobileCapabilityCards, mobileLocaleOptions } from '../model/mobile-home.model';
 
 const colors = designColors.light;

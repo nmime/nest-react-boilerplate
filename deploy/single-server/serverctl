@@ -34,16 +34,23 @@ Commands:
   init                 Create protected configuration and core secrets once.
   provision            Idempotently install/upgrade host prerequisites.
   apply                Provision, validate, deploy, obtain TLS, and verify.
-  deploy               Validate and converge Compose, TLS, and Nginx.
-  update               Fast-forward code and deploy an optional immutable tag.
-  rollback             Deploy the previously successful immutable image tag.
+  deploy               Validate and converge the runtime, TLS, and Nginx.
+  update               Fast-forward code and redeploy.
+  rollback             Redeploy the previously successful immutable image tag.
   renew                Renew due certificates and reload Nginx.
   doctor               Validate configuration, DNS, services, TLS, and binds.
-  status               Show runtime versions, units, containers, and TLS dates.
-  logs [service]       Follow production Compose logs (optionally one service).
+  status               Show runtime versions, units, processes, and TLS dates.
+  logs [service]       Follow production logs (optionally one service).
+
+Runtimes (server.env RUNTIME_MODE):
+  compose              Docker Compose images under systemd. Image provenance comes
+                       from COMPOSE_IMAGE_SOURCE in .env.production: "registry"
+                       pulls immutable sha-<git-sha> tags, "local" builds them here.
+  native              PM2-supervised Node processes, host PostgreSQL/Redis, and the
+                       built SPAs served from disk. No Docker at all.
 
 Options:
-  --image-tag sha-...  Immutable image tag for update.
+  --image-tag sha-...  Immutable image tag for update (compose + registry only).
   --system             Also rerun provision during update.
   --yes                Confirm the database-compatible rollback warning.
 
@@ -122,6 +129,8 @@ load_server_environment() {
   NODE_VERSION="$(environment_value NODE_VERSION "${SERVER_ENV}")"
   PNPM_VERSION="$(environment_value PNPM_VERSION "${SERVER_ENV}")"
   COREPACK_VERSION="$(environment_value COREPACK_VERSION "${SERVER_ENV}")"
+  PM2_VERSION="$(environment_value PM2_VERSION "${SERVER_ENV}")"
+  RUNTIME_MODE="$(environment_value RUNTIME_MODE "${SERVER_ENV}")"
   DEPLOY_USER="$(environment_value DEPLOY_USER "${SERVER_ENV}")"
   APP_ROOT="$(environment_value APP_ROOT "${SERVER_ENV}")"
   STATE_ROOT="$(environment_value STATE_ROOT "${SERVER_ENV}")"
@@ -149,6 +158,9 @@ load_server_environment() {
   : "${REPOSITORY_URL:?REPOSITORY_URL is required in ${SERVER_ENV}}"
   : "${REPOSITORY_BRANCH:=main}"
   : "${COREPACK_VERSION:=0.35.0}"
+  : "${PM2_VERSION:=6.0.13}"
+  # Hosts provisioned before the runtime axis existed keep their Compose behaviour.
+  : "${RUNTIME_MODE:=compose}"
   : "${ENABLE_UFW:=false}"
   : "${ENABLE_UNATTENDED_UPGRADES:=true}"
   : "${SSH_PORT:=22}"
@@ -162,6 +174,19 @@ load_server_environment() {
   [[ "${NODE_VERSION}" =~ ^24\.[0-9]+\.[0-9]+$ ]] || die 'NODE_VERSION must be an exact Node.js 24 release'
   [[ "${PNPM_VERSION}" =~ ^11\.[0-9]+\.[0-9]+$ ]] || die 'PNPM_VERSION must be an exact pnpm 11 release'
   [[ "${COREPACK_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die 'COREPACK_VERSION must be exact'
+  [[ "${PM2_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die 'PM2_VERSION must be exact'
+  [[ "${RUNTIME_MODE}" == 'compose' || "${RUNTIME_MODE}" == 'native' ]] || die 'RUNTIME_MODE must be compose or native'
+  # Image provenance lives with the rest of the Compose wiring, so there is exactly
+  # one source of truth for it and no second key to drift from.
+  IMAGE_SOURCE=''
+  [[ ! -f "${PRODUCTION_ENV}" ]] || IMAGE_SOURCE="$(environment_value COMPOSE_IMAGE_SOURCE "${PRODUCTION_ENV}")"
+  : "${IMAGE_SOURCE:=registry}"
+  [[ "${IMAGE_SOURCE}" == 'registry' || "${IMAGE_SOURCE}" == 'local' ]] || \
+    die 'COMPOSE_IMAGE_SOURCE must be registry or local'
+  if [[ "${RUNTIME_MODE}" == 'native' ]]; then
+    [[ "${IMAGE_SOURCE}" == 'registry' ]] || die 'RUNTIME_MODE=native builds no images; unset COMPOSE_IMAGE_SOURCE'
+    [[ -z "${IMAGE_TAG_OVERRIDE}" ]] || die 'RUNTIME_MODE=native has no image tags; --image-tag is not applicable'
+  fi
   [[ "${REPOSITORY_BRANCH}" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || die 'REPOSITORY_BRANCH is invalid'
   [[ "${ENABLE_UFW}" == 'true' || "${ENABLE_UFW}" == 'false' ]] || die 'ENABLE_UFW must be true or false'
   [[ "${ENABLE_UNATTENDED_UPGRADES}" == 'true' || "${ENABLE_UNATTENDED_UPGRADES}" == 'false' ]] || die 'ENABLE_UNATTENDED_UPGRADES must be true or false'
@@ -288,6 +313,27 @@ initialize() {
     upsert_environment_value "${PRODUCTION_ENV}" EXTERNAL_PROXY_PUBLIC_MODE per-app-domains
     upsert_environment_value "${PRODUCTION_ENV}" TRUST_PROXY true
     upsert_environment_value "${PRODUCTION_ENV}" VITE_API_BASE_URL_MODE same-origin
+    # The example targets Compose, whose service aliases (postgres, redis,
+    # otel-collector) cannot resolve on a native host. Read RUNTIME_MODE directly:
+    # init deliberately runs before load_server_environment.
+    if [[ "$(environment_value RUNTIME_MODE "${SERVER_ENV}")" == 'native' ]]; then
+      local app_root
+      app_root="$(environment_value APP_ROOT "${SERVER_ENV}")"
+      upsert_environment_value "${PRODUCTION_ENV}" COMPOSE_DATABASE_MODE native
+      upsert_environment_value "${PRODUCTION_ENV}" POSTGRES_HOST 127.0.0.1
+      upsert_environment_value "${PRODUCTION_ENV}" POSTGRES_USER nest_react_boilerplate
+      upsert_environment_value "${PRODUCTION_ENV}" POSTGRES_DB nest_react_boilerplate
+      upsert_environment_value "${PRODUCTION_ENV}" REDIS_URL redis://127.0.0.1:6379/0
+      upsert_environment_value "${PRODUCTION_ENV}" REDIS_HOSTS ''
+      # Nginx serves the built SPAs, so no SPA process exists to proxy to.
+      upsert_environment_value "${PRODUCTION_ENV}" EXTERNAL_PROXY_FRONTEND_MODE static
+      upsert_environment_value "${PRODUCTION_ENV}" FRONTEND_DIST_ROOT /srv/nest-react-boilerplate/frontend
+      # No host collector ships with the native runtime; opt in deliberately instead
+      # of failing every span export against an unresolvable container name.
+      upsert_environment_value "${PRODUCTION_ENV}" OTEL_SDK_DISABLED true
+      upsert_environment_value "${PRODUCTION_ENV}" OTEL_EXPORTER_OTLP_ENDPOINT ''
+      log "created ${PRODUCTION_ENV} for the native runtime (app root ${app_root})"
+    fi
     log "created ${PRODUCTION_ENV}"
   else
     require_protected_regular_file "${PRODUCTION_ENV}" 'production environment'
@@ -423,6 +469,53 @@ prepare_runtime_permissions() {
   done
 }
 
+resolve_deploy_home() {
+  local home
+  home="$(getent passwd "${DEPLOY_USER}" | cut -d: -f6)"
+  validate_absolute_path DEPLOY_USER_HOME "${home}"
+  printf '%s\n' "${home}"
+}
+
+pm2_unit_name() { printf 'pm2-%s\n' "${DEPLOY_USER}"; }
+
+# Where nginx reads the built SPAs from. Never inside APP_ROOT: that is 0750 and
+# owned by the deployment user, so www-data cannot traverse it, and rebuilding in
+# place would rewrite files under live traffic.
+frontend_web_root() {
+  local configured
+  configured="$(environment_value FRONTEND_DIST_ROOT)"
+  printf '%s\n' "${configured:-/srv/nest-react-boilerplate/frontend}"
+}
+
+provision_native_runtime() {
+  local home web_root
+  home="$(resolve_deploy_home)"
+  chmod 0750 "${home}"
+
+  # Pinned like corepack, and under /usr/local so a Node upgrade does not remove it.
+  if ! command -v pm2 >/dev/null 2>&1 || [[ "$(pm2 --version 2>/dev/null)" != "${PM2_VERSION}" ]]; then
+    npm_config_prefix=/usr/local npm install --global "pm2@${PM2_VERSION}"
+  fi
+
+  # Host data services, unless an external database owns them.
+  if [[ "$(environment_value COMPOSE_DATABASE_MODE)" == 'native' ]]; then
+    /usr/local/bin/node "${APP_ROOT}/scripts/native-datastores.mjs" install
+  fi
+
+  web_root="$(frontend_web_root)"
+  validate_dedicated_path FRONTEND_DIST_ROOT "${web_root}"
+  case "${web_root}" in
+    "${APP_ROOT}"|"${APP_ROOT}"/*) die 'FRONTEND_DIST_ROOT must be outside APP_ROOT so Nginx never reads the checkout' ;;
+  esac
+  install -d -o root -g root -m 0755 "${web_root}"
+
+  # PM2's own generator owns boot resurrection; a second hand-rolled unit would be a
+  # competing source of truth for the process list.
+  pm2 startup systemd -u "${DEPLOY_USER}" --hp "${home}" >/dev/null
+  systemctl enable "$(pm2_unit_name)" >/dev/null 2>&1 || true
+  log "native runtime ready: pm2 ${PM2_VERSION}, web root ${web_root}"
+}
+
 provision() {
   require_root
   load_server_environment
@@ -435,13 +528,15 @@ provision() {
     apt_install unattended-upgrades
     systemctl enable --now unattended-upgrades
   fi
-  install_docker
+  # Docker is a Compose-runtime dependency only. A native host neither installs it
+  # nor puts the deployment user in the docker group, which is root-equivalent.
+  [[ "${RUNTIME_MODE}" != 'compose' ]] || install_docker
   install_node
 
   if ! id "${DEPLOY_USER}" >/dev/null 2>&1; then
     useradd --create-home --shell /bin/bash "${DEPLOY_USER}"
   fi
-  usermod -aG docker "${DEPLOY_USER}"
+  [[ "${RUNTIME_MODE}" != 'compose' ]] || usermod -aG docker "${DEPLOY_USER}"
   install -d -o "${DEPLOY_USER}" -g "${DEPLOY_USER}" -m 0750 "${APP_ROOT}"
   chown -R "${DEPLOY_USER}:${DEPLOY_USER}" "${APP_ROOT}"
   install -d -o root -g root -m 0700 "${STATE_ROOT}"
@@ -449,7 +544,10 @@ provision() {
   install -d -o www-data -g www-data -m 0755 /var/www/certbot
   rm -f /etc/nginx/sites-enabled/default
   install_renewal_hook
-  systemctl enable --now docker nginx certbot.timer
+  local units=(nginx certbot.timer)
+  [[ "${RUNTIME_MODE}" != 'compose' ]] || units=(docker "${units[@]}")
+  systemctl enable --now "${units[@]}"
+  [[ "${RUNTIME_MODE}" != 'native' ]] || provision_native_runtime
   install_firewall
   install_controller_wrapper
 
@@ -516,9 +614,14 @@ validate_configuration() {
   database_mode="$(environment_value COMPOSE_DATABASE_MODE)"
   configured_profiles=",$(environment_value COMPOSE_PROFILES),"
   public_domain="$(environment_value PUBLIC_DOMAIN)"
-  [[ "${image_tag}" =~ ^sha-[0-9a-f]{7,64}$ ]] || die 'IMAGE_TAG must be an immutable sha-<git-sha> tag'
-  [[ "${image_tag}" != 'sha-000000000000' ]] || die 'replace the placeholder IMAGE_TAG with a released immutable image tag'
-  [[ -n "${image_registry}" && "${image_registry}" != *your-github-org* ]] || die 'set IMAGE_REGISTRY to the real image repository'
+  # An immutable published tag is the deployment identity only when images are pulled.
+  # Locally built images carry the same tag without a registry, and a native host has
+  # no images at all.
+  if [[ "${RUNTIME_MODE}" == 'compose' && "${IMAGE_SOURCE}" == 'registry' ]]; then
+    [[ "${image_tag}" =~ ^sha-[0-9a-f]{7,64}$ ]] || die 'IMAGE_TAG must be an immutable sha-<git-sha> tag'
+    [[ "${image_tag}" != 'sha-000000000000' ]] || die 'replace the placeholder IMAGE_TAG with a released immutable image tag'
+    [[ -n "${image_registry}" && "${image_registry}" != *your-github-org* ]] || die 'set IMAGE_REGISTRY to the real image repository'
+  fi
   [[ "${public_domain}" != 'example.com' ]] || die 'replace the placeholder PUBLIC_DOMAIN before deployment'
   [[ "${CERTIFICATE_NAME:-}" != 'example.com' ]] || die 'replace the placeholder CERTIFICATE_NAME before deployment'
   if [[ "${CERTIFICATE_MODE}" != 'existing' ]]; then
@@ -555,17 +658,40 @@ validate_configuration() {
     esac
   fi
   validate_secret_file REDIS_PASSWORD_FILE
-  validate_secret_file GRAFANA_ADMIN_PASSWORD_FILE
+  # Grafana only exists as a Compose service, so a native host has no consumer for it.
+  [[ "${RUNTIME_MODE}" != 'compose' ]] || validate_secret_file GRAFANA_ADMIN_PASSWORD_FILE
   validate_generated_secret_contracts
   [[ "$(environment_value AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED)" == 'true' ]] || \
     die 'AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED must be true for the single-server production deployment'
-  if [[ "${database_mode}" == 'bundled-db' ]]; then
-    validate_secret_file POSTGRES_PASSWORD_FILE
-    validate_secret_minimum_length POSTGRES_PASSWORD_FILE 32
-  elif [[ "${database_mode}" == 'external-db' ]]; then
-    validate_secret_file DATABASE_URL_FILE
-  else
-    die 'COMPOSE_DATABASE_MODE must be bundled-db or external-db'
+  case "${database_mode}" in
+    bundled-db)
+      [[ "${RUNTIME_MODE}" == 'compose' ]] || die 'COMPOSE_DATABASE_MODE=bundled-db needs the compose runtime'
+      validate_secret_file POSTGRES_PASSWORD_FILE
+      validate_secret_minimum_length POSTGRES_PASSWORD_FILE 32
+      ;;
+    external-db) validate_secret_file DATABASE_URL_FILE ;;
+    native)
+      # PostgreSQL installed on this host: loopback-only, with a dedicated role. The
+      # provisioner refuses the superuser, so catching it here fails early instead.
+      [[ "${RUNTIME_MODE}" == 'native' ]] || die 'COMPOSE_DATABASE_MODE=native needs RUNTIME_MODE=native'
+      validate_secret_file POSTGRES_PASSWORD_FILE
+      validate_secret_minimum_length POSTGRES_PASSWORD_FILE 32
+      [[ "$(environment_value POSTGRES_USER)" != 'postgres' ]] || \
+        die 'POSTGRES_USER must be a dedicated non-superuser role for a host database'
+      ;;
+    *) die 'COMPOSE_DATABASE_MODE must be bundled-db, external-db, or native' ;;
+  esac
+  if [[ "${RUNTIME_MODE}" == 'native' ]]; then
+    # Nginx reads the published tree directly, so it must be a real path outside the
+    # deploy-user-owned checkout — otherwise every asset 403s and the renderer would
+    # silently point at ${APP_ROOT}/dist, which www-data cannot traverse.
+    local dist_root
+    dist_root="$(environment_value FRONTEND_DIST_ROOT)"
+    [[ -n "${dist_root}" ]] || die 'RUNTIME_MODE=native requires FRONTEND_DIST_ROOT in the production environment'
+    validate_dedicated_path FRONTEND_DIST_ROOT "${dist_root}"
+    case "${dist_root}" in
+      "${APP_ROOT}"|"${APP_ROOT}"/*) die 'FRONTEND_DIST_ROOT must be outside APP_ROOT so Nginx never reads the checkout' ;;
+    esac
   fi
   if [[ "${configured_profiles}" == *,telegram,* ]]; then
     validate_secret_file TELEGRAM_BOT_TOKEN_FILE
@@ -583,8 +709,17 @@ validate_configuration() {
     [[ "$(environment_value DISCORD_APPLICATION_ID)" != example-* ]] || die 'set DISCORD_APPLICATION_ID for the discord profile'
   fi
 
-  run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" config \
-    --env-file "${PRODUCTION_ENV}" --dry-run >/dev/null
+  if [[ "${RUNTIME_MODE}" == 'compose' ]]; then
+    run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" config \
+      --env-file "${PRODUCTION_ENV}" --dry-run >/dev/null
+  else
+    # The native equivalents: the process manifest is a real contract, and resolving
+    # the runtime environment proves every secret file and endpoint is usable before
+    # anything starts. `keys` prints names only, never values.
+    /usr/local/bin/node "${APP_ROOT}/scripts/validate-pm2-config.mjs" >/dev/null
+    /usr/local/bin/node "${APP_ROOT}/scripts/native-runtime-env.mjs" keys \
+      --production-env="${PRODUCTION_ENV}" >/dev/null
+  fi
 }
 
 render_nginx() {
@@ -674,10 +809,19 @@ ensure_certificate() {
 }
 
 install_compose_unit() {
-  local deploy_group deploy_home
+  local deploy_group deploy_home pull_line no_build
   deploy_group="$(id -gn "${DEPLOY_USER}")"
-  deploy_home="$(getent passwd "${DEPLOY_USER}" | cut -d: -f6)"
-  validate_absolute_path DEPLOY_USER_HOME "${deploy_home}"
+  deploy_home="$(resolve_deploy_home)"
+  # Registry provenance pulls immutable tags before starting and never builds.
+  # Local provenance has nothing to pull, and the wrapper adds --build itself — so
+  # passing --no-build too would make Compose reject the invocation outright.
+  if [[ "${IMAGE_SOURCE}" == 'registry' ]]; then
+    pull_line="ExecStartPre=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs pull --env-file=${PRODUCTION_ENV}"
+    no_build=' --no-build'
+  else
+    pull_line="# COMPOSE_IMAGE_SOURCE=local builds images on this host; nothing to pull."
+    no_build=''
+  fi
   cat >/etc/systemd/system/nest-react-boilerplate.service <<UNIT
 [Unit]
 Description=Nest React Boilerplate production Compose application
@@ -693,8 +837,8 @@ Group=${deploy_group}
 SupplementaryGroups=docker
 WorkingDirectory=${APP_ROOT}
 Environment="HOME=${deploy_home}"
-ExecStartPre=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs pull --env-file=${PRODUCTION_ENV}
-ExecStart=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs up --env-file=${PRODUCTION_ENV} -d --remove-orphans --wait --wait-timeout=300 --no-build
+${pull_line}
+ExecStart=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs up --env-file=${PRODUCTION_ENV} -d --remove-orphans --wait --wait-timeout=300${no_build}
 TimeoutStartSec=600
 
 [Install]
@@ -702,6 +846,67 @@ WantedBy=multi-user.target
 UNIT
   systemctl daemon-reload
   systemctl enable nest-react-boilerplate.service
+}
+
+# A host that switches runtimes must not keep the other runtime's boot unit enabled,
+# or a reboot starts a stack this controller no longer manages.
+disable_foreign_runtime_unit() {
+  if [[ "${RUNTIME_MODE}" == 'native' ]]; then
+    if systemctl list-unit-files nest-react-boilerplate.service >/dev/null 2>&1; then
+      systemctl disable --now nest-react-boilerplate.service >/dev/null 2>&1 || true
+    fi
+  else
+    local unit
+    unit="$(pm2_unit_name)"
+    if systemctl list-unit-files "${unit}.service" >/dev/null 2>&1; then
+      systemctl disable --now "${unit}" >/dev/null 2>&1 || true
+    fi
+  fi
+}
+
+# Build, publish, migrate, and (re)start the PM2 process tree.
+#
+# The ordered sequence itself lives in scripts/native-release.mjs, shared with
+# `pnpm deploy --preset=native`, so the two entry points cannot drift. Secrets reach
+# the processes through scripts/native-runtime-env.mjs, which dereferences the
+# protected *_FILE material into the child environment — never into argv or a file.
+release_native() {
+  local skip_migrations="${1:-false}" home web_root entry
+  local flags=() start_args=()
+  home="$(resolve_deploy_home)"
+  web_root="$(frontend_web_root)"
+
+  # Which optional processes this topology needs, derived from the rendered edge
+  # rather than restated: the SSR site is a process even when SPAs come from disk.
+  local profiles
+  profiles="$(environment_value COMPOSE_PROFILES)"
+  [[ "${profiles}" != *discord* ]] || flags+=(--pm2-flag=PM2_ENABLE_DISCORD)
+  [[ "${profiles}" != *telegram* ]] || flags+=(--pm2-flag=PM2_ENABLE_TELEGRAM)
+  [[ "${profiles}" != *notification-* ]] || flags+=(--pm2-flag=PM2_ENABLE_NOTIFICATIONS)
+  while IFS= read -r entry; do
+    [[ "${entry%%=*}" != 'SITE_APP_PORT' ]] || flags+=(--pm2-flag=PM2_ENABLE_SITE)
+  done < <(expected_ports)
+
+  # Install and build as the deployment user, inside its own checkout.
+  run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/native-release.mjs" build \
+    --production-env="${PRODUCTION_ENV}" --app-root="${APP_ROOT}"
+
+  # Publish to a root-owned web root: Nginx cannot traverse APP_ROOT, and building in
+  # place would rewrite files while they are being served.
+  install -d -o root -g root -m 0755 "${web_root}"
+  rsync -a --delete --chmod=D755,F644 "${APP_ROOT}/dist/apps/frontend/" "${web_root}/"
+
+  start_args=(--production-env="${PRODUCTION_ENV}" --app-root="${APP_ROOT}" "${flags[@]}")
+  [[ "${skip_migrations}" != 'true' ]] || start_args+=(--skip-migrations)
+  # `9>&-` closes the controller's flock before PM2 daemonizes: an inherited lock fd
+  # in the detached daemon would make every later operation report a running one.
+  run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/native-release.mjs" start \
+    "${start_args[@]}" 9>&-
+
+  # pm2 save persists the fully resolved environment, so the dump is as sensitive as
+  # the secret files it came from.
+  chmod 700 "${home}/.pm2" 2>/dev/null || true
+  chmod 600 "${home}/.pm2/dump.pm2" 2>/dev/null || true
 }
 
 wait_for_https() {
@@ -736,20 +941,63 @@ record_successful_tag() {
   write_state_value "${STATE_ROOT}/current-image-tag" "${tag}"
 }
 
+# A native release has no image artifact, so the deployed commit is its identity.
+record_successful_commit() {
+  local commit previous=''
+  commit="$(run_as_deploy git -C "${APP_ROOT}" rev-parse HEAD)"
+  [[ ! -f "${STATE_ROOT}/current-commit" ]] || previous="$(<"${STATE_ROOT}/current-commit")"
+  if [[ -n "${previous}" && "${previous}" != "${commit}" ]]; then
+    write_state_value "${STATE_ROOT}/previous-commit" "${previous}"
+  fi
+  write_state_value "${STATE_ROOT}/current-commit" "${commit}"
+}
+
+record_successful_release() {
+  if [[ "${RUNTIME_MODE}" == 'compose' ]]; then record_successful_tag; else record_successful_commit; fi
+}
+
+deployed_identity() {
+  if [[ "${RUNTIME_MODE}" == 'compose' ]]; then
+    printf '%s (images: %s)\n' "$(environment_value IMAGE_TAG)" "${IMAGE_SOURCE}"
+  else
+    printf 'commit %s\n' "$(run_as_deploy git -C "${APP_ROOT}" rev-parse --short HEAD)"
+  fi
+}
+
 deploy() {
+  local skip_migrations="${1:-false}"
   require_root
   load_server_environment
   ensure_secret_material
   prepare_runtime_permissions
   validate_configuration
-  if certificate_covers_domains; then render_nginx https; else render_nginx http; fi
-  install_compose_unit
-  systemctl restart nest-react-boilerplate.service
+  disable_foreign_runtime_unit
+  # The HTTP phase keeps the ACME path reachable while the runtime converges; a
+  # native host must not render an HTTPS config whose roots do not exist yet.
+  if [[ "${RUNTIME_MODE}" == 'compose' ]] && certificate_covers_domains; then
+    render_nginx https
+  else
+    render_nginx http
+  fi
+  if [[ "${RUNTIME_MODE}" == 'compose' ]]; then
+    if [[ "${IMAGE_SOURCE}" == 'local' ]]; then
+      # Build before the unit starts: a multi-minute image build inside a oneshot
+      # ExecStartPre would hit TimeoutStartSec.
+      run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" build \
+        --env-file "${PRODUCTION_ENV}"
+    fi
+    install_compose_unit
+    systemctl restart nest-react-boilerplate.service
+  else
+    release_native "${skip_migrations}"
+  fi
   ensure_certificate
   render_nginx https
   wait_for_https
-  record_successful_tag
-  log "deployment healthy: $(environment_value IMAGE_TAG)"
+  check_runtime_health
+  check_application_readiness
+  record_successful_release
+  log "deployment healthy: $(deployed_identity)"
 }
 
 update_checkout() {
@@ -760,9 +1008,11 @@ update_checkout() {
   run_as_deploy git -C "${APP_ROOT}" fetch --prune origin
   run_as_deploy git -C "${APP_ROOT}" checkout "${REPOSITORY_BRANCH}"
   run_as_deploy git -C "${APP_ROOT}" merge --ff-only "origin/${REPOSITORY_BRANCH}"
-  # The deployment controller uses Node built-ins only. Runtime images are
-  # prebuilt and pulled by the systemd unit, so an application update never
-  # recompiles the workspace or reinstalls its dependency graph on the host.
+  # In compose runtime mode the controller uses Node built-ins only: runtime images
+  # are prebuilt and pulled by the systemd unit, so an application update never
+  # recompiles the workspace or reinstalls its dependency graph on the host. The
+  # native runtime is the deliberate exception — it has no prebuilt artifact, so
+  # release_native installs and builds from this checkout.
 }
 
 set_image_tag() {
@@ -786,7 +1036,16 @@ update_application() {
 rollback_application() {
   require_root
   load_server_environment
-  [[ "${ASSUME_YES}" == 'true' ]] || die 'rollback requires --yes: images roll back, but database migrations are not reversed and must be backward-compatible'
+  [[ "${ASSUME_YES}" == 'true' ]] || die 'rollback requires --yes: the runtime rolls back, but database migrations are not reversed and must be backward-compatible'
+  if [[ "${RUNTIME_MODE}" == 'native' ]]; then
+    # An immutable image can always be re-pulled; a native rollback would have to
+    # rebuild from source, and a failed rebuild would leave the host with neither the
+    # old nor the new dist. Retained per-commit release trees are the prerequisite,
+    # so refuse rather than offer a rollback that can destroy a working host.
+    local previous='(none recorded)'
+    [[ ! -f "${STATE_ROOT}/previous-commit" ]] || previous="$(<"${STATE_ROOT}/previous-commit")"
+    die "automatic rollback is not available for RUNTIME_MODE=native: it would rebuild in place. Roll back manually with 'sudo -u ${DEPLOY_USER} git -C ${APP_ROOT} checkout --detach ${previous}' then '${CONTROLLER_NAME} deploy'; migrations are never re-run."
+  fi
   [[ -f "${STATE_ROOT}/current-image-tag" ]] || die 'no successful image tag is recorded'
   local selected last_successful target
   selected="$(environment_value IMAGE_TAG)"
@@ -809,22 +1068,49 @@ renew_certificates() {
   certificate_covers_domains || die 'renewed certificate is invalid, expiring, or missing required domains'
 }
 
+# The ports that must have a listener for THIS topology, derived by the planner from
+# the runtime, the frontend mode and the enabled profiles. Hardcoding them here made
+# doctor demand container-only observability ports on a native host and SPA processes
+# a static deployment never starts.
+expected_ports() {
+  /usr/local/bin/node "${APP_ROOT}/scripts/single-server-deployment.mjs" expected-ports \
+    --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
+}
+
 check_loopback_bindings() {
-  local entries=(ADMIN_APP_API_PORT:3001 USER_APP_API_PORT:3002 AUTH_APP_API_PORT:3003 ADMIN_APP_PORT:4200 USER_APP_PORT:4201 LANDING_APP_PORT:4202 SITE_APP_PORT:4203 MOBILE_APP_PORT:4300 GRAFANA_PORT:3000 OTEL_COLLECTOR_GRPC_PORT:4317 OTEL_COLLECTOR_HTTP_PORT:4318 OTEL_PROMETHEUS_PORT:9464 PROMETHEUS_PORT:9090 ALERTMANAGER_PORT:9093)
-  local configured_profiles entry key fallback port addresses
-  configured_profiles=",$(environment_value COMPOSE_PROFILES),"
-  [[ "${configured_profiles}" != *,discord,* ]] || entries+=(DISCORD_APP_API_PORT:3007)
-  [[ "${configured_profiles}" != *,telegram,* ]] || entries+=(TELEGRAM_BOT_API_PORT:3013)
+  local entries=() entry port addresses
+  mapfile -t entries < <(expected_ports)
+  # A failed process substitution leaves an empty array, and an empty loop would
+  # silently check nothing.
+  ((${#entries[@]} > 0)) || die 'no expected listening ports were derived'
   for entry in "${entries[@]}"; do
-    key="${entry%%:*}"
-    fallback="${entry##*:}"
-    port="$(environment_value "${key}")"
-    port="${port:-${fallback}}"
+    port="${entry##*=}"
     addresses="$(ss -H -ltn "sport = :${port}" | awk '{print $4}')"
-    [[ -n "${addresses}" ]] || die "expected application port ${port} is not listening"
+    [[ -n "${addresses}" ]] || die "expected application port ${port} (${entry%%=*}) is not listening"
     if grep -Evq '^(127\.0\.0\.1|\[::1\]):' <<<"${addresses}"; then
       die "application port ${port} is listening beyond loopback"
     fi
+  done
+}
+
+# nginx answers /_infra/health itself, so wait_for_https proves nothing about the
+# application. Probe the runtime's own readiness endpoint on every expected port.
+check_application_readiness() {
+  local entries=() entry key port attempt
+  mapfile -t entries < <(expected_ports)
+  ((${#entries[@]} > 0)) || die 'no expected listening ports were derived'
+  for entry in "${entries[@]}"; do
+    key="${entry%%=*}"
+    # Only the application services expose /ready; observability containers do not.
+    [[ "${key}" == *_API_PORT || "${key}" == 'SITE_APP_PORT' ]] || continue
+    port="${entry##*=}"
+    for ((attempt = 1; attempt <= HEALTHCHECK_RETRIES; attempt += 1)); do
+      if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:${port}/ready" >/dev/null; then
+        break
+      fi
+      if ((attempt == HEALTHCHECK_RETRIES)); then die "${key} on port ${port} never became ready"; fi
+      sleep "${HEALTHCHECK_INTERVAL_SECONDS}"
+    done
   done
 }
 
@@ -844,35 +1130,104 @@ check_compose_health() {
   ' <<<"${state}" >/dev/null || die 'one or more production Compose services are stopped or unhealthy'
 }
 
+# The PM2 apps this topology is supposed to be running, derived from the same flags
+# release_native passes, so the health check cannot pass with a worker missing.
+expected_pm2_apps() {
+  local profiles flags=()
+  profiles="$(environment_value COMPOSE_PROFILES)"
+  [[ "${profiles}" != *discord* ]] || flags+=(--pm2-flag=PM2_ENABLE_DISCORD)
+  [[ "${profiles}" != *telegram* ]] || flags+=(--pm2-flag=PM2_ENABLE_TELEGRAM)
+  [[ "${profiles}" != *notification-* ]] || flags+=(--pm2-flag=PM2_ENABLE_NOTIFICATIONS)
+  expected_ports | grep -q '^SITE_APP_PORT=' && flags+=(--pm2-flag=PM2_ENABLE_SITE)
+  /usr/local/bin/node "${APP_ROOT}/scripts/native-release.mjs" pm2-apps "${flags[@]}"
+}
+
+check_native_health() {
+  local names status
+  names="$(expected_pm2_apps | jq -R . | jq -sc .)"
+  # pm2 jlist already returns one array, so no -s/flatten. `all` over a partial list
+  # passes, hence the explicit "every expected name is online" difference, and
+  # unstable_restarts catches a crash loop that happens to be online right now.
+  status="$(run_as_deploy /usr/local/bin/pm2 jlist 2>/dev/null)"
+  jq -e --argjson want "${names}" '
+    (map(select(.pm2_env.status == "online") | .name) | unique) as $online
+    | length > 0
+    and (($want | unique) - $online | length) == 0
+    and all(.[]; (.pm2_env.unstable_restarts // 0) == 0)
+  ' <<<"${status}" >/dev/null || die 'one or more PM2 services are missing, stopped, or restarting'
+
+  # A profile turned off in .env.production would otherwise leave its process running
+  # forever with rotated credentials.
+  local running extra
+  running="$(jq -r '.[].name' <<<"${status}")"
+  while IFS= read -r extra; do
+    [[ -n "${extra}" ]] || continue
+    if ! expected_pm2_apps | grep -qx "${extra}"; then
+      log "removing PM2 process no longer in this topology: ${extra}"
+      run_as_deploy /usr/local/bin/pm2 delete "${extra}" 9>&- >/dev/null
+      run_as_deploy /usr/local/bin/pm2 save 9>&- >/dev/null
+    fi
+  done <<<"${running}"
+}
+
+check_runtime_health() {
+  if [[ "${RUNTIME_MODE}" == 'compose' ]]; then check_compose_health; else check_native_health; fi
+}
+
 doctor() {
   require_root
   load_server_environment
   validate_configuration
-  require_command docker
   require_command nginx
   require_command certbot
-  docker info >/dev/null
-  docker compose version >/dev/null
+  local units=(nginx certbot.timer)
+  if [[ "${RUNTIME_MODE}" == 'compose' ]]; then
+    require_command docker
+    docker info >/dev/null
+    docker compose version >/dev/null
+    units+=(docker nest-react-boilerplate)
+  else
+    require_command pm2
+    units+=("$(pm2_unit_name)")
+    if [[ "$(environment_value COMPOSE_DATABASE_MODE)" == 'native' ]]; then
+      units+=(postgresql redis-server)
+    fi
+  fi
   nginx -t
   ensure_dns_resolves
   certificate_covers_domains || die 'certificate is missing, expiring within seven days, or lacks a required SAN'
-  check_compose_health
+  check_runtime_health
   check_loopback_bindings
-  systemctl is-active --quiet docker nginx certbot.timer nest-react-boilerplate
+  # is-active succeeds only when every named unit is active, and with no arguments it
+  # would exit non-zero for the wrong reason.
+  ((${#units[@]} > 0)) || die 'no runtime units were derived'
+  systemctl is-active --quiet "${units[@]}"
   wait_for_https
-  log 'doctor passed: configuration, DNS, certificate, services, loopback binds, and HTTPS are healthy'
+  check_application_readiness
+  log "doctor passed (${RUNTIME_MODE}): configuration, DNS, certificate, services, loopback binds, readiness, and HTTPS are healthy"
 }
 
 status() {
   require_root
   load_server_environment
+  # Which runtime is live is the first thing an operator needs, and it is invisible
+  # from the process list alone.
+  printf 'Runtime: %s\n' "${RUNTIME_MODE}"
   printf 'Node.js: %s\n' "$(node --version 2>/dev/null || printf missing)"
   printf 'pnpm: %s\n' "$(pnpm --version 2>/dev/null || printf missing)"
-  printf 'Docker: %s\n' "$(docker --version 2>/dev/null || printf missing)"
-  printf 'Compose: %s\n' "$(docker compose version --short 2>/dev/null || printf missing)"
-  printf 'Image tag: %s\n' "$(environment_value IMAGE_TAG)"
-  systemctl --no-pager --full status docker nginx certbot.timer nest-react-boilerplate.service || true
-  run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" ps --env-file "${PRODUCTION_ENV}" || true
+  if [[ "${RUNTIME_MODE}" == 'compose' ]]; then
+    printf 'Docker: %s\n' "$(docker --version 2>/dev/null || printf missing)"
+    printf 'Compose: %s\n' "$(docker compose version --short 2>/dev/null || printf missing)"
+    printf 'Images: %s (%s)\n' "$(environment_value IMAGE_TAG)" "${IMAGE_SOURCE}"
+    systemctl --no-pager --full status docker nginx certbot.timer nest-react-boilerplate.service || true
+    run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" ps --env-file "${PRODUCTION_ENV}" || true
+  else
+    printf 'PM2: %s\n' "$(pm2 --version 2>/dev/null || printf missing)"
+    printf 'Commit: %s\n' "$(run_as_deploy git -C "${APP_ROOT}" rev-parse --short HEAD 2>/dev/null || printf unknown)"
+    printf 'Web root: %s\n' "$(frontend_web_root)"
+    systemctl --no-pager --full status nginx certbot.timer "$(pm2_unit_name)" || true
+    run_as_deploy /usr/local/bin/pm2 list 9>&- || true
+  fi
   local certificate="/etc/letsencrypt/live/${CERTIFICATE_NAME}/fullchain.pem"
   [[ ! -f "${certificate}" ]] || openssl x509 -in "${certificate}" -noout -subject -issuer -dates
 }
@@ -880,9 +1235,20 @@ status() {
 logs() {
   require_root
   load_server_environment
-  local arguments=(logs --env-file "${PRODUCTION_ENV}" --tail=200 --follow)
-  [[ -z "${LOG_SERVICE}" ]] || arguments+=("${LOG_SERVICE}")
-  run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" "${arguments[@]}"
+  if [[ "${RUNTIME_MODE}" == 'compose' ]]; then
+    local arguments=(logs --env-file "${PRODUCTION_ENV}" --tail=200 --follow)
+    [[ -z "${LOG_SERVICE}" ]] || arguments+=("${LOG_SERVICE}")
+    run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" "${arguments[@]}"
+  else
+    # PM2 process names are not Compose service names, so reject one that cannot exist
+    # instead of following an empty stream.
+    if [[ -n "${LOG_SERVICE}" ]] && ! expected_pm2_apps | grep -qx "${LOG_SERVICE}"; then
+      die "unknown PM2 process: ${LOG_SERVICE} (available: $(expected_pm2_apps | tr '\n' ' '))"
+    fi
+    local pm2_arguments=(logs --lines 200)
+    [[ -z "${LOG_SERVICE}" ]] || pm2_arguments=(logs "${LOG_SERVICE}" --lines 200)
+    run_as_deploy /usr/local/bin/pm2 "${pm2_arguments[@]}" 9>&-
+  fi
 }
 
 case "${COMMAND}" in

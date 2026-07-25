@@ -35,6 +35,11 @@ if (configuredPort === undefined) {
 }
 const port = configuredPort;
 
+// Containers need every interface, because the port is published from outside. A
+// host-native process behind a reverse proxy must not be publicly reachable, so it
+// sets HOST explicitly instead of inheriting the container default.
+const host = process.env.SITE_APP_HOST?.trim() || process.env.HOST?.trim() || '0.0.0.0';
+
 if (process.env.NODE_ENV === 'production') {
   if (!existsSync(serverEntryPath)) {
     throw new Error(`Missing Vike production server entry: ${serverEntryPath}`);
@@ -81,4 +86,4 @@ app.get('/*', async (request, reply) => {
   return reply.code(httpResponse.statusCode).send(httpResponse.body);
 });
 
-await app.listen({ host: '0.0.0.0', port });
+await app.listen({ host, port });

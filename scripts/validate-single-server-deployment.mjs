@@ -94,12 +94,110 @@ for (const requirement of [
 }
 assert.ok(bootstrap.includes('status --porcelain'));
 assert.ok(bootstrap.includes('merge --ff-only'));
-assert.ok(!controller.includes('source "${SERVER_ENV}"'));
+// One-line unattended bootstrap: a single command must be able to supply the only
+// two values that cannot be generated (domain + ACME email) and converge the host.
+for (const flag of ['--domain', '--email', '--apply', '--registry', '--image-tag']) {
+  assert.ok(bootstrap.includes(flag), `bootstrap must accept ${flag} for unattended one-line installs`);
+}
 assert.ok(
-  !controller.includes('/usr/local/bin/pnpm --dir "${APP_ROOT}" install --frozen-lockfile'),
-  'single-server updates must not reinstall the workspace dependency graph',
+  bootstrap.includes('PUBLIC_DOMAIN') && bootstrap.includes('CERTBOT_EMAIL') && bootstrap.includes('CERTIFICATE_NAME'),
+  'bootstrap must persist the supplied domain and ACME identity',
 );
-assert.ok(docs.includes('does not run `pnpm install`'));
+assert.ok(
+  /APPLY_AFTER_BOOTSTRAP|apply_after_bootstrap/u.test(bootstrap),
+  'bootstrap must only converge the host when apply is explicitly requested',
+);
+assert.ok(!controller.includes('source "${SERVER_ENV}"'));
+
+// Runtime axis. These are structural checks, not word searches: each asserts that a
+// runtime-specific action is reachable ONLY from that runtime's branch.
+const controllerFunction = (name) => {
+  const start = controller.indexOf(`\n${name}() {`);
+  assert.notEqual(start, -1, `controller must define ${name}()`);
+  const end = controller.indexOf('\n}\n', start);
+  return controller.slice(start, end === -1 ? undefined : end);
+};
+
+for (const requirement of [
+  'RUNTIME_MODE must be compose or native',
+  'COMPOSE_IMAGE_SOURCE must be registry or local',
+  'pm2 startup systemd',
+  'native-release.mjs',
+  'native-runtime-env.mjs',
+  'check_native_health',
+  'current-commit',
+  'previous-commit',
+]) {
+  assert.ok(controller.includes(requirement), `controller missing native-runtime contract: ${requirement}`);
+}
+
+// Compose updates converge prebuilt images, so the compose branch must never install
+// dependencies or compile on the host. The native branch must, because it has no
+// prebuilt artifact — so assert per branch instead of banning one exact spelling that
+// any other spelling would slip past.
+const composeInstallers = /pnpm[^\n]*\b(install|run build)\b|native-release\.mjs/u;
+for (const name of ['update_checkout', 'install_compose_unit']) {
+  assert.ok(
+    !composeInstallers.test(controllerFunction(name)),
+    `${name} must not build or reinstall the workspace: compose deploys prebuilt images`,
+  );
+}
+assert.match(
+  controllerFunction('release_native'),
+  /native-release\.mjs" build/u,
+  'the native runtime must build from the checkout it deployed',
+);
+assert.match(
+  controllerFunction('release_native'),
+  /rsync -a --delete/u,
+  'the native runtime must publish the built frontends outside APP_ROOT, not serve the checkout',
+);
+// PM2 daemonizes, so an inherited flock fd would wedge every later operation.
+assert.match(controllerFunction('release_native'), /9>&-/u, 'PM2 must not inherit the controller lock fd');
+// Compose provenance decides the unit shape; both halves must stay reachable.
+const unit = controllerFunction('install_compose_unit');
+assert.match(unit, /IMAGE_SOURCE/u, 'the systemd unit must branch on image provenance');
+assert.match(unit, /compose-production\.mjs pull/u, 'registry provenance must pull before starting');
+assert.match(unit, /--no-build/u, 'registry provenance must never build');
+assert.ok(
+  /nothing to pull/u.test(unit),
+  'local provenance must omit the pull step instead of pulling tags that do not exist',
+);
+// Docker is a compose-only dependency; a native host must not join the docker group.
+assert.match(
+  controllerFunction('provision'),
+  /!= 'compose' \]\] \|\| usermod -aG docker/u,
+  'docker group membership is root-equivalent and must be gated on the compose runtime',
+);
+assert.ok(
+  docs.includes('in compose runtime mode') && docs.includes('does not run `pnpm install`'),
+  'docs must scope the no-install guarantee to the compose runtime',
+);
+assert.ok(value(serverExample, 'RUNTIME_MODE') === 'compose', 'the example must default to the compose runtime');
+assert.ok(value(serverExample, 'PM2_VERSION'), 'the native runtime needs a pinned PM2 version');
+assert.ok(bootstrap.includes('--runtime'), 'bootstrap must be able to select the runtime');
+
+// The shared native sequence, used by both serverctl and `pnpm deploy --preset=native`.
+const nativeRelease = read('scripts/native-release.mjs');
+const nativeEnv = read('scripts/native-runtime-env.mjs');
+assert.match(
+  nativeRelease,
+  /'startOrReload', 'ecosystem\.config\.cjs', '--update-env'/u,
+  'reloading must update the environment or a rotated secret is silently ignored',
+);
+assert.match(nativeRelease, /--chmod=D755,F644/u, 'the published web root must be readable by nginx');
+// Setting both a plain key and its _FILE sibling aborts startup, so these two keys
+// must stay paths.
+for (const key of ['AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE', 'NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE']) {
+  assert.ok(
+    new RegExp(`applicationResolvedSecretFiles[\\s\\S]*${key}`, 'u').test(nativeEnv),
+    `${key} must be passed through as a path, never dereferenced`,
+  );
+}
+assert.ok(
+  !/secretFileEnvironmentKeys\s*=\s*\{[^}]*AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE/u.test(nativeEnv),
+  'the dereference table must not contain the keys the application resolves itself',
+);
 assert.ok(renderer.includes("'single-domain', 'per-app-domains'"));
 assert.ok(renderer.includes('127.0.0.1'));
 assert.ok(renderer.includes('ssl_reject_handshake on'));

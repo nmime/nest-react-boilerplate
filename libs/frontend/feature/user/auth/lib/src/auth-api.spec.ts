@@ -31,7 +31,12 @@ describe('createAuthSession', () => {
 
   it('coerces non-string form values to empty strings on login', async () => {
     const authControllerLogin = vi.fn().mockResolvedValue(ok({}));
-    await createAuthSession({ authControllerLogin } as never, {}, { email: null, mode: AuthMode.Login, password: null }, 'en');
+    await createAuthSession(
+      { authControllerLogin } as never,
+      {},
+      { email: null, mode: AuthMode.Login, password: null },
+      'en',
+    );
     expect(authControllerLogin).toHaveBeenCalledWith({ email: '', password: '' }, {});
   });
 
@@ -48,7 +53,12 @@ describe('createAuthSession', () => {
 
   it('registers with an undefined display name when none is provided', async () => {
     const authControllerRegister = vi.fn().mockResolvedValue(ok({}));
-    await createAuthSession({ authControllerRegister } as never, {}, { email: 'a@example.com', mode: AuthMode.Register, password: 'secret' }, 'en');
+    await createAuthSession(
+      { authControllerRegister } as never,
+      {},
+      { email: 'a@example.com', mode: AuthMode.Register, password: 'secret' },
+      'en',
+    );
     expect(authControllerRegister).toHaveBeenCalledWith(
       { displayName: undefined, email: 'a@example.com', locale: 'en', password: 'secret' },
       {},

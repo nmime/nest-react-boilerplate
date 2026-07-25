@@ -1,4 +1,10 @@
-import { createBrowserHistory, createRootRoute, createRoute, createRouter, type RouterHistory } from '@tanstack/react-router';
+import {
+  createBrowserHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  type RouterHistory,
+} from '@tanstack/react-router';
 import { AuthPage } from '../../pages/auth';
 import { AuthDiscordCallbackPage } from '../../pages/auth-discord-callback';
 import { AuthTelegramCallbackPage } from '../../pages/auth-telegram-callback';
@@ -56,7 +62,11 @@ function ProfileRouteComponent() {
   return <ProfilePage applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} />;
 }
 
-const profileRoute = createRoute({ getParentRoute: () => rootRoute, path: '/profile', component: ProfileRouteComponent });
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile',
+  component: ProfileRouteComponent,
+});
 
 function SettingsRouteComponent() {
   const navigate = useUserNavigate();

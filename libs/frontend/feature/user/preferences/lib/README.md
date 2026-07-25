@@ -1,5 +1,7 @@
 # @app/frontend-feature-user-preferences
 
+## Purpose
+
 Platform-neutral user preference (locale/theme) domain logic shared by the web
 `app` and native `mobile` frontends: the `useUserPreferenceControls` hook, the
 `updateUserPreferences` data-access helper, and preference patch types.

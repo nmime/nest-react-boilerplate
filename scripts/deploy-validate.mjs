@@ -51,7 +51,12 @@ const validateDocker = () => {
   ]);
   run('Docker/static deployment config', process.execPath, ['scripts/validate-deployment-config.mjs', '--mode=docker']);
   run('Docker Compose production wrapper tests', process.execPath, ['--test', 'scripts/compose-production.spec.mjs']);
+  run('Docker Compose production init scaffolder tests', process.execPath, [
+    '--test',
+    'scripts/compose-production-init.spec.mjs',
+  ]);
   run('Single-server deployment tests', process.execPath, ['--test', 'scripts/single-server-deployment.spec.mjs']);
+  run('Native datastore provisioning tests', process.execPath, ['--test', 'scripts/native-datastores.spec.mjs']);
   run('Single-server deployment contract', process.execPath, ['scripts/validate-single-server-deployment.mjs']);
   run('Docker Compose production config', process.execPath, ['scripts/validate-docker-compose-prod.mjs']);
   run('Docker Compose database/domain/TLS topology renders', process.execPath, ['scripts/validate-compose-modes.mjs']);
@@ -107,7 +112,19 @@ const validatePm2 = () => {
     return;
   }
   run('PM2 static config', process.execPath, ['scripts/validate-pm2-config.mjs']);
+  // The native release sequence and its secret resolution are shared with
+  // serverctl's RUNTIME_MODE=native path, so they are contract-checked here too.
+  run('Native release sequence tests', process.execPath, ['--test', 'scripts/native-release.spec.mjs']);
+  run('Native runtime environment tests', process.execPath, ['--test', 'scripts/native-runtime-env.spec.mjs']);
+  run('Native datastore provisioning tests', process.execPath, ['--test', 'scripts/native-datastores.spec.mjs']);
 };
+
+// The unified `pnpm deploy` planner spans every target, so its contract is
+// checked in all modes: a broken plan would misdeploy regardless of runtime.
+run('Unified deploy planner tests', process.execPath, ['--test', 'scripts/deploy.spec.mjs']);
+// The bake generator defines the release image set; keep it gated here rather than
+// relying on a standalone package.json script.
+run('Bake-file generator tests', process.execPath, ['--test', 'scripts/generate-bake-file.spec.mjs']);
 
 if (mode === 'docker') {
   validateDocker();

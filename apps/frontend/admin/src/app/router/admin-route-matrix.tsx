@@ -14,7 +14,13 @@ import { ProblemPresentationsPage } from '../../pages/problem-presentations';
 import { ProfilePage } from '../../pages/profile';
 import { RolesPage } from '../../pages/roles';
 import { UsersPage } from '../../pages/users';
-import { fallbackTranslate, isUsersRoute, normalizeAdminPath, type AdminProfileState, type Translate } from '../../shared';
+import {
+  fallbackTranslate,
+  isUsersRoute,
+  normalizeAdminPath,
+  type AdminProfileState,
+  type Translate,
+} from '../../shared';
 
 export interface AdminRouteRuntime {
   requestOptions?: ApiClientRequestOptions;

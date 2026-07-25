@@ -13,7 +13,7 @@ stages:
 variables:
   CI: 'true'
   NX_DAEMON: 'false'
-  PNPM_VERSION: '11.11.0'
+  PNPM_VERSION: '11.15.1'
   NODE_VERSION_FILE: .nvmrc
 
 # Include GitLab SAST/Dependency Scanning

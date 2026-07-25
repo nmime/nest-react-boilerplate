@@ -10,15 +10,15 @@ let workspaceRoot;
 
 beforeEach(() => {
   workspaceRoot = mkdtempSync(resolve(tmpdir(), 'nrb-doc-validation-'));
-  write('package.json', JSON.stringify({ scripts: { check: 'true' } }));
+  write('package.json', JSON.stringify({ scripts: { check: 'true', 'deploy:validate': 'true' } }));
 });
 
 afterEach(() => {
   rmSync(workspaceRoot, { force: true, recursive: true });
 });
 
-test('accepts valid local files, heading anchors, and root scripts', () => {
-  write('README.md', '[Guide](docs/guide.md#repeatable-setup)\n\n`pnpm run check`\n');
+test('accepts valid local files, heading anchors, and both root-script spellings', () => {
+  write('README.md', '[Guide](docs/guide.md#repeatable-setup)\n\n`pnpm run check`\n\n`pnpm deploy:validate`\n');
   write('docs/guide.md', '# Repeatable <span>setup</span> <script\n');
 
   const result = validateWorkspace({
@@ -27,13 +27,18 @@ test('accepts valid local files, heading anchors, and root scripts', () => {
   });
 
   assert.deepEqual(result.failures, []);
-  assert.deepEqual(result.counts, { anchors: 1, files: 2, links: 1, scripts: 1 });
+  assert.deepEqual(result.counts, { anchors: 1, files: 2, links: 1, scripts: 2 });
 });
 
-test('reports missing files, anchors, and root scripts with source locations', () => {
+test('reports missing files, anchors, and both root-script spellings with source locations', () => {
   write(
     'README.md',
-    ['[Missing](docs/missing.md)', '[Bad anchor](docs/guide.md#missing)', 'pnpm run absent'].join('\n'),
+    [
+      '[Missing](docs/missing.md)',
+      '[Bad anchor](docs/guide.md#missing)',
+      'pnpm run absent',
+      'pnpm deploy:missing',
+    ].join('\n'),
   );
   write('docs/guide.md', '# Existing\n');
 
@@ -42,10 +47,11 @@ test('reports missing files, anchors, and root scripts with source locations', (
     markdownFiles: [resolve(workspaceRoot, 'README.md'), resolve(workspaceRoot, 'docs/guide.md')],
   });
 
-  assert.equal(result.failures.length, 3);
+  assert.equal(result.failures.length, 4);
   assert.match(result.failures.join('\n'), /README\.md:1: missing local target/);
   assert.match(result.failures.join('\n'), /README\.md:2: missing anchor/);
   assert.match(result.failures.join('\n'), /README\.md:3: unknown root script/);
+  assert.match(result.failures.join('\n'), /README\.md:4: unknown root script/);
 });
 
 test('rejects copied project metadata and duplicate project-map headings', () => {

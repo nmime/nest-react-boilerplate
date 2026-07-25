@@ -1,15 +1,35 @@
 # Idempotent single-server deployment
 
 This is the supported turnkey path for one Ubuntu or Debian host. It installs
-and operates host Nginx + Certbot in front of the production Docker Compose
-stack. Compose stays in `external-proxy` mode, so every application and API port
-is bound only to `127.0.0.1`; the host firewall exposes only SSH, HTTP, and
-HTTPS.
+and operates host Nginx + Certbot in front of the application, which stays in
+`external-proxy` mode so every application and API port is bound only to
+`127.0.0.1`; the host firewall exposes only SSH, HTTP, and HTTPS.
+
+## Runtimes
+
+`RUNTIME_MODE` in `server.env` decides what the host actually runs. Everything
+else in this document — Nginx, Certbot, DNS modes, secret handling, loopback
+binds, the rerun guarantees — is shared by both.
+
+| `RUNTIME_MODE`      | What runs                                                                   | Image/artifact source                                                                                  |
+| ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `compose` (default) | Docker Compose services under `nest-react-boilerplate.service`              | `COMPOSE_IMAGE_SOURCE=registry` pulls immutable `sha-<git-sha>` tags; `local` builds them on this host |
+| `native`            | PM2-supervised Node processes, host PostgreSQL/Redis, SPAs served from disk | built from the checkout on every deploy                                                                |
+
+Select it at bootstrap time:
+
+```bash
+curl -fsSL <raw-url>/deploy/single-server/bootstrap.sh | sudo bash -s -- --runtime native --domain acme.example --email ops@acme.example --apply
+```
+
+A native host installs no Docker, and its deployment user is deliberately not in
+the `docker` group. `--registry`/`--image-tag` are rejected there rather than
+silently ignored, because there are no images.
 
 The controller is rerunnable. Existing configuration and secrets are never
 overwritten, already-correct Node.js and Docker installations are retained, apt
-packages are converged, certificates are reused while valid, code updates are
-fast-forward-only, and Compose converges to the selected verified full-SHA image tag.
+packages are converged, certificates are reused while valid, and code updates are
+fast-forward-only.
 
 Use Kubernetes/Helm instead when the product needs multiple application nodes,
 HA databases, rolling traffic across hosts, or GitOps reconciliation. This
@@ -78,18 +98,20 @@ public host through `127.0.0.1` with normal TLS hostname validation.
 
 `server.env` owns the host lifecycle:
 
-| Setting                            | Meaning                                                        |
-| ---------------------------------- | -------------------------------------------------------------- |
-| `NODE_VERSION`                     | Exact Node.js 24 release; official archive checksum is checked |
-| `PNPM_VERSION`                     | Exact repository pnpm version activated through Corepack       |
-| `APP_ROOT`                         | Clean deployment checkout                                      |
-| `STATE_ROOT`                       | Last/previous successful image tags                            |
-| `DEPLOY_USER`                      | Unprivileged Git, pnpm, and Docker Compose owner               |
-| `CERTIFICATE_MODE`                 | `exact-hosts`, `dns-wildcard`, or `existing`                   |
-| `ENABLE_UFW` / `SSH_PORT`          | Optional firewall convergence without assuming port 22         |
-| `ENABLE_UNATTENDED_UPGRADES`       | Debian security-update service                                 |
-| `HEALTHCHECK_RETRIES` and interval | Bounded post-deploy HTTPS retry policy                         |
-| `NGINX_CLIENT_MAX_BODY_SIZE`       | Positive edge request limit in Nginx size syntax               |
+| Setting                            | Meaning                                                                                     |
+| ---------------------------------- | ------------------------------------------------------------------------------------------- |
+| `RUNTIME_MODE`                     | `compose` (default) or `native`; see [Runtimes](#runtimes)                                  |
+| `NODE_VERSION`                     | Exact Node.js 24 release; official archive checksum is checked                              |
+| `PNPM_VERSION`                     | Exact repository pnpm version activated through Corepack                                    |
+| `PM2_VERSION`                      | Exact PM2 release, installed for `RUNTIME_MODE=native` only                                 |
+| `APP_ROOT`                         | Clean deployment checkout                                                                   |
+| `STATE_ROOT`                       | Last/previous successful image tag, or commit in native mode                                |
+| `DEPLOY_USER`                      | Unprivileged owner of Git, pnpm, and the runtime; only a member of `docker` in compose mode |
+| `CERTIFICATE_MODE`                 | `exact-hosts`, `dns-wildcard`, or `existing`                                                |
+| `ENABLE_UFW` / `SSH_PORT`          | Optional firewall convergence without assuming port 22                                      |
+| `ENABLE_UNATTENDED_UPGRADES`       | Debian security-update service                                                              |
+| `HEALTHCHECK_RETRIES` and interval | Bounded post-deploy HTTPS retry policy                                                      |
+| `NGINX_CLIENT_MAX_BODY_SIZE`       | Positive edge request limit in Nginx size syntax                                            |
 
 `.env.production` remains the complete application/runtime source of truth.
 Start from `.env.production.example`; `nrb-server init` does this without
@@ -250,14 +272,23 @@ sudo nrb-server update --image-tag sha-0123456789abcdef0123456789abcdef01234567
 Add `--system` to converge OS/runtime packages in the same maintenance window.
 The update aborts on a dirty checkout, fetches and prunes the configured remote,
 checks out the configured branch, permits only a fast-forward, pulls the pinned
-immutable images, records the previous tag, and deploys with `--no-build`. It
-does not run `pnpm install` or compile the workspace on the server, and it does
-not guess an image tag from `main`: a release/docs commit may not have produced
-images.
+immutable images, records the previous tag, and deploys with `--no-build`.
+Because the deployed artifact is a prebuilt image, in compose runtime mode the
+update **does not run `pnpm install`** or compile the workspace on the server,
+and it does not guess an image tag from `main`: a release/docs commit may not
+have produced images.
+
+`RUNTIME_MODE=native` inverts exactly that one property. It has no prebuilt
+artifact, so every update installs dependencies and builds on the host, then
+publishes the built SPAs into `FRONTEND_DIST_ROOT`, migrates, and reloads PM2.
+Everything else — dirty-checkout refusal, fast-forward-only, secret handling,
+Nginx, Certbot — is identical.
 
 At boot, `nest-react-boilerplate.service` reruns the same production Compose
 wrapper after Docker and network readiness. Containers also use restart
-policies. Nginx and Certbot timers are independently enabled.
+policies. On a native host that unit is absent; `pm2-<DEPLOY_USER>.service`
+resurrects the saved process list instead. Nginx and Certbot timers are
+independently enabled in both runtimes.
 
 ## Rollback boundary
 
@@ -274,6 +305,22 @@ migrations. `--yes` confirms that the deployed schema changes are backward
 compatible. If they are not, stop and follow the database restore/forward-fix
 runbook instead. Automatic destructive database rollback is intentionally not
 implemented.
+
+**`RUNTIME_MODE=native` has no automatic rollback, by design.** A rollback there
+would have to rebuild from source, and a failed rebuild (out of memory, registry
+outage, a lockfile the older commit cannot install) would leave the host with
+neither the old nor the new build while PM2 holds open files from it — strictly
+worse than the compose path, which can always re-pull an immutable tag. The
+controller still records `current-commit`/`previous-commit` under `STATE_ROOT`
+and `nrb-server rollback` prints the exact manual sequence:
+
+```bash
+sudo -u nrb git -C /opt/nest-react-boilerplate checkout --detach <previous-commit>
+sudo nrb-server deploy
+```
+
+Migrations are never re-run on that path. Retained per-commit release trees are
+the prerequisite for making it automatic; until then the refusal is deliberate.
 
 Before every release:
 
@@ -297,7 +344,7 @@ Agents extending this template must preserve these boundaries:
   test the renderer;
 - never replace full-SHA tags with `latest`, expose secrets in environment
   output, bypass `nginx -t`, or make Git updates non-fast-forward;
-- run `pnpm run test:single-server-deployment`, `pnpm run server:validate`, and
+- run `pnpm run test:deploy`, `pnpm run server:validate`, and
   `pnpm run deploy:validate:docker` after deployment-tool changes.
 
 Relevant source files are:

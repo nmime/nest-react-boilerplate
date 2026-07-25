@@ -1,4 +1,13 @@
 {{- if .Values.backups.enabled }}
+{{- /*
+  Fail closed: an enabled backup CronJob with no durable destination writes the
+  dump to an ephemeral emptyDir that is discarded when the pod exits — a silent
+  data-loss trap. Require a PVC, an object store, or an upload hook that ships
+  the dump off-box. See docs/operations/observability-dr.md.
+*/ -}}
+{{- if not (or .Values.backups.destination.pvc.enabled .Values.backups.destination.objectStore.enabled (trim .Values.backups.hooks.upload)) }}
+{{- fail "backups.enabled=true requires a durable destination: set backups.destination.pvc.enabled, backups.destination.objectStore.enabled, or backups.hooks.upload (see docs/operations/observability-dr.md)." }}
+{{- end }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:

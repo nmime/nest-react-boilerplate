@@ -3,13 +3,21 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { certificateDomains, loadSingleServerConfiguration, renderNginx } from './single-server-deployment.mjs';
+import {
+  certificateDomains,
+  expectedListeningPorts,
+  loadSingleServerConfiguration,
+  renderNginx,
+} from './single-server-deployment.mjs';
 
 const fixture = ({
   certificateMode = 'exact-hosts',
   primaryApp = 'landing-app',
   profiles = '',
   publicMode = 'per-app-domains',
+  frontendMode,
+  runtimeMode,
+  distRoot = '/srv/nrb/dist/apps/frontend',
 } = {}) => {
   const directory = mkdtempSync(join(tmpdir(), 'nrb-single-server-'));
   const serverEnv = join(directory, 'server.env');
@@ -23,6 +31,7 @@ const fixture = ({
       'CERTBOT_DNS_PLUGIN=cloudflare',
       ['CERTBOT_DNS_PACKAGE', 'python3-certbot-dns-cloudflare'].join('='),
       ['CERTBOT_DNS_CREDENTIALS', '/etc/letsencrypt/cloudflare.ini'].join('='),
+      ...(runtimeMode ? [`RUNTIME_MODE=${runtimeMode}`] : []),
     ].join('\n'),
   );
   writeFileSync(
@@ -44,6 +53,8 @@ const fixture = ({
       'LANDING_APP_PORT=4102',
       'SITE_APP_PORT=4103',
       'MOBILE_APP_PORT=4104',
+      `FRONTEND_DIST_ROOT=${distRoot}`,
+      ...(frontendMode ? [`EXTERNAL_PROXY_FRONTEND_MODE=${frontendMode}`] : []),
     ].join('\n'),
   );
   const configuration = loadSingleServerConfiguration({ productionEnv, serverEnv });
@@ -224,4 +235,228 @@ test('rejects invalid Certbot identity and DNS propagation settings', (context) 
       }),
     /CERTBOT_DNS_PROPAGATION_SECONDS/u,
   );
+});
+
+test('static frontend mode serves built SPAs from disk with history fallback', () => {
+  const { configuration, cleanup } = fixture({ frontendMode: 'static' });
+  try {
+    const nginx = renderNginx(configuration, 'https');
+    // Each SPA is served from its own dist directory, not proxied to a process.
+    for (const directory of ['landing', 'app', 'admin', 'mobile']) {
+      assert.ok(
+        nginx.includes(`root /srv/nrb/dist/apps/frontend/${directory};`),
+        `${directory} must be served from disk`,
+      );
+    }
+    assert.match(nginx, /try_files \$uri \$uri\/ \/index\.html;/u, 'SPA history fallback is required');
+    assert.match(nginx, /Cache-Control "no-store"/u, 'index.html must never be cached');
+    assert.match(nginx, /location \^~ \/assets\/ \{/u, 'only hashed output is cached hard');
+    assert.match(nginx, /max-age=31536000, immutable/u, 'hashed assets should be cached hard');
+    // The runtime config is rewritten per deployment, so it must not inherit the
+    // immutable asset policy, and no extension regex may outrank the API prefixes.
+    assert.match(nginx, /location = \/runtime-config\.js \{/u);
+    assert.doesNotMatch(nginx, /location ~\* \\\./u, 'an extension regex would shadow /auth, /profile and /admin');
+    // add_header does not merge across levels: a location that sets Cache-Control
+    // discards every inherited header, so each must restate the security set.
+    const indexBlock = nginx.slice(nginx.indexOf('location = /index.html {'));
+    for (const header of ['Strict-Transport-Security', 'X-Content-Type-Options', 'X-Frame-Options', 'Vary Accept']) {
+      assert.ok(indexBlock.slice(0, 700).includes(header), `index.html must keep ${header}`);
+    }
+    assert.match(indexBlock.slice(0, 900), /Content-Security-Policy/u, 'served HTML must carry a CSP');
+    const assetBlock = nginx.slice(nginx.indexOf('location ^~ /assets/ {'));
+    assert.ok(assetBlock.slice(0, 600).includes('X-Content-Type-Options'), 'assets must keep nosniff');
+    // Swagger UI is proxied on the same vhost and would break under the SPA CSP.
+    const docsBlock = nginx.slice(nginx.indexOf('location ^~ /auth/docs/ {'));
+    assert.ok(
+      !docsBlock.slice(0, 600).includes('Content-Security-Policy'),
+      'the API docs must not inherit the SPA CSP',
+    );
+    assert.match(nginx, /location = \/\.env \{ return 404; \}/u);
+    assert.match(nginx, /location \^~ \/\.git\/ \{ return 404; \}/u);
+    // The SSR site keeps its process, and APIs stay proxied to loopback.
+    assert.match(nginx, /proxy_pass http:\/\/127\.0\.0\.1:4103;/u, 'site-app remains an SSR proxy');
+    assert.match(nginx, /proxy_pass http:\/\/127\.0\.0\.1:3103;/u, 'auth API remains proxied');
+  } finally {
+    cleanup();
+  }
+});
+
+test('proxy frontend mode remains the default and never serves from disk', () => {
+  const { configuration, cleanup } = fixture();
+  try {
+    assert.equal(configuration.frontendMode, 'proxy');
+    const nginx = renderNginx(configuration, 'https');
+    assert.ok(!nginx.includes('/srv/nrb/dist/apps/frontend'), 'proxy mode must not reference a dist tree');
+    assert.match(nginx, /proxy_pass http:\/\/127\.0\.0\.1:4102;/u, 'landing stays proxied');
+  } finally {
+    cleanup();
+  }
+});
+
+test('static frontend mode never leaves an SPA route pointing at a process that does not exist', () => {
+  const { configuration, cleanup } = fixture({ frontendMode: 'static', profiles: 'telegram' });
+  try {
+    const nginx = renderNginx(configuration, 'https');
+    // /auth, /profile and /admin share the `/` handler, so they must be served from
+    // disk too — proxying them would reach an SPA process static mode never starts.
+    assert.doesNotMatch(nginx, /proxy_pass http:\/\/127\.0\.0\.1:4(100|101|102|104);/u);
+    for (const route of ['/auth', '/profile', '/admin']) {
+      const block = nginx.slice(nginx.indexOf(`location ${route} {`));
+      assert.match(block.slice(0, 220), /try_files \$uri \$uri\/ \/index\.html;/u, `${route} must be served from disk`);
+    }
+    // The 418 API escape hatches survive the switch to a static handler.
+    assert.match(nginx, /error_page 418 = @auth_api;/u);
+    assert.match(nginx, /error_page 418 = @user_api;/u);
+    assert.match(nginx, /error_page 418 = @admin_api;/u);
+    // The Mini App is a user-SPA route; nothing proxies it in static mode.
+    assert.doesNotMatch(nginx, /location = \/telegram-mini-app/u);
+    assert.match(nginx, /location = \/telegram /u, 'the bot API stays proxied');
+    assert.match(nginx, /proxy_pass http:\/\/127\.0\.0\.1:4103;/u, 'the SSR site keeps its process');
+  } finally {
+    cleanup();
+  }
+});
+
+test('static frontend mode supports the single-domain layout from the primary bundle', () => {
+  const { configuration, cleanup } = fixture({ frontendMode: 'static', publicMode: 'single-domain' });
+  try {
+    const nginx = renderNginx(configuration, 'https');
+    assert.deepEqual(configuration.publicHosts, ['product.example']);
+    assert.ok(nginx.includes('root /srv/nrb/dist/apps/frontend/landing;'), 'the primary bundle is served from disk');
+    // Single-domain keeps its extra same-origin auth routes and the API fallbacks.
+    assert.match(nginx, /location = \/oauth/u);
+    assert.match(nginx, /error_page 418 = @admin_api;/u);
+    assert.match(nginx, /proxy_pass http:\/\/127\.0\.0\.1:3103;/u, 'same-origin APIs stay proxied');
+    assert.doesNotMatch(nginx, /proxy_pass http:\/\/127\.0\.0\.1:410[0-4];/u, 'no SPA process is used');
+    // Only the primary bundle is reachable, so no other dist tree is exposed.
+    for (const directory of ['app', 'admin', 'mobile']) {
+      assert.ok(!nginx.includes(`/srv/nrb/dist/apps/frontend/${directory};`), `${directory} must not be served here`);
+    }
+  } finally {
+    cleanup();
+  }
+});
+
+test('single-domain static keeps an SSR primary proxied instead of serving it from disk', () => {
+  const { configuration, cleanup } = fixture({
+    frontendMode: 'static',
+    publicMode: 'single-domain',
+    primaryApp: 'site-app',
+  });
+  try {
+    const nginx = renderNginx(configuration, 'https');
+    assert.match(nginx, /location \/ \{\n    proxy_pass http:\/\/127\.0\.0\.1:4103;/u);
+    assert.ok(!nginx.includes('/srv/nrb/dist/apps/frontend/'), 'Vike SSR has no static bundle to serve');
+  } finally {
+    cleanup();
+  }
+});
+
+test('single-domain static refuses the telegram profile it cannot serve', () => {
+  // PRIMARY_APP is landing-app or site-app only, so the single public host can never
+  // be the user SPA that owns /telegram-mini-app, and static mode runs no SPA process.
+  assert.throws(
+    () => fixture({ frontendMode: 'static', publicMode: 'single-domain', profiles: 'telegram' }),
+    /per-app-domains/u,
+  );
+  assert.throws(
+    () =>
+      fixture({ frontendMode: 'static', publicMode: 'single-domain', primaryApp: 'site-app', profiles: 'telegram' }),
+    /per-app-domains/u,
+  );
+});
+
+const portKeys = (configuration) =>
+  expectedListeningPorts(configuration)
+    .map(({ key }) => key)
+    .sort();
+
+test('expected listening ports cover the Compose topology exactly', () => {
+  const { configuration, cleanup } = fixture({ profiles: 'telegram,discord' });
+  try {
+    // Compose publishes every SPA process and the whole observability stack.
+    assert.deepEqual(portKeys(configuration), [
+      'ADMIN_APP_API_PORT',
+      'ADMIN_APP_PORT',
+      'ALERTMANAGER_PORT',
+      'AUTH_APP_API_PORT',
+      'DISCORD_APP_API_PORT',
+      'GRAFANA_PORT',
+      'LANDING_APP_PORT',
+      'MOBILE_APP_PORT',
+      'OTEL_COLLECTOR_GRPC_PORT',
+      'OTEL_COLLECTOR_HTTP_PORT',
+      'OTEL_PROMETHEUS_PORT',
+      'PROMETHEUS_PORT',
+      'SITE_APP_PORT',
+      'TELEGRAM_BOT_API_PORT',
+      'USER_APP_API_PORT',
+      'USER_APP_PORT',
+    ]);
+    assert.deepEqual(
+      expectedListeningPorts(configuration).find(({ key }) => key === 'AUTH_APP_API_PORT'),
+      { key: 'AUTH_APP_API_PORT', port: 3103 },
+      'ports come from the configured values, not the defaults',
+    );
+  } finally {
+    cleanup();
+  }
+});
+
+test('the native runtime expects no observability or SPA listeners', () => {
+  const { configuration, cleanup } = fixture({ runtimeMode: 'native' });
+  try {
+    assert.equal(configuration.frontendMode, 'static', 'native defaults to serving SPAs from disk');
+    // Only the APIs and the Vike SSR site run as processes.
+    assert.deepEqual(portKeys(configuration), [
+      'ADMIN_APP_API_PORT',
+      'AUTH_APP_API_PORT',
+      'SITE_APP_PORT',
+      'USER_APP_API_PORT',
+    ]);
+  } finally {
+    cleanup();
+  }
+});
+
+test('a single-domain native host expects only the primary listener it renders', () => {
+  const { configuration, cleanup } = fixture({ runtimeMode: 'native', publicMode: 'single-domain' });
+  try {
+    // The landing bundle is served from disk, so nothing but the APIs listens.
+    assert.deepEqual(portKeys(configuration), ['ADMIN_APP_API_PORT', 'AUTH_APP_API_PORT', 'USER_APP_API_PORT']);
+  } finally {
+    cleanup();
+  }
+
+  const ssr = fixture({ runtimeMode: 'native', publicMode: 'single-domain', primaryApp: 'site-app' });
+  try {
+    assert.ok(portKeys(ssr.configuration).includes('SITE_APP_PORT'), 'an SSR primary keeps its process');
+  } finally {
+    ssr.cleanup();
+  }
+});
+
+test('the native runtime refuses to proxy SPAs it never starts', () => {
+  assert.throws(() => fixture({ runtimeMode: 'native', frontendMode: 'proxy' }), /static/u);
+  assert.throws(() => fixture({ runtimeMode: 'kubernetes' }), /RUNTIME_MODE/u);
+});
+
+test('accepts every profile the Compose wrapper supports and publishes only the edge ones', () => {
+  const { configuration, cleanup } = fixture({ profiles: 'notification-consumer,notification-scheduler' });
+  try {
+    // serverctl validates notification secrets for these profiles, so rejecting them
+    // here made the notification workers impossible to deploy on a single server.
+    assert.deepEqual(configuration.enabledProfiles, ['notification-consumer', 'notification-scheduler']);
+    const nginx = renderNginx(configuration, 'https');
+    assert.doesNotMatch(nginx, /notification/u, 'notification workers have no public surface');
+    assert.ok(!portKeys(configuration).includes('TELEGRAM_BOT_API_PORT'));
+  } finally {
+    cleanup();
+  }
+});
+
+test('static frontend mode rejects an unsafe dist root', () => {
+  assert.throws(() => fixture({ frontendMode: 'static', distRoot: '/srv/a b' }), /whitespace/u);
+  assert.throws(() => fixture({ frontendMode: 'static', distRoot: '/srv/../etc' }), /\.\./u);
+  assert.throws(() => fixture({ frontendMode: 'static', distRoot: 'relative/path' }), /absolute/u);
 });

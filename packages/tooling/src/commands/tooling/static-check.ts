@@ -1695,7 +1695,7 @@ export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
           file: `${relativeFile}:${index + 1}`,
           status: 1,
           stdout: "",
-          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, backend Postgres path/alias, Problem Details RFC9457, Node >=24 <25, and pnpm 11.11.0 references.`,
+          stderr: `Found ${staleReference.label}. Use current product-neutral, exception/swagger, backend Postgres path/alias, Problem Details RFC9457, Node >=24 <25, and pnpm 11.15.1 references.`,
         });
       }
     });

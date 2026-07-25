@@ -14,10 +14,11 @@ routes.
 ## Production contract
 
 - Build and publish immutable images for each service and the migrator. The release workflow pushes `sha-<git-sha>` GHCR tags, emits SBOM/provenance attestations, scans with Trivy, and signs digests with cosign keyless GitHub OIDC.
-- Telegram's user-app entry is a Vite build-time feature. Set the repository
-  Actions variable `VITE_TELEGRAM_AUTH_ENABLED=true` before publishing the
-  release image used by a Telegram-enabled Helm environment; runtime Helm
-  values cannot retrofit a disabled button into an already-built bundle.
+- Telegram's user-app entry is a **runtime** flag: set
+  `frontendRuntimeConfig.TELEGRAM_AUTH_ENABLED='true'` and the SPA container
+  renders it into `/runtime-config.js` at start, so the same immutable image
+  serves Telegram-enabled and disabled environments with no rebuild. (The
+  `VITE_TELEGRAM_AUTH_ENABLED` build arg remains only as the local-dev default.)
 - Create a Kubernetes Secret outside the chart and set `secrets.existingSecret`.
   The Secret must provide `SESSION_SECRET`, `BETTER_AUTH_SECRET`, and `DATABASE_URL`. When enabling an optional bot API,
   include its documented Telegram or Discord runtime values in the same Secret.

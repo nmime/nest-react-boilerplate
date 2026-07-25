@@ -3,11 +3,7 @@
 {{- end -}}
 
 {{- define "boilerplate.fullname" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s" (include "boilerplate.name" .) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
+{{- .Values.fullnameOverride | default .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{- define "boilerplate.labels" -}}

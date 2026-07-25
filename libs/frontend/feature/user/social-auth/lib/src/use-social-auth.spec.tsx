@@ -28,7 +28,9 @@ const { useSocialAuth } = await import('./use-social-auth');
 
 const createWrapper = () => {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
-  return ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
 };
 
 const render = () => {
@@ -48,7 +50,11 @@ afterEach(() => {
 
 describe('useSocialAuth finishExternalAuth', () => {
   it('marks authenticated and navigates to a safe return url from the result', async () => {
-    socialApi.submitTelegramTma.mockResolvedValue({ session: { token: 't' }, returnUrl: '/dashboard', status: 'authenticated' });
+    socialApi.submitTelegramTma.mockResolvedValue({
+      session: { token: 't' },
+      returnUrl: '/dashboard',
+      status: 'authenticated',
+    });
     const { result, navigate } = render();
 
     result.current.authenticateTelegramTma({ initData: 'init', intent: 'login', returnUrl: '/dashboard' });

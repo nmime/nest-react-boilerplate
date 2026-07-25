@@ -53,6 +53,17 @@ spec:
             # port. Nginx frontends ignore this variable.
             - name: PORT
               value: {{ $app.port | quote }}
+            {{- if eq $app.kind "frontend" }}
+            {{- /*
+              Browser-safe runtime flags. The SPA entrypoint renders these into
+              runtime-config.js at container start, so one immutable image serves
+              every environment (no Vite rebuild to toggle a feature).
+            */ -}}
+            {{- range $flag, $value := $root.Values.frontendRuntimeConfig }}
+            - name: {{ $flag }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
           {{- end }}
           {{- if or (eq $app.kind "backend") (eq $app.kind "background") }}
           envFrom:

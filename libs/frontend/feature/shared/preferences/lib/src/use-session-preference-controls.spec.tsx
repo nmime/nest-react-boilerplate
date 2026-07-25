@@ -17,7 +17,9 @@ const { useSessionPreferenceControls } = await import('./use-session-preference-
 
 const createWrapper = () => {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
-  return ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
 };
 
 describe('useSessionPreferenceControls', () => {
@@ -42,10 +44,9 @@ describe('useSessionPreferenceControls', () => {
       data: { data: { user: { locale: 'ru', theme: 'dark' } } },
       response: new Response(null),
     });
-    const { result } = renderHook(
-      () => useSessionPreferenceControls({ invalidateQueryKeys: () => [['profile']] }),
-      { wrapper: createWrapper() },
-    );
+    const { result } = renderHook(() => useSessionPreferenceControls({ invalidateQueryKeys: () => [['profile']] }), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.persistUserLocale('ru');

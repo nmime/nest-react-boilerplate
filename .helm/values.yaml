@@ -532,8 +532,34 @@ backups:
     allowPrivilegeEscalation: false
     capabilities: { drop: ['ALL'] }
 
+# Browser-safe runtime flags injected into the SPA containers at start and
+# rendered into /runtime-config.js. Because these are runtime (not Vite
+# build-time) values, one immutable image serves every environment. Never put
+# secrets here — the file is public. Keys are passed through verbatim as env
+# vars; see docker/frontend-runtime-config.sh for the supported set.
+frontendRuntimeConfig: {}
+# frontendRuntimeConfig:
+#   TELEGRAM_AUTH_ENABLED: 'true'
+#   DISCORD_AUTH_ENABLED: 'false'
+
 networkPolicy:
   enabled: false
+  # Allow egress to external HTTPS endpoints (transactional email, push/FCM/APNs,
+  # Discord/Telegram, hosted OTLP). A default-deny egress policy that only permits
+  # in-cluster namespaceSelectors silently blocks all off-cluster traffic, so this
+  # is enabled by default. Set enabled=false to enforce a strict, tuned egress and
+  # add your own ipBlock rules downstream.
+  externalEgress:
+    enabled: true
+    ports: [443]
+    cidr: 0.0.0.0/0
+    # Keep intra-cluster/link-local traffic out of the public-internet rule; the
+    # in-cluster egress rules above already cover Postgres/Redis/DNS.
+    except:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+      - 169.254.0.0/16
 
 terminationGracePeriodSeconds: 60
 

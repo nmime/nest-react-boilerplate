@@ -31,7 +31,7 @@ describe("project doctor runtime policy", () => {
   });
 
   it("accepts the exact pinned pnpm version", () => {
-    assert.equal(checkPnpmVersion("11.11.0").status, "pass");
+    assert.equal(checkPnpmVersion("11.15.1").status, "pass");
     assert.equal(checkPnpmVersion("11.12.0").status, "fail");
   });
 

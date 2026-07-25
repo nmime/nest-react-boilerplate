@@ -1,9 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   applyDefaultFrontendBuildApiBaseUrlMode,
   assertRequiredFrontendBuildApiBaseUrls,
   getApiBaseUrl,
   getDefaultFrontendBuildApiBaseUrlMode,
+  getFrontendRuntimeConfig,
+  resolveFeatureFlag,
   type FrontendBuildEnv,
   type FrontendEnv,
 } from './frontend-env';
@@ -151,5 +153,43 @@ describe('frontend build API URL mode defaults', () => {
     expect(() => {
       assertRequiredFrontendBuildApiBaseUrls(env, 'build', 'production');
     }).toThrow(/VITE_USER_API_BASE_URL, VITE_ADMIN_API_BASE_URL/u);
+  });
+});
+
+describe('runtime feature flags', () => {
+  afterEach(() => {
+    delete (globalThis as { __APP_RUNTIME_CONFIG__?: unknown }).__APP_RUNTIME_CONFIG__;
+  });
+
+  it('prefers the per-deployment runtime value over the baked build value', () => {
+    // One image, many environments: runtime config must win both directions.
+    expect(resolveFeatureFlag('true', 'false')).toBe(true);
+    expect(resolveFeatureFlag('false', 'true')).toBe(false);
+    expect(resolveFeatureFlag(true, undefined)).toBe(true);
+  });
+
+  it('falls back to the build value when runtime config is absent or unparsable', () => {
+    expect(resolveFeatureFlag(undefined, 'true')).toBe(true);
+    expect(resolveFeatureFlag('', 'true')).toBe(true);
+    expect(resolveFeatureFlag('maybe', 'true')).toBe(true);
+    expect(resolveFeatureFlag(undefined, undefined)).toBe(false);
+  });
+
+  it('treats flags case-insensitively and ignores surrounding whitespace', () => {
+    expect(resolveFeatureFlag('  TRUE ', undefined)).toBe(true);
+    expect(resolveFeatureFlag(' False ', 'true')).toBe(false);
+  });
+
+  it('reads the injected global runtime config, defaulting to an empty object', () => {
+    expect(getFrontendRuntimeConfig()).toEqual({});
+    (globalThis as { __APP_RUNTIME_CONFIG__?: unknown }).__APP_RUNTIME_CONFIG__ = {
+      telegramAuthEnabled: 'true',
+    };
+    expect(getFrontendRuntimeConfig()['telegramAuthEnabled']).toBe('true');
+  });
+
+  it('ignores a non-object runtime global instead of throwing', () => {
+    (globalThis as { __APP_RUNTIME_CONFIG__?: unknown }).__APP_RUNTIME_CONFIG__ = 'nope';
+    expect(getFrontendRuntimeConfig()).toEqual({});
   });
 });

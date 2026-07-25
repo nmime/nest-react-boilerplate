@@ -1,5 +1,7 @@
 # @app/frontend-feature-user-logout
 
+## Purpose
+
 Platform-neutral sign-out domain logic shared by the web `app` and native
 `mobile` frontends: the observable `LogoutModel` (MobX + mobx-tanstack-query),
 the `useLogout` hook, and the `requestLogout` data-access helper. The session is

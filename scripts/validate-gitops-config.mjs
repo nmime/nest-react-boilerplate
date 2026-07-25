@@ -21,7 +21,7 @@ const fluxRelease = read('deploy/flux/release.yaml');
 const fluxKustomization = read('deploy/flux/kustomization.yaml');
 const releaseWorkflow = read('.github/workflows/release-images.yml');
 const promotionWorkflow = read('.github/workflows/deploy.yml');
-const tagUpdater = read('scripts/update-deploy-tags.py');
+const tagUpdater = read('scripts/update-deploy-tags.mjs');
 const releaseImagePlan = read('scripts/release-image-plan.mjs');
 
 for (const expected of [
@@ -92,8 +92,8 @@ has(promotionWorkflow, 'retaining the currently promoted', 'promotion leaves una
 has(promotionWorkflow, 'gh pr create', 'promotion opens a pull request');
 assert.ok(!promotionWorkflow.includes('workflow_run:'), 'promotion must not create a self-triggering main-commit loop');
 assert.ok(!promotionWorkflow.includes('HEAD:main'), 'promotion must never push directly to main');
-has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', args.sha)", 'tag updater requires the release workflow full SHA');
-has(tagUpdater, "'sha256:[0-9a-fA-F]{64}'", 'tag updater requires immutable image digests');
+has(tagUpdater, '/^[0-9a-fA-F]{40}$/u', 'tag updater requires the release workflow full SHA');
+has(tagUpdater, '/^sha256:[0-9a-fA-F]{64}$/u', 'tag updater requires immutable image digests');
 has(
   tagUpdater,
   'the first promotion must supply every release image digest',

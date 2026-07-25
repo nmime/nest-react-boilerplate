@@ -3,13 +3,7 @@
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/frontend/feature/user/preferences/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:frontend",
-    "type:feature-shared",
-    "scope:user",
-    "boundary:preferences",
-    "fsd:layer:shared"
-  ],
+  "tags": ["platform:frontend", "type:feature-shared", "scope:user", "boundary:preferences", "fsd:layer:shared"],
   "targets": {
     "build": {
       "executor": "nx:run-commands",
@@ -31,14 +25,10 @@
         "default",
         "^production",
         {
-          "externalDependencies": [
-            "vitest"
-          ]
+          "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": [
-        "{workspaceRoot}/coverage/libs/frontend/feature/user/preferences"
-      ]
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/feature/user/preferences"]
     }
   }
 }

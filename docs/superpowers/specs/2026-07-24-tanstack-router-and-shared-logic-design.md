@@ -17,12 +17,12 @@ By contrast `site` uses Vike, `landing` uses Astro, `mobile` uses `expo-router` 
 The hand-rolled routers have no route typing, no code-splitting, and duplicate navigation plumbing.
 
 Separately, the user wants **data and business logic shared between `app` (web) and `mobile` (native)**.
-Today all of `app`'s feature logic lives *inside the app* (`apps/frontend/app/src/features/*`,
+Today all of `app`'s feature logic lives _inside the app_ (`apps/frontend/app/src/features/*`,
 `entities/*`), so `mobile` cannot import it (apps may not depend on other apps).
 
 ## Decisions (locked with the user)
 
-1. **Router library: TanStack Router**, used as a *pure router* (no TanStack loaders; data stays in
+1. **Router library: TanStack Router**, used as a _pure router_ (no TanStack loaders; data stays in
    mobx-tanstack-query). Reverses nothing else about the stack.
 2. **Route definition style: code-based**, authored in each app's FSD `app` layer (`src/app/router/`),
    importing page components from the `pages/*` public barrels. No file-based `routes/` dir, no
@@ -30,9 +30,9 @@ Today all of `app`'s feature logic lives *inside the app* (`apps/frontend/app/sr
 3. **Scope: `app` + `admin`** migrate together to the same pattern.
 4. **Keep the boilerplate's own stack**: MobX + mobx-tanstack-query + openapi-fetch + custom
    `frontend-ui-web`/`frontend-ui-native` + custom `frontend-runtime` i18n. i18next stays out.
-   The real product (`xrocket/wallet`, Refine + Ant Design + react-router v7 + axios, admin-only) is a
+   The in-house reference product (Refine + Ant Design + react-router v7 + axios, admin-only) is a
    **reference, not a mandate** — we do not adopt Refine/antd/react-router here.
-5. **Reuse axis is data + logic, NOT navigation.** We do *not* build a shared navigation abstraction
+5. **Reuse axis is data + logic, NOT navigation.** We do _not_ build a shared navigation abstraction
    (web TanStack Router and native expo-router cannot share router code, and that is fine). Instead we
    relocate the already-platform-agnostic `model/` + `api/` layers into shared libs both platforms import.
 
@@ -49,6 +49,7 @@ data fetching or business logic in route definitions.
 ### app route map (parity with today — `user-router.tsx`)
 
 Pathless shell layout →
+
 - `/` → `UserHomePage` (index content)
 - `/auth` → `AuthPage`
 - `/auth/discord/callback` → `AuthDiscordCallbackPage`
@@ -60,12 +61,13 @@ Pathless shell layout →
 - `/link/discord` → `SettingsPage`
 - notFound → render `UserHomePage` (preserve today's "unknown route falls back to home")
 
-Cleanup in scope: split `UserHomePage`'s dual role (it is *both* the shell and the `/` content today)
+Cleanup in scope: split `UserHomePage`'s dual role (it is _both_ the shell and the `/` content today)
 into `UserShell` (layout: nav actions, back handling, `<Outlet/>`) + `UserHomePage` (index content).
 
 ### admin route map (parity with today — `App.tsx`)
 
 Root auth gate (unauthenticated → `ForbiddenPage`). AdminLayout shell →
+
 - `/` + `/dashboard` → `DashboardPage` (guard: dashboard)
 - `/users` + `/users/$userId` → `UsersPage` (guard: users)
 - `/roles` → `RolesPage` (guard: roles)
@@ -108,6 +110,7 @@ against `tsconfig.lib.json`, `tsconfig.json`, `tsconfig.lib.json`, `eslint.confi
 barrel using `export *`, README, AGENTS.md), registered in `tsconfig.base.json` paths.
 
 New libs (name → moved contents):
+
 - `@app/frontend-feature-user-auth` ← `features/auth/{model,api}`
 - `@app/frontend-feature-user-social-auth` ← `features/social-auth/{model,api}`
 - `@app/frontend-feature-user-tma-auth` ← `features/tma-auth/{model,api}`
@@ -116,6 +119,7 @@ New libs (name → moved contents):
 - `@app/frontend-feature-user-profile` ← `entities/profile/{model,api}`
 
 Rules:
+
 - Only `model/` + `api/` move. The `ui/` slices stay in `app` (web) and get their logic via the new libs.
 - Barrels use `export *` (project convention); collisions renamed at source.
 - Tags mirror the i18n lib: `platform:frontend`, `type:feature-shared`, `scope:user`,
@@ -129,6 +133,7 @@ Rules:
 ## Part C — Mobile reuse (demonstration)
 
 Wire `mobile` to consume at least one shared model so reuse is proven, not just structural:
+
 - `mobile` already imports `@app/frontend-runtime`; add a dependency on one new feature lib
   (e.g. `@app/frontend-feature-user-preferences` or `-auth`) and drive a native screen's state from the
   shared model, rendering with `@app/frontend-ui-native` (Tamagui). Keep the router as expo-router.

@@ -145,6 +145,34 @@ Do not publish default same-origin builds without the proxy in place. For
 standalone/static split-origin SPA hosting, set all explicit API origins and use
 a non-`same-origin` mode such as `VITE_API_BASE_URL_MODE=split-origin`.
 
+## Runtime feature flags (one image, many environments)
+
+API origins are resolved at build time, but browser-safe **feature flags are
+resolved at runtime**, so toggling a feature never requires rebuilding an SPA
+image. Each frontend container runs `docker/frontend-runtime-config.sh` from the
+nginx `/docker-entrypoint.d/` hook before serving, rendering the environment into
+`/runtime-config.js`:
+
+```js
+window.__APP_RUNTIME_CONFIG__ = { telegramAuthEnabled: true };
+```
+
+`index.html` loads that file before the app bundle, so
+`resolveFeatureFlag(runtimeValue, buildValue)` (from `@app/frontend-api-support`)
+reads it synchronously. Precedence is runtime → Vite build value → `false`, and an
+unset or unparsable runtime value falls through, so a deployment can only override
+a flag deliberately.
+
+| Surface        | How to set it                                                         |
+| -------------- | --------------------------------------------------------------------- |
+| Compose (prod) | `AUTH_TELEGRAM_ENABLED` / `DISCORD_AUTH_ENABLED` in `.env.production` |
+| Kubernetes     | `frontendRuntimeConfig.TELEGRAM_AUTH_ENABLED: 'true'` in Helm values  |
+| Local dev      | `VITE_TELEGRAM_AUTH_ENABLED` (build-time default)                     |
+
+Two constraints: `/runtime-config.js` is served `no-store` (an exact-match nginx
+location that outranks the year-long immutable rule for hashed assets), and the
+file is public — **never put secrets in it**.
+
 ## Validation commands
 
 Run the repository checks before publishing frontend images or changing routing:

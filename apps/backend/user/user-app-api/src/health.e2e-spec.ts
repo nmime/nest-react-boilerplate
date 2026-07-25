@@ -19,7 +19,7 @@ interface HealthEnvelope {
 const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
 
 describe('user-app-api health e2e', () => {
-  let app: NestFastifyApplication;
+  let app: NestFastifyApplication | undefined;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -32,10 +32,13 @@ describe('user-app-api health e2e', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await app?.close();
   });
 
   it('GET /health returns shared liveness-compatible health details', async () => {
+    if (!app) {
+      throw new Error('Test application was not initialized');
+    }
     const response = await app.inject({ method: 'GET', url: '/health' });
 
     expect(response.statusCode).toBe(200);
@@ -56,6 +59,9 @@ describe('user-app-api health e2e', () => {
   });
 
   it('GET /live and /ready report the database-backed user API', async () => {
+    if (!app) {
+      throw new Error('Test application was not initialized');
+    }
     const liveResponse = await app.inject({ method: 'GET', url: '/live' });
     expect(liveResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(liveResponse)).toMatchObject({

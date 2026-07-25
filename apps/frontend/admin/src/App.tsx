@@ -50,7 +50,7 @@ import { type AdminProfileState } from './shared';
 
 // The RBAC route matrix moved into the router module; re-exported so existing
 // route/page tests can keep asserting the matrix directly.
-export { renderAdminRoute } from './app/router/admin-route-matrix';
+export * from './app/router/admin-route-matrix';
 
 interface AdminAppProps {
   applyUserLocale: (locale: Locale) => void;

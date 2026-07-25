@@ -3,7 +3,7 @@ import { ApiClientProvider } from '@app/frontend-api-client';
 import { FrontendI18nProvider, FrontendQueryProvider, FrontendStateProvider, observer } from '@app/frontend-runtime';
 import { useUserPreferenceControls } from '@app/frontend-feature-user-preferences';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
-import { MobileRuntimeProvider } from '../shared/mobile-runtime';
+import { MobileRuntimeProvider } from '../shared';
 
 /**
  * Drives locale/theme from the shared `useUserPreferenceControls` hook — the
@@ -12,7 +12,11 @@ import { MobileRuntimeProvider } from '../shared/mobile-runtime';
  * through the shared API client; when offline/unauthenticated it degrades to a
  * local-only change (the hook swallows the failure).
  */
-const MobilePreferencesBridge = observer(function MobilePreferencesBridge({ children }: { readonly children: ReactNode }) {
+const MobilePreferencesBridge = observer(function MobilePreferencesBridge({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
   const preferences = useUserPreferenceControls();
 
   return (

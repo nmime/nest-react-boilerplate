@@ -22,7 +22,7 @@ env:
   NX_CACHE_DIRECTORY: .nx/cache
   NODE_VERSION_FILE: .nvmrc
   BUN_VERSION_FILE: .bun-version
-  PNPM_VERSION: 11.11.0
+  PNPM_VERSION: 11.15.1
 
 jobs:
   gitleaks:
@@ -286,13 +286,15 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
         run: |
+          # Tests run once, with coverage, in the "Enforce coverage thresholds"
+          # step below. Running a plain `test` here too would re-execute the same
+          # projects under a different Nx hash (coverage changes the task inputs).
           if [ "$EVENT_NAME" = "pull_request" ]; then
-            pnpm exec nx affected -t lint typecheck test build \
+            pnpm exec nx affected -t lint typecheck build \
               --base="origin/$BASE_REF" --head=HEAD
           else
             pnpm run lint
             pnpm run typecheck
-            pnpm run test
             pnpm run build
           fi
 

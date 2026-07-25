@@ -1,5 +1,7 @@
 # @app/frontend-feature-user-auth
 
+## Purpose
+
 Platform-neutral auth-session domain logic shared by the web `app` and native
 `mobile` frontends: auth form/request types + `AuthMode`, the `createAuthSession`
 / `fetchAuthMe` data-access helpers, and the `useAuthSessionFlow` hook that owns

@@ -191,7 +191,6 @@ services:
       postgres:
         condition: service_healthy
     environment: *backend-env
-    command: ['pnpm', 'db:migrate']
 
   admin-app-api:
     profiles: [admin-app-api]

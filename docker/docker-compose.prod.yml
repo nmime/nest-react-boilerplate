@@ -129,7 +129,7 @@ x-migrate-command: &migrate-command
       DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
       export DATABASE_URL
     fi
-    exec pnpm db:migrate
+    exec node docker/migrator-run.mjs
 
 x-backend-healthcheck: &backend-healthcheck
   test:

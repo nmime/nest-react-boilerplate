@@ -155,6 +155,32 @@ before(
   'CMD ["node", "docker/migrator-run.mjs"]',
   'migrator entrypoint before the standalone migration runner command',
 );
+assert.ok(
+  !migratorStage.includes('/usr/local/bin/pnpm'),
+  'Migrator runtime must not include pnpm; migrations use the standalone Node runner.',
+);
+
+const localCompose = read('docker/docker-compose.yml');
+const localMigrateService = yamlMapEntry(localCompose, 'migrate');
+assert.ok(
+  !localMigrateService.includes('command:'),
+  'Local Compose must inherit the migrator image command instead of overriding it with workspace tooling.',
+);
+const productionCompose = read('docker/docker-compose.prod.yml');
+const productionMigrateCommand = section(
+  productionCompose,
+  'x-migrate-command: &migrate-command',
+  'x-backend-healthcheck: &backend-healthcheck',
+);
+has(
+  productionMigrateCommand,
+  'exec node docker/migrator-run.mjs',
+  'production Compose invokes the standalone migration runner after resolving DATABASE_URL',
+);
+assert.ok(
+  !productionMigrateCommand.includes('pnpm'),
+  'Production migrations must not depend on the package manager removed from runtime images.',
+);
 
 // Backend images ship per-app production dependencies computed from each app's
 // generated dist package.json + pruned lockfile, not the whole-workspace tree.

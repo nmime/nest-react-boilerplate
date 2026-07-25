@@ -144,8 +144,8 @@ CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 # portable, production-only dependency graph derived from the reviewed root
 # lockfile and supply-chain policy.
 FROM builder AS site-deps
-RUN pnpm --filter site-app deploy --prod /site-deploy \
-  && find /site-deploy/node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} + 2>/dev/null || true
+RUN pnpm pm deploy --filter site-app --prod /site-deploy \
+  && { find /site-deploy/node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} + 2>/dev/null || true; }
 
 FROM node:${NODE_VERSION} AS site-runtime
 ENV CONTAINER=true \

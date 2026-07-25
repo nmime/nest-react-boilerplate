@@ -97,6 +97,16 @@ has(
 );
 has(
   dockerfile,
+  'pnpm pm deploy --filter site-app --prod /site-deploy',
+  'site runtime forces the pnpm built-in deploy command despite the root deploy script',
+);
+has(
+  dockerfile,
+  '&& { find /site-deploy/node_modules/.pnpm',
+  'site dependency pruning cannot mask a failed pnpm deploy command',
+);
+has(
+  dockerfile,
   'ARG NGINX_CONFIG=docker/nginx-fullstack.conf',
   'frontend nginx config build arg defaults to same-origin fullstack proxy',
 );

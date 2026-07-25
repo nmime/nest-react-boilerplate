@@ -95,9 +95,10 @@ jobs:
       - name: Validate branch and commit conventions
         env:
           BEFORE_SHA: ${{ github.event.before }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [[ -n "$GITHUB_HEAD_REF" ]]; then
-            pnpm run git:conventions -- --branch "$GITHUB_HEAD_REF" --range "origin/$GITHUB_BASE_REF..HEAD"
+            pnpm run git:conventions -- --branch "$GITHUB_HEAD_REF" --range "origin/$GITHUB_BASE_REF..$PR_HEAD_SHA"
           else
             pnpm run git:conventions -- --branch "$GITHUB_REF_NAME" --range "$BEFORE_SHA..HEAD"
           fi

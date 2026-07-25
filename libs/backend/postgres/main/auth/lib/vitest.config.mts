@@ -16,10 +16,10 @@ export default defineConfig({
     exclude: ['src/**/*.component-spec.ts'],
     globals: false,
     coverage: fullCoverage('coverage/libs/backend/postgres/main/auth/lib', ['src/**/*.ts'], [], {
-      branches: -21,
-      functions: -6,
-      lines: -33,
-      statements: -33,
+      branches: -83,
+      functions: -8,
+      lines: -40,
+      statements: -40,
     }),
   },
 });

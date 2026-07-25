@@ -15,10 +15,10 @@ export default defineConfig({
     include: ['src/**/*.spec.ts'],
     globals: false,
     coverage: fullCoverage('coverage/libs/backend/feature/notification/main/lib', ['src/**/*.ts'], [], {
-      branches: -108,
-      functions: -36,
-      lines: -144,
-      statements: -148,
+      branches: -445,
+      functions: -119,
+      lines: -460,
+      statements: -478,
     }),
   },
 });

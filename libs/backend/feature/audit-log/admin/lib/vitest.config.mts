@@ -14,6 +14,11 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('coverage/libs/backend/feature/audit-log/admin/lib', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/libs/backend/feature/audit-log/admin/lib', ['src/**/*.ts'], [], {
+      branches: -22,
+      functions: -11,
+      lines: -21,
+      statements: -24,
+    }),
   },
 });

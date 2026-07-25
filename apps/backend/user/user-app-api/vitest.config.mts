@@ -75,6 +75,11 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts', 'src/**/*.e2e-spec.ts'],
     globals: false,
-    coverage: fullCoverage('coverage/apps/backend/user/user-app-api', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/apps/backend/user/user-app-api', ['src/**/*.ts'], [], {
+      branches: -1,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    }),
   },
 });

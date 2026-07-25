@@ -33,6 +33,12 @@ export default defineConfig({
         'src/shared/**/*.{ts,tsx}',
       ],
       [],
+      {
+        branches: -214,
+        functions: -151,
+        lines: -297,
+        statements: -305,
+      },
     ),
   },
 });

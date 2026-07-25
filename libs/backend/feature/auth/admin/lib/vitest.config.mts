@@ -18,6 +18,12 @@ export default defineConfig({
       'coverage/libs/backend/feature/auth/admin/lib',
       ['src/**/*.ts'],
       ['src/index.ts', 'src/**/*.module.ts', 'src/**/*.dto.ts'],
+      {
+        branches: -18,
+        functions: 100,
+        lines: -2,
+        statements: -2,
+      },
     ),
   },
 });

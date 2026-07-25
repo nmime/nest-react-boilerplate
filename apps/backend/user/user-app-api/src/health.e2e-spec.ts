@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- Fastify inject response JSON is intentionally dynamic in e2e tests. */
+import { MikroORM } from '@mikro-orm/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import type { Response as InjectResponse } from 'light-my-request';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createValidationPipe } from '@app/backend-common-validation';
 import { UserAppApiModule } from './user-app-api.module';
 
@@ -20,11 +21,25 @@ const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => respon
 
 describe('user-app-api health e2e', () => {
   let app: NestFastifyApplication | undefined;
+  const ormMock = {
+    close: vi.fn(() => Promise.resolve()),
+    em: {
+      fork: vi.fn(() => ormMock.em),
+      getConnection: () => ({ execute: vi.fn(() => Promise.resolve()) }),
+      getMigrator: () => ({
+        getPendingMigrations: vi.fn(() => Promise.resolve([])),
+      }),
+      getRepository: () => ({}),
+    },
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [UserAppApiModule],
-    }).compile();
+    })
+      .overrideProvider(MikroORM)
+      .useValue(ormMock)
+      .compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     app.useGlobalPipes(createValidationPipe());

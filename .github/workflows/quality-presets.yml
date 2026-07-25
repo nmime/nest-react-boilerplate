@@ -57,7 +57,7 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
       ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
-      COMPOSE_PROFILES: postgres,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app
+      COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
       PLAYWRIGHT_AUTO_INSTALL: '1'
       A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083

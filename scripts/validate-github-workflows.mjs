@@ -195,7 +195,7 @@ assert.ok(
   'scheduled quality workflow must run the pinned visual regression matrix',
 );
 const runtimeComposeProfiles =
-  'COMPOSE_PROFILES: postgres,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app';
+  'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app';
 for (const [workflowName, workflowText] of [
   ['ci.yml', ci],
   ['quality-presets.yml', qualityPresets],

@@ -123,6 +123,7 @@ for (const expected of [
   "AUTH_TELEGRAM_ENABLED: 'true'",
   "TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'",
   "VITE_TELEGRAM_AUTH_ENABLED: 'true'",
+  'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app',
 ]) {
   has(runtimeOpsJob, expected, `runtime QA Telegram TMA fixture ${expected}`);
 }
@@ -165,6 +166,11 @@ const localMigrateService = yamlMapEntry(localCompose, 'migrate');
 assert.ok(
   !localMigrateService.includes('command:'),
   'Local Compose must inherit the migrator image command instead of overriding it with workspace tooling.',
+);
+has(
+  localCompose,
+  'NATS_SERVERS: ${NATS_SERVERS:-nats://nats:4222}',
+  'Local Compose addresses the profile-gated NATS service when it is selected',
 );
 const productionCompose = read('docker/docker-compose.prod.yml');
 const productionMigrateCommand = section(

@@ -160,7 +160,12 @@ function createCucumberApp(tree: Tree, names: ReturnType<typeof generateNames>, 
             executor: 'nx:run-commands',
             cache: false,
             options: {
-              command: `node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config ${dir}/cucumber.config.ts`,
+              commands: [
+                {
+                  command: `node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config ${dir}/cucumber.config.ts`,
+                  forwardAllArgs: false,
+                },
+              ],
             },
             inputs: ['default', '^production', { externalDependencies: ['@cucumber/cucumber'] }],
             outputs: ['{workspaceRoot}/test-results/cucumber', '{workspaceRoot}/cucumber-report'],

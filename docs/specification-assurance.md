@@ -105,6 +105,11 @@ pnpm exec nx run acceptance-e2e:typecheck
 pnpm exec nx run acceptance-e2e:acceptance
 ```
 
+The generic `test` target is safe inside repository-wide Nx test and coverage
+commands: it does not forward Vitest-only flags to Cucumber, but it still runs
+all scenarios and emits message, HTML, and JUnit execution evidence. Use the
+explicit `acceptance` target when passing Cucumber-owned filters or profiles.
+
 Write declarative scenarios in product language. Step definitions may call
 public domain functions or system boundaries, but feature files should not name
 buttons, CSS selectors, implementation classes, or internal method sequences

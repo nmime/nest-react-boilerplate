@@ -37,7 +37,12 @@
       "executor": "nx:run-commands",
       "cache": false,
       "options": {
-        "command": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config apps/e2e/acceptance/cucumber.config.ts"
+        "commands": [
+          {
+            "command": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config apps/e2e/acceptance/cucumber.config.ts",
+            "forwardAllArgs": false
+          }
+        ]
       },
       "inputs": [
         "default",

@@ -393,6 +393,9 @@ describe('application generator', () => {
       assert.ok(projectJson.targets.acceptance);
       assert.ok(projectJson.targets.test);
       assert.ok(projectJson.targets.typecheck);
+      assert.equal(projectJson.targets.test.options.commands[0].forwardAllArgs, false);
+      assert.match(projectJson.targets.test.options.commands[0].command, /@cucumber\/cucumber/u);
+      assert.match(projectJson.targets.acceptance.options.command, /@cucumber\/cucumber/u);
       assert.ok(tree.exists(`${root}/cucumber.config.ts`));
       assert.equal(JSON.parse(tree.read(`${root}/package.json`, 'utf8') ?? '{}').type, 'module');
       assert.ok(tree.exists(`${root}/src/support/world.ts`));

@@ -451,8 +451,8 @@ test('keeps the complete repository disposition inventory synchronized', () => {
   assert.equal(report.totals.cucumberNotApplicableRequirements, 53);
   assert.equal(report.totals.projects, 90);
   assert.equal(report.totals.coveredProjects, 90);
-  assert.equal(report.totals.behaviorTests, 446);
-  assert.equal(report.totals.tracedBehaviorTests, 446);
+  assert.equal(report.totals.behaviorTests, 447);
+  assert.equal(report.totals.tracedBehaviorTests, 447);
 });
 
 test('rejects an Nx project without capability ownership', () => {

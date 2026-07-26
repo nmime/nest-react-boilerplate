@@ -5,6 +5,7 @@ import { createReadStream } from "node:fs";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
+import { accessibilityContextOptions } from "./accessibility-context.ts";
 import { envList, parseArgs, writeJson } from "./runtime-utils.ts";
 
 interface AxeViolation { id: string; impact: string | null; help: string; nodes: unknown[]; }
@@ -118,7 +119,11 @@ const profileConfig: Record<string, Parameters<typeof browser.newContext>[0]> = 
 const results: Record<string, unknown>[] = [];
 try {
   for (const url of urls) for (const profile of profiles) {
-    const context = await browser.newContext(profileConfig[profile] ?? profileConfig.desktop);
+    const context = await browser.newContext(
+      accessibilityContextOptions(
+        profileConfig[profile] ?? profileConfig.desktop,
+      ),
+    );
     const page = await context.newPage();
     await page.goto(url, { waitUntil: "networkidle" });
     const semantic = await page.evaluate(() => {

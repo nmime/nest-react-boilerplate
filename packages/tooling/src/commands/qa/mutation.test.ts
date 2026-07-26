@@ -51,10 +51,9 @@ describe('runMutation', () => {
 
     assert.equal(status, 0);
     assert.equal(calls.length, 1);
-    assert.equal(calls[0]?.program, 'pnpm');
+    assert.equal(calls[0]?.program, 'node');
     assert.deepEqual(calls[0]?.args, [
-      'dlx',
-      '@stryker-mutator/core@9.6.1',
+      'packages/tooling/node_modules/@stryker-mutator/core/bin/stryker.js',
       'run',
       'stryker.config.mjs',
     ]);
@@ -69,9 +68,8 @@ describe('runMutation', () => {
       {
         status: 'ok',
         command: [
-          'pnpm',
-          'dlx',
-          '@stryker-mutator/core@9.6.1',
+          'node',
+          'packages/tooling/node_modules/@stryker-mutator/core/bin/stryker.js',
           'run',
           'stryker.config.mjs',
         ],
@@ -108,5 +106,30 @@ describe('runMutation', () => {
       ).status,
       'dry-run',
     );
+  });
+
+  it('forwards an explicit mutation scope to Stryker', () => {
+    const workspaceRoot = workspace();
+    const calls: string[][] = [];
+
+    const status = runMutation({
+      workspaceRoot,
+      argv: ['--mutate', 'src/domain.ts'],
+      runtime: {
+        commandExists: () => true,
+        run: (_program, args): RunResult => {
+          calls.push(args);
+          return {
+            command: ['pnpm', ...args].join(' '),
+            status: 0,
+            stdout: '',
+            stderr: '',
+          };
+        },
+      },
+    });
+
+    assert.equal(status, 0);
+    assert.deepEqual(calls[0]?.slice(-2), ['--mutate', 'src/domain.ts']);
   });
 });

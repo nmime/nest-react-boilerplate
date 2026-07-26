@@ -75,6 +75,11 @@ peerDependencyRules:
 # plugin without declaring them. Keep the fix scoped to that exact release so
 # pnpm's isolated linker produces a reproducible mobile export.
 packageExtensions:
+  # Stryker's TS config preprocessor dynamically imports TypeScript without
+  # declaring it. Keep the compiler visible under pnpm's strict linker.
+  '@stryker-mutator/core@9.6.1':
+    dependencies:
+      typescript: '6.0.3'
   'react-native-worklets@0.10.0':
     dependencies:
       '@babel/generator': '7.29.7'

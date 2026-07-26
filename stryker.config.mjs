@@ -2,7 +2,9 @@ export default {
   packageManager: "pnpm",
   testRunner: "command",
   commandRunner: {
-    command: "pnpm exec vitest run --pool=forks --passWithNoTests",
+    command:
+      process.env.STRYKER_TEST_COMMAND ??
+      "pnpm exec nx run-many -t test --skip-nx-cache",
   },
   mutate: [
     "apps/**/*.ts",

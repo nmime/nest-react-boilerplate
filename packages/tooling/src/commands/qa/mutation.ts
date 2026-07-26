@@ -30,11 +30,14 @@ export function runMutation(options: MutationOptions = {}): number {
     "stryker.config.mjs";
   const reportPath =
     args.options.get("report") ?? "test-results/mutation/command.json";
+  const mutate = args.options.get("mutate") ?? process.env.STRYKER_MUTATE;
+  const strykerCli =
+    "packages/tooling/node_modules/@stryker-mutator/core/bin/stryker.js";
   const command = [
-    "dlx",
-    "@stryker-mutator/core@9.6.1",
+    strykerCli,
     "run",
     config,
+    ...(mutate ? ["--mutate", mutate] : []),
     ...args.positional,
   ];
   const configPath = resolve(workspaceRoot, config);
@@ -46,29 +49,29 @@ export function runMutation(options: MutationOptions = {}): number {
   }
 
   if (args.flags.has("dry-run")) {
-    const report = { status: "dry-run", command: ["pnpm", ...command], config };
+    const report = { status: "dry-run", command: ["node", ...command], config };
     writeJson(reportAbsolutePath, report);
     console.log(JSON.stringify({ ...report, report: reportPath }, null, 2));
     return 0;
   }
 
-  if (!runtime.commandExists("pnpm")) {
-    console.error("pnpm is required to run Stryker via pnpm dlx.");
+  if (!runtime.commandExists("node")) {
+    console.error("Node.js is required to run the repository-pinned Stryker.");
     return 1;
   }
 
   writeJson(reportAbsolutePath, {
     status: "running",
-    command: ["pnpm", ...command],
+    command: ["node", ...command],
     config,
   });
-  const result = runtime.run("pnpm", command, {
+  const result = runtime.run("node", command, {
     cwd: workspaceRoot,
     stdio: "inherit",
   });
   writeJson(reportAbsolutePath, {
     status: result.status === 0 ? "ok" : "failed",
-    command: ["pnpm", ...command],
+    command: ["node", ...command],
     config,
     exitCode: result.status,
   });

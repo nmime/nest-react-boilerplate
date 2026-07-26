@@ -48,5 +48,9 @@
     "./commands/*": "./src/commands/*.ts",
     "./runtime/*": "./src/runtime/*.ts",
     "./package.json": "./package.json"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "9.6.1",
+    "typescript": "6.0.3"
   }
 }

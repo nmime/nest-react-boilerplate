@@ -16,6 +16,7 @@ import istanbulReport from "istanbul-lib-report";
 import reports from "istanbul-reports";
 import path from "node:path";
 import {
+  buildStaticFileIndex,
   isPathInsideRoot,
   resolveExistingStaticFile,
   resolveWorkspaceSubdirectory,
@@ -151,11 +152,15 @@ describe("frontend-browser-e2e-coverage: path confinement", () => {
 
     try {
       const fallback = realpathSync(path.join(root, "index.html"));
-      assert.equal(resolveExistingStaticFile(root, "/app.js"), realpathSync(path.join(root, "app.js")));
-      assert.equal(resolveExistingStaticFile(root, "/../../outside/secret.txt"), fallback);
-      assert.equal(resolveExistingStaticFile(root, "/escape.txt"), fallback);
-      assert.equal(resolveExistingStaticFile(root, "/missing.js"), fallback);
-      assert.equal(resolveExistingStaticFile(root, "/%E0%A4%A"), fallback);
+      const staticFiles = buildStaticFileIndex(root);
+      assert.equal(
+        resolveExistingStaticFile(staticFiles, "/app.js"),
+        realpathSync(path.join(root, "app.js")),
+      );
+      assert.equal(resolveExistingStaticFile(staticFiles, "/../../outside/secret.txt"), fallback);
+      assert.equal(resolveExistingStaticFile(staticFiles, "/escape.txt"), fallback);
+      assert.equal(resolveExistingStaticFile(staticFiles, "/missing.js"), fallback);
+      assert.equal(resolveExistingStaticFile(staticFiles, "/%E0%A4%A"), fallback);
     } finally {
       rmSync(workspace, { force: true, recursive: true });
     }

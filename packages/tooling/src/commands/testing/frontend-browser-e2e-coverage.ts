@@ -9,6 +9,7 @@ import istanbulCoverage from "istanbul-lib-coverage";
 import istanbulReport from "istanbul-lib-report";
 import reports from "istanbul-reports";
 import {
+  buildStaticFileIndex,
   isPathInsideRoot,
   resolveExistingStaticFile,
   resolveWorkspaceSubdirectory,
@@ -54,6 +55,7 @@ const reportDir = resolveWorkspaceSubdirectory(
   path.join("coverage", "e2e"),
   "--coverage-dir",
 );
+const staticFiles = buildStaticFileIndex(root);
 
 function contentType(filePath: string): string {
   if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
@@ -65,7 +67,7 @@ function contentType(filePath: string): string {
 
 const server = createServer((request, response) => {
   try {
-    const filePath = resolveExistingStaticFile(root, request.url ?? "/");
+    const filePath = resolveExistingStaticFile(staticFiles, request.url ?? "/");
     response.setHeader("content-type", contentType(filePath));
     createReadStream(filePath).pipe(response);
   } catch (error) {

@@ -139,7 +139,6 @@ export interface ParsedArgs {
 export interface RunOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
-  shell?: boolean;
   stdio?: StdioOptions;
 }
 
@@ -210,7 +209,7 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     cwd: options.cwd ?? workspaceRoot,
     env: { ...process.env, ...(options.env ?? {}) },
     encoding: "utf8",
-    shell: options.shell ?? false,
+    shell: false,
     stdio: options.stdio ?? "pipe",
   };
   const result = spawnSync(command, args, spawnOptions);

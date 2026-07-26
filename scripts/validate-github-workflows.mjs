@@ -209,6 +209,22 @@ for (const [workflowName, workflowText] of [
     `${workflowName} runtime QA stack must seed the e2e bootstrap admin email`,
   );
   assert.ok(
+    /AUTH_TELEGRAM_ENABLED:\s*['"]true['"]/u.test(workflowText),
+    `${workflowName} runtime QA stack must enable the Telegram TMA fixture`,
+  );
+  assert.ok(
+    /EXTERNAL_AUTH_AUTO_PROVISION_ENABLED:\s*['"]true['"]/u.test(workflowText),
+    `${workflowName} runtime QA stack must enable external-auth fixture provisioning`,
+  );
+  assert.ok(
+    workflowText.includes("TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'"),
+    `${workflowName} runtime QA stack must use the fullstack Telegram signing fixture`,
+  );
+  assert.ok(
+    /RATE_LIMIT_MAX:\s*['"]1000['"]/u.test(workflowText),
+    `${workflowName} runtime QA stack must budget for the five-project browser matrix`,
+  );
+  assert.ok(
     workflowText.includes(runtimeComposeProfiles),
     `${workflowName} runtime QA stack must activate every required Compose profile`,
   );

@@ -57,6 +57,12 @@ jobs:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
       ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
+      AUTH_TELEGRAM_ENABLED: 'true'
+      EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
+      TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
+      VITE_TELEGRAM_AUTH_ENABLED: 'true'
+      # Five browser/device projects share the same runtime client address.
+      RATE_LIMIT_MAX: '1000'
       COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
       PLAYWRIGHT_AUTO_INSTALL: '1'

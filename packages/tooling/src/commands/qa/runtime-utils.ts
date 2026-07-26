@@ -3,6 +3,7 @@ import type { SpawnSyncOptions, StdioOptions } from "node:child_process";
 import type { Stats } from "node:fs";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
+import { commandExists as commandExistsInPath } from "../../runtime/process.ts";
 import { consumerContracts, openApiContracts } from "../api/contracts-manifest.ts";
 
 /** Any value produced by JSON.parse; used where a shape is intentionally open. */
@@ -201,8 +202,7 @@ export function writeJson(path: string, value: unknown): void {
 }
 
 export function commandExists(command: string): boolean {
-  const result = process.platform === "win32" ? spawnSync("where", [command], { stdio: "ignore" }) : spawnSync("sh", ["-c", `command -v ${JSON.stringify(command)} >/dev/null 2>&1`], { stdio: "ignore" });
-  return result.status === 0;
+  return commandExistsInPath(command);
 }
 
 export function run(command: string, args: string[] = [], options: RunOptions = {}): RunResult {

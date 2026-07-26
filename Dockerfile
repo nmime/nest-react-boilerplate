@@ -88,12 +88,10 @@ RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
 #   --prod            production dependencies only
 #   --prefer-offline  reuse the pnpm-fetch store first, with registry metadata
 #                     fallback for generated per-app lockfiles
-#   --ignore-workspace treat the dist output as a standalone project so pnpm
-#                     uses the app's generated lockfile, not the root workspace one
-#   --no-frozen-lockfile the workspace stage sets CI=true (frozen by default) and
-#                     the generated lockfile carries the root `overrides` block the
-#                     standalone dir cannot reproduce; the offline store is pinned to
-#                     the locked versions, so resolution stays deterministic
+#   --frozen-lockfile use the app's generated lockfile without re-resolving its
+#                     dependency graph. A copy of pnpm-workspace.yaml supplies the
+#                     exact root overrides recorded in that lockfile, including
+#                     security overrides for transitive production dependencies.
 #   --ignore-scripts  the standalone dir lacks the root `allowBuilds` policy, so pnpm
 #                     would fail on unapproved build scripts; backend runtime deps are
 #                     pure JS and need none
@@ -103,18 +101,13 @@ WORKDIR /workspace/${BUILD_OUTPUT}
 # Drop esbuild/drizzle-kit: they arrive as dead weight via better-auth's
 # drizzle-kit dependency (this app uses MikroORM, not drizzle), are never run at
 # runtime, and their bundled Go binaries carry the bulk of the image's CVEs.
-# find-my-way: the standalone install runs --ignore-workspace, so the root
-# pnpm-workspace.yaml `find-my-way: 9.7.0` override does not apply and fastify's
-# ^9.6.0 resolves to the vulnerable 9.6.x (CVE-2026-47219). The workspace stage
-# already installed the overridden 9.7.0, so overlay that real 9.7.0 code onto
-# the pruned 9.6.x path.
-RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
+# Keep the generated lockfile's root policy active in this otherwise standalone
+# install. Without this file pnpm rejects a frozen install; allowing it to
+# re-resolve silently discards overrides and can reintroduce fixed CVEs.
+COPY pnpm-workspace.yaml ./pnpm-workspace.yaml
+RUN pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
   && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} + \
-  && for old in node_modules/.pnpm/find-my-way@9.6.*; do \
-       [ -d "$old" ] || continue; \
-       rm -rf "$old/node_modules/find-my-way"; \
-       cp -a /workspace/node_modules/.pnpm/find-my-way@9.7.0/node_modules/find-my-way "$old/node_modules/find-my-way"; \
-     done
+  && test -d node_modules/.pnpm/find-my-way@9.7.0
 
 FROM node:${NODE_VERSION} AS backend
 ENV CONTAINER=true \

@@ -193,8 +193,17 @@ assert.ok(
 const backendDepsStage = section(dockerfile, 'FROM builder AS backend-deps', 'FROM node:${NODE_VERSION} AS backend');
 has(
   backendDepsStage,
-  'pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts',
-  'backend-deps installs per-app prod dependencies from the fetched store with registry metadata fallback',
+  'COPY pnpm-workspace.yaml ./pnpm-workspace.yaml',
+  'backend-deps retains the root override policy recorded in each generated lockfile',
+);
+has(
+  backendDepsStage,
+  'pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts',
+  'backend-deps installs the reviewed per-app production lockfile without re-resolution',
+);
+assert.ok(
+  !backendDepsStage.includes('--no-frozen-lockfile') && !backendDepsStage.includes('--ignore-workspace'),
+  'Backend dependency installation must not bypass the generated lockfile or its security overrides.',
 );
 has(
   backendDepsStage,

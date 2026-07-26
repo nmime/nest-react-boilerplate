@@ -1,42 +1,201 @@
-version: 1
+version: 2
 capability: workspace-scaffolding
 owners:
   product: tooling-maintainers
   verification: generated-code-maintainers
-projects:
-  - '@repo/tooling'
-  - acceptance-e2e
-  - '@app/backend'
-  - '@app/frontend'
+  security: security-maintainers
+  operations: release-engineering
 requirements:
   - id: REQ-SCAFFOLD-OWNERSHIP-001
+    projects:
+      - '@repo/tooling'
+      - '@app/backend'
+      - '@app/frontend'
+      - acceptance-e2e
     risk: high
-    profiles: [tooling, domain, documentation]
+    profiles:
+      - tooling
+      - domain
+      - documentation
     evidence:
       - kind: static
         file: packages/tooling/src/generators/application/generator.ts
         target: '@repo/tooling:static-check'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: packages/tooling/src/generators/application/generator.unit.test.ts
         target: '@repo/tooling:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: documentation
         file: openspec/specs/workspace-scaffolding/spec.md
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
   - id: REQ-SCAFFOLD-SELECTION-002
+    projects:
+      - '@repo/tooling'
     risk: high
-    profiles: [tooling, domain]
+    profiles:
+      - tooling
+      - domain
     evidence:
       - kind: static
         file: packages/tooling/src/setup/catalog.ts
         target: '@repo/tooling:static-check'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: packages/tooling/src/setup/planner.test.ts
         target: '@repo/tooling:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-GENERATORS-003
+    projects:
+      - '@repo/tooling'
+      - acceptance-e2e
+    risk: high
+    profiles:
+      - tooling
+      - domain
+    evidence:
+      - kind: static
+        file: packages/tooling/src/generators/feature/generator.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
       - kind: vitest
-        file: packages/tooling/src/setup/apply.component.test.ts
+        file: packages/tooling/src/generators/feature/generator.unit.test.ts
         target: '@repo/tooling:test'
-        lanes: [main]
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-INIT-004
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - domain
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/project/init-project.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/project/init-project.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-TOOLING-005
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - domain
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/project/setup.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/project/setup.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-QUALITY-006
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - operations
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/testing/frontend-browser-e2e-coverage.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/testing/frontend-browser-e2e-coverage.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly
+  - id: REQ-SCAFFOLD-AGENTS-007
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - documentation
+    evidence:
+      - kind: static
+        file: packages/tooling/scripts/validate-agent-skills.mjs
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/scripts/validate-agent-skills.spec.mjs
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/workspace-scaffolding/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-SAFETY-008
+    projects:
+      - '@repo/tooling'
+    risk: critical
+    profiles:
+      - tooling
+      - persistence
+      - security
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/db/restore.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/db/restore-safety.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: packages/tooling/src/commands/db/restore-safety.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main

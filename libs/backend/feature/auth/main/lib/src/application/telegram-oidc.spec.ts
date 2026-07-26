@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-IDENTITY-005
 import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT } from 'jose';
 import { describe, expect, it } from 'vitest';
 import {

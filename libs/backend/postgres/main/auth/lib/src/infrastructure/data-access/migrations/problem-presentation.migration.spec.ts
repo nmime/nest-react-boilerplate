@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { Migration20260716120000AddTelegramOidcChannel } from './Migration20260716120000AddTelegramOidcChannel';
 import { Migration20260719120000CreateProblemPresentationOverrides } from './Migration20260719120000CreateProblemPresentationOverrides';

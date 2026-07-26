@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { existsSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';

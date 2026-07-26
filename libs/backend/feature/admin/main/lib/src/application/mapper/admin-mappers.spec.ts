@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { describe, expect, it } from 'vitest';
 import type {
   AdminAuditLogEntity,

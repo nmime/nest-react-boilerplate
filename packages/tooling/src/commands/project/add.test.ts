@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from "node:assert/strict";
 import { describe as nodeDescribe, it as nodeIt } from "node:test";
 import { parseAddArgs, runAddCommand } from "./add.js";

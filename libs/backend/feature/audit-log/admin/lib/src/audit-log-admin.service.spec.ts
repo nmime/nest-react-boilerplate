@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-AUDIT-008
 import type { EntityManager } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import { okAsync } from 'neverthrow';

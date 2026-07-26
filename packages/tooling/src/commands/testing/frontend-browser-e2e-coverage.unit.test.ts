@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-QUALITY-006
+// Evidence for: REQ-SCAFFOLD-QUALITY-006
 import * as assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import istanbulCoverage from "istanbul-lib-coverage";

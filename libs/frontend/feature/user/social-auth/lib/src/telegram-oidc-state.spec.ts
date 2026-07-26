@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-IDENTITY-005
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { clearTelegramOidcState, readTelegramOidcState, saveTelegramOidcState } from './telegram-oidc-state';
 

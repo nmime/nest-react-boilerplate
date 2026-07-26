@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-QUALITY-006
 import * as assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { OpenApiDocument, OpenApiSchema } from "./runtime-utils.ts";

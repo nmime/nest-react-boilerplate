@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Specify Behavior'
+  short_description: 'Turn product intent into verifiable requirements'
+  default_prompt: 'Use $specify-behavior to define this behavior before implementation.'

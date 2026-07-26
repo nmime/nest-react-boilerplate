@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { supportedLocales } from '@app/backend-common-i18n';
 import {

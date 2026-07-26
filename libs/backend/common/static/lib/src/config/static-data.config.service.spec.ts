@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-BOUNDARY-010
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StaticDataConfigService } from './static-data.config.service';
 

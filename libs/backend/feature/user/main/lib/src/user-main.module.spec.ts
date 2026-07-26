@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PROFILE-006
 import { Test, type TestingModule } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 import { GetCurrentUserProfileUseCase } from '@app/backend-feature-user-shared';

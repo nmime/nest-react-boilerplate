@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-LIFECYCLE-002
 import { afterEach, describe, expect, it } from 'vitest';
 import { NotificationMainModule } from './notification-main.module';
 

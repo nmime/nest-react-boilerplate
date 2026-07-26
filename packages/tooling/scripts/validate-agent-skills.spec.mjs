@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-AGENTS-007
+// Evidence for: REQ-ASSURANCE-WORKFLOW-005 REQ-SCAFFOLD-AGENTS-007
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -235,4 +237,23 @@ test('validateSkillsRoot requires catalog and workflow discovery', async () => {
   await writeFile(catalogPath, '[Skill](../.agents/skills/example-skill/SKILL.md)\n');
   await writeFile(workflowsPath, 'Use `$example-skill`.\n');
   assert.deepEqual(await validateSkillsRoot(root, { catalogPath, workflowsPath }), []);
+});
+
+test('validateSkillsRoot requires behavior skills to route through the specification lifecycle', async () => {
+  const root = await createRoot();
+  await writeSkill(root, 'develop-backend-api');
+
+  const errors = await validateSkillsRoot(root);
+
+  assert.ok(errors.some((error) => error.includes('$specify-behavior')));
+  assert.ok(errors.some((error) => error.includes('$implement-specified-change')));
+});
+
+test('validateSkillsRoot requires assurance skills to route through independent review', async () => {
+  const root = await createRoot();
+  await writeSkill(root, 'validate-change');
+
+  const errors = await validateSkillsRoot(root);
+
+  assert.ok(errors.some((error) => error.includes('$review-specification-assurance')));
 });

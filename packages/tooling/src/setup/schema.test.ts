@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-INIT-004
 /**
  * Tests for setup schema, catalog, and presets.
  *

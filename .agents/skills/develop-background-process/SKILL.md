@@ -24,6 +24,13 @@ description: Implement backend consumers and schedulers with safe lifecycle beha
 5. Make startup fail clearly when required resources are absent and make shutdown stop intake before draining in-flight work.
 6. Add deterministic tests for duplicate delivery, retry, terminal failure, partial infrastructure failure, and shutdown where applicable.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run the owning project lint, typecheck, tests, build, and Docker/Testcontainers integration when required. If Docker is unavailable, report that boundary rather than describing the integration lane as passed.

@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-IDENTITY-005
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isRecentAuthTime, readPositiveInt } from './external-auth.util';
 

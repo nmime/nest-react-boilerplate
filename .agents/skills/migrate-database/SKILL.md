@@ -20,6 +20,13 @@ description: Design, generate, and verify safe MikroORM database migrations. Use
 5. Implement and inspect rollback behavior when reversal is safe. Document irreversible operations rather than pretending they can be undone.
 6. Add repository/integration tests for constraints, indexes, transaction behavior, and affected queries.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run `pnpm run db:migrations:check`, owning tests, and applicable Testcontainers

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { Logger } from '@nestjs/common';
 import { createClient, createCluster, createSentinel } from 'redis';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

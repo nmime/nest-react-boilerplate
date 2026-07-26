@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-IDENTITY-005
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

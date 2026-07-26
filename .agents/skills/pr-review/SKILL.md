@@ -21,6 +21,12 @@ description: Review local branches, pull requests, or merge requests for correct
 - For frontend changes, check Feature-Sliced Design boundaries, app ownership, responsive behavior, and expected smoke/Storybook coverage.
 - For backend changes, check controller/DTO contracts, validation, health/readiness behavior, logging/secrets, migrations, and test coverage.
 
+## Specification assurance
+
+For behavior-changing diffs, include
+`$review-specification-assurance` in the independent review so requirement
+completeness, ownership, evidence meaning, and exact-SHA provenance are checked.
+
 ## Verification
 
 Run safe, read-only or local validation proportionate to the changed risk. Do

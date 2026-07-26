@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
+// Evidence for: REQ-AUTH-PERSISTENCE-007
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
 import { AuthUserEntity, DefaultAuthTenantId, type AuthUserEntityInput } from '../entities';

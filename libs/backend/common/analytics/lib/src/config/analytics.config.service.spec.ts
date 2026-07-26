@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-OBSERVABILITY-005
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnalyticsConfigService } from './analytics.config.service';
 import type { AnalyticsPlugin } from '../type';

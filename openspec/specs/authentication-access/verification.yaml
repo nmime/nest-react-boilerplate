@@ -1,69 +1,267 @@
-version: 1
+version: 2
 capability: authentication-access
 owners:
   product: identity-maintainers
   verification: quality-engineering
   security: security-maintainers
-projects:
-  - auth-app-api
-  - user-app-api
-  - admin-app-api
-  - '@app/backend-feature-auth-admin'
-  - '@app/backend-feature-auth-main'
-  - '@app/backend-feature-auth-shared'
-  - '@app/backend-feature-auth-test'
-  - '@app/backend-feature-user-main'
-  - '@app/backend-feature-user-shared'
-  - '@app/backend-feature-admin-main'
-  - '@app/backend-feature-admin-shared'
-  - '@app/backend-feature-audit-log-admin'
-  - '@app/backend-postgres-main-auth'
-  - '@app/frontend-feature-user-auth'
-  - '@app/frontend-feature-user-logout'
-  - '@app/frontend-feature-user-profile'
-  - '@app/frontend-feature-user-social-auth'
-  - '@app/frontend-feature-user-tma-auth'
-  - '@app/common-authz'
+  operations: platform-operations
 requirements:
   - id: REQ-AUTH-ACCESS-001
+    projects:
+      - auth-app-api
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-feature-auth-test'
+      - '@app/common-authz'
     risk: critical
-    profiles: [acceptance, domain, security]
+    profiles:
+      - acceptance
+      - domain
+      - security
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/authentication.feature
         scenario: SCN-AUTH-ACCESS-01
         target: acceptance-e2e:acceptance
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: cucumber
         file: apps/e2e/acceptance/features/authentication.feature
         scenario: SCN-AUTH-ACCESS-02
         target: acceptance-e2e:acceptance
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/common/authz/lib/src/index.spec.ts
         target: '@app/common-authz:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: security
         file: libs/backend/feature/auth/main/lib/src/application/auth-tenant-isolation.spec.ts
         target: '@app/backend-feature-auth-main:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
   - id: REQ-AUTH-SESSION-002
+    projects:
+      - auth-app-api
+      - user-app-api
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-auth-test'
+      - '@app/backend-postgres-main-auth'
     risk: critical
-    profiles: [domain, persistence, security, journey]
+    profiles:
+      - domain
+      - persistence
+      - security
+      - journey
     evidence:
       - kind: vitest
         file: libs/backend/feature/auth/main/lib/src/interfaces/http/persistent-session-access.guard.spec.ts
         target: '@app/backend-feature-auth-main:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: component
         file: libs/backend/feature/auth/test/lib/src/auth-main.postgres.component-spec.ts
         target: '@app/backend-feature-auth-test:component-test'
-        lanes: [main, nightly]
+        lanes:
+          - main
+          - nightly
       - kind: security
         file: libs/backend/feature/auth/main/lib/src/application/auth-tenant-isolation.spec.ts
         target: '@app/backend-feature-auth-main:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: playwright
         file: apps/e2e/fullstack/src/fullstack.spec.ts
         target: fullstack-e2e:e2e
-        lanes: [runtime]
+        lanes:
+          - runtime
+  - id: REQ-AUTH-CREDENTIAL-003
+    projects:
+      - auth-app-api
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-postgres-main-auth'
+    risk: critical
+    profiles:
+      - domain
+      - security
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/auth/main/lib/src/application/auth-password-hash.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/application/auth.service.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-AUTH-TENANT-004
+    projects:
+      - admin-app-api
+      - '@app/backend-feature-admin-main'
+      - '@app/backend-feature-admin-shared'
+      - '@app/backend-feature-audit-log-admin'
+      - '@app/backend-feature-auth-admin'
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-postgres-main-auth'
+    risk: critical
+    profiles:
+      - domain
+      - persistence
+      - security
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/auth/main/lib/src/application/auth-tenant-isolation.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/application/auth-tenant-isolation.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-AUTH-IDENTITY-005
+    projects:
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-postgres-main-auth'
+      - '@app/frontend-feature-user-social-auth'
+      - '@app/frontend-feature-user-tma-auth'
+    risk: critical
+    profiles:
+      - domain
+      - security
+      - journey
+    evidence:
+      - kind: vitest
+        file: libs/frontend/feature/user/social-auth/lib/src/same-origin-return-url.spec.ts
+        target: '@app/frontend-feature-user-social-auth:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/application/util/return-url.util.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes:
+          - runtime
+  - id: REQ-AUTH-PROFILE-006
+    projects:
+      - user-app-api
+      - '@app/backend-feature-user-main'
+      - '@app/backend-feature-user-shared'
+      - '@app/frontend-feature-user-profile'
+    risk: high
+    profiles:
+      - domain
+      - api
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/user/main/lib/src/interfaces/http/profile.controller.spec.ts
+        target: '@app/backend-feature-user-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: contract
+        file: libs/backend/feature/user/main/lib/src/interfaces/http/profile.dto.spec.ts
+        target: '@app/backend-feature-user-main:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-AUTH-PERSISTENCE-007
+    projects:
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-feature-auth-test'
+      - '@app/backend-postgres-main-auth'
+    risk: critical
+    profiles:
+      - persistence
+      - domain
+    evidence:
+      - kind: component
+        file: libs/backend/feature/auth/test/lib/src/auth-user.repository.component-spec.ts
+        target: '@app/backend-feature-auth-test:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: vitest
+        file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/repositories/auth-user.repository.spec.ts
+        target: '@app/backend-postgres-main-auth:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-AUTH-AUDIT-008
+    projects:
+      - '@app/backend-feature-admin-main'
+      - '@app/backend-feature-audit-log-admin'
+      - '@app/backend-feature-auth-admin'
+    risk: critical
+    profiles:
+      - domain
+      - security
+      - operations
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/audit-log/admin/lib/src/admin-access-audit.interceptor.spec.ts
+        target: '@app/backend-feature-audit-log-admin:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/feature/audit-log/admin/lib/src/admin-access-audit.interceptor.spec.ts
+        target: '@app/backend-feature-audit-log-admin:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly
+  - id: REQ-AUTH-FRONTEND-009
+    projects:
+      - '@app/frontend-feature-user-auth'
+      - '@app/frontend-feature-user-logout'
+      - '@app/frontend-feature-user-profile'
+      - '@app/frontend-feature-user-social-auth'
+      - '@app/frontend-feature-user-tma-auth'
+    risk: high
+    profiles:
+      - domain
+      - journey
+    evidence:
+      - kind: vitest
+        file: libs/frontend/feature/user/auth/lib/src/use-auth-session-flow.spec.tsx
+        target: '@app/frontend-feature-user-auth:test'
+        lanes:
+          - pr
+          - main
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes:
+          - runtime

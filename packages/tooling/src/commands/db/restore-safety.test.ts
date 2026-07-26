@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-SAFETY-008
+// Evidence for: REQ-SCAFFOLD-SAFETY-008
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { assertRestoreSafety } from "./restore-safety.ts";

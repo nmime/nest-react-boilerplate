@@ -44,6 +44,12 @@ validation also checks every root command referenced by repo-local skills.
 
 ### Develop product behavior
 
+- [Specify behavior](../.agents/skills/specify-behavior/SKILL.md) converts product
+  intent into stable OpenSpec requirements, precise project ownership, and
+  risk-based evidence before implementation.
+- [Implement specified change](../.agents/skills/implement-specified-change/SKILL.md)
+  implements approved behavior while synchronizing code, executable test
+  markers, Gherkin examples, evidence sidecars, and change tasks.
 - [Plan frontend change](../.agents/skills/plan-frontend-change/SKILL.md) resolves
   renderer, ownership, user states, cross-boundary work, and proof before implementation.
 - [Design frontend experience](../.agents/skills/design-frontend-experience/SKILL.md)
@@ -84,6 +90,9 @@ validation also checks every root command referenced by repo-local skills.
 
 ### Operate and assure the repository
 
+- [Review specification assurance](../.agents/skills/review-specification-assurance/SKILL.md)
+  independently audits requirement completeness, ownership, evidence meaning,
+  omissions, and exact-revision provenance.
 - [Validate backend quality](../.agents/skills/validate-backend-quality/SKILL.md)
   applies backend-specific contract, infrastructure, migration, process lifecycle,
   security, observability, performance, and runtime gates.
@@ -121,19 +130,26 @@ native test lane.
 
 ## Frontend delivery workflow
 
-Use `$plan-frontend-change` for scope and ownership, `$design-frontend-experience`
+Start observable behavior with `$specify-behavior`, implement the approved
+artifacts with `$implement-specified-change`, then use `$plan-frontend-change`
+for scope and ownership, `$design-frontend-experience`
 when visual or UX direction changes, `$design-from-reference` when the direction
 is anchored to a real-world example, the matching web/mobile development skill
-for implementation, and `$validate-frontend-quality` for risk-based proof.
+for implementation, `$validate-frontend-quality` for risk-based proof, and
+`$review-specification-assurance` for independent assurance.
 LazyWeb is optional reference research, not a prerequisite or source of truth.
 
 ## Backend delivery workflow
 
-Use `$plan-backend-change` for runtime, ownership, invariants, failure modes, and
-rollout. Implement with `$develop-backend-api` or `$develop-background-process`,
-chain contract/auth/database/notification skills only for changed boundaries,
-and finish with `$validate-backend-quality`. Use `$validate-change` when the same
-diff also crosses frontend, tooling, generator, deployment, or repository-wide boundaries.
+Start observable behavior with `$specify-behavior`, then use
+`$plan-backend-change` for runtime, ownership, invariants, failure modes, and
+rollout. Implement the approved artifacts with `$implement-specified-change`
+plus `$develop-backend-api` or `$develop-background-process`, chain
+contract/auth/database/notification skills only for changed boundaries, and
+finish with `$validate-backend-quality` and
+`$review-specification-assurance`. Use `$validate-change` when the same diff
+also crosses frontend, tooling, generator, deployment, or repository-wide
+boundaries.
 
 ## UI/UX Pro Max priority hierarchy
 

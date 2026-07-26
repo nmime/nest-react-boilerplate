@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import { describe, expect, it } from 'vitest';
 import { normalizeStringList } from './normalize-string-list.util';
 

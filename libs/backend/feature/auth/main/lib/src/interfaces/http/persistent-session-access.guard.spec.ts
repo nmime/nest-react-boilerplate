@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-SESSION-002
+// Evidence for: REQ-AUTH-SESSION-002
 import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 // Domain evidence for REQ-AUTH-SESSION-002.
 import { Reflector } from '@nestjs/core';

@@ -1,3 +1,5 @@
+// @requirements REQ-API-RESPONSE-006
+// Evidence for: REQ-API-RESPONSE-006
 import { BadRequestException, Logger, UnauthorizedException } from '@nestjs/common';
 import { err, ok } from 'neverthrow';
 import { lastValueFrom, of, throwError } from 'rxjs';

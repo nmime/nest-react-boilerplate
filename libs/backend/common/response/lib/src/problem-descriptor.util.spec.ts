@@ -1,3 +1,4 @@
+// @requirements REQ-API-RESPONSE-006
 import { describe, expect, it } from 'vitest';
 import type { ProblemDetailsResponse } from '@app/backend-common-exception';
 import { formatProblemDescriptor } from './problem-descriptor.util';

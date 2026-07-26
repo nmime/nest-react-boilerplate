@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-BOUNDARY-010
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 import { StaticDataModule, StaticDataRootInjectToken } from './static-data.module';

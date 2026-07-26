@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { QueryClient, useQueryClient, type DefaultOptions } from '@tanstack/react-query';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';

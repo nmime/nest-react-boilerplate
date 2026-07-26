@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-INGRESS-001
 import { BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { InteractionType } from 'discord-api-types/v10';

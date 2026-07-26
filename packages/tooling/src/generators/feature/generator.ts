@@ -1,3 +1,4 @@
+// Evidence for: REQ-SCAFFOLD-GENERATORS-003
 /**
  * Feature generator — generates vertical-slice features across backend
  * and frontend layers, preserving the current vertical-slice semantics.

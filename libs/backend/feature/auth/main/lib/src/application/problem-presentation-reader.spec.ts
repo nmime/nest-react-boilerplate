@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { errAsync, okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import { ProblemPresentationEntity } from '@app/backend-postgres-main-auth';

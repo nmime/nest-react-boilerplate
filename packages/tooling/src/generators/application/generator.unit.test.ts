@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-GENERATORS-003
+// Evidence for: REQ-SCAFFOLD-OWNERSHIP-001
 /**
  * Generator evidence for REQ-SCAFFOLD-OWNERSHIP-001.
  *

@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-NATIVE-006
 import { describe, expect, it } from 'vitest';
 
 import { nativeTamaguiConfig, nativeTokens } from './tamagui-config';

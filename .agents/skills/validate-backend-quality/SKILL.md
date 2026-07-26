@@ -52,6 +52,12 @@ description: Select and run risk-based quality gates for backend APIs, consumers
   external canaries, and deployment proof.
 - Never run destructive or production operations without explicit current-task authorization.
 
+## Specification assurance
+
+For behavior-changing diffs, include
+`$review-specification-assurance` in the independent review so requirement
+completeness, ownership, evidence meaning, and exact-SHA provenance are checked.
+
 ## Report
 
 List commands and outcomes by risk, name failure artifacts where available, and

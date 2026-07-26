@@ -274,6 +274,21 @@ Existing features must be modified in place; regeneration is rejected.
 | `testing:frontend-static-smoke`         | Smoke-test a built frontend from static assets.                                                     |
 | `testing:frontend-browser-e2e-coverage` | Run browser e2e smoke coverage.                                                                     |
 
+## Specification commands
+
+| Command         | Description                                                                                           |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| `spec:validate` | Strict-validate OpenSpec, requirement projects, executable-test markers, evidence, and Cucumber tags. |
+| `spec:trace`    | Write exact-SHA project/test/feature/requirement/evidence inventory totals.                           |
+| `spec:impact`   | Map a Git revision range to affected requirements, Nx targets, and root scripts.                      |
+| `spec:verify`   | Execute one selected evidence lane and write JSON/Markdown assurance dossiers.                        |
+| `spec:report`   | Render an existing JSON assurance dossier as Markdown without rerunning evidence.                     |
+
+Use the root aliases shown in [Specification
+assurance](../specification-assurance.md). `spec:verify --dry-run` proves
+selection only; exact-revision passing evidence requires a clean committed
+worktree.
+
 ## Tooling commands
 
 | Command                        | Description                                  |

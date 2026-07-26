@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-STORAGE-007
 import {
   DeleteObjectCommand,
   GetObjectCommand,

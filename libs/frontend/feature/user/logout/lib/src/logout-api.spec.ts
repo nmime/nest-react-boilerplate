@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-FRONTEND-009
 import { describe, expect, it, vi } from 'vitest';
 import { requestLogout } from './logout-api';
 

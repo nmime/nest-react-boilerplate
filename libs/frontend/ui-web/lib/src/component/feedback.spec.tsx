@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ERROR-005
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import type { ErrorInfo } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';

@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
 import { AuthLoginEventEntity, type AuthLoginEventRepository } from '@app/backend-postgres-main-auth';

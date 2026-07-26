@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Evidence for: REQ-ASSURANCE-WORKFLOW-005 REQ-SCAFFOLD-AGENTS-007
 
 import { access, readdir, readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
@@ -8,6 +9,31 @@ const skillNamePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const metadataKeyPattern = /^[a-z_]+$/;
 const forbiddenFiles = new Set(['CHANGELOG.md', 'INSTALLATION.md', 'QUICK_REFERENCE.md', 'README.md']);
 const interfaceKeys = new Set(['default_prompt', 'display_name', 'short_description']);
+const behaviorLifecycleSkills = new Set([
+  'activate-capability',
+  'change-api-contract',
+  'change-auth-access',
+  'change-i18n',
+  'develop-backend-api',
+  'develop-background-process',
+  'develop-mobile-frontend',
+  'develop-web-frontend',
+  'extend-notifications',
+  'maintain-generators',
+  'maintain-repo-tooling',
+  'migrate-database',
+  'plan-backend-change',
+  'plan-frontend-change',
+  'prepare-deployment',
+  'scaffold-feature',
+]);
+const assuranceReviewSkills = new Set([
+  'pr-review',
+  'service-audit',
+  'validate-backend-quality',
+  'validate-change',
+  'validate-frontend-quality',
+]);
 
 function parseFlatYaml(source, label) {
   const values = new Map();
@@ -92,6 +118,16 @@ function validateSkillSource(skillSource, directoryName, errors) {
   }
   if (/\bUse this (?:skill|workflow)\b/iu.test(skillSource)) {
     errors.push(`${directoryName}/SKILL.md: move trigger guidance into the frontmatter description`);
+  }
+  if (behaviorLifecycleSkills.has(directoryName)) {
+    for (const requiredSkill of ['$specify-behavior', '$implement-specified-change']) {
+      if (!skillSource.includes(requiredSkill)) {
+        errors.push(`${directoryName}/SKILL.md: behavior workflow must route through ${requiredSkill}`);
+      }
+    }
+  }
+  if (assuranceReviewSkills.has(directoryName) && !skillSource.includes('$review-specification-assurance')) {
+    errors.push(`${directoryName}/SKILL.md: assurance workflow must route through $review-specification-assurance`);
   }
 }
 

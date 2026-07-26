@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-HEALTH-001
 import { describe, expect, it } from 'vitest';
 import { addTgUsernamesToMessage, normalizeTelegramUsernames } from './add-tg-usernames-to-message.util';
 

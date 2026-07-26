@@ -1,53 +1,158 @@
-version: 1
+version: 2
 capability: notification-delivery
 owners:
   product: notification-maintainers
   verification: quality-engineering
+  security: security-maintainers
   operations: platform-operations
-projects:
-  - notification-scheduler
-  - notification-consumer
-  - '@app/backend-feature-notification-shared'
-  - '@app/backend-feature-notification-admin'
-  - '@app/backend-feature-notification-main'
-  - '@app/backend-postgres-main-notification'
-  - '@app/backend-postgres-main-feature-flags'
-  - '@app/common-notifications'
-  - '@app/common-feature-flags'
-  - '@app/frontend-feature-shared-preferences'
-  - '@app/frontend-feature-user-preferences'
 requirements:
   - id: REQ-NOTIFY-DELIVERY-001
+    projects:
+      - notification-consumer
+      - '@app/backend-feature-notification-main'
+      - '@app/backend-feature-notification-shared'
+      - '@app/common-notifications'
     risk: high
-    profiles: [acceptance, domain]
+    profiles:
+      - acceptance
+      - domain
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/notification-delivery.feature
         scenario: SCN-NOTIFY-DELIVERY-01
         target: acceptance-e2e:acceptance
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: cucumber
         file: apps/e2e/acceptance/features/notification-delivery.feature
         scenario: SCN-NOTIFY-DELIVERY-02
         target: acceptance-e2e:acceptance
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/common/notifications/lib/src/notification-contracts.spec.ts
         target: '@app/common-notifications:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
   - id: REQ-NOTIFY-LIFECYCLE-002
+    projects:
+      - notification-consumer
+      - notification-scheduler
+      - '@app/backend-feature-notification-admin'
+      - '@app/backend-feature-notification-main'
     risk: critical
-    profiles: [domain, operations]
+    profiles:
+      - domain
+      - operations
     evidence:
       - kind: vitest
         file: libs/backend/feature/notification/main/lib/src/service/notification-application.service.spec.ts
         target: '@app/backend-feature-notification-main:test'
-        lanes: [pr, main]
-      - kind: vitest
-        file: libs/backend/postgres/main/notification/lib/src/notification-payload-crypto.service.spec.ts
-        target: '@app/backend-postgres-main-notification:test'
-        lanes: [main]
+        lanes:
+          - pr
+          - main
       - kind: operations
         file: packages/tooling/src/commands/qa/world-class-gates.ts
         script: test:world-class
-        lanes: [nightly]
+        lanes:
+          - nightly
+  - id: REQ-NOTIFY-TEMPLATE-003
+    projects:
+      - '@app/backend-feature-notification-main'
+      - '@app/backend-feature-notification-shared'
+      - '@app/backend-postgres-main-notification'
+    risk: high
+    profiles:
+      - domain
+      - persistence
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/notification/main/lib/src/service/notification-strategy-resolver.service.spec.ts
+        target: '@app/backend-feature-notification-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+  - id: REQ-NOTIFY-AUDIENCE-004
+    projects:
+      - '@app/backend-feature-notification-admin'
+      - '@app/backend-feature-notification-main'
+      - '@app/backend-postgres-main-notification'
+    risk: critical
+    profiles:
+      - domain
+      - persistence
+      - security
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/notification/main/lib/src/service/notification-recipient-resolver.service.spec.ts
+        target: '@app/backend-feature-notification-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: libs/backend/feature/notification/main/lib/src/service/notification-recipient-resolver.service.spec.ts
+        target: '@app/backend-feature-notification-main:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-NOTIFY-PERSISTENCE-005
+    projects:
+      - notification-consumer
+      - notification-scheduler
+      - '@app/backend-feature-notification-main'
+      - '@app/backend-postgres-main-notification'
+    risk: critical
+    profiles:
+      - persistence
+      - security
+      - async
+    evidence:
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: libs/backend/postgres/main/notification/lib/src/notification-payload-crypto.service.spec.ts
+        target: '@app/backend-postgres-main-notification:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-NOTIFY-PREFERENCE-006
+    projects:
+      - '@app/backend-postgres-main-feature-flags'
+      - '@app/common-feature-flags'
+      - '@app/frontend-feature-shared-preferences'
+      - '@app/frontend-feature-user-preferences'
+    risk: high
+    profiles:
+      - domain
+      - journey
+    evidence:
+      - kind: vitest
+        file: libs/frontend/feature/user/preferences/lib/src/use-user-preference-controls.spec.tsx
+        target: '@app/frontend-feature-user-preferences:test'
+        lanes:
+          - pr
+          - main
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes:
+          - runtime

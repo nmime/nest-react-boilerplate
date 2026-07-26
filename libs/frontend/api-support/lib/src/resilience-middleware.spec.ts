@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ERROR-005
 import { describe, expect, it } from 'vitest';
 import type { MergedOptions } from 'openapi-fetch';
 

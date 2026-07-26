@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { describe, expect, it, vi } from 'vitest';
 import { createTelegramApplication, resolveTelegramApplication } from './application';
 import type { TelegramBotAuthPort, TelegramBotIdentity } from '../type';

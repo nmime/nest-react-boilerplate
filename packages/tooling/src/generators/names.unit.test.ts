@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-GENERATORS-003
 /**
  * Tests for the shared name utilities used by all generators.
  *

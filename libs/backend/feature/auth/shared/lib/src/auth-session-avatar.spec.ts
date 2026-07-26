@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import { describe, expect, it } from 'vitest';
 import type { Locale } from '@app/backend-common-i18n';
 import { toAuthenticatedUserView } from './auth-session.types';

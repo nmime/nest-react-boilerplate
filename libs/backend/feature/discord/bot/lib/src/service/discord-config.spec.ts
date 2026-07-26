@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { describe, expect, it } from 'vitest';
 import { DefaultDiscordTenantId, DiscordBotConfig, resolveDiscordTenantId } from './discord-config';
 

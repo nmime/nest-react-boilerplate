@@ -1,3 +1,5 @@
+// @requirements REQ-API-CLIENT-005
+// Evidence for: REQ-API-CLIENT-005
 import { configureApiLocale } from '@app/frontend-api-support';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import {

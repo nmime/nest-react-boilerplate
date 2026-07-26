@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { AdminAuthLoginAnalyticsReadPermission } from '@app/common-authz';
 import { describe, expect, it } from 'vitest';
 import { Migration20260721200000CreateAuthLoginAnalytics } from './Migration20260721200000CreateAuthLoginAnalytics';

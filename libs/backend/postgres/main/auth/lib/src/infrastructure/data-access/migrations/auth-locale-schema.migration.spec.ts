@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { Migration20260607080000AlignAuthUserLocaleConstraint } from './Migration20260607080000AlignAuthUserLocaleConstraint';
 import { Migration20260609100000CreateFeatureFlags } from '@app/backend-postgres-main-feature-flags';

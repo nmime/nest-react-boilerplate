@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-ACCESS-001
+// Evidence for: REQ-AUTH-CREDENTIAL-003
 import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';

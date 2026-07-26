@@ -1,3 +1,5 @@
+// @requirements REQ-NOTIFY-TEMPLATE-003
+// Evidence for: REQ-NOTIFY-TEMPLATE-003
 import { describe, expect, it } from 'vitest';
 import { NotificationTargetType } from '@app/common-notifications';
 import { NotificationStrategyResolverService } from './notification-strategy-resolver.service';

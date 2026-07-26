@@ -1,3 +1,5 @@
+// @requirements REQ-SOCIAL-INGRESS-001
+// Evidence for: REQ-SOCIAL-INGRESS-001
 import { ForbiddenException } from '@nestjs/common';
 // Security and domain evidence for REQ-SOCIAL-INGRESS-001.
 import { describe, expect, it, vi } from 'vitest';

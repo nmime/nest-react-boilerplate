@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Evidence for: REQ-SCAFFOLD-QUALITY-006
 import { createServer } from "node:http"; import { stat, mkdir, writeFile } from "node:fs/promises"; import { createReadStream } from "node:fs"; import path from "node:path"; import { chromium } from "@playwright/test"; import istanbulCoverage from "istanbul-lib-coverage"; import istanbulReport from "istanbul-lib-report"; import reports from "istanbul-reports";
 declare global {
   // Injected into the page by the istanbul-instrumented Vite build (VITE_E2E_COVERAGE=true).

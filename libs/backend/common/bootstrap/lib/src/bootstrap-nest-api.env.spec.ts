@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
 import { describe, expect, it } from 'vitest';
 import { RedisMode } from '@app/backend-common-redis';
 import { resolveBackendEnvironmentConfig } from './bootstrap-nest-api';

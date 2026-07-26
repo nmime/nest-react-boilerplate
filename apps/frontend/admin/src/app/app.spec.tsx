@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import type { ReactElement } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';

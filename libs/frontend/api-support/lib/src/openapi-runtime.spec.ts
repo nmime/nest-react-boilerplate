@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ERROR-005
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Middleware } from 'openapi-fetch';
 

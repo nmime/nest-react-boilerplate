@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-STORAGE-007
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RedisMode } from '../const';
 import { RedisConfigService } from './redis.config.service';

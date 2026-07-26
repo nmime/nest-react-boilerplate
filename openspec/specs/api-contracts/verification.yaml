@@ -1,59 +1,156 @@
-version: 1
+version: 2
 capability: api-contracts
 owners:
   product: api-maintainers
   verification: consumer-contract-maintainers
-projects:
-  - '@app/backend-common-request-context'
-  - '@app/backend-common-validation'
-  - '@app/backend-common-bootstrap'
-  - '@app/backend-common-exception'
-  - '@app/backend-common-response'
-  - '@app/backend-common-swagger'
-  - '@app/common-api-contracts'
-  - '@app/common-problem-details'
-  - '@app/frontend-api-client'
-  - '@app/frontend-api-support'
 requirements:
   - id: REQ-API-PROBLEM-001
+    projects:
+      - '@app/backend-common-exception'
+      - '@app/backend-common-response'
+      - '@app/common-problem-details'
     risk: high
-    profiles: [acceptance, api, domain]
+    profiles:
+      - acceptance
+      - api
+      - domain
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/api-problems.feature
         scenario: SCN-API-PROBLEM-01
         target: acceptance-e2e:acceptance
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: cucumber
         file: apps/e2e/acceptance/features/api-problems.feature
         scenario: SCN-API-PROBLEM-02
         target: acceptance-e2e:acceptance
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: contract
-        file: libs/common/api-contracts/lib/src/api-contracts.spec.ts
-        target: '@app/common-api-contracts:test'
-        lanes: [pr, main]
-      - kind: vitest
         file: libs/common/problem-details/lib/src/index.spec.ts
         target: '@app/common-problem-details:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/common/exception/lib/src/exception-contract.spec.ts
+        target: '@app/backend-common-exception:test'
+        lanes:
+          - pr
+          - main
   - id: REQ-API-COMPAT-002
+    projects:
+      - '@repo/tooling'
+      - '@app/backend-common-swagger'
+      - '@app/common-api-contracts'
+      - '@app/frontend-api-client'
+      - '@app/frontend-api-support'
     risk: high
-    profiles: [api, tooling]
+    profiles:
+      - api
+      - tooling
     evidence:
       - kind: contract
         file: packages/tooling/src/commands/qa/consumer-contracts.ts
         script: api:contracts:consumer
-        lanes: [main, nightly]
+        lanes:
+          - main
+          - nightly
       - kind: static
         file: packages/tooling/src/commands/api/contracts-manifest.test.ts
-        target: '@repo/tooling:test'
-        lanes: [pr, main]
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: packages/tooling/src/commands/api/contracts-manifest.test.ts
         target: '@repo/tooling:test'
-        lanes: [pr, main]
+        lanes:
+          - pr
+          - main
       - kind: property
         file: packages/tooling/src/commands/qa/property.ts
         script: test:property
-        lanes: [main, nightly]
+        lanes:
+          - main
+          - nightly
+  - id: REQ-API-CONTEXT-003
+    projects:
+      - '@app/backend-common-request-context'
+      - '@app/backend-common-bootstrap'
+    risk: high
+    profiles:
+      - domain
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/request-context/lib/src/request-context.spec.ts
+        target: '@app/backend-common-request-context:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-API-VALIDATION-004
+    projects:
+      - '@app/backend-common-validation'
+    risk: high
+    profiles:
+      - domain
+      - api
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/validation/lib/src/create-validation.pipe.spec.ts
+        target: '@app/backend-common-validation:test'
+        lanes:
+          - pr
+          - main
+      - kind: contract
+        file: libs/backend/common/validation/lib/src/create-validation.pipe.spec.ts
+        target: '@app/backend-common-validation:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-API-CLIENT-005
+    projects:
+      - '@app/frontend-api-client'
+      - '@app/frontend-api-support'
+    risk: high
+    profiles:
+      - api
+      - domain
+    evidence:
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/generated-api-client.spec.ts
+        target: '@app/frontend-api-client:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/frontend/api-support/lib/src/api-client.spec.ts
+        target: '@app/frontend-api-support:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-API-RESPONSE-006
+    projects:
+      - '@app/backend-common-response'
+      - '@app/backend-common-exception'
+      - '@app/backend-common-swagger'
+    risk: high
+    profiles:
+      - domain
+      - api
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/response/lib/src/result-response.util.spec.ts
+        target: '@app/backend-common-response:test'
+        lanes:
+          - pr
+          - main
+      - kind: contract
+        file: libs/backend/common/response/lib/src/result-response.util.spec.ts
+        target: '@app/backend-common-response:test'
+        lanes:
+          - pr
+          - main

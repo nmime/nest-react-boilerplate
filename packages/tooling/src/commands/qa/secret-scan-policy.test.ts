@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-QUALITY-006
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { isAllowedSecretScanValue, secretValueEntropy } from "./secret-scan-policy.ts";

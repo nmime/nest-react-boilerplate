@@ -1,3 +1,4 @@
+// @requirements REQ-API-PROBLEM-001
 import { describe, expect, it } from 'vitest';
 import { localizeProblemDetails, resolveProblemContentLanguage } from './localize-problem-details.util';
 

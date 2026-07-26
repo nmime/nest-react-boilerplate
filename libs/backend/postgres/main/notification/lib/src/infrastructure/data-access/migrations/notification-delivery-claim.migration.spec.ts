@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-PERSISTENCE-005
 import { describe, expect, it } from 'vitest';
 import { Migration20260715100000CreateNotifications } from './Migration20260715100000CreateNotifications';
 import { Migration20260720130000AddNotificationDeliveryClaim } from './Migration20260720130000AddNotificationDeliveryClaim';

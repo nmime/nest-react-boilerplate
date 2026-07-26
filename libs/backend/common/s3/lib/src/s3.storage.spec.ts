@@ -1,3 +1,5 @@
+// @requirements REQ-RUNTIME-STORAGE-007
+// Evidence for: REQ-RUNTIME-STORAGE-007
 import { describe, expect, it } from 'vitest';
 import { InMemoryObjectStorageClient } from './s3.storage';
 

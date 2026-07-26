@@ -1,3 +1,5 @@
+// @requirements REQ-NOTIFY-AUDIENCE-004
+// Evidence for: REQ-NOTIFY-AUDIENCE-004
 import { describe, expect, it, vi } from 'vitest';
 import {
   NotificationChannel,

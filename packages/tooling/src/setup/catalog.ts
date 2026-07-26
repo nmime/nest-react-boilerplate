@@ -1,3 +1,4 @@
+// Evidence for: REQ-SCAFFOLD-SELECTION-002
 /**
  * Static setup-catalog evidence for REQ-SCAFFOLD-SELECTION-002.
  *

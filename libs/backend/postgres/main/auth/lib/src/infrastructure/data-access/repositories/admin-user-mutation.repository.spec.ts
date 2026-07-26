@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { LockMode, type EntityManager } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import {

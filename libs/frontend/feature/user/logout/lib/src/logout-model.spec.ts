@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-FRONTEND-009
 import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 import { authApi, userApi } from '@app/frontend-api-client';

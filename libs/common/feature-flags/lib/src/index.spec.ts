@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-PREFERENCE-006
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   EnvironmentFeatureFlagProvider,

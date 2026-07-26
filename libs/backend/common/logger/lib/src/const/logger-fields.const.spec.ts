@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-OBSERVABILITY-005
 import { describe, expect, it } from 'vitest';
 import { ProtectedLoggerFields, RedactedValue } from './logger-fields.const';
 

@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
+// Evidence for: REQ-SCAFFOLD-INIT-004
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";

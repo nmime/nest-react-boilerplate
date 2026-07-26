@@ -1,3 +1,5 @@
+// @requirements REQ-FRONTEND-I18N-002
+// Evidence for: REQ-FRONTEND-I18N-002
 import { describe, expect, it, vi } from 'vitest';
 // Locale evidence for REQ-FRONTEND-I18N-002.
 import { createDomainTranslationKey, createDomainTranslator } from './domain-namespace';

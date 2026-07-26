@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { InteractionType } from 'discord-api-types/v10';
 import { describe, expect, it } from 'vitest';
 import {

@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-NATIVE-006
 import { describe, expect, it } from 'vitest';
 
 import { mobileCapabilityCards, mobileLocaleOptions } from './mobile-home.model';

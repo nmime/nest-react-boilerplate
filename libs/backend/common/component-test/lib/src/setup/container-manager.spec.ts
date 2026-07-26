@@ -1,3 +1,5 @@
+// @requirements REQ-RUNTIME-RECOVERY-002
+// Evidence for: REQ-RUNTIME-LIFECYCLE-004
 import { describe, expect, it, vi } from 'vitest';
 // Component-environment evidence for REQ-RUNTIME-RECOVERY-002.
 import { ContainerManager } from './container-manager';

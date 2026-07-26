@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RedisClientLike } from '@app/backend-common-redis';
 

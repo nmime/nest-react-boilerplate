@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { parseBoolean, parsePositiveInteger } from './parse-env.util';
 

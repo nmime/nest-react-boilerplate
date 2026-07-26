@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-PERSISTENCE-005
 import 'reflect-metadata';
 import { LockMode } from '@mikro-orm/core';
 import type { EntityManager } from '@mikro-orm/postgresql';

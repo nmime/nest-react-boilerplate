@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-OBSERVABILITY-005
 import type { Logger } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { createLoggerAnalyticsPlugin } from './logger.plugin';

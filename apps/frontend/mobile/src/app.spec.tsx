@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-NATIVE-006
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

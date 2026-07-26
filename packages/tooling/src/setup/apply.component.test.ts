@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-INIT-004
 /**
  * Repeatable setup evidence for REQ-SCAFFOLD-SELECTION-002.
  *

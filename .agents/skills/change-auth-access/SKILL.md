@@ -23,6 +23,13 @@ description: Change authentication, sessions, tenants, roles, and authorization 
 6. Update generated clients and every affected app when the public session or policy contract changes.
 7. Add security-focused tests for anonymous, valid, expired/revoked, wrong-role, wrong-tenant, and privilege-escalation paths as applicable.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run auth library/API tests, affected app tests and e2e, contract/client checks when public types change, and `git diff --check`. Never use real credentials or weaken controls to make an attended provider test pass.

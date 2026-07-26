@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { describe, expect, it, vi } from 'vitest';
 import { withTimeout } from './with-timeout.util';
 

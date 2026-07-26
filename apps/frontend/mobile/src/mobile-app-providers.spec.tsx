@@ -1,3 +1,5 @@
+// @requirements REQ-FRONTEND-NATIVE-006
+// Evidence for: REQ-FRONTEND-NATIVE-006
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { useI18n } from '@app/frontend-runtime';

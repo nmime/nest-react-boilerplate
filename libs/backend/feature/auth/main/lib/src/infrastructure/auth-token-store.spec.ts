@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import { errAsync, okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import { hashOpaqueToken, InMemoryAuthTokenStore, PostgresAuthTokenStore } from './auth-token-store';

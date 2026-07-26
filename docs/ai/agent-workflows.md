@@ -4,43 +4,48 @@ These workflows keep repeatable agent procedures out of the always-loaded [AGENT
 
 ## Workflow selection
 
-| Task                                   | Use                           | Primary owner to inspect                             |
-| -------------------------------------- | ----------------------------- | ---------------------------------------------------- |
-| Initialize or select applications      | `$initialize-product`         | setup catalog and `.nrb/workspace.json`              |
-| Update a downstream boilerplate base   | `$update-boilerplate-base`    | Git ancestry, upstream tag, product-owned changes    |
-| Add a new app, library, or feature     | `$scaffold-feature`           | Nx graph, generator dry-run, target owners           |
-| Change a generator                     | `$maintain-generators`        | schema, implementation, templates, tests             |
-| Integrate an optional capability       | `$activate-capability`        | setup catalog and target composition roots           |
-| Plan multi-owner backend work          | `$plan-backend-change`        | deployable, domain, contracts, data, runtime tests   |
-| Plan multi-owner frontend work         | `$plan-frontend-change`       | selected app, routes, slices, UI, contracts, tests   |
-| Define frontend UX or visual direction | `$design-frontend-experience` | app surface, tokens, shared web/native UI            |
-| Match an external visual reference     | `$design-from-reference`      | brand/site/DESIGN.md reference, tokens, primitives   |
-| Build an HTTP API                      | `$develop-backend-api`        | backend deployable and domain library                |
-| Build a consumer or scheduler          | `$develop-background-process` | process entrypoint and job/event owner               |
-| Build Vite, Astro, or Vike UI          | `$develop-web-frontend`       | frontend deployable, feature slice, web UI           |
-| Build Expo or native UI                | `$develop-mobile-frontend`    | mobile deployable and native UI library              |
-| Add or research shared web UI source   | `$shadcn-ui`                  | approved registry, `@app/frontend-ui-web`, Storybook |
-| Change a public API contract           | `$change-api-contract`        | controller/DTO, OpenAPI, clients, consumers          |
-| Change database shape or data          | `$migrate-database`           | entity, repository, migrations, integration tests    |
-| Change auth, tenant, or RBAC behavior  | `$change-auth-access`         | auth/access libraries and protected resources        |
-| Add a notification delivery path       | `$extend-notifications`       | event, template, provider, scheduler, consumer       |
-| Change translated copy                 | `$change-i18n`                | owning locale catalog and rendered consumers         |
-| Add or change repository commands      | `$maintain-repo-tooling`      | tooling CLI registry, command, tests, docs           |
-| Prepare runtime configuration          | `$prepare-deployment`         | selected app Docker/Helm/GitOps/operations files     |
-| Upgrade packages                       | `$upgrade-dependencies`       | owning manifest, lockfile, all consumers             |
-| Prove backend delivery quality         | `$validate-backend-quality`   | backend owners, contracts, infrastructure, e2e       |
-| Prove frontend delivery quality        | `$validate-frontend-quality`  | frontend owners, Storybook, app/native e2e           |
-| Select completion checks               | `$validate-change`            | diff owners, project targets, command matrix         |
-| Change repository documentation        | `$maintain-documentation`     | canonical source, docs index, retrieval routes       |
-| Review a branch or PR                  | `$pr-review`                  | changed source, tests, contracts, generated policy   |
-| Diagnose CI                            | `$ci-triage`                  | first failing job, workflow, local equivalent        |
-| Audit a project                        | `$service-audit`              | config, source, contracts, tests, operations docs    |
+| Task                                   | Use                               | Primary owner to inspect                             |
+| -------------------------------------- | --------------------------------- | ---------------------------------------------------- |
+| Specify new or changed behavior        | `$specify-behavior`               | OpenSpec capability, owners, current source/tests    |
+| Implement approved behavior            | `$implement-specified-change`     | active change, durable spec, sidecar, project owners |
+| Audit requirement and evidence quality | `$review-specification-assurance` | spec, sidecar, diff, exact-SHA dossier               |
+| Initialize or select applications      | `$initialize-product`             | setup catalog and `.nrb/workspace.json`              |
+| Update a downstream boilerplate base   | `$update-boilerplate-base`        | Git ancestry, upstream tag, product-owned changes    |
+| Add a new app, library, or feature     | `$scaffold-feature`               | Nx graph, generator dry-run, target owners           |
+| Change a generator                     | `$maintain-generators`            | schema, implementation, templates, tests             |
+| Integrate an optional capability       | `$activate-capability`            | setup catalog and target composition roots           |
+| Plan multi-owner backend work          | `$plan-backend-change`            | deployable, domain, contracts, data, runtime tests   |
+| Plan multi-owner frontend work         | `$plan-frontend-change`           | selected app, routes, slices, UI, contracts, tests   |
+| Define frontend UX or visual direction | `$design-frontend-experience`     | app surface, tokens, shared web/native UI            |
+| Match an external visual reference     | `$design-from-reference`          | brand/site/DESIGN.md reference, tokens, primitives   |
+| Build an HTTP API                      | `$develop-backend-api`            | backend deployable and domain library                |
+| Build a consumer or scheduler          | `$develop-background-process`     | process entrypoint and job/event owner               |
+| Build Vite, Astro, or Vike UI          | `$develop-web-frontend`           | frontend deployable, feature slice, web UI           |
+| Build Expo or native UI                | `$develop-mobile-frontend`        | mobile deployable and native UI library              |
+| Add or research shared web UI source   | `$shadcn-ui`                      | approved registry, `@app/frontend-ui-web`, Storybook |
+| Change a public API contract           | `$change-api-contract`            | controller/DTO, OpenAPI, clients, consumers          |
+| Change database shape or data          | `$migrate-database`               | entity, repository, migrations, integration tests    |
+| Change auth, tenant, or RBAC behavior  | `$change-auth-access`             | auth/access libraries and protected resources        |
+| Add a notification delivery path       | `$extend-notifications`           | event, template, provider, scheduler, consumer       |
+| Change translated copy                 | `$change-i18n`                    | owning locale catalog and rendered consumers         |
+| Add or change repository commands      | `$maintain-repo-tooling`          | tooling CLI registry, command, tests, docs           |
+| Prepare runtime configuration          | `$prepare-deployment`             | selected app Docker/Helm/GitOps/operations files     |
+| Upgrade packages                       | `$upgrade-dependencies`           | owning manifest, lockfile, all consumers             |
+| Prove backend delivery quality         | `$validate-backend-quality`       | backend owners, contracts, infrastructure, e2e       |
+| Prove frontend delivery quality        | `$validate-frontend-quality`      | frontend owners, Storybook, app/native e2e           |
+| Select completion checks               | `$validate-change`                | diff owners, project targets, command matrix         |
+| Change repository documentation        | `$maintain-documentation`         | canonical source, docs index, retrieval routes       |
+| Review a branch or PR                  | `$pr-review`                      | changed source, tests, contracts, generated policy   |
+| Diagnose CI                            | `$ci-triage`                      | first failing job, workflow, local equivalent        |
+| Audit a project                        | `$service-audit`                  | config, source, contracts, tests, operations docs    |
 
-For behavior changes, inspect the owning
-`openspec/specs/<capability>/spec.md` and `verification.yaml` before editing.
-Update stable requirements and evidence in the same change, then run
-`pnpm run spec:validate` and the impacted evidence lane. See
-[Specification assurance](../specification-assurance.md).
+For behavior changes, start with `$specify-behavior`, inspect the owning
+`openspec/specs/<capability>/spec.md` and version 2 `verification.yaml`, then
+implement through `$implement-specified-change`. Every executable test file
+must contain a `// @requirements REQ-...` marker whose requirements own its Nx
+project. Finish with `$review-specification-assurance`, `pnpm run
+spec:validate`, and the impacted evidence lane. See [Specification
+assurance](../specification-assurance.md).
 
 ## Error handling and exception workflows
 
@@ -88,6 +93,10 @@ When adding request-scoped data (correlation IDs, user context, tracing):
 - Invoke only the smallest set of matching skills. Chain skills when ownership
   crosses a real boundary, such as `$develop-backend-api` followed by
   `$change-api-contract` and `$validate-change`.
+- Route observable behavior through `$specify-behavior` and
+  `$implement-specified-change`; include `$review-specification-assurance` in
+  independent review. A source-only refactor may keep existing requirements and
+  evidence when behavior is unchanged.
 - For substantial frontend work, use `$plan-frontend-change`, add
   `$design-frontend-experience` only when UX or visual direction changes,
   start from `$design-from-reference` when the direction is anchored to a

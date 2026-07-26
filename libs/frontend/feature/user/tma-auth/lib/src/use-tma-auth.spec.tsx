@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-IDENTITY-005
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { renderHook } from '@testing-library/react';

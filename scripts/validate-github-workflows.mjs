@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Evidence for: REQ-ASSURANCE-RELEASE-003
 // Security and operations evidence for REQ-ASSURANCE-RELEASE-003.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';

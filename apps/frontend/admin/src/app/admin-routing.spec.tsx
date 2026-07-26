@@ -1,3 +1,5 @@
+// @requirements REQ-FRONTEND-SHELL-004
+// Evidence for: REQ-FRONTEND-SHELL-004
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';

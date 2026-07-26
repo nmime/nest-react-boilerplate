@@ -1,3 +1,5 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
+// Evidence for: REQ-RUNTIME-LIFECYCLE-004
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {

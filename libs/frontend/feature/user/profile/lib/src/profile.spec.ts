@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PROFILE-006
 import { describe, expect, it, vi } from 'vitest';
 import { fetchUserProfile, getProfileState, profileQueryKey } from './index';
 

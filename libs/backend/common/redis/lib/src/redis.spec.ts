@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { describe, expect, it, vi } from 'vitest';
 import { RedisConfigService } from './config';
 import { RedisMode } from './const';

@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ERROR-005
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';

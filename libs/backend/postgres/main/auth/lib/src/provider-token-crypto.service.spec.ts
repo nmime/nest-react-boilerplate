@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { randomBytes } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { NodeAesGcmProviderTokenCrypto, type ProviderTokenCryptoKey } from './provider-token-crypto.service';

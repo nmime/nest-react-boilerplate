@@ -11,6 +11,8 @@ context: |
   Requirements use stable REQ-<CAPABILITY>-<NNN> identifiers.
   A normative change is not complete until its required evidence is fresh
   and passing for the exact source commit.
+  Every executable test names at least one durable requirement, and each
+  requirement owns its exact Nx project scope in a version 2 evidence sidecar.
 
 rules:
   proposal:
@@ -25,6 +27,7 @@ rules:
     - State invariants, concurrency, idempotency, observability, and rollback expectations when applicable.
   verification:
     - Select an evidence profile for every requirement.
+    - Assign exact requirement-level projects and executable-test markers.
     - Reference independently authored tests and exact repository owners.
     - Do not treat generated tests or line coverage as sufficient evidence.
   tasks:

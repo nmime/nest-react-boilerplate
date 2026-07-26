@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
+// Evidence for: REQ-AUTH-CREDENTIAL-003
 import { describe, expect, it } from 'vitest';
 import { hashPassword, verifyPassword } from '../domain';
 

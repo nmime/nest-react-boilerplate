@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-INGRESS-001
 import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiscordAccountApplicationPort, DiscordAccountService } from '@app/backend-feature-discord-bot';

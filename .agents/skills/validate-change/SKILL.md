@@ -30,6 +30,12 @@ description: Choose and run proportional repository validation using the Testing
 - Regenerate source-derived artifacts only from their canonical source and inspect the diff.
 - Always run `git diff --check`. Run `pnpm run agent:verify` when agent guidance, setup, generators, or ownership rules change.
 
+## Specification assurance
+
+For behavior-changing diffs, include
+`$review-specification-assurance` in the independent review so requirement
+completeness, ownership, evidence meaning, and exact-SHA provenance are checked.
+
 ## Report
 
 List each command and outcome, distinguish code failures from environment blockers, and state the exact unverified boundary. Never update baselines, snapshots, or golden files merely to silence a failure.

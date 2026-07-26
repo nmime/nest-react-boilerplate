@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Evidence for: REQ-SCAFFOLD-SAFETY-008
 import { existsSync } from "node:fs";
 import {
   createPostgresClientInvocation,

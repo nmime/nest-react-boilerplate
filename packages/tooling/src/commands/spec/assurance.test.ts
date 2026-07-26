@@ -1,3 +1,5 @@
+// @requirements REQ-ASSURANCE-INVENTORY-004
+// Evidence for: REQ-ASSURANCE-FRESHNESS-002 REQ-ASSURANCE-INVENTORY-004 REQ-ASSURANCE-OWNERSHIP-006 REQ-ASSURANCE-TRACE-001
 import assert from 'node:assert/strict';
 import {
   mkdtempSync,
@@ -10,9 +12,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, test } from 'node:test';
 import { loadAssuranceModel, verifyRequirements } from './assurance';
-
-// Independent executable evidence for REQ-ASSURANCE-TRACE-001 and
-// REQ-ASSURANCE-FRESHNESS-002.
 const workspaces: string[] = [];
 
 afterEach(() => {
@@ -59,19 +58,22 @@ function fixtureWorkspace(): string {
   );
   writeFileSync(
     join(workspace, 'apps/fixture/evidence.test.ts'),
-    '// REQ-FIXTURE-RULE-001\n',
+    '// @requirements REQ-FIXTURE-RULE-001\n',
+  );
+  writeFileSync(
+    join(workspace, 'apps/fixture/storybook-test.ts'),
+    'export const runStorybookTests = (): void => {};\n',
   );
   writeFileSync(
     join(workspace, 'openspec/specs/fixture/verification.yaml'),
-    `version: 1
+    `version: 2
 capability: fixture
 owners:
   product: product
   verification: verification
-projects:
-  - fixture
 requirements:
   - id: REQ-FIXTURE-RULE-001
+    projects: [fixture]
     risk: high
     profiles: [acceptance, tooling]
     evidence:
@@ -113,6 +115,10 @@ test('builds a complete trace and selects only the requested evidence lane', () 
 
   assert.equal(pr.status, 'planned');
   assert.equal(pr.workspaceState, 'planned');
+  assert.equal(pr.trace.totals.behaviorTests, 1);
+  assert.equal(pr.trace.totals.tracedBehaviorTests, 1);
+  assert.equal(pr.trace.totals.features, 1);
+  assert.equal(pr.trace.totals.scenarios, 1);
   assert.deepEqual(pr.runs.map(({ key }) => key), ['fixture:test']);
   assert.deepEqual(nightly.runs.map(({ key }) => key), ['fixture:static-check']);
 });
@@ -130,6 +136,56 @@ test('rejects an Nx project without capability ownership', () => {
   assert.ok(
     model.errors.includes(
       'openspec/specs: Nx project has no capability ownership: orphan',
+    ),
+  );
+});
+
+test('rejects an executable behavior test without a requirement marker', () => {
+  const workspace = fixtureWorkspace();
+  writeFileSync(join(workspace, 'apps/fixture/untraced.spec.ts'), 'export {};\n');
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'apps/fixture/untraced.spec.ts: executable behavior test requires a // @requirements REQ-... marker',
+    ),
+  );
+});
+
+test('rejects an executable behavior test that references an unknown requirement', () => {
+  const workspace = fixtureWorkspace();
+  writeFileSync(
+    join(workspace, 'apps/fixture/unknown.spec.ts'),
+    '// @requirements REQ-FIXTURE-UNKNOWN-999\n',
+  );
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'apps/fixture/unknown.spec.ts: @requirements references unknown REQ-FIXTURE-UNKNOWN-999',
+    ),
+  );
+});
+
+test('rejects a behavior test traced to a requirement that does not own its project', () => {
+  const workspace = fixtureWorkspace();
+  mkdirSync(join(workspace, 'apps/other'), { recursive: true });
+  writeFileSync(
+    join(workspace, 'apps/other/project.json'),
+    JSON.stringify({ name: 'other', targets: {} }),
+  );
+  writeFileSync(
+    join(workspace, 'apps/other/cross-owned.test.ts'),
+    '// @requirements REQ-FIXTURE-RULE-001\n',
+  );
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'apps/other/cross-owned.test.ts: REQ-FIXTURE-RULE-001 does not own Nx project other',
     ),
   );
 });

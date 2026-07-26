@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRequestLoggingMiddleware } from './request-logging.middleware';
 

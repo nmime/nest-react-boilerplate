@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import type { FactoryProvider } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { HealthService } from '@app/backend-common-health';

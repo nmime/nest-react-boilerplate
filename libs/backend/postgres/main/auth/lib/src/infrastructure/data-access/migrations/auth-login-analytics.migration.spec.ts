@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { Migration20260721170000AddAdminAuditFilterIndexes } from './Migration20260721170000AddAdminAuditFilterIndexes';
 import { Migration20260721200000CreateAuthLoginAnalytics } from './Migration20260721200000CreateAuthLoginAnalytics';

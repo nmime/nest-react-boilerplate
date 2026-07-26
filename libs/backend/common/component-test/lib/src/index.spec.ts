@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-RECOVERY-002
 import { describe, expect, it } from 'vitest';
 import * as componentTest from './index';
 

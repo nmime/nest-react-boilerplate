@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PROFILE-006
 import { describe, expect, it } from 'vitest';
 import type { UserProfile } from '../domain';
 import { presentUserProfile } from './profile-view.presenter';

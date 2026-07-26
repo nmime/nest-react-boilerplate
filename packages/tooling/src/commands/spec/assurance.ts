@@ -1,3 +1,4 @@
+// Evidence for: REQ-ASSURANCE-FRESHNESS-002 REQ-ASSURANCE-INVENTORY-004 REQ-ASSURANCE-OWNERSHIP-006 REQ-ASSURANCE-TRACE-001
 import { createHash } from 'node:crypto';
 import {
   existsSync,
@@ -62,13 +63,14 @@ export interface EvidenceReference {
 
 export interface RequirementVerification {
   id: string;
+  projects: string[];
   risk: RequirementRisk;
   profiles: EvidenceProfile[];
   evidence: EvidenceReference[];
 }
 
 export interface VerificationDocument {
-  version: 1;
+  version: 2;
   capability: string;
   owners: {
     product: string;
@@ -76,7 +78,6 @@ export interface VerificationDocument {
     security?: string;
     operations?: string;
   };
-  projects: string[];
   requirements: RequirementVerification[];
 }
 
@@ -95,11 +96,20 @@ export interface ProjectRecord {
   targets: Set<string>;
 }
 
+export interface BehaviorTestRecord {
+  file: string;
+  project?: string;
+  requirementIds: string[];
+}
+
 export interface AssuranceModel {
   workspaceRoot: string;
   projects: Map<string, ProjectRecord>;
   requirements: Map<string, RequirementRecord>;
   evidenceFiles: Set<string>;
+  behaviorTests: BehaviorTestRecord[];
+  features: number;
+  scenarios: number;
   errors: string[];
   warnings: string[];
   hash: string;
@@ -113,6 +123,10 @@ export interface TraceReport {
   totals: {
     projects: number;
     coveredProjects: number;
+    behaviorTests: number;
+    tracedBehaviorTests: number;
+    features: number;
+    scenarios: number;
     requirements: number;
     evidence: number;
   };
@@ -184,7 +198,11 @@ const KIND_VALUES = new Set<EvidenceKind>(evidenceKinds);
 const LANE_VALUES = new Set<EvidenceLane>(evidenceLanes);
 const REQUIREMENT_PATTERN =
   /^### Requirement:\s+\[(REQ-[A-Z0-9]+(?:-[A-Z0-9]+)+-\d{3})\]\s+(.+?)\s*$/gmu;
+const TEST_REQUIREMENTS_PATTERN = /^\s*\/\/\s*@requirements\s+(.+?)\s*$/gmu;
+const REQUIREMENT_ID_PATTERN = /\bREQ-[A-Z0-9]+(?:-[A-Z0-9]+)+-\d{3}\b/gu;
 const SCENARIO_TAG_PATTERN = /@(SCN-[A-Z0-9]+(?:-[A-Z0-9]+)+-\d{2,3})\b/gu;
+const BEHAVIOR_TEST_PATTERN =
+  /(?:\.(?:spec|test)|(?:^|[._-])(?:component|e2e)-spec)\.(?:ts|tsx|mts|mjs)$/u;
 
 export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
   const errors: string[] = [];
@@ -246,14 +264,6 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
       );
     }
 
-    for (const projectName of verification.projects) {
-      if (!projects.has(projectName)) {
-        errors.push(`${verificationFile}: references unknown Nx project ${projectName}`);
-      } else {
-        coveredProjects.add(projectName);
-      }
-    }
-
     const mapped = new Map<string, RequirementVerification>();
     for (const requirement of verification.requirements) {
       if (mapped.has(requirement.id)) {
@@ -287,6 +297,15 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
         warnings,
         evidenceFiles,
       });
+      for (const projectName of mapping.projects) {
+        if (!projects.has(projectName)) {
+          errors.push(
+            `${verificationFile}: ${requirement.id} references unknown Nx project ${projectName}`,
+          );
+        } else {
+          coveredProjects.add(projectName);
+        }
+      }
 
       requirements.set(requirement.id, {
         ...mapping,
@@ -295,7 +314,7 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
         specFile,
         verificationFile,
         owners: verification.owners,
-        projects: verification.projects,
+        projects: mapping.projects,
       });
     }
 
@@ -312,7 +331,18 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
     }
   }
 
-  validateFeatureInventory(workspaceRoot, requirements, evidenceFiles, errors);
+  const behaviorTests = validateBehaviorTestInventory(
+    workspaceRoot,
+    projects,
+    requirements,
+    errors,
+  );
+  const featureInventory = validateFeatureInventory(
+    workspaceRoot,
+    requirements,
+    evidenceFiles,
+    errors,
+  );
 
   const hash = createHash('sha256')
     .update(specificationSources.sort().join('\n---\n'))
@@ -323,6 +353,9 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
     projects,
     requirements,
     evidenceFiles,
+    behaviorTests,
+    features: featureInventory.features,
+    scenarios: featureInventory.scenarios,
     errors,
     warnings,
     hash,
@@ -350,6 +383,12 @@ export function createTraceReport(model: AssuranceModel): TraceReport {
     totals: {
       projects: model.projects.size,
       coveredProjects: coveredProjects.size,
+      behaviorTests: model.behaviorTests.length,
+      tracedBehaviorTests: model.behaviorTests.filter(
+        ({ requirementIds }) => requirementIds.length > 0,
+      ).length,
+      features: model.features,
+      scenarios: model.scenarios,
       requirements: model.requirements.size,
       evidence,
     },
@@ -530,6 +569,8 @@ export function renderVerificationMarkdown(report: VerificationReport): string {
     `- Specification hash: \`${report.specificationHash}\``,
     `- Requirements: ${report.requirementIds.length}`,
     `- Projects covered: ${report.trace.totals.coveredProjects}/${report.trace.totals.projects}`,
+    `- Behavior tests traced: ${report.trace.totals.tracedBehaviorTests}/${report.trace.totals.behaviorTests}`,
+    `- Gherkin features/scenarios: ${report.trace.totals.features}/${report.trace.totals.scenarios}`,
     `- Evidence references: ${report.trace.totals.evidence}`,
     '',
     '## Executed evidence',
@@ -601,6 +642,9 @@ function validateRequirementMapping(options: {
   } = options;
   const prefix = `${verificationFile}: ${requirement.id}`;
 
+  if (requirement.projects.length === 0) {
+    errors.push(`${prefix}: at least one owned Nx project is required`);
+  }
   if (!RISK_VALUES.has(requirement.risk)) {
     errors.push(`${prefix}: invalid risk ${String(requirement.risk)}`);
   }
@@ -710,14 +754,89 @@ function validateRequirementMapping(options: {
   }
 }
 
+function validateBehaviorTestInventory(
+  workspaceRoot: string,
+  projects: Map<string, ProjectRecord>,
+  requirements: Map<string, RequirementRecord>,
+  errors: string[],
+): BehaviorTestRecord[] {
+  const inventoryRoots = [
+    'apps',
+    'libs',
+    'packages',
+    'i18n',
+    'scripts',
+    'deploy',
+    'docker',
+    '.github',
+  ]
+    .map((directory) => resolve(workspaceRoot, directory))
+    .filter(existsSync);
+  const projectRoots = [...projects.values()]
+    .map((project) => ({
+      name: project.name,
+      root: project.root.replaceAll('\\', '/').replace(/\/+$/u, ''),
+    }))
+    .sort((left, right) => right.root.length - left.root.length);
+  const testFiles = inventoryRoots.flatMap((root) =>
+    findFiles(root, (path) => BEHAVIOR_TEST_PATTERN.test(basename(path))),
+  );
+  const records: BehaviorTestRecord[] = [];
+
+  for (const absoluteFile of [...new Set(testFiles)].sort()) {
+    const file = toWorkspacePath(workspaceRoot, absoluteFile);
+    const text = readFileSync(absoluteFile, 'utf8');
+    const markerLines = [...text.matchAll(TEST_REQUIREMENTS_PATTERN)];
+    const requirementIds = [
+      ...new Set(
+        markerLines.flatMap((marker) => [
+          ...(marker[1] ?? '').matchAll(REQUIREMENT_ID_PATTERN),
+        ]).flatMap((match) => (match[0] ? [match[0]] : [])),
+      ),
+    ].sort();
+    const project = projectRoots.find(
+      ({ root }) => file === root || file.startsWith(`${root}/`),
+    )?.name;
+
+    if (markerLines.length === 0) {
+      errors.push(
+        `${file}: executable behavior test requires a // @requirements REQ-... marker`,
+      );
+    } else if (requirementIds.length === 0) {
+      errors.push(`${file}: @requirements marker contains no valid requirement ID`);
+    }
+
+    for (const requirementId of requirementIds) {
+      const requirement = requirements.get(requirementId);
+      if (requirement === undefined) {
+        errors.push(`${file}: @requirements references unknown ${requirementId}`);
+        continue;
+      }
+      if (project !== undefined && !requirement.projects.includes(project)) {
+        errors.push(
+          `${file}: ${requirementId} does not own Nx project ${project}`,
+        );
+      }
+    }
+
+    records.push({
+      file,
+      ...(project === undefined ? {} : { project }),
+      requirementIds,
+    });
+  }
+
+  return records;
+}
+
 function validateFeatureInventory(
   workspaceRoot: string,
   requirements: Map<string, RequirementRecord>,
   evidenceFiles: Set<string>,
   errors: string[],
-): void {
+): { features: number; scenarios: number } {
   const featureRoot = resolve(workspaceRoot, 'apps/e2e/acceptance/features');
-  if (!existsSync(featureRoot)) return;
+  if (!existsSync(featureRoot)) return { features: 0, scenarios: 0 };
   const featureFiles = findFiles(featureRoot, (path) => path.endsWith('.feature'));
   const scenarioIds = new Set<string>();
   const mappedScenarioIds = new Set(
@@ -753,6 +872,7 @@ function validateFeatureInventory(
       }
     }
   }
+  return { features: featureFiles.length, scenarios: scenarioIds.size };
 }
 
 function discoverProjects(
@@ -836,7 +956,7 @@ function parseVerificationDocument(
     }
     return null;
   }
-  if (value.version !== 1) errors.push(`${file}: version must be 1`);
+  if (value.version !== 2) errors.push(`${file}: version must be 2`);
   if (typeof value.capability !== 'string' || value.capability.trim() === '') {
     errors.push(`${file}: capability is required`);
   }
@@ -847,15 +967,12 @@ function parseVerificationDocument(
       errors.push(`${file}: owners.${owner} is required`);
     }
   }
-  if (!isStringArray(value.projects) || value.projects.length === 0) {
-    errors.push(`${file}: projects must list at least one Nx project`);
-  }
   if (!Array.isArray(value.requirements) || value.requirements.length === 0) {
     errors.push(`${file}: requirements must list at least one mapping`);
   }
 
   return {
-    version: 1,
+    version: 2,
     capability: typeof value.capability === 'string' ? value.capability : '',
     owners: {
       product: typeof owners.product === 'string' ? owners.product : '',
@@ -863,12 +980,14 @@ function parseVerificationDocument(
       ...(typeof owners.security === 'string' ? { security: owners.security } : {}),
       ...(typeof owners.operations === 'string' ? { operations: owners.operations } : {}),
     },
-    projects: isStringArray(value.projects) ? value.projects : [],
     requirements: Array.isArray(value.requirements)
       ? value.requirements
           .filter(isRecord)
           .map((requirement) => ({
             id: typeof requirement.id === 'string' ? requirement.id : '',
+            projects: isStringArray(requirement.projects)
+              ? requirement.projects
+              : [],
             risk:
               typeof requirement.risk === 'string'
                 ? (requirement.risk as RequirementRisk)

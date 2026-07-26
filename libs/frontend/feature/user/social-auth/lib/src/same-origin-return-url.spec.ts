@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-IDENTITY-005
+// Evidence for: REQ-AUTH-IDENTITY-005
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { toAbsoluteSameOriginReturnUrl, toSameOriginReturnPath } from './same-origin-return-url';
 

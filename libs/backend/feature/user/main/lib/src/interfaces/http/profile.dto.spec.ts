@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-PROFILE-006
+// Evidence for: REQ-AUTH-PROFILE-006
 import { DECORATORS } from '@nestjs/swagger';
 import { describe, expect, it } from 'vitest';
 import { AuthenticatedPrincipalDto, ProfilePayloadDto, UserProfileViewDto } from './profile.dto';

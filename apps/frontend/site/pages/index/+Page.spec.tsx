@@ -1,3 +1,5 @@
+// @requirements REQ-FRONTEND-SSR-007
+// Evidence for: REQ-FRONTEND-SSR-007
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

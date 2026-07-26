@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SSR-007
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';

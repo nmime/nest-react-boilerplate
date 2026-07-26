@@ -1,3 +1,4 @@
+// @requirements REQ-API-RESPONSE-006
 import { HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { lastValueFrom, of, throwError } from 'rxjs';

@@ -1,3 +1,5 @@
+// @requirements REQ-API-PROBLEM-001
+// Evidence for: REQ-API-PROBLEM-001
 import { HttpException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { ProblemTypeDefinitions, problemTypeForCode } from '@app/common-problem-details';

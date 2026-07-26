@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-BOUNDARY-010
 import { describe, expect, it } from 'vitest';
 import {
   buildIpAllowList,

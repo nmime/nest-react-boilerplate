@@ -1,3 +1,4 @@
+// @requirements REQ-API-CLIENT-005
 import { describe, expect, it } from 'vitest';
 import { resolveBetterAuthBaseUrl } from './auth-client';
 

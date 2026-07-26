@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-FRONTEND-009
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';

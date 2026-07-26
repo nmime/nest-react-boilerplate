@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { describe, expect, it } from 'vitest';
 import {

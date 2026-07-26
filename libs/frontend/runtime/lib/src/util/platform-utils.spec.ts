@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { describe, expect, it, vi } from 'vitest';
 import {
   add3DotsInTheStringMiddle,

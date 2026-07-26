@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { describe, expect, it, vi } from 'vitest';
 import { InMemoryRedisClient } from './in-memory-redis.client';
 import { RedisRedlockService } from './redis-redlock.service';

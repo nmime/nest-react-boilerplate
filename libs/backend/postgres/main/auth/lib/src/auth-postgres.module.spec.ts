@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { AuthPostgresModule } from './auth-postgres.module';
 import { AuthTokenCleanupService } from './auth-token-cleanup.service';

@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-INIT-004
+// Evidence for: REQ-SCAFFOLD-SELECTION-002
 /**
  * Planner evidence for REQ-SCAFFOLD-SELECTION-002.
  *

@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ACCESSIBILITY-003
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { MouseEvent } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';

@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PROFILE-006
 import { Test, type TestingModule } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 import { BaseHealthController, HealthService } from '@app/backend-common-health';

@@ -23,6 +23,13 @@ description: Prepare Docker, Helm, GitOps, or single-server deployment configura
 5. Validate chart/value composition, container startup assumptions, dependency ordering, shutdown grace, and observable failure signals.
 6. Update runbooks and environment matrices from the actual configuration.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification and boundary
 
 Run local image builds, config/render validation, Helm lint/template or GitOps validation, and deployment-focused tests that do not mutate a live environment. Preparation does not authorize pushing images, applying manifests, changing DNS, spending funds, or deploying.

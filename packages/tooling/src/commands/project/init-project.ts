@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Evidence for: REQ-SCAFFOLD-INIT-004
 /**
  * init-project — delegate to shared setup/planner/apply engine.
  *

@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-QUALITY-006
 import assert from 'node:assert/strict';
 import {
   mkdtempSync,

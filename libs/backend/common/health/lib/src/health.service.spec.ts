@@ -1,3 +1,5 @@
+// @requirements REQ-RUNTIME-HEALTH-001
+// Evidence for: REQ-RUNTIME-HEALTH-001
 import { describe, expect, it } from 'vitest';
 // Domain health evidence for REQ-RUNTIME-HEALTH-001.
 import { HealthService } from './health.service';

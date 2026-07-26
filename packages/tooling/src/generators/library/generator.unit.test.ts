@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-GENERATORS-003
 /**
  * Tests for the library generator.
  *

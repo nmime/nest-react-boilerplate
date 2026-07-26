@@ -1,3 +1,4 @@
+// Evidence for: REQ-ASSURANCE-TRACE-001
 import { existsSync } from "node:fs";
 // Mutation evidence for REQ-ASSURANCE-TRACE-001.
 import { resolve } from "node:path";

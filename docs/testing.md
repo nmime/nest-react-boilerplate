@@ -25,6 +25,13 @@ pnpm exec nx run acceptance-e2e:acceptance
 pnpm run spec:verify -- --lane pr --base origin/main --head HEAD
 ```
 
+Every repository-owned executable `*.spec.*`, `*.test.*`, `*.e2e-spec.*`, or
+`*.component-spec.*` file carries one `// @requirements REQ-...` inventory
+marker. Filename-shaped command modules such as `storybook-test.ts` are
+excluded. The marker links the whole file to durable behavior and project
+ownership; `verification.yaml` separately selects the high-signal evidence
+that satisfies each risk profile.
+
 Run heavier suites intentionally: `test:component`, `test:e2e`, `test:storybook`, `test:visual`, `test:docker-smoke`, `test:fullstack`, and the nightly/manual presets (`api:openapi:fuzz`, `test:a11y`, `test:e2e:matrix`, `test:perf`, `test:security:dast`, `test:mutation`).
 
 ## Reliability

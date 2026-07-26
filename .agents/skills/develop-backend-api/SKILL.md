@@ -23,6 +23,13 @@ description: Implement NestJS Fastify API behavior within repository runtime con
 6. Add unit or integration coverage for success, validation, authorization, not-found/conflict, and infrastructure failure paths as applicable.
 7. When the public API changes, continue with `$change-api-contract`.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run the owning project lint, typecheck, test, build, and applicable integration/e2e target. Run `git diff --check` and broaden to shared consumers when a public alias or backend-common contract changes.

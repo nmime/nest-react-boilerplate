@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-SESSION-002
 import { describe, expect, it, vi } from 'vitest';
 import { AuthenticatedTheme } from '@app/backend-feature-auth-shared';
 import { principalFromUserView } from './principal.mapper';

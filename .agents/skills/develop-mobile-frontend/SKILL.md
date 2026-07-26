@@ -24,6 +24,13 @@ description: Implement Expo and React Native features within native UI boundarie
 5. Keep platform-specific files explicit and minimal; share domain logic through runtime-neutral libraries.
 6. Add component tests and the relevant mobile e2e journey for critical flows.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run native library and app lint, typecheck, tests, Expo export or build validation for affected targets, and mobile e2e when available. Report simulator, signing, or external-device blockers explicitly.

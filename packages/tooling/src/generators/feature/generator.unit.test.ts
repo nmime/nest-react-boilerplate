@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-GENERATORS-003
+// Evidence for: REQ-SCAFFOLD-GENERATORS-003
 /**
  * Tests for the feature generator.
  *

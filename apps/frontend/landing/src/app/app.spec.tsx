@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SSR-007
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from '.';

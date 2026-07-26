@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { Migration20260719120000CreateProblemPresentationOverrides } from './Migration20260719120000CreateProblemPresentationOverrides';
 import { Migration20260720120000AddAuthRefreshTokenAuthContext } from './Migration20260720120000AddAuthRefreshTokenAuthContext';

@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-TEMPLATE-003
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NotificationErrorReason, NotificationStatus } from '@app/common-notifications';
 import { ResendEmailNotificationProvider } from './resend-email-notification.provider';

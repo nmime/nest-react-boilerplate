@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-LIFECYCLE-002
 import { describe, expect, it, vi } from 'vitest';
 import { NotificationHealthService } from './notification-health.service';
 

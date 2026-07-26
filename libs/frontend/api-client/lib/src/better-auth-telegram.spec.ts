@@ -1,3 +1,4 @@
+// @requirements REQ-API-CLIENT-005
 import { describe, expect, it, vi } from 'vitest';
 import { ApiClientError } from './service-options';
 import { establishTelegramTmaBetterAuthSession, requestTelegramOidcAuthorization } from './better-auth-telegram';

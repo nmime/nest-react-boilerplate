@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import { describe, expect, it } from 'vitest';
 import { AuthOAuthConfigInjectToken, AuthOAuthService } from './auth-oauth.service';
 import type { AuthOAuthConfig } from './auth-oauth.types';

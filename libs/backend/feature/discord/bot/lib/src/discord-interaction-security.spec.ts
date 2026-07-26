@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { generateKeyPairSync, sign } from 'node:crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';

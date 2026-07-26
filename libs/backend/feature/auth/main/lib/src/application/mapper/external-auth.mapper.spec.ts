@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-IDENTITY-005
 import { describe, expect, it } from 'vitest';
 import { AuthProvider, AuthProviderChannel, DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import { profileToIdentityInput, toIdentityView } from './external-auth.mapper';

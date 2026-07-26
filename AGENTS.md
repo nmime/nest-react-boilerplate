@@ -23,6 +23,10 @@ Always-loaded policy for human and AI contributors to
   changes scoped and avoid compatibility shims that contradict repo policy.
 - Treat generated artifacts as read-only unless the task explicitly includes
   source changes plus regeneration.
+- For observable behavior changes, inspect or update the owning OpenSpec
+  requirement and version 2 evidence sidecar before implementation. Every
+  executable test file must contain a `// @requirements REQ-...` marker whose
+  requirements own that test's Nx project.
 
 ## Branch And Authorship
 
@@ -150,6 +154,10 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 Pick the smallest command set that proves the change, then broaden when touching
 shared/public APIs. Always run `git diff --check`; for docs, run Prettier on the
 touched Markdown when dependencies are available.
+
+Run `pnpm run spec:validate` after behavior, test, project, skill, or evidence
+changes. Use `pnpm run spec:impact -- --base <rev> --head HEAD` and the selected
+`spec:verify` lane to bind evidence to the exact source revision.
 
 Run `pnpm agent:verify` when setup, generators, ownership rules, or agent-facing
 scaffolding guidance changes. It exercises repeatable setup plus the executable

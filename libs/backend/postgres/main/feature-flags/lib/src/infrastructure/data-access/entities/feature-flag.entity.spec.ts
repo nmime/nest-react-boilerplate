@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-PREFERENCE-006
 import { describe, expect, it } from 'vitest';
 import { DefaultFeatureFlagTenantId } from '@app/common-feature-flags';
 import { FeatureFlagEntity, FeatureFlagEntitySchema } from './feature-flag.entity';

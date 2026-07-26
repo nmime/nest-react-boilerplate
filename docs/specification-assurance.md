@@ -9,16 +9,16 @@ claim mathematical proof that the original requirement is correct or complete.
 
 Each layer has one job:
 
-| Layer                    | Canonical source                                     | Owns                                                              |
-| ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------- |
-| Normative behavior       | `openspec/specs/<capability>/spec.md`                | stable `REQ-*` requirements, invariants, failures, examples       |
-| Discovery/change history | `openspec/changes/**`                                | proposals, counterexamples, design, verification policy, tasks    |
-| Evidence mapping         | `openspec/specs/<capability>/verification.yaml`      | risk, owners, profiles, files, commands, lanes                    |
-| Stakeholder examples     | `apps/e2e/acceptance/features/**/*.feature`          | declarative `@REQ-*` / `@SCN-*` Cucumber examples                 |
-| Domain and failure rules | owning project Vitest suites                         | algorithms, state transitions, boundaries, negative paths         |
-| Public API invariants    | OpenAPI, contract, property, and fuzz suites         | provider/consumer shape and generated-client compatibility        |
-| User journeys            | Playwright projects                                  | behavior in the real browser or full product stack                |
-| Runtime confidence       | component, security, mutation, and operations suites | infrastructure, adversarial, test-strength, and recovery evidence |
+| Layer                    | Canonical source                                     | Owns                                                                |
+| ------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| Normative behavior       | `openspec/specs/<capability>/spec.md`                | stable `REQ-*` requirements, invariants, failures, examples         |
+| Discovery/change history | `openspec/changes/**`                                | proposals, counterexamples, design, verification policy, tasks      |
+| Evidence mapping         | `openspec/specs/<capability>/verification.yaml`      | requirement-level projects, risk, owners, profiles, commands, lanes |
+| Stakeholder examples     | `apps/e2e/acceptance/features/**/*.feature`          | declarative `@REQ-*` / `@SCN-*` Cucumber examples                   |
+| Domain and failure rules | owning project Vitest suites                         | algorithms, state transitions, boundaries, negative paths           |
+| Public API invariants    | OpenAPI, contract, property, and fuzz suites         | provider/consumer shape and generated-client compatibility          |
+| User journeys            | Playwright projects                                  | behavior in the real browser or full product stack                  |
+| Runtime confidence       | component, security, mutation, and operations suites | infrastructure, adversarial, test-strength, and recovery evidence   |
 
 The layers are complementary. Do not restate every Vitest assertion in Gherkin
 or hide stakeholder behavior inside low-level tests.
@@ -41,14 +41,60 @@ flowchart LR
 
 `pnpm run spec:validate` fails when:
 
-- an Nx project belongs to no capability;
+- an Nx project belongs to no durable requirement;
 - a durable requirement lacks an evidence mapping;
 - a mapped requirement does not exist in its spec;
+- a requirement names an unknown project or the union of requirement scopes
+  leaves a project unowned;
+- an executable repository test lacks a `// @requirements REQ-...` marker,
+  names an unknown requirement, or names a requirement that does not own its Nx
+  project;
 - a required evidence kind, owner, file, Nx target, or root script is missing;
 - an evidence source does not explicitly name its `REQ-*` identifier;
 - a Cucumber feature or scenario lacks a valid mapping or stable tag;
 - a scenario ID is duplicated;
 - OpenSpec strict validation fails.
+
+The trace report separates total and traced executable tests, Nx projects,
+durable requirements, Cucumber features/scenarios, and selected high-signal
+evidence. This prevents a small evidence manifest from being presented as
+complete repository test coverage.
+
+Version 2 sidecars place ownership on each requirement:
+
+```yaml
+version: 2
+capability: authentication-access
+owners:
+  product: identity-maintainers
+  verification: quality-engineering
+requirements:
+  - id: REQ-AUTH-SESSION-002
+    projects:
+      - auth-app-api
+      - '@app/backend-feature-auth-main'
+    risk: critical
+    profiles: [domain, persistence, security, journey]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/auth/main/lib/src/interfaces/http/persistent-session-access.guard.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+```
+
+Every executable `*.spec.*`, `*.test.*`, `*.e2e-spec.*`, or
+`*.component-spec.*` file under the repository-owned inventory roots has one
+explicit marker near its top. Command modules whose product name happens to end
+in `-test`, such as `storybook-test.ts`, are not test-suite files and are not
+inventoried.
+
+```ts
+// @requirements REQ-AUTH-SESSION-002
+```
+
+The marker assigns the whole test file to durable behavior and is checked
+against project ownership. It does not claim that every assertion is
+high-signal evidence; selected evidence remains explicit in the sidecar.
 
 `pnpm run spec:impact -- --base <rev> --head <rev>` maps changed specs,
 evidence files, and project roots to requirements. Changes to assurance
@@ -76,9 +122,10 @@ into a source-code pass.
 
 ## Writing or changing behavior
 
-1. Start or update an OpenSpec change. Complete discovery with actors, positive
-   examples, negative/boundary cases, authorization, concurrency, failure,
-   observability, rollout, and rollback where applicable.
+1. Start with `$specify-behavior` and create or update an OpenSpec change.
+   Complete discovery with actors, positive examples, negative/boundary cases,
+   authorization, concurrency, failure, observability, rollout, and rollback
+   where applicable.
 2. Add or modify the durable `REQ-*` requirement. The ID is stable across
    wording and implementation refactors.
 3. Select proportional profiles in `verification.yaml`. Critical/high risk
@@ -89,8 +136,13 @@ into a source-code pass.
    scenario.
 5. Keep pure rules and failure matrices in Vitest, public compatibility in
    contract/property suites, and real journeys in Playwright.
-6. Run `spec:validate`, `spec:impact`, and the impacted lane before handoff.
-7. Treat a new production incident, escaped defect, or missed canary as
+6. Implement approved artifacts through `$implement-specified-change`. Give
+   every new executable test its requirement marker and update
+   requirement-level project ownership and evidence in the same revision.
+7. Run `spec:validate`, `spec:impact`, and the impacted lane before handoff.
+   Use `$review-specification-assurance` for independent completeness,
+   evidence-quality, and exact-revision review.
+8. Treat a new production incident, escaped defect, or missed canary as
    discovery input: update the requirement/example and add independent
    regression evidence.
 
@@ -116,6 +168,12 @@ buttons, CSS selectors, implementation classes, or internal method sequences
 unless that interface is itself the requirement. Shared product logic never
 belongs in the acceptance project.
 
+Follow the official Cucumber guidance for
+[Gherkin syntax](https://cucumber.io/docs/gherkin/reference),
+[better Gherkin](https://cucumber.io/docs/gherkin/better-gherkin/), and
+[hooks, tags, and execution APIs](https://cucumber.io/docs/cucumber/api/).
+Feature files describe observable examples, not implementation scripts.
+
 Generate another owned acceptance project only when a product truly needs a
 separate boundary:
 
@@ -135,6 +193,8 @@ No collection of tests can establish that humans asked for the right product or
 enumerated every unknown scenario. This repository reduces that risk through:
 
 - explicit owner discovery and unresolved-question gates;
+- an independently reviewed discovery artifact with named assumptions and
+  unresolved stakeholder decisions;
 - independently owned evidence for high-risk behavior;
 - counterexamples, boundary, authorization, concurrency, and failure review;
 - property and mutation testing to challenge examples and assertions;

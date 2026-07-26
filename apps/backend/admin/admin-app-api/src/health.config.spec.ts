@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import type { FactoryProvider } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import type { HealthService } from '@app/backend-common-health';

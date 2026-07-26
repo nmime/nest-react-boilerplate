@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { Injectable } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { Test } from '@nestjs/testing';

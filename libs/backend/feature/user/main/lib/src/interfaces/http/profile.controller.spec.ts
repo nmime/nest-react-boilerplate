@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-PROFILE-006
+// Evidence for: REQ-AUTH-PROFILE-006
 import { describe, expect, it } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { GetCurrentUserProfileUseCase } from '@app/backend-feature-user-shared';

@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
 /**
  * E2E tests for the setup engine: idempotency, conflict refusal,
  * disposable workspace setup twice.

@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-AUDIENCE-004
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { describe, expect, it } from 'vitest';
 import { AuditLogAdminModule } from '@app/backend-feature-audit-log-admin';

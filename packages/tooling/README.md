@@ -40,7 +40,8 @@ TS-first command implementations live under `packages/tooling/src/commands` grou
 - `testing/` Storybook, browser e2e coverage, and visual regression helpers.
 - `qa/` local QA presets for OpenAPI lint/fuzz, consumer contracts, accessibility, browser matrix, performance, security SAST/secret scanning/DAST, mutation, and property checks.
 - `spec/` OpenSpec validation, complete trace generation, revision impact
-  calculation, lane-aware evidence execution, and dossier rendering.
+  calculation, executable-test marker enforcement, requirement-level project
+  ownership, lane-aware evidence execution, and dossier rendering.
 
 Do not add root-level `tools/` wrappers. New local commands should be routed through `repo-tooling`.
 
@@ -53,7 +54,8 @@ All QA presets are designed to be useful locally without depending on GitHub Act
 - `pnpm run tooling:static-check` performs syntax checks for repository tooling, safe CLI help smoke tests, package-script reference checks, generator regression tests, and stale architecture/version/Postgres path wording guards. It intentionally avoids running Docker, deployment, or destructive database commands.
 - `pnpm run agent:skills:check` tests the skill validator and checks every
   repo-local skill's trigger metadata, context/evidence sections, local
-  references, interface prompt, package hygiene, catalog entry, and workflow discovery.
+  references, interface prompt, package hygiene, catalog entry, workflow
+  discovery, and required specification-lifecycle routing.
 - `pnpm run format:changed` checks only changed Prettier-supported files against `origin/main...HEAD`; use it in PR-sized gates when full-repository formatting is too memory-heavy. Formatting intentionally uses stock Prettier defaults plus `.prettierignore`; no explicit Prettier config is required unless style requirements change.
 - `pnpm run images:webp` converts PNG/JPG/JPEG assets to WebP side-by-side by default. Use `pnpm run images:webp:check` for a non-mutating dry-run, pass input directories after `--`, and use `--replace` only when source image deletion is intended.
 - `pnpm run test:security:secrets` runs the native secret scanner by default and can be promoted to gitleaks with `SECRET_SCAN_ENGINE=gitleaks`. If an external engine is explicitly requested and unavailable, the command fails unless `SECRET_SCAN_FAIL_ON_UNAVAILABLE_EXTERNAL=false` is set for local dry-runs.

@@ -1,3 +1,4 @@
+// @requirements REQ-API-PROBLEM-001
 import { describe, expect, it } from 'vitest';
 import { ProblemTypeBaseUrl, problemTypeForCode } from './problem-type-base-url.const';
 

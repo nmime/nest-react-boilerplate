@@ -33,7 +33,7 @@ export const backendAppIds = [
 export type BackendAppId = (typeof backendAppIds)[number];
 
 /** All application IDs (union of frontend + backend + e2e). */
-export const appIds = [...frontendAppIds, ...backendAppIds, 'fullstack-e2e'] as const;
+export const appIds = [...frontendAppIds, ...backendAppIds, 'fullstack-e2e', 'acceptance-e2e'] as const;
 export type AppId = (typeof appIds)[number];
 
 /** Cross-cutting capabilities that can be toggled. */

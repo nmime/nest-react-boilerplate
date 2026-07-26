@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+// Domain evidence for REQ-AUTH-ACCESS-001.
 import {
   AdminAuthLoginAnalyticsReadPermission,
   AdminDashboardReadPermission,

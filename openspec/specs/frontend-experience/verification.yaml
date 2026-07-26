@@ -1,0 +1,55 @@
+version: 1
+capability: frontend-experience
+owners:
+  product: frontend-maintainers
+  verification: accessibility-quality
+projects:
+  - landing-app
+  - mobile-app
+  - site-app
+  - admin-app
+  - user-app
+  - fullstack-e2e
+  - '@app/frontend-feature-admin-shared'
+  - '@app/frontend-feature-admin-i18n'
+  - '@app/frontend-feature-landing-i18n'
+  - '@app/frontend-feature-user-i18n'
+  - '@app/frontend-i18n-shared'
+  - '@app/frontend-runtime'
+  - '@app/frontend-ui-native'
+  - '@app/frontend-ui-web'
+  - '@app/common-design-tokens'
+  - '@app/common-i18n-keys'
+  - '@app/common-i18n-runtime'
+  - '@app/i18n-en-admin'
+  - '@app/i18n-ru-admin'
+  - '@app/i18n-en-common'
+  - '@app/i18n-ru-common'
+  - '@app/i18n-en-landing'
+  - '@app/i18n-ru-landing'
+  - '@app/i18n-en-user'
+  - '@app/i18n-ru-user'
+requirements:
+  - id: REQ-FRONTEND-JOURNEY-001
+    risk: high
+    profiles: [journey, domain]
+    evidence:
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes: [runtime]
+      - kind: vitest
+        file: libs/frontend/ui-web/lib/src/component/design-system-contract.spec.tsx
+        target: '@app/frontend-ui-web:test'
+        lanes: [pr, main]
+  - id: REQ-FRONTEND-I18N-002
+    risk: normal
+    profiles: [domain, documentation]
+    evidence:
+      - kind: vitest
+        file: libs/frontend/runtime/lib/src/i18n/domain-namespace.spec.ts
+        target: '@app/frontend-runtime:test'
+        lanes: [pr, main]
+      - kind: documentation
+        file: openspec/specs/frontend-experience/spec.md
+        lanes: [pr, main]

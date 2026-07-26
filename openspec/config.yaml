@@ -1,0 +1,31 @@
+schema: nrb-verifiable
+
+context: |
+  Repository: nmime/nest-react-boilerplate
+  Runtime: Node.js 24, pnpm 11.11.0, TypeScript, Nx
+  Backend: NestJS/Fastify, PostgreSQL/MikroORM, Redis, NATS
+  Frontend: Vite, Astro, Vike, Expo
+  Verification: Vitest, Cucumber.js, Playwright, OpenAPI contracts,
+    property tests, mutation tests, Testcontainers, and runtime QA.
+  Public API failures use RFC 9457 Problem Details.
+  Requirements use stable REQ-<CAPABILITY>-<NNN> identifiers.
+  A normative change is not complete until its required evidence is fresh
+  and passing for the exact source commit.
+
+rules:
+  proposal:
+    - State goals, non-goals, affected capabilities, rollout, and rollback.
+    - Identify product, security, compatibility, and operational risk.
+  discovery:
+    - Record rules, examples, counterexamples, boundaries, and unresolved questions.
+    - Do not mark the change ready while a blocking question remains.
+  specs:
+    - Give every requirement a unique REQ-<CAPABILITY>-<NNN> identifier.
+    - Include positive, negative, boundary, authorization, and failure scenarios when applicable.
+    - State invariants, concurrency, idempotency, observability, and rollback expectations when applicable.
+  verification:
+    - Select an evidence profile for every requirement.
+    - Reference independently authored tests and exact repository owners.
+    - Do not treat generated tests or line coverage as sufficient evidence.
+  tasks:
+    - Include specification validation, evidence collection, documentation, and rollback checks.

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+// Domain health evidence for REQ-RUNTIME-HEALTH-001.
 import { HealthService } from './health.service';
 import { toHealthResponseDto } from './mapper';
 import { hasRequiredReadinessFailure, resolveHealthStatus } from './util/health-status.util';

@@ -3,7 +3,12 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
-import { bunCompatibilityProbes, childHasExited, readPinnedBunVersion } from "./bun-compat.ts";
+import {
+  bunCompatibilityProbes,
+  childHasExited,
+  createBunCompatibilityInvocation,
+  readPinnedBunVersion,
+} from "./bun-compat.ts";
 
 const temporaryRoots: string[] = [];
 
@@ -31,6 +36,39 @@ describe("Bun compatibility contract", () => {
     ]) {
       assert.match(contract, new RegExp(expected));
     }
+  });
+
+  it("keeps Expo on its supported Node toolchain while Bun owns every other probe", () => {
+    const expo = bunCompatibilityProbes.find((probe) =>
+      probe.nxArgs.includes("mobile-app:export"),
+    );
+
+    assert.equal(expo?.runtime, "node");
+    assert.equal(
+      bunCompatibilityProbes
+        .filter((probe) => probe !== expo)
+        .every((probe) => probe.runtime === undefined || probe.runtime === "bun"),
+      true,
+    );
+
+    assert.ok(expo);
+    const expoInvocation = createBunCompatibilityInvocation(
+      expo,
+      { BUN_BE_BUN: "1", CI: "true" },
+      "/runtime/bun",
+    );
+    assert.equal(expoInvocation.program, "node");
+    assert.deepEqual(expoInvocation.args.slice(0, 2), ["node_modules/nx/dist/bin/nx.js", "run"]);
+    assert.equal(expoInvocation.environment.BUN_BE_BUN, undefined);
+
+    const bunInvocation = createBunCompatibilityInvocation(
+      bunCompatibilityProbes[0],
+      { BUN_BE_BUN: "1", CI: "true" },
+      "/runtime/bun",
+    );
+    assert.equal(bunInvocation.program, "/runtime/bun");
+    assert.deepEqual(bunInvocation.args.slice(0, 3), ["run", "--bun", "nx"]);
+    assert.equal(bunInvocation.environment.BUN_BE_BUN, "1");
   });
 
   it("requires an exact pinned Bun version", () => {

@@ -229,6 +229,7 @@ export function defaultIgnore(rel: string): boolean {
     "node_modules",
     "dist",
     "coverage",
+    "cucumber-report",
     "test-results",
     "playwright-report",
     "validation-logs",

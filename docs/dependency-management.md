@@ -130,7 +130,7 @@ image resolution.
 | NATS       | `2.10.25-alpine`               | Docker Hub `nats`        |
 | MinIO      | `RELEASE.2025-09-07T16-13-09Z` | Docker Hub `minio/minio` |
 
-## Audit results (2026-07-22)
+## Audit results (2026-07-26)
 
 - **Production audit**: 0 vulnerabilities (exit 0)
 - **Development audit**: 0 vulnerabilities (exit 0)
@@ -140,5 +140,6 @@ image resolution.
 - **Deduplication**: `better-auth` → 1 version (was 2), `drizzle-orm` → 1 version (was 2)
 - **Release plugins**: provider publishing, commit analysis, and release-note
   generation run through `release.config.mjs` on Node 24.18.0 and
-  semantic-release 25. Changelog/git mutation plugins are intentionally absent
-  so protected default branches receive only reviewed changes.
+  semantic-release 25. Releases tag the exact successful CI SHA; changelog/git
+  mutation plugins are intentionally absent so protected default branches
+  receive only reviewed changes.

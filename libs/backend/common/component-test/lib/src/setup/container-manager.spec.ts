@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+// Component-environment evidence for REQ-RUNTIME-RECOVERY-002.
 import { ContainerManager } from './container-manager';
 
 describe('ContainerManager', () => {

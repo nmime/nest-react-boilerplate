@@ -75,6 +75,7 @@ Thumbs.db
 # test
 .playwright-mcp
 e2e-report/
+cucumber-report/
 playwright-report/
 test-results/
 playwright/.cache/

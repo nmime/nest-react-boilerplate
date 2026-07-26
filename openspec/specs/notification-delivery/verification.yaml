@@ -1,0 +1,53 @@
+version: 1
+capability: notification-delivery
+owners:
+  product: notification-maintainers
+  verification: quality-engineering
+  operations: platform-operations
+projects:
+  - notification-scheduler
+  - notification-consumer
+  - '@app/backend-feature-notification-shared'
+  - '@app/backend-feature-notification-admin'
+  - '@app/backend-feature-notification-main'
+  - '@app/backend-postgres-main-notification'
+  - '@app/backend-postgres-main-feature-flags'
+  - '@app/common-notifications'
+  - '@app/common-feature-flags'
+  - '@app/frontend-feature-shared-preferences'
+  - '@app/frontend-feature-user-preferences'
+requirements:
+  - id: REQ-NOTIFY-DELIVERY-001
+    risk: high
+    profiles: [acceptance, domain]
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/notification-delivery.feature
+        scenario: SCN-NOTIFY-DELIVERY-01
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/notification-delivery.feature
+        scenario: SCN-NOTIFY-DELIVERY-02
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/common/notifications/lib/src/notification-contracts.spec.ts
+        target: '@app/common-notifications:test'
+        lanes: [pr, main]
+  - id: REQ-NOTIFY-LIFECYCLE-002
+    risk: critical
+    profiles: [domain, operations]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/notification/main/lib/src/service/notification-application.service.spec.ts
+        target: '@app/backend-feature-notification-main:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/postgres/main/notification/lib/src/notification-payload-crypto.service.spec.ts
+        target: '@app/backend-postgres-main-notification:test'
+        lanes: [main]
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes: [nightly]

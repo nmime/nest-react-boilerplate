@@ -26,11 +26,11 @@ describe('user-app-api health e2e', () => {
     em: {
       fork: vi.fn(() => ormMock.em),
       getConnection: () => ({ execute: vi.fn(() => Promise.resolve()) }),
-      getMigrator: () => ({
-        getPendingMigrations: vi.fn(() => Promise.resolve([])),
-      }),
       getRepository: () => ({}),
     },
+    getMigrator: () => ({
+      getPendingMigrations: vi.fn(() => Promise.resolve([])),
+    }),
   };
 
   beforeAll(async () => {
@@ -47,6 +47,8 @@ describe('user-app-api health e2e', () => {
   });
 
   afterAll(async () => {
+    // `app` stays unset if `beforeAll` throws before assignment; guard so
+    // teardown does not mask the original setup failure with a TypeError.
     await app?.close();
   });
 
@@ -112,5 +114,54 @@ describe('user-app-api health e2e', () => {
         ]),
       },
     });
+  });
+
+  it('GET /ready degrades safely when optional Postgres is unavailable', async () => {
+    const sensitiveValue = ['sensitive', 'health', 'fixture'].join('-');
+    const connectionError = ['password=', sensitiveValue, ' postgres://', 'user:', sensitiveValue, '@db:5432/app'].join(
+      '',
+    );
+    const failingOrmMock = {
+      ...ormMock,
+      em: {
+        ...ormMock.em,
+        getConnection: () => ({
+          execute: vi.fn(() => Promise.reject(new Error(connectionError))),
+        }),
+      },
+    };
+    const moduleRef = await Test.createTestingModule({
+      imports: [UserAppApiModule],
+    })
+      .overrideProvider(MikroORM)
+      .useValue(failingOrmMock)
+      .compile();
+    const failingApp = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+
+    try {
+      await failingApp.init();
+      const response = await failingApp.inject({ method: 'GET', url: '/ready' });
+      const body = parseHealthEnvelope(response);
+
+      expect(response.statusCode).toBe(200);
+      expect(body.data).toMatchObject({
+        app: 'user-app-api',
+        status: 'degraded',
+        dependencies: expect.arrayContaining([
+          expect.objectContaining({
+            name: 'postgres',
+            status: 'error',
+            required: false,
+            detail: expect.not.stringContaining(sensitiveValue),
+            details: expect.objectContaining({
+              message: expect.not.stringContaining(sensitiveValue),
+            }),
+          }),
+        ]),
+      });
+      expect(JSON.stringify(body)).not.toContain(sensitiveValue);
+    } finally {
+      await failingApp.close();
+    }
   });
 });

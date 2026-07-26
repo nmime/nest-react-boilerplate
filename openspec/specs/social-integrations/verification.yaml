@@ -1,0 +1,40 @@
+version: 1
+capability: social-integrations
+owners:
+  product: integrations-maintainers
+  verification: quality-engineering
+  security: security-maintainers
+  operations: platform-operations
+projects:
+  - telegram-bot-api
+  - discord-app-api
+  - '@app/backend-feature-telegram-shared'
+  - '@app/backend-feature-telegram-bot'
+  - '@app/backend-feature-discord-bot'
+  - '@app/i18n-en-bots'
+  - '@app/i18n-ru-bots'
+requirements:
+  - id: REQ-SOCIAL-INGRESS-001
+    risk: critical
+    profiles: [domain, security]
+    evidence:
+      - kind: vitest
+        file: apps/backend/telegram/telegram-bot-api/src/telegram-webhook.controller.spec.ts
+        target: telegram-bot-api:test
+        lanes: [pr, main]
+      - kind: security
+        file: apps/backend/telegram/telegram-bot-api/src/telegram-webhook.controller.spec.ts
+        target: telegram-bot-api:test
+        lanes: [pr, main]
+  - id: REQ-SOCIAL-SESSION-002
+    risk: high
+    profiles: [domain, operations]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/telegram/bot/lib/src/storage/redis-session-adapter.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes: [pr, main]
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes: [nightly]

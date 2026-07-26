@@ -1,4 +1,6 @@
 /**
+ * Static setup-catalog evidence for REQ-SCAFFOLD-SELECTION-002.
+ *
  * Catalog of applications, capabilities, and their dependency / conflict
  * rules.  Pure data — no side-effects, no filesystem access.
  */
@@ -180,6 +182,17 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     publicHostname: null,
     requiresCapabilities: [],
     requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'user-app', 'user-app-api'],
+    conflictsWithCapabilities: [],
+  },
+  'acceptance-e2e': {
+    id: 'acceptance-e2e',
+    label: 'Executable Acceptance Specifications',
+    platform: 'e2e',
+    classification: 'reference',
+    runtime: 'Cucumber.js domain and API acceptance tests',
+    publicHostname: null,
+    requiresCapabilities: [],
+    requiresApps: [],
     conflictsWithCapabilities: [],
   },
 } as const;

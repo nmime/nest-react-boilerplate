@@ -5,6 +5,10 @@
 This app owns the Expo Router entrypoint, native app config, Metro/Babel config,
 and mobile-specific tests. Shared native UI belongs in `libs/frontend/ui-native`.
 Do not import web-only `ui-web` primitives into native screens.
+Keep `*.spec.*` and `*.test.*` modules outside `src/app`: Expo Router treats
+that directory as production routes, so route-local tests can pull Vitest/Vite
+into Metro's application graph. `src/expo-route-boundary.spec.ts` enforces this
+boundary.
 
 ## Commands
 

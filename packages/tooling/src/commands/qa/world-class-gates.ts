@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// Scheduled operations evidence for REQ-ASSURANCE-FRESHNESS-002,
+// REQ-NOTIFY-LIFECYCLE-002, REQ-RUNTIME-HEALTH-001,
+// REQ-RUNTIME-RECOVERY-002, and REQ-SOCIAL-SESSION-002.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";

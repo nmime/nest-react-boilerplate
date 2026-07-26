@@ -1,4 +1,6 @@
 /**
+ * Generator evidence for REQ-SCAFFOLD-OWNERSHIP-001.
+ *
  * Tests for the application generator.
  *
  * UNIT: name validation, duplicate detection, option defaults
@@ -364,6 +366,67 @@ describe('application generator', () => {
       assert.ok(tree.exists('apps/backend/support/support-ticket-api/project.json'));
       const projectJson = JSON.parse(tree.read('apps/backend/support/support-ticket-api/project.json', 'utf8')!);
       assert.equal(projectJson.name, 'support-ticket-api');
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // E2E: Cucumber acceptance application generation
+  // -----------------------------------------------------------------------
+
+  describe('e2e application', () => {
+    it('creates an isolated Cucumber acceptance project', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await applicationGenerator(tree, {
+        name: 'payments-acceptance-e2e',
+        kind: 'e2e',
+        renderer: 'cucumber',
+        skipFormat: true,
+      });
+
+      const root = 'apps/e2e/payments-acceptance';
+      const projectJson = JSON.parse(tree.read(`${root}/project.json`, 'utf8')!);
+      assert.equal(projectJson.name, 'payments-acceptance-e2e');
+      assert.ok(projectJson.tags.includes('platform:e2e'));
+      assert.ok(projectJson.tags.includes('type:e2e'));
+      assert.ok(projectJson.targets.acceptance);
+      assert.ok(projectJson.targets.test);
+      assert.ok(projectJson.targets.typecheck);
+      assert.ok(tree.exists(`${root}/cucumber.config.ts`));
+      assert.equal(JSON.parse(tree.read(`${root}/package.json`, 'utf8') ?? '{}').type, 'module');
+      assert.ok(tree.exists(`${root}/src/support/world.ts`));
+      assert.ok(tree.exists(`${root}/src/steps/acceptance.steps.ts`));
+      const feature = tree.read(`${root}/features/acceptance.feature`, 'utf8')!;
+      assert.match(feature, /@REQ-PAYMENTS-ACCEPTANCE-001/u);
+      assert.match(feature, /@SCN-PAYMENTS-ACCEPTANCE-01/u);
+    });
+
+    it('rejects unsupported renderers and HTTP ports', async () => {
+      const tree = await createTree();
+      const { applicationGenerator } = await import('./generator.js');
+
+      await assert.rejects(
+        () =>
+          applicationGenerator(tree, {
+            name: 'acceptance-e2e',
+            kind: 'e2e',
+            renderer: 'vite',
+            skipFormat: true,
+          }),
+        /Unsupported e2e renderer/,
+      );
+      await assert.rejects(
+        () =>
+          applicationGenerator(tree, {
+            name: 'acceptance-e2e',
+            kind: 'e2e',
+            renderer: 'cucumber',
+            port: 4400,
+            skipFormat: true,
+          }),
+        /do not expose an HTTP port/,
+      );
     });
   });
 

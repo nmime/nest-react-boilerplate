@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+// Domain session evidence for REQ-SOCIAL-SESSION-002.
 import type { RedisClientLike } from '@app/backend-common-redis';
 import { RedisSessionStorage } from './redis-session-adapter';
 

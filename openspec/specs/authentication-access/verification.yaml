@@ -1,0 +1,69 @@
+version: 1
+capability: authentication-access
+owners:
+  product: identity-maintainers
+  verification: quality-engineering
+  security: security-maintainers
+projects:
+  - auth-app-api
+  - user-app-api
+  - admin-app-api
+  - '@app/backend-feature-auth-admin'
+  - '@app/backend-feature-auth-main'
+  - '@app/backend-feature-auth-shared'
+  - '@app/backend-feature-auth-test'
+  - '@app/backend-feature-user-main'
+  - '@app/backend-feature-user-shared'
+  - '@app/backend-feature-admin-main'
+  - '@app/backend-feature-admin-shared'
+  - '@app/backend-feature-audit-log-admin'
+  - '@app/backend-postgres-main-auth'
+  - '@app/frontend-feature-user-auth'
+  - '@app/frontend-feature-user-logout'
+  - '@app/frontend-feature-user-profile'
+  - '@app/frontend-feature-user-social-auth'
+  - '@app/frontend-feature-user-tma-auth'
+  - '@app/common-authz'
+requirements:
+  - id: REQ-AUTH-ACCESS-001
+    risk: critical
+    profiles: [acceptance, domain, security]
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/authentication.feature
+        scenario: SCN-AUTH-ACCESS-01
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/authentication.feature
+        scenario: SCN-AUTH-ACCESS-02
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/common/authz/lib/src/index.spec.ts
+        target: '@app/common-authz:test'
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/application/auth-tenant-isolation.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+  - id: REQ-AUTH-SESSION-002
+    risk: critical
+    profiles: [domain, persistence, security, journey]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/auth/main/lib/src/interfaces/http/persistent-session-access.guard.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+      - kind: component
+        file: libs/backend/feature/auth/test/lib/src/auth-main.postgres.component-spec.ts
+        target: '@app/backend-feature-auth-test:component-test'
+        lanes: [main, nightly]
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/application/auth-tenant-isolation.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes: [runtime]

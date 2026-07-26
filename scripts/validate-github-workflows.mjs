@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Security and operations evidence for REQ-ASSURANCE-RELEASE-003.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -40,6 +41,8 @@ const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.me
 const scripts = packageJson.scripts ?? {};
 const ci = workflows.find((workflow) => workflow.name === 'ci.yml')?.text ?? '';
 const release = workflows.find((workflow) => workflow.name === 'release.yml')?.text ?? '';
+const nightlyAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-nightly.yml')?.text ?? '';
+const runtimeAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-runtime.yml')?.text ?? '';
 const githubReleaseNotes = readFileSync(new URL('../.github/release.yml', import.meta.url), 'utf8');
 const gitleaksConfig = readFileSync(new URL('../.gitleaks.toml', import.meta.url), 'utf8');
 const nxCacheAction = readFileSync(new URL('../.github/actions/nx-cache/action.yml', import.meta.url), 'utf8');
@@ -51,7 +54,7 @@ assert.ok(
 assert.ok(nxCacheAction.includes('path: .nx/cache'), 'Nx cache composite action must cache only Nx task outputs');
 assert.ok(!nxCacheAction.includes('secrets.'), 'Nx cache composite action must not receive secrets');
 assert.ok(ci.includes('NX_CACHE_DIRECTORY: .nx/cache'), 'CI must use the explicit Nx cache directory');
-for (const scope of ['fast', 'non-runtime', 'bun', 'quality', 'e2e']) {
+for (const scope of ['fast', 'spec-evidence', 'non-runtime', 'bun', 'quality', 'e2e']) {
   assert.ok(ci.includes(`scope: ${scope}`), `CI must restore the remote Nx cache for ${scope}`);
 }
 assert.ok(
@@ -73,6 +76,52 @@ assert.ok(
   !release.includes('GIT_AUTHOR_NAME:') && !release.includes('GIT_COMMITTER_NAME:'),
   'release.yml must not configure an identity for forbidden protected-branch release commits',
 );
+assert.ok(release.includes('workflow_run:'), 'release.yml must wait for the CI workflow');
+assert.ok(
+  release.includes("github.event.workflow_run.conclusion == 'success'"),
+  'release.yml must require a successful CI conclusion',
+);
+assert.ok(
+  release.includes('ref: ${{ github.event.workflow_run.head_sha }}'),
+  'release.yml must checkout the exact verified CI commit',
+);
+assert.ok(
+  release.includes('test "$(git rev-parse origin/main)" = "$VERIFIED_SHA"'),
+  'release.yml must refuse a stale successful CI commit after main advances',
+);
+assert.ok(
+  ci.includes('Enforce every required CI result'),
+  'ci.yml summary must fail when any required job did not succeed',
+);
+assert.ok(
+  ci.includes('origin/$GITHUB_BASE_REF..$PR_HEAD_SHA'),
+  'ci.yml must validate authored commits without including the synthetic pull-request merge commit',
+);
+for (const required of [
+  'name: Exact-SHA specification evidence',
+  'pnpm run spec:verify',
+  '--lane "$lane"',
+  '--base "$base"',
+  '--head HEAD',
+  '${{ needs.spec-evidence.result }}',
+]) {
+  assert.ok(ci.includes(required), `ci.yml missing exact-SHA specification gate: ${required}`);
+}
+for (const required of [
+  "cron: '21 1 * * *'",
+  'pnpm run spec:verify -- --all --lane nightly',
+  'docker compose -f docker/docker-compose.yml up -d --build',
+  'nightly-specification-assurance',
+]) {
+  assert.ok(nightlyAssurance.includes(required), `nightly assurance workflow missing required contract: ${required}`);
+}
+for (const required of [
+  'workflow_dispatch:',
+  'pnpm run spec:verify -- --all --lane runtime',
+  'runtime-specification-assurance',
+]) {
+  assert.ok(runtimeAssurance.includes(required), `runtime assurance workflow missing required contract: ${required}`);
+}
 for (const required of [
   '[extend]',
   'useDefault = true',
@@ -108,6 +157,12 @@ for (const required of [
   'pnpm exec semantic-release',
   'RELEASE_PROVIDER: gitlab',
   '$GITLAB_TOKEN != null || $GL_TOKEN != null',
+  'spec-evidence:',
+  'pnpm run spec:validate',
+  'pnpm run spec:verify',
+  '--lane "$lane"',
+  '--base "$base"',
+  '--head HEAD',
 ]) {
   assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing provider-isolated release contract: ${required}`);
 }
@@ -142,6 +197,14 @@ const gitlabReleaseConfig = buildReleaseConfig({
   CI_REPOSITORY_URL: 'https://gitlab-ci-token:example@gitlab.example.com/group/project.git',
 });
 const configuredReleasePlugins = new Set([...pluginNames(githubReleaseConfig), ...pluginNames(gitlabReleaseConfig)]);
+assert.ok(
+  !configuredReleasePlugins.has('@semantic-release/git'),
+  'semantic-release must not create an unverified release commit',
+);
+assert.ok(
+  !configuredReleasePlugins.has('@semantic-release/changelog'),
+  'semantic-release must not modify source after CI verification',
+);
 assert.deepEqual(
   releaseNoteTypes.map(({ type }) => type),
   ['feat', 'fix', 'perf', 'revert', 'refactor', 'docs', 'build', 'ci', 'test', 'chore'],

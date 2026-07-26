@@ -1,0 +1,141 @@
+# Specification assurance
+
+The repository uses a specification-driven assurance graph so maintainers can
+review intent and evidence without treating thousands of implementation and test
+lines as the primary product specification. It raises confidence; it does not
+claim mathematical proof that the original requirement is correct or complete.
+
+## Sources of truth
+
+Each layer has one job:
+
+| Layer                    | Canonical source                                     | Owns                                                              |
+| ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------- |
+| Normative behavior       | `openspec/specs/<capability>/spec.md`                | stable `REQ-*` requirements, invariants, failures, examples       |
+| Discovery/change history | `openspec/changes/**`                                | proposals, counterexamples, design, verification policy, tasks    |
+| Evidence mapping         | `openspec/specs/<capability>/verification.yaml`      | risk, owners, profiles, files, commands, lanes                    |
+| Stakeholder examples     | `apps/e2e/acceptance/features/**/*.feature`          | declarative `@REQ-*` / `@SCN-*` Cucumber examples                 |
+| Domain and failure rules | owning project Vitest suites                         | algorithms, state transitions, boundaries, negative paths         |
+| Public API invariants    | OpenAPI, contract, property, and fuzz suites         | provider/consumer shape and generated-client compatibility        |
+| User journeys            | Playwright projects                                  | behavior in the real browser or full product stack                |
+| Runtime confidence       | component, security, mutation, and operations suites | infrastructure, adversarial, test-strength, and recovery evidence |
+
+The layers are complementary. Do not restate every Vitest assertion in Gherkin
+or hide stakeholder behavior inside low-level tests.
+
+```mermaid
+flowchart LR
+  discovery["Discovery and owner review"] --> spec["OpenSpec REQ identifiers"]
+  spec --> examples["Cucumber SCN examples"]
+  spec --> mapping["verification.yaml risk and evidence"]
+  mapping --> focused["PR and main evidence"]
+  mapping --> deep["Nightly and runtime evidence"]
+  examples --> focused
+  focused --> dossier["Exact-SHA evidence dossier"]
+  deep --> dossier
+  dossier --> release["CI summary and release provenance"]
+  incidents["Canaries, telemetry, incidents"] --> discovery
+```
+
+## Mechanical synchronization
+
+`pnpm run spec:validate` fails when:
+
+- an Nx project belongs to no capability;
+- a durable requirement lacks an evidence mapping;
+- a mapped requirement does not exist in its spec;
+- a required evidence kind, owner, file, Nx target, or root script is missing;
+- an evidence source does not explicitly name its `REQ-*` identifier;
+- a Cucumber feature or scenario lacks a valid mapping or stable tag;
+- a scenario ID is duplicated;
+- OpenSpec strict validation fails.
+
+`pnpm run spec:impact -- --base <rev> --head <rev>` maps changed specs,
+evidence files, and project roots to requirements. Changes to assurance
+infrastructure conservatively select every requirement.
+
+`pnpm run spec:verify` deduplicates the selected commands, executes one evidence
+lane, and writes JSON plus Markdown under `test-results/spec-evidence/`. Every
+dossier contains its source SHA and specification hash. A dry run is recorded as
+`planned`, never `ok`. A passing dossier is refused from a dirty worktree,
+because `HEAD` would not identify the source that actually executed.
+
+## Evidence lanes
+
+| Lane    | Invocation                                                            | Purpose                                                                      |
+| ------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| PR      | `pnpm run spec:verify -- --lane pr --base origin/main --head HEAD`    | impacted deterministic acceptance, unit/security, and tooling evidence       |
+| Main    | `pnpm run spec:verify -- --lane main --base <before-sha> --head HEAD` | impacted broader contracts and component evidence                            |
+| Nightly | `pnpm run spec:verify -- --all --lane nightly`                        | mutation, property, component, resilience, recovery, and operations evidence |
+| Runtime | `pnpm run spec:verify -- --all --lane runtime`                        | environment-bound fullstack Playwright journeys and canaries                 |
+
+GitHub and GitLab run impacted PR/main evidence. GitHub also owns scheduled
+nightly and manually dispatched runtime workflows. Required skips are failures;
+an unavailable runtime is reported as an environment boundary, not converted
+into a source-code pass.
+
+## Writing or changing behavior
+
+1. Start or update an OpenSpec change. Complete discovery with actors, positive
+   examples, negative/boundary cases, authorization, concurrency, failure,
+   observability, rollout, and rollback where applicable.
+2. Add or modify the durable `REQ-*` requirement. The ID is stable across
+   wording and implementation refactors.
+3. Select proportional profiles in `verification.yaml`. Critical/high risk
+   requires an independent verification owner; security and operations profiles
+   require their respective owners.
+4. Add declarative Gherkin only for stakeholder-significant examples. Put a
+   `@REQ-*` tag on the feature/rule scope and one unique `@SCN-*` tag on each
+   scenario.
+5. Keep pure rules and failure matrices in Vitest, public compatibility in
+   contract/property suites, and real journeys in Playwright.
+6. Run `spec:validate`, `spec:impact`, and the impacted lane before handoff.
+7. Treat a new production incident, escaped defect, or missed canary as
+   discovery input: update the requirement/example and add independent
+   regression evidence.
+
+## Cucumber contract
+
+The `acceptance-e2e` Nx project uses Cucumber.js with TypeScript, a new World
+instance per scenario, deterministic serial execution, and message, HTML, and
+JUnit reports. Run:
+
+```bash
+pnpm exec nx run acceptance-e2e:typecheck
+pnpm exec nx run acceptance-e2e:acceptance
+```
+
+Write declarative scenarios in product language. Step definitions may call
+public domain functions or system boundaries, but feature files should not name
+buttons, CSS selectors, implementation classes, or internal method sequences
+unless that interface is itself the requirement. Shared product logic never
+belongs in the acceptance project.
+
+Generate another owned acceptance project only when a product truly needs a
+separate boundary:
+
+```bash
+pnpm nrb add app payments-acceptance-e2e \
+  --kind e2e \
+  --renderer cucumber \
+  --dry-run
+```
+
+Apply the same command without `--dry-run`, then replace the generated example
+IDs and evidence mapping with product-owned requirements.
+
+## What this cannot prove
+
+No collection of tests can establish that humans asked for the right product or
+enumerated every unknown scenario. This repository reduces that risk through:
+
+- explicit owner discovery and unresolved-question gates;
+- independently owned evidence for high-risk behavior;
+- counterexamples, boundary, authorization, concurrency, and failure review;
+- property and mutation testing to challenge examples and assertions;
+- runtime canaries, observability, exploratory review, and incident feedback;
+- exact-SHA evidence so a good test result cannot authorize different code.
+
+Confidence is therefore evidence-bounded: a green PR proves the declared PR
+lane for that revision, while production readiness additionally needs the
+required nightly/runtime evidence and operational approval.

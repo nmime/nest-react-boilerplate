@@ -1,0 +1,14 @@
+{
+  "name": "acceptance-e2e",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "13.2.0",
+    "@types/node": "24.13.3",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3"
+  }
+}

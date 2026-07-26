@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+// Renderer-domain evidence for REQ-FRONTEND-JOURNEY-001.
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {

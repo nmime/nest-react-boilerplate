@@ -1,0 +1,46 @@
+version: 1
+capability: runtime-operations
+owners:
+  product: runtime-maintainers
+  verification: reliability-engineering
+  operations: platform-operations
+projects:
+  - '@app/backend-common-analytics'
+  - '@app/backend-common-component-test'
+  - '@app/backend-common-health'
+  - '@app/backend-common-i18n'
+  - '@app/backend-common-logger'
+  - '@app/backend-common-nats'
+  - '@app/backend-common-network'
+  - '@app/backend-common-otel'
+  - '@app/backend-common-redis'
+  - '@app/backend-common-s3'
+  - '@app/backend-common-static'
+  - '@app/backend-postgres-main'
+  - '@app/common-config'
+  - '@app/common-websocket'
+requirements:
+  - id: REQ-RUNTIME-HEALTH-001
+    risk: high
+    profiles: [domain, operations]
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/health/lib/src/health.service.spec.ts
+        target: '@app/backend-common-health:test'
+        lanes: [pr, main]
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:observability
+        lanes: [nightly]
+  - id: REQ-RUNTIME-RECOVERY-002
+    risk: critical
+    profiles: [async, persistence, operations]
+    evidence:
+      - kind: component
+        file: libs/backend/feature/auth/test/lib/src/auth-main.postgres.component-spec.ts
+        target: '@app/backend-feature-auth-test:component-test'
+        lanes: [main, nightly]
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes: [nightly]

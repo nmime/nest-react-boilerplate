@@ -1,4 +1,6 @@
 /**
+ * Planner evidence for REQ-SCAFFOLD-SELECTION-002.
+ *
  * Tests for the deterministic operation planner and state management.
  *
  * UNIT: isolated function tests

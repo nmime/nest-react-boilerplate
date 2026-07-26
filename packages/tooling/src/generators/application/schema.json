@@ -15,14 +15,14 @@
     "kind": {
       "type": "string",
       "description": "Application kind",
-      "enum": ["frontend", "backend"],
+      "enum": ["frontend", "backend", "e2e"],
       "x-prompt": "What kind of application?",
       "x-priority": "important"
     },
     "renderer": {
       "type": "string",
-      "description": "Runtime template. Frontend: vite, astro, vike, expo. Backend: nest-api, consumer, scheduler.",
-      "enum": ["vite", "astro", "vike", "expo", "nest-api", "consumer", "scheduler"],
+      "description": "Runtime template. Frontend: vite, astro, vike, expo. Backend: nest-api, consumer, scheduler. E2E: cucumber.",
+      "enum": ["vite", "astro", "vike", "expo", "nest-api", "consumer", "scheduler", "cucumber"],
       "x-priority": "important"
     },
     "port": {

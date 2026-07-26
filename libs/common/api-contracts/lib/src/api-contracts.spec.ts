@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+// Provider contract evidence for REQ-API-PROBLEM-001 and REQ-API-COMPAT-002.
 
 import type { ApiEnvelope, AuthSessionContract } from './index';
 

@@ -17,6 +17,8 @@ pnpm --filter @repo/tooling tooling ui registry add --source magicui ripple --vi
 pnpm --filter @repo/tooling tooling tooling static-check
 pnpm --filter @repo/tooling tooling project dependency-map --json
 pnpm --filter @repo/tooling tooling db migrations rollback-check
+pnpm --filter @repo/tooling tooling spec validate
+pnpm --filter @repo/tooling tooling spec verify --lane pr --base origin/main --head HEAD
 pnpm run bun:check
 ```
 
@@ -37,6 +39,8 @@ TS-first command implementations live under `packages/tooling/src/commands` grou
   any later licence, dependency, source, integration, and test decision.
 - `testing/` Storybook, browser e2e coverage, and visual regression helpers.
 - `qa/` local QA presets for OpenAPI lint/fuzz, consumer contracts, accessibility, browser matrix, performance, security SAST/secret scanning/DAST, mutation, and property checks.
+- `spec/` OpenSpec validation, complete trace generation, revision impact
+  calculation, lane-aware evidence execution, and dossier rendering.
 
 Do not add root-level `tools/` wrappers. New local commands should be routed through `repo-tooling`.
 

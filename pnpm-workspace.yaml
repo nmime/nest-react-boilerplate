@@ -239,6 +239,7 @@ minimumReleaseAgeExclude:
   - grammy@1.44.0
 
 allowBuilds:
+  '@fission-ai/openspec': false
   '@nestjs/core': true
   '@parcel/watcher': true
   '@prisma/client': true

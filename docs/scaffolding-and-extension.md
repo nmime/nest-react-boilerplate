@@ -105,6 +105,7 @@ core reference surface, not a mandatory baseline:
 | Reference      | `site-app`                                                    | Vike SSR site surface                              |
 | Reference      | `mobile-app`                                                  | Expo/React Native client                           |
 | Reference      | `fullstack-e2e`                                               | Cross-application contract and browser proof       |
+| Reference      | `acceptance-e2e`                                              | Cucumber executable stakeholder specifications     |
 | Selectable     | PostgreSQL, Redis, OTEL, Swagger                              | Persistence, cache, observability, and API tooling |
 | Selectable     | design tokens, i18n, and authz                                | Shared UI, locale, and authorization capabilities  |
 | Optional       | Discord and Telegram APIs                                     | Bot and social integrations                        |
@@ -203,6 +204,12 @@ pnpm nrb add app billing-scheduler \
   --kind backend \
   --renderer scheduler \
   --dry-run
+
+# Acceptance renderer: Cucumber.js
+pnpm nrb add app payments-acceptance-e2e \
+  --kind e2e \
+  --renderer cucumber \
+  --dry-run
 ```
 
 Run the same command without `--dry-run`, then:
@@ -216,8 +223,11 @@ pnpm exec nx run customer-portal:test
 pnpm exec nx run customer-portal:typecheck
 ```
 
-The generator creates the source root, Nx project configuration, package
-manifest, tests, and nearest `README.md`/`AGENTS.md`. It never requires copying
+The generator creates the source root, Nx project configuration, applicable
+package manifest, tests or executable examples, and nearest
+`README.md`/`AGENTS.md`. Cucumber projects include isolated typed World state,
+stable generated requirement/scenario tags, and `test`/`acceptance` targets;
+replace their example IDs with product-owned OpenSpec requirements. It never requires copying
 or moving another app.
 
 ### Application completion checklist

@@ -30,6 +30,7 @@
     "@types/istanbul-lib-coverage": "2.0.6",
     "@types/istanbul-lib-report": "3.0.3",
     "@types/istanbul-reports": "3.0.4",
+    "ajv": "8.20.0",
     "axe-core": "4.12.1",
     "fast-check": "4.9.0",
     "istanbul-lib-coverage": "3.2.2",
@@ -38,7 +39,8 @@
     "jiti": "2.7.0",
     "pg": "8.22.0",
     "sharp": "0.35.3",
-    "tsconfig-paths": "4.2.0"
+    "tsconfig-paths": "4.2.0",
+    "yaml": "2.9.0"
   },
   "generators": "./generators.json",
   "exports": {

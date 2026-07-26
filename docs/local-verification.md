@@ -51,9 +51,11 @@ Bun version in `.bun-version`:
 pnpm run bun:check
 ```
 
-This runs the Nx graph, representative Vite/Vike/Expo/Nest builds, selected
-unit and API end-to-end tests, and live Vike/Nest HTTP smokes under Bun. The
-canonical Node coverage and pnpm lockfile gates remain separate and mandatory.
+This runs the Nx graph, representative Vite/Vike/Nest builds, selected unit and
+API end-to-end tests, and live Vike/Nest HTTP smokes under Bun. Expo/Metro
+export is still part of the contract, but runs as an explicit Node child because
+that upstream toolchain is not supported under forced Bun. The canonical Node
+coverage and pnpm lockfile gates remain separate and mandatory.
 
 For documentation-only ops/QA/deployment changes, the focused parity slice is:
 

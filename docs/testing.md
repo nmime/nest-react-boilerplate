@@ -15,6 +15,16 @@ pnpm run typecheck
 pnpm run test
 ```
 
+Normative requirements, Cucumber acceptance examples, and independent evidence
+lanes are described in
+[Specification assurance](specification-assurance.md). Start with:
+
+```bash
+pnpm run spec:validate
+pnpm exec nx run acceptance-e2e:acceptance
+pnpm run spec:verify -- --lane pr --base origin/main --head HEAD
+```
+
 Run heavier suites intentionally: `test:component`, `test:e2e`, `test:storybook`, `test:visual`, `test:docker-smoke`, `test:fullstack`, and the nightly/manual presets (`api:openapi:fuzz`, `test:a11y`, `test:e2e:matrix`, `test:perf`, `test:security:dast`, `test:mutation`).
 
 ## Reliability

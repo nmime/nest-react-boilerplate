@@ -212,7 +212,13 @@ pnpm run check
 | Runtime code            | `pnpm run lint` · `pnpm run typecheck` · focused Nx/Vitest tests                            |
 | Security-sensitive work | `pnpm run test:security:secrets` plus targeted SAST/security checks                         |
 
-Testing spans unit and integration suites, Storybook interaction and visual checks, Playwright browser flows, Testcontainers-backed component tests, OpenAPI consumer/fuzz checks, property tests, and coverage thresholds. See [Testing](docs/testing.md), [Modern QA](docs/testing/modern-qa.md), and [Local Verification](docs/local-verification.md).
+Testing spans OpenSpec requirements, Cucumber acceptance examples, Vitest unit
+and integration suites, Storybook interaction and visual checks, Playwright
+browser flows, Testcontainers-backed component tests, OpenAPI consumer/fuzz
+checks, property and mutation tests, exact-SHA evidence dossiers, and coverage
+thresholds. See [Specification Assurance](docs/specification-assurance.md),
+[Testing](docs/testing.md), [Modern QA](docs/testing/modern-qa.md), and
+[Local Verification](docs/local-verification.md).
 
 ## Repository layout
 
@@ -220,7 +226,7 @@ Testing spans unit and integration suites, Storybook interaction and visual chec
 apps/
 ├── frontend/                 # Vite, Astro, Vike, and Expo deployables
 ├── backend/<scope>/          # NestJS APIs, consumers, and schedulers
-└── e2e/                      # Cross-application Playwright projects
+└── e2e/                      # Cucumber acceptance and cross-application Playwright projects
 
 libs/
 ├── frontend/                 # UI, runtime, API support, clients, and frontend features
@@ -228,6 +234,7 @@ libs/
 └── common/                   # Cross-runtime contracts, i18n, notifications, and problem details
 
 packages/tooling/             # NRB setup, generators, checks, and repository automation
+openspec/                     # Durable requirements, change records, and evidence mappings
 docs/                         # Architecture, workflows, testing, deployment, and runbooks
 deploy/                       # Single-server lifecycle automation
 docker/                       # Production Compose topology and supporting configuration

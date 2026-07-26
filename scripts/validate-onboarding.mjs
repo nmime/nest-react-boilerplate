@@ -40,8 +40,9 @@ for (const name of requiredDoctorChecks) {
 }
 
 const presetExpectations = {
-  minimal: ['auth-app-api', 'user-app-api'],
+  minimal: ['acceptance-e2e', 'auth-app-api', 'user-app-api'],
   web: [
+    'acceptance-e2e',
     'admin-app',
     'admin-app-api',
     'auth-app-api',
@@ -54,6 +55,7 @@ const presetExpectations = {
     'user-app-api',
   ],
   fullstack: [
+    'acceptance-e2e',
     'admin-app',
     'admin-app-api',
     'auth-app-api',
@@ -67,6 +69,7 @@ const presetExpectations = {
     'user-app-api',
   ],
   enterprise: [
+    'acceptance-e2e',
     'admin-app',
     'admin-app-api',
     'auth-app-api',
@@ -81,10 +84,11 @@ const presetExpectations = {
     'user-app',
     'user-app-api',
   ],
-  bots: ['auth-app-api', 'discord-app-api', 'telegram-bot-api', 'user-app', 'user-app-api'],
+  bots: ['acceptance-e2e', 'auth-app-api', 'discord-app-api', 'telegram-bot-api', 'user-app', 'user-app-api'],
 };
 
 const referenceApplications = [
+  'acceptance-e2e',
   'admin-app',
   'admin-app-api',
   'auth-app-api',
@@ -96,7 +100,12 @@ const referenceApplications = [
   'user-app-api',
 ];
 const optionalApplications = ['discord-app-api', 'notification-consumer', 'notification-scheduler', 'telegram-bot-api'];
-const nonDeployableApplications = new Set(['fullstack-e2e', 'notification-consumer', 'notification-scheduler']);
+const nonDeployableApplications = new Set([
+  'acceptance-e2e',
+  'fullstack-e2e',
+  'notification-consumer',
+  'notification-scheduler',
+]);
 
 function findApplicationProjects(directory) {
   const projects = [];

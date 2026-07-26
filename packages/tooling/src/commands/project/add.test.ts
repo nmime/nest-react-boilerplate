@@ -117,6 +117,24 @@ describe("runAddCommand", () => {
     assert.equal(capturedCg, "@repo/tooling:application");
   });
 
+  it("dispatches the Cucumber e2e renderer without a port", async () => {
+    let capturedArgs: string[] | undefined;
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    assert.equal(
+      await runAddCommand(
+        makeContext(["app", "acceptance-e2e", "--kind", "e2e", "--renderer", "cucumber"]),
+        runner,
+      ),
+      0,
+    );
+    assert.ok(capturedArgs?.includes("--kind=e2e"));
+    assert.ok(capturedArgs?.includes("--renderer=cucumber"));
+  });
+
   it("dispatches lib to @repo/tooling:library", async () => {
     let capturedCg: string | undefined;
     const runner: NxGeneratorFn = (args) => {
@@ -300,6 +318,33 @@ describe("runAddCommand", () => {
     assert.equal(
       await runAddCommand(
         makeContext(["app", "billing-worker", "--kind", "backend", "--renderer", "worker"]),
+        runner,
+      ),
+      1,
+    );
+  });
+
+  it("rejects unsupported e2e renderers and ports", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(
+        makeContext(["app", "acceptance-e2e", "--kind", "e2e", "--renderer", "vite"]),
+        runner,
+      ),
+      1,
+    );
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "app",
+          "acceptance-e2e",
+          "--kind",
+          "e2e",
+          "--renderer",
+          "cucumber",
+          "--port",
+          "4400",
+        ]),
         runner,
       ),
       1,

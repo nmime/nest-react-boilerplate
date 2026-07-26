@@ -36,6 +36,12 @@ These workflows keep repeatable agent procedures out of the always-loaded [AGENT
 | Diagnose CI                            | `$ci-triage`                  | first failing job, workflow, local equivalent        |
 | Audit a project                        | `$service-audit`              | config, source, contracts, tests, operations docs    |
 
+For behavior changes, inspect the owning
+`openspec/specs/<capability>/spec.md` and `verification.yaml` before editing.
+Update stable requirements and evidence in the same change, then run
+`pnpm run spec:validate` and the impacted evidence lane. See
+[Specification assurance](../specification-assurance.md).
+
 ## Error handling and exception workflows
 
 When adding or changing error handling in backend code:

@@ -1,4 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
+// Runtime journey evidence for REQ-AUTH-SESSION-002 and
+// REQ-FRONTEND-JOURNEY-001.
 import { sign } from '@tma.js/init-data-node';
 import { composeEnv, urls } from './compose';
 

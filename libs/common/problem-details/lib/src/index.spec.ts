@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+// Domain evidence for REQ-API-PROBLEM-001.
 import {
   getProblemTypeDefinition,
   isProblemPresentationDisplay,

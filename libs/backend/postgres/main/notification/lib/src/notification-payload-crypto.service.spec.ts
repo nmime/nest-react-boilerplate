@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+// Persistence-focused evidence for REQ-NOTIFY-LIFECYCLE-002.
 import { NotificationPayloadCryptoService } from './notification-payload-crypto.service';
 
 describe(NotificationPayloadCryptoService.name, () => {

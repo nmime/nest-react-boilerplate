@@ -15,6 +15,11 @@ import { runGitConventions } from './commands/git/conventions';
 import { runWebpCommand } from './commands/images/webp';
 import { runChangedFormatCheck, runStaticCheck } from './commands/tooling/static-check';
 import { runBunCompatibilityCommand } from './commands/tooling/bun-compat';
+import { runSpecImpact } from './commands/spec/impact';
+import { runSpecReport } from './commands/spec/report';
+import { runSpecTrace } from './commands/spec/trace';
+import { runSpecValidate } from './commands/spec/validate';
+import { runSpecVerify } from './commands/spec/verify';
 import { runShadcnAddCommand, runUiRegistryAddCommand, runUiRegistrySearchCommand } from './commands/ui/shadcn-add';
 import { run } from './runtime/process';
 
@@ -102,6 +107,29 @@ register('doctor', 'Shorthand for project:doctor — workspace health checks.', 
 register('add', 'Add an app, library, or feature to the workspace.', runAddFromContext, true);
 register('qa:mutation', 'Run Stryker mutation testing or write its dry-run report.', ({ argv, workspaceRoot }) =>
   runMutation({ argv, workspaceRoot }),
+);
+register(
+  'spec:validate',
+  'Strictly validate OpenSpec artifacts and repository evidence ownership.',
+  ({ argv, workspaceRoot }) => runSpecValidate({ argv, workspaceRoot }),
+);
+register('spec:trace', 'Build the requirement-to-project-and-test trace graph.', ({ argv, workspaceRoot }) =>
+  runSpecTrace({ argv, workspaceRoot }),
+);
+register(
+  'spec:impact',
+  'Resolve changed files to affected requirements and evidence commands.',
+  ({ argv, workspaceRoot }) => runSpecImpact({ argv, workspaceRoot }),
+);
+register(
+  'spec:verify',
+  'Run fresh evidence for affected or all requirements and write an assurance dossier.',
+  ({ argv, workspaceRoot }) => runSpecVerify({ argv, workspaceRoot }),
+);
+register(
+  'spec:report',
+  'Render a human-readable assurance dossier from its JSON evidence.',
+  ({ argv, workspaceRoot }) => runSpecReport({ argv, workspaceRoot }),
 );
 register(
   'tooling:bun-compat',

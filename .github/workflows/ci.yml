@@ -131,6 +131,64 @@ jobs:
           path: fast-check-summary.md
           if-no-files-found: ignore
 
+  spec-evidence:
+    name: Exact-SHA specification evidence
+    runs-on: ubuntu-22.04
+    needs: fast-check
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Nx computation cache
+        uses: ./.github/actions/nx-cache
+        with:
+          scope: spec-evidence
+
+      - name: Verify impacted requirements
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            lane=pr
+            base="origin/$BASE_REF"
+          else
+            lane=main
+            base="$BEFORE_SHA"
+            if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+              base="$(git rev-parse HEAD^)"
+            fi
+          fi
+          pnpm run spec:verify -- \
+            --lane "$lane" \
+            --base "$base" \
+            --head HEAD \
+            --report test-results/spec-evidence/ci.json
+
+      - name: Upload exact-SHA specification evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: exact-sha-specification-evidence
+          path: test-results/spec-evidence/**
+          if-no-files-found: error
+
   non-runtime-validation:
     name: Non-runtime validation gates
     runs-on: ubuntu-22.04
@@ -251,6 +309,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - fast-check
+      - spec-evidence
       - non-runtime-validation
     timeout-minutes: 60
 
@@ -626,6 +685,7 @@ jobs:
     needs:
       - helm-validation
       - fast-check
+      - spec-evidence
       - non-runtime-validation
       - bun-compat
       - quality
@@ -650,10 +710,12 @@ jobs:
             echo "| --- | --- |"
             echo "| Helm render validation | ${{ needs.helm-validation.result }} |"
             echo "| Fast PR gate (ci:pr) | ${{ needs.fast-check.result }} |"
+            echo "| Exact-SHA specification evidence | ${{ needs.spec-evidence.result }} |"
             echo "| Non-runtime validation gates | ${{ needs.non-runtime-validation.result }} |"
             echo "| Bun compatibility contract | ${{ needs.bun-compat.result }} |"
             echo "| Nx quality gates | ${{ needs.quality.result }} |"
             echo "| Static/browser e2e coverage | ${{ needs.e2e.result }} |"
+            echo "| Storybook interaction and visual regression | ${{ needs.visual-regression.result }} |"
             echo "| Docker smoke stack | ${{ needs.docker-smoke.result }} |"
             echo "| Native security gates | ${{ needs.security-native.result }} |"
             echo "| Runtime QA/ops gates | ${{ needs.ops-gates.result }} |"
@@ -667,3 +729,26 @@ jobs:
           name: ci-status-summary
           path: ci-status-summary.md
           if-no-files-found: error
+
+      - name: Enforce every required CI result
+        env:
+          REQUIRED_RESULTS: >-
+            ${{ needs.helm-validation.result }}
+            ${{ needs.fast-check.result }}
+            ${{ needs.spec-evidence.result }}
+            ${{ needs.non-runtime-validation.result }}
+            ${{ needs.bun-compat.result }}
+            ${{ needs.quality.result }}
+            ${{ needs.e2e.result }}
+            ${{ needs.visual-regression.result }}
+            ${{ needs.docker-smoke.result }}
+            ${{ needs.security-native.result }}
+            ${{ needs.ops-gates.result }}
+            ${{ needs.fullstack-e2e.result }}
+        run: |
+          for result in $REQUIRED_RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::A required CI job finished with result: $result"
+              exit 1
+            fi
+          done

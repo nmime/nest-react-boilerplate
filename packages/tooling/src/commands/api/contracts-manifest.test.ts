@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+// Tooling evidence for REQ-API-COMPAT-002.
 import { existsSync } from "node:fs";
 import { relative } from "node:path";
 import { describe, it } from "node:test";

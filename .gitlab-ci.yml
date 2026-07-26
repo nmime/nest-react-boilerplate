@@ -71,11 +71,48 @@ fast-check:
       else
         pnpm run git:conventions -- --branch "$CI_COMMIT_BRANCH" --range "$CI_COMMIT_BEFORE_SHA..HEAD"
       fi
+    - pnpm run spec:validate
     - pnpm exec nx run-many -t lint --all
     - pnpm exec nx run-many -t typecheck --all
     - pnpm format:check
     - pnpm test
   timeout: 30m
+
+spec-evidence:
+  stage: test
+  image: node:24.18.0-alpine
+  needs:
+    - fast-check
+  variables:
+    GIT_DEPTH: '0'
+  before_script:
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - |
+      if [ -n "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-}" ]; then
+        git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+        lane=pr
+        base="origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+      else
+        lane=main
+        base="$CI_COMMIT_BEFORE_SHA"
+        if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+          base="$(git rev-parse HEAD^)"
+        fi
+      fi
+      pnpm run spec:verify -- \
+        --lane "$lane" \
+        --base "$base" \
+        --head HEAD \
+        --report test-results/spec-evidence/gitlab.json
+  artifacts:
+    when: always
+    paths:
+      - test-results/spec-evidence/
+    expire_in: 14 days
+  timeout: 45m
 
 full-check:
   stage: test

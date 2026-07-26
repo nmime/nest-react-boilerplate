@@ -1,4 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
+// Persistence evidence for REQ-AUTH-SESSION-002 and component recovery
+// evidence for REQ-RUNTIME-RECOVERY-002.
 import { Migrator } from '@mikro-orm/migrations';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test, type TestingModule } from '@nestjs/testing';

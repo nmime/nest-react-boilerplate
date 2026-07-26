@@ -1,0 +1,67 @@
+{
+  "name": "acceptance-e2e",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/e2e/acceptance/src",
+  "projectType": "application",
+  "tags": ["platform:e2e", "type:e2e", "scope:acceptance"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "tsc --noEmit -p apps/e2e/acceptance/tsconfig.json"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["typescript"]
+        }
+      ]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "tsc --noEmit -p apps/e2e/acceptance/tsconfig.json"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["typescript"]
+        }
+      ]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config apps/e2e/acceptance/cucumber.config.ts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["@cucumber/cucumber"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/test-results/cucumber", "{workspaceRoot}/cucumber-report"]
+    },
+    "acceptance": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config apps/e2e/acceptance/cucumber.config.ts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["@cucumber/cucumber"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/test-results/cucumber", "{workspaceRoot}/cucumber-report"]
+    }
+  }
+}

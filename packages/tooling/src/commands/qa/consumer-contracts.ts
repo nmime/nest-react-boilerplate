@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Consumer contract evidence for REQ-API-COMPAT-002.
 import { findOperation, loadConsumerContracts, loadOpenApiContracts, parseArgs, validateSchema, writeJson } from "./runtime-utils.ts";
 import type { LoadedOpenApiContract, OpenApiDocument, OpenApiSecurityRequirement } from "./runtime-utils.ts";
 const args = parseArgs();

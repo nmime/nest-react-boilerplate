@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+// Domain evidence for REQ-NOTIFY-LIFECYCLE-002.
 import { NotificationApplicationService } from './notification-application.service';
 
 describe(NotificationApplicationService.name, () => {

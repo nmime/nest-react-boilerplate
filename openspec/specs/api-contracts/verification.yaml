@@ -1,0 +1,59 @@
+version: 1
+capability: api-contracts
+owners:
+  product: api-maintainers
+  verification: consumer-contract-maintainers
+projects:
+  - '@app/backend-common-request-context'
+  - '@app/backend-common-validation'
+  - '@app/backend-common-bootstrap'
+  - '@app/backend-common-exception'
+  - '@app/backend-common-response'
+  - '@app/backend-common-swagger'
+  - '@app/common-api-contracts'
+  - '@app/common-problem-details'
+  - '@app/frontend-api-client'
+  - '@app/frontend-api-support'
+requirements:
+  - id: REQ-API-PROBLEM-001
+    risk: high
+    profiles: [acceptance, api, domain]
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/api-problems.feature
+        scenario: SCN-API-PROBLEM-01
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/api-problems.feature
+        scenario: SCN-API-PROBLEM-02
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/common/api-contracts/lib/src/api-contracts.spec.ts
+        target: '@app/common-api-contracts:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/common/problem-details/lib/src/index.spec.ts
+        target: '@app/common-problem-details:test'
+        lanes: [pr, main]
+  - id: REQ-API-COMPAT-002
+    risk: high
+    profiles: [api, tooling]
+    evidence:
+      - kind: contract
+        file: packages/tooling/src/commands/qa/consumer-contracts.ts
+        script: api:contracts:consumer
+        lanes: [main, nightly]
+      - kind: static
+        file: packages/tooling/src/commands/api/contracts-manifest.test.ts
+        target: '@repo/tooling:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: packages/tooling/src/commands/api/contracts-manifest.test.ts
+        target: '@repo/tooling:test'
+        lanes: [pr, main]
+      - kind: property
+        file: packages/tooling/src/commands/qa/property.ts
+        script: test:property
+        lanes: [main, nightly]

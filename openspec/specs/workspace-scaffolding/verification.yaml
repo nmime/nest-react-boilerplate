@@ -1,0 +1,42 @@
+version: 1
+capability: workspace-scaffolding
+owners:
+  product: tooling-maintainers
+  verification: generated-code-maintainers
+projects:
+  - '@repo/tooling'
+  - acceptance-e2e
+  - '@app/backend'
+  - '@app/frontend'
+requirements:
+  - id: REQ-SCAFFOLD-OWNERSHIP-001
+    risk: high
+    profiles: [tooling, domain, documentation]
+    evidence:
+      - kind: static
+        file: packages/tooling/src/generators/application/generator.ts
+        target: '@repo/tooling:static-check'
+        lanes: [pr, main]
+      - kind: vitest
+        file: packages/tooling/src/generators/application/generator.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes: [pr, main]
+      - kind: documentation
+        file: openspec/specs/workspace-scaffolding/spec.md
+        lanes: [pr, main]
+  - id: REQ-SCAFFOLD-SELECTION-002
+    risk: high
+    profiles: [tooling, domain]
+    evidence:
+      - kind: static
+        file: packages/tooling/src/setup/catalog.ts
+        target: '@repo/tooling:static-check'
+        lanes: [pr, main]
+      - kind: vitest
+        file: packages/tooling/src/setup/planner.test.ts
+        target: '@repo/tooling:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: packages/tooling/src/setup/apply.component.test.ts
+        target: '@repo/tooling:test'
+        lanes: [main]

@@ -10,15 +10,17 @@ import { applicationGenerator } from './generator.js';
 const workspaceRoot = process.cwd();
 const frontendNames = ['nrb-canary-vite', 'nrb-canary-astro', 'nrb-canary-vike', 'nrb-canary-expo'] as const;
 const backendNames = ['nrb-canary-api', 'nrb-canary-consumer', 'nrb-canary-scheduler'] as const;
+const e2eNames = ['nrb-canary-acceptance-e2e'] as const;
 const libraryProjects = [
   '@app/backend-nrb-canary-backend-lib',
   '@app/frontend-nrb-canary-frontend-lib',
   '@app/common-nrb-canary-common-lib',
 ] as const;
-const projectNames = [...frontendNames, ...backendNames, ...libraryProjects];
+const projectNames = [...frontendNames, ...backendNames, ...e2eNames, ...libraryProjects];
 const generatedRoots = [
   ...frontendNames.map((name) => `apps/frontend/${name}`),
   ...backendNames.map((name) => `apps/backend/nrb/${name}`),
+  'apps/e2e/nrb-canary-acceptance',
   'libs/backend/common/nrb-canary-backend-lib',
   'libs/frontend/nrb-canary-frontend-lib',
   'libs/common/nrb-canary-common-lib',
@@ -195,6 +197,12 @@ void test(
       name: 'nrb-canary-scheduler',
       kind: 'backend',
       renderer: 'scheduler',
+      skipFormat: true,
+    });
+    await applicationGenerator(tree, {
+      name: 'nrb-canary-acceptance-e2e',
+      kind: 'e2e',
+      renderer: 'cucumber',
       skipFormat: true,
     });
     await libraryGenerator(tree, {

@@ -1,22 +1,32 @@
 name: Release
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
 permissions:
   contents: write
   issues: write
   pull-requests: write
-concurrency: release
+  actions: read
+concurrency:
+  group: release-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    # Only the canonical repository releases. Forks/adopters opt in by setting the
-    # `RELEASE_REPOSITORY` Actions variable to their own `owner/repo`; unset keeps
-    # the upstream default so this repo's CD is unaffected.
-    if: ${{ github.repository == (vars.RELEASE_REPOSITORY || 'nmime/nest-react-boilerplate') }}
+    # Only the configured canonical repository releases. The workflow still
+    # requires the exact successful main CI commit below.
+    if: >-
+      github.repository == (vars.RELEASE_REPOSITORY || 'nmime/nest-react-boilerplate') &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
         with: { version: 11.15.1 }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
@@ -24,11 +34,19 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Verify the release commit is the successful CI commit and current main
+        env:
+          VERIFIED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$VERIFIED_SHA"
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "$VERIFIED_SHA"
       - run: pnpm exec semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_PROVIDER: github
-      # semantic-release tags the reviewed main commit. GitHub's token-recursion
+      # semantic-release tags the exact reviewed main commit that passed CI.
+      # GitHub's token-recursion
       # rule still suppresses the `push: tags: v*` release-images trigger, so
       # dispatch it explicitly on the new tag with a PAT so images build,
       # scan, and sign automatically. Requires a repo secret RELEASE_DISPATCH_PAT
@@ -42,13 +60,14 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_PAT }}
+          VERIFIED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
             echo "::warning::RELEASE_DISPATCH_PAT not set — skipping automatic release-images build. Build manually: gh workflow run release-images.yml --ref <tag> -f force_full=true"
             exit 0
           fi
           git fetch origin --tags --quiet
-          NEW_TAG=$(git tag --points-at HEAD --sort=-v:refname | head -1)
+          NEW_TAG=$(git tag --points-at "$VERIFIED_SHA" --sort=-v:refname | head -1)
           if [ -z "$NEW_TAG" ]; then
             echo "No new release tag on HEAD; nothing to build."
             exit 0

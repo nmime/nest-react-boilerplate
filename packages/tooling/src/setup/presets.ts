@@ -42,7 +42,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
   {
     id: 'minimal',
     description: 'Single API with auth — minimal backend footprint',
-    apps: ['auth-app-api', 'user-app-api'],
+    apps: ['acceptance-e2e', 'auth-app-api', 'user-app-api'],
     capabilities: ['postgres'],
   },
 
@@ -55,6 +55,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
     apps: [
       'admin-app',
       'admin-app-api',
+      'acceptance-e2e',
       'user-app',
       'user-app-api',
       'auth-app-api',
@@ -75,6 +76,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
     apps: [
       'admin-app',
       'admin-app-api',
+      'acceptance-e2e',
       'user-app',
       'user-app-api',
       'auth-app-api',
@@ -96,6 +98,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
     apps: [
       'admin-app',
       'admin-app-api',
+      'acceptance-e2e',
       'user-app',
       'user-app-api',
       'auth-app-api',
@@ -134,7 +137,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
   {
     id: 'bots',
     description: 'Telegram + Discord bots — bot-first setup',
-    apps: ['auth-app-api', 'user-app-api', 'telegram-bot-api', 'discord-app-api'],
+    apps: ['acceptance-e2e', 'auth-app-api', 'user-app-api', 'telegram-bot-api', 'discord-app-api'],
     capabilities: ['postgres', 'redis', 'telegram-bot', 'discord-bot', 'otel'],
   },
 ] as const;

@@ -1,16 +1,27 @@
 import { existsSync } from "node:fs";
+// Mutation evidence for REQ-ASSURANCE-TRACE-001.
 import { resolve } from "node:path";
 import { parseArgs } from "../../runtime/args";
 import { writeJson } from "../../runtime/files";
-import { commandExists, run } from "../../runtime/process";
+import {
+  commandExists,
+  run,
+  type RunOptions,
+  type RunResult,
+} from "../../runtime/process";
 
 export interface MutationOptions {
   argv?: string[];
   workspaceRoot?: string;
+  runtime?: {
+    commandExists(program: string): boolean;
+    run(program: string, args: string[], options: RunOptions): RunResult;
+  };
 }
 
 export function runMutation(options: MutationOptions = {}): number {
   const workspaceRoot = options.workspaceRoot ?? process.cwd();
+  const runtime = options.runtime ?? { commandExists, run };
   const args = parseArgs(options.argv ?? []);
   const config =
     args.options.get("config") ??
@@ -40,32 +51,9 @@ export function runMutation(options: MutationOptions = {}): number {
     return 0;
   }
 
-  if (!commandExists("pnpm")) {
+  if (!runtime.commandExists("pnpm")) {
     console.error("pnpm is required to run Stryker via pnpm dlx.");
     return 1;
-  }
-
-  if (
-    process.env.STRYKER_RUN !== "1" &&
-    process.env.MUTATION_REQUIRED !== "1"
-  ) {
-    const report = {
-      status: "skipped",
-      command: ["pnpm", ...command],
-      config,
-      reason:
-        "Mutation testing is intentionally opt-in for local quality presets; set STRYKER_RUN=1 to enforce thresholds.",
-    };
-    writeJson(reportAbsolutePath, report);
-    console.log(
-      JSON.stringify({
-        status: "skipped",
-        preset: "mutation",
-        reason: "Set STRYKER_RUN=1 to run Stryker mutation thresholds",
-        report: reportPath,
-      }),
-    );
-    return 0;
   }
 
   writeJson(reportAbsolutePath, {
@@ -73,7 +61,10 @@ export function runMutation(options: MutationOptions = {}): number {
     command: ["pnpm", ...command],
     config,
   });
-  const result = run("pnpm", command, { cwd: workspaceRoot, stdio: "inherit" });
+  const result = runtime.run("pnpm", command, {
+    cwd: workspaceRoot,
+    stdio: "inherit",
+  });
   writeJson(reportAbsolutePath, {
     status: result.status === 0 ? "ok" : "failed",
     command: ["pnpm", ...command],

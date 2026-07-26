@@ -106,8 +106,7 @@ WORKDIR /workspace/${BUILD_OUTPUT}
 # re-resolve silently discards overrides and can reintroduce fixed CVEs.
 COPY pnpm-workspace.yaml ./pnpm-workspace.yaml
 RUN pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
-  && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} + \
-  && test -d node_modules/.pnpm/find-my-way@9.7.0
+  && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} +
 
 FROM node:${NODE_VERSION} AS backend
 ENV CONTAINER=true \

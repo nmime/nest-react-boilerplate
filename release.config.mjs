@@ -61,18 +61,6 @@ export function buildReleaseConfig(environment = process.env) {
           },
         },
       ],
-      [
-        '@semantic-release/changelog',
-        {
-          changelogFile: 'CHANGELOG.md',
-        },
-      ],
-      [
-        '@semantic-release/git',
-        {
-          message: 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
-        },
-      ],
       providerPlugin,
     ],
   };

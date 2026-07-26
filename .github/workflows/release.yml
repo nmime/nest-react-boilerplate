@@ -28,16 +28,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_PROVIDER: github
-          # Adopters override the release identity with the RELEASE_GIT_AUTHOR_*
-          # Actions variables; unset keeps the upstream default.
-          GIT_AUTHOR_NAME: ${{ vars.RELEASE_GIT_AUTHOR_NAME || 'nmime' }}
-          GIT_AUTHOR_EMAIL: ${{ vars.RELEASE_GIT_AUTHOR_EMAIL || '66474195+nmime@users.noreply.github.com' }}
-          GIT_COMMITTER_NAME: ${{ vars.RELEASE_GIT_AUTHOR_NAME || 'nmime' }}
-          GIT_COMMITTER_EMAIL: ${{ vars.RELEASE_GIT_AUTHOR_EMAIL || '66474195+nmime@users.noreply.github.com' }}
-      # semantic-release tags its `chore(release) [skip ci]` commit and pushes
-      # with GITHUB_TOKEN, so the `push: tags: v*` trigger of release-images is
-      # suppressed (both by [skip ci] and by GitHub's token-recursion rule).
-      # Dispatch it explicitly on the new tag with a PAT so release images build,
+      # semantic-release tags the reviewed main commit. GitHub's token-recursion
+      # rule still suppresses the `push: tags: v*` release-images trigger, so
+      # dispatch it explicitly on the new tag with a PAT so images build,
       # scan, and sign automatically. Requires a repo secret RELEASE_DISPATCH_PAT
       # (classic: `repo` + `workflow`, or fine-grained: Actions:write +
       # Contents:read). Without it this is a no-op and images are built by manual

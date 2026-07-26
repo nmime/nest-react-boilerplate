@@ -138,7 +138,7 @@ image resolution.
 - **Frozen lockfile install**: exit 0
 - **Registry drift**: 12 package entries remain, represented by the 11 incompatible runtime/peer rows listed above
 - **Deduplication**: `better-auth` → 1 version (was 2), `drizzle-orm` → 1 version (was 2)
-- **Release plugins**: `@semantic-release/changelog` 7 and
-  `@semantic-release/git` 11 are native ESM. The repository already uses
-  `release.config.mjs`, Node 24.18.0, and semantic-release 25, satisfying their
-  migration and engine requirements without configuration changes.
+- **Release plugins**: provider publishing, commit analysis, and release-note
+  generation run through `release.config.mjs` on Node 24.18.0 and
+  semantic-release 25. Changelog/git mutation plugins are intentionally absent
+  so protected default branches receive only reviewed changes.

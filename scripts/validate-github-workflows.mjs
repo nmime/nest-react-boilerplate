@@ -63,20 +63,15 @@ assert.ok(
   'CI cache documentation must prohibit secret-bearing cache paths',
 );
 assert.ok(release.includes('RELEASE_PROVIDER: github'), 'release.yml must select only the GitHub release provider');
-// The release repository and identity are overridable via Actions variables so
-// forks/adopters can enable CD, but the upstream `nmime` default must be preserved
-// (unset variable => this repo keeps releasing exactly as before).
+// The release repository is overridable so forks/adopters can enable CD, but
+// the upstream `nmime` default must be preserved.
 assert.ok(
   release.includes("vars.RELEASE_REPOSITORY || 'nmime/nest-react-boilerplate'"),
   'release.yml must gate releases on RELEASE_REPOSITORY with the nmime default',
 );
 assert.ok(
-  release.includes("GIT_AUTHOR_NAME: ${{ vars.RELEASE_GIT_AUTHOR_NAME || 'nmime' }}"),
-  'release.yml must preserve the nmime release author default (overridable via RELEASE_GIT_AUTHOR_NAME)',
-);
-assert.ok(
-  release.includes("GIT_COMMITTER_NAME: ${{ vars.RELEASE_GIT_AUTHOR_NAME || 'nmime' }}"),
-  'release.yml must preserve the nmime release committer default (overridable via RELEASE_GIT_AUTHOR_NAME)',
+  !release.includes('GIT_AUTHOR_NAME:') && !release.includes('GIT_COMMITTER_NAME:'),
+  'release.yml must not configure an identity for forbidden protected-branch release commits',
 );
 for (const required of [
   '[extend]',
@@ -162,6 +157,18 @@ for (const plugin of configuredReleasePlugins) {
     `release.config.mjs plugin must be a direct dependency under pnpm: ${plugin}`,
   );
   await import(plugin);
+}
+for (const [provider, config] of [
+  ['GitHub', githubReleaseConfig],
+  ['GitLab', gitlabReleaseConfig],
+]) {
+  assert.deepEqual(
+    pluginNames(config).filter(
+      (plugin) => plugin === '@semantic-release/changelog' || plugin === '@semantic-release/git',
+    ),
+    [],
+    `${provider} releases must tag reviewed commits instead of pushing release commits to protected main`,
+  );
 }
 assert.deepEqual(
   pluginNames(githubReleaseConfig).filter(

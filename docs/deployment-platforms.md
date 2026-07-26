@@ -40,16 +40,17 @@ See [GITOPS.md](../GITOPS.md) for both controller setups.
 Actions sets `RELEASE_PROVIDER=github` and uses the repository `GITHUB_TOKEN`.
 GitLab CI sets `RELEASE_PROVIDER=gitlab` and runs the release job on the default
 branch only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a protected CI/CD
-variable. GitLab uses `CI_REPOSITORY_URL` so release commits and tags target the
-GitLab clone instead of this template's GitHub repository metadata.
+variable. GitLab uses `CI_REPOSITORY_URL` so release tags target the GitLab
+clone instead of this template's GitHub repository metadata.
 
 Both providers use the latest `vMAJOR.MINOR.PATCH` tag as the Semantic
 Versioning baseline. `fix`, `perf`, and `revert` commits increment patch;
 `feat` increments minor; and `!` or a `BREAKING CHANGE:` footer increments
 major. Other accepted commit types do not publish by themselves. Squashing or
 rewriting commit history never changes a release number unless the release tag
-itself is deliberately replaced. Release commits are attributed to the same
-`nmime` author and committer identity required for agent-produced commits.
+itself is deliberately replaced. Releases tag the already-reviewed default
+branch commit and publish generated notes through the selected provider; they
+never push an unreviewed changelog commit to a protected branch.
 
 Semantic-release groups Conventional Commits into stable sections for
 features, fixes, performance, reverts, refactors, documentation, build, CI,

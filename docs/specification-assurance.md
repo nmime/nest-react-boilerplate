@@ -9,16 +9,16 @@ claim mathematical proof that the original requirement is correct or complete.
 
 Each layer has one job:
 
-| Layer                    | Canonical source                                     | Owns                                                                |
-| ------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------- |
-| Normative behavior       | `openspec/specs/<capability>/spec.md`                | stable `REQ-*` requirements, invariants, failures, examples         |
-| Discovery/change history | `openspec/changes/**`                                | proposals, counterexamples, design, verification policy, tasks      |
-| Evidence mapping         | `openspec/specs/<capability>/verification.yaml`      | requirement-level projects, risk, owners, profiles, commands, lanes |
-| Stakeholder examples     | `apps/e2e/acceptance/features/**/*.feature`          | declarative `@REQ-*` / `@SCN-*` Cucumber examples                   |
-| Domain and failure rules | owning project Vitest suites                         | algorithms, state transitions, boundaries, negative paths           |
-| Public API invariants    | OpenAPI, contract, property, and fuzz suites         | provider/consumer shape and generated-client compatibility          |
-| User journeys            | Playwright projects                                  | behavior in the real browser or full product stack                  |
-| Runtime confidence       | component, security, mutation, and operations suites | infrastructure, adversarial, test-strength, and recovery evidence   |
+| Layer                    | Canonical source                                     | Owns                                                              |
+| ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------- |
+| Normative behavior       | `openspec/specs/<capability>/spec.md`                | stable `REQ-*` requirements, invariants, failures, examples       |
+| Discovery/change history | `openspec/changes/**`                                | proposals, counterexamples, design, verification policy, tasks    |
+| Evidence mapping         | `openspec/specs/<capability>/verification.yaml`      | requirement-level projects, risk, Cucumber disposition, evidence  |
+| Stakeholder examples     | `apps/e2e/acceptance/features/**/*.feature`          | declarative `@REQ-*` / `@SCN-*` Cucumber examples                 |
+| Domain and failure rules | owning project Vitest suites                         | algorithms, state transitions, boundaries, negative paths         |
+| Public API invariants    | OpenAPI, contract, property, and fuzz suites         | provider/consumer shape and generated-client compatibility        |
+| User journeys            | Playwright projects                                  | behavior in the real browser or full product stack                |
+| Runtime confidence       | component, security, mutation, and operations suites | infrastructure, adversarial, test-strength, and recovery evidence |
 
 The layers are complementary. Do not restate every Vitest assertion in Gherkin
 or hide stakeholder behavior inside low-level tests.
@@ -51,19 +51,26 @@ flowchart LR
   project;
 - a required evidence kind, owner, file, Nx target, or root script is missing;
 - an evidence source does not explicitly name its `REQ-*` identifier;
+- a requirement lacks a Cucumber disposition, or its disposition contradicts
+  its profile and mapped evidence;
+- a Cucumber `not-applicable` reason is empty, generic, duplicated, or names an
+  alternative evidence kind absent from the requirement;
 - a Cucumber feature or scenario lacks a valid mapping or stable tag;
 - a scenario ID is duplicated;
 - OpenSpec strict validation fails.
 
 The trace report separates total and traced executable tests, Nx projects,
 durable requirements, Cucumber features/scenarios, and selected high-signal
-evidence. This prevents a small evidence manifest from being presented as
-complete repository test coverage.
+evidence. It also reports total dispositions, acceptance requirements,
+not-applicable requirements, and their alternative evidence kinds. This
+prevents either a small evidence manifest or an unexplained absence of Gherkin
+from being presented as complete repository coverage.
 
-Version 2 sidecars place ownership on each requirement:
+Version 3 sidecars place ownership and exactly one Cucumber disposition on each
+requirement:
 
 ```yaml
-version: 2
+version: 3
 capability: authentication-access
 owners:
   product: identity-maintainers
@@ -75,12 +82,23 @@ requirements:
       - '@app/backend-feature-auth-main'
     risk: critical
     profiles: [domain, persistence, security, journey]
+    cucumber:
+      disposition: not-applicable
+      reason: Session enforcement is proven at the guard, persistence, and browser boundaries.
+      alternativeEvidence: [vitest, component, playwright]
     evidence:
       - kind: vitest
         file: libs/backend/feature/auth/main/lib/src/interfaces/http/persistent-session-access.guard.spec.ts
         target: '@app/backend-feature-auth-main:test'
         lanes: [pr, main]
 ```
+
+Use `disposition: acceptance` only with the `acceptance` profile and mapped
+`kind: cucumber` scenario evidence. Use `disposition: not-applicable` only
+without an acceptance profile or Cucumber evidence; its reason must explain why
+another executable boundary is more faithful, and every named alternative kind
+must exist in the same requirement's evidence. Placeholder or copied
+rationales fail validation or review.
 
 Every executable `*.spec.*`, `*.test.*`, `*.e2e-spec.*`, or
 `*.component-spec.*` file under the repository-owned inventory roots has one
@@ -128,17 +146,22 @@ into a source-code pass.
    where applicable.
 2. Add or modify the durable `REQ-*` requirement. The ID is stable across
    wording and implementation refactors.
-3. Select proportional profiles in `verification.yaml`. Critical/high risk
-   requires an independent verification owner; security and operations profiles
-   require their respective owners.
-4. Add declarative Gherkin only for stakeholder-significant examples. Put a
-   `@REQ-*` tag on the feature/rule scope and one unique `@SCN-*` tag on each
-   scenario.
+3. Select proportional profiles in the version 3 `verification.yaml`.
+   Critical/high risk requires an independent verification owner; security and
+   operations profiles require their respective owners.
+4. Classify every requirement. Select Cucumber `acceptance` and add declarative
+   Gherkin for stakeholder-significant examples, with a `@REQ-*` tag on the
+   feature/rule scope and one unique `@SCN-*` tag per scenario. Otherwise
+   select `not-applicable`, record a requirement-specific reason, and name the
+   mapped alternative evidence kinds.
 5. Keep pure rules and failure matrices in Vitest, public compatibility in
-   contract/property suites, and real journeys in Playwright.
+   contract/property suites, and real journeys in Playwright. These layers are
+   alternatives to Gherkin only when the requirement sidecar says so
+   explicitly.
 6. Implement approved artifacts through `$implement-specified-change`. Give
    every new executable test its requirement marker and update
-   requirement-level project ownership and evidence in the same revision.
+   requirement-level project ownership, disposition, and evidence in the same
+   revision.
 7. Run `spec:validate`, `spec:impact`, and the impacted lane before handoff.
    Use `$review-specification-assurance` for independent completeness,
    evidence-quality, and exact-revision review.
@@ -161,6 +184,12 @@ The generic `test` target is safe inside repository-wide Nx test and coverage
 commands: it does not forward Vitest-only flags to Cucumber, but it still runs
 all scenarios and emits message, HTML, and JUnit execution evidence. Use the
 explicit `acceptance` target when passing Cucumber-owned filters or profiles.
+
+Cucumber evidence is never optional for a requirement whose disposition is
+`acceptance`. Conversely, a `not-applicable` requirement cannot retain an
+acceptance profile or Cucumber evidence. This makes omission explicit without
+turning every unit, contract, property, component, or browser assertion into
+Gherkin.
 
 Write declarative scenarios in product language. Step definitions may call
 public domain functions or system boundaries, but feature files should not name

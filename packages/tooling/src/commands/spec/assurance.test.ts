@@ -11,7 +11,11 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, test } from 'node:test';
-import { loadAssuranceModel, verifyRequirements } from './assurance';
+import {
+  createTraceReport,
+  loadAssuranceModel,
+  verifyRequirements,
+} from './assurance';
 const workspaces: string[] = [];
 
 afterEach(() => {
@@ -66,7 +70,7 @@ function fixtureWorkspace(): string {
   );
   writeFileSync(
     join(workspace, 'openspec/specs/fixture/verification.yaml'),
-    `version: 2
+    `version: 3
 capability: fixture
 owners:
   product: product
@@ -76,6 +80,8 @@ requirements:
     projects: [fixture]
     risk: high
     profiles: [acceptance, tooling]
+    cucumber:
+      disposition: acceptance
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/fixture.feature
@@ -93,6 +99,67 @@ requirements:
 `,
   );
   return workspace;
+}
+
+function verificationFile(workspace: string): string {
+  return join(workspace, 'openspec/specs/fixture/verification.yaml');
+}
+
+function writeNotApplicableFixture(
+  workspace: string,
+  options: {
+    reason?: string;
+    alternatives?: string[];
+    profiles?: string[];
+    includeCucumberEvidence?: boolean;
+  } = {},
+): void {
+  const {
+    reason = 'Tooling behavior is verified more precisely through focused executable checks.',
+    alternatives = ['vitest'],
+    profiles = ['tooling'],
+    includeCucumberEvidence = false,
+  } = options;
+  if (!includeCucumberEvidence) {
+    rmSync(join(workspace, 'apps/e2e/acceptance/features/fixture.feature'), {
+      force: true,
+    });
+  }
+  const cucumberEvidence = includeCucumberEvidence
+    ? `      - kind: cucumber
+        file: apps/e2e/acceptance/features/fixture.feature
+        scenario: SCN-FIXTURE-RULE-01
+        target: fixture:test
+        lanes: [pr, main]
+`
+    : '';
+  writeFileSync(
+    verificationFile(workspace),
+    `version: 3
+capability: fixture
+owners:
+  product: product
+  verification: verification
+requirements:
+  - id: REQ-FIXTURE-RULE-001
+    projects: [fixture]
+    risk: high
+    profiles: [${profiles.join(', ')}]
+    cucumber:
+      disposition: not-applicable
+      reason: ${reason}
+      alternativeEvidence: [${alternatives.join(', ')}]
+    evidence:
+${cucumberEvidence}      - kind: static
+        file: apps/fixture/evidence.test.ts
+        target: fixture:static-check
+        lanes: [nightly]
+      - kind: vitest
+        file: apps/fixture/evidence.test.ts
+        target: fixture:test
+        lanes: [pr, main]
+`,
+  );
 }
 
 test('builds a complete trace and selects only the requested evidence lane', () => {
@@ -119,8 +186,273 @@ test('builds a complete trace and selects only the requested evidence lane', () 
   assert.equal(pr.trace.totals.tracedBehaviorTests, 1);
   assert.equal(pr.trace.totals.features, 1);
   assert.equal(pr.trace.totals.scenarios, 1);
+  assert.equal(pr.trace.totals.requirementsWithCucumberDisposition, 1);
+  assert.equal(pr.trace.totals.acceptanceRequirements, 1);
+  assert.equal(pr.trace.totals.cucumberNotApplicableRequirements, 0);
+  assert.deepEqual(pr.trace.cucumberAlternativeEvidenceByKind, {});
+  assert.deepEqual(pr.trace.requirements[0]?.cucumber, {
+    disposition: 'acceptance',
+  });
   assert.deepEqual(pr.runs.map(({ key }) => key), ['fixture:test']);
   assert.deepEqual(nightly.runs.map(({ key }) => key), ['fixture:static-check']);
+});
+
+test('accepts a justified not-applicable disposition backed by mapped alternative evidence', () => {
+  const workspace = fixtureWorkspace();
+  writeNotApplicableFixture(workspace);
+
+  const model = loadAssuranceModel(workspace);
+  const report = verifyRequirements({
+    model,
+    requirementIds: ['REQ-FIXTURE-RULE-001'],
+    dryRun: true,
+    lane: 'pr',
+  });
+
+  assert.deepEqual(model.errors, []);
+  assert.equal(report.trace.totals.requirementsWithCucumberDisposition, 1);
+  assert.equal(report.trace.totals.acceptanceRequirements, 0);
+  assert.equal(report.trace.totals.cucumberNotApplicableRequirements, 1);
+  assert.deepEqual(report.trace.cucumberAlternativeEvidenceByKind, {
+    vitest: 1,
+  });
+});
+
+test('rejects a requirement without an explicit Cucumber disposition', () => {
+  const workspace = fixtureWorkspace();
+  const file = verificationFile(workspace);
+  writeFileSync(
+    file,
+    readFileSync(file, 'utf8').replace(
+      `    cucumber:
+      disposition: acceptance
+`,
+      '',
+    ),
+  );
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.some(
+      (error) =>
+        error.includes('verification.yaml') &&
+        error.includes("must have required property 'cucumber'"),
+    ),
+  );
+});
+
+test('rejects a version 2 sidecar after the breaking contract migration', () => {
+  const workspace = fixtureWorkspace();
+  const file = verificationFile(workspace);
+  writeFileSync(file, readFileSync(file, 'utf8').replace('version: 3', 'version: 2'));
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.some(
+      (error) =>
+        error.includes('verification.yaml/version') &&
+        error.includes('must be equal to constant'),
+    ),
+  );
+});
+
+test('rejects Cucumber acceptance without the acceptance profile', () => {
+  const workspace = fixtureWorkspace();
+  const file = verificationFile(workspace);
+  writeFileSync(
+    file,
+    readFileSync(file, 'utf8').replace(
+      'profiles: [acceptance, tooling]',
+      'profiles: [tooling]',
+    ),
+  );
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: Cucumber acceptance requires the acceptance profile',
+    ),
+  );
+});
+
+test('rejects Cucumber acceptance without mapped Cucumber evidence', () => {
+  const workspace = fixtureWorkspace();
+  const file = verificationFile(workspace);
+  const verification = readFileSync(file, 'utf8');
+  const withoutCucumberEvidence = verification.replace(
+    `      - kind: cucumber
+        file: apps/e2e/acceptance/features/fixture.feature
+        scenario: SCN-FIXTURE-RULE-01
+        target: fixture:test
+        lanes: [pr, main]
+`,
+    '',
+  );
+  writeFileSync(file, withoutCucumberEvidence);
+  rmSync(join(workspace, 'apps/e2e/acceptance/features/fixture.feature'), {
+    force: true,
+  });
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: profile acceptance requires cucumber evidence',
+    ),
+  );
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: Cucumber acceptance requires cucumber evidence',
+    ),
+  );
+});
+
+test('rejects not-applicable when acceptance profile and Cucumber evidence remain', () => {
+  const workspace = fixtureWorkspace();
+  writeNotApplicableFixture(workspace, {
+    profiles: ['acceptance', 'tooling'],
+    includeCucumberEvidence: true,
+  });
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: Cucumber not-applicable forbids the acceptance profile',
+    ),
+  );
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: Cucumber not-applicable forbids cucumber evidence',
+    ),
+  );
+});
+
+test('rejects a not-applicable alternative absent from requirement evidence', () => {
+  const workspace = fixtureWorkspace();
+  writeNotApplicableFixture(workspace, { alternatives: ['contract'] });
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: Cucumber alternative contract is not mapped by requirement evidence',
+    ),
+  );
+});
+
+test('rejects a not-applicable reason containing only whitespace', () => {
+  const workspace = fixtureWorkspace();
+  writeNotApplicableFixture(workspace, { reason: '"                    "' });
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: Cucumber not-applicable reason must contain at least 12 non-whitespace characters',
+    ),
+  );
+});
+
+test('rejects a placeholder not-applicable reason', () => {
+  const workspace = fixtureWorkspace();
+  writeNotApplicableFixture(workspace, { reason: 'Not applicable' });
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: Cucumber not-applicable reason must be requirement-specific, not placeholder text',
+    ),
+  );
+});
+
+test('rejects duplicate not-applicable rationales across requirements', () => {
+  const workspace = fixtureWorkspace();
+  const reason =
+    'Tooling behavior is verified more precisely through focused executable checks.';
+  writeNotApplicableFixture(workspace, { reason });
+  writeFileSync(
+    join(workspace, 'openspec/specs/fixture/spec.md'),
+    `${readFileSync(join(workspace, 'openspec/specs/fixture/spec.md'), 'utf8')}
+### Requirement: [REQ-FIXTURE-RULE-002] Second fixture rule
+`,
+  );
+  writeFileSync(
+    join(workspace, 'apps/fixture/evidence.test.ts'),
+    '// @requirements REQ-FIXTURE-RULE-001 REQ-FIXTURE-RULE-002\n',
+  );
+  writeFileSync(
+    verificationFile(workspace),
+    `${readFileSync(verificationFile(workspace), 'utf8')}  - id: REQ-FIXTURE-RULE-002
+    projects: [fixture]
+    risk: high
+    profiles: [tooling]
+    cucumber:
+      disposition: not-applicable
+      reason: ${reason}
+      alternativeEvidence: [vitest]
+    evidence:
+      - kind: vitest
+        file: apps/fixture/evidence.test.ts
+        target: fixture:test
+        lanes: [pr, main]
+`,
+  );
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-002: Cucumber not-applicable reason duplicates REQ-FIXTURE-RULE-001; provide a requirement-specific rationale',
+    ),
+  );
+});
+
+test('rejects duplicate or Cucumber alternative evidence kinds', () => {
+  const duplicateWorkspace = fixtureWorkspace();
+  writeNotApplicableFixture(duplicateWorkspace, {
+    alternatives: ['vitest', 'vitest'],
+  });
+  const duplicateModel = loadAssuranceModel(duplicateWorkspace);
+  assert.ok(
+    duplicateModel.errors.some(
+      (error) =>
+        error.includes('/cucumber/alternativeEvidence') &&
+        error.includes('must NOT have duplicate items'),
+    ),
+  );
+
+  const cucumberWorkspace = fixtureWorkspace();
+  writeNotApplicableFixture(cucumberWorkspace, {
+    alternatives: ['cucumber'],
+  });
+  const cucumberModel = loadAssuranceModel(cucumberWorkspace);
+  assert.ok(
+    cucumberModel.errors.some(
+      (error) =>
+        error.includes('/cucumber/alternativeEvidence/0') &&
+        error.includes('must be equal to one of the allowed values'),
+    ),
+  );
+});
+
+test('keeps the complete repository disposition inventory synchronized', () => {
+  const model = loadAssuranceModel(process.cwd());
+  const report = createTraceReport(model);
+
+  assert.deepEqual(model.errors, []);
+  assert.equal(report.totals.requirements, 58);
+  assert.equal(report.totals.requirementsWithCucumberDisposition, 58);
+  assert.equal(report.totals.acceptanceRequirements, 5);
+  assert.equal(report.totals.cucumberNotApplicableRequirements, 53);
+  assert.equal(report.totals.projects, 90);
+  assert.equal(report.totals.coveredProjects, 90);
+  assert.equal(report.totals.behaviorTests, 446);
+  assert.equal(report.totals.tracedBehaviorTests, 446);
 });
 
 test('rejects an Nx project without capability ownership', () => {

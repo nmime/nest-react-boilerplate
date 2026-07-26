@@ -276,13 +276,13 @@ Existing features must be modified in place; regeneration is rejected.
 
 ## Specification commands
 
-| Command         | Description                                                                                           |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| `spec:validate` | Strict-validate OpenSpec, requirement projects, executable-test markers, evidence, and Cucumber tags. |
-| `spec:trace`    | Write exact-SHA project/test/feature/requirement/evidence inventory totals.                           |
-| `spec:impact`   | Map a Git revision range to affected requirements, Nx targets, and root scripts.                      |
-| `spec:verify`   | Execute one selected evidence lane and write JSON/Markdown assurance dossiers.                        |
-| `spec:report`   | Render an existing JSON assurance dossier as Markdown without rerunning evidence.                     |
+| Command         | Description                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------ |
+| `spec:validate` | Strict-validate OpenSpec, projects, test markers, evidence, Cucumber tags, and all requirement dispositions. |
+| `spec:trace`    | Write exact-SHA project/test/feature/requirement/disposition/evidence inventory totals.                      |
+| `spec:impact`   | Map a Git revision range to affected requirements, Nx targets, and root scripts.                             |
+| `spec:verify`   | Execute one selected evidence lane and write JSON/Markdown assurance dossiers.                               |
+| `spec:report`   | Render an existing JSON assurance dossier as Markdown without rerunning evidence.                            |
 
 Use the root aliases shown in [Specification
 assurance](../specification-assurance.md). `spec:verify --dry-run` proves

@@ -1,4 +1,4 @@
-version: 2
+version: 3
 capability: repository-assurance
 owners:
   product: repository-maintainers
@@ -16,6 +16,8 @@ requirements:
       - tooling
       - documentation
       - mutation
+    cucumber:
+      disposition: acceptance
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/assurance.feature
@@ -53,6 +55,12 @@ requirements:
     profiles:
       - tooling
       - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Exact-SHA freshness is a provenance invariant verified by tooling and operational dossier execution.
+      alternativeEvidence:
+        - static
+        - operations
     evidence:
       - kind: static
         file: packages/tooling/src/commands/spec/assurance.ts
@@ -79,6 +87,8 @@ requirements:
       - acceptance
       - security
       - operations
+    cucumber:
+      disposition: acceptance
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/release-provenance.feature
@@ -106,6 +116,12 @@ requirements:
     profiles:
       - tooling
       - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Complete executable-test inventory is a repository scan whose exact totals are asserted by tooling tests.
+      alternativeEvidence:
+        - static
+        - vitest
     evidence:
       - kind: static
         file: packages/tooling/src/commands/spec/assurance.ts
@@ -131,6 +147,12 @@ requirements:
     profiles:
       - tooling
       - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Skill routing and discoverability are structural repository contracts verified by static checks and documentation.
+      alternativeEvidence:
+        - static
+        - documentation
     evidence:
       - kind: static
         file: packages/tooling/scripts/validate-agent-skills.mjs
@@ -155,6 +177,12 @@ requirements:
     risk: critical
     profiles:
       - tooling
+    cucumber:
+      disposition: not-applicable
+      reason: Requirement-to-project ownership is a graph invariant best enforced through deterministic tooling and unit fixtures.
+      alternativeEvidence:
+        - static
+        - vitest
     evidence:
       - kind: static
         file: packages/tooling/src/commands/spec/assurance.ts

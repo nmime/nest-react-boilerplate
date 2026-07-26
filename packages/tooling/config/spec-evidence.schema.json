@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:nrb:spec-evidence:v2",
+  "$id": "urn:nrb:spec-evidence:v3",
   "title": "NRB requirement evidence",
   "type": "object",
   "additionalProperties": false,
   "required": ["version", "capability", "owners", "requirements"],
   "properties": {
-    "version": { "const": 2 },
+    "version": { "const": 3 },
     "capability": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
     "owners": {
       "type": "object",
@@ -25,7 +25,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "projects", "risk", "profiles", "evidence"],
+        "required": ["id", "projects", "risk", "profiles", "cucumber", "evidence"],
         "properties": {
           "id": {
             "type": "string",
@@ -59,6 +59,50 @@
                 "mutation"
               ]
             }
+          },
+          "cucumber": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["disposition"],
+                "properties": {
+                  "disposition": { "const": "acceptance" }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["disposition", "reason", "alternativeEvidence"],
+                "properties": {
+                  "disposition": { "const": "not-applicable" },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 240
+                  },
+                  "alternativeEvidence": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "vitest",
+                        "playwright",
+                        "contract",
+                        "property",
+                        "component",
+                        "mutation",
+                        "security",
+                        "operations",
+                        "static",
+                        "documentation"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
           },
           "evidence": {
             "type": "array",

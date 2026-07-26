@@ -46,7 +46,8 @@ validation also checks every root command referenced by repo-local skills.
 
 - [Specify behavior](../.agents/skills/specify-behavior/SKILL.md) converts product
   intent into stable OpenSpec requirements, precise project ownership, and
-  risk-based evidence before implementation.
+  risk-based evidence with an explicit Cucumber disposition before
+  implementation.
 - [Implement specified change](../.agents/skills/implement-specified-change/SKILL.md)
   implements approved behavior while synchronizing code, executable test
   markers, Gherkin examples, evidence sidecars, and change tasks.
@@ -91,8 +92,8 @@ validation also checks every root command referenced by repo-local skills.
 ### Operate and assure the repository
 
 - [Review specification assurance](../.agents/skills/review-specification-assurance/SKILL.md)
-  independently audits requirement completeness, ownership, evidence meaning,
-  omissions, and exact-revision provenance.
+  independently audits requirement completeness, ownership, Cucumber
+  dispositions, evidence meaning, omissions, and exact-revision provenance.
 - [Validate backend quality](../.agents/skills/validate-backend-quality/SKILL.md)
   applies backend-specific contract, infrastructure, migration, process lifecycle,
   security, observability, performance, and runtime gates.

@@ -50,6 +50,17 @@ export type EvidenceKind = (typeof evidenceKinds)[number];
 export type EvidenceProfile = (typeof evidenceProfiles)[number];
 export type EvidenceLane = (typeof evidenceLanes)[number];
 export type RequirementRisk = 'low' | 'normal' | 'high' | 'critical';
+export type AlternativeEvidenceKind = Exclude<EvidenceKind, 'cucumber'>;
+
+export type CucumberDisposition =
+  | {
+      disposition: 'acceptance';
+    }
+  | {
+      disposition: 'not-applicable';
+      reason: string;
+      alternativeEvidence: AlternativeEvidenceKind[];
+    };
 
 export interface EvidenceReference {
   kind: EvidenceKind;
@@ -66,11 +77,12 @@ export interface RequirementVerification {
   projects: string[];
   risk: RequirementRisk;
   profiles: EvidenceProfile[];
+  cucumber: CucumberDisposition;
   evidence: EvidenceReference[];
 }
 
 export interface VerificationDocument {
-  version: 2;
+  version: 3;
   capability: string;
   owners: {
     product: string;
@@ -128,15 +140,20 @@ export interface TraceReport {
     features: number;
     scenarios: number;
     requirements: number;
+    requirementsWithCucumberDisposition: number;
+    acceptanceRequirements: number;
+    cucumberNotApplicableRequirements: number;
     evidence: number;
   };
   evidenceByKind: Record<string, number>;
+  cucumberAlternativeEvidenceByKind: Record<string, number>;
   requirements: Array<{
     id: string;
     capability: string;
     name: string;
     risk: RequirementRisk;
     profiles: EvidenceProfile[];
+    cucumber: CucumberDisposition;
     evidence: number;
     projects: string[];
   }>;
@@ -203,6 +220,14 @@ const REQUIREMENT_ID_PATTERN = /\bREQ-[A-Z0-9]+(?:-[A-Z0-9]+)+-\d{3}\b/gu;
 const SCENARIO_TAG_PATTERN = /@(SCN-[A-Z0-9]+(?:-[A-Z0-9]+)+-\d{2,3})\b/gu;
 const BEHAVIOR_TEST_PATTERN =
   /(?:\.(?:spec|test)|(?:^|[._-])(?:component|e2e)-spec)\.(?:ts|tsx|mts|mjs)$/u;
+const CUCUMBER_REASON_PLACEHOLDERS = new Set([
+  'covered elsewhere',
+  'cucumber not needed',
+  'no cucumber needed',
+  'not applicable',
+  'other tests cover this',
+  'use other tests',
+]);
 
 export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
   const errors: string[] = [];
@@ -331,6 +356,8 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
     }
   }
 
+  validateCucumberRationaleUniqueness(requirements, errors);
+
   const behaviorTests = validateBehaviorTestInventory(
     workspaceRoot,
     projects,
@@ -364,11 +391,23 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
 
 export function createTraceReport(model: AssuranceModel): TraceReport {
   const evidenceByKind: Record<string, number> = {};
+  const cucumberAlternativeEvidenceByKind: Record<string, number> = {};
   let evidence = 0;
+  let acceptanceRequirements = 0;
+  let cucumberNotApplicableRequirements = 0;
   const coveredProjects = new Set<string>();
 
   for (const requirement of model.requirements.values()) {
     for (const project of requirement.projects) coveredProjects.add(project);
+    if (requirement.cucumber.disposition === 'acceptance') {
+      acceptanceRequirements += 1;
+    } else {
+      cucumberNotApplicableRequirements += 1;
+      for (const kind of requirement.cucumber.alternativeEvidence) {
+        cucumberAlternativeEvidenceByKind[kind] =
+          (cucumberAlternativeEvidenceByKind[kind] ?? 0) + 1;
+      }
+    }
     for (const reference of requirement.evidence) {
       evidence += 1;
       evidenceByKind[reference.kind] = (evidenceByKind[reference.kind] ?? 0) + 1;
@@ -390,9 +429,14 @@ export function createTraceReport(model: AssuranceModel): TraceReport {
       features: model.features,
       scenarios: model.scenarios,
       requirements: model.requirements.size,
+      requirementsWithCucumberDisposition:
+        acceptanceRequirements + cucumberNotApplicableRequirements,
+      acceptanceRequirements,
+      cucumberNotApplicableRequirements,
       evidence,
     },
     evidenceByKind,
+    cucumberAlternativeEvidenceByKind,
     requirements: [...model.requirements.values()]
       .sort((left, right) => left.id.localeCompare(right.id))
       .map((requirement) => ({
@@ -401,6 +445,7 @@ export function createTraceReport(model: AssuranceModel): TraceReport {
         name: requirement.name,
         risk: requirement.risk,
         profiles: requirement.profiles,
+        cucumber: requirement.cucumber,
         evidence: requirement.evidence.length,
         projects: requirement.projects,
       })),
@@ -571,6 +616,7 @@ export function renderVerificationMarkdown(report: VerificationReport): string {
     `- Projects covered: ${report.trace.totals.coveredProjects}/${report.trace.totals.projects}`,
     `- Behavior tests traced: ${report.trace.totals.tracedBehaviorTests}/${report.trace.totals.behaviorTests}`,
     `- Gherkin features/scenarios: ${report.trace.totals.features}/${report.trace.totals.scenarios}`,
+    `- Cucumber dispositions: ${report.trace.totals.requirementsWithCucumberDisposition}/${report.trace.totals.requirements} (${report.trace.totals.acceptanceRequirements} acceptance, ${report.trace.totals.cucumberNotApplicableRequirements} not applicable)`,
     `- Evidence references: ${report.trace.totals.evidence}`,
     '',
     '## Executed evidence',
@@ -651,15 +697,53 @@ function validateRequirementMapping(options: {
   if (requirement.profiles.length === 0) {
     errors.push(`${prefix}: at least one evidence profile is required`);
   }
+  const requirementEvidenceKinds = new Set(
+    requirement.evidence.map(({ kind }) => kind),
+  );
   for (const profile of requirement.profiles) {
     if (!PROFILE_VALUES.has(profile)) {
       errors.push(`${prefix}: invalid evidence profile ${String(profile)}`);
       continue;
     }
-    const kinds = new Set(requirement.evidence.map(({ kind }) => kind));
     for (const requiredKind of PROFILE_KINDS[profile]) {
-      if (!kinds.has(requiredKind)) {
+      if (!requirementEvidenceKinds.has(requiredKind)) {
         errors.push(`${prefix}: profile ${profile} requires ${requiredKind} evidence`);
+      }
+    }
+  }
+  if (requirement.cucumber.disposition === 'acceptance') {
+    if (!requirement.profiles.includes('acceptance')) {
+      errors.push(`${prefix}: Cucumber acceptance requires the acceptance profile`);
+    }
+    if (!requirementEvidenceKinds.has('cucumber')) {
+      errors.push(`${prefix}: Cucumber acceptance requires cucumber evidence`);
+    }
+  } else {
+    if (requirement.profiles.includes('acceptance')) {
+      errors.push(
+        `${prefix}: Cucumber not-applicable forbids the acceptance profile`,
+      );
+    }
+    if (requirementEvidenceKinds.has('cucumber')) {
+      errors.push(`${prefix}: Cucumber not-applicable forbids cucumber evidence`);
+    }
+    const normalizedReason = normalizeCucumberReason(
+      requirement.cucumber.reason,
+    );
+    if (requirement.cucumber.reason.trim().length < 12) {
+      errors.push(
+        `${prefix}: Cucumber not-applicable reason must contain at least 12 non-whitespace characters`,
+      );
+    } else if (CUCUMBER_REASON_PLACEHOLDERS.has(normalizedReason)) {
+      errors.push(
+        `${prefix}: Cucumber not-applicable reason must be requirement-specific, not placeholder text`,
+      );
+    }
+    for (const kind of requirement.cucumber.alternativeEvidence) {
+      if (!requirementEvidenceKinds.has(kind)) {
+        errors.push(
+          `${prefix}: Cucumber alternative ${kind} is not mapped by requirement evidence`,
+        );
       }
     }
   }
@@ -750,6 +834,29 @@ function validateRequirementMapping(options: {
       }
     } else if (evidence.kind !== 'documentation') {
       errors.push(`${prefix}: ${evidence.kind} evidence requires target or script`);
+    }
+  }
+}
+
+function normalizeCucumberReason(reason: string): string {
+  return reason.trim().toLowerCase().replace(/\s+/gu, ' ');
+}
+
+function validateCucumberRationaleUniqueness(
+  requirements: Map<string, RequirementRecord>,
+  errors: string[],
+): void {
+  const ownersByReason = new Map<string, string>();
+  for (const requirement of requirements.values()) {
+    if (requirement.cucumber.disposition !== 'not-applicable') continue;
+    const normalizedReason = normalizeCucumberReason(requirement.cucumber.reason);
+    const existingRequirement = ownersByReason.get(normalizedReason);
+    if (existingRequirement !== undefined) {
+      errors.push(
+        `${requirement.verificationFile}: ${requirement.id}: Cucumber not-applicable reason duplicates ${existingRequirement}; provide a requirement-specific rationale`,
+      );
+    } else {
+      ownersByReason.set(normalizedReason, requirement.id);
     }
   }
 }
@@ -956,7 +1063,7 @@ function parseVerificationDocument(
     }
     return null;
   }
-  if (value.version !== 2) errors.push(`${file}: version must be 2`);
+  if (value.version !== 3) errors.push(`${file}: version must be 3`);
   if (typeof value.capability !== 'string' || value.capability.trim() === '') {
     errors.push(`${file}: capability is required`);
   }
@@ -972,7 +1079,7 @@ function parseVerificationDocument(
   }
 
   return {
-    version: 2,
+    version: 3,
     capability: typeof value.capability === 'string' ? value.capability : '',
     owners: {
       product: typeof owners.product === 'string' ? owners.product : '',
@@ -995,6 +1102,7 @@ function parseVerificationDocument(
             profiles: isStringArray(requirement.profiles)
               ? (requirement.profiles as EvidenceProfile[])
               : [],
+            cucumber: parseCucumberDisposition(requirement.cucumber),
             evidence: Array.isArray(requirement.evidence)
               ? requirement.evidence.filter(isRecord).map((evidence) => ({
                   kind:
@@ -1020,6 +1128,19 @@ function parseVerificationDocument(
                 }))
               : [],
           }))
+      : [],
+  };
+}
+
+function parseCucumberDisposition(value: unknown): CucumberDisposition {
+  if (!isRecord(value) || value.disposition === 'acceptance') {
+    return { disposition: 'acceptance' };
+  }
+  return {
+    disposition: 'not-applicable',
+    reason: typeof value.reason === 'string' ? value.reason : '',
+    alternativeEvidence: isStringArray(value.alternativeEvidence)
+      ? (value.alternativeEvidence as AlternativeEvidenceKind[])
       : [],
   };
 }

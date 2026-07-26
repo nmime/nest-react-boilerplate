@@ -10,7 +10,7 @@ This policy defines how agents should gather repository context before answering
 4. Read the files named by the user.
 5. Read the nearest project config, package config, tests, and existing docs for the touched surface.
 6. For observable behavior, read the owning
-   `openspec/specs/<capability>/spec.md`, its version 2 `verification.yaml`, and
+   `openspec/specs/<capability>/spec.md`, its version 3 `verification.yaml`, and
    any active change before implementation or review.
 7. Use [AI repo map](repo-map.md) to find adjacent architecture, testing, operations, and API docs.
 8. Verify claims through source, tests, generated artifacts, or current external primary sources when the answer depends on changing facts.
@@ -23,7 +23,9 @@ This policy defines how agents should gather repository context before answering
    approved.
 3. Read the complete executable-test inventory through `pnpm run spec:trace`
    instead of treating individual test discovery as proof of full coverage.
-4. Use `$review-specification-assurance` to challenge omitted scenarios and
+4. Confirm every requirement's Cucumber disposition: acceptance must map
+   Gherkin evidence; not-applicable must justify mapped alternative evidence.
+5. Use `$review-specification-assurance` to challenge omitted scenarios and
    verify exact-SHA evidence independently.
 
 ## Task-specific retrieval additions

@@ -1,4 +1,4 @@
-version: 2
+version: 3
 capability: frontend-experience
 owners:
   product: frontend-maintainers
@@ -16,6 +16,12 @@ requirements:
     profiles:
       - journey
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Cross-renderer navigation and recovery are executable user journeys whose faithful boundary is Playwright.
+      alternativeEvidence:
+        - playwright
+        - vitest
     evidence:
       - kind: playwright
         file: apps/e2e/fullstack/src/fullstack.spec.ts
@@ -50,6 +56,12 @@ requirements:
     profiles:
       - domain
       - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Locale-key parity and renderer ownership are catalog invariants best checked directly and documented normatively.
+      alternativeEvidence:
+        - vitest
+        - documentation
     evidence:
       - kind: vitest
         file: libs/frontend/runtime/lib/src/i18n/domain-namespace.spec.ts
@@ -72,6 +84,12 @@ requirements:
     profiles:
       - domain
       - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Keyboard, focus, and semantic behavior require rendered component assertions and real browser interaction.
+      alternativeEvidence:
+        - vitest
+        - playwright
     evidence:
       - kind: vitest
         file: libs/frontend/ui-web/lib/src/component/design-system-contract.spec.tsx
@@ -97,6 +115,12 @@ requirements:
     profiles:
       - domain
       - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Route and provider composition is verified in owning renderers through focused tests and full-stack navigation.
+      alternativeEvidence:
+        - vitest
+        - playwright
     evidence:
       - kind: vitest
         file: apps/frontend/admin/src/app/admin-routing.spec.tsx
@@ -120,6 +144,12 @@ requirements:
       - domain
       - api
       - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Safe error rendering depends on typed API responses and browser recovery states that contracts and Playwright exercise.
+      alternativeEvidence:
+        - contract
+        - playwright
     evidence:
       - kind: vitest
         file: libs/frontend/ui-web/lib/src/component/api-runtime-overlay.spec.tsx
@@ -146,6 +176,12 @@ requirements:
     profiles:
       - domain
       - tooling
+    cucumber:
+      disposition: not-applicable
+      reason: Native export and DOM-boundary safety are compile-time and renderer-specific contracts rather than Gherkin examples.
+      alternativeEvidence:
+        - static
+        - vitest
     evidence:
       - kind: vitest
         file: apps/frontend/mobile/src/mobile-app-providers.spec.tsx
@@ -167,6 +203,12 @@ requirements:
     profiles:
       - domain
       - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Server rendering and hydration consistency must be exercised in the actual SSR browser lifecycle.
+      alternativeEvidence:
+        - playwright
+        - vitest
     evidence:
       - kind: vitest
         file: apps/frontend/site/pages/index/+Page.spec.tsx
@@ -188,6 +230,12 @@ requirements:
     profiles:
       - domain
       - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Token, export, and source-ownership rules are structural design-system contracts with reviewed documentation.
+      alternativeEvidence:
+        - vitest
+        - documentation
     evidence:
       - kind: vitest
         file: libs/frontend/ui-web/lib/src/component/design-system-contract.spec.tsx

@@ -212,11 +212,12 @@ pnpm run check
 | Runtime code            | `pnpm run lint` · `pnpm run typecheck` · focused Nx/Vitest tests                            |
 | Security-sensitive work | `pnpm run test:security:secrets` plus targeted SAST/security checks                         |
 
-Testing spans OpenSpec requirements, Cucumber acceptance examples, Vitest unit
-and integration suites, Storybook interaction and visual checks, Playwright
-browser flows, Testcontainers-backed component tests, OpenAPI consumer/fuzz
-checks, property and mutation tests, exact-SHA evidence dossiers, and coverage
-thresholds. See [Specification Assurance](docs/specification-assurance.md),
+Testing spans OpenSpec requirements with an explicit Cucumber disposition,
+Cucumber acceptance examples, Vitest unit and integration suites, Storybook
+interaction and visual checks, Playwright browser flows, Testcontainers-backed
+component tests, OpenAPI consumer/fuzz checks, property and mutation tests,
+exact-SHA evidence dossiers, and coverage thresholds. See
+[Specification Assurance](docs/specification-assurance.md),
 [Testing](docs/testing.md), [Modern QA](docs/testing/modern-qa.md), and
 [Local Verification](docs/local-verification.md).
 

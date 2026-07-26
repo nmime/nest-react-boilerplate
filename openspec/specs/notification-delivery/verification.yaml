@@ -1,4 +1,4 @@
-version: 2
+version: 3
 capability: notification-delivery
 owners:
   product: notification-maintainers
@@ -16,6 +16,8 @@ requirements:
     profiles:
       - acceptance
       - domain
+    cucumber:
+      disposition: acceptance
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/notification-delivery.feature
@@ -47,6 +49,12 @@ requirements:
     profiles:
       - domain
       - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Idempotent broadcast transitions and recovery are state-machine and operational invariants with direct evidence.
+      alternativeEvidence:
+        - vitest
+        - operations
     evidence:
       - kind: vitest
         file: libs/backend/feature/notification/main/lib/src/service/notification-application.service.spec.ts
@@ -68,6 +76,12 @@ requirements:
     profiles:
       - domain
       - persistence
+    cucumber:
+      disposition: not-applicable
+      reason: Template immutability and channel persistence require domain and real-database verification.
+      alternativeEvidence:
+        - vitest
+        - component
     evidence:
       - kind: vitest
         file: libs/backend/feature/notification/main/lib/src/service/notification-strategy-resolver.service.spec.ts
@@ -91,6 +105,12 @@ requirements:
       - domain
       - persistence
       - security
+    cucumber:
+      disposition: not-applicable
+      reason: Tenant-safe audience materialization requires persistent and adversarial checks at recipient resolution.
+      alternativeEvidence:
+        - component
+        - security
     evidence:
       - kind: vitest
         file: libs/backend/feature/notification/main/lib/src/service/notification-recipient-resolver.service.spec.ts
@@ -121,6 +141,12 @@ requirements:
       - persistence
       - security
       - async
+    cucumber:
+      disposition: not-applicable
+      reason: Durable retries, payload encryption, and outbox semantics must be exercised at database and security boundaries.
+      alternativeEvidence:
+        - component
+        - security
     evidence:
       - kind: component
         file: packages/tooling/src/commands/db/migration.integration.test.ts
@@ -144,6 +170,12 @@ requirements:
     profiles:
       - domain
       - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Preference controls and their recovery states are interactive browser behavior best verified as a real user journey.
+      alternativeEvidence:
+        - playwright
+        - vitest
     evidence:
       - kind: vitest
         file: libs/frontend/feature/user/preferences/lib/src/use-user-preference-controls.spec.tsx

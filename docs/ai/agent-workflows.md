@@ -40,12 +40,13 @@ These workflows keep repeatable agent procedures out of the always-loaded [AGENT
 | Audit a project                        | `$service-audit`                  | config, source, contracts, tests, operations docs    |
 
 For behavior changes, start with `$specify-behavior`, inspect the owning
-`openspec/specs/<capability>/spec.md` and version 2 `verification.yaml`, then
-implement through `$implement-specified-change`. Every executable test file
-must contain a `// @requirements REQ-...` marker whose requirements own its Nx
-project. Finish with `$review-specification-assurance`, `pnpm run
-spec:validate`, and the impacted evidence lane. See [Specification
-assurance](../specification-assurance.md).
+`openspec/specs/<capability>/spec.md` and version 3 `verification.yaml`, then
+classify each requirement as Cucumber `acceptance` or justified
+`not-applicable` before implementing through `$implement-specified-change`.
+Every executable test file must contain a `// @requirements REQ-...` marker
+whose requirements own its Nx project. Finish with
+`$review-specification-assurance`, `pnpm run spec:validate`, and the impacted
+evidence lane. See [Specification assurance](../specification-assurance.md).
 
 ## Error handling and exception workflows
 

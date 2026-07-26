@@ -10,7 +10,7 @@ description: Independently audit whether requirements are correct, complete, pre
 - Read `../../../AGENTS.md`, `../../../docs/ai/agent-policy.md`,
   `../../../docs/specification-assurance.md`, and
   `../../../openspec/config.yaml`.
-- Read the active change, affected durable specs and version 2 sidecars, the
+- Read the active change, affected durable specs and version 3 sidecars, the
   implementation diff, evidence source files, and generated trace or assurance
   reports.
 - Read owner-specific validation skills for the changed backend, frontend,
@@ -32,6 +32,12 @@ description: Independently audit whether requirements are correct, complete, pre
 5. Confirm evidence is meaningful:
    - source files explicitly name the claimed requirement
    - Gherkin examples have stable requirement and scenario tags
+   - every requirement declares exactly one Cucumber disposition
+   - `acceptance` has an acceptance profile and mapped Cucumber evidence
+   - `not-applicable` has no acceptance profile or Cucumber evidence, gives a
+     requirement-specific non-placeholder reason, and names mapped
+     non-Cucumber alternatives
+   - rationales are not copied across unrelated requirements
    - unit, contract, property, component, browser, mutation, security, and
      operations evidence match the risk instead of duplicating one another
    - skips, plans, and environment blockers are not reported as executed passes

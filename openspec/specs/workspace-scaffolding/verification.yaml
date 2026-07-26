@@ -1,4 +1,4 @@
-version: 2
+version: 3
 capability: workspace-scaffolding
 owners:
   product: tooling-maintainers
@@ -17,6 +17,12 @@ requirements:
       - tooling
       - domain
       - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Generated ownership and layout invariants are proven directly from generator output and policy checks.
+      alternativeEvidence:
+        - static
+        - vitest
     evidence:
       - kind: static
         file: packages/tooling/src/generators/application/generator.ts
@@ -42,6 +48,12 @@ requirements:
     profiles:
       - tooling
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Workspace selection repeatability is a deterministic planner and filesystem contract.
+      alternativeEvidence:
+        - static
+        - vitest
     evidence:
       - kind: static
         file: packages/tooling/src/setup/catalog.ts
@@ -63,6 +75,12 @@ requirements:
     profiles:
       - tooling
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Generator idempotency and collision safety require direct dry-run and filesystem assertions.
+      alternativeEvidence:
+        - static
+        - vitest
     evidence:
       - kind: static
         file: packages/tooling/src/generators/feature/generator.ts
@@ -83,6 +101,12 @@ requirements:
     profiles:
       - tooling
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Initialization safety is a deterministic command, manifest, and filesystem contract.
+      alternativeEvidence:
+        - static
+        - vitest
     evidence:
       - kind: static
         file: packages/tooling/src/commands/project/init-project.ts
@@ -103,6 +127,12 @@ requirements:
     profiles:
       - tooling
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Setup convergence and catalog correctness require direct planner and filesystem assertions.
+      alternativeEvidence:
+        - static
+        - vitest
     evidence:
       - kind: static
         file: packages/tooling/src/commands/project/setup.ts
@@ -123,6 +153,12 @@ requirements:
     profiles:
       - tooling
       - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Quality-lane routing and executable gate registration are tooling and operational contracts.
+      alternativeEvidence:
+        - static
+        - operations
     evidence:
       - kind: static
         file: packages/tooling/src/commands/testing/frontend-browser-e2e-coverage.ts
@@ -148,6 +184,12 @@ requirements:
     profiles:
       - tooling
       - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Agent workflow discoverability is enforced by static policy validation and canonical documentation.
+      alternativeEvidence:
+        - static
+        - documentation
     evidence:
       - kind: static
         file: packages/tooling/scripts/validate-agent-skills.mjs
@@ -174,6 +216,13 @@ requirements:
       - tooling
       - persistence
       - security
+    cucumber:
+      disposition: not-applicable
+      reason: Destructive-operation guards require direct static, component, and adversarial safety evidence.
+      alternativeEvidence:
+        - static
+        - component
+        - security
     evidence:
       - kind: static
         file: packages/tooling/src/commands/db/restore.ts

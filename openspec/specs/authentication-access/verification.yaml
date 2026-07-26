@@ -1,4 +1,4 @@
-version: 2
+version: 3
 capability: authentication-access
 owners:
   product: identity-maintainers
@@ -18,6 +18,8 @@ requirements:
       - acceptance
       - domain
       - security
+    cucumber:
+      disposition: acceptance
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/authentication.feature
@@ -58,6 +60,13 @@ requirements:
       - persistence
       - security
       - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Session revocation and tenant isolation require persistent-component, security, and full-stack boundaries.
+      alternativeEvidence:
+        - component
+        - security
+        - playwright
     evidence:
       - kind: vitest
         file: libs/backend/feature/auth/main/lib/src/interfaces/http/persistent-session-access.guard.spec.ts
@@ -92,6 +101,12 @@ requirements:
     profiles:
       - domain
       - security
+    cucumber:
+      disposition: not-applicable
+      reason: Credential hashing, replay, and enumeration resistance require direct domain and adversarial assertions.
+      alternativeEvidence:
+        - vitest
+        - security
     evidence:
       - kind: vitest
         file: libs/backend/feature/auth/main/lib/src/application/auth-password-hash.spec.ts
@@ -120,6 +135,12 @@ requirements:
       - domain
       - persistence
       - security
+    cucumber:
+      disposition: not-applicable
+      reason: Cross-tenant RBAC isolation is verified at persistent and security boundaries where authorization is enforced.
+      alternativeEvidence:
+        - component
+        - security
     evidence:
       - kind: vitest
         file: libs/backend/feature/auth/main/lib/src/application/auth-tenant-isolation.spec.ts
@@ -150,6 +171,12 @@ requirements:
       - domain
       - security
       - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Provider state, nonce, and return-URL safety need adversarial checks plus a real full-stack callback journey.
+      alternativeEvidence:
+        - security
+        - playwright
     evidence:
       - kind: vitest
         file: libs/frontend/feature/user/social-auth/lib/src/same-origin-return-url.spec.ts
@@ -178,6 +205,12 @@ requirements:
     profiles:
       - domain
       - api
+    cucumber:
+      disposition: not-applicable
+      reason: Profile ownership and public-field exposure are expressed precisely through controller and DTO contracts.
+      alternativeEvidence:
+        - vitest
+        - contract
     evidence:
       - kind: vitest
         file: libs/backend/feature/user/main/lib/src/interfaces/http/profile.controller.spec.ts
@@ -201,6 +234,12 @@ requirements:
     profiles:
       - persistence
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Referential integrity and transaction behavior require a real PostgreSQL component boundary.
+      alternativeEvidence:
+        - component
+        - vitest
     evidence:
       - kind: component
         file: libs/backend/feature/auth/test/lib/src/auth-user.repository.component-spec.ts
@@ -224,6 +263,12 @@ requirements:
       - domain
       - security
       - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Audit redaction and persistence failure semantics are challenged directly by security and operations evidence.
+      alternativeEvidence:
+        - security
+        - operations
     evidence:
       - kind: vitest
         file: libs/backend/feature/audit-log/admin/lib/src/admin-access-audit.interceptor.spec.ts
@@ -253,6 +298,12 @@ requirements:
     profiles:
       - domain
       - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Auth loading, expiry, logout, and recovery are user-interface behaviors best verified in the real browser stack.
+      alternativeEvidence:
+        - playwright
+        - vitest
     evidence:
       - kind: vitest
         file: libs/frontend/feature/user/auth/lib/src/use-auth-session-flow.spec.tsx

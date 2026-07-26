@@ -10,7 +10,7 @@ description: Implement approved OpenSpec behavior while synchronizing source, ex
 - Read `../../../AGENTS.md`, `../../../docs/ai/agent-policy.md`,
   `../../../docs/specification-assurance.md`, and the nearest owner guidance.
 - Read every artifact under `../../../openspec/changes/<change>/`, the affected
-  durable specs and version 2 `verification.yaml` sidecars, and the real source
+  durable specs and version 3 `verification.yaml` sidecars, and the real source
   and tests before editing.
 - If no approved requirement governs observable behavior, stop implementation
   and use `$specify-behavior`.
@@ -34,8 +34,11 @@ description: Implement approved OpenSpec behavior while synchronizing source, ex
    changed executable test file. List only durable requirements that own the
    test's Nx project. The marker is inventory; it does not replace selected
    evidence in the sidecar.
-5. Keep Gherkin synchronized with stable `@REQ-...` and `@SCN-...` tags. Do not
-   restate unit-level permutations as feature prose.
+5. Keep each requirement's Cucumber disposition synchronized. `acceptance`
+   requires the acceptance profile plus stable `@REQ-...` and `@SCN-...`
+   evidence; `not-applicable` requires a concrete reason and mapped
+   non-Cucumber alternatives. Do not restate unit-level permutations as feature
+   prose.
 6. Update requirement-level `projects` and evidence references in each affected
    `verification.yaml`. Evidence files must explicitly name every requirement
    they claim to verify.

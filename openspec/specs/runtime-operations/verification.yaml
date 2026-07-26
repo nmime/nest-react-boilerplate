@@ -1,4 +1,4 @@
-version: 2
+version: 3
 capability: runtime-operations
 owners:
   product: runtime-maintainers
@@ -13,6 +13,12 @@ requirements:
     profiles:
       - domain
       - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Dependency health truth is proven directly at the service and operational probe layers.
+      alternativeEvidence:
+        - vitest
+        - operations
     evidence:
       - kind: vitest
         file: libs/backend/common/health/lib/src/health.service.spec.ts
@@ -34,6 +40,12 @@ requirements:
       - async
       - persistence
       - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Recovery behavior requires real dependency failure drills and operational execution evidence.
+      alternativeEvidence:
+        - component
+        - operations
     evidence:
       - kind: component
         file: libs/backend/common/component-test/lib/src/testcontainer/service-containers.spec.ts
@@ -54,6 +66,12 @@ requirements:
     profiles:
       - domain
       - security
+    cucumber:
+      disposition: not-applicable
+      reason: Configuration validation and secret redaction are direct schema and adversarial assertions.
+      alternativeEvidence:
+        - vitest
+        - security
     evidence:
       - kind: vitest
         file: libs/common/config/lib/src/create-config.spec.ts
@@ -82,6 +100,12 @@ requirements:
     profiles:
       - domain
       - async
+    cucumber:
+      disposition: not-applicable
+      reason: Startup and shutdown resource behavior requires executable lifecycle and component evidence.
+      alternativeEvidence:
+        - component
+        - vitest
     evidence:
       - kind: vitest
         file: libs/backend/common/bootstrap/lib/src/bootstrap.spec.ts
@@ -104,6 +128,12 @@ requirements:
     profiles:
       - domain
       - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Correlation and exporter failure handling are proven by direct telemetry and operational gates.
+      alternativeEvidence:
+        - operations
+        - vitest
     evidence:
       - kind: vitest
         file: libs/backend/common/analytics/lib/src/analytics.service.spec.ts
@@ -127,6 +157,12 @@ requirements:
     profiles:
       - async
       - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Acknowledgement, retry, and idempotency guarantees require real messaging component evidence.
+      alternativeEvidence:
+        - component
+        - operations
     evidence:
       - kind: component
         file: libs/backend/common/nats/lib/src/nats.runtime.spec.ts
@@ -147,6 +183,12 @@ requirements:
     profiles:
       - domain
       - security
+    cucumber:
+      disposition: not-applicable
+      reason: Storage isolation and provider failure handling are direct security and domain assertions.
+      alternativeEvidence:
+        - security
+        - vitest
     evidence:
       - kind: vitest
         file: libs/backend/common/s3/lib/src/s3.storage.spec.ts
@@ -170,6 +212,12 @@ requirements:
     profiles:
       - persistence
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Transaction and migration guarantees require executable behavior against real database components.
+      alternativeEvidence:
+        - component
+        - vitest
     evidence:
       - kind: component
         file: packages/tooling/src/commands/db/migration.integration.test.ts
@@ -190,6 +238,12 @@ requirements:
     profiles:
       - operations
       - security
+    cucumber:
+      disposition: not-applicable
+      reason: Deployment manifest and secret-handling guarantees require operational and security inspection.
+      alternativeEvidence:
+        - operations
+        - security
     evidence:
       - kind: operations
         file: scripts/deploy.spec.mjs
@@ -211,6 +265,12 @@ requirements:
     profiles:
       - domain
       - security
+    cucumber:
+      disposition: not-applicable
+      reason: Path, origin, and network boundary failures are best proven with adversarial executable assertions.
+      alternativeEvidence:
+        - security
+        - vitest
     evidence:
       - kind: vitest
         file: libs/backend/common/static/lib/src/static-data.service.spec.ts

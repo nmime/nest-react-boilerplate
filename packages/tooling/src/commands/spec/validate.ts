@@ -40,6 +40,13 @@ export function runSpecValidate(options: SpecCommandOptions = {}): number {
     features: report.totals.features,
     scenarios: report.totals.scenarios,
     requirements: report.totals.requirements,
+    requirementsWithCucumberDisposition:
+      report.totals.requirementsWithCucumberDisposition,
+    acceptanceRequirements: report.totals.acceptanceRequirements,
+    cucumberNotApplicableRequirements:
+      report.totals.cucumberNotApplicableRequirements,
+    cucumberAlternativeEvidenceByKind:
+      report.cucumberAlternativeEvidenceByKind,
     evidence: report.totals.evidence,
     errors: report.errors,
     warnings: report.warnings,

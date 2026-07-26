@@ -1,4 +1,4 @@
-version: 2
+version: 3
 capability: api-contracts
 owners:
   product: api-maintainers
@@ -14,6 +14,8 @@ requirements:
       - acceptance
       - api
       - domain
+    cucumber:
+      disposition: acceptance
     evidence:
       - kind: cucumber
         file: apps/e2e/acceptance/features/api-problems.feature
@@ -52,6 +54,12 @@ requirements:
     profiles:
       - api
       - tooling
+    cucumber:
+      disposition: not-applicable
+      reason: Contract and property checks express provider-consumer compatibility more precisely than Gherkin.
+      alternativeEvidence:
+        - contract
+        - property
     evidence:
       - kind: contract
         file: packages/tooling/src/commands/qa/consumer-contracts.ts
@@ -84,6 +92,11 @@ requirements:
     risk: high
     profiles:
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Concurrent async-context isolation is a low-level runtime invariant best exercised directly in Vitest.
+      alternativeEvidence:
+        - vitest
     evidence:
       - kind: vitest
         file: libs/backend/common/request-context/lib/src/request-context.spec.ts
@@ -98,6 +111,12 @@ requirements:
     profiles:
       - domain
       - api
+    cucumber:
+      disposition: not-applicable
+      reason: Typed rejection and wire-shape behavior are already executable at the validation and contract boundaries.
+      alternativeEvidence:
+        - vitest
+        - contract
     evidence:
       - kind: vitest
         file: libs/backend/common/validation/lib/src/create-validation.pipe.spec.ts
@@ -119,6 +138,12 @@ requirements:
     profiles:
       - api
       - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Generated client compatibility is source-derived and is verified more faithfully through contract and wrapper tests.
+      alternativeEvidence:
+        - contract
+        - vitest
     evidence:
       - kind: contract
         file: libs/frontend/api-client/lib/src/generated-api-client.spec.ts
@@ -141,6 +166,12 @@ requirements:
     profiles:
       - domain
       - api
+    cucumber:
+      disposition: not-applicable
+      reason: Serialization status and media-type invariants are precise programmatic assertions rather than stakeholder examples.
+      alternativeEvidence:
+        - vitest
+        - contract
     evidence:
       - kind: vitest
         file: libs/backend/common/response/lib/src/result-response.util.spec.ts

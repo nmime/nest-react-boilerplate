@@ -210,10 +210,13 @@ artifacts:
     template: verification.md
     instruction: >
       Map every requirement ID to its risk class and required evidence profile.
-      Assign each requirement its exact Nx projects in a version 2
-      verification sidecar. Plan one `// @requirements REQ-...` inventory
-      marker for every executable test file and ensure its requirements own the
-      containing project.
+      Assign each requirement its exact Nx projects in a version 3
+      verification sidecar. Declare exactly one Cucumber disposition:
+      acceptance with an acceptance profile and mapped Cucumber scenario, or
+      not-applicable with a requirement-specific reason and mapped
+      non-Cucumber alternative evidence. Plan one `// @requirements REQ-...`
+      inventory marker for every executable test file and ensure its
+      requirements own the containing project.
       Name the exact Vitest, Cucumber, Playwright, contract, property,
       component, mutation, security, or operational owners that will prove it.
       Explain why the selected evidence is independent enough to challenge the

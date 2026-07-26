@@ -40,15 +40,18 @@ description: Convert product intent into stable OpenSpec requirements, precise p
    - explicit invariants and failure behavior
    - at least one falsifiable scenario
    - a proportional evidence profile
-4. Put business-readable cross-boundary examples in Cucumber only when they
-   improve shared understanding. Give every scenario stable `@REQ-...` and
-   `@SCN-...` tags; keep domain edge cases in Vitest and user journeys in
-   Playwright.
+4. Give every requirement exactly one Cucumber disposition. Use `acceptance`
+   for stakeholder-significant cross-boundary examples and give every scenario
+   stable `@REQ-...` and `@SCN-...` tags. Otherwise use `not-applicable` with a
+   requirement-specific reason and one or more non-Cucumber evidence kinds
+   mapped on that requirement.
 5. Design requirement-level project ownership. Every named project must be a
    real Nx owner, and overlaps must represent a real cross-project behavior.
-6. Plan sidecar evidence using version 2 manifests. A referenced evidence file
+6. Plan sidecar evidence using version 3 manifests. A referenced evidence file
    must name the requirement, identify its execution target or root script, and
-   use the correct PR, main, nightly, or runtime lane.
+   use the correct PR, main, nightly, or runtime lane. Keep domain edge cases in
+   Vitest and user journeys in Playwright instead of duplicating them in
+   Gherkin.
 7. Complete `design.md`, `verification.md`, and `tasks.md` so implementation and
    review can proceed without guessing.
 

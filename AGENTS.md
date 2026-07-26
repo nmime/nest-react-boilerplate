@@ -24,9 +24,11 @@ Always-loaded policy for human and AI contributors to
 - Treat generated artifacts as read-only unless the task explicitly includes
   source changes plus regeneration.
 - For observable behavior changes, inspect or update the owning OpenSpec
-  requirement and version 2 evidence sidecar before implementation. Every
-  executable test file must contain a `// @requirements REQ-...` marker whose
-  requirements own that test's Nx project.
+  requirement and version 3 evidence sidecar before implementation. Every
+  requirement must explicitly select Cucumber acceptance evidence or justify
+  mapped alternative evidence. Every executable test file must contain a
+  `// @requirements REQ-...` marker whose requirements own that test's Nx
+  project.
 
 ## Branch And Authorship
 

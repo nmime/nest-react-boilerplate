@@ -61,7 +61,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 ## Testing and quality
 
 - [Testing Guide](testing.md) — unit, component, and e2e strategy.
-- [Specification Assurance](specification-assurance.md) — OpenSpec requirements, Cucumber examples, evidence lanes, and exact-SHA dossiers.
+- [Specification Assurance](specification-assurance.md) — OpenSpec requirements, explicit Cucumber dispositions, evidence lanes, and exact-SHA dossiers.
 - [Modern QA](testing/modern-qa.md) — Storybook tests, mutation testing, and coverage gates.
 - [Test Reliability](testing/test-reliability.md) — flaky test detection and isolation.
 

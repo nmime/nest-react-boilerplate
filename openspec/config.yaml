@@ -2,7 +2,7 @@ schema: nrb-verifiable
 
 context: |
   Repository: nmime/nest-react-boilerplate
-  Runtime: Node.js 24, pnpm 11.11.0, TypeScript, Nx
+  Runtime: Node.js 24, pnpm 11.15.1, TypeScript, Nx
   Backend: NestJS/Fastify, PostgreSQL/MikroORM, Redis, NATS
   Frontend: Vite, Astro, Vike, Expo
   Verification: Vitest, Cucumber.js, Playwright, OpenAPI contracts,

@@ -13,14 +13,16 @@ description: Update a downstream product repository onto a newer nest-react-boil
   `../../../docs/local-verification.md`.
 - Inspect the product's closest `AGENTS.md` and README files,
   `.nrb/workspace.json`, root manifests, lockfile, Nx graph, migrations,
-  generated-artifact sources, deployment configuration, and current CI state.
+  generated-artifact sources, deployment configuration, durable OpenSpec specs
+  and verification sidecars, active changes, and current CI state.
 - Obtain the exact old boilerplate base and target release tag or commit. Prefer
   a release tag over a moving upstream branch.
 
 ## Establish safe state
 
 1. Verify the product repository, branch, `HEAD`, current local and remote
-   `main`, remotes, Node 24, pnpm 11.11, and working-tree ownership.
+   `main`, remotes, the toolchain pinned by its root manifest, and working-tree
+   ownership.
 2. Fetch the product remote and a read-only `boilerplate` remote, including
    tags. Record the old product `main`, old base, target tag, and target SHA.
 3. Create a focused integration branch from current product `main`. Never
@@ -89,6 +91,18 @@ Then integrate without force-pushing.
    printing, copying, or committing real secrets.
 8. Compare meaningful release boundaries one at a time when the product spans
    several boilerplate minor releases.
+9. Reconcile specification ownership deliberately. Preserve product requirement
+   IDs, Cucumber dispositions, project scopes, and product-owned evidence;
+   import or modify upstream requirements only when the migrated product really
+   adopts that behavior.
+
+## Specification lifecycle
+
+When the update changes observable product behavior, establish or update the
+governing requirements with `$specify-behavior`, then synchronize the migrated
+source, executable tests, Gherkin examples, and sidecars through
+`$implement-specified-change`. For source-preserving migrations, prove that the
+existing requirements and evidence still describe the resulting product.
 
 ## Verification
 
@@ -100,9 +114,12 @@ Then integrate without force-pushing.
 3. Run generated contract/client checks when their sources or consumers
    changed. Run `pnpm run agent:verify` when setup, generators, ownership, agent
    guidance, or scaffolding changed.
-4. Broaden to `pnpm run check:fast` when the reconciled surface is
+4. Run `pnpm run spec:validate`, inspect specification impact, and execute the
+   selected evidence lane when source, tests, projects, skills, or assurance
+   metadata changed.
+5. Broaden to `pnpm run check:fast` when the reconciled surface is
    repository-wide. Always run `git diff --check`.
-5. Before integration, fetch product `origin/main` again and prove the expected
+6. Before integration, fetch product `origin/main` again and prove the expected
    head, tree, divergence, CI state, and absence of accidental secrets or
    unrelated files. Separate local validation from CI and deployment readiness.
 

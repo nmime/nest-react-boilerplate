@@ -22,6 +22,14 @@ description: Diagnose repository workflow, check, and pipeline failures from the
 5. Diagnose and report the cause first. Implement a fix only when the task also
    requests remediation; keep it scoped to the failing surface.
 
+## Specification lifecycle
+
+When an authorized remediation changes observable behavior, establish or update
+the governing requirement through `$specify-behavior` and implement the
+approved change and synchronized evidence through
+`$implement-specified-change`. A source-preserving CI or environment repair may
+retain the existing requirements.
+
 ## Validation
 
 After an authorized fix, rerun the failing command or the closest safe local

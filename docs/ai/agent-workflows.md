@@ -98,6 +98,9 @@ When adding request-scoped data (correlation IDs, user context, tracing):
   `$implement-specified-change`; include `$review-specification-assurance` in
   independent review. A source-only refactor may keep existing requirements and
   evidence when behavior is unchanged.
+- Treat a new repo-local skill as behavior-capable until the offline validator
+  explicitly classifies it as diagnostic, documentation-only, execution-only,
+  review, or assurance. This makes missing lifecycle routing fail closed.
 - For substantial frontend work, use `$plan-frontend-change`, add
   `$design-frontend-experience` only when UX or visual direction changes,
   start from `$design-from-reference` when the direction is anchored to a

@@ -30,6 +30,13 @@ repository's tokens and primitives. Never clone another product's identity.
 4. Hand structural design to `../design-frontend-experience/SKILL.md` and any new shared component to `../shadcn-ui/SKILL.md`; cover every UX state and accessibility requirement there.
 5. Capture browser or device evidence against the repository floors and interaction states through `../validate-frontend-quality/SKILL.md`.
 
+## Specification lifecycle
+
+Translate only approved principles into observable requirements through
+`$specify-behavior`, then pass the approved token, state, and evidence decisions
+to `$implement-specified-change`. Reference research cannot authorize behavior
+or substitute for product-owned acceptance criteria.
+
 ## Handoff
 
 State the reference used and its rights status, the profile extracted, which principles were kept versus dropped, the token and primitive mapping (existing versus new), and the visual evidence. Name anything from the reference that was deliberately not reproduced and why. Do not vendor third-party brand assets, fonts, or logos, and never claim the result carries any brand's licence or endorsement.

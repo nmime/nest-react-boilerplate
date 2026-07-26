@@ -9,23 +9,18 @@ const skillNamePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const metadataKeyPattern = /^[a-z_]+$/;
 const forbiddenFiles = new Set(['CHANGELOG.md', 'INSTALLATION.md', 'QUICK_REFERENCE.md', 'README.md']);
 const interfaceKeys = new Set(['default_prompt', 'display_name', 'short_description']);
-const behaviorLifecycleSkills = new Set([
-  'activate-capability',
-  'change-api-contract',
-  'change-auth-access',
-  'change-i18n',
-  'develop-backend-api',
-  'develop-background-process',
-  'develop-mobile-frontend',
-  'develop-web-frontend',
-  'extend-notifications',
-  'maintain-generators',
-  'maintain-repo-tooling',
-  'migrate-database',
-  'plan-backend-change',
-  'plan-frontend-change',
-  'prepare-deployment',
-  'scaffold-feature',
+// Fail closed: a new skill must route through specification unless reviewers
+// deliberately classify it as a non-behavior workflow here.
+const specificationLifecycleExemptSkills = new Set([
+  'implement-specified-change',
+  'initialize-product',
+  'pr-review',
+  'review-specification-assurance',
+  'service-audit',
+  'specify-behavior',
+  'validate-backend-quality',
+  'validate-change',
+  'validate-frontend-quality',
 ]);
 const assuranceReviewSkills = new Set([
   'pr-review',
@@ -34,6 +29,7 @@ const assuranceReviewSkills = new Set([
   'validate-change',
   'validate-frontend-quality',
 ]);
+const hardcodedToolchainPattern = /\b(?:Node(?:\.js)?|pnpm)\s+v?\d+(?:\.\d+){0,2}\b/gu;
 
 function parseFlatYaml(source, label) {
   const values = new Map();
@@ -99,7 +95,21 @@ function validateSkillMetadata(metadata, directoryName, errors) {
   }
 }
 
-function validateSkillSource(skillSource, directoryName, errors) {
+function sectionSource(skillSource, heading) {
+  const lines = skillSource.split(/\r?\n/u);
+  const start = lines.findIndex((line) => line === `## ${heading}`);
+  if (start === -1) return undefined;
+  let end = lines.length;
+  for (let index = start + 1; index < lines.length; index += 1) {
+    if (/^## /u.test(lines[index])) {
+      end = index;
+      break;
+    }
+  }
+  return lines.slice(start + 1, end).join('\n');
+}
+
+function validateCoreSkillStructure(skillSource, directoryName, errors) {
   if (skillSource.split(/\r?\n/u).length > 500) {
     errors.push(`${directoryName}/SKILL.md: exceeds 500 lines`);
   }
@@ -119,16 +129,48 @@ function validateSkillSource(skillSource, directoryName, errors) {
   if (/\bUse this (?:skill|workflow)\b/iu.test(skillSource)) {
     errors.push(`${directoryName}/SKILL.md: move trigger guidance into the frontmatter description`);
   }
-  if (behaviorLifecycleSkills.has(directoryName)) {
-    for (const requiredSkill of ['$specify-behavior', '$implement-specified-change']) {
-      if (!skillSource.includes(requiredSkill)) {
-        errors.push(`${directoryName}/SKILL.md: behavior workflow must route through ${requiredSkill}`);
-      }
+}
+
+function validateToolchainClaims(skillSource, directoryName, errors) {
+  const hardcodedToolchains = [...skillSource.matchAll(hardcodedToolchainPattern)].map((match) => match[0]);
+  if (hardcodedToolchains.length > 0) {
+    errors.push(
+      `${directoryName}/SKILL.md: read toolchain versions from root policy instead of hard-coding ${[
+        ...new Set(hardcodedToolchains),
+      ].join(', ')}`,
+    );
+  }
+}
+
+function validateSpecificationLifecycle(skillSource, directoryName, errors) {
+  if (specificationLifecycleExemptSkills.has(directoryName)) return;
+  const lifecycle = sectionSource(skillSource, 'Specification lifecycle');
+  if (lifecycle === undefined) {
+    errors.push(`${directoryName}/SKILL.md: missing "## Specification lifecycle" section`);
+  }
+  for (const requiredSkill of ['$specify-behavior', '$implement-specified-change']) {
+    if (!lifecycle?.includes(requiredSkill)) {
+      errors.push(`${directoryName}/SKILL.md: behavior workflow must route through ${requiredSkill}`);
     }
   }
-  if (assuranceReviewSkills.has(directoryName) && !skillSource.includes('$review-specification-assurance')) {
+}
+
+function validateAssuranceRouting(skillSource, directoryName, errors) {
+  if (!assuranceReviewSkills.has(directoryName)) return;
+  const assurance = sectionSource(skillSource, 'Specification assurance');
+  if (assurance === undefined) {
+    errors.push(`${directoryName}/SKILL.md: missing "## Specification assurance" section`);
+  }
+  if (!assurance?.includes('$review-specification-assurance')) {
     errors.push(`${directoryName}/SKILL.md: assurance workflow must route through $review-specification-assurance`);
   }
+}
+
+function validateSkillSource(skillSource, directoryName, errors) {
+  validateCoreSkillStructure(skillSource, directoryName, errors);
+  validateToolchainClaims(skillSource, directoryName, errors);
+  validateSpecificationLifecycle(skillSource, directoryName, errors);
+  validateAssuranceRouting(skillSource, directoryName, errors);
 }
 
 const rootedReadFirstPathPattern = /`((?:docs|packages|libs|apps|scripts|tools)\/[^`\r\n]+\.md)`/gu;
@@ -157,7 +199,9 @@ function validateReadFirstPaths(skillSource, directoryName, errors) {
 }
 
 async function validateLocalReferences(skillSource, skillDirectory, directoryName, errors) {
-  const references = new Set([...skillSource.matchAll(/`((?:\.\.\/)+[^`\r\n]+\.md)`/gu)].map((match) => match[1]));
+  const references = new Set(
+    [...skillSource.matchAll(/`((?:\.\.\/)+[^`\r\n]+\.(?:json|md|ya?ml))`/gu)].map((match) => match[1]),
+  );
   for (const reference of references) {
     try {
       await access(resolve(skillDirectory, reference));
@@ -310,11 +354,69 @@ async function validateSkillDiscovery(directories, { catalogPath, workflowsPath 
 
   for (const directory of directories) {
     const name = directory.name;
-    if (!catalog.includes(`.agents/skills/${name}/SKILL.md`)) {
-      errors.push(`${name}: missing from docs/agent-skills.md`);
+    const catalogReference = `.agents/skills/${name}/SKILL.md`;
+    const catalogReferences = catalog.split(catalogReference).length - 1;
+    if (catalogReferences !== 1) {
+      errors.push(`${name}: expected exactly one docs/agent-skills.md catalog entry, found ${catalogReferences}`);
     }
-    if (!workflows.includes(`$${name}`)) {
-      errors.push(`${name}: missing from docs/ai/agent-workflows.md`);
+    const workflowRows = workflows
+      .split(/\r?\n/u)
+      .filter((line) => line.startsWith('|') && line.includes(`\`$${name}\``)).length;
+    if (workflowRows !== 1) {
+      errors.push(`${name}: expected exactly one docs/ai/agent-workflows.md selector row, found ${workflowRows}`);
+    }
+  }
+  return errors;
+}
+
+async function validateUniqueInterfaceMetadata(directories, skillsRoot) {
+  const errors = [];
+  const displayNames = new Map();
+  for (const directory of directories) {
+    const openAiPath = resolve(skillsRoot, directory.name, 'agents/openai.yaml');
+    try {
+      const source = await readFile(openAiPath, 'utf8');
+      const values = parseFlatYaml(source, `${directory.name}/agents/openai.yaml`);
+      const displayName = values.get('display_name')?.value;
+      if (!displayName) continue;
+      const existing = displayNames.get(displayName);
+      if (existing) {
+        errors.push(
+          `${directory.name}/agents/openai.yaml: display_name "${displayName}" duplicates ${existing}/agents/openai.yaml`,
+        );
+      } else {
+        displayNames.set(displayName, directory.name);
+      }
+    } catch {
+      // Per-skill validation reports unreadable or malformed interface metadata.
+    }
+  }
+  return errors;
+}
+
+async function validateRootScriptReferences(directories, skillsRoot, packageJsonPath) {
+  if (!packageJsonPath) return [];
+  const errors = [];
+  let scripts;
+  try {
+    const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
+    scripts = new Set(Object.keys(packageJson.scripts ?? {}));
+  } catch {
+    return [`Cannot read root package scripts: ${packageJsonPath}`];
+  }
+  for (const directory of directories) {
+    const skillPath = resolve(skillsRoot, directory.name, 'SKILL.md');
+    let source;
+    try {
+      source = await readFile(skillPath, 'utf8');
+    } catch {
+      continue;
+    }
+    const referencedScripts = new Set([...source.matchAll(/\bpnpm run ([a-zA-Z0-9:_-]+)/gu)].map((match) => match[1]));
+    for (const script of referencedScripts) {
+      if (!scripts.has(script)) {
+        errors.push(`${directory.name}/SKILL.md: root script "${script}" is missing from package.json`);
+      }
     }
   }
   return errors;
@@ -330,7 +432,12 @@ export async function validateSkillsRoot(skillsRoot, discovery = {}) {
   const errorGroups = await Promise.all(
     directories.map((entry) => validateSkillDirectory(resolve(skillsRoot, entry.name))),
   );
-  return [...errorGroups.flat(), ...(await validateSkillDiscovery(directories, discovery))];
+  return [
+    ...errorGroups.flat(),
+    ...(await validateUniqueInterfaceMetadata(directories, skillsRoot)),
+    ...(await validateSkillDiscovery(directories, discovery)),
+    ...(await validateRootScriptReferences(directories, skillsRoot, discovery.packageJsonPath)),
+  ];
 }
 
 async function main() {
@@ -338,6 +445,7 @@ async function main() {
   const skillsRoot = resolve(workspaceRoot, '.agents/skills');
   const errors = await validateSkillsRoot(skillsRoot, {
     catalogPath: resolve(workspaceRoot, 'docs/agent-skills.md'),
+    packageJsonPath: resolve(workspaceRoot, 'package.json'),
     workflowsPath: resolve(workspaceRoot, 'docs/ai/agent-workflows.md'),
   });
   if (errors.length > 0) {

@@ -22,6 +22,10 @@ Every repository skill must:
   add scripts or references only when they remove repeated work or large context
 - expose quoted `display_name`, `short_description`, and a one-sentence
   `$skill-name` default prompt through `agents/openai.yaml`
+- read runtime and package-manager versions from canonical root policy instead
+  of hard-coding toolchain versions that can drift
+- route behavior-capable work through the specification lifecycle; a new skill
+  fails closed until it is explicitly classified as non-behavioral
 - appear in this catalog and the workflow selector so humans and agents can discover it
 
 The offline validator enforces packaging, trigger quality, required sections,
@@ -131,12 +135,12 @@ native test lane.
 
 ## Frontend delivery workflow
 
-Start observable behavior with `$specify-behavior`, implement the approved
-artifacts with `$implement-specified-change`, then use `$plan-frontend-change`
-for scope and ownership, `$design-frontend-experience`
+Start observable behavior with `$specify-behavior`, then use
+`$plan-frontend-change` for scope and ownership, `$design-frontend-experience`
 when visual or UX direction changes, `$design-from-reference` when the direction
-is anchored to a real-world example, the matching web/mobile development skill
-for implementation, `$validate-frontend-quality` for risk-based proof, and
+is anchored to a real-world example, and `$implement-specified-change` with the
+matching web/mobile development skill for implementation. Finish with
+`$validate-frontend-quality` for risk-based proof and
 `$review-specification-assurance` for independent assurance.
 LazyWeb is optional reference research, not a prerequisite or source of truth.
 

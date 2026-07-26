@@ -7,12 +7,15 @@ description: Initialize, select, and verify a product workspace with the reposit
 
 ## Read first
 
-- Read `../../../AGENTS.md`, `../../../docs/setup/cli-reference.md`, and `../../../docs/project-catalog.md`.
+- Read `../../../AGENTS.md`, `../../../package.json`,
+  `../../../docs/setup/cli-reference.md`, and
+  `../../../docs/project-catalog.md`.
 - Inspect `.nrb/workspace.json`, the setup catalog, and current `pnpm nrb doctor --json` output. Never infer a default application.
 
 ## Workflow
 
-1. Verify the repository, branch, `HEAD`, current `main`, Node 24, pnpm 11.11, and working-tree ownership.
+1. Verify the repository, branch, `HEAD`, current `main`, the Node.js and pnpm
+   versions pinned by the root manifest, and working-tree ownership.
 2. Use `pnpm nrb init` only for an uninitialized workspace. Use `pnpm nrb setup` or `pnpm nrb setup --app <id>` for explicit application selection.
 3. Review the dry-run or plan before accepting file changes. Preserve existing selections and user configuration.
 4. Keep secrets as documented placeholders. Never reveal, synthesize, or commit credentials.

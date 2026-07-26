@@ -37,6 +37,11 @@ Read the canonical owner and current tests.
 
 Inspect the owner, implement the change, and verify it.
 
+## Specification lifecycle
+
+Establish observable behavior with $specify-behavior and synchronize approved
+implementation and evidence through $implement-specified-change.
+
 ## Verification
 
 Run the narrowest check that proves the requested behavior.
@@ -231,20 +236,55 @@ test('validateSkillsRoot requires catalog and workflow discovery', async () => {
   await writeFile(workflowsPath, '# Workflows\n');
 
   const missing = await validateSkillsRoot(root, { catalogPath, workflowsPath });
-  assert.ok(missing.some((error) => error.includes('missing from docs/agent-skills.md')));
-  assert.ok(missing.some((error) => error.includes('missing from docs/ai/agent-workflows.md')));
+  assert.ok(missing.some((error) => error.includes('expected exactly one docs/agent-skills.md')));
+  assert.ok(missing.some((error) => error.includes('expected exactly one docs/ai/agent-workflows.md')));
 
   await writeFile(catalogPath, '[Skill](../.agents/skills/example-skill/SKILL.md)\n');
-  await writeFile(workflowsPath, 'Use `$example-skill`.\n');
+  await writeFile(workflowsPath, 'Mentioned outside the selector: `$example-skill`.\n');
+  const buried = await validateSkillsRoot(root, { catalogPath, workflowsPath });
+  assert.ok(
+    buried.some((error) => error.includes('docs/ai/agent-workflows.md selector row') && error.includes('found 0')),
+  );
+
+  await writeFile(
+    workflowsPath,
+    '| Task | Use | Owner |\n| --- | --- | --- |\n| Example | `$example-skill` | owner |\n',
+  );
   assert.deepEqual(await validateSkillsRoot(root, { catalogPath, workflowsPath }), []);
+
+  await writeFile(
+    catalogPath,
+    '[Skill](../.agents/skills/example-skill/SKILL.md)\n[Duplicate](../.agents/skills/example-skill/SKILL.md)\n',
+  );
+  const duplicated = await validateSkillsRoot(root, { catalogPath, workflowsPath });
+  assert.ok(
+    duplicated.some((error) => error.includes('docs/agent-skills.md catalog entry') && error.includes('found 2')),
+  );
 });
 
 test('validateSkillsRoot requires behavior skills to route through the specification lifecycle', async () => {
   const root = await createRoot();
-  await writeSkill(root, 'develop-backend-api');
+  await writeSkill(root, 'develop-backend-api', {
+    skill: `---
+name: develop-backend-api
+description: Implement backend behavior within repository runtime contracts. Use for controllers, DTOs, domain services, errors, request context, and API-focused tests.
+---
+
+# Develop a backend API
+
+## Read first
+
+Read the canonical owner and current tests.
+
+## Verification
+
+Run the narrowest check that proves the requested behavior.
+`,
+  });
 
   const errors = await validateSkillsRoot(root);
 
+  assert.ok(errors.some((error) => error.includes('missing "## Specification lifecycle"')));
   assert.ok(errors.some((error) => error.includes('$specify-behavior')));
   assert.ok(errors.some((error) => error.includes('$implement-specified-change')));
 });
@@ -256,4 +296,109 @@ test('validateSkillsRoot requires assurance skills to route through independent 
   const errors = await validateSkillsRoot(root);
 
   assert.ok(errors.some((error) => error.includes('$review-specification-assurance')));
+});
+
+test('validateSkillsRoot rejects lifecycle routing outside its owned section', async () => {
+  const root = await createRoot();
+  await writeSkill(root, 'behavior-skill', {
+    skill: `---
+name: behavior-skill
+description: Change product behavior within repository ownership boundaries. Use when implementing observable behavior that requires synchronized requirements and evidence.
+---
+
+# Change behavior
+
+## Read first
+
+Read $specify-behavior and $implement-specified-change before editing.
+
+## Verification
+
+Run the narrowest check that proves the requested behavior.
+`,
+  });
+
+  const errors = await validateSkillsRoot(root);
+
+  assert.ok(errors.some((error) => error.includes('missing "## Specification lifecycle"')));
+  assert.ok(errors.some((error) => error.includes('$specify-behavior')));
+  assert.ok(errors.some((error) => error.includes('$implement-specified-change')));
+});
+
+test('validateSkillsRoot rejects hard-coded toolchain versions in skills', async () => {
+  const root = await createRoot();
+  await writeSkill(root, 'versioned-skill', {
+    skill: `---
+name: versioned-skill
+description: Maintain a version-sensitive repository workflow safely. Use when the task must follow current runtime and package-manager policy.
+---
+
+# Maintain a workflow
+
+## Read first
+
+Use Node 24 and pnpm 11.11 before inspecting the canonical owner.
+
+## Specification lifecycle
+
+Establish observable behavior with $specify-behavior and synchronize it through
+$implement-specified-change.
+
+## Verification
+
+Run the narrowest check that proves the requested behavior.
+`,
+  });
+
+  const errors = await validateSkillsRoot(root);
+
+  assert.ok(errors.some((error) => error.includes('read toolchain versions from root policy')));
+  assert.ok(errors.some((error) => error.includes('Node 24')));
+  assert.ok(errors.some((error) => error.includes('pnpm 11.11')));
+});
+
+test('validateSkillsRoot enforces unique interface names and live root scripts', async () => {
+  const root = await createRoot();
+  await writeSkill(root, 'first-skill', {
+    openAi: `interface:
+  display_name: "Duplicated Display"
+  short_description: "Follow the first repository workflow"
+  default_prompt: "Use $first-skill to complete this repository task."
+`,
+    skill: `---
+name: first-skill
+description: Maintain the first repository workflow safely and deterministically. Use when its specialized owner, command, and validation contract are required.
+---
+
+# First workflow
+
+## Read first
+
+Read the canonical owner and current tests.
+
+## Specification lifecycle
+
+Establish observable behavior with $specify-behavior and synchronize it through
+$implement-specified-change.
+
+## Verification
+
+Run \`pnpm run known:check\` and \`pnpm run missing:check\`.
+`,
+  });
+  await writeSkill(root, 'second-skill', {
+    openAi: `interface:
+  display_name: "Duplicated Display"
+  short_description: "Follow the second repository workflow"
+  default_prompt: "Use $second-skill to complete this repository task."
+`,
+  });
+  const packageJsonPath = resolve(root, 'package.json');
+  await writeFile(packageJsonPath, JSON.stringify({ scripts: { 'known:check': 'node --test' } }));
+
+  const errors = await validateSkillsRoot(root, { packageJsonPath });
+
+  assert.ok(errors.some((error) => error.includes('duplicates first-skill')));
+  assert.ok(errors.some((error) => error.includes('root script "missing:check" is missing')));
+  assert.ok(!errors.some((error) => error.includes('root script "known:check" is missing')));
 });

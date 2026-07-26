@@ -20,6 +20,14 @@ description: Design or substantially reshape a web or native product experience 
 6. Prefer a small number of intentional compositional decisions over ornamental complexity. Do not add one-off colors, duplicated primitives, speculative registry blocks, or a second UI framework.
 7. Use external reference research only when it materially helps the requested surface. Record applicable patterns rather than copying third-party screens or assets. When the direction is anchored to a specific real-world example, start from `../design-from-reference/SKILL.md`. Shadcn owns controls and primitives; consider Magic UI only for a justified signature effect. In this template, keep Aceternity to non-persistent visual research and route any later integration decision to the downstream product owner through `../shadcn-ui/SKILL.md`.
 
+## Specification lifecycle
+
+Express new or changed user-visible states, accessibility behavior, responsive
+invariants, and acceptance examples through `$specify-behavior` before code.
+Hand the approved design and evidence contract to
+`$implement-specified-change`; a visual artifact or supplied design does not
+replace durable requirements.
+
 ## Turn design into code
 
 - Pair with `../develop-web-frontend/SKILL.md` or `../develop-mobile-frontend/SKILL.md` for implementation.

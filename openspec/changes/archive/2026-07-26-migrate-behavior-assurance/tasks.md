@@ -39,5 +39,5 @@
 - [x] 6.1 Run strict OpenSpec, specification, skill, tooling, docs, and focused regression checks.
 - [x] 6.2 Run the complete local repository quality and assurance gauntlet.
 - [x] 6.3 Archive the completed OpenSpec change and revalidate durable specs.
-- [ ] 6.4 Commit with required authorship, push the exact SHA, and follow hosted CI to green.
+- [x] 6.4 Commit with required authorship, push the exact SHA, and follow hosted CI to green.
 - [x] 6.5 Verify rollback is metadata-only and report any runtime evidence boundary separately.

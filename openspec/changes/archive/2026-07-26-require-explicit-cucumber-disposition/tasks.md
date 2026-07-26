@@ -33,6 +33,6 @@
 - [x] 5.1 Validate the OpenSpec change strictly.
 - [x] 5.2 Run focused tooling, Cucumber, documentation, and agent checks.
 - [x] 5.3 Prove 58/58 dispositions, 90/90 projects, and 446/446 tests.
-- [ ] 5.4 Run the complete repository check and exact-SHA PR evidence.
+- [x] 5.4 Run the complete repository check and exact-SHA PR evidence.
 - [x] 5.5 Archive the completed change and verify rollback is metadata-only.
 - [ ] 5.6 Commit with required authorship, push, and follow hosted CI to green.

@@ -1,7 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync, okAsync } from 'neverthrow';
-import { DefaultAuthTenantId, permissionsForRoles } from '@app/backend-feature-auth-shared';
-import { AuthUserRoleRepository } from '@app/backend-postgres-main-auth';
+import {
+  AuthUserRoleRepositoryInjectToken,
+  DefaultAuthTenantId,
+  permissionsForRoles,
+  type AuthUserRoleRepositoryPort,
+} from '@app/backend-feature-auth-shared';
 
 export interface AuthRoleStoreError {
   code: 'repository_error';
@@ -38,7 +42,7 @@ export const AuthRoleStoreInjectToken = Symbol('AuthRoleStoreInjectToken');
 /* v8 ignore start -- Nest decorator metadata is framework glue, not runtime branch logic. */
 @Injectable()
 export class PostgresAuthRoleStore implements AuthRoleStore {
-  constructor(private readonly repository: AuthUserRoleRepository) {}
+  constructor(@Inject(AuthUserRoleRepositoryInjectToken) private readonly repository: AuthUserRoleRepositoryPort) {}
   /* v8 ignore stop */
 
   assignRoles(input: AssignRolesInput): ResultAsync<string[], AuthRoleStoreError> {
@@ -59,6 +63,13 @@ export class PostgresAuthRoleStore implements AuthRoleStore {
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<EffectiveAccess, AuthRoleStoreError> {
     return this.repository.resolveEffectiveAccess(userId, tenantId);
+  }
+}
+
+@Injectable()
+export class MongoAuthRoleStore extends PostgresAuthRoleStore {
+  constructor(@Inject(AuthUserRoleRepositoryInjectToken) repository: AuthUserRoleRepositoryPort) {
+    super(repository);
   }
 }
 

@@ -56,7 +56,8 @@ Always-loaded policy for human and AI contributors to
 ## Runtime Stack
 
 - **Node.js >=24 <25**, pnpm, TypeScript, Nx monorepo.
-- **Backend**: NestJS on Fastify, PostgreSQL + MikroORM, Redis, NATS.
+- **Backend**: NestJS on Fastify, selectable PostgreSQL + MikroORM or native
+  MongoDB persistence, Redis, NATS.
 - **Frontend**: Vite (React SPAs), Astro (landing), Vike (SSR), Expo (React Native).
 
 ## Scaffolding Workflow

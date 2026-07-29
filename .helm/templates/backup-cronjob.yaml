@@ -1,11 +1,12 @@
+{{- $databaseEngine := include "boilerplate.databaseEngine" . }}
 {{- if .Values.backups.enabled }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "boilerplate.fullname" . }}-postgres-backup
+  name: {{ include "boilerplate.fullname" . }}-{{ $databaseEngine }}-backup
   labels:
     {{- include "boilerplate.labels" . | nindent 4 }}
-    app.kubernetes.io/component: postgres-backup
+    app.kubernetes.io/component: {{ $databaseEngine }}-backup
 spec:
   schedule: {{ .Values.backups.schedule | quote }}
   {{- if .Values.backups.timeZone }}
@@ -25,7 +26,7 @@ spec:
         metadata:
           labels:
             {{- include "boilerplate.labels" . | nindent 12 }}
-            app.kubernetes.io/component: postgres-backup
+            app.kubernetes.io/component: {{ $databaseEngine }}-backup
         spec:
           restartPolicy: Never
           {{- with .Values.imagePullSecrets }}
@@ -37,9 +38,14 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           containers:
-            - name: postgres-backup
+            - name: {{ $databaseEngine }}-backup
+              {{- if eq $databaseEngine "postgres" }}
               image: {{ printf "%s:%s" .Values.backups.image.repository .Values.backups.image.tag | quote }}
               imagePullPolicy: {{ default "IfNotPresent" .Values.backups.image.pullPolicy }}
+              {{- else }}
+              image: {{ printf "%s:%s" .Values.backups.mongodbImage.repository .Values.backups.mongodbImage.tag | quote }}
+              imagePullPolicy: {{ default "IfNotPresent" .Values.backups.mongodbImage.pullPolicy }}
+              {{- end }}
               {{- with .Values.backups.securityContext }}
               securityContext:
                 {{- toYaml . | nindent 16 }}
@@ -52,9 +58,17 @@ spec:
                   timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
                   backup_dir="${BACKUP_PATH:-/backups}"
                   mkdir -p "${backup_dir}"
+                  {{- if eq $databaseEngine "postgres" }}
                   backup_file="${backup_dir}/postgres-${timestamp}.dump"
+                  {{- else }}
+                  backup_file="${backup_dir}/mongodb-${timestamp}.archive.gz"
+                  {{- end }}
                   if [ -n "${PRE_BACKUP_HOOK:-}" ]; then eval "${PRE_BACKUP_HOOK}"; fi
+                  {{- if eq $databaseEngine "postgres" }}
                   pg_dump --format=custom --no-owner --no-acl --file "${backup_file}" "${DATABASE_URL}"
+                  {{- else }}
+                   mongodump --uri "${MONGODB_BACKUP_RESTORE_URI}" --archive="${backup_file}" --gzip --oplog
+                  {{- end }}
                   BACKUP_FILE="${backup_file}"
                   export BACKUP_FILE
                   if [ "${BACKUP_ENCRYPTION_ENABLED:-false}" = "true" ]; then
@@ -69,16 +83,23 @@ spec:
                     eval "${BACKUP_RETENTION_COMMAND}"
                   else
                     keep="${BACKUP_RETENTION_KEEP_LAST:-168}"
-                    find "${backup_dir}" -maxdepth 1 -type f -name 'postgres-*' | sort -r | awk "NR > ${keep}" | while IFS= read -r old_backup; do rm -f "${old_backup}"; done
+                    find "${backup_dir}" -maxdepth 1 -type f -name '{{ $databaseEngine }}-*' | sort -r | awk "NR > ${keep}" | while IFS= read -r old_backup; do rm -f "${old_backup}"; done
                   fi
                   if [ -n "${POST_BACKUP_HOOK:-}" ]; then eval "${POST_BACKUP_HOOK}"; fi
               env:
+                {{- if eq $databaseEngine "mongodb" }}
+                - name: MONGODB_BACKUP_RESTORE_URI
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "boilerplate.mongodbBackupRestoreSecretName" . }}
+                      key: MONGODB_BACKUP_RESTORE_URI
+                {{- end }}
                 - name: BACKUP_PATH
                   value: {{ default "/backups" .Values.backups.destination.path | quote }}
                 - name: BACKUP_BUCKET
                   value: {{ default "" .Values.backups.destination.objectStore.bucket | quote }}
                 - name: BACKUP_PREFIX
-                  value: {{ default "nest-react-boilerplate/postgres" .Values.backups.destination.objectStore.prefix | quote }}
+                  value: {{ default (printf "nest-react-boilerplate/%s" $databaseEngine) .Values.backups.destination.objectStore.prefix | quote }}
                 - name: BACKUP_ENCRYPTION_ENABLED
                   value: {{ ternary "true" "false" .Values.backups.encryption.enabled | quote }}
                 - name: BACKUP_ENCRYPTION_COMMAND
@@ -96,8 +117,10 @@ spec:
               envFrom:
                 - configMapRef:
                     name: {{ include "boilerplate.fullname" . }}-config
+                {{- if eq $databaseEngine "postgres" }}
                 - secretRef:
                     name: {{ include "boilerplate.secretName" . }}
+                {{- end }}
                 {{- if and .Values.backups.destination.objectStore.enabled .Values.backups.destination.objectStore.existingSecret }}
                 - secretRef:
                     name: {{ .Values.backups.destination.objectStore.existingSecret | quote }}

@@ -1,6 +1,6 @@
 import { errAsync, okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
-import { ProblemPresentationEntity } from '@app/backend-postgres-main-auth';
+import type { ProblemPresentationRecord } from '@app/backend-feature-auth-shared';
 import { InMemoryProblemPresentationReader, PostgresProblemPresentationReader } from './problem-presentation-reader';
 
 describe('problem presentation readers', () => {
@@ -9,7 +9,8 @@ describe('problem presentation readers', () => {
   });
 
   it('maps tenant-scoped Postgres overrides into the public runtime shape', async () => {
-    const entity = new ProblemPresentationEntity({
+    const entity = {
+      id: 'presentation-id',
       tenantId: '00000000-0000-4000-8000-000000000001',
       ruleId: 'user-app-api:PATCH:/profile:409:resource-conflict',
       display: 'silent',
@@ -18,8 +19,10 @@ describe('problem presentation readers', () => {
       severity: 'info',
       revision: 2,
       updatedByUserId: '00000000-0000-4000-8000-000000000002',
+      createdAt: new Date('2026-07-19T11:00:00.000Z'),
       updatedAt: new Date('2026-07-19T12:00:00.000Z'),
-    });
+      comment: '',
+    } satisfies ProblemPresentationRecord;
     const repository = { list: vi.fn(() => okAsync([entity])) };
     const reader = new PostgresProblemPresentationReader(repository as never);
 

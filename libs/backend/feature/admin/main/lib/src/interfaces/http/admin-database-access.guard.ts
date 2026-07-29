@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -8,8 +9,14 @@ import {
 import { Reflector } from '@nestjs/core';
 import { HealthRouteMetadataKey } from '@app/backend-common-health';
 import { createAdminAbility, type AdminAuthorizedRequest } from '@app/backend-feature-admin-shared';
-import { PublicAuthMetadataKey, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import { AuthUserRepository, AuthUserRoleRepository } from '@app/backend-postgres-main-auth';
+import {
+  AuthUserRepositoryInjectToken,
+  AuthUserRoleRepositoryInjectToken,
+  PublicAuthMetadataKey,
+  type AuthenticatedPrincipal,
+  type AuthUserRepositoryPort,
+  type AuthUserRoleRepositoryPort,
+} from '@app/backend-feature-auth-shared';
 
 /**
  * Resolves authorization from normalized PostgreSQL RBAC data for each admin
@@ -21,8 +28,8 @@ import { AuthUserRepository, AuthUserRoleRepository } from '@app/backend-postgre
 export class AdminDatabaseAccessGuard implements CanActivate {
   constructor(
     private readonly metadata: Reflector,
-    private readonly users: AuthUserRepository,
-    private readonly roles: AuthUserRoleRepository,
+    @Inject(AuthUserRepositoryInjectToken) private readonly users: AuthUserRepositoryPort,
+    @Inject(AuthUserRoleRepositoryInjectToken) private readonly roles: AuthUserRoleRepositoryPort,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

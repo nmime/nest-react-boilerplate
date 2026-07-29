@@ -15,8 +15,12 @@ Follow the root [AGENTS.md](../../AGENTS.md) and detailed
 - Frontend code must not import backend libraries or backend-only aliases.
 - Respect Feature-Sliced Design tags and run `pnpm run frontend:fsd:check` for
   frontend structure/import changes.
-- App-level `package.json` files list app-local direct dependencies only;
-  platform-wide frontend dependencies belong in `libs/frontend/package.json`.
+- `project.json` owns each deployable's identity and targets. External
+  dependencies normally belong in `libs/frontend/package.json`. An application
+  manifest is allowed only when a renderer concretely requires a nearest-package
+  dependency boundary; it must contain dependencies only, never a name, version,
+  scripts, entrypoint, or duplicated Nx identity. Source imports and the Nx graph
+  retain app-specific dependency closures.
 
 ## App Notes
 

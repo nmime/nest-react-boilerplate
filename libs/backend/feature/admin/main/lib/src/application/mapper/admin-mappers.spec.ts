@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type {
-  AdminAuditLogEntity,
-  AuthPermissionEntity,
+  AdminAuditLogRecord,
+  AuthPermissionRecord,
   AuthRoleWithPermissions,
-  AuthUserEntity,
-} from '@app/backend-postgres-main-auth';
+  AuthUserPersistenceRecord,
+} from '@app/backend-feature-auth-shared';
 import { AdminUsersReadPermission, UserProfileReadPermission } from '@app/common-authz';
 import { toAdminAuditLogView, toAdminRoleView, toAdminUserView, toPermissionView } from './index';
 
-const baseUser = (partial: Partial<AuthUserEntity> = {}): AuthUserEntity => ({
+const baseUser = (partial: Partial<AuthUserPersistenceRecord> = {}): AuthUserPersistenceRecord => ({
   id: 'user-id',
   tenantId: 'tenant-1',
   email: 'user@example.com',
@@ -53,7 +53,7 @@ describe('toAdminUserView', () => {
   });
 });
 
-const baseAudit = (partial: Partial<AdminAuditLogEntity> = {}): AdminAuditLogEntity => ({
+const baseAudit = (partial: Partial<AdminAuditLogRecord> = {}): AdminAuditLogRecord => ({
   id: 'audit-id',
   tenantId: 'tenant-1',
   actorUserId: 'actor-id',
@@ -112,7 +112,7 @@ describe('toAdminRoleView', () => {
 
 describe('toPermissionView', () => {
   it('projects the catalog fields of a permission entity', () => {
-    const entity: AuthPermissionEntity = {
+    const entity: AuthPermissionRecord = {
       id: 'permission-id',
       key: AdminUsersReadPermission,
       resource: 'admin.users',

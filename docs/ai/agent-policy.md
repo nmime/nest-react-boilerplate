@@ -164,9 +164,10 @@ All exceptions flow through the `@app/backend-common-exception` library.
   `libs/backend/feature/<scope>/<layer>/lib/**`; bot libraries are feature
   libraries such as `libs/backend/feature/discord/bot/lib` and
   `libs/backend/feature/telegram/bot/lib`.
-- Backend shared PostgreSQL infrastructure lives under
-  `libs/backend/postgres/main/shared/lib`; feature-owned persistence lives under
-  `libs/backend/postgres/main/<scope>/lib`.
+- Backend shared database infrastructure lives under
+  `libs/backend/{postgres,mongodb}/main/shared/lib`; feature-owned persistence
+  lives under `libs/backend/{postgres,mongodb}/main/<scope>/lib`. PostgreSQL and
+  MongoDB are mutually exclusive durable-provider selections.
 - Frontend-only libraries live under `libs/frontend/**`. Use
   `@app/frontend-ui-web` for shared React DOM UI, `@app/frontend-ui-native` for
   Tamagui/native UI, `@app/frontend-runtime` for non-visual frontend runtime,

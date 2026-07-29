@@ -324,6 +324,85 @@ describe('library generator', () => {
       ]);
     });
 
+    it('creates MongoDB data-access ownership and keeps PostgreSQL as the compatibility default', async () => {
+      const mongoTree = await createTree();
+      const { libraryGenerator } = await import('./generator.js');
+      await libraryGenerator(mongoTree, {
+        name: 'ledger-store',
+        kind: 'backend',
+        type: 'data-access',
+        scope: 'ledger',
+        database: 'mongodb',
+        skipFormat: true,
+      });
+      assert.ok(mongoTree.exists('libs/backend/mongodb/main/ledger/lib/project.json'));
+      const mongoTsconfig = JSON.parse(mongoTree.read('tsconfig.base.json', 'utf8')!);
+      assert.deepEqual(mongoTsconfig.compilerOptions.paths['@app/backend-mongodb-main-ledger'], [
+        'libs/backend/mongodb/main/ledger/lib/src/index.ts',
+      ]);
+
+      const postgresTree = await createTree();
+      await libraryGenerator(postgresTree, {
+        name: 'ledger-store',
+        kind: 'backend',
+        type: 'data-access',
+        scope: 'ledger',
+        skipFormat: true,
+      });
+      assert.ok(postgresTree.exists('libs/backend/postgres/main/ledger/lib/project.json'));
+    });
+
+    it('derives setup database selection and rejects mismatches and provider collisions', async () => {
+      const { libraryGenerator } = await import('./generator.js');
+      const selectedTree = await createTree();
+      selectedTree.write('.nrb/workspace.json', JSON.stringify({ capabilities: ['mongodb'] }));
+      await libraryGenerator(selectedTree, {
+        name: 'ledger-store',
+        kind: 'backend',
+        type: 'data-access',
+        scope: 'ledger',
+        skipFormat: true,
+      });
+      assert.ok(selectedTree.exists('libs/backend/mongodb/main/ledger/lib/project.json'));
+
+      const mismatchTree = await createTree();
+      mismatchTree.write('.nrb/workspace.json', JSON.stringify({ capabilities: ['mongodb'] }));
+      await assert.rejects(
+        () =>
+          libraryGenerator(mismatchTree, {
+            name: 'ledger-store',
+            kind: 'backend',
+            type: 'data-access',
+            scope: 'ledger',
+            database: 'postgres',
+            skipFormat: true,
+          }),
+        /Database provider mismatch/,
+      );
+
+      const collisionTree = await createTree();
+      collisionTree.write(
+        'libs/backend/postgres/main/ledger/lib/project.json',
+        JSON.stringify({
+          name: '@app/backend-postgres-main-ledger',
+          root: 'libs/backend/postgres/main/ledger/lib',
+          projectType: 'library',
+        }),
+      );
+      await assert.rejects(
+        () =>
+          libraryGenerator(collisionTree, {
+            name: 'ledger-store',
+            kind: 'backend',
+            type: 'data-access',
+            scope: 'ledger',
+            database: 'mongodb',
+            skipFormat: true,
+          }),
+        /Database provider collision/,
+      );
+    });
+
     it('rejects platform-incompatible library roles', async () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');

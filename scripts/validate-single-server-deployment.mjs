@@ -41,6 +41,12 @@ for (const contract of [
   'VITE_AUTH_API_BASE_URL=',
   'VITE_USER_API_BASE_URL=',
   'VITE_ADMIN_API_BASE_URL=',
+  'DATABASE_ENGINE=postgres',
+  'MONGODB_URI_FILE=./secrets/mongodb_uri.txt',
+  'MONGODB_MIGRATION_URI_FILE=./secrets/mongodb_migration_uri.txt',
+  'MONGODB_BACKUP_RESTORE_URI_FILE=./secrets/mongodb_backup_restore_uri.txt',
+  'MONGODB_REPLICA_SET=rs0',
+  'MONGODB_DATABASE_TOOLS_DOCKER_NETWORK=',
 ]) {
   assert.ok(productionExample.includes(contract), `host production example missing ${contract}`);
 }
@@ -87,6 +93,16 @@ for (const requirement of [
   'configure_secret RESEND_API_KEY_FILE resend_api_key.txt empty',
   'configure_secret MAILPACE_SERVER_TOKEN_FILE mailpace_server_token.txt empty',
   'configure_secret REDIS_PASSWORD_FILE redis_password.txt hex',
+  'configure_secret MONGODB_ROOT_PASSWORD_FILE mongodb_root_password.txt base64',
+  'configure_secret MONGODB_PASSWORD_FILE mongodb_password.txt base64',
+  'configure_secret MONGODB_MIGRATION_PASSWORD_FILE mongodb_migration_password.txt base64',
+  'configure_secret MONGODB_BACKUP_RESTORE_PASSWORD_FILE mongodb_backup_restore_password.txt base64',
+  'configure_secret MONGODB_KEYFILE_FILE mongodb_keyfile.txt base64',
+  'configure_secret MONGODB_URI_FILE mongodb_uri.txt empty',
+  'configure_secret MONGODB_MIGRATION_URI_FILE mongodb_migration_uri.txt empty',
+  'configure_secret MONGODB_BACKUP_RESTORE_URI_FILE mongodb_backup_restore_uri.txt empty',
+  'MONGODB_DATABASE_TOOLS_DOCKER_NETWORK nest-react-boilerplate_database',
+  'single-node replica set and is not highly available',
   'configure_secret TELEGRAM_BOT_WEBHOOK_SECRET_FILE telegram_bot_webhook_secret.txt hex',
   'configure_secret DISCORD_CUSTOM_ID_SECRET_FILE discord_custom_id_secret.txt hex',
 ]) {

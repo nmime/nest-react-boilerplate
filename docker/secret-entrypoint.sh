@@ -21,6 +21,10 @@ if [ "$(id -u)" -eq 0 ]; then
   load_secret REDIS_PASSWORD /run/secrets/redis_password
   load_secret DATABASE_URL /run/secrets/database_url
   load_secret POSTGRES_PASSWORD /run/secrets/postgres_password
+  load_secret MONGODB_URI /run/secrets/mongodb_uri
+  load_secret MONGODB_URI /run/secrets/mongodb_migration_uri
+  load_secret MONGODB_PASSWORD /run/secrets/mongodb_password
+  load_secret MONGODB_PASSWORD /run/secrets/mongodb_migration_password
   load_secret TELEGRAM_BOT_TOKEN /run/secrets/telegram_bot_token
   load_secret TELEGRAM_OIDC_CLIENT_SECRET /run/secrets/telegram_oidc_client_secret
   load_secret TELEGRAM_BOT_WEBHOOK_SECRET /run/secrets/telegram_bot_webhook_secret

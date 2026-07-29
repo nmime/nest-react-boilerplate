@@ -7,15 +7,39 @@ import { fileURLToPath } from 'node:url';
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const modeArg = process.argv.find((arg) => arg.startsWith('--mode='));
 const mode = modeArg?.split('=', 2)[1] ?? process.env.DEPLOY_VALIDATE_MODE ?? 'all';
+const allReference = process.argv.includes('--all-reference');
+const providerArg = process.argv.find((arg) => arg.startsWith('--provider='));
+const provider = providerArg?.split('=', 2)[1];
 const requireHelm =
   mode === 'helm' ||
   mode === 'gitops' ||
   process.argv.includes('--require-helm') ||
   process.env.REQUIRE_HELM === 'true';
 const supportedModes = new Set(['all', 'docker', 'helm', 'gitops', 'pm2']);
+const referenceContextFiles = [
+  'Caddyfile.per-app-domains',
+  'Caddyfile.single-domain',
+  'closure.json',
+  'nrb.config.json',
+  'workspace.json',
+  'package.json',
+  'pnpm-workspace.yaml',
+  'pnpm-lock.yaml',
+  'lock.json',
+  'helm-values.yaml',
+];
+let validationEnvironment = process.env;
 
 if (!supportedModes.has(mode)) {
   console.error(`Unsupported deployment validation mode: ${mode}. Expected one of: ${[...supportedModes].join(', ')}.`);
+  process.exit(2);
+}
+if (allReference && provider !== 'postgres' && provider !== 'mongodb') {
+  console.error('--all-reference requires --provider=postgres or --provider=mongodb.');
+  process.exit(2);
+}
+if (!allReference && provider !== undefined) {
+  console.error('--provider is valid only with --all-reference.');
   process.exit(2);
 }
 
@@ -44,17 +68,64 @@ const commandExists = (command) =>
 
 const hasAny = (paths) => paths.some((path) => existsSync(join(rootDir, path)));
 
-const validateDocker = () => {
-  run('Docker workspace dependency manifests', process.execPath, [
-    'scripts/sync-docker-workspace-manifests.mjs',
-    '--check',
+if (allReference) {
+  run(`${provider} all-reference closure`, 'pnpm', [
+    'nrb',
+    'closure',
+    'materialize',
+    '--all-reference',
+    '--provider',
+    provider,
   ]);
-  run('Docker/static deployment config', process.execPath, ['scripts/validate-deployment-config.mjs', '--mode=docker']);
-  run('Docker Compose production wrapper tests', process.execPath, ['--test', 'scripts/compose-production.spec.mjs']);
-  run('Single-server deployment tests', process.execPath, ['--test', 'scripts/single-server-deployment.spec.mjs']);
-  run('Single-server deployment contract', process.execPath, ['scripts/validate-single-server-deployment.mjs']);
-  run('Docker Compose production config', process.execPath, ['scripts/validate-docker-compose-prod.mjs']);
-  run('Docker Compose database/domain/TLS topology renders', process.execPath, ['scripts/validate-compose-modes.mjs']);
+  const contextRoot = join(rootDir, '.nrb', 'reference', provider);
+  const missing = referenceContextFiles.filter((file) => !existsSync(join(contextRoot, file)));
+  if (missing.length > 0) {
+    console.error(`All-reference ${provider} context is incomplete: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+  validationEnvironment = {
+    ...process.env,
+    NRB_CLOSURE_CONTEXT: contextRoot,
+    NRB_CLOSURE_MANIFEST: join(contextRoot, 'closure.json'),
+    HELM_SELECTION_VALUES: join(contextRoot, 'helm-values.yaml'),
+    NRB_ALL_REFERENCE: 'true',
+  };
+}
+
+const validateDocker = () => {
+  const options = { env: validationEnvironment };
+  run(
+    'Docker/static deployment config',
+    process.execPath,
+    ['scripts/validate-deployment-config.mjs', '--mode=docker'],
+    options,
+  );
+  run(
+    'Docker Compose production wrapper tests',
+    process.execPath,
+    ['--test', 'scripts/compose-production.spec.mjs'],
+    options,
+  );
+  run('Standalone migrator provider tests', process.execPath, ['--test', 'docker/migrator-run.spec.mjs'], options);
+  run(
+    'Single-server deployment tests',
+    process.execPath,
+    ['--test', 'scripts/single-server-deployment.spec.mjs'],
+    options,
+  );
+  run(
+    'Single-server deployment contract',
+    process.execPath,
+    ['scripts/validate-single-server-deployment.mjs'],
+    options,
+  );
+  run('Docker Compose production config', process.execPath, ['scripts/validate-docker-compose-prod.mjs'], options);
+  run(
+    'Docker Compose database/domain/TLS topology renders',
+    process.execPath,
+    ['scripts/validate-compose-modes.mjs'],
+    options,
+  );
 };
 
 const validateHelm = () => {
@@ -63,11 +134,24 @@ const validateHelm = () => {
     process.exit(1);
   }
 
-  run('Helm/static deployment config', process.execPath, ['scripts/validate-deployment-config.mjs', '--mode=helm']);
-  run('Helm rate-limit static config', process.execPath, ['scripts/validate-helm-rate-limit-config.mjs']);
+  if (!allReference) {
+    run('Selected closure freshness', 'pnpm', ['nrb', 'closure', 'check']);
+    validationEnvironment = {
+      ...process.env,
+      HELM_SELECTION_VALUES: join(rootDir, '.helm', 'values-selection.yaml'),
+    };
+  }
+  const options = { env: validationEnvironment };
+  run(
+    'Helm/static deployment config',
+    process.execPath,
+    ['scripts/validate-deployment-config.mjs', '--mode=helm'],
+    options,
+  );
+  run('Helm rate-limit static config', process.execPath, ['scripts/validate-helm-rate-limit-config.mjs'], options);
 
   if (commandExists('helm')) {
-    run('Helm render validation', 'bash', ['scripts/validate-helm.sh']);
+    run('Helm render validation', 'bash', ['scripts/validate-helm.sh'], options);
     return;
   }
 

@@ -28,6 +28,7 @@ import {
 } from '@app/backend-postgres-main-auth';
 
 const dockerAvailable = hasDockerRuntime();
+const originalDatabaseUrl = process.env.DATABASE_URL;
 if (!dockerAvailable) {
   process.stderr.write('AuthUserRepository component tests: skipped because Docker is not available on this host.\n');
 }
@@ -81,6 +82,7 @@ describeIfDocker('AuthUserRepository component', () => {
 
   beforeAll(async () => {
     container = await startPostgresContainer();
+    process.env.DATABASE_URL = container.getConnectionUri();
 
     moduleRef = await Test.createTestingModule({
       imports: [
@@ -118,8 +120,15 @@ describeIfDocker('AuthUserRepository component', () => {
 
   afterAll(async () => {
     await app?.close();
-    await moduleRef?.close();
+    if (!app) {
+      await moduleRef?.close();
+    }
     await stopPostgresContainer(container);
+    if (originalDatabaseUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = originalDatabaseUrl;
+    }
   });
 
   it('creates and finds users through a real Postgres repository', async () => {

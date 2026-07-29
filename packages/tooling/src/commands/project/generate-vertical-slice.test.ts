@@ -13,7 +13,13 @@ describe("legacy vertical-slice adapter", () => {
 
     const status = await runGenerateVerticalSlice({
       workspaceRoot: "/workspace",
-      argv: ["billing-events", "--api-app=auth-app-api", "--frontend-app=admin-app", "--dry-run"],
+      argv: [
+        "billing-events",
+        "--api-app=auth-app-api",
+        "--frontend-app=admin-app",
+        "--database=postgres",
+        "--dry-run",
+      ],
       runner,
     });
 
@@ -24,6 +30,7 @@ describe("legacy vertical-slice adapter", () => {
       "--dryRun=true",
       "--apiApp=auth-app-api",
       "--frontendApp=admin-app",
+      "--database=postgres",
     ]);
   });
 

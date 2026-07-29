@@ -45,16 +45,28 @@ export interface DependencyMapOptions {
 
 const libraryOwnership: LibraryDependencyOwner[] = [
   {
+    source: "apps/backend/**",
+    manifest: "libs/backend/package.json",
+    workspace: "@app/backend",
+    responsibility: "External dependencies used by backend applications and libraries.",
+  },
+  {
+    source: "apps/frontend/**",
+    manifest: "libs/frontend/package.json",
+    workspace: "@app/frontend",
+    responsibility: "External dependencies used by frontend applications and libraries.",
+  },
+  {
     source: "libs/backend/**",
     manifest: "libs/backend/package.json",
     workspace: "@app/backend",
-    responsibility: "External dependencies shared by backend libraries.",
+    responsibility: "External dependencies used by backend applications and libraries.",
   },
   {
     source: "libs/frontend/**",
     manifest: "libs/frontend/package.json",
     workspace: "@app/frontend",
-    responsibility: "External dependencies shared by browser and native frontend libraries.",
+    responsibility: "External dependencies used by frontend applications and libraries.",
   },
   {
     source: "libs/common/**",
@@ -133,7 +145,7 @@ export function formatWorkspaceDependencyMap(map: WorkspaceDependencyMap): strin
         `| ${workspace.scope} | ${workspace.name} | ${workspace.productionDependencies.length} | ${workspace.developmentDependencies.length} | ${workspace.path} |`,
     ),
     "",
-    "## Library dependency ownership",
+    "## Source dependency ownership",
     "",
     "| Source scope | Owning manifest | Workspace | Responsibility |",
     "| --- | --- | --- | --- |",
@@ -211,11 +223,17 @@ function matchesWorkspacePattern(workspacePath: string, pattern: string): boolea
 
 function readWorkspaceManifest(workspaceRoot: string, manifestPath: string): WorkspacePackageMapEntry {
   const manifest = JSON.parse(readFileSync(join(workspaceRoot, manifestPath), "utf8")) as PackageManifest;
-  if (typeof manifest.name !== "string" || manifest.name.length === 0) {
+  const name =
+    typeof manifest.name === "string" && manifest.name.length > 0
+      ? manifest.name
+      : manifestPath.startsWith("apps/")
+        ? `${dirname(manifestPath)} dependency boundary`
+        : undefined;
+  if (!name) {
     throw new Error(`${manifestPath}: package manifest must declare a non-empty name`);
   }
   return {
-    name: manifest.name,
+    name,
     path: manifestPath,
     scope: classifyScope(manifestPath),
     productionDependencies: readDependencySection(manifest, "dependencies", manifestPath),

@@ -11,7 +11,7 @@
       "cache": false,
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" node_modules/.bin/vike dev --host localhost --port 4203"
+        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" vike dev --host localhost --port 4203"
       }
     },
     "build": {
@@ -19,7 +19,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" node_modules/.bin/vike build && node_modules/.bin/tsc --project tsconfig.server-build.json && node scripts/link-server-node-modules.mjs"
+        "command": "node scripts/build.mjs && tsc --project tsconfig.server-build.json && node scripts/link-server-node-modules.mjs"
       },
       "inputs": [
         "production",
@@ -48,7 +48,7 @@
       "dependsOn": ["build"],
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" node_modules/.bin/vike preview --host localhost --port 4203"
+        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" vike preview --host localhost --port 4203"
       }
     },
     "start": {
@@ -75,7 +75,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "node_modules/.bin/tsc --noEmit --project tsconfig.app.json"
+        "command": "tsc --noEmit --project tsconfig.app.json"
       },
       "inputs": [
         "default",

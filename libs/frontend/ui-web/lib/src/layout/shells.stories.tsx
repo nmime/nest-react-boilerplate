@@ -11,7 +11,6 @@ import { UiStatCard } from '../component/stat-card';
 import { UiStatusTag } from '../component/status-tag';
 import { LanguageSwitcher, ThemeSwitcher } from '../component/switchers';
 import { UiAdminConsole, type UiAdminConsoleNavItem } from './admin-console';
-import { MiniAppShell } from './mini-app-shell';
 import { ProductShell } from './product-shell';
 
 const navItems: UiAdminConsoleNavItem[] = [
@@ -137,27 +136,6 @@ export const ProductApplication: Story = {
       >
         <UiSection title="Content region">Product content</UiSection>
       </ProductShell>
-    </Providers>
-  ),
-};
-
-export const MiniApplication: Story = {
-  render: () => (
-    <Providers>
-      <MiniAppShell
-        actions={[
-          { href: '/', isCurrent: false, label: 'Home' },
-          { href: '/profile', isCurrent: true, label: 'Profile' },
-        ]}
-        activePath="/profile"
-        appName="Mini Workspace"
-        description="Browser and Telegram-aware adaptive shell."
-        eyebrow="Profile"
-        onBack={() => undefined}
-        title="Account details"
-      >
-        <UiSection title="Profile">Adaptive mini-app content.</UiSection>
-      </MiniAppShell>
     </Providers>
   ),
 };

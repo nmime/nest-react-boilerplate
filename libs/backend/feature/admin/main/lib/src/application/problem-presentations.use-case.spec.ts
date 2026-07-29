@@ -1,7 +1,6 @@
 import { errAsync, okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import { ProblemPresentationEntity } from '@app/backend-postgres-main-auth';
+import type { AuthenticatedPrincipal, ProblemPresentationRecord } from '@app/backend-feature-auth-shared';
 import { ProblemPresentationsUseCase } from './problem-presentations.use-case';
 
 const tenantId = '00000000-0000-4000-8000-000000000001';
@@ -17,7 +16,8 @@ const principal: AuthenticatedPrincipal = {
 const context = { requestId: 'request-1', ip: '127.0.0.1', userAgent: 'Vitest' };
 
 const createOverride = () =>
-  new ProblemPresentationEntity({
+  ({
+    id: 'presentation-id',
     tenantId,
     ruleId,
     display: 'silent',
@@ -29,7 +29,7 @@ const createOverride = () =>
     updatedByUserId: actorUserId,
     createdAt: new Date('2026-07-19T12:00:00.000Z'),
     updatedAt: new Date('2026-07-19T13:00:00.000Z'),
-  });
+  }) satisfies ProblemPresentationRecord;
 
 const createDependencies = () => {
   const presentations = {

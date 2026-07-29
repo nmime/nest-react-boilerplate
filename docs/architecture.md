@@ -1,6 +1,6 @@
 # Architecture
 
-This repository is an Nx monorepo with flat deployable applications and small shared libraries. It keeps the starter architecture ready to use while leaving clear seams for database, component-test, and feature growth without depending on external reference repositories.
+This repository is an Nx monorepo with flat deployable applications and small shared libraries. PostgreSQL and MongoDB are mutually exclusive durable-provider choices behind provider-neutral feature ports; existing presets select PostgreSQL unless explicitly swapped.
 
 ## Frontend apps
 
@@ -83,18 +83,18 @@ Current `libs/common` placement decisions:
 | `libs/common/api-contracts` (`@app/common-api-contracts`)     | Keep common | Generated OpenAPI/contract review types describe the API boundary between backend producers and frontend/generated clients. It must stay independent of either runtime even when direct frontend app imports are discouraged in favor of `@app/frontend-api-client`. |
 | `libs/common/config` (`@app/common-config`)                   | Keep common | The Joi-backed `createConfig` helper is a tiny platform-neutral configuration accessor used by backend config modules today and safe for other Node/shared packages without pulling Nest app concerns into common.                                                   |
 | `libs/common/i18n/{runtime,keys}`                             | Keep common | Platform-neutral locale parsing, merge/fallback/interpolation mechanics and generated translation-key types. Backend/frontend/bot catalogs live under their owning runtime scopes.                                                                                   |
-| `libs/common/notifications` (`@app/common-notifications`)     | Keep common | Framework-neutral notification event, template, delivery, channel-content, provider, and error contracts. PostgreSQL and transport implementations stay backend-owned.                                                                                               |
+| `libs/common/notifications` (`@app/common-notifications`)     | Keep common | Framework-neutral notification event, template, delivery, channel-content, provider, and error contracts. Database and transport implementations stay backend-owned.                                                                                                 |
 | `libs/common/problem-details` (`@app/common-problem-details`) | Keep common | Framework-neutral custom problem type identities and documentation metadata consumed by backend producers and both apex-capable documentation pages.                                                                                                                 |
 | `libs/common/websocket` (`@app/common-websocket`)             | Keep common | Provider-neutral websocket/broadcast contracts with no browser, Nest, or backend-only dependency; the project is tagged `platform:shared`.                                                                                                                           |
-| `libs/common/feature-flags` (`@app/common-feature-flags`)     | Keep common | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.           |
+| `libs/common/feature-flags` (`@app/common-feature-flags`)     | Keep common | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; durable adapters live under the selected PostgreSQL or MongoDB infrastructure tree.                           |
 
 - `libs/backend/common/bootstrap/lib` creates Nest apps with the common backend foundation: CLS request context (`ClsInterceptor`), raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
 - `libs/backend/common/exception/lib` provides RFC 9457 Problem Details exceptions with the `Exception` factory, domain exception classes, localization, safe conversion, and OpenAPI schemas. Custom metadata comes from `@app/common-problem-details`; runtime context is limited to `{ extensions?, meta?, cause? }`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
 - `libs/backend/common/health/lib` provides the shared `BaseHealthController`, `HealthService`, health decorators/guards/interceptors, and indicator contract. Apps contribute app-specific health providers/config, while the shared controller owns `/health`, `/health/private`, `/live`, and `/ready`.
 - `libs/backend/common/response/lib` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
 - `libs/backend/common/swagger/lib` centralizes OpenAPI/Swagger setup with session-cookie security and problem response schemas.
-- `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; the Postgres-backed persistence adapter lives under `libs/backend/postgres/main/feature-flags/lib`.
-- `libs/common/notifications` defines framework-neutral notification domain contracts. Application ports are notification-feature-owned, PostgreSQL implements them, and provider strategies currently cover Telegram Bot, Discord Bot, Resend, MailPace, FCM, and APNs behind the provider resolver.
+- `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; PostgreSQL and MongoDB provide mutually exclusive durable adapters.
+- `libs/common/notifications` defines framework-neutral notification domain contracts. Application ports are notification-feature-owned, both durable providers implement them, and transport strategies currently cover Telegram Bot, Discord Bot, Resend, MailPace, FCM, and APNs behind the provider resolver.
 - `libs/backend/common/validation/lib` creates `createValidationPipe` validation exceptions backed by RFC 9457 Problem Details. Validation failures use the `errors[]` extension with field `detail` and JSON Pointer `pointer` entries.
 - `libs/backend/feature/auth/shared/lib` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable session guards/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
 - `libs/backend/feature/auth/main/lib` contains register/login/me/logout controllers, password authentication, provider projection, and server-session orchestration.
@@ -123,7 +123,7 @@ Projects use multiple tag dimensions so module-boundary rules can describe archi
 - `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses; test utilities should not also carry `type:common`.
 - `type:asset` is for source-controlled static inputs such as scoped i18n catalog projects; common catalog adapters may depend on these assets, but assets should not import application code.
 - `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks. Frontend apps may consume SDKs directly, SDKs may consume non-UI utilities, and UI should stay on UI/common/util dependencies rather than importing SDKs.
-- `scope:<domain>` identifies a single ownership boundary such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, `scope:feature-flags`, or `scope:shared`. Feature-owned Postgres libraries live under the owning scope, use `type:data-access`, and keep the same `scope:<domain>` tag instead of inventing a second database scope.
+- `scope:<domain>` identifies a single ownership boundary such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, `scope:feature-flags`, or `scope:shared`. Feature-owned database libraries live under the selected provider, use `type:data-access`, and keep the same `scope:<domain>` tag instead of replacing domain ownership with a database scope.
 - `boundary:backend-kernel`, `boundary:infrastructure-adapter`, `boundary:interface-helper`, and `boundary:test-util` describe Clean Architecture layer boundaries for backend libraries and constrain which layers may depend on which; `fsd:layer:*` (e.g. `fsd:layer:shared`, `fsd:layer:app`) describes frontend Feature-Sliced Design layers; and `framework:neutral` marks libraries that may only depend on other `framework:neutral` libraries or `type:asset`. These additional dimensions are defined and enforced in `eslint.config.js`.
 
 New libraries should use the taxonomy above and, where practical, keep feature, data-access, and test-util responsibilities split.
@@ -137,7 +137,7 @@ Backend feature libraries use `libs/backend/feature/<scope>/<layer>/lib/...` pat
 - Feature main: `@app/backend-feature-auth-main`, `@app/backend-feature-user-main`, `@app/backend-feature-admin-main`.
 - Feature shared: `@app/backend-feature-auth-shared`, `@app/backend-feature-user-shared`, `@app/frontend-feature-admin-shared` (frontend admin contracts), and `@app/backend-feature-admin-shared` (backend admin RBAC/permission logic).
 - Bot features: `@app/backend-feature-discord-bot`, `@app/backend-feature-telegram-bot`.
-- Data access: `@app/backend-postgres-main`, `@app/backend-postgres-main-auth`.
+- Data access: `@app/backend-postgres-main*` or `@app/backend-mongodb-main*`, never both in one configured runtime.
 - Test utilities: `@app/backend-common-component-test`.
 - Frontend API support: `@app/frontend-api-support`.
 - Frontend API SDK: `@app/frontend-api-client`.
@@ -148,16 +148,43 @@ Backend feature libraries use `libs/backend/feature/<scope>/<layer>/lib/...` pat
 - Backend exception foundation: `@app/backend-common-exception` only. Keep the path singular at `libs/backend/common/exception/lib` and Nx project name `@app/backend-common-exception`.
 - Backend health foundation: `@app/backend-common-health` at `libs/backend/common/health/lib`.
 
-For the next DB stage, data-access libs should contain `entity/`, `repository/`, and module/config exports. Feature libs should consume repositories through Nest providers instead of importing app code.
+Data-access libraries expose repositories and Nest modules through public barrels; provider-specific entities/documents remain private. Feature libraries consume neutral ports rather than importing app code or depending on both providers.
 
-## Postgres data-access layer
+## Durable data-access layers
 
-Shared Postgres infrastructure lives under `libs/backend/postgres/main/shared/lib`; feature-owned data-access libraries live under the owning scope, such as `libs/backend/postgres/main/auth/lib`. Import them through their `@app/backend-postgres-main-*` aliases instead of spelling source-file paths in application code.
+Shared infrastructure lives under `libs/backend/<provider>/main/shared/lib`; feature-owned data-access libraries live under the same provider and owning scope. Import them through their `@app/backend-<provider>-main-*` aliases instead of spelling source-file paths in application code.
 
 - `@app/backend-postgres-main` (`libs/backend/postgres/main/shared/lib`, source root `libs/backend/postgres/main/shared/lib/src`) owns shared Postgres/MikroORM configuration, the root module helper, and transaction helpers.
 - `@app/backend-postgres-main-auth` (`libs/backend/postgres/main/auth/lib`, source root `libs/backend/postgres/main/auth/lib/src`) owns auth persistence objects such as `entity/` and `repository/` exports.
+- `@app/backend-mongodb-main` owns validated native-driver configuration,
+  topology checks, health indicators, and snapshot/majority/primary transaction
+  helpers with bounded retries.
+- The provider-neutral OTel library owns only HTTP, Fastify, NestJS, Redis, and
+  Node-runtime instrumentation. PostgreSQL and MongoDB shared provider projects
+  own their respective database instrumentation factories behind the narrow
+  `@app/backend-postgres-main-otel` and `@app/backend-mongodb-main-otel`
+  entrypoints. Those entrypoints do not export or evaluate provider modules or
+  drivers. Setup-generated bootstrap composition imports one selected factory,
+  registers telemetry, and only then dynamically imports the Nest app module;
+  it never statically imports both providers.
+- `@app/backend-mongodb-main-auth`,
+  `@app/backend-mongodb-main-feature-flags`, and
+  `@app/backend-mongodb-main-notification` own private document models, strict
+  validators, deterministic indexes, and provider-neutral adapter outputs.
 
-Configuration is environment driven. `DATABASE_URL` takes precedence; otherwise `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are used with local-safe defaults. `POSTGRES_SSL=true` enables SSL and `POSTGRES_SSL_REJECT_UNAUTHORIZED=false` can be used for managed databases that require it. MikroORM does not auto-sync schemas in this boilerplate; schema changes are explicit MikroORM `Migration` classes under data-access libraries and are applied by `pnpm run db:migrate`, which records state in `mikro_orm_migrations`. Runtime migration does not read raw SQL files or use `psql` loops.
+Configuration is environment driven. PostgreSQL uses `DATABASE_URL` or the
+`POSTGRES_*` fields and explicit MikroORM migrations recorded in
+`mikro_orm_migrations`. MongoDB requires `MONGODB_URI` and
+`MONGODB_DATABASE`, normally pins `MONGODB_REPLICA_SET`, and records verified
+native collection/validator/index migrations in `mongo_migrations`.
+
+MongoDB preserves behavior, not PostgreSQL's physical mechanisms. It has no
+foreign keys, savepoints, or advisory locks; adapters use unique indexes,
+expected-revision CAS, per-tenant serialization documents, leases, and
+claim-token fencing. Related mutation/audit/outbox documents commit in one
+transaction, but NATS and email/provider delivery remain at-least-once outbox
+work outside that transaction. TTL cleanup and MongoDB DDL are asynchronous and
+non-transactional respectively. See [Database migration standards](database-migrations.md).
 
 Repository wrappers return `neverthrow` `ResultAsync` values so feature code can handle persistence failures explicitly. New data-access libraries should follow the same shape: `entity/`, `repository/`, a Nest module, and a public `index.ts` barrel. Testcontainers-backed component tests live beside repository code as `*.component-spec.ts` and run only through the `component-test` target.
 
@@ -175,7 +202,9 @@ Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<loca
   contract. New projects start at 100%; existing projects may carry explicit
   negative uncovered-item budgets that must only move toward zero.
 - Component tests run under separate `component-test` targets and use Testcontainers for real service dependencies. They require Docker and are intentionally separate from unit tests so normal `test` targets do not start containers.
-- `@app/backend-common-component-test` provides shared PostgreSQL container helpers for DB-backed component tests.
+- PostgreSQL component suites use the shared Postgres Testcontainers helpers;
+  MongoDB adapter suites use transaction-capable MongoDB Testcontainers and run
+  through each library's explicit `component-test` target.
 - Backend e2e tests should exercise Nest apps through HTTP with `supertest`; DB-backed e2e/component tests should use Testcontainers and isolated fixtures.
 - Frontend e2e runs instrumented Playwright browser coverage smokes for the two
   Vite SPAs (`admin-app` and `user-app`). `landing-app`, `site-app`, and
@@ -247,6 +276,10 @@ graph TD
   AuthApi --> PgShared[@app/backend-postgres-main]
   AdminApi --> PgFlags[@app/backend-postgres-main-feature-flags]
   PgFlags --> PgShared
+  AuthApi -. "MongoDB selection" .-> MongoAuth[@app/backend-mongodb-main-auth]
+  AuthApi -. "MongoDB selection" .-> MongoShared[@app/backend-mongodb-main]
+  AdminApi -. "MongoDB selection" .-> MongoFlags[@app/backend-mongodb-main-feature-flags]
+  MongoFlags --> MongoShared
 ```
 
 ## Current contract and persistence layout
@@ -255,4 +288,9 @@ OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/con
 
 There is intentionally no repository-root contract artifact directory and no `openapi` or `consumers` artifact subtree inside `libs/common/api-contracts`; that library owns generated source under `lib/src/generated/**` only.
 
-Canonical Postgres data access lives under `libs/backend/postgres/main/shared/lib` for shared database infrastructure and `libs/backend/postgres/main/<scope>/lib` for feature-owned persistence. Use `@app/backend-postgres-main`, `@app/backend-postgres-main-auth`, and `@app/backend-postgres-main-feature-flags` instead of non-canonical database paths. API errors standardize on RFC 9457 Problem Details through the singular `@app/backend-common-exception` alias.
+Canonical durable data access lives under
+`libs/backend/{postgres,mongodb}/main/shared/lib` for shared provider
+infrastructure and `libs/backend/{postgres,mongodb}/main/<scope>/lib` for
+feature-owned persistence. The setup selection composes one provider. API errors
+standardize on RFC 9457 Problem Details through the singular
+`@app/backend-common-exception` alias.

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { LockMode } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
@@ -59,6 +60,9 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateVersionChannelEntity,
   NotificationTemplateVersionEntity,
+  UnclaimedNotificationBroadcastClaimId,
+  UnclaimedNotificationDeliveryClaimId,
+  UnclaimedNotificationSegmentUploadClaimId,
 } from '../infrastructure/data-access/entities';
 
 const claimLeaseMs = 5 * 60 * 1000;
@@ -383,15 +387,20 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       }
       upload.status = NotificationSegmentUploadStatus.Processing;
       upload.claimedAt = now;
+      upload.claimToken = randomUUID();
       upload.updatedAt = now;
       await em.flush();
-      return { ...mapUpload(upload), tenantId: segment.tenantId };
+      return { ...mapUpload(upload), claimToken: upload.claimToken, tenantId: segment.tenantId };
     });
   }
 
   async completeSegmentUpload(input: CompleteNotificationSegmentUploadInput): Promise<void> {
     await this.entityManager.transactional(async (em) => {
-      const upload = await em.findOne(NotificationSegmentUploadEntity, { id: input.uploadId });
+      const upload = await em.findOne(NotificationSegmentUploadEntity, {
+        id: input.uploadId,
+        claimToken: input.claimToken,
+        status: NotificationSegmentUploadStatus.Processing,
+      });
       if (!upload) {
         return;
       }
@@ -423,19 +432,21 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       upload.invalidRows = input.invalidRows;
       upload.errors = input.errors.slice(0, 100);
       upload.claimedAt = new Date(0);
+      upload.claimToken = UnclaimedNotificationSegmentUploadClaimId;
       upload.updatedAt = now;
       await em.flush();
     });
   }
 
-  async failSegmentUpload(uploadId: string, errors: string[]): Promise<void> {
+  async failSegmentUpload(uploadId: string, claimToken: string, errors: string[]): Promise<void> {
     await this.entityManager.nativeUpdate(
       NotificationSegmentUploadEntity,
-      { id: uploadId },
+      { id: uploadId, claimToken, status: NotificationSegmentUploadStatus.Processing },
       {
         status: NotificationSegmentUploadStatus.Failed,
         errors: errors.slice(0, 100),
         claimedAt: new Date(0),
+        claimToken: UnclaimedNotificationSegmentUploadClaimId,
         updatedAt: new Date(),
       },
     );
@@ -593,6 +604,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       }
       snapshot.status = NotificationAudienceSnapshotStatus.Collecting;
       snapshot.claimedAt = now;
+      snapshot.claimToken = randomUUID();
       snapshot.updatedAt = now;
       await em.flush();
       const segmentLinks = await em.find(NotificationBroadcastSegmentEntity, { broadcastId: broadcast.id });
@@ -601,6 +613,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
         status: NotificationSegmentStatus.Active,
       });
       return {
+        claimToken: snapshot.claimToken,
         snapshot: mapSnapshot(snapshot),
         broadcast: await this.mapBroadcast(em, broadcast),
         segments: segments.map(mapSegment),
@@ -608,9 +621,13 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     });
   }
 
-  async completeSnapshot(snapshotId: string, members: NotificationAudienceMember[]): Promise<void> {
+  async completeSnapshot(snapshotId: string, claimToken: string, members: NotificationAudienceMember[]): Promise<void> {
     await this.entityManager.transactional(async (em) => {
-      const snapshot = await em.findOne(NotificationAudienceSnapshotEntity, { id: snapshotId });
+      const snapshot = await em.findOne(NotificationAudienceSnapshotEntity, {
+        id: snapshotId,
+        claimToken,
+        status: NotificationAudienceSnapshotStatus.Collecting,
+      });
       if (!snapshot) {
         return;
       }
@@ -637,6 +654,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       snapshot.duplicateCount = duplicates;
       snapshot.conflictCount = conflicts;
       snapshot.claimedAt = new Date(0);
+      snapshot.claimToken = UnclaimedNotificationBroadcastClaimId;
       snapshot.updatedAt = new Date();
       if (conflicts > 0) {
         snapshot.status = NotificationAudienceSnapshotStatus.Failed;
@@ -664,15 +682,20 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     });
   }
 
-  async failSnapshot(snapshotId: string, message: string): Promise<void> {
+  async failSnapshot(snapshotId: string, claimToken: string, message: string): Promise<void> {
     await this.entityManager.transactional(async (em) => {
-      const snapshot = await em.findOne(NotificationAudienceSnapshotEntity, { id: snapshotId });
+      const snapshot = await em.findOne(NotificationAudienceSnapshotEntity, {
+        id: snapshotId,
+        claimToken,
+        status: NotificationAudienceSnapshotStatus.Collecting,
+      });
       if (!snapshot) {
         return;
       }
       snapshot.status = NotificationAudienceSnapshotStatus.Failed;
       snapshot.error = { reason: NotificationErrorReason.UnknownError, message: message.slice(0, 500) };
       snapshot.claimedAt = new Date(0);
+      snapshot.claimToken = UnclaimedNotificationBroadcastClaimId;
       snapshot.updatedAt = new Date();
       await em.nativeUpdate(
         NotificationBroadcastEntity,
@@ -684,12 +707,26 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
   }
 
   async claimBroadcastMaterialization(limit: number): Promise<NotificationBroadcastMaterializationContext | null> {
-    const broadcast = await this.entityManager.findOne(
-      NotificationBroadcastEntity,
-      { status: NotificationBroadcastStatus.Sending, materializedAt: null },
-      { orderBy: { updatedAt: 'ASC' } },
-    );
-    if (!broadcast) {
+    const now = new Date();
+    const broadcast = await this.entityManager.transactional(async (em) => {
+      const claimed = await em.findOne(
+        NotificationBroadcastEntity,
+        {
+          status: NotificationBroadcastStatus.Sending,
+          materializedAt: null,
+          materializationClaimedAt: { $lte: new Date(now.getTime() - claimLeaseMs) },
+        },
+        { orderBy: { updatedAt: 'ASC' }, lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE },
+      );
+      if (!claimed) {
+        return null;
+      }
+      claimed.materializationClaimedAt = now;
+      claimed.materializationClaimToken = randomUUID();
+      await em.flush();
+      return claimed;
+    });
+    if (!broadcast?.materializationClaimToken) {
       return null;
     }
     const snapshot = await this.entityManager.findOne(NotificationAudienceSnapshotEntity, {
@@ -705,9 +742,17 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       { limit, orderBy: { id: 'ASC' } },
     );
     if (members.length === 0) {
-      broadcast.materializedAt = new Date();
-      broadcast.updatedAt = broadcast.materializedAt;
-      await this.entityManager.flush();
+      const materializedAt = new Date();
+      await this.entityManager.nativeUpdate(
+        NotificationBroadcastEntity,
+        { id: broadcast.id, materializationClaimToken: broadcast.materializationClaimToken },
+        {
+          materializedAt,
+          materializationClaimedAt: new Date(0),
+          materializationClaimToken: UnclaimedNotificationBroadcastClaimId,
+          updatedAt: materializedAt,
+        },
+      );
       return null;
     }
     const version = await this.entityManager.findOne(NotificationTemplateVersionEntity, {
@@ -721,6 +766,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       throw new Error('notification_template_missing');
     }
     return {
+      claimToken: broadcast.materializationClaimToken,
       broadcast: await this.mapBroadcast(this.entityManager, broadcast),
       snapshotId: snapshot.id,
       template: await this.mapTemplate(this.entityManager, template),
@@ -733,6 +779,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       const broadcast = await em.findOne(NotificationBroadcastEntity, {
         id: context.broadcast.id,
         status: NotificationBroadcastStatus.Sending,
+        materializationClaimToken: context.claimToken,
       });
       if (!broadcast) {
         return 0;
@@ -810,6 +857,8 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       broadcast.queuedCount += created;
       broadcast.pendingCount += created;
       broadcast.updatedAt = now;
+      broadcast.materializationClaimedAt = new Date(0);
+      broadcast.materializationClaimToken = UnclaimedNotificationBroadcastClaimId;
       await em.flush();
       return created;
     });
@@ -824,48 +873,62 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
   }
 
   async refreshBroadcastStatistics(): Promise<number> {
-    const broadcasts = await this.entityManager.find(NotificationBroadcastEntity, {
+    const candidates = await this.entityManager.find(NotificationBroadcastEntity, {
       status: { $in: [NotificationBroadcastStatus.Sending, NotificationBroadcastStatus.Paused] },
     });
-    await Promise.all(
-      broadcasts.map(async (broadcast) => {
-        const [queued, sent, rejected, errors, pending, cancelled] = await Promise.all([
-          this.entityManager.count(NotificationDeliveryEntity, { broadcastId: broadcast.id }),
-          this.entityManager.count(NotificationDeliveryEntity, {
-            broadcastId: broadcast.id,
-            status: NotificationStatus.Sent,
-          }),
-          this.entityManager.count(NotificationDeliveryEntity, {
-            broadcastId: broadcast.id,
-            status: NotificationStatus.Rejected,
-          }),
-          this.entityManager.count(NotificationDeliveryEntity, {
-            broadcastId: broadcast.id,
-            status: NotificationStatus.Error,
-          }),
-          this.entityManager.count(NotificationDeliveryEntity, {
-            broadcastId: broadcast.id,
-            status: { $in: [NotificationStatus.Pending, NotificationStatus.Paused] },
-          }),
-          this.entityManager.count(NotificationDeliveryEntity, {
-            broadcastId: broadcast.id,
-            status: NotificationStatus.Cancelled,
-          }),
-        ]);
-        broadcast.queuedCount = queued;
-        broadcast.sentCount = sent;
-        broadcast.rejectedCount = rejected;
-        broadcast.errorCount = errors;
-        broadcast.pendingCount = pending;
-        broadcast.cancelledCount = cancelled;
-        if (broadcast.status === NotificationBroadcastStatus.Sending && broadcast.materializedAt && pending === 0) {
-          broadcast.status = NotificationBroadcastStatus.Completed;
-        }
-        broadcast.updatedAt = new Date();
-      }),
+    const refreshed = await Promise.all(
+      candidates.map((candidate) =>
+        this.entityManager.transactional(async (em) => {
+          const broadcast = await em.findOne(
+            NotificationBroadcastEntity,
+            {
+              id: candidate.id,
+              status: { $in: [NotificationBroadcastStatus.Sending, NotificationBroadcastStatus.Paused] },
+            },
+            { lockMode: LockMode.PESSIMISTIC_WRITE },
+          );
+          if (!broadcast) {
+            return false;
+          }
+          const [queued, sent, rejected, errors, pending, cancelled] = await Promise.all([
+            em.count(NotificationDeliveryEntity, { broadcastId: broadcast.id }),
+            em.count(NotificationDeliveryEntity, {
+              broadcastId: broadcast.id,
+              status: NotificationStatus.Sent,
+            }),
+            em.count(NotificationDeliveryEntity, {
+              broadcastId: broadcast.id,
+              status: NotificationStatus.Rejected,
+            }),
+            em.count(NotificationDeliveryEntity, {
+              broadcastId: broadcast.id,
+              status: NotificationStatus.Error,
+            }),
+            em.count(NotificationDeliveryEntity, {
+              broadcastId: broadcast.id,
+              status: { $in: [NotificationStatus.Pending, NotificationStatus.Paused] },
+            }),
+            em.count(NotificationDeliveryEntity, {
+              broadcastId: broadcast.id,
+              status: NotificationStatus.Cancelled,
+            }),
+          ]);
+          broadcast.queuedCount = queued;
+          broadcast.sentCount = sent;
+          broadcast.rejectedCount = rejected;
+          broadcast.errorCount = errors;
+          broadcast.pendingCount = pending;
+          broadcast.cancelledCount = cancelled;
+          if (broadcast.status === NotificationBroadcastStatus.Sending && broadcast.materializedAt && pending === 0) {
+            broadcast.status = NotificationBroadcastStatus.Completed;
+          }
+          broadcast.updatedAt = new Date();
+          await em.flush();
+          return true;
+        }),
+      ),
     );
-    await this.entityManager.flush();
-    return broadcasts.length;
+    return refreshed.filter(Boolean).length;
   }
 
   private async applyTransition(
@@ -963,7 +1026,12 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     await em.nativeUpdate(
       NotificationDeliveryEntity,
       { broadcastId: broadcast.id, status: currentDeliveryStatus },
-      { status: nextDeliveryStatus, updatedAt: new Date() },
+      {
+        status: nextDeliveryStatus,
+        claimedAt: new Date(0),
+        claimToken: UnclaimedNotificationDeliveryClaimId,
+        updatedAt: new Date(),
+      },
     );
   }
 
@@ -979,7 +1047,12 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     await em.nativeUpdate(
       NotificationDeliveryEntity,
       { broadcastId: broadcast.id, status: { $in: [NotificationStatus.Pending, NotificationStatus.Paused] } },
-      { status: NotificationStatus.Cancelled, updatedAt: new Date() },
+      {
+        status: NotificationStatus.Cancelled,
+        claimedAt: new Date(0),
+        claimToken: UnclaimedNotificationDeliveryClaimId,
+        updatedAt: new Date(),
+      },
     );
   }
 

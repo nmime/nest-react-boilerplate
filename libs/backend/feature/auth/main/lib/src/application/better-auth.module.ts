@@ -1,4 +1,8 @@
 import { DynamicModule, Global, Inject, Injectable, Module } from '@nestjs/common';
+import {
+  BetterAuthDatabaseProviderInjectToken,
+  type BetterAuthDatabaseProvider,
+} from '@app/backend-feature-auth-shared';
 import { getBetterAuthConfig, getBaseUrl, type BetterAuthConfigOptions } from './better-auth';
 import type { Auth } from 'better-auth';
 
@@ -22,8 +26,9 @@ export class BetterAuthModule {
         },
         {
           provide: BetterAuthInstanceToken,
-          useFactory: (opts: BetterAuthConfigOptions): Auth => getBetterAuthConfig(null, opts),
-          inject: ['BETTER_AUTH_MODULE_OPTIONS'],
+          useFactory: (opts: BetterAuthConfigOptions, database?: BetterAuthDatabaseProvider): Auth =>
+            getBetterAuthConfig(database?.database, opts),
+          inject: ['BETTER_AUTH_MODULE_OPTIONS', { token: BetterAuthDatabaseProviderInjectToken, optional: true }],
         },
       ],
       exports: [BetterAuthInstanceToken],

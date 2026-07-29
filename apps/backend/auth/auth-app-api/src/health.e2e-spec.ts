@@ -9,6 +9,7 @@ import type { AuthenticatedPrincipal, AuthenticatedSession } from '@app/backend-
 
 import { BetterAuthInstanceToken } from '@app/backend-feature-auth-main';
 import { AuthAppApiModule } from './auth-app-api.module';
+import { AuthAppApiCapabilitiesModule } from './capabilities.generated';
 
 const mockAuth = {
   api: {},
@@ -38,6 +39,17 @@ interface AuthSessionResponse {
 }
 
 const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
+
+const capabilityImports =
+  (Reflect.getMetadata('imports', AuthAppApiCapabilitiesModule) as Array<
+    { module?: { name?: string }; name?: string }
+  > | null) ?? [];
+const capabilityModuleNames = capabilityImports.map((entry) => entry.module?.name ?? entry.name ?? '');
+const selectedPersistence = capabilityModuleNames.some((name) => name.includes('Postgres'))
+  ? 'postgres'
+  : capabilityModuleNames.some((name) => name.includes('Mongo'))
+    ? 'mongodb'
+    : 'memory';
 
 function readSessionId(cookieHeader: string | string[] | undefined): string | undefined {
   const header = Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader;
@@ -124,7 +136,10 @@ describe('auth-app-api e2e', () => {
   let app: NestFastifyApplication;
 
   beforeAll(async () => {
-    process.env.AUTH_PERSISTENCE = 'memory';
+    process.env.AUTH_PERSISTENCE = selectedPersistence;
+    process.env.DATABASE_URL ??= 'postgresql://test:test@127.0.0.1:1/test';
+    process.env.MONGODB_DATABASE ??= 'test';
+    process.env.MONGODB_URI ??= 'mongodb://127.0.0.1:1/test';
     process.env.SESSION_SECRET = 'e2e-test-session-secret-at-least-32-characters';
     const moduleRef = await Test.createTestingModule({
       imports: [AuthAppApiModule],
@@ -195,12 +210,7 @@ describe('auth-app-api e2e', () => {
         expect.objectContaining({
           name: 'auth-persistence',
           status: 'ok',
-          details: expect.objectContaining({ mode: 'memory' }),
-        }),
-        expect.objectContaining({
-          name: 'postgres',
-          status: 'ok',
-          required: false,
+          details: expect.objectContaining({ mode: selectedPersistence }),
         }),
       ]),
     });
@@ -391,7 +401,7 @@ describe('auth-app-api e2e', () => {
     expect(sessionAfterLogout.statusCode).toBe(401);
   });
 
-  it('GET /live and /ready return ok with memory persistence and skipped Postgres', async () => {
+  it('GET /live and /ready reflect the setup-selected persistence', async () => {
     const liveResponse = await app.inject({ method: 'GET', url: '/live' });
     expect(liveResponse.statusCode).toBe(200);
     expect(parseHealthEnvelope(liveResponse)).toMatchObject({
@@ -422,12 +432,9 @@ describe('auth-app-api e2e', () => {
     expect(deps!.find((d) => d.name === 'auth-persistence')).toMatchObject({
       status: 'ok',
       required: true,
-      details: expect.objectContaining({ mode: 'memory' }),
+      details: expect.objectContaining({ mode: selectedPersistence }),
     });
-    expect(deps!.find((d) => d.name === 'postgres')).toMatchObject({
-      status: 'ok',
-      required: false,
-    });
+    expect(deps!.some((dependency) => dependency.name === 'database')).toBe(selectedPersistence !== 'memory');
     expect(deps!.find((d) => d.name === 'redis')).toMatchObject({
       status: 'ok',
       required: false,

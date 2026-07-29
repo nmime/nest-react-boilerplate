@@ -48,12 +48,25 @@ describe('repeatable setup selection', () => {
     );
   });
 
-  it('refuses to remove a capability that remains required', () => {
+  it('refuses to remove the only database provider', () => {
     const existing = updateSelection(null, { addApps: ['user-app'] });
     assert.throws(
       () => updateSelection(existing, { removeCapabilities: ['postgres'] }),
-      /Cannot remove capability "postgres".*required by auth-app-api, user-app-api/,
+      /require exactly one durable database provider/,
     );
+  });
+
+  it('swaps database providers atomically', () => {
+    const existing = updateSelection(null, {
+      addApps: ['user-app-api'],
+      addCapabilities: ['postgres'],
+    });
+    const config = updateSelection(existing, {
+      addCapabilities: ['mongodb'],
+      removeCapabilities: ['postgres'],
+    });
+
+    assert.deepEqual(config.capabilities, ['mongodb']);
   });
 
   it('supports an explicit replacement selection', () => {

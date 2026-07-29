@@ -2,29 +2,49 @@
 # DATABASE_URL is mounted as a Docker secret and is never committed or interpolated
 # into the Compose model. Use only with docker/docker-compose.prod.yml.
 
+x-postgres-env: &postgres-env
+  DATABASE_ENGINE: postgres
+  AUTH_PERSISTENCE: postgres
+  POSTGRES_SSL: ${POSTGRES_SSL:-true}
+  POSTGRES_SSL_REJECT_UNAUTHORIZED: ${POSTGRES_SSL_REJECT_UNAUTHORIZED:-true}
+  POSTGRES_SYNCHRONIZE: 'false'
+  POSTGRES_LOGGING: ${POSTGRES_LOGGING:-false}
+  POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-2}
+  POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-10}
+  POSTGRES_POOL_IDLE_TIMEOUT_MS: ${POSTGRES_POOL_IDLE_TIMEOUT_MS:-30000}
+  POSTGRES_SLOW_QUERY_MS: ${POSTGRES_SLOW_QUERY_MS:-}
+
 services:
   migrate:
+    environment: *postgres-env
     secrets: [database_url]
 
   admin-app-api:
+    environment: *postgres-env
     secrets: [database_url]
 
   user-app-api:
+    environment: *postgres-env
     secrets: [database_url]
 
   auth-app-api:
+    environment: *postgres-env
     secrets: [database_url]
 
   discord-app-api:
+    environment: *postgres-env
     secrets: [database_url]
 
   telegram-bot-api:
+    environment: *postgres-env
     secrets: [database_url]
 
   notification-scheduler:
+    environment: *postgres-env
     secrets: [database_url]
 
   notification-consumer:
+    environment: *postgres-env
     secrets: [database_url]
 
 secrets:

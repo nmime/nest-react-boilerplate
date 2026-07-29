@@ -33,13 +33,29 @@ test('joins setup metadata with Nx project roots', () => {
       publicHostname: 'demo-app.example.com',
       requiresApps: [],
       requiresCapabilities: [],
+      requiresDurableDatabase: true,
     },
   };
   const rendered = renderProjectCatalog(catalog, collectApplicationRoots(root));
 
   assert.match(rendered, /`demo-app` \| `apps\/frontend\/demo`/);
   assert.match(rendered, /`demo-app\.example\.com`/);
+  assert.match(rendered, /`postgres` or `mongodb` capability/);
   assert.match(rendered, /Do not maintain an exhaustive library table/);
+});
+
+test('renders both durable provider library conventions', () => {
+  const rendered = renderProjectCatalog(
+    {},
+    new Map(),
+    new Map([
+      ['@app/backend-mongodb-main-auth', 'libs/backend/mongodb/main/auth/lib'],
+      ['@app/backend-postgres-main-auth', 'libs/backend/postgres/main/auth/lib'],
+    ]),
+  );
+
+  assert.match(rendered, /Backend MongoDB.*libs\/backend\/mongodb\/main\/<scope>\/lib/u);
+  assert.match(rendered, /Backend PostgreSQL.*libs\/backend\/postgres\/main\/<scope>\/lib/u);
 });
 
 test('rejects catalog and Nx application drift in either direction', () => {
@@ -100,6 +116,29 @@ test('rejects copied application path or hostname rows outside the catalog', () 
   assert.match(failures.join('\n'), /guide\.md:5/);
 });
 
+test('ignores local nested worktree storage when scanning copied rows', () => {
+  const root = mkdtempSync(resolve(tmpdir(), 'nrb-project-catalog-worktrees-'));
+  temporaryRoots.push(root);
+  const worktree = resolve(root, '.claude/worktrees/local/docs');
+  mkdirSync(worktree, { recursive: true });
+  writeFileSync(resolve(worktree, 'project-catalog.md'), '| `demo-app` | `apps/frontend/demo` |\n');
+
+  const entry = {
+    id: 'demo-app',
+    platform: 'frontend',
+    classification: 'reference',
+    runtime: 'React + Vite SPA',
+    publicHostname: 'demo-app.example.com',
+    requiresApps: [],
+    requiresCapabilities: [],
+  };
+
+  assert.deepEqual(
+    findCopiedCatalogRows(root, { 'demo-app': entry }, new Map([['demo-app', 'apps/frontend/demo']])),
+    [],
+  );
+});
+
 test('accepts every live library root and rejects layouts outside the repository contract', () => {
   const workspaceRoot = resolve(import.meta.dirname, '..');
   const libraryRoots = collectLibraryRoots(workspaceRoot);
@@ -112,12 +151,14 @@ test('accepts every live library root and rejects layouts outside the repository
     validateLibraryRoots(
       new Map([
         ['@app/backend-invalid', 'libs/backend/invalid/lib'],
+        ['@app/backend-mongodb-too-deep', 'libs/backend/mongodb/main/auth/extra/lib'],
         ['@app/frontend-too-deep', 'libs/frontend/feature/demo/shared/extra/lib'],
         ['@app/common-too-deep', 'libs/common/i18n/runtime/extra/lib'],
       ]),
     ),
     [
       '@app/backend-invalid: libs/backend/invalid/lib',
+      '@app/backend-mongodb-too-deep: libs/backend/mongodb/main/auth/extra/lib',
       '@app/frontend-too-deep: libs/frontend/feature/demo/shared/extra/lib',
       '@app/common-too-deep: libs/common/i18n/runtime/extra/lib',
     ],

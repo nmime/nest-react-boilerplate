@@ -1,15 +1,14 @@
-import type { EntityManager } from '@mikro-orm/core';
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import { AdminManageAllPermission, AdminRole } from '@app/common-authz';
 import type {
-  AuthRoleRepository,
-  AdminAuditLogRepository,
-  AdminUserMutationRepository,
+  AuthenticatedPrincipal,
+  AuthRoleRepositoryPort,
+  AdminAuditLogRepositoryPort,
+  AdminUserMutationRepositoryPort,
   AdminUserMutationResult,
-  AuthPermissionEntity,
-  AuthRoleEntity,
+  AuthPermissionRecord,
+  AuthRoleRecord,
   AuthRoleWithPermissions,
-} from '@app/backend-postgres-main-auth';
+} from '@app/backend-feature-auth-shared';
+import { AdminManageAllPermission, AdminRole } from '@app/common-authz';
 import { AdminApplicationError } from './admin-errors';
 import { adminRoleInvariantPermissions } from './const';
 import { toAdminRoleView, toAdminUserView, toPermissionView } from './mapper';
@@ -33,9 +32,9 @@ import type {
 
 export class AdminRolesUseCase {
   constructor(
-    private readonly roles: AuthRoleRepository,
-    private readonly adminUserMutations: AdminUserMutationRepository,
-    private readonly auditLogs?: AdminAuditLogRepository,
+    private readonly roles: AuthRoleRepositoryPort,
+    private readonly adminUserMutations: AdminUserMutationRepositoryPort,
+    private readonly auditLogs?: AdminAuditLogRepositoryPort,
   ) {}
 
   async listRolesCatalog(principal: AuthenticatedPrincipal): Promise<AdminRbacCatalog> {
@@ -43,7 +42,7 @@ export class AdminRolesUseCase {
     const rolesWithPermissions = unwrapRepositoryResult<AuthRoleWithPermissions[]>(
       await this.roles.listRolesWithPermissions(tenantId),
     );
-    const permissions = unwrapRepositoryResult<AuthPermissionEntity[]>(await this.roles.listPermissions());
+    const permissions = unwrapRepositoryResult<AuthPermissionRecord[]>(await this.roles.listPermissions());
 
     const permissionViews = orderPermissionViews(permissions.map(toPermissionView));
     const roleViews = rolesWithPermissions.map(toAdminRoleView);
@@ -75,13 +74,13 @@ export class AdminRolesUseCase {
     this.requireNoManageAllForCustomRole(requestedPermissions);
 
     return this.auditedRoleMutation(principal, 'admin.role.create', context, async (entityManager) => {
-      const existing = unwrapRepositoryResult<AuthRoleEntity | null>(
+      const existing = unwrapRepositoryResult<AuthRoleRecord | null>(
         await this.roles.findByKey(key, tenantId, entityManager),
       );
       if (existing) {
         throw new AdminApplicationError('conflict', `A role with key "${key}" already exists.`);
       }
-      const created = unwrapRepositoryResult<AuthRoleEntity>(
+      const created = unwrapRepositoryResult<AuthRoleRecord>(
         await this.roles.createRole(
           {
             tenantId,
@@ -115,7 +114,7 @@ export class AdminRolesUseCase {
     const tenantId = resolveTenantId(principal);
     return this.auditedRoleMutation(principal, 'admin.role.update', context, async (entityManager) => {
       const before = await this.roleViewFor(id, tenantId, entityManager);
-      const updated = unwrapRepositoryResult<AuthRoleEntity | null>(
+      const updated = unwrapRepositoryResult<AuthRoleRecord | null>(
         await this.roles.updateRole(
           id,
           {
@@ -145,7 +144,7 @@ export class AdminRolesUseCase {
 
     return this.auditedRoleMutation(principal, 'admin.role.permissions.update', context, async (entityManager) => {
       const before = await this.roleViewFor(id, tenantId, entityManager);
-      const role = unwrapRepositoryResult<AuthRoleEntity | null>(
+      const role = unwrapRepositoryResult<AuthRoleRecord | null>(
         await this.roles.findById(id, tenantId, entityManager),
       );
       if (!role) {
@@ -202,7 +201,7 @@ export class AdminRolesUseCase {
     return toAdminUserView(result.after);
   }
 
-  private async roleViewFor(id: string, tenantId: string, entityManager?: EntityManager): Promise<AdminRoleView> {
+  private async roleViewFor(id: string, tenantId: string, entityManager?: unknown): Promise<AdminRoleView> {
     const rolesWithPermissions = unwrapRepositoryResult<AuthRoleWithPermissions[]>(
       await this.roles.listRolesWithPermissions(tenantId, entityManager),
     );
@@ -218,7 +217,7 @@ export class AdminRolesUseCase {
     if (roleKeys.length === 0) {
       return;
     }
-    const found = unwrapRepositoryResult<AuthRoleEntity[]>(await this.roles.findByKeys(roleKeys, tenantId));
+    const found = unwrapRepositoryResult<AuthRoleRecord[]>(await this.roles.findByKeys(roleKeys, tenantId));
     const foundKeys = new Set(found.map((role) => role.key));
     const unknown = roleKeys.filter((key) => !foundKeys.has(key));
     if (unknown.length > 0) {
@@ -233,7 +232,7 @@ export class AdminRolesUseCase {
     if (permissionKeys.length === 0) {
       return;
     }
-    const found = unwrapRepositoryResult<AuthPermissionEntity[]>(
+    const found = unwrapRepositoryResult<AuthPermissionRecord[]>(
       await this.roles.findPermissionsByKeys(permissionKeys),
     );
     const foundKeys = new Set(found.map((permission) => permission.key));
@@ -260,7 +259,7 @@ export class AdminRolesUseCase {
     action: 'admin.role.create' | 'admin.role.update' | 'admin.role.permissions.update',
     context: AdminRequestContext,
     operation: (
-      entityManager?: EntityManager,
+      entityManager?: unknown,
     ) => Promise<{ before: AdminRoleView | Record<string, never>; after: AdminRoleView }>,
   ): Promise<AdminRoleView> {
     if (!this.auditLogs) {

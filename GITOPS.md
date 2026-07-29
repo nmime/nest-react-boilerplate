@@ -32,8 +32,8 @@ commit according to the promotion policy.
 ```mermaid
 flowchart LR
   merge[Merge application code] --> tag[Create reviewed release tag]
-  tag --> plan[Release workflow derives affected images from Nx and migration paths]
-  plan --> images[Build, scan, sign, and publish only selected immutable images]
+  tag --> plan[Release workflow validates the fresh selected closure]
+  plan --> images[Build, scan, sign, and publish its complete selected image set]
   images --> promote[Run Promote GitOps release with the full 40-character Git SHA]
   promote --> verify[Resolve selected full-SHA images to immutable digests and render Helm]
   verify --> pr[Open a promotion pull request updating values-production.yaml]
@@ -43,25 +43,29 @@ flowchart LR
 The promotion workflow is manual by design. It:
 
 1. accepts only a full 40-character commit SHA already contained in `main`;
-2. resolves only images published for that SHA and verifies their immutable
-   digests in GHCR;
-3. updates those Helm image references to the exact `sha-<40-character-sha>`
-   tag plus digest, leaving unaffected workloads on their previously promoted
-   digest;
-4. requires the first promotion to provide every release-owned image, so no
-   template placeholder can reach a cluster;
-5. renders the chart and validates both GitOps controller manifests;
-6. pushes a topic branch and opens a pull request.
+2. validates that SHA's setup-selected closure and intersects its
+   `releaseImages` with applications and migrations enabled by the matching
+   setup-generated `.helm/values-selection.yaml` and effective Helm production values;
+3. requires every image in that exact set to have an immutable digest in GHCR,
+   on both initial and later promotions;
+4. rejects missing required digests and supplied unselected or disabled image
+   digests, then updates the exact set to the full-SHA tag plus digest;
+5. leaves image values outside the selected-and-enabled set unchanged;
+6. renders the chart and validates both GitOps controller manifests;
+7. pushes a topic branch and opens a pull request.
 
 It never commits directly to `main`, never shortens the image tag, and never
 creates a CI/deploy commit loop. Configure `GH_DEPLOY_TOKEN` with repository
 contents, pull-request, and package read access before using the workflow.
 
 The release planner uses Nx's affected graph for application images and a
-separate migration-path rule for the migration image. A full build remains the
-safe default for the first promotion, Dockerfile/workspace changes, or an
-explicit `force_full` dispatch; otherwise the workflow primes one shared
-BuildKit dependency cache and builds only the selected image targets.
+separate migration-path rule for the migration image, then intersects both with
+the current closure's `releaseImages`. Tag releases and explicit `force_full`
+dispatches build every selected image so the result is promotable; this never
+expands to every catalog image. Missing or stale closure metadata fails release
+and promotion. Every product image build runs through the generated Bake plan
+with its validated selected `nrb-closure` context; no direct Docker workspace
+target bypasses that plan.
 
 ## Common prerequisites
 
@@ -70,9 +74,12 @@ BuildKit dependency cache and builds only the selected image targets.
   `.github/workflows/release-images.yml`; promotion pins selected workloads to
   their registry digest automatically;
 - a target namespace Secret named by `secrets.existingSecret` containing at
-  least `SESSION_SECRET` and `DATABASE_URL`;
+  least `SESSION_SECRET`, `BETTER_AUTH_SECRET`, and the selected provider
+  credential: `DATABASE_URL` for PostgreSQL or a replica-set `MONGODB_URI` for
+  MongoDB;
 - `ghcr-credentials` in the target namespace when images are private;
-- reachable PostgreSQL and Redis services;
+- reachable Redis and either PostgreSQL or a transaction-capable, multi-node
+  MongoDB replica set;
 - ingress, DNS, and TLS configured for every enabled application domain.
 
 The current manifests use the stable APIs documented by each controller:
@@ -151,8 +158,9 @@ curl -fsS https://auth-app-api.example.com/ready
 Rollback is Git-driven: revert the promotion pull request or promote a previous
 verified image SHA, merge the change, and let the controller reconcile. Database
 schema changes must remain backward-compatible across the rollback window. When
-they are not, restore a verified backup or roll forward with a corrective
-migration before returning application traffic.
+they are not, restore a verified backup with the selected PostgreSQL or MongoDB
+workflow, or roll forward with a corrective migration before returning
+application traffic.
 
 Do not use the controller's imperative rollback as the lasting state; record the
 same rollback in Git so reconciliation does not reapply the failed version.

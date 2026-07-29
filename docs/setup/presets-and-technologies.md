@@ -23,26 +23,27 @@ capability behavior.
 
 Capabilities are executable selections, not labels. Each catalog entry declares its activation class, dependencies, owning Nx projects, Docker services, environment contract, and backend module/bootstrap wiring.
 
-| Capability      | Activation                       | Dependencies / concrete effect                                                                                                                                                  |
-| --------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `i18n`          | source libraries                 | Backend common, frontend shared/feature catalogs, common runtime and keys.                                                                                                      |
-| `analytics`     | Nest module                      | Generates `AnalyticsModule.forRoot()` composition.                                                                                                                              |
-| `websockets`    | source library                   | Enables the provider-neutral websocket contracts.                                                                                                                               |
-| `feature-flags` | Nest module                      | Requires PostgreSQL; wires the Postgres feature-flag module.                                                                                                                    |
-| `notifications` | Nest module + consumer/scheduler | Requires PostgreSQL, S3, `notification-consumer`, and `notification-scheduler`; APIs produce commands, the consumer materializes audiences, and the scheduler sends deliveries. |
-| `design-tokens` | source library                   | Enables renderer-neutral tokens, required by native UI.                                                                                                                         |
-| `authz`         | source library                   | Enables shared authorization contracts/policies.                                                                                                                                |
-| `postgres`      | infrastructure                   | Enables `postgres` and `migrate` Compose services and `DATABASE_URL`.                                                                                                           |
-| `redis`         | Nest module + infrastructure     | Wires `RedisModule.forRoot()` and the Redis Compose service.                                                                                                                    |
-| `s3`            | Nest module + infrastructure     | Wires the AWS SDK v3-backed `S3Module.forRoot()` and local MinIO profile; the configured bucket must already exist.                                                             |
-| `static-data`   | Nest module                      | Wires filesystem static-data access.                                                                                                                                            |
-| `nats`          | Nest module + infrastructure     | Wires `NatsModule.forRoot()` and NATS.                                                                                                                                          |
-| `otel`          | bootstrap                        | Enables OpenTelemetry bootstrap environment.                                                                                                                                    |
-| `swagger`       | bootstrap                        | Enables OpenAPI bootstrap environment.                                                                                                                                          |
-| `telegram-bot`  | optional application capability  | Selects `telegram-bot-api` and its Telegram environment contract.                                                                                                               |
-| `discord-bot`   | optional application capability  | Selects `discord-app-api` and its Discord environment contract.                                                                                                                 |
+| Capability      | Activation                       | Dependencies / concrete effect                                                                                                                                                                    |
+| --------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `i18n`          | source libraries                 | Backend common, frontend shared/feature catalogs, common runtime and keys.                                                                                                                        |
+| `analytics`     | Nest module                      | Generates `AnalyticsModule.forRoot()` composition.                                                                                                                                                |
+| `websockets`    | source library                   | Enables the provider-neutral websocket contracts.                                                                                                                                                 |
+| `feature-flags` | Nest module                      | Requires exactly one durable provider; both adapters exist, but the current setup catalog still emits PostgreSQL wiring (see limitation below).                                                   |
+| `notifications` | Nest module + consumer/scheduler | Requires exactly one durable provider, S3, `notification-consumer`, and `notification-scheduler`; APIs produce commands, the consumer materializes audiences, and the scheduler sends deliveries. |
+| `design-tokens` | source library                   | Enables renderer-neutral tokens, required by native UI.                                                                                                                                           |
+| `authz`         | source library                   | Enables shared authorization contracts/policies.                                                                                                                                                  |
+| `postgres`      | infrastructure                   | Enables `postgres` and `migrate` Compose services and `DATABASE_URL`.                                                                                                                             |
+| `mongodb`       | infrastructure                   | Mutually exclusive PostgreSQL alternative; enables a one-node local replica set plus preparation/migration services and the `MONGODB_*` contract.                                                 |
+| `redis`         | Nest module + infrastructure     | Wires `RedisModule.forRoot()` and the Redis Compose service.                                                                                                                                      |
+| `s3`            | Nest module + infrastructure     | Wires the AWS SDK v3-backed `S3Module.forRoot()` and local MinIO profile; the configured bucket must already exist.                                                                               |
+| `static-data`   | Nest module                      | Wires filesystem static-data access.                                                                                                                                                              |
+| `nats`          | Nest module + infrastructure     | Wires `NatsModule.forRoot()` and NATS.                                                                                                                                                            |
+| `otel`          | bootstrap                        | Enables OpenTelemetry bootstrap environment.                                                                                                                                                      |
+| `swagger`       | bootstrap                        | Enables OpenAPI bootstrap environment.                                                                                                                                                            |
+| `telegram-bot`  | optional application capability  | Selects `telegram-bot-api` and its Telegram environment contract.                                                                                                                                 |
+| `discord-bot`   | optional application capability  | Selects `discord-app-api` and its Discord environment contract.                                                                                                                                   |
 
-Setup materializes this into `.nrb/capabilities.json`, `.nrb/capabilities.env`, `.nrb/workspace.json`, and one `capabilities.generated.ts` per backend application. Rerunning setup regenerates all managed modules, so removing a capability also removes stale imports/wiring. `pnpm nrb doctor` fails when generated activation drifts from the saved selection.
+Setup materializes this into `.nrb/capabilities.json`, `.nrb/capabilities.env`, `.nrb/workspace.json`, `.nrb/closure.json`, the selected pnpm closure manifests, and one module-composition `capabilities.generated.ts` plus one pre-import `capabilities.bootstrap.generated.ts` per backend application. Rerunning setup regenerates all managed surfaces, so removing a capability also removes stale imports/wiring. `pnpm nrb doctor` fails when generated activation or the live Nx closure drifts from the saved selection.
 
 Run selected infrastructure/apps with:
 
@@ -54,9 +55,20 @@ Use `pnpm run docker:fullstack` only when intentionally starting every Compose p
 
 ## Dependency expansion example
 
-Selecting `notifications` expands to `postgres`, `s3`,
-`notification-consumer`, and `notification-scheduler`. Telegram and Discord are
+Every current preset explicitly includes PostgreSQL and remains unchanged unless
+the operator swaps it for MongoDB. Database-dependent apps and the
+`feature-flags`/`notifications` capabilities require exactly one durable
+provider, rather than PostgreSQL specifically. Selecting `notifications` also
+adds S3, `notification-consumer`, and `notification-scheduler`; selecting
+`admin-app` adds both required APIs and authorization. Telegram and Discord are
 independent provider integrations, not prerequisites for email or push
-providers. Selecting `admin-app` expands to both required APIs and
-authorization/PostgreSQL requirements. Expansion is deterministic and
-dependency-breaking removals fail.
+providers. Expansion is deterministic and dependency-breaking removals fail.
+
+### Provider-aware setup
+
+Feature flags and notifications resolve their owned persistence projects and
+backend wiring from the selected durable provider. Swapping a valid selection
+from PostgreSQL to MongoDB therefore replaces the provider-specific projects,
+generated module imports, Compose profile, and environment selectors together.
+Selections such as a standalone landing app may intentionally omit both durable
+providers; database-dependent apps and capabilities still require exactly one.

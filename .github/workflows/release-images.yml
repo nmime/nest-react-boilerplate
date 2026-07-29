@@ -11,7 +11,7 @@ on:
         required: false
         type: string
       force_full:
-        description: 'Build every release image instead of using the affected-image plan'
+        description: 'Build every setup-selected release image instead of using the affected-image plan'
         required: false
         default: false
         type: boolean
@@ -30,24 +30,6 @@ env:
   HELM_VERSION: v4.2.3
 
 jobs:
-  helm-render:
-    name: Helm render gate
-    runs-on: ubuntu-22.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - name: Validate deployment config
-        run: node scripts/validate-deployment-config.mjs
-      - name: Validate Helm rate-limit config
-        run: node scripts/validate-helm-rate-limit-config.mjs
-      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
-        with:
-          version: ${{ env.HELM_VERSION }}
-      - name: Validate Helm chart
-        run: bash scripts/validate-helm.sh
-
   image-plan:
     name: Select affected release images
     runs-on: ubuntu-22.04
@@ -74,11 +56,18 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install dependency metadata for Nx impact analysis
-        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install explicit bootstrap/tooling dependencies
+        run: pnpm run tooling:install
 
-      - name: Verify Docker dependency manifests
-        run: pnpm run docker:manifests:check
+      - name: Install clean product-selected closure
+        run: pnpm nrb closure install
+
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Validate selected Helm deployment
+        run: pnpm run deploy:validate:helm
 
       - name: Build the affected-image plan
         id: plan
@@ -88,7 +77,7 @@ jobs:
         run: |
           args=(--head "$GITHUB_SHA" --github-output "$GITHUB_OUTPUT")
           if [ -n "$INPUT_BASE_SHA" ]; then args+=(--base "$INPUT_BASE_SHA"); fi
-          if [ "$INPUT_FORCE_FULL" = 'true' ]; then args+=(--force-full); fi
+          if [ "$INPUT_FORCE_FULL" = 'true' ] || [[ "$GITHUB_REF" == refs/tags/* ]]; then args+=(--force-full); fi
           node scripts/release-image-plan.mjs "${args[@]}"
 
       - name: Write image-plan summary
@@ -105,34 +94,10 @@ jobs:
             echo "- Images: ${SELECTED_IMAGES:-none}"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  workspace-cache:
-    name: Prime shared Docker workspace cache
+  build-scan-sign:
+    name: Build, scan, and sign selected images
     runs-on: ubuntu-22.04
     needs: image-plan
-    if: needs.image-plan.outputs.has_images == 'true'
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
-
-      - name: Export shared dependency cache
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          file: Dockerfile
-          target: workspace
-          outputs: type=cacheonly
-          cache-from: type=gha,scope=release-workspace-v2
-          cache-to: type=gha,mode=max,scope=release-workspace-v2
-
-  build-scan-sign:
-    name: Build, scan, and sign affected images
-    runs-on: ubuntu-22.04
-    needs: [helm-render, image-plan, workspace-cache]
     if: needs.image-plan.outputs.has_images == 'true'
     timeout-minutes: 90
     permissions:
@@ -154,6 +119,12 @@ jobs:
         with:
           node-version-file: .nvmrc
 
+      - name: Install explicit bootstrap/tooling dependencies
+        run: pnpm run tooling:install
+
+      - name: Install clean product-selected closure
+        run: pnpm nrb closure install
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
@@ -164,10 +135,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate the affected bake file
+      - name: Generate the selected bake file
         run: node scripts/generate-bake-file.mjs --only "${SELECTED_IMAGES}"
 
-      - name: Build, push, and attest affected images
+      - name: Build, push, and attest selected images
         id: bake
         env:
           VITE_TELEGRAM_AUTH_ENABLED: ${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}
@@ -179,7 +150,6 @@ jobs:
           done
           docker buildx bake -f docker-bake.json "${NAMES[@]}" "${set_args[@]}" \
             --set "*.args.VITE_TELEGRAM_AUTH_ENABLED=${VITE_TELEGRAM_AUTH_ENABLED}" \
-            --set "*.cache-from=type=gha,scope=release-workspace-v2" \
             --set "*.cache-from=type=gha,scope=release-bake-v2" \
             --set "*.cache-to=type=gha,mode=max,scope=release-bake-v2" \
             --set "*.attest=type=provenance,mode=max" \

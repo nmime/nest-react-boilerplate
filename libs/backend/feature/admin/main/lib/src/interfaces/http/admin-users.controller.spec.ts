@@ -2,7 +2,13 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { validate } from 'class-validator';
 import { errAsync, okAsync, type ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import type {
+  AdminAuditLogRecord,
+  AdminUserMutationResult,
+  AuthenticatedPrincipal,
+  AuthUserPersistenceRecord,
+  TransactionalOutboxRecord,
+} from '@app/backend-feature-auth-shared';
 import {
   AdminAuditReadPermission,
   AdminDashboardReadPermission,
@@ -14,12 +20,6 @@ import {
   AdminUsersWritePermission,
   UserProfileReadPermission,
 } from '@app/backend-feature-admin-shared';
-import type {
-  AdminAuditLogEntity,
-  AdminUserMutationResult,
-  AuthUserEntity,
-  TransactionalOutboxEventEntity,
-} from '@app/backend-postgres-main-auth';
 import { AdminUsersUseCase } from '../../application/admin-users.use-case';
 import { AdminUsersController } from './admin-users.controller';
 import { UpdateAdminUserAccessPolicyDto, UpdateAdminUserStatusDto } from './dto';
@@ -43,7 +43,7 @@ const principal: AuthenticatedPrincipal = {
 };
 
 type TestAuthUser = Pick<
-  AuthUserEntity,
+  AuthUserPersistenceRecord,
   | 'id'
   | 'tenantId'
   | 'email'
@@ -63,7 +63,7 @@ type TestAuthUser = Pick<
 >;
 
 type TestAdminAuditLog = Pick<
-  AdminAuditLogEntity,
+  AdminAuditLogRecord,
   | 'id'
   | 'tenantId'
   | 'actorUserId'
@@ -77,7 +77,7 @@ type TestAdminAuditLog = Pick<
 >;
 
 type TestOutboxEvent = Pick<
-  TransactionalOutboxEventEntity,
+  TransactionalOutboxRecord,
   | 'id'
   | 'tenantId'
   | 'aggregateType'

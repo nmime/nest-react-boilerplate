@@ -14,7 +14,8 @@ The repository separates three decisions that should not be conflated:
    product DNS base.
 2. `pnpm nrb setup` selects existing applications and concretely activates
    capabilities. It writes config/workspace/capability/environment manifests,
-   setup state, and canonical `capabilities.generated.ts` composition for every
+   setup state, canonical `capabilities.generated.ts` module composition, and a
+   pre-import `capabilities.bootstrap.generated.ts` initializer for every
    backend app. It does not delete unselected source or invent credentials.
 3. `pnpm nrb add` generates a new app, library, or feature in the required
    architecture. A generated deployable is not publicly exposed until its
@@ -71,7 +72,10 @@ pnpm nrb setup
 
 cp .env.example .env
 # Replace placeholder secrets in .env from the environment's secret manager.
+# PostgreSQL preset/default:
 pnpm run dev:db
+# MongoDB selection instead:
+# docker compose --profile mongodb up -d mongodb mongodb-init
 pnpm run db:migrate
 pnpm run onboarding:verify
 pnpm run dev
@@ -105,7 +109,7 @@ core reference surface, not a mandatory baseline:
 | Reference      | `site-app`                                                    | Vike SSR site surface                              |
 | Reference      | `mobile-app`                                                  | Expo/React Native client                           |
 | Reference      | `fullstack-e2e`                                               | Cross-application contract and browser proof       |
-| Selectable     | PostgreSQL, Redis, OTEL, Swagger                              | Persistence, cache, observability, and API tooling |
+| Selectable     | PostgreSQL or MongoDB, Redis, OTEL, Swagger                   | Persistence, cache, observability, and API tooling |
 | Selectable     | design tokens, i18n, and authz                                | Shared UI, locale, and authorization capabilities  |
 | Optional       | Discord and Telegram APIs                                     | Bot and social integrations                        |
 | Optional       | NATS, S3, analytics, notifications, feature flags, websockets | Capability-driven extensions                       |
@@ -208,17 +212,20 @@ pnpm nrb add app billing-scheduler \
 Run the same command without `--dry-run`, then:
 
 ```bash
-pnpm install
-pnpm install --frozen-lockfile
 pnpm exec nx show project customer-portal
 pnpm exec nx run customer-portal:build
 pnpm exec nx run customer-portal:test
 pnpm exec nx run customer-portal:typecheck
 ```
 
-The generator creates the source root, Nx project configuration, package
-manifest, tests, and nearest `README.md`/`AGENTS.md`. It never requires copying
-or moving another app.
+The generator creates the source root, Nx project configuration, tests, and
+nearest `README.md`/`AGENTS.md`. It does not create an application identity
+manifest; Astro and Expo receive only the dependency metadata their tooling
+requires.
+Add a missing external dependency to the owning
+`libs/backend/package.json` or `libs/frontend/package.json`, then run
+`pnpm install` and prove `pnpm install --frozen-lockfile`. It never requires
+copying or moving another app.
 
 ### Application completion checklist
 
@@ -265,6 +272,7 @@ responsibility that is written into the generated local README:
 pnpm nrb add lib money --kind common --type util --scope shared --description "Normalizes monetary values for API and browser consumers." --dry-run
 pnpm nrb add lib billing --kind backend --type feature-main --scope billing --description "Owns billing use cases and exposes the Nest feature module to billing APIs." --dry-run
 pnpm nrb add lib billing-admin --kind backend --type feature-admin --scope billing --description "Owns billing administration endpoints and privileged application orchestration." --dry-run
+pnpm nrb add lib ledger --kind backend --type data-access --scope ledger --database mongodb --description "Persists tenant ledger records behind the backend ledger port." --dry-run
 pnpm nrb add lib billing-ui --kind frontend --type ui --scope billing --description "Provides billing presentation primitives to the user and admin frontends." --dry-run
 ```
 
@@ -277,6 +285,9 @@ build/test targets, and the relevant boundary check. Generated libraries use
 the owning shared runtime manifest by default; run `pnpm install` only if a
 package manifest or dependency declaration changed. Do not place frontend code
 in backend libraries or use relative imports across projects.
+Backend `data-access` libraries accept `--database postgres|mongodb`; when it is
+omitted, the generator derives the workspace's exactly-one durable provider and
+rejects an explicit mismatch.
 
 ## Add a vertical feature
 
@@ -287,15 +298,19 @@ page boundary belong to one product capability:
 pnpm nrb add feature invoices \
   --api-app user-app-api \
   --frontend-app user-app \
+  --database mongodb \
   --dry-run
 pnpm nrb add feature invoices \
   --api-app user-app-api \
-  --frontend-app user-app
+  --frontend-app user-app \
+  --database mongodb
 ```
 
-The generator creates backend shared and main libraries, MikroORM persistence
-and a reversible migration, wires the Nest module, and creates an FSD
-`src/pages/<feature>` boundary. It deliberately does not hand-author generated
+The generator creates backend shared and main libraries, provider-owned
+persistence, wires the Nest module, and creates an FSD `src/pages/<feature>`
+boundary. PostgreSQL output uses MikroORM plus a reversible migration. MongoDB
+output uses a strict validator, deterministic indexes, native transactions, and
+replica-set component coverage. It deliberately does not hand-author generated
 OpenAPI/client output or invent product routing and fields.
 
 Before completion:

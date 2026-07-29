@@ -21,7 +21,7 @@
       "cache": true,
       "options": {
         "cwd": "libs/backend/common/nats/lib",
-        "command": "vitest run --config vitest.config.mts --pool=threads --maxWorkers=1 --testTimeout=30000"
+        "command": "vitest run --config vitest.config.mts --pool=forks --maxWorkers=1 --testTimeout=30000"
       },
       "inputs": [
         "default",

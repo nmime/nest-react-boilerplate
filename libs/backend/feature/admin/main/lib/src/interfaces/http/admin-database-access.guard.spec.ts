@@ -2,8 +2,12 @@ import { InternalServerErrorException, UnauthorizedException } from '@nestjs/com
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
 import { canAdmin, type AdminAuthorizedRequest } from '@app/backend-feature-admin-shared';
-import { PublicAuthMetadataKey, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
-import type { AuthUserRepository, AuthUserRoleRepository } from '@app/backend-postgres-main-auth';
+import {
+  PublicAuthMetadataKey,
+  type AuthenticatedRequest,
+  type AuthUserRepositoryPort,
+  type AuthUserRoleRepositoryPort,
+} from '@app/backend-feature-auth-shared';
 import { AdminDatabaseAccessGuard } from './admin-database-access.guard';
 
 const tenantId = '00000000-0000-4000-8000-000000000001';
@@ -41,7 +45,7 @@ function dependencies(input?: {
             value: input?.user === undefined ? { status: 'active' } : input.user,
           } as never),
     ),
-  } as unknown as AuthUserRepository;
+  } as unknown as AuthUserRepositoryPort;
   const roles = {
     resolveEffectiveAccess: vi.fn(async () =>
       input?.accessError
@@ -51,7 +55,7 @@ function dependencies(input?: {
             value: input?.access ?? { roleKeys: ['support'], permissionKeys: ['admin:users:read'] },
           } as never),
     ),
-  } as unknown as AuthUserRoleRepository;
+  } as unknown as AuthUserRoleRepositoryPort;
   return { metadata, users, roles, guard: new AdminDatabaseAccessGuard(metadata, users, roles) };
 }
 

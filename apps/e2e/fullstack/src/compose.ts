@@ -1,27 +1,27 @@
 import { spawn } from 'node:child_process';
+import { join } from 'node:path';
+import { readFullstackSelection, validateFullstackEnvironment } from './selection';
 
 const composeParallelLimit = process.env.COMPOSE_PARALLEL_LIMIT ?? '2';
 export const composeArgs = ['compose', '--parallel', composeParallelLimit, '-f', 'docker/docker-compose.yml'];
-export const stackServices = [
-  'migrate',
-  'admin-app-api',
-  'user-app-api',
-  'auth-app-api',
-  'admin-app',
-  'user-app',
-  'landing-app',
-];
+const workspaceRoot = process.env.NRB_WORKSPACE_ROOT ?? process.cwd();
+export const fullstackSelection = readFullstackSelection(workspaceRoot);
+validateFullstackEnvironment(fullstackSelection, process.env);
+export const databaseProvider = fullstackSelection.provider;
+const applicationServices = fullstackSelection.applicationServices;
+export const stackServices = fullstackSelection.services;
 
 const host = process.env.FULLSTACK_HOST ?? '127.0.0.1';
 const stableHash = (value: string): number =>
   [...value].reduce((hash, char) => (hash * 33 + char.charCodeAt(0)) >>> 0, 5381);
-const fallbackRunId = stableHash(process.cwd()).toString(36);
+const fallbackRunId = stableHash(workspaceRoot).toString(36);
 const generatedPortBase =
-  Number.parseInt(process.env.DOCKER_TEST_PORT_BASE ?? '', 10) || 40_000 + (stableHash(process.cwd()) % 8_000);
+  Number.parseInt(process.env.DOCKER_TEST_PORT_BASE ?? '', 10) || 40_000 + (stableHash(workspaceRoot) % 8_000);
 const pickPort = (envName: string, offset: number): string =>
   process.env[envName] ?? String(generatedPortBase + offset);
 const ports = {
   postgres: pickPort('POSTGRES_PORT', 0),
+  mongodb: pickPort('MONGODB_PORT', 0),
   adminApi: pickPort('ADMIN_APP_API_PORT', 1),
   userApi: pickPort('USER_APP_API_PORT', 2),
   authApi: pickPort('AUTH_APP_API_PORT', 3),
@@ -40,12 +40,14 @@ const writeStderrLine = (message: string): void => {
   process.stderr.write(`${message}\n`);
 };
 
+const selectedEnvironment = { ...process.env };
+
 export const composeEnv = {
-  ...process.env,
-  COMPOSE_PROFILES:
-    process.env.COMPOSE_PROFILES ?? ['postgres', ...stackServices.filter((service) => service !== 'migrate')].join(','),
+  ...selectedEnvironment,
+  COMPOSE_PROFILES: fullstackSelection.profiles.join(','),
   COMPOSE_PROJECT_NAME: process.env.COMPOSE_PROJECT_NAME ?? `nrbfullstack${fallbackRunId}`,
   POSTGRES_PORT: ports.postgres,
+  MONGODB_PORT: ports.mongodb,
   ADMIN_APP_API_PORT: ports.adminApi,
   USER_APP_API_PORT: ports.userApi,
   AUTH_APP_API_PORT: ports.authApi,
@@ -57,7 +59,28 @@ export const composeEnv = {
   // useful default without exhausting a typical CI runner.
   COMPOSE_PARALLEL_LIMIT: composeParallelLimit,
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? 'false',
-  DATABASE_URL: process.env.DOCKER_DATABASE_URL ?? 'postgres://postgres:postgres@postgres:5432/nest_react_boilerplate',
+  NRB_CLOSURE_CONTEXT: join(workspaceRoot, '.nrb/closure'),
+  DATABASE_ENGINE: databaseProvider,
+  AUTH_PERSISTENCE: databaseProvider,
+  DATABASE_URL:
+    databaseProvider === 'postgres'
+      ? (selectedEnvironment.DOCKER_DATABASE_URL ??
+        selectedEnvironment.DATABASE_URL ??
+        'postgres://postgres:postgres@postgres:5432/nest_react_boilerplate')
+      : undefined,
+  CONTAINER_DATABASE_URL:
+    databaseProvider === 'postgres'
+      ? (selectedEnvironment.DOCKER_DATABASE_URL ?? 'postgres://postgres:postgres@postgres:5432/nest_react_boilerplate')
+      : undefined,
+  MONGODB_URI:
+    databaseProvider === 'mongodb'
+      ? (selectedEnvironment.DOCKER_MONGODB_URI ??
+        selectedEnvironment.MONGODB_URI ??
+        'mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true')
+      : undefined,
+  MONGODB_DATABASE:
+    databaseProvider === 'mongodb' ? (selectedEnvironment.MONGODB_DATABASE ?? 'nest_react_boilerplate') : undefined,
+  MONGODB_REPLICA_SET: databaseProvider === 'mongodb' ? (selectedEnvironment.MONGODB_REPLICA_SET ?? 'rs0') : undefined,
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? '1',
   HOST: process.env.DOCKER_BACKEND_HOST ?? '0.0.0.0',
   NX_DAEMON: 'false',
@@ -71,6 +94,8 @@ export const composeEnv = {
   RATE_LIMIT_STORE: process.env.RATE_LIMIT_STORE ?? 'memory',
   RATE_LIMIT_IN_MEMORY_ALLOWED: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED ?? 'true',
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'fullstack-e2e-better-auth-secret-change-me',
+  NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:
+    process.env.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY ?? 'fullstack-e2e-notification-key-change-me',
   BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? url(ports.userApp),
   BETTER_AUTH_TRUSTED_ORIGINS: process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? url(ports.userApp),
   AUTH_TELEGRAM_ENABLED: process.env.AUTH_TELEGRAM_ENABLED ?? 'true',
@@ -91,7 +116,21 @@ export const urls = {
   landingApp: url(ports.landingApp),
 };
 
+export const stackIncludes = (service: string): boolean => applicationServices.includes(service);
+
 const stackUpArgs = [...composeArgs, 'up', '--no-build', '-d', ...stackServices];
+const mongoInitCommand = `
+set -euo pipefail
+bash /opt/mongodb/prepare-replica-set.sh
+mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval '
+  const config = rs.conf();
+  if (config.members[0].host !== "mongodb.localhost:27017") {
+    config.members[0].host = "mongodb.localhost:27017";
+    rs.reconfig(config);
+  }
+'
+until mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)'; do sleep 2; done
+`;
 
 export function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -108,8 +147,35 @@ export function run(command: string, args: string[]): Promise<void> {
 }
 
 export async function upStack(): Promise<void> {
-  try {
+  const startStack = async (): Promise<void> => {
+    if (databaseProvider === 'mongodb') {
+      await run('docker', [...composeArgs, 'up', '--no-build', '-d', 'mongodb']);
+      // Bind-mounted scripts can lose their executable bit on some runners.
+      await run('docker', [
+        ...composeArgs,
+        'run',
+        '--rm',
+        '--no-deps',
+        '--entrypoint',
+        'bash',
+        'mongodb-init',
+        '-c',
+        mongoInitCommand,
+      ]);
+      await run('docker', [...composeArgs, 'run', '--rm', '--no-deps', 'mongodb-migrate']);
+      const remainingServices = stackServices.filter(
+        (service) => !['mongodb', 'mongodb-init', 'mongodb-migrate'].includes(service),
+      );
+      if (remainingServices.length > 0) {
+        await run('docker', [...composeArgs, 'up', '--no-build', '-d', ...remainingServices]);
+      }
+      return;
+    }
     await run('docker', stackUpArgs);
+  };
+
+  try {
+    await startStack();
   } catch (error) {
     writeStderrLine(
       `docker compose up reported a transient startup failure; retrying once: ${
@@ -117,7 +183,7 @@ export async function upStack(): Promise<void> {
       }`,
     );
     await new Promise((resolve) => setTimeout(resolve, 5_000));
-    await run('docker', stackUpArgs);
+    await startStack();
   }
 }
 

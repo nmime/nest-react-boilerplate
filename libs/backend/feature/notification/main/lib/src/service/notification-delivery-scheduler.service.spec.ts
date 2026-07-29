@@ -33,6 +33,7 @@ describe(NotificationDeliverySchedulerService.name, () => {
 
   it('reschedules a delivery as Pending when recipient lookup fails transiently, without aborting the chunk', async () => {
     const pending = {
+      claimToken: 'claim-1',
       delivery: { id: 'd1', createdAt: new Date('2026-07-20T00:00:00.000Z') },
       notification: { targetType: NotificationTargetType.User },
     };
@@ -55,6 +56,7 @@ describe(NotificationDeliverySchedulerService.name, () => {
     expect(saveDeliveryResults).toHaveBeenCalledWith([
       expect.objectContaining({
         id: 'd1',
+        claimToken: 'claim-1',
         status: NotificationStatus.Pending,
         error: expect.objectContaining({ reason: NotificationErrorReason.NetworkError }),
       }),

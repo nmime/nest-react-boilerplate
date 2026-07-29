@@ -8,6 +8,8 @@ import {
   NotificationTargetType,
 } from '@app/common-notifications';
 
+export const UnclaimedNotificationSegmentUploadClaimId = '00000000-0000-0000-0000-000000000000';
+
 export class NotificationSegmentEntity {
   id: string = randomUUID();
   tenantId!: string;
@@ -91,6 +93,7 @@ export class NotificationSegmentUploadEntity {
   invalidRows = 0;
   errors: string[] = [];
   claimedAt: Date = new Date(0);
+  claimToken: string = UnclaimedNotificationSegmentUploadClaimId;
   createdBy!: string;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
@@ -115,6 +118,7 @@ export const NotificationSegmentUploadEntitySchema = new EntitySchema<Notificati
     invalidRows: { type: 'integer', fieldName: 'invalid_rows', default: 0 },
     errors: { type: 'json', defaultRaw: "'[]'::jsonb" },
     claimedAt: { type: 'timestamptz', fieldName: 'claimed_at', defaultRaw: "'1970-01-01 00:00:00+00'" },
+    claimToken: { type: 'uuid', fieldName: 'claim_token', default: UnclaimedNotificationSegmentUploadClaimId },
     createdBy: { type: 'varchar', fieldName: 'created_by', length: 160 },
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },

@@ -19,6 +19,7 @@ concurrency:
 
 env:
   HELM_VERSION: v4.2.3
+  PNPM_VERSION: 11.11.0
 
 jobs:
   promote:
@@ -41,6 +42,14 @@ jobs:
           fetch-depth: 0
           ref: main
 
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
       - name: Validate the source revision
         id: revision
         env:
@@ -61,11 +70,27 @@ jobs:
           echo "tag=sha-$SHA" >> "$GITHUB_OUTPUT"
           echo "branch=gitops/sha-$SHA" >> "$GITHUB_OUTPUT"
 
+      - name: Verify the candidate product-selected closure
+        env:
+          RELEASE_SHA: ${{ steps.revision.outputs.sha }}
+        run: |
+          git switch --detach "$RELEASE_SHA"
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm nrb closure check
+          node scripts/release-image-plan.mjs --names > /tmp/nrb-selected-release-images
+          test -s /tmp/nrb-selected-release-images
+          cp .helm/values-selection.yaml /tmp/nrb-helm-values.yaml
+          git switch main
+
       - name: Require initialized deployment ownership
         run: |
-          if grep -R -n -E 'your-github-org|sha-REPLACE_WITH_RELEASE_GIT_SHA' \
+          if grep -R -n -E 'your-github-org' \
             .helm/values-production.yaml deploy/argocd deploy/flux; then
             echo "::error::Run pnpm nrb init and commit product-owned registry/repository values before promotion"
+            exit 1
+          fi
+          if ! cmp -s /tmp/nrb-helm-values.yaml .helm/values-selection.yaml; then
+            echo "::error::Candidate closure deployment ownership differs from current main; promote a fresh main revision"
             exit 1
           fi
 
@@ -78,9 +103,16 @@ jobs:
         run: |
           set -euo pipefail
           printf '%s' "$DEPLOY_TOKEN" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
-          mapfile -t images < <(node scripts/release-image-plan.mjs --names)
+          selected_args=()
+          while IFS= read -r image; do
+            if [ -n "$image" ]; then selected_args+=(--selected-image "$image"); fi
+          done < /tmp/nrb-selected-release-images
+          required_images=$(python3 scripts/update-deploy-tags.py "$RELEASE_SHA" \
+            "${selected_args[@]}" --selection-values-file /tmp/nrb-helm-values.yaml --print-required)
+          mapfile -t images <<< "$required_images"
           updates=()
           promoted=()
+          missing=()
           for image in "${images[@]}"; do
             reference="ghcr.io/${{ github.repository }}/$image:$IMAGE_TAG"
             if digest="$(docker manifest inspect --verbose "$reference" 2>/dev/null | jq -r '.Descriptor.digest // empty')"; then
@@ -90,13 +122,14 @@ jobs:
                 continue
               fi
             fi
-            echo "Release image not present for this SHA; retaining the currently promoted $image digest"
+            missing+=("$image")
           done
-          if [ "${#updates[@]}" -eq 0 ]; then
-            echo "::error::No release images were found for $IMAGE_TAG"
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing immutable candidate digests for selected and enabled images: ${missing[*]}"
             exit 1
           fi
-          python3 scripts/update-deploy-tags.py "$RELEASE_SHA" "${updates[@]}"
+          python3 scripts/update-deploy-tags.py "$RELEASE_SHA" "${selected_args[@]}" \
+            --selection-values-file /tmp/nrb-helm-values.yaml "${updates[@]}"
           (IFS=,; echo "images=${promoted[*]}") >> "$GITHUB_OUTPUT"
           echo "count=${#promoted[@]}" >> "$GITHUB_OUTPUT"
 
@@ -106,10 +139,11 @@ jobs:
 
       - name: Validate the promoted chart
         run: |
-          helm lint .helm -f .helm/values-production.yaml
+          helm lint .helm -f .helm/values-production.yaml -f /tmp/nrb-helm-values.yaml
           helm template nest-react-boilerplate .helm \
             -f .helm/values.yaml \
             -f .helm/values-production.yaml \
+            -f /tmp/nrb-helm-values.yaml \
             --namespace nest-react-boilerplate >/dev/null
           node scripts/validate-gitops-config.mjs
 
@@ -147,6 +181,6 @@ jobs:
               --base main \
               --head "$BRANCH" \
               --title "deploy: promote $IMAGE_TAG" \
-              --body "Promotes the verified immutable digests for \`$PROMOTED_IMAGES\` from \`$IMAGE_TAG\`. Unchanged workloads retain their currently deployed digests. Merge this PR to let Argo CD or Flux reconcile the release.")
+              --body "Promotes the verified immutable digests for the selected and enabled workloads \`$PROMOTED_IMAGES\` from \`$IMAGE_TAG\`. Unselected or disabled workloads retain their current values. Merge this PR to let Argo CD or Flux reconcile the release.")
           fi
           echo "Promotion PR: $PR_URL" >> "$GITHUB_STEP_SUMMARY"

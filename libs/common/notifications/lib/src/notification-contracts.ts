@@ -225,6 +225,7 @@ export interface NotificationDeliveryRecord {
 }
 
 export interface PendingNotificationDelivery<T = NotificationData> {
+  claimToken: string;
   delivery: NotificationDeliveryRecord;
   notification: NotificationRecord<T>;
 }
@@ -232,6 +233,7 @@ export interface PendingNotificationDelivery<T = NotificationData> {
 export interface NotificationDeliveryResult {
   id: string;
   createdAt: Date;
+  claimToken: string;
   status: NotificationStatus;
   error?: NotificationError | null;
   retryAfterSeconds?: number;

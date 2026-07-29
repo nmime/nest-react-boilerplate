@@ -24,14 +24,15 @@ Application identity, runtime, root, and hostname belong to the
 
 ## Infrastructure Services
 
-| Service       | Port(s) | Role              |
-| ------------- | ------- | ----------------- |
-| PostgreSQL    | 5432    | Database          |
-| Redis         | 6379    | Cache / sessions  |
-| NATS          | 4222    | Messaging         |
-| NATS Monitor  | 8222    | NATS metrics      |
-| MinIO         | 9000    | Object storage    |
-| MinIO Console | 9001    | Object storage UI |
+| Service       | Port(s) | Role                 |
+| ------------- | ------- | -------------------- |
+| PostgreSQL    | 5432    | Database             |
+| MongoDB       | 27017   | Alternative database |
+| Redis         | 6379    | Cache / sessions     |
+| NATS          | 4222    | Messaging            |
+| NATS Monitor  | 8222    | NATS metrics         |
+| MinIO         | 9000    | Object storage       |
+| MinIO Console | 9001    | Object storage UI    |
 
 ## How Ports Are Assigned
 
@@ -66,8 +67,8 @@ Staging services use port offset +100 from production defaults:
 Configure via `PORT` env var per service, or use `.env.staging` which sets the
 staging-specific `*_APP_API_PORT` / `*_APP_PORT` values.
 
-The staging template also offsets PostgreSQL, Redis, NATS client, and NATS
-monitor host ports. MinIO keeps its standard host ports. A separate Compose
+The staging template also offsets PostgreSQL, MongoDB (`27117`), Redis, NATS
+client, and NATS monitor host ports. MinIO keeps its standard host ports. A separate Compose
 project/network or Kubernetes namespace is still required when environments
 share a host or cluster.
 

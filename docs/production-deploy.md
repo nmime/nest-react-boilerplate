@@ -10,7 +10,7 @@ an opt-in extension only when a product adds and owns an ecosystem config.
 Use the canonical runbooks:
 
 - mode matrix and invariants: [deployment.md](deployment.md)
-- Compose with bundled or external PostgreSQL:
+- Compose with bundled or external PostgreSQL/MongoDB:
   [docker-compose-production.md](docker-compose-production.md)
 - idempotent host Nginx + Certbot deployment:
   [single-server-deployment.md](single-server-deployment.md)
@@ -23,7 +23,7 @@ Use the canonical runbooks:
 
 ```mermaid
 flowchart LR
-  commit[Reviewed Git SHA] --> release[Release images workflow]
+  commit[Reviewed Git SHA + current selected closure] --> release[Release selected images workflow]
   release --> verify[SBOM, scan, signature, full-SHA tags and digests]
   verify --> runtime{Selected runtime}
   runtime --> compose[Compose database + domain + TLS topology]
@@ -55,6 +55,19 @@ The commands are no-deploy checks. CI additionally requires Docker Compose,
 Helm, and kubectl rendering so missing local tools cannot silently approve a
 broken release contract.
 
+Run `pnpm nrb setup` and `pnpm nrb closure check` before release. The release
+planner intersects affected and force-full image sets with
+`.nrb/closure.json`'s `releaseImages`; force-full means all selected images.
+`pnpm run bake:generate:all` explicitly materializes the PostgreSQL
+all-reference context for maintainer validation and attaches it to every Bake
+target as the `nrb-closure` BuildKit context. MongoDB maintainers can run
+`pnpm nrb closure materialize --all-reference --provider mongodb`. Neither path
+is an implicit product fallback or used by product release/deploy workflows.
+Product Bake and source Compose builds instead validate and attach the normalized
+`.nrb/closure` context produced by `pnpm nrb closure install`. Dockerfile reads
+all closure/config/package/workspace/lock metadata with
+`COPY --from=nrb-closure`; the default source context cannot substitute it.
+
 ## Compose
 
 Select database ownership, public-domain ownership, and TLS ownership in
@@ -64,12 +77,16 @@ Select database ownership, public-domain ownership, and TLS ownership in
 pnpm run docker:prod:config
 ```
 
-Bundled mode creates PostgreSQL and a persistent volume. External mode mounts a
-`DATABASE_URL` secret file and contains no PostgreSQL service, volume, or
-password secret. Both modes run the migrator before APIs. The production base
+`DATABASE_ENGINE` selects PostgreSQL or MongoDB independently from
+`COMPOSE_DATABASE_MODE`. Bundled mode creates the selected service and a
+persistent volume; bundled MongoDB is a one-node replica set and is not HA.
+External mode mounts `DATABASE_URL` or `MONGODB_URI` from a secret file and
+contains no database service/volume. Both modes run the provider-aware migrator before APIs. The production base
 file is not a standalone topology. Domain modes support one public hostname,
 deterministic per-app hostnames with explicit or wildcard DNS, or an existing
 external proxy. See the Compose runbook for automatic and provided TLS modes.
+MongoDB uses separate runtime, migration, and backup/restore principals in both
+ownership modes; only the runtime credential reaches application containers.
 
 ## Direct Helm
 
@@ -78,13 +95,15 @@ support policy to the target Kubernetes version. `pnpm run helm:validate`
 downloads the pinned kubeconform `v0.8.0` binary into the ignored local tool
 cache when it is not already installed, verifies the official archive checksum,
 and performs strict Kubernetes schema validation. Provision the app Secret,
-registry pull Secret, PostgreSQL, Redis, ingress, DNS, TLS, and backups before
+registry pull Secret, the selected external PostgreSQL or multi-node MongoDB
+replica set, Redis, ingress, DNS, TLS, and backups before
 installing the chart.
 
 ```bash
 helm upgrade --install nest-react-boilerplate .helm \
   -f .helm/values.yaml \
   -f .helm/values-production.yaml \
+  -f .helm/values-selection.yaml \
   --namespace nest-react-boilerplate \
   --create-namespace --atomic --wait --timeout 10m
 ```
@@ -100,13 +119,17 @@ kubectl apply -k deploy/flux
 ```
 
 Run the manual **Promote GitOps release** workflow with the exact source SHA
-after release images exist. It verifies every release-owned image declared by
-the promotion workflow and opens a promotion PR.
+after release images exist. It verifies the selected closure at that source
+revision, intersects its `releaseImages` with enabled Helm deployment ownership,
+using the matching setup-generated `.helm/values-selection.yaml`, requires every digest
+in that exact set, and opens a promotion PR. Tag-triggered image releases build
+the complete selected closure set; use `force_full` for a promotable manual
+image run. Unselected or disabled image values are not promoted.
 Only a reviewed merge changes the desired production version.
 
 ## Backup, verification, and rollback
 
-Before migrations, verify a recoverable database backup. After rollout, check
+Before migrations, verify a recoverable selected-provider backup. After rollout, check
 migration completion, workload rollout status, `/ready`, logs, ingress/TLS, and
 the public domain map.
 

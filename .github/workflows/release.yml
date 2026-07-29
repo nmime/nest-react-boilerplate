@@ -37,13 +37,14 @@ jobs:
       # (classic: `repo` + `workflow`, or fine-grained: Actions:write +
       # Contents:read). Without it this is a no-op and images are built by manual
       # dispatch (`gh workflow run release-images.yml --ref <tag> -f force_full=true`).
+      # force_full always means every image in that tag's setup-selected closure.
       - name: Auto-build release images for the new tag
         if: success()
         env:
           GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_PAT }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "::warning::RELEASE_DISPATCH_PAT not set — skipping automatic release-images build. Build manually: gh workflow run release-images.yml --ref <tag> -f force_full=true"
+            echo "::warning::RELEASE_DISPATCH_PAT not set — skipping automatic selected release-image build. Build manually: gh workflow run release-images.yml --ref <tag> -f force_full=true"
             exit 0
           fi
           git fetch origin --tags --quiet

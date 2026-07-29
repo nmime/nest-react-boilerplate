@@ -3,6 +3,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import ConnectionString from 'mongodb-connection-string-url';
+import { resolveSelectedProductClosureContext } from './closure-build-context.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const defaultEnvFile = '.env.production';
@@ -14,6 +16,39 @@ const frontendApiBaseUrlModes = new Set(['same-origin', 'split-origin']);
 const frontendApiBaseUrlKeys = ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL'];
 const tlsModes = new Set(['automatic', 'provided', 'external']);
 const supportedProfiles = new Set(['discord', 'notification-consumer', 'notification-scheduler', 'telegram']);
+const profileApps = {
+  discord: 'discord-app-api',
+  'notification-consumer': 'notification-consumer',
+  'notification-scheduler': 'notification-scheduler',
+  telegram: 'telegram-bot-api',
+};
+const productionApps = new Set([
+  'admin-app',
+  'admin-app-api',
+  'auth-app-api',
+  'discord-app-api',
+  'landing-app',
+  'mobile-app',
+  'notification-consumer',
+  'notification-scheduler',
+  'site-app',
+  'telegram-bot-api',
+  'user-app',
+  'user-app-api',
+]);
+const productionComposeServices = new Set([
+  ...productionApps,
+  'alertmanager',
+  'edge',
+  'grafana',
+  'migrate',
+  'mongodb',
+  'mongodb-init',
+  'otel-collector',
+  'postgres',
+  'prometheus',
+  'redis',
+]);
 const primaryUpstreams = {
   'landing-app': 'landing-app:8080',
   'site-app': 'site-app:80',
@@ -84,6 +119,56 @@ const splitList = (value) =>
 
 const unique = (values) => [...new Set(values)];
 
+export function readProductionClosure(workspaceRoot, configuredManifest) {
+  const manifestPath = configuredManifest
+    ? resolve(workspaceRoot, configuredManifest)
+    : resolve(workspaceRoot, '.nrb/closure.json');
+  if (!existsSync(manifestPath)) {
+    fail('A setup-selected .nrb/closure.json is required; run `pnpm nrb setup`.');
+  }
+  let closure;
+  try {
+    closure = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  } catch {
+    fail(`Selected closure is not valid JSON: ${manifestPath}.`);
+  }
+  const sortedUniqueStrings = (value, field) => {
+    if (
+      !Array.isArray(value) ||
+      value.some((entry) => typeof entry !== 'string') ||
+      new Set(value).size !== value.length ||
+      value.some((entry, index) => index > 0 && value[index - 1] > entry)
+    ) {
+      fail(`Selected closure ${field} must be a sorted unique string array.`);
+    }
+    return value;
+  };
+  if (closure?.schemaVersion !== 1 || !['postgres', 'mongodb', null].includes(closure.provider)) {
+    fail('Selected closure must use schemaVersion 1 and provider postgres, mongodb, or null.');
+  }
+  const roots = sortedUniqueStrings(closure.roots, 'roots');
+  const services = sortedUniqueStrings(closure.services, 'services');
+  const releaseImages = sortedUniqueStrings(closure.releaseImages, 'releaseImages');
+  const selectedApps = releaseImages.filter((image) => image !== 'migrator');
+  const unknown = selectedApps.filter((appId) => !productionApps.has(appId));
+  if (unknown.length > 0)
+    fail(`Selected closure contains apps without production Compose metadata: ${unknown.join(', ')}.`);
+  if (selectedApps.some((appId) => !roots.includes(appId))) {
+    fail('Selected closure releaseImages must be selected application roots.');
+  }
+  if (releaseImages.includes('migrator') !== (closure.provider !== null)) {
+    fail('Selected closure migrator image must be present exactly when a durable provider is selected.');
+  }
+  const edgeCaddyfiles = {
+    'per-app-domains': resolve(dirname(manifestPath), 'Caddyfile.per-app-domains'),
+    'single-domain': resolve(dirname(manifestPath), 'Caddyfile.single-domain'),
+  };
+  if (Object.values(edgeCaddyfiles).some((path) => !existsSync(path))) {
+    fail('Selected closure Caddyfiles are missing or stale; rerun `pnpm nrb setup`.');
+  }
+  return { edgeCaddyfiles, provider: closure.provider, releaseImages, roots, selectedApps, services };
+}
+
 function parseArguments(argv) {
   const [action, ...raw] = argv;
   if (!actions.has(action)) {
@@ -92,6 +177,7 @@ function parseArguments(argv) {
   const options = {
     action,
     databaseMode: undefined,
+    databaseEngine: undefined,
     domainMode: undefined,
     dryRun: false,
     envFile: defaultEnvFile,
@@ -115,6 +201,11 @@ function parseArguments(argv) {
     const databaseMode = readOption('--database');
     if (databaseMode !== undefined) {
       options.databaseMode = databaseMode;
+      continue;
+    }
+    const databaseEngine = readOption('--engine');
+    if (databaseEngine !== undefined) {
+      options.databaseEngine = databaseEngine;
       continue;
     }
     const domainMode = readOption('--domains');
@@ -190,7 +281,40 @@ const requireAbsoluteHttpOrigin = (value, name) => {
   return url.origin;
 };
 
-export function buildComposeInvocation(argv, processEnvironment = process.env) {
+export function validateExternalMongoUri(value, { deploymentWide = false, label = 'MONGODB_URI_FILE' } = {}) {
+  let url;
+  try {
+    url = new ConnectionString(value.trim());
+  } catch {
+    fail(`${label} must contain a valid mongodb:// or mongodb+srv:// URI.`);
+  }
+  if (url.hosts.some((host) => !host.trim())) {
+    fail(`${label} must contain a valid mongodb:// or mongodb+srv:// URI.`);
+  }
+  const replicaSets = [...url.searchParams.entries()]
+    .filter(([key]) => key.toLowerCase() === 'replicaset')
+    .map(([, optionValue]) => optionValue.trim());
+  if (replicaSets.length === 0 || replicaSets.some((replicaSet) => !replicaSet)) {
+    fail('External MongoDB requires a non-empty replicaSet URI option.');
+  }
+  if (new Set(replicaSets).size !== 1) {
+    fail('External MongoDB replicaSet URI options must not conflict.');
+  }
+  if (deploymentWide && url.pathname !== '/') {
+    fail(`${label} must be deployment-wide and must not select a database path.`);
+  }
+  if (
+    deploymentWide &&
+    ![...url.searchParams.entries()].some(
+      ([key, optionValue]) => key.toLowerCase() === 'authsource' && optionValue.toLowerCase() === 'admin',
+    )
+  ) {
+    fail(`${label} must use authSource=admin.`);
+  }
+  return url;
+}
+
+export function buildComposeInvocation(argv, processEnvironment = process.env, dependencies = {}) {
   const options = parseArguments(argv);
   const envPath = resolve(rootDir, options.envFile);
   if (!existsSync(envPath)) {
@@ -198,11 +322,70 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   }
   const fileEnvironment = parseEnvFile(readFileSync(envPath, 'utf8'));
   const effectiveEnvironment = { ...fileEnvironment, ...processEnvironment };
-  const databaseMode = requireMode(
-    options.databaseMode ?? effectiveEnvironment.COMPOSE_DATABASE_MODE,
-    databaseModes,
-    'COMPOSE_DATABASE_MODE',
+  const closure = (dependencies.readProductionClosure ?? readProductionClosure)(
+    rootDir,
+    effectiveEnvironment.NRB_CLOSURE_MANIFEST,
   );
+  const closureContext = options.sourceBuild
+    ? (dependencies.resolveSelectedProductClosureContext ?? resolveSelectedProductClosureContext)(
+        rootDir,
+        effectiveEnvironment.NRB_CLOSURE_CONTEXT,
+      )
+    : undefined;
+  let mongoReplicaSet;
+  const configuredDatabaseEngine = options.databaseEngine ?? effectiveEnvironment.DATABASE_ENGINE?.trim().toLowerCase();
+  const configuredDatabaseMode = options.databaseMode ?? effectiveEnvironment.COMPOSE_DATABASE_MODE?.trim();
+  if (closure.provider === null && (configuredDatabaseEngine || configuredDatabaseMode)) {
+    fail('DATABASE_ENGINE and COMPOSE_DATABASE_MODE must be empty for a provider-free selected closure.');
+  }
+  if (closure.provider !== null && configuredDatabaseEngine && configuredDatabaseEngine !== closure.provider) {
+    fail(`DATABASE_ENGINE=${configuredDatabaseEngine} conflicts with selected closure provider ${closure.provider}.`);
+  }
+  const databaseEngine = closure.provider;
+  const databaseMode = databaseEngine
+    ? requireMode(configuredDatabaseMode, databaseModes, 'COMPOSE_DATABASE_MODE')
+    : undefined;
+  if (databaseEngine === 'mongodb' && databaseMode === 'bundled-db') {
+    const principalNames = [
+      valueOrDefault(effectiveEnvironment, 'MONGODB_USER', 'nest_react_boilerplate'),
+      valueOrDefault(effectiveEnvironment, 'MONGODB_MIGRATION_USER', 'nest_react_boilerplate_migration'),
+      valueOrDefault(effectiveEnvironment, 'MONGODB_BACKUP_RESTORE_USER', 'nrb_backup_restore'),
+    ];
+    if (new Set(principalNames).size !== principalNames.length) {
+      fail('MONGODB_USER, MONGODB_MIGRATION_USER, and MONGODB_BACKUP_RESTORE_USER must be distinct.');
+    }
+  }
+  if (databaseEngine === 'mongodb' && databaseMode === 'external-db') {
+    const uriSecrets = [
+      ['MONGODB_URI_FILE', './secrets/mongodb_uri.txt', false],
+      ['MONGODB_MIGRATION_URI_FILE', './secrets/mongodb_migration_uri.txt', false],
+      ['MONGODB_BACKUP_RESTORE_URI_FILE', './secrets/mongodb_backup_restore_uri.txt', true],
+    ];
+    const parsedUris = uriSecrets.map(([name, fallback, deploymentWide]) => {
+      const configuredPath = valueOrDefault(effectiveEnvironment, name, fallback);
+      const mongoUriPath = resolve(rootDir, 'docker', configuredPath);
+      if (!existsSync(mongoUriPath)) fail(`${name} secret file not found: ${configuredPath}.`);
+      return validateExternalMongoUri(readFileSync(mongoUriPath, 'utf8'), { deploymentWide, label: name });
+    });
+    const [mongoUri] = parsedUris;
+    const principalNames = parsedUris.map((uri) => uri.username);
+    if (principalNames.some((name) => !name) || new Set(principalNames).size !== principalNames.length) {
+      fail('External MongoDB runtime, migration, and backup/restore URI usernames must be non-empty and distinct.');
+    }
+    mongoReplicaSet = [...mongoUri.searchParams.entries()].find(([key]) => key.toLowerCase() === 'replicaset')?.[1];
+    const configuredReplicaSet = effectiveEnvironment.MONGODB_REPLICA_SET?.trim();
+    if (configuredReplicaSet && configuredReplicaSet !== mongoReplicaSet) {
+      fail('MONGODB_REPLICA_SET must match the external MongoDB URI replicaSet option.');
+    }
+    for (const parsedUri of parsedUris.slice(1)) {
+      const uriReplicaSet = [...parsedUri.searchParams.entries()].find(
+        ([key]) => key.toLowerCase() === 'replicaset',
+      )?.[1];
+      if (uriReplicaSet !== mongoReplicaSet) {
+        fail('All external MongoDB principal URIs must use the same replicaSet option.');
+      }
+    }
+  }
   const domainMode = requireMode(
     options.domainMode ?? effectiveEnvironment.COMPOSE_DOMAIN_MODE,
     domainModes,
@@ -246,14 +429,21 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     fail('COMPOSE_TLS_MODE must be "automatic" or "provided" when the Compose edge is enabled.');
   }
 
-  const profiles = unique([...splitList(effectiveEnvironment.COMPOSE_PROFILES), ...options.profiles]).sort();
-  for (const profile of profiles) {
+  const requestedProfiles = unique([...splitList(effectiveEnvironment.COMPOSE_PROFILES), ...options.profiles]).sort();
+  for (const profile of requestedProfiles) {
     if (!supportedProfiles.has(profile)) {
       fail(
         `Unsupported production profile "${profile}". Supported profiles: discord, notification-consumer, notification-scheduler, telegram.`,
       );
     }
+    if (!closure.selectedApps.includes(profileApps[profile])) {
+      fail(`Production profile "${profile}" cannot enable unselected app "${profileApps[profile]}".`);
+    }
   }
+  const profiles = Object.entries(profileApps)
+    .filter(([, appId]) => closure.selectedApps.includes(appId))
+    .map(([profile]) => profile)
+    .sort();
   if (domainMode === 'single-domain' && profiles.some((profile) => profile === 'telegram' || profile === 'discord')) {
     fail(
       'Optional Telegram/Discord profiles require per-app-domains (or an operator-owned external proxy) because their user app and API must both remain publicly reachable.',
@@ -262,19 +452,18 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
 
   const baseDomain = validateBaseDomain(effectiveEnvironment.PUBLIC_DOMAIN ?? '');
   const primaryApp = effectiveEnvironment.PRIMARY_APP ?? '';
+  if (domainMode !== 'external-proxy' && !closure.selectedApps.includes(primaryApp)) {
+    fail('PRIMARY_APP must be selected when Compose owns the public edge.');
+  }
   const domains = derivePublicDomains(baseDomain, primaryApp);
   const configuredExternalPublicMode = effectiveEnvironment.EXTERNAL_PROXY_PUBLIC_MODE?.trim();
   if (configuredExternalPublicMode && !publicDomainModes.has(configuredExternalPublicMode)) {
     fail('EXTERNAL_PROXY_PUBLIC_MODE must be either "single-domain" or "per-app-domains".');
   }
   const publicDomainMode = domainMode === 'external-proxy' ? configuredExternalPublicMode : domainMode;
-  const frontendOrigins = [
-    'LANDING_APP_DOMAIN',
-    'SITE_APP_DOMAIN',
-    'USER_APP_DOMAIN',
-    'ADMIN_APP_DOMAIN',
-    'MOBILE_APP_DOMAIN',
-  ].map((key) => `https://${domains[key]}`);
+  const frontendOrigins = publicApps
+    .filter(([appId]) => closure.selectedApps.includes(appId) && appId.endsWith('-app'))
+    .map(([, key]) => `https://${domains[key]}`);
   const exposedOrigins = publicDomainMode === 'single-domain' ? [`https://${baseDomain}`] : frontendOrigins;
   const extraCorsOrigins = splitList(effectiveEnvironment.CORS_EXTRA_ORIGINS);
   const extraTrustedOrigins = splitList(effectiveEnvironment.BETTER_AUTH_EXTRA_TRUSTED_ORIGINS);
@@ -310,6 +499,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   const composeEnvironment = {
     ...processEnvironment,
     DOCKER_BUILDKIT: '1',
+    ...(closureContext ? { NRB_CLOSURE_CONTEXT: closureContext } : {}),
     ...domains,
     ...runtimeDefaults,
     ...frontendBuildEnvironment,
@@ -322,10 +512,18 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
       : {}),
     ...(profiles.includes('discord') ? { DISCORD_AUTH_ENABLED: 'true' } : {}),
     COMPOSE_DATABASE_MODE: databaseMode,
+    DATABASE_ENGINE: databaseEngine,
+    ...(mongoReplicaSet ? { MONGODB_REPLICA_SET: mongoReplicaSet } : {}),
     COMPOSE_DOMAIN_MODE: domainMode,
     COMPOSE_TLS_MODE: tlsMode,
     ...(domainMode === 'external-proxy' && publicDomainMode ? { EXTERNAL_PROXY_PUBLIC_MODE: publicDomainMode } : {}),
     EDGE_OPTIONAL_ROUTES: profiles.length === 0 ? 'default' : profiles.join('-'),
+    ...(domainMode !== 'external-proxy'
+      ? {
+          EDGE_CADDYFILE: '/nrb/Caddyfile.selected',
+          NRB_EDGE_CADDYFILE: closure.edgeCaddyfiles?.[domainMode] ?? resolve(rootDir, `.nrb/Caddyfile.${domainMode}`),
+        }
+      : {}),
     PRIMARY_APP: primaryApp,
     PRIMARY_APP_UPSTREAM: primaryUpstreams[primaryApp],
     PUBLIC_DOMAIN: baseDomain,
@@ -345,12 +543,40 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     }
   }
 
-  const files = ['docker/docker-compose.prod.yml', `docker/docker-compose.prod.${databaseMode}.yml`];
+  const files = ['docker/docker-compose.prod.yml'];
+  if (databaseEngine) {
+    files.push(
+      databaseEngine === 'postgres'
+        ? `docker/docker-compose.prod.${databaseMode}.yml`
+        : `docker/docker-compose.prod.mongodb-${databaseMode}.yml`,
+    );
+  }
+  if (closure.services.includes('redis')) files.push('docker/docker-compose.prod.redis.yml');
   if (profiles.includes('telegram')) files.push('docker/docker-compose.prod.telegram.yml');
   if (profiles.includes('discord')) files.push('docker/docker-compose.prod.discord.yml');
   if (domainMode !== 'external-proxy') files.push('docker/docker-compose.prod.edge.yml');
   if (tlsMode === 'provided') files.push('docker/docker-compose.prod.edge-provided-tls.yml');
   if (options.sourceBuild) files.push('docker/docker-compose.prod.build.yml');
+
+  const selectedServices = [
+    ...closure.selectedApps,
+    ...(databaseEngine ? ['migrate'] : []),
+    ...(databaseMode === 'bundled-db' && databaseEngine === 'postgres' ? ['postgres'] : []),
+    ...(databaseMode === 'bundled-db' && databaseEngine === 'mongodb' ? ['mongodb', 'mongodb-init'] : []),
+    ...(closure.services.includes('redis') ? ['redis'] : []),
+    ...(domainMode !== 'external-proxy' ? ['edge'] : []),
+  ];
+  const actionServices =
+    options.action === 'build'
+      ? closure.releaseImages.map((name) => (name === 'migrator' ? 'migrate' : name))
+      : selectedServices;
+  const selectedServiceSet = new Set(selectedServices);
+  for (const argument of options.composeArguments) {
+    const referencedService = argument.split('=').find((part) => productionComposeServices.has(part));
+    if (referencedService && !selectedServiceSet.has(referencedService)) {
+      fail(`Compose argument cannot reference unselected service "${referencedService}".`);
+    }
+  }
 
   const composeArgs = ['compose', '--env-file', options.envFile];
   for (const file of files) composeArgs.push('-f', file);
@@ -361,16 +587,20 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
     else if (!options.composeArguments.includes('--no-build')) composeArgs.push('--no-build');
   }
   composeArgs.push(...options.composeArguments);
+  if (options.action !== 'down') composeArgs.push(...actionServices);
 
   return {
     action: options.action,
     args: composeArgs,
     databaseMode,
+    databaseEngine,
     domainMode,
     dryRun: options.dryRun,
     env: composeEnvironment,
     files,
     profiles,
+    selectedApps: closure.selectedApps,
+    selectedServices,
     publicDomain: baseDomain,
     publicDomainMode,
     sourceBuild: options.sourceBuild,
@@ -380,6 +610,18 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
 
 function main() {
   try {
+    if (process.env.NRB_CLOSURE_MANIFEST && process.env.NRB_ALL_REFERENCE !== 'true') {
+      throw new Error('NRB_CLOSURE_MANIFEST is reserved for the explicit all-reference maintainer validation path.');
+    }
+    const closureCheck = spawnSync('pnpm', ['nrb', 'closure', 'check'], {
+      cwd: rootDir,
+      encoding: 'utf8',
+    });
+    if (closureCheck.status !== 0 && !process.env.NRB_CLOSURE_MANIFEST) {
+      throw new Error(
+        `Production Compose requires a fresh selected closure: ${(closureCheck.stderr || closureCheck.stdout).trim()}`,
+      );
+    }
     const invocation = buildComposeInvocation(process.argv.slice(2));
     if (invocation.dryRun) {
       console.log(
@@ -388,8 +630,11 @@ function main() {
             action: invocation.action,
             command: ['docker', ...invocation.args],
             databaseMode: invocation.databaseMode,
+            databaseEngine: invocation.databaseEngine,
             domainMode: invocation.domainMode,
             profiles: invocation.profiles,
+            selectedApps: invocation.selectedApps,
+            selectedServices: invocation.selectedServices,
             publicDomain: invocation.publicDomain,
             publicDomainMode: invocation.publicDomainMode,
             sourceBuild: invocation.sourceBuild,
@@ -402,7 +647,7 @@ function main() {
       return;
     }
     console.error(
-      `Production Compose: database=${invocation.databaseMode}, domains=${invocation.domainMode}, tls=${invocation.tlsMode}, profiles=${invocation.profiles.join(',') || 'none'}`,
+      `Production Compose: database=${invocation.databaseEngine}/${invocation.databaseMode}, domains=${invocation.domainMode}, tls=${invocation.tlsMode}, profiles=${invocation.profiles.join(',') || 'none'}`,
     );
     const result = spawnSync('docker', invocation.args, {
       cwd: rootDir,

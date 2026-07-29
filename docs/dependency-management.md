@@ -34,18 +34,44 @@ the checked-in manifests; it does not query the registry or mutate the lockfile.
 Dependency ownership follows the workspace boundary rather than every Nx
 library having its own package manifest:
 
-| Source scope          | Owning manifest                 | Purpose                                                                    |
-| --------------------- | ------------------------------- | -------------------------------------------------------------------------- |
-| `apps/backend/*/*`    | nearest application manifest    | Deployable-specific NestJS/runtime and build dependencies                  |
-| `apps/frontend/*`     | nearest application manifest    | Renderer-specific browser, SSR, Astro, or Expo dependencies                |
-| `libs/backend/**`     | `libs/backend/package.json`     | External dependencies shared by backend common, feature, and database libs |
-| `libs/frontend/**`    | `libs/frontend/package.json`    | External dependencies shared by browser and native frontend libs           |
-| `libs/common/**`      | root `package.json`             | Cross-runtime dependencies; common libs are not a separate pnpm workspace  |
-| `packages/tooling/**` | `packages/tooling/package.json` | Repository CLI, generators, QA, and operational tooling                    |
+| Source scope          | Owning manifest                                              | Purpose                                                                    |
+| --------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `apps/backend/*/*`    | `libs/backend/package.json`                                  | External dependencies used by backend deployables                          |
+| `apps/frontend/*`     | `libs/frontend/package.json` plus required renderer boundary | External dependencies used by browser, SSR, and native deployables         |
+| `libs/backend/**`     | `libs/backend/package.json`                                  | External dependencies shared by backend common, feature, and database libs |
+| `libs/frontend/**`    | `libs/frontend/package.json`                                 | External dependencies used by reusable browser/native libraries            |
+| `libs/common/**`      | root `package.json`                                          | Cross-runtime dependencies; common libs are not a separate pnpm workspace  |
+| `packages/tooling/**` | `packages/tooling/package.json`                              | Repository CLI, generators, QA, and operational tooling                    |
 
 ## Version alignment rules
 
 All workspace manifests must use the same version for shared direct dependencies unless a documented constraint requires otherwise. Drift is caught by the drift-check script and must be resolved before merging.
+
+Applications do not use package manifests for identity or targets. Nx
+`project.json` owns those contracts, while source-import analysis derives the
+exact external packages reachable through each live closure. Astro and Expo are
+the current narrow exceptions: Astro's prerenderer consumes nearest-package
+dependency metadata, and Expo refuses to run without it. Their app manifests
+therefore group renderer dependencies but contain no name, version, scripts, or
+entrypoint. The closure integration test verifies that
+admin, user, landing, site, and mobile dependencies are declared by a canonical
+platform/root owner and retain renderer/product isolation. App-only integration
+source remains in the owning app; for example, Telegram Mini App code belongs to
+`user-app`, while Expo/Tamagui imports remain in the mobile closure.
+
+The full maintainer install uses pnpm's reviewed hoisting mode so dependencies
+owned by the platform manifests resolve from application source. Selected
+product installs remain flattened under `.nrb/closure/node_modules` and link
+only selected Nx roots.
+
+## pnpm and Bun parity
+
+pnpm is the only dependency resolver, installer, workspace owner, and lockfile
+writer. Bun executes the same pnpm-installed tree; it does not maintain a second
+dependency graph. Repository static checks reject `bun.lock`, `bun.lockb`,
+`bunfig.toml`, a duplicate root `workspaces` declaration, and Bun package-manager
+commands such as `bun install`, `bun add`, `bun update`, or `bunx`. `bun run
+--bun` remains supported for the pinned runtime compatibility contract.
 
 ### pnpm workspace overrides
 
@@ -58,19 +84,24 @@ All workspace manifests must use the same version for shared direct dependencies
 
 ## Deferred major updates
 
-| Package               | Current | Latest  | Blocker                                                     | Revisit trigger                                      |
-| --------------------- | ------- | ------- | ----------------------------------------------------------- | ---------------------------------------------------- |
-| TypeScript            | 6.0.3   | 7.0.2   | typescript-eslint 8.65 declares TypeScript `<6.1.0`         | typescript-eslint release with a TS 7 peer range     |
-| Babel                 | 7.29.x  | 8.x     | Rollup, Jest, and Babel 7 plugins reject Babel 8            | All Babel consumers publish Babel 8 peer ranges      |
-| @fastify/static       | 9.3.0   | 10.x    | NestJS 11 platform and Swagger accept only 8.x or 9.x       | NestJS releases with @fastify/static 10 peer support |
-| @types/node           | 24.13.3 | 26.x    | Node 24 runtime; type definitions match the runtime major   | Runtime upgrade to Node 26                           |
-| React / React DOM     | 19.2.3  | 19.2.8  | Expo SDK 57 requires exactly 19.2.3                         | Expo package matrix moves to the newer patch         |
-| gesture-handler       | 2.32.0  | 3.1.0   | Expo SDK 57 requires `~2.32.0`                              | Expo package matrix includes 3.x                     |
-| reanimated            | 4.5.0   | 4.5.2   | Expo SDK 57 requires exactly 4.5.0                          | Expo package matrix moves to the newer patch         |
-| safe-area-context     | 5.7.0   | 5.8.0   | Expo SDK 57 requires `~5.7.0`                               | Expo package matrix moves to 5.8.x                   |
-| react-native-screens  | 4.25.2  | 4.26.2  | Expo SDK 57 requires exactly 4.25.2                         | Expo package matrix moves to 4.26.x                  |
-| react-native-worklets | 0.10.0  | 0.11.1  | Expo SDK 57 requires 0.10.0 in its supported package matrix | Expo package matrix includes 0.11.x                  |
-| happy-dom             | 20.10.6 | 20.11.0 | Vitest 4.1.10 declares the 20.10.6 peer version             | Vitest accepts the newer happy-dom release           |
+| Package               | Current | Latest  | Blocker                                                     | Revisit trigger                                  |
+| --------------------- | ------- | ------- | ----------------------------------------------------------- | ------------------------------------------------ |
+| TypeScript            | 6.0.3   | 7.0.2   | typescript-eslint 8.65 declares TypeScript `<6.1.0`         | typescript-eslint release with a TS 7 peer range |
+| Babel                 | 7.29.x  | 8.x     | Rollup, Jest, and Babel 7 plugins reject Babel 8            | All Babel consumers publish Babel 8 peer ranges  |
+| @types/node           | 24.13.3 | 26.x    | Node 24 runtime; type definitions match the runtime major   | Runtime upgrade to Node 26                       |
+| React / React DOM     | 19.2.3  | 19.2.8  | Expo SDK 57 requires exactly 19.2.3                         | Expo package matrix moves to the newer patch     |
+| gesture-handler       | 2.32.0  | 3.1.0   | Expo SDK 57 requires `~2.32.0`                              | Expo package matrix includes 3.x                 |
+| reanimated            | 4.5.0   | 4.5.2   | Expo SDK 57 requires exactly 4.5.0                          | Expo package matrix moves to the newer patch     |
+| safe-area-context     | 5.7.0   | 5.8.0   | Expo SDK 57 requires `~5.7.0`                               | Expo package matrix moves to 5.8.x               |
+| react-native-screens  | 4.25.2  | 4.26.2  | Expo SDK 57 requires exactly 4.25.2                         | Expo package matrix moves to 4.26.x              |
+| react-native-worklets | 0.10.0  | 0.11.1  | Expo SDK 57 requires 0.10.0 in its supported package matrix | Expo package matrix includes 0.11.x              |
+| happy-dom             | 20.10.6 | 20.11.0 | Vitest 4.1.10 declares the 20.10.6 peer version             | Vitest accepts the newer happy-dom release       |
+
+`@fastify/static` 10.1.2 is the security-patched baseline used directly by the
+Vike server and by Swagger. NestJS 11's static-package peer is optional; the
+Fastify adapter does not import that plugin, while Swagger explicitly accepts
+10.x. `peerDependencyRules.allowedVersions` records that exact reviewed peer
+exception until Nest widens its optional range.
 
 ## Build scripts
 

@@ -15,7 +15,52 @@ pnpm run typecheck
 pnpm run test
 ```
 
+The normal lint, typecheck, unit, coverage, component, and e2e commands are product commands:
+they require a current `.nrb/closure.json` and run every transitive closure
+project that owns the requested target. Template CI and repository maintainers
+use the explicit `lint:all`, `typecheck:all`, `test:all`, `test:coverage:all`, `test:component:all`,
+`test:e2e:all`, and `test:e2e:coverage:all` sweeps instead of inventing a
+default product selection.
+
 Run heavier suites intentionally: `test:component`, `test:e2e`, `test:storybook`, `test:visual`, `test:docker-smoke`, `test:fullstack`, and the nightly/manual presets (`api:openapi:fuzz`, `test:a11y`, `test:e2e:matrix`, `test:perf`, `test:security:dast`, `test:mutation`).
+
+`pnpm run test:fullstack` fails closed unless `fullstack-e2e` belongs to the
+fresh selected closure. Its Compose graph, database provider, applications, and
+capability infrastructure come from that closure; environment profile overrides
+cannot reduce the selected service set or add stale applications.
+
+## Durable-provider proof
+
+PostgreSQL and MongoDB are separate persistence implementations behind shared
+behavioral ports. Unit tests prove mapping, validation, retries, CAS filters,
+tenant scope, and claim-token fencing. Component tests prove the actual database
+semantics and must not be replaced by mocks:
+
+```bash
+pnpm exec nx run @app/backend-mongodb-main:component-test
+pnpm exec nx run @app/backend-mongodb-main-auth:component-test
+pnpm exec nx run @app/backend-mongodb-main-feature-flags:component-test
+pnpm exec nx run @app/backend-mongodb-main-notification:component-test
+pnpm run db:migrations:rollback-check # PostgreSQL only
+```
+
+MongoDB component suites require a transaction-capable replica-set
+Testcontainer. They cover topology rejection, snapshot/majority/primary
+transactions, bounded retries, atomic mutation/audit/outbox writes, migration
+ledger replay and validator/index drift, per-tenant serialization,
+expected-revision CAS, lease reclaim, and stale claim-token rejection. A
+standalone MongoDB fixture is valid only for proving fail-closed rejection.
+
+Provider behavior should match for authorization, tenant isolation, domain
+results, idempotency, audit/outbox atomicity, and delivery state transitions.
+Tests must not assert false physical parity: MongoDB has no foreign keys,
+savepoints, or advisory locks; TTL cleanup is asynchronous; and collection,
+validator, and index DDL is not transactional.
+
+Database-operation tests should cover provider dispatch for migrate, reset,
+seed, backup, restore, and restore drill. Before production, perform a real
+restore into an isolated target for the selected provider; CI dry-run output
+proves command construction and redaction, not recoverability.
 
 ## Reliability
 

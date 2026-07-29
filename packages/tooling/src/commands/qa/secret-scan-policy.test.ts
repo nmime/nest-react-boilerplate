@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isAllowedSecretScanValue, secretValueEntropy } from "./secret-scan-policy.ts";
+import { isAllowedSecretScanValue, isSecretScanIgnoredPath, secretValueEntropy } from "./secret-scan-policy.ts";
 
 describe("native secret scan policy", () => {
   it("allows generated HTTP toast variants without globally allowing the same value", () => {
@@ -26,5 +26,10 @@ describe("native secret scan policy", () => {
   it("calculates entropy for the native high-entropy rule", () => {
     assert.equal(secretValueEntropy("aaaaaaaa"), 0);
     assert.ok(secretValueEntropy("abcdefghijklmnopqrstuvwxyz0123456789") > 4.4);
+  });
+
+  it("ignores local Claude worktrees without excluding repository Claude configuration", () => {
+    assert.equal(isSecretScanIgnoredPath(".claude/worktrees/feature/src/config.ts"), true);
+    assert.equal(isSecretScanIgnoredPath(".claude/settings.json"), false);
   });
 });

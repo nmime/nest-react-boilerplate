@@ -13,6 +13,7 @@ const workspaceRoot = resolve(import.meta.dirname, '..');
 const catalogPath = resolve(workspaceRoot, 'docs/project-catalog.md');
 const ignoredDirectories = new Set([
   '.cache',
+  '.claude',
   '.git',
   '.nx',
   'coverage',
@@ -57,6 +58,7 @@ export function collectLibraryRoots(root) {
 const libraryRootConventions = [
   /^libs\/backend\/common\/[^/]+\/lib$/u,
   /^libs\/backend\/feature\/[^/]+\/[^/]+\/lib$/u,
+  /^libs\/backend\/mongodb\/main\/[^/]+\/lib$/u,
   /^libs\/backend\/postgres\/main\/[^/]+\/lib$/u,
   /^libs\/frontend\/[^/]+\/lib$/u,
   /^libs\/frontend\/(?!feature\/)[^/]+\/[^/]+\/lib$/u,
@@ -119,6 +121,7 @@ export function renderProjectCatalog(catalog, projectRoots, libraryRoots) {
       const requirements = [
         ...entry.requiresApps.map((id) => `\`${id}\``),
         ...entry.requiresCapabilities.map((id) => `\`${id}\` capability`),
+        ...(entry.requiresDurableDatabase ? ['`postgres` or `mongodb` capability'] : []),
       ];
       lines.push(
         `| \`${entry.id}\` | \`${projectRoots.get(entry.id)}\` | ${entry.runtime} | ${capitalize(entry.classification)} | ${entry.publicHostname ? `\`${entry.publicHostname}\`` : 'Not deployable'} | ${requirements.length > 0 ? requirements.join(', ') : 'None'} |`,
@@ -148,6 +151,7 @@ export function renderProjectCatalog(catalog, projectRoots, libraryRoots) {
     '| --- | --- |',
     '| Backend common | `libs/backend/common/<name>/lib` |',
     '| Backend feature | `libs/backend/feature/<scope>/<layer>/lib` |',
+    '| Backend MongoDB | `libs/backend/mongodb/main/<scope>/lib` |',
     '| Backend PostgreSQL | `libs/backend/postgres/main/<scope>/lib` |',
     '| Frontend shared | `libs/frontend/<name>/lib` |',
     '| Frontend scoped | `libs/frontend/<scope>/<name>/lib` |',

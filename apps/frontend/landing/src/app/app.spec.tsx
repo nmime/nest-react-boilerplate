@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from '.';
+import { getAuthApiDocsHref } from '../features/landing-actions';
 import { LandingReactIsland } from './landing-react-island';
 
 describe('Landing app', () => {
@@ -32,11 +33,14 @@ describe('Landing app', () => {
   });
 
   it('uses a configured auth API docs URL when provided', () => {
-    vi.stubEnv('VITE_AUTH_API_BASE_URL', 'https://auth.example.test/');
-
-    const html = renderToStaticMarkup(<App />);
-
-    expect(html).toContain('href="https://auth.example.test/docs"');
+    expect(
+      getAuthApiDocsHref({
+        DEV: false,
+        MODE: 'production',
+        VITE_API_BASE_URL_MODE: 'explicit',
+        VITE_AUTH_API_BASE_URL: 'https://auth.example.test/',
+      }),
+    ).toBe('https://auth.example.test/docs');
   });
 
   it('keeps the docs action available when production config falls back', () => {

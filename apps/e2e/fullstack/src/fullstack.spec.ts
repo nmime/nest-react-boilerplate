@@ -143,6 +143,23 @@ async function register(baseUrl: string, email: string): Promise<SessionResponse
   return session;
 }
 
+test('@critical @api-critical registration and login preserve the durable API session', async ({ request }) => {
+  const email = `fullstack-api-${Date.now()}@example.com`;
+  const registration = await request.post(`${urls.authApi}/auth/register`, {
+    data: { displayName: 'Fullstack API User', email, password: authPassword },
+  });
+  expect(successfulAuthStatuses).toContain(registration.status());
+
+  const loginResponse = await request.post(`${urls.authApi}/auth/login`, {
+    data: { email, password: authPassword },
+  });
+  expect(successfulAuthStatuses).toContain(loginResponse.status());
+
+  const sessionResponse = await request.get(`${urls.authApi}/auth/me`);
+  expect(sessionResponse.status()).toBe(200);
+  await expect(sessionResponse.json()).resolves.toMatchObject({ data: { user: { email } } });
+});
+
 test('health endpoints and frontends are reachable through the Docker stack', async ({ page }) => {
   const health = await Promise.all([
     fetch(`${urls.authApi}/health`).then(async (response) => ({
@@ -187,7 +204,7 @@ test('health endpoints and frontends are reachable through the Docker stack', as
   ).toBeVisible();
 });
 
-test('registered users can log in through the user frontend same-origin proxies', async ({ page }) => {
+test('@critical registered users can log in through the user frontend same-origin proxies', async ({ page }) => {
   const email = `fullstack-${Date.now()}@example.com`;
   await register(urls.userApp, email);
 

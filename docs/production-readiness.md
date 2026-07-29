@@ -38,7 +38,8 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 
 ## Configuration and secrets
 
-- [ ] `NODE_ENV=production`, `POSTGRES_SYNCHRONIZE=false`, and
+- [ ] `NODE_ENV=production`, matching `DATABASE_ENGINE`/`AUTH_PERSISTENCE`,
+      `POSTGRES_SYNCHRONIZE=false`, and
       `OPENAPI_ENABLED=false` unless explicitly protected.
 - [ ] `CORS_ORIGINS` is a comma-separated allow-list of real HTTPS origins.
 - [ ] `AUTH_ALLOWED_RETURN_URLS` contains only the real absolute HTTPS frontend origins and is present in the auth runtime.
@@ -50,12 +51,16 @@ prerequisite unless the selected path renders or deploys the Helm chart.
       public auth/API hosts.
 - [ ] OAuth client secrets, database passwords, and TLS private keys are never
       committed and have a rotation path.
-- [ ] Managed PostgreSQL uses SSL with certificate validation where available.
+- [ ] Managed PostgreSQL uses validated TLS, or managed MongoDB uses validated
+      TLS and a multi-node transaction-capable replica set. Standalone MongoDB
+      is rejected.
 
 ## Runtime health
 
 - [ ] APIs expose `/live`, `/ready`, and `/health`; orchestrators use `/ready`
       for dependency readiness.
+- [ ] MongoDB-backed APIs report both required `database` and
+      `database-transactions` readiness checks.
 - [ ] Database migrations run once per release through the selected path:
       Compose `migrate` service, product-owned PM2 release step, or Helm
       pre-install/pre-upgrade hook.

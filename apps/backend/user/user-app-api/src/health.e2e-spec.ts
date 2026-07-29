@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import type { Response as InjectResponse } from 'light-my-request';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createValidationPipe } from '@app/backend-common-validation';
+import { UserAppApiCapabilitiesModule } from './capabilities.generated';
 import { UserAppApiModule } from './user-app-api.module';
 
 interface HealthEnvelope {
@@ -18,10 +19,16 @@ interface HealthEnvelope {
 
 const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
 
-describe('user-app-api health e2e', () => {
+const hasSelectedCapabilities =
+  ((Reflect.getMetadata('imports', UserAppApiCapabilitiesModule) as unknown[] | undefined) ?? []).length > 0;
+
+describe.runIf(hasSelectedCapabilities)('user-app-api health e2e', () => {
   let app: NestFastifyApplication;
 
   beforeAll(async () => {
+    process.env.DATABASE_URL ??= 'postgresql://test:test@127.0.0.1:1/test';
+    process.env.MONGODB_DATABASE ??= 'test';
+    process.env.MONGODB_URI ??= 'mongodb://127.0.0.1:1/test';
     const moduleRef = await Test.createTestingModule({
       imports: [UserAppApiModule],
     }).compile();
@@ -47,9 +54,9 @@ describe('user-app-api health e2e', () => {
         expect.objectContaining({ name: 'i18n' }),
         expect.objectContaining({ name: 'session-config' }),
         expect.objectContaining({
-          name: 'postgres',
+          name: 'database',
           status: 'ok',
-          required: false,
+          required: true,
         }),
       ]),
     });
@@ -73,10 +80,14 @@ describe('user-app-api health e2e', () => {
         status: expect.stringMatching(/^(ok|degraded)$/),
         dependencies: expect.arrayContaining([
           expect.objectContaining({
-            name: 'postgres',
+            name: 'database',
             status: 'ok',
+            required: true,
+            details: expect.objectContaining({ skipped: expect.any(Boolean) }),
+          }),
+          expect.objectContaining({
+            name: 'database-migrations',
             required: false,
-            details: expect.objectContaining({ skipped: false }),
           }),
           expect.objectContaining({
             name: 'redis',

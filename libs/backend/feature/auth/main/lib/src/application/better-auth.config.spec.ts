@@ -8,6 +8,7 @@ describe('getBetterAuthConfig', () => {
     process.env = { ...originalEnv };
     process.env.DATABASE_URL = 'postgres://test:test@localhost:5432/test';
     process.env.BETTER_AUTH_SECRET = 'test-secret-for-testing-min-32-chars';
+    delete process.env.AUTH_PERSISTENCE;
     delete process.env.BETTER_AUTH_URL;
     delete process.env.API_BASE_URL;
     delete process.env.BETTER_AUTH_TRUSTED_ORIGINS;
@@ -26,18 +27,21 @@ describe('getBetterAuthConfig', () => {
     delete process.env.ALLOWED_RETURN_URLS;
     delete process.env.NODE_ENV;
     delete process.env.OPENAPI_ENABLED;
+    delete process.env.MONGODB_DATABASE;
+    delete process.env.MONGODB_REPLICA_SET;
+    delete process.env.MONGODB_URI;
   });
 
   afterEach(() => {
     process.env = originalEnv;
   });
 
-  it('requires DATABASE_URL for normal runtime startup', () => {
+  it('does not resolve provider configuration inside the neutral auth feature', () => {
     delete process.env.DATABASE_URL;
-    expect(() => getBetterAuthConfig(null, {})).toThrow('DATABASE_URL is required');
+    expect(getBetterAuthConfig(null, {})).toBeDefined();
   });
 
-  it('uses Better-Auth memory persistence only during OpenAPI export', () => {
+  it('supports a database-free OpenAPI export', () => {
     delete process.env.DATABASE_URL;
     process.env.OPENAPI_ENABLED = 'true';
     expect(getBetterAuthConfig(null, {})).toBeDefined();

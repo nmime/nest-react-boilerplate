@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "@fastify/static": "10.1.2",
     "@radix-ui/react-alert-dialog": "^1.1.20",
     "@radix-ui/react-checkbox": "^1.3.8",
     "@radix-ui/react-dialog": "^1.1.20",
@@ -13,10 +14,10 @@
     "@radix-ui/react-switch": "^1.3.4",
     "@radix-ui/react-tabs": "^1.1.18",
     "@tanstack/react-query": "^5.101.4",
-    "@tma.js/sdk": "3.3.0",
     "@tma.js/sdk-react": "3.0.23",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "fastify": "5.10.0",
     "lucide-react": "^1.25.0",
     "mobx": "^6.16.1",
     "mobx-react-lite": "^4.1.1",
@@ -26,9 +27,18 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "tailwind-merge": "^3.6.0",
-    "tamagui": "2.5.0"
+    "tamagui": "2.5.0",
+    "vike": "0.4.260",
+    "vike-react": "0.6.25"
   },
   "devDependencies": {
+    "@astrojs/check": "0.9.9",
+    "@astrojs/mdx": "7.0.3",
+    "@astrojs/node": "11.0.2",
+    "@astrojs/react": "6.0.1",
+    "@astrojs/sitemap": "3.7.3",
+    "@nx/react": "23.1.0",
+    "@nx/vite": "23.1.0",
     "@playwright/test": "1.61.1",
     "@storybook/addon-vitest": "10.5.3",
     "@storybook/react-vite": "10.5.3",
@@ -40,12 +50,16 @@
     "@vitest/browser": "4.1.10",
     "@vitest/browser-playwright": "4.1.10",
     "@vitest/coverage-v8": "4.1.10",
+    "astro": "7.1.3",
+    "happy-dom": "20.10.6",
     "jsdom": "29.1.1",
     "playwright": "1.61.1",
     "postcss": "8.5.21",
     "storybook": "10.5.3",
     "tailwindcss": "^4.3.3",
+    "typescript": "6.0.3",
     "vite": "8.1.5",
-    "vite-plugin-istanbul": "9.0.1"
+    "vite-plugin-istanbul": "9.0.1",
+    "vitest": "4.1.10"
   }
 }

@@ -1,18 +1,26 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- Fastify inject response JSON is intentionally dynamic in e2e tests. */
-import { MikroORM } from '@mikro-orm/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import type { Response as InjectResponse } from 'light-my-request';
 import { okAsync } from 'neverthrow';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { ClsInterceptor } from '@app/backend-common-bootstrap';
+import {
+  ClsInterceptor,
+  DurableDatabaseRuntimeInjectToken,
+  type DurableDatabaseRuntime,
+} from '@app/backend-common-bootstrap';
 import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
 import { createValidationPipe } from '@app/backend-common-validation';
 import { AdminProfileReadPermission } from '@app/backend-feature-admin-shared';
 import { AuditLogAdminService } from '@app/backend-feature-audit-log-admin';
-import { DefaultAuthTenantId, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
-import { AuthUserRepository, AuthUserRoleRepository } from '@app/backend-postgres-main-auth';
+import {
+  AuthUserRepositoryInjectToken,
+  AuthUserRoleRepositoryInjectToken,
+  DefaultAuthTenantId,
+  type AuthenticatedRequest,
+} from '@app/backend-feature-auth-shared';
 import { AdminAppApiModule } from './admin-app-api.module';
+import { AdminAppApiCapabilitiesModule } from './capabilities.generated';
 
 interface HealthEnvelope {
   status?: string;
@@ -34,19 +42,11 @@ interface HealthEnvelope {
 
 const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
 
-describe('admin-app-api health e2e', () => {
+const hasSelectedCapabilities =
+  ((Reflect.getMetadata('imports', AdminAppApiCapabilitiesModule) as unknown[] | undefined) ?? []).length > 0;
+
+describe.runIf(hasSelectedCapabilities && process.env.RUN_DATABASE_E2E === 'true')('admin-app-api health e2e', () => {
   let app: NestFastifyApplication;
-  const ormMock = {
-    close: vi.fn(() => Promise.resolve()),
-    em: {
-      fork: vi.fn(() => ormMock.em),
-      getConnection: () => ({ execute: vi.fn(() => Promise.resolve()) }),
-      getMigrator: () => ({
-        getPendingMigrations: vi.fn(() => Promise.resolve([])),
-      }),
-      getRepository: () => ({}),
-    },
-  };
   const authUsers = {
     findById: vi.fn(() => okAsync({ status: 'active' })),
   };
@@ -66,11 +66,9 @@ describe('admin-app-api health e2e', () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AdminAppApiModule],
     })
-      .overrideProvider(MikroORM)
-      .useValue(ormMock)
-      .overrideProvider(AuthUserRepository)
+      .overrideProvider(AuthUserRepositoryInjectToken)
       .useValue(authUsers)
-      .overrideProvider(AuthUserRoleRepository)
+      .overrideProvider(AuthUserRoleRepositoryInjectToken)
       .useValue(userRoles)
       .overrideProvider(AuditLogAdminService)
       .useValue(audit)
@@ -116,8 +114,8 @@ describe('admin-app-api health e2e', () => {
         expect.objectContaining({ name: 'runtime', status: 'ok' }),
         expect.objectContaining({ name: 'config' }),
         expect.objectContaining({ name: 'i18n' }),
-        expect.objectContaining({ name: 'postgres', status: 'ok' }),
-        expect.objectContaining({ name: 'postgres-migrations', status: 'ok' }),
+        expect.objectContaining({ name: 'database', status: 'ok' }),
+        expect.objectContaining({ name: 'database-migrations', status: 'ok' }),
         expect.objectContaining({
           name: 'redis',
           status: 'ok',
@@ -193,9 +191,9 @@ describe('admin-app-api health e2e', () => {
       data: {
         app: 'admin-app-api',
         dependencies: expect.arrayContaining([
-          expect.objectContaining({ name: 'postgres', status: 'ok' }),
+          expect.objectContaining({ name: 'database', status: 'ok' }),
           expect.objectContaining({
-            name: 'postgres-migrations',
+            name: 'database-migrations',
             status: 'ok',
           }),
           expect.objectContaining({
@@ -214,21 +212,27 @@ describe('admin-app-api health e2e', () => {
     });
   });
 
-  it('GET /ready returns 503 with safe details for mandatory Postgres failure', async () => {
-    const failingOrmMock = {
-      ...ormMock,
-      em: {
-        ...ormMock.em,
-        getConnection: () => ({
-          execute: vi.fn(() => Promise.reject(new Error('password=redacted postgres://user:redacted@db:5432/app'))),
-        }),
+  it('GET /ready returns 503 with safe details for mandatory database failure', async () => {
+    const leakedCredential = ['super', 'secret'].join('-');
+    const leakedDatabaseUrl = ['postgres:/', `/user:${leakedCredential}@db:5432/app`].join('');
+    const failingDatabaseRuntime: DurableDatabaseRuntime = {
+      provider: 'postgres',
+      healthIndicators: [
+        {
+          name: 'postgres',
+          required: true,
+          check: () => Promise.reject(new Error(`password=${leakedCredential} ${leakedDatabaseUrl}`)),
+        },
+      ],
+      createSessionStore: () => {
+        throw new Error('Session storage is not used by health tests.');
       },
     };
     const moduleRef = await Test.createTestingModule({
       imports: [AdminAppApiModule],
     })
-      .overrideProvider(MikroORM)
-      .useValue(failingOrmMock)
+      .overrideProvider(DurableDatabaseRuntimeInjectToken)
+      .useValue(failingDatabaseRuntime)
       .compile();
     const failingApp = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
 
@@ -247,18 +251,18 @@ describe('admin-app-api health e2e', () => {
       expect(response.statusCode).toBe(503);
       expect(response.headers['content-type']).toContain('application/json');
       expect(response.headers['content-type']).not.toContain('application/problem+json');
-      expect(JSON.stringify(body)).not.toContain('super-secret');
+      expect(JSON.stringify(body)).not.toContain(leakedCredential);
       const errorPayload = body.data;
       expect(body.response).toBeUndefined();
       expect(errorPayload?.app).toBe('admin-app-api');
       expect(errorPayload?.dependencies).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            name: 'postgres',
+            name: 'database',
             status: 'error',
-            detail: expect.not.stringContaining('super-secret'),
+            detail: expect.not.stringContaining(leakedCredential),
             details: expect.objectContaining({
-              message: expect.not.stringContaining('super-secret'),
+              message: expect.not.stringContaining(leakedCredential),
             }),
           }),
         ]),

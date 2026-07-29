@@ -16,5 +16,33 @@ services:
       timeout: 5s
       retries: 10
 
+  mongodb:
+    profiles: [mongodb]
+    image: mongo:8.0.28-noble
+    restart: unless-stopped
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '${MONGODB_PORT:-27017}:27017'
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ['CMD-SHELL', 'mongosh --quiet --host localhost --eval "quit(db.hello().isWritablePrimary ? 0 : 1)"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  mongodb-init:
+    profiles: [mongodb]
+    image: mongo:8.0.28-noble
+    restart: 'no'
+    depends_on:
+      mongodb:
+        condition: service_started
+    volumes:
+      - ./docker/mongodb:/opt/mongodb:ro
+    entrypoint: ['bash', '/opt/mongodb/prepare-replica-set.sh']
+
 volumes:
   postgres-data:
+  mongodb-data:

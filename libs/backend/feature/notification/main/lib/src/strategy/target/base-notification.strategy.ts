@@ -29,6 +29,7 @@ export async function deliverNotification(
   const fail = (reason: NotificationErrorReason, message?: string): NotificationDeliveryResult => ({
     id: delivery.id,
     createdAt: delivery.createdAt,
+    claimToken: params.pending.claimToken,
     status: NotificationStatus.Error,
     error: { reason, message },
   });
@@ -59,6 +60,7 @@ export async function deliverNotification(
   return {
     id: delivery.id,
     createdAt: delivery.createdAt,
+    claimToken: params.pending.claimToken,
     status: sendResult.status,
     error: sendResult.errorReason ? { reason: sendResult.errorReason, message: sendResult.errorMessage } : null,
     retryAfterSeconds: sendResult.retryAfterSeconds,

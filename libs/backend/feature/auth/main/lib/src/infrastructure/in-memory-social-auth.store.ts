@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ResultAsync, okAsync } from 'neverthrow';
-import type { AuthLinkTokenPurpose, AuthMethodType, ExternalAuthProvider } from '@app/backend-postgres-main-auth';
+import type { AuthLinkTokenPurpose, AuthMethodType, ExternalAuthProvider } from '@app/backend-feature-auth-shared';
 import type {
   AuthMethodRecord,
   CreateLinkTokenInput,

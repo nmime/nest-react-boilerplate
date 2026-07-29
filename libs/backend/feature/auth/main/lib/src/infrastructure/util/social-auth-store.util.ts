@@ -1,15 +1,19 @@
-import type { AuthLinkTokenEntity, AuthMethodEntity, ExternalIdentityEntity } from '@app/backend-postgres-main-auth';
+import type {
+  AuthLinkTokenRecord as PersistedAuthLinkTokenRecord,
+  AuthMethodPersistenceRecord as PersistedAuthMethodRecord,
+  ExternalIdentityPersistenceRecord as PersistedExternalIdentityRecord,
+} from '@app/backend-feature-auth-shared';
 import type { AuthMethodRecord, ExternalIdentityRecord, LinkTokenRecord } from '../type/social-auth-store.type';
 
-export function toIdentityRecord(entity: ExternalIdentityEntity): ExternalIdentityRecord {
+export function toIdentityRecord(entity: PersistedExternalIdentityRecord): ExternalIdentityRecord {
   return { ...entity };
 }
 
-export function toMethodRecord(entity: AuthMethodEntity): AuthMethodRecord {
+export function toMethodRecord(entity: PersistedAuthMethodRecord): AuthMethodRecord {
   return { ...entity };
 }
 
-export function toLinkTokenRecord(entity: AuthLinkTokenEntity): LinkTokenRecord {
+export function toLinkTokenRecord(entity: PersistedAuthLinkTokenRecord): LinkTokenRecord {
   return { ...entity };
 }
 

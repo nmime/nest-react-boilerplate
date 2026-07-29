@@ -3,6 +3,7 @@ import { Migration20260715100000CreateNotifications } from './Migration202607151
 import { Migration20260720130000AddNotificationDeliveryClaim } from './Migration20260720130000AddNotificationDeliveryClaim';
 import { Migration20260721120000NotificationProvidersAndSensitivePayload } from './Migration20260721120000NotificationProvidersAndSensitivePayload';
 import { Migration20260721160000AdminNotificationBroadcasts } from './Migration20260721160000AdminNotificationBroadcasts';
+import { Migration20260726180000NotificationClaimTokens } from './Migration20260726180000NotificationClaimTokens';
 import { notificationMigrations } from './index';
 
 function collectSql(migration: { addSql(sql: string): void }, run: () => void): string {
@@ -89,5 +90,18 @@ describe('Notification delivery-claim migration', () => {
     expect(
       notificationMigrations.indexOf(Migration20260721120000NotificationProvidersAndSensitivePayload),
     ).toBeLessThan(notificationMigrations.indexOf(Migration20260721160000AdminNotificationBroadcasts));
+  });
+
+  it('adds non-null fencing tokens after broadcast persistence exists', () => {
+    const migration = new Migration20260726180000NotificationClaimTokens(undefined as never, undefined as never);
+    const sql = collectSql(migration, () => {
+      migration.up();
+    });
+
+    expect(sql).toContain('"claim_token" uuid not null');
+    expect(sql).toContain('"materialization_claim_token" uuid not null');
+    expect(notificationMigrations.indexOf(Migration20260721160000AdminNotificationBroadcasts)).toBeLessThan(
+      notificationMigrations.indexOf(Migration20260726180000NotificationClaimTokens),
+    );
   });
 });

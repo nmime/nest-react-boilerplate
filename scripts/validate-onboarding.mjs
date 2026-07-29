@@ -7,12 +7,13 @@ import { resolve } from 'node:path';
 
 const workspaceRoot = process.cwd();
 const toolingBin = resolve(workspaceRoot, 'packages/tooling/bin/repo-tooling.mjs');
+const closureContext = resolve(workspaceRoot, '.nrb/closure');
 
 function runJson(args) {
   const result = spawnSync(process.execPath, [toolingBin, ...args], {
     cwd: workspaceRoot,
     encoding: 'utf8',
-    env: { ...process.env, NX_DAEMON: 'false' },
+    env: { ...process.env, NRB_CLOSURE_CONTEXT: closureContext, NX_DAEMON: 'false' },
   });
 
   if (result.status !== 0) {

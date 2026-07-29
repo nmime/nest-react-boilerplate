@@ -10,6 +10,9 @@ const prodCompose = read('docker/docker-compose.prod.yml');
 const prodBuildCompose = read('docker/docker-compose.prod.build.yml');
 const bundledDbCompose = read('docker/docker-compose.prod.bundled-db.yml');
 const externalDbCompose = read('docker/docker-compose.prod.external-db.yml');
+const bundledMongoCompose = read('docker/docker-compose.prod.mongodb-bundled-db.yml');
+const externalMongoCompose = read('docker/docker-compose.prod.mongodb-external-db.yml');
+const redisCompose = read('docker/docker-compose.prod.redis.yml');
 const edgeCompose = read('docker/docker-compose.prod.edge.yml');
 const providedTlsCompose = read('docker/docker-compose.prod.edge-provided-tls.yml');
 const secretEntrypoint = read('docker/secret-entrypoint.sh');
@@ -25,6 +28,7 @@ const composeModeSmoke = read('scripts/smoke-compose-database-modes.mjs');
 const projectCatalogDocs = read('docs/project-catalog.md');
 const deploymentDocs = read('docs/deployment.md');
 const securityPolicy = read('SECURITY.md');
+const mongoProductionUsers = read('docker/mongodb/create-production-user.js');
 
 const unsafeTags = new Set(['latest', 'main', 'master', 'dev', 'prod', 'production']);
 const placeholderTag = 'sha-000000000000';
@@ -73,8 +77,11 @@ has(
   'auth return URL allowlist reaches backend containers',
 );
 has(prodCompose, 'auth_provider_token_encryption_key:', 'provider-token encryption Docker secret');
-has(prodCompose, 'redis_password:', 'Redis authentication Docker secret');
-has(prodCompose, 'requirepass %s', 'Redis requires its generated password');
+assert.ok(!prodCompose.includes('\n  redis:\n'), 'production Compose base must omit unselected Redis');
+assert.ok(!prodCompose.includes('      redis:\n'), 'production Compose base must not depend on unselected Redis');
+assert.ok(!prodCompose.includes('\n  redis_password:\n'), 'production Compose base must omit unselected Redis secrets');
+has(redisCompose, 'redis_password:', 'Redis authentication Docker secret');
+has(redisCompose, 'requirepass %s', 'Redis requires its generated password');
 for (const expected of [
   'load_secret SESSION_SECRET /run/secrets/session_secret',
   'load_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY /run/secrets/auth_provider_token_encryption_key',
@@ -99,6 +106,27 @@ has(bundledDbCompose, '\n  postgres:\n', 'bundled-db overlay defines PostgreSQL'
 has(bundledDbCompose, 'postgres_password:', 'bundled-db overlay defines its password secret');
 assert.ok(!externalDbCompose.includes('\n  postgres:\n'), 'external-db overlay must not define PostgreSQL');
 has(externalDbCompose, 'database_url:', 'external-db overlay defines its URL secret');
+has(bundledMongoCompose, '\n  mongodb:\n', 'bundled MongoDB overlay defines MongoDB');
+has(bundledMongoCompose, 'mongodb-init:', 'bundled MongoDB overlay prepares its replica set idempotently');
+has(bundledMongoCompose, 'mongodb_keyfile:', 'bundled MongoDB overlay defines keyfile authentication');
+has(bundledMongoCompose, 'mongodb-data:', 'bundled MongoDB overlay persists database data');
+has(bundledMongoCompose, 'mongodb_migration_password:', 'bundled MongoDB migration principal secret');
+has(bundledMongoCompose, 'mongodb_backup_restore_password:', 'bundled MongoDB backup/restore principal secret');
+for (const role of ["'readWrite'", "'dbAdmin'", "'backup'", "'restore'"]) {
+  has(mongoProductionUsers, `role: ${role}`, `bundled MongoDB ${role} role`);
+}
+has(mongoProductionUsers, "actions: ['anyAction']", 'bundled MongoDB oplog replay action privilege');
+has(mongoProductionUsers, 'anyResource: true', 'bundled MongoDB oplog replay resource privilege');
+assert.ok(!bundledMongoCompose.includes('\n  postgres:\n'), 'bundled MongoDB overlay must not define PostgreSQL');
+assert.ok(!externalMongoCompose.includes('\n  mongodb:\n'), 'external MongoDB overlay must not define MongoDB');
+has(externalMongoCompose, 'mongodb_uri:', 'external MongoDB overlay defines its URI secret');
+has(externalMongoCompose, 'mongodb_migration_uri:', 'external MongoDB overlay defines its migration URI secret');
+has(
+  externalMongoCompose,
+  'mongodb_backup_restore_uri:',
+  'external MongoDB overlay defines its backup/restore URI secret',
+);
+has(composeWrapper, 'validateExternalMongoUri', 'production wrapper validates external MongoDB replica-set URIs');
 has(edgeCompose, 'caddy:2.11.4-alpine', 'Compose-owned Caddy edge image');
 has(edgeCompose, 'host_ip: ${EDGE_BIND_ADDRESS:-0.0.0.0}', 'configurable public edge bind address');
 has(edgeCompose, "published: '${EDGE_HTTP_PORT:-80}'", 'configurable edge HTTP port');
@@ -181,6 +209,10 @@ for (const expected of [
   'REDIS_PASSWORD_FILE=./secrets/redis_password.txt',
   'POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt',
   'DATABASE_URL_FILE=./secrets/database_url.txt',
+  'MONGODB_MIGRATION_PASSWORD_FILE=./secrets/mongodb_migration_password.txt',
+  'MONGODB_BACKUP_RESTORE_PASSWORD_FILE=./secrets/mongodb_backup_restore_password.txt',
+  'MONGODB_MIGRATION_URI_FILE=./secrets/mongodb_migration_uri.txt',
+  'MONGODB_BACKUP_RESTORE_URI_FILE=./secrets/mongodb_backup_restore_uri.txt',
   'TELEGRAM_BOT_TOKEN_FILE=./secrets/telegram_bot_token.txt',
   'TELEGRAM_OIDC_CLIENT_SECRET_FILE=./secrets/telegram_oidc_client_secret.txt',
   'TELEGRAM_BOT_WEBHOOK_SECRET_FILE=./secrets/telegram_bot_webhook_secret.txt',
@@ -264,10 +296,31 @@ for (const expected of [
 ]) {
   has(prodBuildCompose, expected, `production Compose source-build frontend arg ${expected}`);
 }
+has(
+  prodBuildCompose,
+  'nrb-closure: ${NRB_CLOSURE_CONTEXT:?',
+  'production source builds require the normalized named closure context',
+);
+const productionBuildCount = prodBuildCompose.match(/^    build:$/gmu)?.length ?? 0;
+assert.equal(
+  prodBuildCompose.match(/^      <<: \*nrb-build$/gmu)?.length ?? 0,
+  productionBuildCount,
+  'Every production Dockerfile build must merge the nrb-closure build anchor.',
+);
 has(composeWrapper, "'docker/docker-compose.prod.build.yml'", 'production wrapper source-build overlay');
 has(composeWrapper, "composeArgs.push('--no-build')", 'production wrapper defaults up to no-build');
 has(composeWrapper, "composeArgs.push('--build')", 'production wrapper explicitly builds only on source-build');
 has(composeWrapper, "DOCKER_BUILDKIT: '1'", 'source-build wrapper enables BuildKit');
+has(
+  composeWrapper,
+  'resolveSelectedProductClosureContext',
+  'source-build wrapper validates the normalized selected product context',
+);
+has(
+  composeWrapper,
+  "spawnSync('pnpm', ['nrb', 'closure', 'check']",
+  'source-build wrapper validates selected closure freshness against setup and the live graph',
+);
 has(
   composeModeSmoke,
   "'docker/docker-compose.prod.build.yml'",
@@ -290,8 +343,8 @@ for (const expected of [
   'docker/docker-compose.prod.discord.yml',
   'user-app.example.com/api/auth/oauth2/callback/telegram',
   'pnpm run docker:prod:config:check',
-  'pnpm run docker:manifests:check',
-  'docker/workspace-manifests/',
+  'pnpm nrb closure install',
+  '.nrb/closure/',
   'latest',
   'Protect that tag from mutation',
   'override when immutable identity is required',

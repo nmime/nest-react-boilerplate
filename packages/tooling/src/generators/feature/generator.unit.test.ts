@@ -90,6 +90,34 @@ describe('feature generator', () => {
   // -----------------------------------------------------------------------
 
   describe('conflict detection', () => {
+    it('rejects database provider collisions and setup mismatches', async () => {
+      const tree = await createTree();
+      tree.write(
+        'tsconfig.base.json',
+        JSON.stringify({
+          compilerOptions: {
+            paths: {
+              '@app/backend-mongodb-main-invoices': ['libs/backend/mongodb/main/invoices/lib/src/index.ts'],
+            },
+          },
+        }),
+      );
+
+      const { featureGenerator } = await import('./generator.js');
+      await assert.rejects(
+        () => featureGenerator(tree, { ...featureTargets, name: 'invoices', database: 'postgres' }),
+        /Database provider collision/,
+      );
+
+      const mismatchTree = await createTree();
+      mismatchTree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+      mismatchTree.write('.nrb/workspace.json', JSON.stringify({ capabilities: ['mongodb'] }));
+      await assert.rejects(
+        () => featureGenerator(mismatchTree, { ...featureTargets, name: 'invoices', database: 'postgres' }),
+        /Database provider mismatch/,
+      );
+    });
+
     it('rejects duplicate feature names without --force', async () => {
       const tree = await createTree();
       tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
@@ -192,6 +220,78 @@ describe('feature generator', () => {
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/AGENTS.md'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/shared/lib/README.md'));
       assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/AGENTS.md'));
+    });
+
+    it('creates native MongoDB persistence with a registered ledger migration', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+
+      const { featureGenerator } = await import('./generator.js');
+      await featureGenerator(tree, {
+        ...featureTargets,
+        name: 'Support Cases',
+        database: 'mongodb',
+        migrationTimestamp: '20260727000000',
+        skipFormat: true,
+      });
+
+      const root = 'libs/backend/mongodb/main/support-cases/lib';
+      assert.ok(tree.exists(`${root}/src/support-cases-mongo.collection.ts`));
+      assert.ok(tree.exists(`${root}/src/support-cases-mongo.repository.ts`));
+      assert.ok(tree.exists(`${root}/src/support-cases-mongo.module.ts`));
+      assert.ok(tree.exists(`${root}/src/support-cases-mongo.collection.spec.ts`));
+      assert.ok(tree.exists(`${root}/src/support-cases-mongo.repository.component-spec.ts`));
+      assert.ok(tree.exists(`${root}/src/migrations/Migration20260727000000InitializeSupportCases.ts`));
+      assert.ok(tree.exists(`${root}/src/migrations/index.ts`));
+      assert.ok(tree.exists(`${root}/vitest.component.config.mts`));
+      assert.ok(tree.exists(`${root}/README.md`));
+      assert.ok(tree.exists(`${root}/AGENTS.md`));
+      const repository = tree.read(`${root}/src/support-cases-mongo.repository.ts`, 'utf8')!;
+      assert.match(repository, /runInMongoTransaction/);
+      assert.match(repository, /insertMany\(documents, \{ session \}\)/);
+      const collection = tree.read(`${root}/src/support-cases-mongo.collection.ts`, 'utf8')!;
+      assert.match(collection, /createIndexes/);
+      assert.match(collection, /collMod/);
+      assert.match(collection, /assertCollectionDefinition/);
+      assert.doesNotMatch(collection, /OnModuleInit/);
+      const migration = tree.read(`${root}/src/migrations/Migration20260727000000InitializeSupportCases.ts`, 'utf8')!;
+      assert.match(migration, /20260727000000_initialize_support_cases/);
+      assert.match(migration, /verifySupportCasesCollection/);
+      const registry = tree.read('packages/tooling/src/commands/db/generated-mongo-migrations.ts', 'utf8')!;
+      assert.match(registry, /import \{ supportCasesMongoMigrations \}/);
+      assert.match(registry, /\.\.\.supportCasesMongoMigrations/);
+      const project = JSON.parse(tree.read(`${root}/project.json`, 'utf8')!);
+      assert.ok(project.targets.test);
+      assert.ok(project.targets['component-test']);
+      const tsconfig = JSON.parse(tree.read('tsconfig.base.json', 'utf8')!);
+      assert.deepEqual(tsconfig.compilerOptions.paths['@app/backend-mongodb-main-support-cases'], [
+        `${root}/src/index.ts`,
+      ]);
+      assert.equal(tsconfig.compilerOptions.paths['@app/backend-postgres-main-support-cases'], undefined);
+    });
+
+    it('keeps generated MongoDB migration registration deterministic', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+
+      const { featureGenerator } = await import('./generator.js');
+      await featureGenerator(tree, {
+        ...featureTargets,
+        name: 'Zebra Records',
+        database: 'mongodb',
+        migrationTimestamp: '20260727000200',
+        skipFormat: true,
+      });
+      await featureGenerator(tree, {
+        ...featureTargets,
+        name: 'Alpha Records',
+        database: 'mongodb',
+        migrationTimestamp: '20260727000100',
+        skipFormat: true,
+      });
+
+      const registry = tree.read('packages/tooling/src/commands/db/generated-mongo-migrations.ts', 'utf8')!;
+      assert.ok(registry.indexOf('alphaRecordsMongoMigrations') < registry.indexOf('zebraRecordsMongoMigrations'));
     });
 
     it('creates frontend files', async () => {
@@ -363,6 +463,35 @@ describe('feature generator', () => {
         assert.ok(logs.some((l) => l.includes('CREATE libs/backend/feature/invoices')));
         assert.ok(logs.some((l) => l.includes('UPDATE tsconfig.base.json')));
         assert.ok(logs.some((l) => l.includes('Next steps')));
+      } finally {
+        console.log = origLog;
+      }
+    });
+
+    it('dry-runs MongoDB paths with migration registration and no PostgreSQL output', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+      const logs: string[] = [];
+      const origLog = console.log;
+      console.log = (...args: unknown[]) => logs.push(args.join(' '));
+
+      try {
+        const { featureGenerator } = await import('./generator.js');
+        await featureGenerator(tree, {
+          ...featureTargets,
+          name: 'invoices',
+          database: 'mongodb',
+          migrationTimestamp: '20260727000100',
+          skipFormat: true,
+          dryRun: true,
+        });
+        assert.ok(logs.some((line) => line.includes('CREATE libs/backend/mongodb/main/invoices/lib')));
+        assert.equal(
+          logs.some((line) => line.includes('/postgres/')),
+          false,
+        );
+        assert.ok(logs.some((line) => line.includes('Migration20260727000100InitializeInvoices')));
+        assert.ok(logs.some((line) => line.includes('generated-mongo-migrations.ts register invoicesMongoMigrations')));
       } finally {
         console.log = origLog;
       }

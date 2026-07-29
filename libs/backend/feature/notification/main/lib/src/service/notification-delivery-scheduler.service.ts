@@ -86,6 +86,7 @@ export class NotificationDeliverySchedulerService {
       return {
         id: pending.delivery.id,
         createdAt: pending.delivery.createdAt,
+        claimToken: pending.claimToken,
         status: NotificationStatus.Error,
         error: { reason: NotificationErrorReason.NotFoundTargetStrategy },
       };
@@ -105,6 +106,7 @@ export class NotificationDeliverySchedulerService {
         return {
           id: pending.delivery.id,
           createdAt: pending.delivery.createdAt,
+          claimToken: pending.claimToken,
           status: NotificationStatus.Pending,
           error: { reason: NotificationErrorReason.NetworkError, message: error.message },
         };

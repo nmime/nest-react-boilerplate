@@ -23,6 +23,7 @@ spec:
       valueFiles:
         - values.yaml
         - values-production.yaml
+        - values-selection.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: nest-react-boilerplate

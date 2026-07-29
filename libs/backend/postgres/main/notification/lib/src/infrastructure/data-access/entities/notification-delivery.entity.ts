@@ -25,6 +25,8 @@ export interface NotificationDeliveryEntityInput {
   updatedAt?: Date;
 }
 
+export const UnclaimedNotificationDeliveryClaimId = '00000000-0000-0000-0000-000000000000';
+
 export class NotificationDeliveryEntity {
   id!: string;
   notificationId!: string;
@@ -42,6 +44,7 @@ export class NotificationDeliveryEntity {
   // Delivery-claim lease marker. The epoch sentinel means "unclaimed"; the scheduler
   // stamps it with the claim time and re-claims only once the lease has elapsed.
   claimedAt: Date = new Date(0);
+  claimToken: string = UnclaimedNotificationDeliveryClaimId;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 
@@ -83,6 +86,7 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
     sendAfter: { type: 'timestamptz', fieldName: 'send_after', onCreate: () => new Date() },
     sentAt: { type: 'timestamptz', fieldName: 'sent_at', nullable: true, default: null },
     claimedAt: { type: 'timestamptz', fieldName: 'claimed_at', defaultRaw: "'1970-01-01 00:00:00+00'" },
+    claimToken: { type: 'uuid', fieldName: 'claim_token', default: UnclaimedNotificationDeliveryClaimId },
     createdAt: { type: 'timestamptz', fieldName: 'created_at', primary: true, onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },

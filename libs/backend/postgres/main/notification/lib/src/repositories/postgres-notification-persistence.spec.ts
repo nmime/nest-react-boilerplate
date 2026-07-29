@@ -4,6 +4,7 @@ import type { EntityManager } from '@mikro-orm/postgresql';
 import { afterEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { InvalidNotificationTemplateError } from '@app/backend-feature-notification-shared';
 import {
+  NotificationBroadcastStatus,
   NotificationChannel,
   NotificationDeliveryProvider,
   NotificationErrorReason,
@@ -12,13 +13,17 @@ import {
   NotificationTemplateEngine,
 } from '@app/common-notifications';
 import {
+  NotificationAudienceSnapshotEntity,
+  NotificationBroadcastEntity,
   NotificationDeliveryEntity,
   NotificationEntity,
   NotificationTemplateEntity,
   NotificationTemplateVersionChannelEntity,
   NotificationTemplateVersionEntity,
+  UnclaimedNotificationDeliveryClaimId,
 } from '../infrastructure/data-access/entities';
 import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
+import { PostgresNotificationBroadcastPersistence } from './postgres-notification-broadcast.persistence';
 import { DeliveryClaimLeaseSeconds, PostgresNotificationPersistence } from './postgres-notification-persistence';
 
 describe('PostgresNotificationPersistence', () => {
@@ -133,6 +138,8 @@ describe('PostgresNotificationPersistence', () => {
       createdAt: new Date('2026-07-16T09:00:00.000Z'),
     });
     delivery.id = '42';
+    const claimId = '6f00d185-c6cc-4202-a0ae-ccd02aa2f329';
+    delivery.claimToken = claimId;
     const transaction = createTransactionEntityManager();
     transaction.findOne.mockResolvedValue(delivery);
 
@@ -140,6 +147,7 @@ describe('PostgresNotificationPersistence', () => {
       {
         id: delivery.id,
         createdAt: delivery.createdAt,
+        claimToken: delivery.claimToken,
         status: NotificationStatus.Pending,
         error: { reason: NotificationErrorReason.RateLimit },
       },
@@ -154,6 +162,161 @@ describe('PostgresNotificationPersistence', () => {
     });
     expect(transaction.flush).toHaveBeenCalledOnce();
   });
+
+  it('fences an in-flight delivery result across pause, resume, and cancel', async () => {
+    const firstClaimId = '6f00d185-c6cc-4202-a0ae-ccd02aa2f329';
+    const delivery = buildPendingDelivery('42', '75f25517-d0ae-4a25-87e7-e8936a3a9e43');
+    const broadcast = new NotificationBroadcastEntity({
+      tenantId: '15de1900-f931-4ff9-91cd-a954125e67f7',
+      name: 'Race fence',
+      templateVersionId: 'c1f69d6f-7e21-45d2-981b-3b51c158174c',
+      status: NotificationBroadcastStatus.Sending,
+      createdBy: 'operator',
+    });
+    delivery.broadcastId = broadcast.id;
+    delivery.claimedAt = new Date('2026-07-16T10:00:00.000Z');
+    delivery.claimToken = firstClaimId;
+    const transaction = createTransactionEntityManager();
+    transaction.find.mockResolvedValue([]);
+    transaction.findOne.mockImplementation((entity: unknown, criteria: Record<string, unknown>) => {
+      if (entity === NotificationBroadcastEntity) {
+        return Promise.resolve(broadcast);
+      }
+      if (entity === NotificationAudienceSnapshotEntity) {
+        return Promise.resolve(null);
+      }
+      if (entity === NotificationDeliveryEntity) {
+        return Promise.resolve(
+          criteria['id'] === delivery.id &&
+            (criteria['createdAt'] as Date).getTime() === delivery.createdAt.getTime() &&
+            criteria['status'] === delivery.status &&
+            criteria['claimToken'] === delivery.claimToken
+            ? delivery
+            : null,
+        );
+      }
+      return Promise.resolve(null);
+    });
+    transaction.nativeUpdate.mockImplementation(
+      async (entity: unknown, _criteria: Record<string, unknown>, update: Record<string, unknown>) => {
+        if (entity === NotificationDeliveryEntity) {
+          Object.assign(delivery, update);
+          return 1;
+        }
+        return 0;
+      },
+    );
+    const root = { transactional: transaction.transactional } as unknown as EntityManager;
+    const broadcasts = new PostgresNotificationBroadcastPersistence(root, notificationPayloadCrypto());
+    const notifications = new PostgresNotificationPersistence(root, notificationPayloadCrypto());
+    const saveStaleResult = (claimId: string) =>
+      notifications.saveDeliveryResults([
+        {
+          id: delivery.id,
+          createdAt: delivery.createdAt,
+          claimToken: claimId,
+          status: NotificationStatus.Sent,
+        },
+      ]);
+
+    await broadcasts.transitionBroadcast({
+      broadcastId: broadcast.id,
+      tenantId: broadcast.tenantId,
+      action: 'pause',
+      idempotencyKey: 'pause',
+      actorId: 'operator',
+    });
+    await saveStaleResult(firstClaimId);
+    expect(delivery).toMatchObject({
+      status: NotificationStatus.Paused,
+      attempts: 0,
+      claimToken: UnclaimedNotificationDeliveryClaimId,
+      claimedAt: new Date(0),
+    });
+
+    await broadcasts.transitionBroadcast({
+      broadcastId: broadcast.id,
+      tenantId: broadcast.tenantId,
+      action: 'resume',
+      idempotencyKey: 'resume',
+      actorId: 'operator',
+    });
+    await saveStaleResult(firstClaimId);
+    expect(delivery).toMatchObject({
+      status: NotificationStatus.Pending,
+      attempts: 0,
+      claimToken: UnclaimedNotificationDeliveryClaimId,
+      claimedAt: new Date(0),
+    });
+
+    const secondClaimId = '96212ed7-d22b-40d6-a473-244b72f13722';
+    delivery.claimToken = secondClaimId;
+    delivery.claimedAt = new Date('2026-07-16T10:05:00.000Z');
+    await broadcasts.transitionBroadcast({
+      broadcastId: broadcast.id,
+      tenantId: broadcast.tenantId,
+      action: 'cancel',
+      idempotencyKey: 'cancel',
+      actorId: 'operator',
+    });
+    await saveStaleResult(secondClaimId);
+    expect(delivery).toMatchObject({
+      status: NotificationStatus.Cancelled,
+      attempts: 0,
+      claimToken: UnclaimedNotificationDeliveryClaimId,
+      claimedAt: new Date(0),
+    });
+    expect(transaction.findOne).toHaveBeenCalledWith(
+      NotificationDeliveryEntity,
+      expect.objectContaining({ status: NotificationStatus.Pending }),
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+  });
+
+  it.each([
+    [NotificationBroadcastStatus.Paused, 1],
+    [NotificationBroadcastStatus.Cancelled, 0],
+  ] as const)(
+    'revalidates a stale statistics candidate after a concurrent %s transition',
+    async (concurrentStatus, expectedRefreshes) => {
+      const staleCandidate = new NotificationBroadcastEntity({
+        tenantId: '15de1900-f931-4ff9-91cd-a954125e67f7',
+        name: 'Statistics race',
+        templateVersionId: 'c1f69d6f-7e21-45d2-981b-3b51c158174c',
+        status: NotificationBroadcastStatus.Sending,
+        materializedAt: new Date('2026-07-27T10:00:00.000Z'),
+        createdBy: 'operator',
+      });
+      const current = new NotificationBroadcastEntity({
+        ...staleCandidate,
+        status: concurrentStatus,
+      });
+      const transaction = {
+        findOne: vi.fn().mockResolvedValue(concurrentStatus === NotificationBroadcastStatus.Paused ? current : null),
+        count: vi.fn().mockResolvedValue(0),
+        flush: vi.fn().mockResolvedValue(undefined),
+      };
+      const root = {
+        find: vi.fn().mockResolvedValue([staleCandidate]),
+        transactional: vi.fn(async (callback: (em: typeof transaction) => Promise<unknown>) => callback(transaction)),
+      } as unknown as EntityManager;
+      const persistence = new PostgresNotificationBroadcastPersistence(root, notificationPayloadCrypto());
+
+      await expect(persistence.refreshBroadcastStatistics()).resolves.toBe(expectedRefreshes);
+
+      expect(staleCandidate.status).toBe(NotificationBroadcastStatus.Sending);
+      expect(current.status).toBe(concurrentStatus);
+      expect(transaction.findOne).toHaveBeenCalledWith(
+        NotificationBroadcastEntity,
+        {
+          id: staleCandidate.id,
+          status: { $in: [NotificationBroadcastStatus.Sending, NotificationBroadcastStatus.Paused] },
+        },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      expect(transaction.flush).toHaveBeenCalledTimes(expectedRefreshes);
+    },
+  );
 
   it('persists an explicit provider and encrypts sensitive template values', async () => {
     const template = new NotificationTemplateEntity({ code: 'auth.email-verification-code' });
@@ -430,6 +593,7 @@ function createTransactionEntityManager() {
     find: vi.fn(),
     persist: vi.fn(),
     remove: vi.fn(),
+    nativeUpdate: vi.fn(),
     flush: vi.fn().mockResolvedValue(undefined),
     transactional: vi.fn(),
   };

@@ -54,6 +54,8 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     env:
+      DATABASE_ENGINE: postgres
+      AUTH_PERSISTENCE: postgres
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
       ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
@@ -86,12 +88,18 @@ jobs:
 
       - name: Install PostgreSQL client tools
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Materialize explicit PostgreSQL reference build context
+        run: pnpm nrb closure materialize --all-reference --provider postgres
       - name: Start local runtime stack
+        env:
+          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
         run: docker compose -f docker/docker-compose.yml up -d --build
       - name: Run quality presets
         run: pnpm run quality:presets
       - name: Stop local runtime stack
         if: always()
+        env:
+          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
       - name: Upload test result artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

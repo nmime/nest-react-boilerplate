@@ -11,7 +11,7 @@
       "cache": false,
       "options": {
         "cwd": "apps/frontend/landing",
-        "command": "node_modules/.bin/astro dev --host localhost --port 4202"
+        "command": "astro dev --host localhost --port 4202"
       },
       "inputs": [
         "default",
@@ -25,7 +25,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/landing",
-        "command": "VITE_API_BASE_URL_MODE=same-origin node_modules/.bin/astro build"
+        "command": "VITE_API_BASE_URL_MODE=same-origin astro build"
       },
       "inputs": [
         "production",
@@ -41,7 +41,7 @@
       "dependsOn": ["build"],
       "options": {
         "cwd": "apps/frontend/landing",
-        "command": "node_modules/.bin/astro preview --host localhost --port 4202"
+        "command": "astro preview --host localhost --port 4202"
       },
       "inputs": [
         "production",
@@ -71,7 +71,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/landing",
-        "command": "node_modules/.bin/astro check"
+        "command": "astro check"
       },
       "inputs": [
         "default",

@@ -28,6 +28,7 @@ export interface LibraryGeneratorOptions {
     | 'test-util'
     | 'asset';
   scope?: string;
+  database?: 'postgres' | 'mongodb';
   /** Concrete responsibility rendered into the local README. */
   description?: string;
   fsdLayer?: 'shared' | 'entities' | 'features' | 'widgets' | 'pages';
@@ -53,12 +54,18 @@ function findExistingProject(tree: Tree, name: string): string | null {
   return null;
 }
 
-function computeProjectName(kind: string, name: string, type: string, scope: string): string {
+function computeProjectName(
+  kind: string,
+  name: string,
+  type: string,
+  scope: string,
+  database: 'postgres' | 'mongodb',
+): string {
   if (type === 'feature-main' || type === 'feature-admin' || type === 'feature-shared') {
     return `@app/${kind === 'common' ? 'common' : kind}-feature-${scope}-${type.replace('feature-', '')}`;
   }
   if (type === 'data-access') {
-    return `@app/backend-postgres-main-${scope}`;
+    return `@app/backend-${database}-main-${scope}`;
   }
   if (kind === 'backend') {
     return `@app/backend-${name}`;
@@ -69,7 +76,13 @@ function computeProjectName(kind: string, name: string, type: string, scope: str
   return `@app/common-${name}`;
 }
 
-function computeDirectory(kind: string, name: string, type: string, scope: string): string {
+function computeDirectory(
+  kind: string,
+  name: string,
+  type: string,
+  scope: string,
+  database: 'postgres' | 'mongodb',
+): string {
   if (kind === 'backend') {
     if (type === 'feature-main') {
       return `libs/backend/feature/${scope}/main/lib`;
@@ -81,7 +94,7 @@ function computeDirectory(kind: string, name: string, type: string, scope: strin
       return `libs/backend/feature/${scope}/shared/lib`;
     }
     if (type === 'data-access') {
-      return `libs/backend/postgres/main/${scope}/lib`;
+      return `libs/backend/${database}/main/${scope}/lib`;
     }
     return `libs/backend/common/${name}/lib`;
   }
@@ -95,6 +108,38 @@ function computeDirectory(kind: string, name: string, type: string, scope: strin
     return `libs/frontend/${name}/lib`;
   }
   return `libs/common/${name}/lib`;
+}
+
+function resolveDatabaseProvider(tree: Tree, requested: LibraryGeneratorOptions['database']): 'postgres' | 'mongodb' {
+  if (requested !== undefined && requested !== 'postgres' && requested !== 'mongodb') {
+    throw new Error(`Unsupported database provider "${String(requested)}". Must be one of: postgres, mongodb`);
+  }
+
+  const manifestContents = tree.read('.nrb/workspace.json', 'utf8');
+  if (!manifestContents) {
+    return requested ?? 'postgres';
+  }
+
+  let capabilities: unknown;
+  try {
+    capabilities = (JSON.parse(manifestContents) as { capabilities?: unknown }).capabilities;
+  } catch {
+    throw new Error('Cannot resolve database provider: .nrb/workspace.json is not valid JSON.');
+  }
+  const selected = ['postgres', 'mongodb'].filter(
+    (provider) => Array.isArray(capabilities) && capabilities.includes(provider),
+  ) as Array<'postgres' | 'mongodb'>;
+  if (selected.length !== 1) {
+    throw new Error(
+      'Cannot resolve database provider: .nrb/workspace.json must select exactly one of postgres or mongodb.',
+    );
+  }
+  if (requested && requested !== selected[0]) {
+    throw new Error(
+      `Database provider mismatch: requested "${requested}" but .nrb/workspace.json selects "${selected[0]}".`,
+    );
+  }
+  return selected[0] as 'postgres' | 'mongodb';
 }
 
 function computeTags(kind: string, type: string, scope: string, fsdLayer: string): string[] {
@@ -655,6 +700,9 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
   ) {
     throw new Error(`The ${type} library type must target the frontend or backend platform.`);
   }
+  if (options.database !== undefined && type !== 'data-access') {
+    throw new Error('--database is supported only for backend data-access libraries.');
+  }
 
   const names = generateNames(options.name);
   if (options.directory) {
@@ -666,14 +714,30 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
   const [inferredScope] = names.kebab.split('-');
   const scope = options.scope?.trim() || inferredScope || names.kebab;
   const fsdLayer = options.fsdLayer ?? (type === 'feature-main' ? 'features' : 'shared');
-  const projectName = computeProjectName(options.kind, names.kebab, type, scope);
-  const dir = computeDirectory(options.kind, names.kebab, type, scope);
+  const database = type === 'data-access' ? resolveDatabaseProvider(tree, options.database) : 'postgres';
+  const projectName = computeProjectName(options.kind, names.kebab, type, scope, database);
+  const dir = computeDirectory(options.kind, names.kebab, type, scope, database);
   const tags = computeTags(options.kind, type, scope, fsdLayer);
   const description = resolveDescription(options.description, names, options.kind, type);
 
   const existing = findExistingProject(tree, projectName);
   if (existing) {
     throw new Error(`Library "${existing}" already exists. Choose a different name.`);
+  }
+  if (type === 'data-access') {
+    const otherDatabase = database === 'postgres' ? 'mongodb' : 'postgres';
+    const otherProject = `@app/backend-${otherDatabase}-main-${scope}`;
+    const otherRoot = `libs/backend/${otherDatabase}/main/${scope}/lib`;
+    const tsconfigContents = tree.read('tsconfig.base.json', 'utf8');
+    const paths = tsconfigContents
+      ? ((JSON.parse(tsconfigContents) as { compilerOptions?: { paths?: Record<string, string[]> } }).compilerOptions
+          ?.paths ?? {})
+      : {};
+    if (findExistingProject(tree, otherProject) || tree.exists(`${otherRoot}/project.json`) || paths[otherProject]) {
+      throw new Error(
+        `Database provider collision: scope "${scope}" already has ${otherDatabase} data-access ownership at ${otherRoot}.`,
+      );
+    }
   }
 
   const projects = getProjects(tree);

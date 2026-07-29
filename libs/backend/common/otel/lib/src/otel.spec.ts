@@ -2,6 +2,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createOpenTelemetrySdkConfig,
+  createOpenTelemetryInstrumentations,
   getTracer,
   initOpenTelemetry,
   isOpenTelemetryEnabled,
@@ -223,6 +224,24 @@ describe('OpenTelemetry bootstrap', () => {
     expect(config.instrumentations).toEqual([]);
     expect(config.traceExporter).toBeDefined();
     expect(config).toHaveProperty('metricReader');
+  });
+
+  it('builds only the provider-neutral runtime instrumentation set by default', () => {
+    const instrumentations = createOpenTelemetryInstrumentations();
+
+    expect(instrumentations.map((instrumentation) => instrumentation.instrumentationName)).toEqual([
+      '@opentelemetry/instrumentation-http',
+      '@fastify/otel',
+      '@opentelemetry/instrumentation-nestjs-core',
+      '@opentelemetry/instrumentation-redis',
+      '@opentelemetry/instrumentation-runtime-node',
+    ]);
+    expect(instrumentations.map((instrumentation) => instrumentation.instrumentationName)).not.toContain(
+      '@opentelemetry/instrumentation-pg',
+    );
+    expect(instrumentations.map((instrumentation) => instrumentation.instrumentationName)).not.toContain(
+      '@opentelemetry/instrumentation-mongodb',
+    );
   });
 
   it('omits optional resource attributes when no version or environment is resolvable', () => {

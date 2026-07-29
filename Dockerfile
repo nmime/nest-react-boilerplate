@@ -14,12 +14,18 @@ RUN apk add --no-cache libc6-compat libcap python3 make g++ \
   && setcap 'cap_net_bind_service=+ep' "$(which node)" \
   && npm install -g pnpm@${PNPM_VERSION}
 
-# The fetched store is keyed only on the lockfile. The generated manifest tree
-# lets the install layer remain independent from workspace source changes.
-COPY pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-RUN pnpm fetch
-COPY package.json nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
-COPY docker/workspace-manifests/ ./
+# Product source builds install only the normalized closure supplied through the
+# explicit nrb-closure BuildKit context. The default source context cannot
+# substitute root/workspace dependency metadata.
+COPY --from=nrb-closure package.json ./package.json
+COPY --from=nrb-closure pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=nrb-closure pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=nrb-closure . ./.nrb/closure
+COPY --from=nrb-closure closure.json ./.nrb/closure.json
+COPY --from=nrb-closure nrb.config.json ./nrb.config.json
+COPY --from=nrb-closure workspace.json ./.nrb/workspace.json
+COPY .npmrc nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
+RUN pnpm fetch --frozen-lockfile
 RUN pnpm install --frozen-lockfile --offline \
   && chown -R node:node /workspace
 
@@ -28,14 +34,19 @@ COPY apps ./apps
 COPY libs ./libs
 COPY packages ./packages
 COPY i18n ./i18n
+RUN node packages/tooling/bin/run-ts-command.mjs \
+      packages/tooling/src/runtime/deployment-artifact.ts link-source-dependencies
 
 # Minimal migration dependency closure. Installing only docker/migrator-package.json
 # (MikroORM + pg + the loaders) from the warm offline store keeps the migrator off
 # the @repo/tooling CLI's heavy dev/test deps (playwright, nx, sharp, istanbul, ...)
 # that otherwise dominate this image's CVE surface.
 FROM workspace AS migrator-deps
+WORKDIR /workspace
+COPY docker/migrator-package.json ./docker/migrator-package.json
+RUN node packages/tooling/bin/run-ts-command.mjs \
+      /workspace/packages/tooling/src/runtime/deployment-artifact.ts stage-migrator /migrator
 WORKDIR /migrator
-COPY docker/migrator-package.json ./package.json
 RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
 
 FROM node:${NODE_VERSION} AS migrator
@@ -61,6 +72,7 @@ CMD ["node", "docker/migrator-run.mjs"]
 FROM workspace AS builder
 ARG NX_BUILD_PROJECTS
 ARG NX_PROJECT
+ARG RUNTIME_PROJECT
 ARG VITE_API_BASE_URL_MODE=same-origin
 ARG VITE_AUTH_API_BASE_URL
 ARG VITE_USER_API_BASE_URL
@@ -77,8 +89,10 @@ ENV VITE_API_BASE_URL_MODE=${VITE_API_BASE_URL_MODE} \
 # Reuse Nx task outputs while BuildKit builds several application targets. The
 # cache mount never enters a runtime image and is safe to discard at any time.
 RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
-  PROJECTS="${NX_BUILD_PROJECTS:-$NX_PROJECT}" \
+  PROJECTS="${NX_BUILD_PROJECTS:-${NX_PROJECT:-$RUNTIME_PROJECT}}" \
   && test -n "${PROJECTS}" \
+  && node packages/tooling/bin/run-ts-command.mjs \
+       packages/tooling/src/runtime/deployment-artifact.ts validate-build "${PROJECTS}" \
   && pnpm exec nx run-many -t build export --projects="${PROJECTS}"
 
 # Per-app production dependencies. Installing from the app's generated
@@ -99,7 +113,8 @@ RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
 #                     pure JS and need none
 FROM builder AS backend-deps
 ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
-WORKDIR /workspace/${BUILD_OUTPUT}
+ARG NX_PROJECT
+ARG RUNTIME_PROJECT
 # Drop esbuild/drizzle-kit: they arrive as dead weight via better-auth's
 # drizzle-kit dependency (this app uses MikroORM, not drizzle), are never run at
 # runtime, and their bundled Go binaries carry the bulk of the image's CVEs.
@@ -108,6 +123,11 @@ WORKDIR /workspace/${BUILD_OUTPUT}
 # ^9.6.0 resolves to the vulnerable 9.6.x (CVE-2026-47219). The workspace stage
 # already installed the overridden 9.7.0, so overlay that real 9.7.0 code onto
 # the pruned 9.6.x path.
+RUN PROJECT="${RUNTIME_PROJECT:-$NX_PROJECT}" \
+  && test -n "${PROJECT}" \
+  && node packages/tooling/bin/run-ts-command.mjs \
+       packages/tooling/src/runtime/deployment-artifact.ts stage "${PROJECT}" /runtime
+WORKDIR /runtime
 RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
   && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} + \
   && for old in node_modules/.pnpm/find-my-way@9.6.*; do \
@@ -129,10 +149,10 @@ RUN apk add --no-cache libcap su-exec \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 # Placed at /app so both the app and the libs it inlines resolve modules from
 # a shared ancestor node_modules.
-COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json
-COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules
-COPY --from=builder /workspace/dist ./dist
-COPY --from=builder /workspace/i18n ./i18n
+COPY --from=backend-deps /runtime/package.json ./package.json
+COPY --from=backend-deps /runtime/node_modules ./node_modules
+COPY --from=backend-deps /runtime/dist ./dist
+COPY --from=backend-deps /runtime/i18n ./i18n
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
@@ -144,8 +164,17 @@ CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 # portable, production-only dependency graph derived from the reviewed root
 # lockfile and supply-chain policy.
 FROM builder AS site-deps
-RUN pnpm --filter site-app deploy --prod /site-deploy \
-  && find /site-deploy/node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} + 2>/dev/null || true
+ARG NX_PROJECT
+ARG RUNTIME_PROJECT
+RUN PROJECT="${RUNTIME_PROJECT:-${NX_PROJECT:-site-app}}" \
+  && test "${PROJECT}" = site-app \
+  && node packages/tooling/bin/run-ts-command.mjs \
+       packages/tooling/src/runtime/deployment-artifact.ts stage "${PROJECT}" /site-deploy
+WORKDIR /site-deploy
+RUN pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts \
+  && if [ -d node_modules/.pnpm ]; then \
+       find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} +; \
+     fi
 
 FROM node:${NODE_VERSION} AS site-runtime
 ENV CONTAINER=true \
@@ -160,7 +189,7 @@ RUN apk add --no-cache libcap \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 COPY --from=site-deps /site-deploy/package.json ./package.json
 COPY --from=site-deps /site-deploy/node_modules ./node_modules
-COPY --from=builder /workspace/dist ./dist
+COPY --from=site-deps /site-deploy/dist ./dist
 USER node
 EXPOSE 80
 CMD ["node", "dist/apps/frontend/site/server/index.js"]

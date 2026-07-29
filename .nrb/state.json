@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
+  "files": {
+    "nrb.config.json": "384fd07a7da1344d004ef81e11425d299e1167f803ad30c641687bb3adbba0d9",
+    ".nrb/summary.md": "33b92a573c27e944c9dcc5c64d79c1b1e53bf4d0cbe72d38f0395b09dd23a891",
+    ".nrb/workspace.json": "7c8dd8240160fe01b6ac69a26d006f3e92860b3d49ed8b109693f62013601468",
+    ".nrb/capabilities.json": "86b7581317025c7b1726deedec89f940b8cfeb8d626d54529b3b6c5a45a51021",
+    ".nrb/capabilities.env": "4082b1fe7893e6d4e97a31cb084143cb2ec209357697141e954cefd1e6fe942b",
+    "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "3f7e64998e4b99f756e1fe343e4daeab858f4b34ddfbcede3a2c8373747dee19",
+    "apps/backend/user/user-app-api/src/capabilities.generated.ts": "b10b9142f3a803e2c7939e753362d03a5b16e80d44e4b0916a0d66a9bcd21a8b",
+    "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "77ac04357dcea185529ffbfe1ea83542655c697ec35e19334c2e759e2a030af0",
+    "apps/backend/discord/discord-app-api/src/capabilities.generated.ts": "56fb95dc139bed5062f4f3676ebbee91daaaa1efa67a2ed3fe30aed508258358",
+    "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "54a6672d013f0556f9cbc5dca93889b37bb3c74fa3afb961453ff551b1e275f8",
+    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "98f694e9d618f27e96a3d6a209186d657cff09dd2c17e6d666e3ae7b2d472912",
+    "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "676aafd079da0564a491e03d47063861bee1c736f6fc89d62bec3b1f636bb3a8",
+    "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/auth/auth-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/discord/discord-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/telegram/telegram-bot-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
+  },
+  "digest": "886da60cc96736e18b6e6700f81981cb2031bc0ff09f1b6041f47527bb1bf4f7"
+}

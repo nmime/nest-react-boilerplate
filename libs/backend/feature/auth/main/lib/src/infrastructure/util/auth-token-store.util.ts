@@ -1,11 +1,11 @@
-import type { AuthUserTokenEntity } from '@app/backend-postgres-main-auth';
+import type { AuthUserTokenRecord } from '@app/backend-feature-auth-shared';
 import type { AuthTokenStoreError, AuthUserTokenPurpose, UserActionTokenRecord } from '../type/auth-token-store.type';
 import {
   DefaultEmailVerificationTtlSeconds,
   DefaultPasswordResetTtlSeconds,
 } from '../const/auth-token-store-ttl.const';
 
-export function toUserActionTokenRecord(entity: AuthUserTokenEntity): UserActionTokenRecord {
+export function toUserActionTokenRecord(entity: AuthUserTokenRecord): UserActionTokenRecord {
   return {
     id: entity.id,
     tenantId: entity.tenantId,

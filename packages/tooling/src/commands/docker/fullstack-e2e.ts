@@ -1,5 +1,7 @@
 #!/usr/bin/env node
+import { resolve } from "node:path";
 import { run, skipWhenDockerUnavailable } from "./runtime.ts";
+import { loadCurrentSelectedClosure } from "../../runtime/deployment-artifact.ts";
 
 const generatedPortBase =
   Number.parseInt(process.env.DOCKER_TEST_PORT_BASE ?? "", 10) ||
@@ -16,7 +18,13 @@ const env = {
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
   NX_DAEMON: "false",
   NX_PARALLEL: process.env.NX_PARALLEL ?? "1",
+  NRB_CLOSURE_CONTEXT: resolve(process.cwd(), ".nrb/closure"),
 };
+
+const { closure } = await loadCurrentSelectedClosure(process.cwd());
+if (!closure.roots.includes("fullstack-e2e")) {
+  throw new Error("Fullstack e2e requires fullstack-e2e in the fresh selected closure.");
+}
 
 if (await skipWhenDockerUnavailable("fullstack e2e")) process.exit(0);
 console.log(

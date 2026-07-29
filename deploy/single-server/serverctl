@@ -247,12 +247,36 @@ ensure_secret_material() {
   configure_secret NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE notification_payload_encryption_key.txt base64-32
   configure_secret REDIS_PASSWORD_FILE redis_password.txt hex
   configure_secret GRAFANA_ADMIN_PASSWORD_FILE grafana_admin_password.txt base64
-  configure_secret POSTGRES_PASSWORD_FILE postgres_password.txt base64
+  local database_engine database_mode
+  database_engine="$(environment_value DATABASE_ENGINE)"
+  database_engine="${database_engine:-postgres}"
+  database_mode="$(environment_value COMPOSE_DATABASE_MODE)"
+  case "${database_engine}/${database_mode}" in
+    postgres/bundled-db)
+      configure_secret POSTGRES_PASSWORD_FILE postgres_password.txt base64
+      ;;
+    postgres/external-db)
+      configure_secret DATABASE_URL_FILE database_url.txt empty
+      ;;
+    mongodb/bundled-db)
+      upsert_environment_value "${PRODUCTION_ENV}" MONGODB_DATABASE_TOOLS_DOCKER_NETWORK nest-react-boilerplate_database
+      configure_secret MONGODB_ROOT_PASSWORD_FILE mongodb_root_password.txt base64
+      configure_secret MONGODB_PASSWORD_FILE mongodb_password.txt base64
+      configure_secret MONGODB_MIGRATION_PASSWORD_FILE mongodb_migration_password.txt base64
+      configure_secret MONGODB_BACKUP_RESTORE_PASSWORD_FILE mongodb_backup_restore_password.txt base64
+      configure_secret MONGODB_KEYFILE_FILE mongodb_keyfile.txt base64
+      ;;
+    mongodb/external-db)
+      upsert_environment_value "${PRODUCTION_ENV}" MONGODB_DATABASE_TOOLS_DOCKER_NETWORK ''
+      configure_secret MONGODB_URI_FILE mongodb_uri.txt empty
+      configure_secret MONGODB_MIGRATION_URI_FILE mongodb_migration_uri.txt empty
+      configure_secret MONGODB_BACKUP_RESTORE_URI_FILE mongodb_backup_restore_uri.txt empty
+      ;;
+    *) die 'DATABASE_ENGINE must be postgres or mongodb and COMPOSE_DATABASE_MODE must be bundled-db or external-db' ;;
+  esac
 
-  # These values are issued by an external system and cannot be fabricated.
-  # Empty protected files make the required operator inputs explicit and allow
-  # profile validation to fail before Compose starts.
-  configure_secret DATABASE_URL_FILE database_url.txt empty
+  # These values are issued by external systems and cannot be fabricated.
+  # Empty protected files make required operator inputs explicit.
   configure_secret TELEGRAM_BOT_TOKEN_FILE telegram_bot_token.txt empty
   configure_secret TELEGRAM_OIDC_CLIENT_SECRET_FILE telegram_oidc_client_secret.txt empty
   configure_secret TELEGRAM_BOT_WEBHOOK_SECRET_FILE telegram_bot_webhook_secret.txt hex
@@ -510,10 +534,12 @@ validate_configuration() {
   /usr/local/bin/node "${APP_ROOT}/scripts/single-server-deployment.mjs" validate \
     --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
 
-  local image_tag image_registry database_mode configured_profiles public_domain
+  local image_tag image_registry database_engine database_mode configured_profiles public_domain
   image_tag="$(environment_value IMAGE_TAG)"
   image_registry="$(environment_value IMAGE_REGISTRY)"
   database_mode="$(environment_value COMPOSE_DATABASE_MODE)"
+  database_engine="$(environment_value DATABASE_ENGINE)"
+  database_engine="${database_engine:-postgres}"
   configured_profiles=",$(environment_value COMPOSE_PROFILES),"
   public_domain="$(environment_value PUBLIC_DOMAIN)"
   [[ "${image_tag}" =~ ^sha-[0-9a-f]{7,64}$ ]] || die 'IMAGE_TAG must be an immutable sha-<git-sha> tag'
@@ -559,14 +585,34 @@ validate_configuration() {
   validate_generated_secret_contracts
   [[ "$(environment_value AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED)" == 'true' ]] || \
     die 'AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED must be true for the single-server production deployment'
-  if [[ "${database_mode}" == 'bundled-db' ]]; then
-    validate_secret_file POSTGRES_PASSWORD_FILE
-    validate_secret_minimum_length POSTGRES_PASSWORD_FILE 32
-  elif [[ "${database_mode}" == 'external-db' ]]; then
-    validate_secret_file DATABASE_URL_FILE
-  else
-    die 'COMPOSE_DATABASE_MODE must be bundled-db or external-db'
-  fi
+  case "${database_engine}/${database_mode}" in
+    postgres/bundled-db)
+      validate_secret_file POSTGRES_PASSWORD_FILE
+      validate_secret_minimum_length POSTGRES_PASSWORD_FILE 32
+      ;;
+    postgres/external-db)
+      validate_secret_file DATABASE_URL_FILE
+      ;;
+    mongodb/bundled-db)
+      log 'WARNING: bundled MongoDB is a transaction-capable single-node replica set and is not highly available'
+      validate_secret_file MONGODB_ROOT_PASSWORD_FILE
+      validate_secret_file MONGODB_PASSWORD_FILE
+      validate_secret_file MONGODB_MIGRATION_PASSWORD_FILE
+      validate_secret_file MONGODB_BACKUP_RESTORE_PASSWORD_FILE
+      validate_secret_file MONGODB_KEYFILE_FILE
+      validate_secret_minimum_length MONGODB_ROOT_PASSWORD_FILE 32
+      validate_secret_minimum_length MONGODB_PASSWORD_FILE 32
+      validate_secret_minimum_length MONGODB_MIGRATION_PASSWORD_FILE 32
+      validate_secret_minimum_length MONGODB_BACKUP_RESTORE_PASSWORD_FILE 32
+      validate_secret_minimum_length MONGODB_KEYFILE_FILE 6
+      ;;
+    mongodb/external-db)
+      validate_secret_file MONGODB_URI_FILE
+      validate_secret_file MONGODB_MIGRATION_URI_FILE
+      validate_secret_file MONGODB_BACKUP_RESTORE_URI_FILE
+      ;;
+    *) die 'DATABASE_ENGINE must be postgres or mongodb and COMPOSE_DATABASE_MODE must be bundled-db or external-db' ;;
+  esac
   if [[ "${configured_profiles}" == *,telegram,* ]]; then
     validate_secret_file TELEGRAM_BOT_TOKEN_FILE
     validate_secret_file TELEGRAM_OIDC_CLIENT_SECRET_FILE

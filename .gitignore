@@ -89,6 +89,7 @@ storybook-static
 # AI working artifacts (plans, specs) — local only
 
 .nx/
+.nrb/reference/
 
 # Local database backups
 backups/

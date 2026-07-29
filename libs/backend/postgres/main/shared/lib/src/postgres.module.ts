@@ -1,5 +1,11 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { DynamicModule, Global, Module } from '@nestjs/common';
+import { DynamicModule, Global, Injectable, Module, type OnModuleInit } from '@nestjs/common';
+import {
+  assertDurableDatabaseEnvironment,
+  DurableDatabaseRuntimeInjectToken,
+  type BackendSessionStoreOptions,
+  type DurableDatabaseRuntime,
+} from '@app/backend-common-bootstrap';
 import { createPostgresMikroOrmOptions, type PostgresMikroOrmOverrides } from './data-source-options';
 import {
   MikroOrmPostgresHealthAdapter,
@@ -7,6 +13,30 @@ import {
   PostgresMigrationsHealthIndicator,
   PostgresReadinessHealthIndicator,
 } from './postgres.health';
+import { PostgresSessionStore } from './postgres-session.store';
+
+@Injectable()
+class PostgresDurableDatabaseRuntime implements DurableDatabaseRuntime, OnModuleInit {
+  readonly provider = 'postgres' as const;
+
+  constructor(readiness: PostgresReadinessHealthIndicator, migrations: PostgresMigrationsHealthIndicator) {
+    this.healthIndicators = [readiness, migrations];
+  }
+
+  readonly healthIndicators: DurableDatabaseRuntime['healthIndicators'];
+
+  onModuleInit(): void {
+    assertDurableDatabaseEnvironment(this.provider);
+  }
+
+  createSessionStore(options: BackendSessionStoreOptions): PostgresSessionStore {
+    const databaseUrl = options.env.DATABASE_URL?.trim();
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL is required for PostgreSQL-backed server-side sessions.');
+    }
+    return new PostgresSessionStore(databaseUrl, options.defaultMaxAgeSeconds, options.sweepIntervalMs);
+  }
+}
 
 @Global()
 @Module({})
@@ -23,8 +53,15 @@ export class PostgresMainModule {
         },
         PostgresReadinessHealthIndicator,
         PostgresMigrationsHealthIndicator,
+        PostgresDurableDatabaseRuntime,
+        { provide: DurableDatabaseRuntimeInjectToken, useExisting: PostgresDurableDatabaseRuntime },
       ],
-      exports: [PostgresHealthAdapter, PostgresReadinessHealthIndicator, PostgresMigrationsHealthIndicator],
+      exports: [
+        PostgresHealthAdapter,
+        PostgresReadinessHealthIndicator,
+        PostgresMigrationsHealthIndicator,
+        DurableDatabaseRuntimeInjectToken,
+      ],
     };
   }
 }

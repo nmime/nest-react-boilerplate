@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   EnvironmentFeatureFlagProvider,
   FeatureFlagProviderToken,
+  FeatureFlagRepositoryToken,
   InMemoryFeatureFlagProvider,
   createFeatureFlagProvider,
   parseFlagValue,
@@ -51,6 +52,8 @@ describe('feature flags', () => {
   it('publishes a stable string injection token', () => {
     expect(FeatureFlagProviderToken).toBe('app.feature-flags.provider');
     expect(typeof FeatureFlagProviderToken).toBe('string');
+    expect(FeatureFlagRepositoryToken).toBe('app.feature-flags.repository');
+    expect(typeof FeatureFlagRepositoryToken).toBe('string');
   });
 
   it('treats numeric and absent flags as booleans', () => {

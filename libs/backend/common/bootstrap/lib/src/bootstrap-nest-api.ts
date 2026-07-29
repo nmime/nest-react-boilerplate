@@ -3,10 +3,14 @@ import fastifySession from '@fastify/session';
 import type { DynamicModule, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import type { FastifySessionObject as Session } from '@fastify/session';
 import helmet from 'helmet';
-import { Pool, type PoolClient } from 'pg';
 import { getPortEnvVarName } from './util/port.util';
+import {
+  assertDurableDatabaseEnvironment,
+  DurableDatabaseRuntimeInjectToken,
+  type BackendSessionStore,
+  type DurableDatabaseRuntime,
+} from './durable-database.runtime';
 import {
   closeRedisClient,
   createRedisClient,
@@ -60,6 +64,7 @@ export interface BootstrapRateLimitOptions {
 
 export type BackendRateLimitStore = 'memory' | 'redis';
 export type BackendRateLimitStorePreference = BackendRateLimitStore | 'auto';
+export type BackendSessionPersistence = 'memory' | 'mongodb' | 'postgres';
 type BackendPortSource = 'configured';
 
 export interface BackendEnvironmentConfig {
@@ -76,8 +81,8 @@ export interface BackendEnvironmentConfig {
   };
   session: {
     cookieName: string;
-    databaseUrl?: string;
     maxAgeSeconds: number;
+    persistence: BackendSessionPersistence;
     sameSite: SessionSameSite;
     secure: boolean;
     secret: string;
@@ -109,8 +114,6 @@ type NextFunctionLike = () => void;
 type FastifySessionOptions = Parameters<typeof fastifySession>[1];
 type FastifyPluginRegister = (plugin: unknown, options?: unknown) => PromiseLike<unknown>;
 type SessionSameSite = 'lax' | 'strict' | 'none';
-type SessionStoreCallback = (error?: unknown) => void;
-type SessionStoreGetCallback = (error: unknown, session?: Session | null) => void;
 
 interface RateLimitBucket {
   count: number;
@@ -136,176 +139,6 @@ const DefaultSessionSweepIntervalMs = 600_000;
 const MinimumSessionSecretLength = 32;
 const DevelopmentSessionSecretPadding = ':development-session-padding';
 const rateLimitBuckets = new Map<string, RateLimitBucket>();
-
-class FastifyPostgresSessionStore {
-  private initialized: Promise<void> | undefined;
-  private sweepTimer: NodeJS.Timeout | undefined;
-  private readonly pool: Pool;
-
-  constructor(
-    databaseUrl: string,
-    private readonly defaultMaxAgeSeconds: number,
-    private readonly sweepIntervalMs: number = DefaultSessionSweepIntervalMs,
-  ) {
-    this.pool = new Pool({ connectionString: databaseUrl });
-  }
-
-  async init(): Promise<void> {
-    await this.ensureInitialized();
-    this.startExpiredSessionSweep();
-  }
-
-  close(): Promise<void> {
-    if (this.sweepTimer) {
-      clearInterval(this.sweepTimer);
-      this.sweepTimer = undefined;
-    }
-
-    return Promise.resolve();
-  }
-
-  private ensureInitialized(): Promise<void> {
-    this.initialized ??= this.createTable(this.pool);
-    return this.initialized;
-  }
-
-  private startExpiredSessionSweep(): void {
-    if (this.sweepTimer || this.sweepIntervalMs <= 0) {
-      return;
-    }
-
-    this.sweepTimer = setInterval(() => {
-      void this.deleteExpiredSessions();
-    }, this.sweepIntervalMs);
-    // Do not keep the event loop alive solely for the sweep timer.
-    this.sweepTimer.unref();
-  }
-
-  private async deleteExpiredSessions(): Promise<void> {
-    await this.pool.query('DELETE FROM fastify_sessions WHERE expire <= $1', [new Date()]);
-  }
-
-  get(sessionId: string, callback: SessionStoreGetCallback): void {
-    void this.getSession(sessionId)
-      .then((session) => {
-        callback(null, session);
-      })
-      .catch((error: unknown) => {
-        callback(error);
-      });
-  }
-
-  set(sessionId: string, session: Session, callback: SessionStoreCallback): void {
-    void this.setSession(sessionId, session)
-      .then(() => {
-        callback();
-      })
-      .catch((error: unknown) => {
-        callback(error);
-      });
-  }
-
-  destroy(sessionId: string, callback: SessionStoreCallback): void {
-    void this.destroySession(sessionId)
-      .then(() => {
-        callback();
-      })
-      .catch((error: unknown) => {
-        callback(error);
-      });
-  }
-
-  private async createTable(client: Pool | PoolClient): Promise<void> {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS fastify_sessions (
-        sid varchar PRIMARY KEY,
-        sess jsonb NOT NULL,
-        expire timestamptz NOT NULL
-      )
-    `);
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS ix__fastify_sessions__expire
-      ON fastify_sessions (expire)
-    `);
-  }
-
-  private async getSession(sessionId: string): Promise<Session | null> {
-    await this.ensureInitialized();
-    const result = await this.pool.query<{ sess: Session; expire: Date }>(
-      'SELECT sess, expire FROM fastify_sessions WHERE sid = $1',
-      [sessionId],
-    );
-    const row = result.rows.at(0);
-    if (!row) {
-      return null;
-    }
-
-    const expiresAt = row.expire instanceof Date ? row.expire : new Date(row.expire);
-    if (expiresAt.getTime() <= Date.now()) {
-      await this.deleteSession(sessionId);
-      return null;
-    }
-
-    return this.reviveSession(row.sess);
-  }
-
-  private async setSession(sessionId: string, session: Session): Promise<void> {
-    await this.ensureInitialized();
-    await this.pool.query(
-      `
-        INSERT INTO fastify_sessions (sid, sess, expire)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (sid)
-        DO UPDATE SET sess = EXCLUDED.sess, expire = EXCLUDED.expire
-      `,
-      [sessionId, this.serializeSession(session), this.resolveExpiry(session)],
-    );
-  }
-
-  private async destroySession(sessionId: string): Promise<void> {
-    await this.ensureInitialized();
-    await this.deleteSession(sessionId);
-  }
-
-  private async deleteSession(sessionId: string): Promise<void> {
-    await this.pool.query('DELETE FROM fastify_sessions WHERE sid = $1', [sessionId]);
-  }
-
-  private serializeSession(session: Session): Session {
-    return JSON.parse(JSON.stringify(session)) as Session;
-  }
-
-  private reviveSession(session: Session): Session {
-    const cookie = session.cookie as (Session['cookie'] & { expires?: Date | string | null }) | undefined;
-    if (cookie?.expires && !(cookie.expires instanceof Date)) {
-      const expires = new Date(cookie.expires);
-      if (!Number.isNaN(expires.getTime())) {
-        cookie.expires = expires;
-      }
-    }
-
-    return session;
-  }
-
-  private resolveExpiry(session: Session): Date {
-    const cookie = session.cookie as (Session['cookie'] & { expires?: Date | string | null }) | undefined;
-    if (cookie?.expires) {
-      const expires = cookie.expires instanceof Date ? cookie.expires : new Date(cookie.expires);
-      if (!Number.isNaN(expires.getTime())) {
-        return expires;
-      }
-    }
-
-    let maxAge = this.defaultMaxAgeSeconds * 1000;
-    if (typeof cookie?.originalMaxAge === 'number' && cookie.originalMaxAge > 0) {
-      maxAge = cookie.originalMaxAge;
-    } else if (typeof cookie?.maxAge === 'number' && cookie.maxAge > 0) {
-      maxAge = cookie.maxAge;
-    }
-
-    return new Date(Date.now() + maxAge);
-  }
-}
 
 class MemoryRateLimitStore implements RateLimitStore {
   readonly name = 'memory' as const;
@@ -484,17 +317,44 @@ function resolveSessionCookieSecure(isProduction: boolean, env: NodeJS.ProcessEn
   return readBoolean('SESSION_COOKIE_SECURE', env.SESSION_COOKIE_SECURE) ?? false;
 }
 
-function createSessionStore(config: BackendEnvironmentConfig): FastifyPostgresSessionStore | undefined {
-  return config.session.databaseUrl
-    ? new FastifyPostgresSessionStore(
-        config.session.databaseUrl,
-        config.session.maxAgeSeconds,
-        config.session.sweepIntervalMs,
-      )
-    : undefined;
+function resolveSessionPersistence(env: NodeJS.ProcessEnv): BackendSessionPersistence {
+  const persistence = env.AUTH_PERSISTENCE?.trim().toLowerCase();
+  if (!persistence && env.VITEST) {
+    return 'memory';
+  }
+  if (persistence === 'memory' || persistence === 'mongodb' || persistence === 'postgres') {
+    return persistence;
+  }
+  if (persistence) {
+    throw new Error('AUTH_PERSISTENCE must be one of memory, mongodb, or postgres.');
+  }
+  return 'postgres';
 }
 
-function registerSessionStoreShutdown(app: NestFastifyApplication, store: FastifyPostgresSessionStore): void {
+function createSessionStore(
+  config: BackendEnvironmentConfig,
+  runtime: DurableDatabaseRuntime | undefined,
+): BackendSessionStore | undefined {
+  if (config.session.persistence === 'memory') {
+    return undefined;
+  }
+  if (!runtime) {
+    throw new Error('The selected backend does not include a durable database runtime. Rerun `pnpm nrb setup`.');
+  }
+  assertDurableDatabaseEnvironment(runtime.provider);
+  if (config.session.persistence !== runtime.provider) {
+    throw new Error(
+      `AUTH_PERSISTENCE=${config.session.persistence} does not match the compiled ${runtime.provider} provider.`,
+    );
+  }
+  return runtime.createSessionStore({
+    defaultMaxAgeSeconds: config.session.maxAgeSeconds,
+    env: process.env,
+    sweepIntervalMs: config.session.sweepIntervalMs,
+  });
+}
+
+function registerSessionStoreShutdown(app: NestFastifyApplication, store: BackendSessionStore): void {
   const fastify = app.getHttpAdapter().getInstance() as {
     addHook?: (hook: 'onClose', handler: () => Promise<void> | void) => void;
   };
@@ -504,10 +364,16 @@ function registerSessionStoreShutdown(app: NestFastifyApplication, store: Fastif
 }
 
 async function registerFastifySession(app: NestFastifyApplication, config: BackendEnvironmentConfig): Promise<void> {
-  const store = createSessionStore(config);
-  await store?.init();
+  const runtime = config.session.persistence === 'memory' ? undefined : resolveDurableDatabaseRuntime(app);
+  const store = createSessionStore(config, runtime);
   if (store) {
-    registerSessionStoreShutdown(app, store);
+    try {
+      await store.init();
+      registerSessionStoreShutdown(app, store);
+    } catch (error) {
+      await store.close();
+      throw error;
+    }
   }
 
   const fastify = app.getHttpAdapter().getInstance();
@@ -529,6 +395,14 @@ async function registerFastifySession(app: NestFastifyApplication, config: Backe
   const registerFastifyPlugin = fastify.register.bind(fastify) as FastifyPluginRegister;
   await registerFastifyPlugin(fastifyCookie);
   await registerFastifyPlugin(fastifySession, sessionOptions);
+}
+
+function resolveDurableDatabaseRuntime(app: NestFastifyApplication): DurableDatabaseRuntime | undefined {
+  try {
+    return app.get<DurableDatabaseRuntime>(DurableDatabaseRuntimeInjectToken, { strict: false });
+  } catch {
+    return undefined;
+  }
 }
 
 function resolveHost(env: NodeJS.ProcessEnv): string | undefined {
@@ -695,11 +569,7 @@ export function resolveBackendEnvironmentConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): BackendEnvironmentConfig {
   const isProduction = env.NODE_ENV === 'production';
-  const usesInMemoryAuthPersistence = env.AUTH_PERSISTENCE?.trim().toLowerCase() === 'memory';
-  const databaseUrl = usesInMemoryAuthPersistence ? undefined : readOptionalSecret(env.DATABASE_URL);
-  if (isProduction && !databaseUrl) {
-    throw new Error('DATABASE_URL must be configured in production for server-side sessions.');
-  }
+  const sessionPersistence = resolveSessionPersistence(env);
 
   const port = resolvePort(options, env);
 
@@ -713,12 +583,12 @@ export function resolveBackendEnvironmentConfig(
     rateLimit: resolveRateLimitOptions(options, env, isProduction),
     session: {
       cookieName: resolveSessionCookieName(isProduction, env),
-      databaseUrl,
       maxAgeSeconds: readPositiveInteger(
         'SESSION_COOKIE_MAX_AGE_SECONDS',
         env.SESSION_COOKIE_MAX_AGE_SECONDS,
         DefaultSessionCookieMaxAgeSeconds,
       ),
+      persistence: sessionPersistence,
       sameSite: resolveSessionCookieSameSite(env),
       secure: resolveSessionCookieSecure(isProduction, env),
       secret: resolveSessionSecret(isProduction, env),

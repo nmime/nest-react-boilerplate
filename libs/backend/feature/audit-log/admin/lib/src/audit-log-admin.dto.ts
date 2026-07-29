@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsISO8601, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AdminAuditActions } from '@app/backend-postgres-main-auth';
+import { AdminAuditActions } from '@app/backend-feature-auth-shared';
 import { AdminAuditResources, AuditLogAdminMaxPageSize } from './audit-log-admin.const';
 
 export class AuditLogAdminListQueryDto {

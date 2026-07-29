@@ -17,7 +17,6 @@ const mocks = vi.hoisted(() => {
     createLogger: vi.fn(() => ({ logger, middlewares: [middleware] })),
     helmet: vi.fn(() => helmetMiddleware),
     helmetMiddleware,
-    initOpenTelemetry: vi.fn(),
     logger,
     middleware,
     nestCreate: vi.fn(() => Promise.resolve(app)),
@@ -49,10 +48,6 @@ vi.mock('@app/backend-common-logger', () => ({
   createLogger: mocks.createLogger,
 }));
 
-vi.mock('@app/backend-common-otel', () => ({
-  initOpenTelemetry: mocks.initOpenTelemetry,
-}));
-
 vi.mock('@app/backend-common-swagger', () => ({
   setupSwagger: mocks.setupSwagger,
 }));
@@ -69,8 +64,6 @@ describe('bootstrap', () => {
   const originalEnvironment = {
     gracefulShutdown: process.env.GRACEFUL_SHUTDOWN,
     nodeEnv: process.env.NODE_ENV as string | undefined,
-    npmPackageVersion: process.env.npm_package_version,
-    otelServiceVersion: process.env.OTEL_SERVICE_VERSION,
     port: process.env.PORT,
     testApiPort: process.env.TEST_API_PORT,
   };
@@ -78,8 +71,6 @@ describe('bootstrap', () => {
   beforeEach(() => {
     delete process.env.GRACEFUL_SHUTDOWN;
     delete process.env.NODE_ENV;
-    delete process.env.npm_package_version;
-    delete process.env.OTEL_SERVICE_VERSION;
     delete process.env.PORT;
     delete process.env.TEST_API_PORT;
     vi.clearAllMocks();
@@ -88,15 +79,12 @@ describe('bootstrap', () => {
   afterEach(() => {
     process.env.GRACEFUL_SHUTDOWN = originalEnvironment.gracefulShutdown ?? '';
     process.env.NODE_ENV = originalEnvironment.nodeEnv ?? '';
-    process.env.npm_package_version = originalEnvironment.npmPackageVersion ?? '';
-    process.env.OTEL_SERVICE_VERSION = originalEnvironment.otelServiceVersion ?? '';
     process.env.PORT = originalEnvironment.port ?? '';
     process.env.TEST_API_PORT = originalEnvironment.testApiPort ?? '';
   });
 
   it('creates and listens with static options', async () => {
     process.env.NODE_ENV = 'test';
-    process.env.OTEL_SERVICE_VERSION = '1.2.3';
     const beforeListen = vi.fn();
     const afterListen = vi.fn();
 
@@ -111,11 +99,6 @@ describe('bootstrap', () => {
     });
 
     expect(app).toBe(mocks.app);
-    expect(mocks.initOpenTelemetry).toHaveBeenCalledWith({
-      serviceName: 'test-api',
-      serviceVersion: '1.2.3',
-      environment: 'test',
-    });
     expect(mocks.nestCreate).toHaveBeenCalledWith(TestModule, {
       logger: mocks.logger,
       rawBody: true,
@@ -137,7 +120,6 @@ describe('bootstrap', () => {
   it('uses env and async factories for optional runtime settings', async () => {
     process.env.TEST_API_PORT = '4123';
     process.env.GRACEFUL_SHUTDOWN = 'true';
-    process.env.npm_package_version = '9.9.9';
     const cors = vi.fn(() => Promise.resolve({ credentials: true }));
 
     await bootstrap({
@@ -151,7 +133,6 @@ describe('bootstrap', () => {
     expect(mocks.app.enableCors).toHaveBeenCalledWith({ credentials: true });
     expect(mocks.app.enableShutdownHooks).toHaveBeenCalled();
     expect(mocks.app.listen).toHaveBeenCalledWith(4123);
-    expect(mocks.initOpenTelemetry).toHaveBeenCalledWith(expect.objectContaining({ serviceVersion: '9.9.9' }));
   });
 
   it('rejects invalid ports', async () => {

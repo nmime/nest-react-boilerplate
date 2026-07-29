@@ -52,16 +52,33 @@ const yamlMapEntry = (text, key, indent = 2) => {
 };
 
 const dockerfile = read('Dockerfile');
-const dockerManifestSync = read('scripts/sync-docker-workspace-manifests.mjs');
+const migratorRun = read('docker/migrator-run.mjs');
+const deploymentProvider = read('packages/tooling/src/commands/db/deployment-provider.ts');
 const rootPackageJson = JSON.parse(read('package.json'));
 const pinnedPnpm = rootPackageJson.packageManager?.split('@')[1];
 assert.ok(pinnedPnpm, 'package.json packageManager must pin a pnpm version');
 has(dockerfile, `ARG PNPM_VERSION=${pinnedPnpm}`, `Dockerfile pnpm version must match packageManager (${pinnedPnpm})`);
+for (const input of [
+  'package.json',
+  'pnpm-workspace.yaml',
+  'pnpm-lock.yaml',
+  'closure.json',
+  'nrb.config.json',
+  'workspace.json',
+]) {
+  has(dockerfile, `COPY --from=nrb-closure ${input} `, `Docker consumes ${input} from the named closure context`);
+}
 has(
   dockerfile,
-  'COPY docker/workspace-manifests/ ./',
-  'Docker dependency layer uses generated workspace package manifests',
+  'COPY --from=nrb-closure . ./.nrb/closure',
+  'Docker consumes closure lock integrity metadata from the named closure context',
 );
+for (const forbidden of ['COPY .nrb/', 'COPY nrb.config.json']) {
+  assert.ok(
+    !dockerfile.includes(forbidden),
+    `Dockerfile must not read closure metadata from the default context: ${forbidden}`,
+  );
+}
 has(
   dockerfile,
   '--mount=type=cache,target=/workspace/.nx/cache,sharing=locked',
@@ -69,25 +86,29 @@ has(
 );
 before(
   dockerfile,
-  'COPY docker/workspace-manifests/ ./',
+  'COPY --from=nrb-closure pnpm-lock.yaml ./pnpm-lock.yaml',
   'RUN pnpm install --frozen-lockfile --offline',
-  'Docker copies dependency manifests before installing workspace dependencies',
+  'Docker copies selected dependency metadata before installing source-build dependencies',
 );
 before(
   dockerfile,
   'RUN pnpm install --frozen-lockfile --offline',
   'COPY apps ./apps',
-  'Docker copies application source only after the dependency layer is cached',
+  'Docker copies application source only after the selected dependency layer is cached',
+);
+assert.ok(
+  !dockerfile.includes('COPY docker/workspace-manifests/ ./'),
+  'Docker source builds must not fall back to the all-workspace manifest tree.',
+);
+assert.ok(
+  !existsSync(new URL('../docker/workspace-manifests', import.meta.url)) &&
+    !existsSync(new URL('../scripts/sync-docker-workspace-manifests.mjs', import.meta.url)),
+  'Retired Docker workspace manifest artifacts and their synchronizer must be removed.',
 );
 has(
-  dockerManifestSync,
-  "sourceRoots = ['apps', 'libs', 'packages']",
-  'manifest sync covers every workspace ownership root',
-);
-has(
-  dockerManifestSync,
-  'Docker workspace manifests are out of date',
-  'manifest sync fails CI when generated inputs are stale',
+  dockerfile,
+  'deployment-artifact.ts link-source-dependencies',
+  'Docker links only selected app roots to the flattened source dependency closure',
 );
 has(dockerfile, 'FROM nginxinc/nginx-unprivileged:', 'unprivileged frontend base image');
 has(
@@ -134,6 +155,17 @@ assertNginxHardening(nginxSpa, 'standalone SPA');
 has(dockerfile, 'USER 101', 'frontend runtime user 101');
 has(dockerfile, 'EXPOSE 8080', 'frontend exposes unprivileged port 8080');
 const migratorStage = section(dockerfile, 'FROM workspace AS migrator', 'FROM workspace AS builder');
+before(
+  migratorStage,
+  'COPY docker/migrator-package.json ./docker/migrator-package.json',
+  'deployment-artifact.ts stage-migrator /migrator',
+  'migrator manifest is available before selected dependency staging',
+);
+has(
+  migratorStage,
+  'deployment-artifact.ts stage-migrator /migrator',
+  'migrator stages only the selected provider dependency manifest',
+);
 has(
   migratorStage,
   'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
@@ -144,6 +176,28 @@ before(
   'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
   'CMD ["node", "docker/migrator-run.mjs"]',
   'migrator entrypoint before the standalone migration runner command',
+);
+has(
+  migratorRun,
+  'packages/tooling/src/commands/db/deployment-provider.ts',
+  'migrator uses the filesystem-free deployment provider resolver',
+);
+has(migratorRun, 'providerCommandModulePath', 'migrator resolves the selected provider migration module directly');
+has(migratorRun, 'migratePostgresDatabase', 'migrator dispatches directly to PostgreSQL migrations');
+has(migratorRun, 'migrateMongoDatabase', 'migrator dispatches directly to MongoDB migrations');
+assert.ok(
+  !migratorRun.includes('resolveDatabaseMigrationProvider'),
+  'Final migrator runtime must not load the local closure-aware provider resolver.',
+);
+for (const forbidden of ['.nrb', 'closure-workspace', '@nx/']) {
+  assert.ok(
+    !deploymentProvider.includes(forbidden),
+    `Deployment provider resolver must remain filesystem-free and import-light: ${forbidden}`,
+  );
+}
+assert.ok(
+  !migratorStage.includes('COPY .nrb'),
+  'Final migrator stage must not copy selected closure filesystem state.',
 );
 
 // Backend images ship per-app production dependencies computed from each app's
@@ -156,20 +210,22 @@ has(
 );
 has(
   backendDepsStage,
-  'WORKDIR /workspace/${BUILD_OUTPUT}',
-  "backend-deps installs against the app's generated dist package.json",
+  'deployment-artifact.ts stage "${PROJECT}" /runtime',
+  "backend-deps stages the app's selected transitive output closure",
 );
+has(backendDepsStage, 'WORKDIR /runtime', 'backend-deps installs outside the source workspace');
 const backendStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS backend', 'FROM nginxinc/nginx-unprivileged');
 has(
   backendStage,
-  'COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules',
-  'backend copies the per-app pruned node_modules to a shared /app ancestor',
+  'COPY --from=backend-deps /runtime/node_modules ./node_modules',
+  'backend copies only the staged per-app node_modules',
 );
 has(
   backendStage,
-  'COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json',
+  'COPY --from=backend-deps /runtime/package.json ./package.json',
   "backend copies the app's generated package.json alongside its node_modules",
 );
+has(backendStage, 'COPY --from=backend-deps /runtime/dist ./dist', 'backend copies only the staged output closure');
 assert.ok(
   !dockerfile.includes('pnpm prune --prod'),
   'Backend images must install per-app dependencies instead of pruning the whole workspace tree.',
@@ -207,7 +263,8 @@ has(
   PORT=80`,
   'site runtime explicitly assigns container port 80',
 );
-has(siteStage, 'COPY --from=builder /workspace/dist ./dist', 'site runtime copies built Vike output');
+has(siteStage, 'COPY --from=site-deps /site-deploy/dist ./dist', 'site runtime copies only staged Vike output');
+assert.ok(!siteStage.includes('/workspace/dist'), 'Site runtime must not copy the full workspace dist tree.');
 has(siteStage, 'USER node', 'site runtime runs as the non-root node user');
 has(siteStage, 'EXPOSE 80', 'site runtime exposes the Vike server port');
 
@@ -217,12 +274,21 @@ has(devCompose, "published: '${ADMIN_APP_API_PORT:-3001}'", 'admin API explicit 
 assert.ok(!devCompose.includes(':-0}'), 'Development Compose must not request random host ports.');
 const devBackendEnv = section(devCompose, 'x-backend-env:', '\nx-backend-healthcheck:');
 has(devBackendEnv, 'NODE_ENV: ${NODE_ENV:-development}', 'dev Compose backend defaults to development NODE_ENV');
+for (const migrationService of ['migrate', 'mongodb-migrate']) {
+  const migrationBlock = section(devCompose, `  ${migrationService}:`, '\n\n  ');
+  assert.ok(
+    !migrationBlock.includes('command:'),
+    `${migrationService} must inherit the image's Node migrator command instead of invoking pnpm.`,
+  );
+}
 has(devBackendEnv, 'PORT: 80', 'dev Compose explicitly assigns backend container port 80');
 has(
   devBackendEnv,
-  'DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nest_react_boilerplate}',
-  'dev Compose keeps container DATABASE_URL on the Compose network',
+  'DATABASE_URL: ${CONTAINER_DATABASE_URL:-}',
+  'dev Compose receives the explicitly selected container database URL',
 );
+has(devBackendEnv, 'DATABASE_ENGINE: ${DATABASE_ENGINE:-}', 'dev Compose passes explicit database engine selection');
+has(devBackendEnv, 'MONGODB_URI: ${MONGODB_URI:-}', 'dev Compose passes explicit MongoDB URI selection');
 assert.ok(
   !devBackendEnv.includes('DATABASE_URL: ${DATABASE_URL:-'),
   'Local Docker services must not inherit host DATABASE_URL; CI uses localhost for host-side QA tools.',
@@ -334,6 +400,22 @@ has(devSiteService, 'target: site-runtime', 'site-app uses the Vike Docker runti
 
 const prodCompose = read('docker/docker-compose.prod.yml');
 const prodBuildCompose = read('docker/docker-compose.prod.build.yml');
+const prodRedisCompose = read('docker/docker-compose.prod.redis.yml');
+
+const assertNamedClosureBuilds = (compose, label) => {
+  has(compose, 'nrb-closure: ${NRB_CLOSURE_CONTEXT:?', `${label} required named closure context`);
+  const buildCount = compose.match(/^    build:$/gmu)?.length ?? 0;
+  const namedBuildCount = compose.match(/^      <<: \*nrb-build$/gmu)?.length ?? 0;
+  assert.ok(buildCount > 0, `${label} must define Dockerfile builds.`);
+  assert.equal(namedBuildCount, buildCount, `${label} has a Dockerfile build without the nrb-closure anchor.`);
+};
+assertNamedClosureBuilds(devCompose, 'selected Compose');
+assertNamedClosureBuilds(prodBuildCompose, 'production source-build Compose');
+const prodBundledPostgresCompose = read('docker/docker-compose.prod.bundled-db.yml');
+const prodExternalPostgresCompose = read('docker/docker-compose.prod.external-db.yml');
+const prodBundledMongoCompose = read('docker/docker-compose.prod.mongodb-bundled-db.yml');
+const prodExternalMongoCompose = read('docker/docker-compose.prod.mongodb-external-db.yml');
+const prodMongoUsers = read('docker/mongodb/create-production-user.js');
 assert.ok(!prodCompose.includes('\n    build:'), 'Production Compose base must only reference published images.');
 has(prodBuildCompose, '  admin-app-api:\n    build:', 'production source-build overlay defines backend images');
 has(prodBuildCompose, '  mobile-app:\n    build:', 'production source-build overlay defines frontend images');
@@ -366,18 +448,67 @@ has(
 const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
 has(prodBackendEnv, 'PORT: 80', 'production Compose explicitly assigns backend container port 80');
 assert.ok(!prodCompose.includes(':-0}'), 'Production Compose must not request random host ports.');
-has(
-  prodBackendEnv,
-  'RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-redis}',
-  'production Compose defaults to Redis rate limiting',
-);
-has(prodBackendEnv, 'REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}', 'production Compose points APIs at Redis');
+has(prodBackendEnv, 'RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-auto}', 'production Compose keeps Redis optional');
+has(prodBackendEnv, 'REDIS_URL: ${REDIS_URL:-}', 'production Compose has no implicit Redis endpoint');
+has(prodRedisCompose, 'RATE_LIMIT_STORE: redis', 'selected Redis overlay forces shared rate limiting');
+has(prodRedisCompose, 'REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}', 'selected Redis overlay points APIs at Redis');
 has(prodBackendEnv, 'REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-nrb:}', 'production Compose sets Redis key prefix');
 has(prodBackendEnv, 'NATS_SERVERS: ${NATS_SERVERS:-}', 'production Compose passes an explicit external NATS endpoint');
 has(
-  prodBackendEnv,
+  prodBundledPostgresCompose,
   'POSTGRES_POOL_IDLE_TIMEOUT_MS: ${POSTGRES_POOL_IDLE_TIMEOUT_MS:-30000}',
   'production Compose exposes the validated PostgreSQL pool timeout',
+);
+for (const [label, overlay] of [
+  ['bundled PostgreSQL', prodBundledPostgresCompose],
+  ['external PostgreSQL', prodExternalPostgresCompose],
+]) {
+  has(overlay, 'DATABASE_ENGINE: postgres', `${label} overlay selects PostgreSQL`);
+  has(overlay, 'AUTH_PERSISTENCE: postgres', `${label} overlay selects PostgreSQL auth persistence`);
+  assert.ok(!overlay.includes('DATABASE_ENGINE: mongodb'), `${label} overlay must not select MongoDB.`);
+}
+has(prodBundledPostgresCompose, '  postgres:', 'bundled PostgreSQL overlay owns the PostgreSQL service');
+has(prodBundledPostgresCompose, 'condition: service_healthy', 'bundled PostgreSQL waits for database health');
+has(prodExternalPostgresCompose, 'secrets: [database_url]', 'external PostgreSQL uses the database URL secret');
+has(
+  prodExternalPostgresCompose,
+  'file: ${DATABASE_URL_FILE:-./secrets/database_url.txt}',
+  'external PostgreSQL reads DATABASE_URL from a secret file',
+);
+for (const [label, overlay] of [
+  ['bundled MongoDB', prodBundledMongoCompose],
+  ['external MongoDB', prodExternalMongoCompose],
+]) {
+  has(overlay, 'DATABASE_ENGINE: mongodb', `${label} overlay selects MongoDB`);
+  has(overlay, 'AUTH_PERSISTENCE: mongodb', `${label} overlay selects MongoDB auth persistence`);
+  has(overlay, 'MONGODB_REPLICA_SET:', `${label} overlay requires replica-set configuration`);
+  assert.ok(!overlay.includes('DATABASE_ENGINE: postgres'), `${label} overlay must not select PostgreSQL.`);
+}
+has(prodBundledMongoCompose, '  mongodb-init:', 'bundled MongoDB overlay initializes its replica set');
+has(
+  prodBundledMongoCompose,
+  'condition: service_completed_successfully',
+  'bundled MongoDB workloads wait for replica-set initialization',
+);
+has(prodBundledMongoCompose, 'secrets: [mongodb_root_password, mongodb_keyfile]', 'bundled MongoDB uses auth secrets');
+has(prodBundledMongoCompose, 'mongodb_migration_password:', 'bundled MongoDB separates migration credentials');
+has(
+  prodBundledMongoCompose,
+  'mongodb_backup_restore_password:',
+  'bundled MongoDB separates backup/restore credentials',
+);
+for (const role of ["'readWrite'", "'dbAdmin'", "'backup'", "'restore'"]) {
+  has(prodMongoUsers, `role: ${role}`, `bundled MongoDB principal role ${role}`);
+}
+has(prodMongoUsers, "actions: ['anyAction']", 'bundled MongoDB oplog replay action privilege');
+has(prodMongoUsers, 'anyResource: true', 'bundled MongoDB oplog replay resource privilege');
+has(prodExternalMongoCompose, 'secrets: [mongodb_uri]', 'external MongoDB runtime uses its URI secret');
+has(prodExternalMongoCompose, 'secrets: [mongodb_migration_uri]', 'external MongoDB migration uses its URI secret');
+has(prodExternalMongoCompose, 'mongodb_backup_restore_uri:', 'external MongoDB defines its backup/restore URI secret');
+has(
+  prodExternalMongoCompose,
+  'file: ${MONGODB_URI_FILE:-./secrets/mongodb_uri.txt}',
+  'external MongoDB reads MONGODB_URI from a secret file',
 );
 has(
   prodBackendEnv,
@@ -385,14 +516,27 @@ has(
   'production Compose passes the auth return URL allowlist to backend containers',
 );
 const prodBackendService = section(prodCompose, 'x-backend-service:', '\nx-frontend-service:');
-has(prodBackendService, 'redis:', 'production backend services depend on Redis');
-has(prodBackendService, 'condition: service_healthy', 'production backend services wait for healthy dependencies');
-const prodRedisService = section(prodCompose, '  redis:', '\n\n  migrate:');
+assert.ok(!prodBackendService.includes('redis:'), 'production backends must not depend on unselected Redis.');
+has(prodRedisCompose, 'redis:', 'selected Redis overlay adds backend Redis dependencies');
+has(
+  prodBackendService,
+  'condition: service_completed_successfully',
+  'production backends wait for selected migrations',
+);
+has(prodRedisCompose, 'condition: service_healthy', 'selected Redis overlay waits for healthy Redis');
+assert.ok(!prodCompose.includes('\n  redis:\n'), 'production base Compose must omit unselected Redis.');
+assert.ok(!prodCompose.includes('      redis:\n'), 'production base Compose must not depend on unselected Redis.');
+assert.ok(!prodCompose.includes('\n  redis-data:\n'), 'production base Compose must omit the unselected Redis volume.');
+assert.ok(
+  !prodCompose.includes('\n  redis_password:\n'),
+  'production base Compose must omit the unselected Redis secret.',
+);
+const prodRedisService = section(prodRedisCompose, '  redis:', '\n\n  admin-app-api:');
 has(prodRedisService, 'image: redis:7.4.3-alpine', 'production Compose Redis image');
 has(prodRedisService, 'redis-server', 'production Compose starts Redis server explicitly');
 has(prodRedisService, 'redis-cli', 'production Compose Redis healthcheck command');
 has(prodRedisService, 'ping', 'production Compose Redis ping healthcheck');
-has(prodCompose, 'redis-data:', 'production Compose persists Redis data volume');
+has(prodRedisCompose, 'redis-data:', 'production Redis overlay persists Redis data volume');
 
 const sharedHealthController = read('libs/backend/common/health/lib/src/base-health.controller.ts');
 has(sharedHealthController, "@Get('health')", 'shared health controller exposes /health');
@@ -480,20 +624,22 @@ for (const { app, healthProvider, modulePath, configPath, localControllerPath } 
   );
 
   const healthConfig = read(configPath);
-  has(healthConfig, 'const appName =', `${app} health config declares the app name`);
+  has(healthConfig, 'appName:', `${app} health config declares the app name`);
   has(healthConfig, app, `${app} health config sets the expected app name`);
   has(
     healthConfig,
-    `export const ${healthProvider}: Provider`,
-    `${app} health config exports the app-specific HealthService provider`,
+    `export const ${healthProvider}: FactoryProvider<HealthService>`,
+    `${app} health config exports its provider-aware HealthService provider`,
   );
   has(healthConfig, 'provide: HealthService', `${app} health config wires HealthService`);
-  has(healthConfig, 'new PostgresReadinessHealthIndicator', `${app} /ready includes PostgreSQL readiness checks`);
   has(
     healthConfig,
-    'new PostgresMigrationsHealthIndicator',
-    `${app} health config includes PostgreSQL migration checks`,
+    'DurableDatabaseRuntimeInjectToken',
+    `${app} health config receives the selected durable database runtime`,
   );
+  has(healthConfig, "runtime.provider === 'mongodb'", `${app} health config normalizes MongoDB transaction readiness`);
+  has(healthConfig, "'database-transactions'", `${app} health config names the MongoDB transaction check`);
+  has(healthConfig, "'database-migrations'", `${app} health config names the PostgreSQL migration check`);
   has(healthConfig, 'RedisHealthIndicator', `${app} health config includes Redis health wiring`);
   has(healthConfig, 'NatsHealthIndicator', `${app} health config includes NATS health wiring`);
 }
@@ -520,20 +666,23 @@ const prodSiteBuild = section(prodBuildCompose, '  site-app:', '\n\n  mobile-app
 has(prodSiteBuild, 'target: site-runtime', 'site-app production source-build uses the Vike Docker runtime target');
 
 const dockerSmoke = read('packages/tooling/src/commands/docker/smoke.ts');
-has(
-  dockerSmoke,
-  "['postgres', 'redis', ...backendServices, ...frontendServices].join(',')",
-  'Docker smoke activates every dependency profile used by the tested stack',
-);
+has(dockerSmoke, 'COMPOSE_PROFILES:', 'Docker smoke explicitly selects Compose profiles');
+has(dockerSmoke, '...backendServices', 'Docker smoke activates its backend service profiles');
+has(dockerSmoke, '...frontendServices', 'Docker smoke activates its frontend service profiles');
 has(dockerSmoke, 'async function buildServices', 'Docker smoke retries transient image-build failures');
 has(dockerSmoke, '"--parallel",', 'Docker smoke batches image builds through Compose parallel mode');
 has(dockerSmoke, 'const composeParallelLimit', 'Docker smoke caps Compose build concurrency');
 const fullstackCompose = read('apps/e2e/fullstack/src/compose.ts');
+has(fullstackCompose, 'COMPOSE_PROFILES:', 'Full-stack e2e explicitly selects Compose profiles');
 has(
   fullstackCompose,
-  "['postgres', ...stackServices.filter((service) => service !== 'migrate')].join(',')",
-  'Full-stack e2e activates every dependency profile used by its tested stack',
+  'readFullstackSelection',
+  'Full-stack e2e reads its application and service graph from the selected closure',
 );
+has(fullstackCompose, 'fullstackSelection.services', 'Full-stack e2e starts every selected closure service');
+has(fullstackCompose, 'DATABASE_ENGINE: databaseProvider', 'Full-stack e2e passes the selected database engine');
+has(fullstackCompose, 'DATABASE_URL:', 'Full-stack e2e configures the PostgreSQL connection path');
+has(fullstackCompose, 'MONGODB_URI:', 'Full-stack e2e configures the MongoDB connection path');
 has(fullstackCompose, 'async function buildServices', 'Full-stack e2e retries transient image-build failures');
 has(fullstackCompose, "'compose', '--parallel'", 'Full-stack e2e batches image builds through Compose parallel mode');
 has(fullstackCompose, 'const composeParallelLimit', 'Full-stack e2e caps Compose build concurrency');
@@ -586,8 +735,114 @@ if (validateHelmStatic) {
   assertNginxRoutes(read('.helm/templates/configmap.yaml'), { helm: true });
 
   const helmValues = read('.helm/values.yaml');
+  const helmHelpers = read('.helm/templates/_helpers.tpl');
   const helmConfigMap = read('.helm/templates/configmap.yaml');
   const helmSecret = read('.helm/templates/secret.yaml');
+  const helmBackupCronJob = read('.helm/templates/backup-cronjob.yaml');
+  const helmPrometheusRule = read('.helm/templates/prometheusrule.yaml');
+  const helmDashboard = read('.helm/dashboards/nest-react-boilerplate.json');
+  const deploymentTemplate = read('.helm/templates/deployment.yaml');
+  const helmValidator = read('scripts/validate-helm.sh');
+  const selectedHelmValidation = section(
+    helmValidator,
+    'echo "==> Helm lint/template (actual selected',
+    'echo "==> Helm lint (synthetic PostgreSQL all-reference)"',
+  );
+  has(selectedHelmValidation, '${PROD_VALUES}', 'Helm validates the actual selected production overlay');
+  has(selectedHelmValidation, '${SELECTION_VALUES}', 'Helm validates setup-selected ownership values');
+  assert.ok(
+    !selectedHelmValidation.includes('backups.enabled=true'),
+    'Actual selected Helm validation must not unconditionally enable backups.',
+  );
+  has(helmValidator, 'POSTGRES_REFERENCE_VALUES', 'Helm keeps synthetic PostgreSQL compatibility values separate');
+  has(helmValidator, 'MONGODB_REFERENCE_VALUES', 'Helm keeps synthetic MongoDB compatibility values separate');
+  has(helmHelpers, 'list "postgres" "mongodb"', 'Helm accepts PostgreSQL and MongoDB database engines');
+  has(helmHelpers, 'database.ownership=external-db only', 'Helm keeps selected databases externally managed');
+  has(
+    helmHelpers,
+    'boilerplate.mongodbPrincipalIdentity',
+    'Helm compares MongoDB principals by username and authentication database',
+  );
+  has(helmHelpers, 'urlParse', 'Helm percent-decodes MongoDB principal identity components');
+  has(
+    helmHelpers,
+    '$runtimeSecret := include "boilerplate.secretName" .',
+    'Helm compares the resolved runtime Secret name',
+  );
+  for (const pair of [
+    'resolved runtime and migration Secret names',
+    'resolved runtime and backup/restore Secret names',
+    'resolved migration and backup/restore Secret names',
+  ]) {
+    has(helmHelpers, `${pair} must be distinct for MongoDB`, `Helm rejects shared MongoDB Secret names: ${pair}`);
+  }
+  for (const expected of [
+    'percent-encoded-mongodb-principal',
+    'generated-runtime-collision',
+    'generated-migration-collision',
+    'generated-backup-collision',
+    'mongodb-generated-runtime.yaml',
+    'mongodb-generated-backup.yaml',
+  ]) {
+    has(helmValidator, expected, `Helm validator covers ${expected}`);
+  }
+  for (const expected of [
+    'DATABASE_ENGINE: {{ $databaseEngine | quote }}',
+    '{{- if eq $databaseEngine "postgres" }}',
+    'POSTGRES_SYNCHRONIZE:',
+    'MONGODB_DATABASE:',
+    'MONGODB_REPLICA_SET:',
+  ]) {
+    has(helmConfigMap, expected, `Helm selected-provider ConfigMap ${expected}`);
+  }
+  for (const expected of [
+    '{{- if eq $databaseEngine "postgres" }}',
+    'DATABASE_URL:',
+    'MONGODB_URI:',
+    'MONGODB_MIGRATION_URI:',
+    'MONGODB_BACKUP_RESTORE_URI:',
+    'replicaSet URI option',
+  ]) {
+    has(helmSecret, expected, `Helm selected-provider Secret ${expected}`);
+  }
+  has(
+    helmSecret,
+    '(not .Values.migrations.mongodbExistingSecret)',
+    'Helm does not render over an external MongoDB migration Secret',
+  );
+  has(
+    helmSecret,
+    '(not .Values.backups.mongodb.existingSecret)',
+    'Helm does not render over an external MongoDB backup/restore Secret',
+  );
+  has(
+    helmSecret,
+    '(not .Values.migrations.mongodbExistingSecret) .Values.secrets.mongodbMigrationUri',
+    'Helm compares migration identity only for an in-chart MongoDB migration URI',
+  );
+  for (const expected of [
+    'name: {{ include "boilerplate.fullname" . }}-{{ $databaseEngine }}-backup',
+    'pg_dump --format=custom',
+    'mongodump --uri "${MONGODB_BACKUP_RESTORE_URI}" --archive="${backup_file}" --gzip --oplog',
+  ]) {
+    has(helmBackupCronJob, expected, `Helm selected-provider backup ${expected}`);
+  }
+  has(
+    helmPrometheusRule,
+    'cronjob="{{ include "boilerplate.fullname" . }}-{{ $databaseEngine }}-backup"',
+    'Prometheus backup freshness selector uses the selected database engine',
+  );
+  has(
+    helmPrometheusRule,
+    'job_name=~"{{ include "boilerplate.fullname" . }}-{{ $databaseEngine }}-backup.*"',
+    'Prometheus failed backup selector uses the selected database engine',
+  );
+  assert.ok(
+    !helmPrometheusRule.includes('PostgreSQL backup'),
+    'Prometheus backup alert summaries must remain provider-neutral.',
+  );
+  has(helmDashboard, '.*-(postgres|mongodb)-backup', 'Grafana backup freshness selector covers both database engines');
+  assert.ok(!helmDashboard.includes('postgres-backup'), 'Grafana backup selectors must not be PostgreSQL-only.');
   has(helmValues, 'listenPort: 8080', 'Helm frontend listenPort default');
   for (const expected of [
     'BETTER_AUTH_URL:',
@@ -616,7 +871,6 @@ if (validateHelmStatic) {
   }
   const siteHelmBlock = yamlMapEntry(helmValues, 'siteApp');
   has(siteHelmBlock, 'readinessPath: /ready', 'site readiness path');
-  const deploymentTemplate = read('.helm/templates/deployment.yaml');
   has(deploymentTemplate, 'containerPort: {{ $app.port }}', 'Helm deployment uses per-app container port');
   const apiEnvFromBlock = section(
     deploymentTemplate,
@@ -624,7 +878,16 @@ if (validateHelmStatic) {
     '{{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}',
   );
   has(apiEnvFromBlock, 'envFrom:', 'Helm deployment gates backend env on backend processes');
-  has(apiEnvFromBlock, 'secretRef:', 'Helm deployment gates backend secrets on backend processes');
+  has(deploymentTemplate, 'secretKeyRef:', 'Helm runtime secrets use explicit key references');
+  has(deploymentTemplate, 'key: {{ ternary "DATABASE_URL" "MONGODB_URI"', 'Helm selects only the runtime database key');
+  assert.ok(
+    !deploymentTemplate.includes('MONGODB_MIGRATION_URI') && !deploymentTemplate.includes('MONGODB_BACKUP_RESTORE_URI'),
+    'Helm runtime Deployments must not reference MongoDB migration or backup URI keys.',
+  );
+  assert.ok(
+    !apiEnvFromBlock.includes('- secretRef:'),
+    'Helm runtime Deployments must not import every key from the runtime Secret.',
+  );
   has(read('.helm/templates/service.yaml'), 'targetPort: http', 'Helm service targets named container port');
   const migrationJobTemplate = read('.helm/templates/migration-job.yaml');
   has(migrationJobTemplate, '.Values.migrations.podSecurityContext', 'Helm migration job renders pod security context');
@@ -633,10 +896,29 @@ if (validateHelmStatic) {
     '.Values.migrations.securityContext',
     'Helm migration job renders container security context',
   );
+  has(
+    migrationJobTemplate,
+    'boilerplate.mongodbMigrationSecretName',
+    'Helm MongoDB migration job uses a separate principal Secret',
+  );
+  has(
+    helmBackupCronJob,
+    'boilerplate.mongodbBackupRestoreSecretName',
+    'Helm MongoDB backup uses a separate backup/restore principal Secret',
+  );
+  for (const expected of [
+    'runAsUser: 1000',
+    'runAsGroup: 1000',
+    'fsGroup: 1000',
+    'fsGroupChangePolicy: OnRootMismatch',
+  ]) {
+    has(helmValues, expected, `Helm backup writable non-root volume context ${expected}`);
+  }
 
   const productionValues = read('.helm/values-production.yaml');
   const releaseWorkflow = read('.github/workflows/release-images.yml');
   const releaseImagePlan = read('scripts/release-image-plan.mjs');
+  const setupCatalog = read('packages/tooling/src/setup/catalog.ts');
   has(
     releaseWorkflow,
     "VITE_TELEGRAM_AUTH_ENABLED: ${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}",
@@ -665,24 +947,26 @@ if (validateHelmStatic) {
     'Every public app contract must have a unique default domain.',
   );
   for (const [app, service] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
-    has(releaseImagePlan, `'${service}'`, `${app} immutable release image plan entry`);
-    has(releaseImagePlan, `NX_PROJECT=${service}`, `${app} release image plan Nx project`);
+    has(setupCatalog, `id: '${service}'`, `${app} setup catalog ownership`);
   }
-  has(releaseImagePlan, "'site-runtime'", 'release image plan uses the actual Vike runtime Docker target');
+  has(setupCatalog, 'releaseImage:', 'setup catalog owns immutable release image metadata');
+  has(releaseImagePlan, 'Object.values(appCatalog)', 'release image plan derives app images from the setup catalog');
+  has(setupCatalog, "target: 'site-runtime'", 'setup catalog uses the actual Vike runtime Docker target');
   has(releaseWorkflow, 'image-plan', 'release workflow selects affected images before build');
   has(
     releaseWorkflow,
-    'workspace-cache',
-    'release workflow primes a shared dependency cache before the bake build',
+    'pnpm nrb closure install',
+    'release workflow fails closed and installs a clean selected dependency tree',
+  );
+  has(releaseWorkflow, 'generate-bake-file.mjs --only', 'release workflow generates its selected Bake plan');
+  has(releaseWorkflow, 'docker buildx bake -f docker-bake.json', 'release workflow builds through selected Bake only');
+  assert.ok(
+    !releaseWorkflow.includes('docker/build-push-action') && !releaseWorkflow.includes('target: workspace'),
+    'release workflow must not prime an unscoped direct Docker target',
   );
   has(
     releaseWorkflow,
-    'scope=release-workspace',
-    'release workflow shares Docker dependency cache across image targets',
-  );
-  has(
-    releaseWorkflow,
-    'cache-to: type=gha,mode=max,scope=release-',
+    'cache-to=type=gha,mode=max,scope=release-',
     'release workflow persists the shared BuildKit dependency cache for reuse across the bake build',
   );
   for (const [, service, host] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {

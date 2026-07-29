@@ -1,5 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
+import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test, type TestingModule } from '@nestjs/testing';
 import supertest from 'supertest';
@@ -16,8 +17,10 @@ import {
   AuthTenantMembershipEntitySchema,
   AuthUserEntitySchema,
   AuthUserTokenEntitySchema,
+  AuthPostgresModule,
   authMigrationOptions,
 } from '@app/backend-postgres-main-auth';
+import { PostgresMainModule } from '@app/backend-postgres-main';
 import { type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -45,12 +48,25 @@ const sessionSecret = [
 ].join('-');
 
 const dockerAvailable = hasDockerRuntime();
+const originalDatabaseUrl = process.env.DATABASE_URL;
 if (!dockerAvailable) {
   process.stderr.write(
     'AuthMainModule postgres component tests: skipped because Docker is not available on this host.\n',
   );
 }
 const describeIfDocker = dockerAvailable ? describe : describe.skip;
+
+@Global()
+@Module({})
+class TestPostgresAuthCapabilitiesModule {
+  static forRoot(options: Parameters<typeof PostgresMainModule.forRoot>[0]): DynamicModule {
+    return {
+      module: TestPostgresAuthCapabilitiesModule,
+      imports: [PostgresMainModule.forRoot(options), AuthPostgresModule],
+      exports: [PostgresMainModule, AuthPostgresModule],
+    };
+  }
+}
 
 describeIfDocker('AuthMainModule postgres component', () => {
   let container: StartedPostgreSqlContainer | undefined;
@@ -62,13 +78,12 @@ describeIfDocker('AuthMainModule postgres component', () => {
     process.env.SESSION_SECRET = sessionSecret;
     process.env.AUTH_PERSISTENCE = 'postgres';
     container = await startPostgresContainer();
+    process.env.DATABASE_URL = container.getConnectionUri();
 
     moduleRef = await Test.createTestingModule({
       imports: [
-        BetterAuthModule.forRoot(),
-        AuthMainModule.forRoot({
-          mode: AuthPersistenceMode.Postgres,
-          postgres: createPostgresContainerMikroOrmOptions(
+        TestPostgresAuthCapabilitiesModule.forRoot(
+          createPostgresContainerMikroOrmOptions(
             container,
             [
               AuthUserEntitySchema,
@@ -82,6 +97,11 @@ describeIfDocker('AuthMainModule postgres component', () => {
               migrations: authMigrationOptions,
             },
           ),
+        ),
+        AuthPostgresModule,
+        BetterAuthModule.forRoot(),
+        AuthMainModule.forRoot({
+          mode: AuthPersistenceMode.Postgres,
         }),
       ],
     })
@@ -106,10 +126,17 @@ describeIfDocker('AuthMainModule postgres component', () => {
 
   afterAll(async () => {
     await app?.close();
-    await moduleRef?.close();
+    if (!app) {
+      await moduleRef?.close();
+    }
     await stopPostgresContainer(container);
     delete process.env.SESSION_SECRET;
     delete process.env.AUTH_PERSISTENCE;
+    if (originalDatabaseUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = originalDatabaseUrl;
+    }
   });
 
   it('applies MikroORM migrations against a clean Testcontainers database', async () => {

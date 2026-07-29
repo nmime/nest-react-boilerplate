@@ -16,6 +16,7 @@ import { runWebpCommand } from './commands/images/webp';
 import { runChangedFormatCheck, runStaticCheck } from './commands/tooling/static-check';
 import { runBunCompatibilityCommand } from './commands/tooling/bun-compat';
 import { runShadcnAddCommand, runUiRegistryAddCommand, runUiRegistrySearchCommand } from './commands/ui/shadcn-add';
+import { runClosureFromContext } from './commands/project/closure';
 import { run } from './runtime/process';
 
 export interface CommandContext {
@@ -100,6 +101,12 @@ register(
 register('setup', 'Shorthand for project:setup — boilerplate configuration.', runSetupFromContext, true);
 register('doctor', 'Shorthand for project:doctor — workspace health checks.', runDoctorFromContext);
 register('add', 'Add an app, library, or feature to the workspace.', runAddFromContext, true);
+register(
+  'closure',
+  'Check, install, or run the setup-selected project and package closure.',
+  runClosureFromContext,
+  true,
+);
 register('qa:mutation', 'Run Stryker mutation testing or write its dry-run report.', ({ argv, workspaceRoot }) =>
   runMutation({ argv, workspaceRoot }),
 );
@@ -144,9 +151,14 @@ registerScript(
 );
 registerScript('db:reset', 'Reset the local database.', 'db/reset.ts');
 registerScript('db:seed', 'Seed the local database.', 'db/seed.ts');
-registerScript('db:backup', 'Create a PostgreSQL backup.', 'db/backup.ts');
-registerScript('db:restore', 'Restore a PostgreSQL backup.', 'db/restore.ts');
-registerScript('db:restore-drill', 'Run a PostgreSQL backup/restore drill or CI-safe dry-run.', 'db/restore-drill.ts');
+registerScript('db:backup', 'Create a selected-provider backup.', 'db/backup.ts');
+registerScript('db:restore', 'Restore a selected-provider backup.', 'db/restore.ts');
+registerScript(
+  'db:restore-drill',
+  'Run a selected-provider backup/restore drill or CI-safe dry-run.',
+  'db/restore-drill.ts',
+);
+registerScript('dev:database', 'Start the setup-selected local database.', 'dev/database.ts');
 registerScript('dev:fullstack', 'Run the local fullstack dev helper.', 'dev/fullstack.ts');
 registerScript('docker:smoke', 'Run Docker smoke checks.', 'docker/smoke.ts');
 registerScript('docker:fullstack-e2e', 'Run Docker fullstack e2e checks.', 'docker/fullstack-e2e.ts');

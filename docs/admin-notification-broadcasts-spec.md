@@ -141,18 +141,19 @@ different boundaries. The boilerplate must not guess those product semantics.
 
 The implementation extends these owners instead of creating a parallel system:
 
-| Owner                                      | Existing responsibility                        | Required extension                                                    |
-| ------------------------------------------ | ---------------------------------------------- | --------------------------------------------------------------------- |
-| `@app/common-notifications`                | Provider-neutral contracts                     | Broadcast, segment, source, version, and state contracts              |
-| `@app/backend-feature-notification-shared` | Notification service and persistence ports     | Admin use-case ports, resolver registry, preview contract             |
-| `@app/backend-feature-notification-main`   | Rendering, providers, HTTP opt-in, scheduler   | Safe rendering and broadcast-aware claiming                           |
-| `@app/backend-feature-notification-admin`  | Privileged notification HTTP and orchestration | Templates, segments, broadcasts, RBAC, audit integration              |
-| `@app/backend-feature-audit-log-admin`     | Tenant-scoped audit inspection and writer      | Filtered list/detail/meta endpoints and notification audit recording  |
-| `@app/backend-postgres-main-notification`  | PostgreSQL queue and templates                 | Versioned templates, segments, snapshots, broadcasts, materialization |
-| `admin-app-api`                            | Authenticated admin HTTP composition           | Compose domain admin modules without owning their controllers         |
-| `apps/frontend/admin`                      | Admin FSD product UI                           | Template, segment, and broadcast pages                                |
-| `notification-scheduler`                   | Scheduled claiming and provider delivery       | Scheduled activation and paused-broadcast filtering                   |
-| `notification-consumer`                    | New consumer composition root                  | CSV validation, snapshot collection, chunk materialization            |
+| Owner                                      | Existing responsibility                        | Required extension                                                     |
+| ------------------------------------------ | ---------------------------------------------- | ---------------------------------------------------------------------- |
+| `@app/common-notifications`                | Provider-neutral contracts                     | Broadcast, segment, source, version, and state contracts               |
+| `@app/backend-feature-notification-shared` | Notification service and persistence ports     | Admin use-case ports, resolver registry, preview contract              |
+| `@app/backend-feature-notification-main`   | Rendering, providers, HTTP opt-in, scheduler   | Safe rendering and broadcast-aware claiming                            |
+| `@app/backend-feature-notification-admin`  | Privileged notification HTTP and orchestration | Templates, segments, broadcasts, RBAC, audit integration               |
+| `@app/backend-feature-audit-log-admin`     | Tenant-scoped audit inspection and writer      | Filtered list/detail/meta endpoints and notification audit recording   |
+| `@app/backend-postgres-main-notification`  | PostgreSQL queue and templates                 | Versioned templates, segments, snapshots, broadcasts, materialization  |
+| `@app/backend-mongodb-main-notification`   | MongoDB queue and templates                    | Equivalent behavior through validators, indexes, transactions, and CAS |
+| `admin-app-api`                            | Authenticated admin HTTP composition           | Compose domain admin modules without owning their controllers          |
+| `apps/frontend/admin`                      | Admin FSD product UI                           | Template, segment, and broadcast pages                                 |
+| `notification-scheduler`                   | Scheduled claiming and provider delivery       | Scheduled activation and paused-broadcast filtering                    |
+| `notification-consumer`                    | New consumer composition root                  | CSV validation, snapshot collection, chunk materialization             |
 
 `notification-consumer` is a consumer, not a generic worker type. It must be
 generated with the repository's `consumer` renderer and remain a thin
@@ -262,7 +263,7 @@ language and validated variable data.
 Create `notification_segment_uploads` with object-storage key, SHA-256 checksum,
 status, total rows, valid rows, duplicate rows, invalid rows, bounded error
 summary, and creator. CSV bytes are streamed to object storage, never stored in
-PostgreSQL or loaded entirely into API memory.
+the selected durable database or loaded entirely into API memory.
 
 ### Resolver registry
 
@@ -398,7 +399,7 @@ membership.
 ```mermaid
 flowchart LR
     Admin["Admin UI"] --> API["admin-app-api"]
-    API --> DB["PostgreSQL command and outbox"]
+    API --> DB["Selected database command and outbox"]
     API --> ObjectStore["Object storage for CSV and images"]
     DB --> Consumer["notification-consumer"]
     ObjectStore --> Consumer
@@ -728,7 +729,8 @@ notification-consumer --kind backend --renderer consumer --dry-run` first.
 - Consumer crash/retry during snapshot and notification materialization.
 - Pause while a chunk is in flight, followed by idempotent resume.
 - Cancel with pending deliveries and accurate final counters.
-- PostgreSQL `SKIP LOCKED` behavior with multiple consumer/scheduler replicas.
+- PostgreSQL `SKIP LOCKED` and MongoDB CAS/lease/claim-token behavior with
+  multiple consumer/scheduler replicas.
 - Audit/outbox atomicity for every protected command.
 - OpenAPI and generated frontend client freshness.
 

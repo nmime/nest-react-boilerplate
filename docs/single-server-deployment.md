@@ -106,7 +106,22 @@ VITE_API_BASE_URL_MODE=same-origin
 Choose either `single-domain` or `per-app-domains` for
 `EXTERNAL_PROXY_PUBLIC_MODE`. Choose `landing-app` or `site-app` for
 `PRIMARY_APP`. Set the real `PUBLIC_DOMAIN`, registry, verified full-SHA image tag,
-database mode, and optional profiles.
+`DATABASE_ENGINE`, database ownership mode, and optional profiles. Engine and
+ownership are independent, producing four supported pairs:
+
+| Engine     | `bundled-db`                                                                  | `external-db`                                                                      |
+| ---------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `postgres` | Compose-owned PostgreSQL and password file                                    | Operator PostgreSQL via `DATABASE_URL_FILE`                                        |
+| `mongodb`  | Compose-owned one-node replica set, separate principal passwords, and keyfile | Operator replica set via separate runtime, migration, and backup/restore URI files |
+
+Bundled MongoDB enables transactions but is not HA. Use an external managed or
+multi-node replica set for production availability. Standalone MongoDB is
+rejected, and the external URI must include a non-empty `replicaSet` option that
+matches `MONGODB_REPLICA_SET`.
+MongoDB runtime, migration, and backup/restore identities are distinct. The
+external backup/restore URI is deployment-wide, uses `authSource=admin`, and is
+read from `MONGODB_BACKUP_RESTORE_URI_FILE`; the host controller requires all
+three external URI files before deployment.
 
 The Compose wrapper derives CORS, Better Auth trusted origins/base URL, OAuth
 callbacks, Discord interactions, Telegram webhook, and Telegram Mini App URL
@@ -115,15 +130,15 @@ Nginx.
 
 Every secret that can be created locally is generated independently with
 OpenSSL: the session secret, Better Auth state/cookie material, the 32-byte
-provider-token encryption key, Redis and bundled PostgreSQL
-passwords, the Grafana administrator password, and the Telegram webhook
+provider-token encryption key, Redis, bundled PostgreSQL or MongoDB passwords,
+the MongoDB replica-set keyfile, the Grafana administrator password, and the Telegram webhook
 verification secret. They are created once, never overwritten on reruns, owned
 by root, and converged to mode `0640` for the deployment user's protected
 primary group. This gives the unprivileged Compose process read access without
 making secrets world-readable.
 
 Credentials issued by another system cannot be generated locally. Protected
-empty files are created for the external database URL, Telegram bot/OIDC
+empty files are created for the selected external database URL, Telegram bot/OIDC
 credentials, and Discord bot/OAuth/public-key values; enabling the relevant
 mode or profile fails validation until the operator installs the real values.
 The same external-input boundary applies to registry login and Certbot DNS
@@ -281,6 +296,12 @@ Before every release:
 2. verify the exact image tag exists for every enabled service;
 3. run `pnpm run deploy:validate:docker` in the reviewed checkout;
 4. deploy and keep `nrb-server doctor` output with the release record.
+
+Provider-aware `pnpm db:backup`, `db:restore`, and `db:restore:drill` remain the
+canonical database lifecycle commands. MongoDB backups are gzip archives;
+deployment-wide dumps include oplog capture/replay. A CI dry run verifies
+dispatch and redaction, not recoverability, so perform an isolated real restore
+for the selected provider.
 
 ## Agent and operator contract
 

@@ -1,6 +1,10 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
-import { NotificationBroadcastPersistence, NotificationPersistence } from '@app/backend-feature-notification-shared';
+import {
+  NotificationBroadcastPersistence,
+  NotificationDeliveryPartitionMaintenance,
+  NotificationPersistence,
+} from '@app/backend-feature-notification-shared';
 import {
   NotificationAudienceSnapshotEntitySchema,
   NotificationAudienceSnapshotMemberEntitySchema,
@@ -18,6 +22,7 @@ import {
 } from '../infrastructure/data-access/entities';
 import { PostgresNotificationBroadcastPersistence, PostgresNotificationPersistence } from '../repositories';
 import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
+import { PostgresNotificationDeliveryPartitionMaintenance } from '../postgres-notification-delivery-partition.maintenance';
 
 @Module({
   imports: [
@@ -41,6 +46,11 @@ import { NotificationPayloadCryptoService } from '../notification-payload-crypto
     NotificationPayloadCryptoService,
     PostgresNotificationPersistence,
     PostgresNotificationBroadcastPersistence,
+    PostgresNotificationDeliveryPartitionMaintenance,
+    {
+      provide: NotificationDeliveryPartitionMaintenance,
+      useExisting: PostgresNotificationDeliveryPartitionMaintenance,
+    },
     { provide: NotificationPersistence, useExisting: PostgresNotificationPersistence },
     { provide: NotificationBroadcastPersistence, useExisting: PostgresNotificationBroadcastPersistence },
   ],
@@ -49,6 +59,7 @@ import { NotificationPayloadCryptoService } from '../notification-payload-crypto
     NotificationPersistence,
     NotificationBroadcastPersistence,
     NotificationPayloadCryptoService,
+    NotificationDeliveryPartitionMaintenance,
   ],
 })
 export class NotificationPostgresModule {}

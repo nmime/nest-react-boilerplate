@@ -26,6 +26,16 @@ secrets:
 imagePullSecrets:
   - name: ghcr-credentials
 
+# Production databases are externally managed. For MongoDB, point the existing
+# Secret at a multi-node transaction-capable replica set; this chart never
+# creates a MongoDB StatefulSet.
+database:
+  engine: postgres
+  ownership: external-db
+  mongodb:
+    database: nest_react_boilerplate
+    replicaSet: ''
+
 config:
   # Mount a licensed, regularly updated GeoIP2/GeoLite2 City MMDB and set this
   # path to enable geo enrichment. Empty keeps geo fields unknown.
@@ -67,6 +77,9 @@ frontendNginx:
   cspConnectSrc: "'self'"
 
 migrations:
+  # Required when database.engine=mongodb; keep migration credentials separate
+  # from the runtime application Secret.
+  mongodbExistingSecret: nest-react-boilerplate-mongodb-migration
   image:
     repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
     tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
@@ -362,12 +375,16 @@ monitoring:
 backups:
   enabled: false
   schedule: '17 * * * *'
+  mongodb:
+    # Required when database.engine=mongodb and backups.enabled=true. The Secret
+    # contains MONGODB_BACKUP_RESTORE_URI for a backup+restore role in admin.
+    existingSecret: nest-react-boilerplate-mongodb-backup-restore
   destination:
     objectStore:
       enabled: true
       existingSecret: nest-react-boilerplate-backup-object-store
       bucket: example-prod-backups
-      prefix: nest-react-boilerplate/postgres
+      prefix: ''
   encryption:
     enabled: true
     existingSecret: nest-react-boilerplate-backup-encryption

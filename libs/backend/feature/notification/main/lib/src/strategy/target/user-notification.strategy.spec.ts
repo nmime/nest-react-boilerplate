@@ -11,6 +11,7 @@ import { UserNotificationStrategy } from './user-notification.strategy';
 describe(UserNotificationStrategy.name, () => {
   it('resolves the user before delivering and returns delivery state', async () => {
     const pending = {
+      claimToken: 'claim-1',
       delivery: {
         id: '1',
         createdAt: new Date(),
@@ -40,6 +41,6 @@ describe(UserNotificationStrategy.name, () => {
       extra: null,
       deliveryId: '1',
     });
-    expect(result).toMatchObject({ id: '1', status: NotificationStatus.Sent });
+    expect(result).toMatchObject({ id: '1', claimToken: 'claim-1', status: NotificationStatus.Sent });
   });
 });

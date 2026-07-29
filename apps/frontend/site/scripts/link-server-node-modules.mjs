@@ -4,15 +4,20 @@ import { join, relative, resolve } from 'node:path';
 const appRoot = resolve(import.meta.dirname, '..');
 const workspaceRoot = resolve(appRoot, '../../..');
 const serverRoot = resolve(workspaceRoot, 'dist/apps/frontend/site/server');
-const appNodeModules = join(appRoot, 'node_modules');
+const dependencyRoots = [
+  join(appRoot, 'node_modules'),
+  join(workspaceRoot, 'libs/frontend/node_modules'),
+  join(workspaceRoot, 'node_modules'),
+];
+const sourceNodeModules = dependencyRoots.find((path) => existsSync(path));
 const serverNodeModules = join(serverRoot, 'node_modules');
 
 if (!existsSync(serverRoot)) {
   throw new Error(`Missing Vike server output: ${serverRoot}`);
 }
 
-if (!existsSync(appNodeModules)) {
-  throw new Error(`Missing site app dependencies: ${appNodeModules}`);
+if (!sourceNodeModules) {
+  throw new Error(`Missing site dependencies: ${dependencyRoots.join(' or ')}`);
 }
 
 if (existsSync(serverNodeModules)) {
@@ -29,7 +34,7 @@ if (existsSync(serverNodeModules)) {
   throw new Error(`${serverNodeModules} exists and is not a symlink`);
 }
 
-symlinkSync(relative(serverRoot, appNodeModules), serverNodeModules, 'dir');
+symlinkSync(relative(serverRoot, sourceNodeModules), serverNodeModules, 'dir');
 
 console.log(
   JSON.stringify({

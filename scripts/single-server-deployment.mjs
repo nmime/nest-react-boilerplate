@@ -8,6 +8,8 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const certificateModes = new Set(['dns-wildcard', 'exact-hosts', 'existing']);
 const publicModes = new Set(['single-domain', 'per-app-domains']);
 const profiles = new Set(['discord', 'telegram']);
+const databaseEngines = new Set(['postgres', 'mongodb']);
+const databaseModes = new Set(['bundled-db', 'external-db']);
 const appPorts = {
   ADMIN_APP_API_PORT: 3001,
   USER_APP_API_PORT: 3002,
@@ -112,6 +114,11 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv }) {
   const server = readEnvironment(serverPath, 'Server environment');
   const production = readEnvironment(productionPath, 'Production environment');
 
+  const databaseEngine = production.DATABASE_ENGINE?.trim().toLowerCase() || 'postgres';
+  if (!databaseEngines.has(databaseEngine)) fail('DATABASE_ENGINE must be postgres or mongodb.');
+  const databaseMode = required(production, 'COMPOSE_DATABASE_MODE', 'the production environment');
+  if (!databaseModes.has(databaseMode)) fail('COMPOSE_DATABASE_MODE must be bundled-db or external-db.');
+
   if (production.COMPOSE_DOMAIN_MODE !== 'external-proxy') {
     fail('COMPOSE_DOMAIN_MODE must be external-proxy for the host Nginx deployment.');
   }
@@ -207,6 +214,8 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv }) {
     certificateMode,
     certificateName,
     clientMaxBodySize,
+    databaseEngine,
+    databaseMode,
     domain,
     domains,
     enabledProfiles,
@@ -453,8 +462,13 @@ function main() {
     }
     const configuration = loadSingleServerConfiguration(options);
     if (options.command === 'validate') {
+      if (configuration.databaseEngine === 'mongodb' && configuration.databaseMode === 'bundled-db') {
+        console.error(
+          'WARNING: bundled MongoDB is a single-node replica set for transactions and is not highly available.',
+        );
+      }
       console.log(
-        `single-server configuration valid: domains=${configuration.publicMode}, certificate=${configuration.certificateMode}, hosts=${configuration.publicHosts.length}`,
+        `single-server configuration valid: database=${configuration.databaseEngine}/${configuration.databaseMode}, domains=${configuration.publicMode}, certificate=${configuration.certificateMode}, hosts=${configuration.publicHosts.length}`,
       );
       return;
     }

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { LockMode } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
@@ -40,6 +41,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateVersionChannelEntity,
   NotificationTemplateVersionEntity,
+  UnclaimedNotificationDeliveryClaimId,
 } from '../infrastructure/data-access/entities';
 
 const defaultDeliveryChannels: NotificationDeliveryChannel[] = [NotificationChannel.Bot];
@@ -204,6 +206,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
 
       for (const delivery of deliveries) {
         delivery.claimedAt = params.now;
+        delivery.claimToken = randomUUID();
       }
       await em.flush();
 
@@ -234,7 +237,9 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
 
       return deliveries.flatMap((delivery) => {
         const notification = notificationsById.get(delivery.notificationId);
-        return notification ? [{ delivery: mapDelivery(delivery), notification }] : [];
+        return notification && delivery.claimToken
+          ? [{ claimToken: delivery.claimToken, delivery: mapDelivery(delivery), notification }]
+          : [];
       });
     });
   }
@@ -246,12 +251,18 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
 
     await this.entityManager.transactional(async (em) => {
       for (const result of results) {
-        // Result rows are updated through one transactional EntityManager in deterministic order.
+        // Lock the still-pending token owner so completion and administrative transitions have one database order.
         // eslint-disable-next-line no-await-in-loop
-        const delivery = await em.findOne(NotificationDeliveryEntity, {
-          id: result.id,
-          createdAt: result.createdAt,
-        });
+        const delivery = await em.findOne(
+          NotificationDeliveryEntity,
+          {
+            id: result.id,
+            createdAt: result.createdAt,
+            status: NotificationStatus.Pending,
+            claimToken: result.claimToken,
+          },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
         if (!delivery) {
           continue;
         }
@@ -263,6 +274,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
         // Release the claim (reset to the epoch sentinel) so a rescheduled retry is
         // eligible again once its sendAfter passes (terminal rows keep it harmlessly).
         delivery.claimedAt = new Date(0);
+        delivery.claimToken = UnclaimedNotificationDeliveryClaimId;
 
         if (result.status === NotificationStatus.Sent) {
           delivery.sentAt = delivery.updatedAt;

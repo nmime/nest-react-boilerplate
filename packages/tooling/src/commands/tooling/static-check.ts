@@ -40,6 +40,11 @@ interface WorkspacePackageManifest {
   file: string;
   name?: string;
   exports?: unknown;
+  version?: unknown;
+  scripts?: unknown;
+  main?: unknown;
+  dependencies?: unknown;
+  devDependencies?: unknown;
 }
 
 interface WorkspaceMetadata {
@@ -381,6 +386,9 @@ const staleReferenceIgnoredFiles = new Set([
   "pnpm-lock.yaml",
 ]);
 
+const localWorktreePrefix = ".claude/worktrees/";
+const staleReferenceArchivePrefix = "docs/superpowers/";
+
 const generatedContractImportExtensions = new Set([
   ".cjs",
   ".cts",
@@ -423,6 +431,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkPackageProjectReferences(workspaceRoot),
     ...checkFrontendFsd(workspaceRoot),
     ...checkWorkspaceMetadata(workspaceRoot),
+    ...checkBunPackageManagerParity(workspaceRoot),
     ...checkExportedAllCapsConstantConventions(workspaceRoot),
     ...checkExportedSymbolTokenConventions(workspaceRoot),
     ...checkLocalBarrelExportConventions(workspaceRoot),
@@ -432,6 +441,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkStaleSlashStyleAliasImports(workspaceRoot),
     ...checkForbiddenSocialAuthImports(workspaceRoot),
     ...checkForbiddenSocialAuthDependencies(workspaceRoot),
+    ...checkProviderScopedRuntimeImports(workspaceRoot),
     ...checkTrackedSocialAuthSecrets(workspaceRoot),
     ...checkThinLocaleCatalogs(workspaceRoot),
     ...checkTranslationKeyDrift(workspaceRoot),
@@ -463,6 +473,62 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   );
 
   return 0;
+}
+
+export function checkBunPackageManagerParity(workspaceRoot: string): CheckFailure[] {
+  const failures: CheckFailure[] = [];
+  for (const file of ["bun.lock", "bun.lockb", "bunfig.toml"]) {
+    if (!existsSync(join(workspaceRoot, file))) continue;
+    failures.push({
+      command: "bun pnpm dependency parity",
+      file,
+      status: 1,
+      stdout: "",
+      stderr: `${file} creates Bun package-manager state; pnpm-lock.yaml and pnpm-installed node_modules are the only dependency authority.`,
+    });
+  }
+
+  const rootPackagePath = join(workspaceRoot, "package.json");
+  if (existsSync(rootPackagePath)) {
+    const rootPackage = JSON.parse(readFileSync(rootPackagePath, "utf8")) as { workspaces?: unknown };
+    if (rootPackage.workspaces !== undefined) {
+      failures.push({
+        command: "bun pnpm dependency parity",
+        file: "package.json",
+        status: 1,
+        stdout: "",
+        stderr: "Root package.json must not duplicate pnpm-workspace.yaml with a Bun/npm workspaces declaration.",
+      });
+    }
+  }
+
+  const executableFiles = new Set<string>();
+  for (const manifest of collectWorkspacePackageManifests(workspaceRoot)) {
+    executableFiles.add(manifest.file);
+  }
+  executableFiles.add("package.json");
+  if (existsSync(join(workspaceRoot, "Dockerfile"))) executableFiles.add("Dockerfile");
+  const workflowsRoot = join(workspaceRoot, ".github/workflows");
+  if (existsSync(workflowsRoot)) {
+    for (const file of walk(workflowsRoot)) executableFiles.add(relativeToWorkspace(workspaceRoot, file));
+  }
+
+  const forbiddenCommand = /\b(?:bunx|bun\s+(?:add|install|pm|remove|update|x))\b/u;
+  for (const file of [...executableFiles].sort()) {
+    const absolutePath = join(workspaceRoot, file);
+    if (!existsSync(absolutePath)) continue;
+    const content = readFileSync(absolutePath, "utf8");
+    const match = content.match(forbiddenCommand)?.[0];
+    if (!match) continue;
+    failures.push({
+      command: "bun pnpm dependency parity",
+      file,
+      status: 1,
+      stdout: "",
+      stderr: `${file} invokes ${match}; Bun may execute only the dependency tree installed and locked by pnpm.`,
+    });
+  }
+  return failures;
 }
 
 function checkSyntaxTargets(
@@ -806,6 +872,17 @@ function isNonPackageStyleAppName(name: string): boolean {
 function checkWorkspacePackageManifests(
   metadata: WorkspaceMetadata,
 ): CheckFailure[] {
+  const invalidApplicationPackageFiles = metadata.packageManifests
+    .filter((manifest) => manifest.file.startsWith("apps/"))
+    .filter(
+      (manifest) =>
+        manifest.name !== undefined ||
+        manifest.version !== undefined ||
+        manifest.scripts !== undefined ||
+        manifest.main !== undefined ||
+        !hasExternalDependencyGroup(manifest),
+    )
+    .map((manifest) => manifest.file);
   const libraryPackageFiles = metadata.packageManifests
     .filter(
       (manifest) =>
@@ -817,6 +894,18 @@ function checkWorkspacePackageManifests(
     .filter((manifest) => manifest.file.startsWith("packages/"))
     .map((manifest) => manifest.file);
 
+  if (invalidApplicationPackageFiles.length > 0) {
+    return [
+      {
+        command: "workspace metadata package manifests",
+        file: "pnpm-workspace.yaml",
+        status: 1,
+        stdout: "",
+        stderr: `Nx project.json owns application identity and targets. Application package manifests are allowed only as dependency-only renderer boundaries with no name, version, scripts, or main field. Fix or remove: ${invalidApplicationPackageFiles.join(", ")}.`,
+      },
+    ];
+  }
+
   if (libraryPackageFiles.length > 0) {
     return [
       {
@@ -824,7 +913,7 @@ function checkWorkspacePackageManifests(
         file: "pnpm-workspace.yaml",
         status: 1,
         stdout: "",
-        stderr: `Nested libraries must not define package.json manifests; keep dependencies in root, deployable app manifests, or platform manifests under libs/backend/package.json and libs/frontend/package.json. Found ${libraryPackageFiles.join(", ")}.`,
+        stderr: `Nested libraries must not define package.json manifests; keep dependencies in root or platform manifests under libs/backend/package.json and libs/frontend/package.json. Found ${libraryPackageFiles.join(", ")}.`,
       },
     ];
   }
@@ -895,14 +984,34 @@ function collectWorkspacePackageManifests(
       const parsed = JSON.parse(readFileSync(file, "utf8")) as {
         name?: string;
         exports?: unknown;
+        version?: unknown;
+        scripts?: unknown;
+        main?: unknown;
+        dependencies?: unknown;
+        devDependencies?: unknown;
       };
 
       return {
         file: relativeFile,
         name: parsed.name,
         exports: parsed.exports,
+        version: parsed.version,
+        scripts: parsed.scripts,
+        main: parsed.main,
+        dependencies: parsed.dependencies,
+        devDependencies: parsed.devDependencies,
       };
     });
+}
+
+function hasExternalDependencyGroup(manifest: WorkspacePackageManifest): boolean {
+  return [manifest.dependencies, manifest.devDependencies].some(
+    (section) =>
+      typeof section === "object" &&
+      section !== null &&
+      !Array.isArray(section) &&
+      Object.keys(section).length > 0,
+  );
 }
 
 export function isWorkspaceMetadataFileName(
@@ -926,7 +1035,10 @@ function walkWorkspaceMetadata(workspaceRoot: string, current: string): string[]
   return readdirSync(current, { withFileTypes: true }).flatMap((entry) => {
     const path = join(current, entry.name);
     if (entry.isDirectory()) {
-      if (workspaceMetadataIgnoredProjectDirs.has(entry.name)) return [];
+      if (
+        workspaceMetadataIgnoredProjectDirs.has(entry.name) ||
+        isLocalWorktreePath(workspaceRoot, path)
+      ) return [];
       return walkWorkspaceMetadata(workspaceRoot, path);
     }
 
@@ -1210,6 +1322,42 @@ export function checkForbiddenSocialAuthDependencies(
           },
         ];
       });
+    });
+  });
+}
+
+export function checkProviderScopedRuntimeImports(workspaceRoot: string): CheckFailure[] {
+  const roots = [
+    "apps/backend",
+    "libs/backend/common",
+    "libs/backend/feature",
+  ];
+  const providerImport =
+    /(?:@app\/backend-(?:mongodb|postgres)|from\s+["'](?:mongodb|mongodb-connection-string-url|pg|@mikro-orm\/[^"']+)["']|require\(["']pg["']\)|better-auth\/adapters\/mongodb)/u;
+
+  return roots.flatMap((root) => {
+    const absoluteRoot = resolve(workspaceRoot, root);
+    if (!existsSync(absoluteRoot)) return [];
+    return walk(absoluteRoot).flatMap((absoluteFile) => {
+      const file = relativeToWorkspace(workspaceRoot, absoluteFile);
+      if (
+        !absoluteFile.endsWith(".ts") ||
+        file.includes("/node_modules/") ||
+        file.endsWith("/capabilities.generated.ts") ||
+        file.startsWith("libs/backend/common/component-test/") ||
+        file.startsWith("libs/backend/feature/auth/test/")
+      ) {
+        return [];
+      }
+      const content = readFileSync(absoluteFile, "utf8");
+      if (!providerImport.test(content)) return [];
+      return [{
+        command: "provider-scoped runtime import boundary",
+        file,
+        status: 1,
+        stdout: "",
+        stderr: `Provider-neutral project source imports a database provider or driver and can pollute its Nx package closure: ${file}`,
+      }];
     });
   });
 }
@@ -1554,7 +1702,10 @@ function walkProjectJsonFiles(workspaceRoot: string): string[] {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       const entryPath = join(directory, entry.name);
       if (entry.isDirectory()) {
-        if (staleReferenceIgnoredDirectories.has(entry.name)) continue;
+        if (
+          staleReferenceIgnoredDirectories.has(entry.name) ||
+          isLocalWorktreePath(workspaceRoot, entryPath)
+        ) continue;
         visit(entryPath);
         continue;
       }
@@ -1683,6 +1834,7 @@ function envExampleFailure(file: string, message: string): CheckFailure {
 export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
   return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
     const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    if (relativeFile.startsWith(staleReferenceArchivePrefix)) return [];
     const text = readFileSync(file, "utf8");
     const failures: CheckFailure[] = [];
 
@@ -1710,8 +1862,12 @@ function collectStaleReferenceTargets(workspaceRoot: string): string[] {
   function visit(directory: string): void {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       if (entry.isDirectory()) {
-        if (staleReferenceIgnoredDirectories.has(entry.name)) continue;
-        visit(join(directory, entry.name));
+        const entryPath = join(directory, entry.name);
+        if (
+          staleReferenceIgnoredDirectories.has(entry.name) ||
+          isLocalWorktreePath(workspaceRoot, entryPath)
+        ) continue;
+        visit(entryPath);
         continue;
       }
 
@@ -1968,6 +2124,11 @@ function statExists(path: string): boolean {
 
 function relativeToWorkspace(workspaceRoot: string, path: string): string {
   return relative(workspaceRoot, path).replaceAll("\\", "/");
+}
+
+function isLocalWorktreePath(workspaceRoot: string, path: string): boolean {
+  const relativePath = relativeToWorkspace(workspaceRoot, path);
+  return relativePath === ".claude/worktrees" || relativePath.startsWith(localWorktreePrefix);
 }
 
 function isPrettierCandidate(file: string): boolean {

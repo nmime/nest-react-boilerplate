@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, rmdirSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, rmdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import test from 'node:test';
 import type { Tree } from '@nx/devkit';
@@ -23,16 +23,6 @@ const generatedRoots = [
   'libs/frontend/nrb-canary-frontend-lib',
   'libs/common/nrb-canary-common-lib',
 ];
-const dependencySources = new Map<string, string>([
-  ['apps/frontend/nrb-canary-vite', 'apps/frontend/admin/node_modules'],
-  ['apps/frontend/nrb-canary-astro', 'apps/frontend/landing/node_modules'],
-  ['apps/frontend/nrb-canary-vike', 'apps/frontend/site/node_modules'],
-  ['apps/frontend/nrb-canary-expo', 'apps/frontend/mobile/node_modules'],
-  ['apps/backend/nrb/nrb-canary-api', 'apps/backend/auth/auth-app-api/node_modules'],
-  ['apps/backend/nrb/nrb-canary-consumer', 'apps/backend/auth/auth-app-api/node_modules'],
-  ['apps/backend/nrb/nrb-canary-scheduler', 'apps/backend/auth/auth-app-api/node_modules'],
-]);
-
 function isGeneratedPath(path: string): boolean {
   return generatedRoots.some((root) => path === root || path.startsWith(`${root}/`));
 }
@@ -95,12 +85,14 @@ function cleanupGeneratedFiles(): void {
   }
 }
 
-function linkInstalledDependencies(): void {
-  for (const [generatedRoot, dependencySource] of dependencySources) {
-    const source = join(workspaceRoot, dependencySource);
-    assert.ok(existsSync(source), `Install workspace dependencies before scaffold verification: ${dependencySource}`);
-    symlinkSync(source, join(workspaceRoot, generatedRoot, 'node_modules'), 'dir');
-  }
+function resetNxWorkspaceData(): void {
+  const environment = { ...process.env };
+  delete environment.NODE_TEST_CONTEXT;
+  execFileSync(join(workspaceRoot, 'node_modules/.bin/nx'), ['reset', '--onlyWorkspaceData'], {
+    cwd: workspaceRoot,
+    env: environment,
+    stdio: 'inherit',
+  });
 }
 
 function runNxTargets(targets: string, projects: readonly string[]): void {
@@ -142,14 +134,13 @@ void test(
     );
 
     cleanupGeneratedFiles();
+    resetNxWorkspaceData();
     for (const root of generatedRoots) {
       assert.equal(existsSync(join(workspaceRoot, root)), false, `Canary path already exists: ${root}`);
     }
 
     const { createTreeWithEmptyWorkspace } = await import('nx/src/devkit-testing-exports');
     const tree = createTreeWithEmptyWorkspace();
-    tree.write('package.json', readFileSync(join(workspaceRoot, 'package.json')));
-
     await applicationGenerator(tree, {
       name: 'nrb-canary-vite',
       kind: 'frontend',
@@ -222,25 +213,27 @@ void test(
       skipFormat: true,
     });
 
-    const astroPackage = readTreeJson(tree, 'apps/frontend/nrb-canary-astro/package.json');
-    const astroDevDependencies = recordProperty(astroPackage, 'devDependencies');
     const astroProject = readTreeJson(tree, 'apps/frontend/nrb-canary-astro/project.json');
     const astroTargets = recordProperty(astroProject, 'targets');
     const astroTypecheck = recordProperty(astroTargets, 'typecheck');
     const astroTypecheckOptions = recordProperty(astroTypecheck, 'options');
     const astroTypecheckCommand = astroTypecheckOptions.command;
 
-    assert.equal(astroDevDependencies['@astrojs/check'], '0.9.9');
+    const astroPackage = readTreeJson(tree, 'apps/frontend/nrb-canary-astro/package.json');
+    const astroDevDependencies = recordProperty(astroPackage, 'devDependencies');
+    assert.equal(astroProject.name, 'nrb-canary-astro');
+    assert.equal(astroPackage.name, undefined);
+    assert.equal(astroDevDependencies.astro, '7.1.3');
     assert.ok(typeof astroTypecheckCommand === 'string');
     assert.match(astroTypecheckCommand, /astro check/);
 
     try {
       flushGeneratedFiles(tree);
-      linkInstalledDependencies();
       runNxTargets('build,test', projectNames);
       runNxTargets('typecheck', projectNames);
     } finally {
       cleanupGeneratedFiles();
+      resetNxWorkspaceData();
     }
   },
 );

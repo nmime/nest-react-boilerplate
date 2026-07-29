@@ -2,18 +2,12 @@ import type { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { createLogger } from '@app/backend-common-logger';
-import { initOpenTelemetry } from '@app/backend-common-otel';
 import { setupSwagger } from '@app/backend-common-swagger';
 import type { BootstrapParams } from './type/bootstrap.type';
 import { getPortEnvVarName } from './util/port.util';
 import { robotsMiddleware } from './util/robots.util';
 
 export async function bootstrap(params: BootstrapParams): Promise<INestApplication> {
-  initOpenTelemetry({
-    serviceName: params.name,
-    serviceVersion: process.env.OTEL_SERVICE_VERSION ?? process.env.npm_package_version,
-    environment: process.env.NODE_ENV,
-  });
   const { logger, middlewares } = createLogger({ name: params.name });
   const module = await params.module;
   const app = await NestFactory.create(module, { logger, rawBody: true });

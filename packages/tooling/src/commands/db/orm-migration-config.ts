@@ -13,11 +13,22 @@ const { MikroORM } = require("@mikro-orm/core");
 const {
   AuthUserEntitySchema,
   AuthLoginEventEntitySchema,
+} = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/entities/index.ts",
+));
+const {
   authMigrationOptions,
   authMigrations,
   AuthMigrationsTableName,
-} = require("@app/backend-postgres-main-auth");
-const { FeatureFlagEntitySchema } = require("@app/backend-postgres-main-feature-flags");
+} = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/index.ts",
+));
+const { FeatureFlagEntitySchema } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/feature-flags/lib/src/infrastructure/data-access/entities/index.ts",
+));
 const {
   NotificationAudienceSnapshotEntitySchema,
   NotificationAudienceSnapshotMemberEntitySchema,
@@ -26,15 +37,24 @@ const {
   NotificationBroadcastSegmentEntitySchema,
   NotificationDeliveryEntitySchema,
   NotificationEntitySchema,
-  notificationMigrations,
   NotificationSegmentEntitySchema,
   NotificationSegmentMemberEntitySchema,
   NotificationSegmentUploadEntitySchema,
   NotificationTemplateEntitySchema,
   NotificationTemplateVersionChannelEntitySchema,
   NotificationTemplateVersionEntitySchema,
-} = require("@app/backend-postgres-main-notification");
-const { createPostgresMikroOrmOptions } = require("@app/backend-postgres-main");
+} = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/notification/lib/src/infrastructure/data-access/entities/index.ts",
+));
+const { notificationMigrations } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/notification/lib/src/infrastructure/data-access/migrations/index.ts",
+));
+const { createPostgresMikroOrmOptions } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/shared/lib/src/data-source-options.ts",
+));
 export const authMigrationTableName = AuthMigrationsTableName;
 export function createAuthMigrationOrmOptions(env = process.env) {
   return createPostgresMikroOrmOptions(

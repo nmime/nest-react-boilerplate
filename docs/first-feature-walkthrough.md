@@ -10,6 +10,7 @@ This walkthrough is the preferred path for shipping a small vertical slice witho
 pnpm nrb add feature invoices \
   --api-app user-app-api \
   --frontend-app user-app \
+  --database mongodb \
   --dry-run
 ```
 
@@ -19,6 +20,7 @@ pnpm nrb add feature invoices \
 pnpm generate:feature invoices -- \
   --api-app user-app-api \
   --frontend-app user-app \
+  --database mongodb \
   --dry-run
 ```
 
@@ -26,7 +28,9 @@ The scaffold lists the files it would create for:
 
 - backend shared DTOs/permissions under `libs/backend/feature/<name>/shared/lib`;
 - an authenticated, RBAC-protected Nest module/controller/service under `libs/backend/feature/<name>/main/lib`;
-- a MikroORM module, `ResultAsync` repository, entity, and timestamped migration under `libs/backend/postgres/main/<name>/lib`;
+- provider-owned persistence under `libs/backend/<provider>/main/<name>/lib`:
+  MikroORM/entity/migration for PostgreSQL, or native validator/index/transaction
+  repository for MongoDB;
 - an FSD page boundary under the selected frontend app's `src/pages/<name>` root;
 - a completion guide under `docs/features/<name>/scaffold.md`.
 
@@ -38,32 +42,34 @@ Remove `--dry-run` when the file plan is correct:
 # Unified CLI:
 pnpm nrb add feature invoices \
   --api-app user-app-api \
-  --frontend-app user-app
+  --frontend-app user-app \
+  --database mongodb
 
 # Legacy alias:
 pnpm generate:feature invoices -- \
   --api-app user-app-api \
-  --frontend-app user-app
+  --frontend-app user-app \
+  --database mongodb
 ```
 
 ### Target a different API app
 
 ```bash
-pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app
+pnpm nrb add feature invoices --api-app admin-app-api --frontend-app admin-app --database mongodb
 ```
 
 ### Change an existing feature
 
 Do not run the generator again and do not create an `invoices-new` or
 `invoices-v2` slice. Inspect the owning API module, backend feature libraries,
-PostgreSQL library, and frontend route, then modify those files in place.
+selected provider library, and frontend route, then modify those files in place.
 `pnpm nrb add --force` is intentionally rejected.
 
 ## 2. Verify backend ownership
 
 1. Review the generated API-module import and the default read/write permission names.
 2. Replace the generic `name` model with the product fields and invariants for the feature.
-3. Review the timestamped migration SQL and add indexes/constraints required by the access pattern.
+3. Review the PostgreSQL migration or MongoDB validator/index definitions and add the physical invariants required by the access pattern.
 4. Add controller/service/repository tests for validation, authorization, persistence failure, and concurrency behavior.
 
 ## 3. Wire frontend ownership

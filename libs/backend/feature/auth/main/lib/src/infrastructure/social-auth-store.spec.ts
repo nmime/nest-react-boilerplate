@@ -8,8 +8,8 @@ import {
   AuthProviderChannel,
   DefaultAuthTenantId,
   ExternalAuthIntent,
+  type ProviderTokenCrypto,
 } from '@app/backend-feature-auth-shared';
-import type { ProviderTokenCrypto } from '@app/backend-postgres-main-auth';
 import { InMemorySocialAuthStore, PostgresSocialAuthStore, type ExternalIdentityRecord } from './social-auth-store';
 
 const tenantId = DefaultAuthTenantId;

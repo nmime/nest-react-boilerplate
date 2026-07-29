@@ -1,0 +1,52 @@
+{
+  "name": "@app/backend-mongodb-main-feature-flags",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/mongodb/main/feature-flags/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:data-access", "scope:feature-flags"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/mongodb/main/feature-flags/lib",
+        "main": "libs/backend/mongodb/main/feature-flags/lib/src/index.ts",
+        "tsConfig": "libs/backend/mongodb/main/feature-flags/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/mongodb/main/feature-flags/lib",
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/mongodb/main/feature-flags/lib"]
+    },
+    "component-test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/backend/mongodb/main/feature-flags/lib",
+        "command": "NODE_ENV=test vitest run --config vitest.component.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest", "mongodb", "testcontainers", "@testcontainers/mongodb"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/mongodb/main/feature-flags/lib-component"]
+    }
+  }
+}

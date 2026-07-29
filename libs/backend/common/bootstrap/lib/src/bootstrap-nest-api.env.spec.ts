@@ -31,6 +31,7 @@ describe('resolveBackendEnvironmentConfig', () => {
       },
       session: {
         cookieName: 'nrb.sid',
+        persistence: 'postgres',
         secure: false,
       },
       trustProxy: true,
@@ -47,7 +48,31 @@ describe('resolveBackendEnvironmentConfig', () => {
       },
     );
 
-    expect(config.session.databaseUrl).toBeUndefined();
+    expect(config.session).not.toHaveProperty('databaseUrl');
+    expect(config.session.persistence).toBe('memory');
+    expect(config.session).not.toHaveProperty('mongodb');
+  });
+
+  it('records the selected durable session provider without importing provider configuration', () => {
+    const fromEnvironment = resolveBackendEnvironmentConfig(
+      { appName: 'auth-app-api', port: 3003 },
+      {
+        AUTH_PERSISTENCE: 'mongodb',
+        MONGODB_DATABASE: 'auth',
+        MONGODB_REPLICA_SET: 'rs0',
+        MONGODB_URI: 'mongodb://mongo-a,mongo-b/auth',
+      },
+    );
+    expect(fromEnvironment.session.persistence).toBe('mongodb');
+    expect(fromEnvironment.session).not.toHaveProperty('databaseUrl');
+    expect(fromEnvironment.session).not.toHaveProperty('mongodb');
+  });
+
+  it('rejects an unknown session provider selector', () => {
+    const options = { appName: 'auth-app-api', port: 3003 };
+    expect(() => resolveBackendEnvironmentConfig(options, { AUTH_PERSISTENCE: 'sqlite' })).toThrow(
+      'AUTH_PERSISTENCE must be one of memory, mongodb, or postgres.',
+    );
   });
 
   it('uses Redis rate-limit storage when explicitly configured', () => {

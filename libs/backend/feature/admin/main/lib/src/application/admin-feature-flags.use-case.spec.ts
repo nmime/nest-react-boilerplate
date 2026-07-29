@@ -1,8 +1,7 @@
 import { okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
-import { FeatureFlagEntity } from '@app/backend-postgres-main-feature-flags';
 import { AdminApplicationError } from './admin-errors';
-import { AdminFeatureFlagsUseCase } from './admin-feature-flags.use-case';
+import { type AdminFeatureFlagRecord, AdminFeatureFlagsUseCase } from './admin-feature-flags.use-case';
 
 const principal = {
   subject: '00000000-0000-0000-0000-000000000001',
@@ -12,14 +11,20 @@ const principal = {
 };
 
 const createFixture = () => {
-  const entity = new FeatureFlagEntity({
+  const now = new Date('2026-07-26T00:00:00.000Z');
+  const entity: AdminFeatureFlagRecord = {
+    id: '00000000-0000-4000-8000-000000000010',
+    tenantId: principal.tenantId,
     key: 'checkout.newflow',
     value: true,
     description: 'New checkout',
-  });
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  };
   const featureFlags = {
     list: vi.fn(() => okAsync([entity])),
-    findByKey: vi.fn(() => okAsync<FeatureFlagEntity | null>(null)),
+    findByKey: vi.fn(() => okAsync<AdminFeatureFlagRecord | null>(null)),
     upsert: vi.fn(() => okAsync(entity)),
   };
   const auditLogs = {

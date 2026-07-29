@@ -19,9 +19,9 @@ describe("workspace dependency map", () => {
   it("groups live workspace manifests and dependency counts by owning scope", () => {
     const root = createWorkspace();
     writeManifest(root, "package.json", "example", { react: "1.0.0" }, { typescript: "1.0.0" });
-    writeManifest(root, "apps/backend/user/api/package.json", "user-api", { fastify: "1.0.0" }, {});
     writeManifest(root, "libs/backend/package.json", "@app/backend", { fastify: "1.0.0", pg: "1.0.0" }, {});
     writeManifest(root, "libs/backend/ignored/package.json", "ignored", { bad: "1.0.0" }, {});
+    writeManifest(root, "apps/frontend/docs/package.json", undefined, {}, { astro: "1.0.0" });
 
     const map = buildWorkspaceDependencyMap(root);
 
@@ -29,7 +29,7 @@ describe("workspace dependency map", () => {
     assert.deepEqual(
       map.scopes.map(({ scope, workspaceCount }) => ({ scope, workspaceCount })),
       [
-        { scope: "apps/backend", workspaceCount: 1 },
+        { scope: "apps/frontend", workspaceCount: 1 },
         { scope: "libs/backend", workspaceCount: 1 },
         { scope: "root", workspaceCount: 1 },
       ],
@@ -56,7 +56,7 @@ describe("workspace dependency map", () => {
   });
 });
 
-function createWorkspace(workspaceConfig = "packages:\n  - 'apps/backend/*/*'\n  - 'libs/backend'\n"): string {
+function createWorkspace(workspaceConfig = "packages:\n  - 'apps/frontend/*'\n  - 'libs/backend'\n"): string {
   const root = mkdtempSync(join(tmpdir(), "dependency-map-"));
   workspaces.push(root);
   writeFileSync(join(root, "pnpm-workspace.yaml"), workspaceConfig);
@@ -66,11 +66,11 @@ function createWorkspace(workspaceConfig = "packages:\n  - 'apps/backend/*/*'\n 
 function writeManifest(
   root: string,
   path: string,
-  name: string,
+  name: string | undefined,
   dependencies: Record<string, string>,
   devDependencies: Record<string, string>,
 ): void {
   const absolutePath = join(root, path);
   mkdirSync(dirname(absolutePath), { recursive: true });
-  writeFileSync(absolutePath, JSON.stringify({ name, dependencies, devDependencies }, null, 2));
+  writeFileSync(absolutePath, JSON.stringify({ ...(name ? { name } : {}), dependencies, devDependencies }, null, 2));
 }

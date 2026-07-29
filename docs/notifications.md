@@ -1,6 +1,9 @@
 # Notifications
 
-The notification capability is a PostgreSQL-backed event feed plus delivery queue. This clean-install template has no legacy columns, dual writes, backfill jobs, or fallback reads.
+The notification capability is a durable event feed plus delivery queue backed
+by the workspace's selected PostgreSQL or MongoDB provider. This clean-install
+template has no legacy columns, cross-provider dual writes, backfill jobs, or
+fallback reads.
 
 ## Ownership
 
@@ -9,6 +12,7 @@ The notification capability is a PostgreSQL-backed event feed plus delivery queu
 | `@app/common-notifications`                | Framework-neutral event, template-version, segment, snapshot, broadcast, delivery, error, and channel-content contracts.                                                     |
 | `@app/backend-feature-notification-shared` | Application and persistence ports plus recipient and segment resolver contracts. It never imports MikroORM.                                                                  |
 | `@app/backend-postgres-main-notification`  | Tenant-scoped MikroORM entities, migrations, transactions, immutable versions, snapshots, command leases, queue queries, encrypted payloads, and retry scheduling.           |
+| `@app/backend-mongodb-main-notification`   | Tenant-scoped native collections, strict validators/indexes, replica-set transactions, CAS leases, claim-token fencing, encrypted payloads, and retry scheduling.            |
 | `@app/backend-feature-notification-main`   | Nest composition, admin orchestration, safe rendering, CSV validation, provider strategies, consumer and scheduler loops, health, and partition maintenance.                 |
 | `admin-app-api`                            | Authenticated, permission-gated template, segment, upload, and broadcast commands. It never loops through audiences or calls a provider.                                     |
 | `notification-consumer`                    | Headless consumer that validates pending CSV uploads, resolves exact audience snapshots, and materializes notification/delivery rows in bounded idempotent chunks.           |
@@ -18,12 +22,13 @@ The notification capability is a PostgreSQL-backed event feed plus delivery queu
 
 `notifications` is the immutable user-facing event/feed record. It stores target, template, ordinary template data, extra, `in_app_visible`, and creation time. It does not store transport status, channel, attempts, errors, priority, or scheduling. Confidential values (for example confirmation codes and bearer links) are stored separately in AES-256-GCM encrypted `sensitive_data`, authenticated to the notification id and target; only the delivery scheduler decrypts them to render a delivery.
 
-`notification_deliveries` is the only transport queue. Each row owns channel,
+`notification_deliveries` is the only transport queue. Each record owns channel,
 provider, status, attempts, error, priority, `send_after`, `sent_at`, timestamps,
 and denormalized target identity. A delivery may also point to the immutable
-template version and broadcast that created it. It is range-partitioned by
-`created_at`; the baseline migration creates the current and next six monthly
-partitions, while the scheduler maintains future partitions.
+template version and broadcast that created it. PostgreSQL range-partitions it
+by `created_at` and maintains future monthly partitions. MongoDB uses indexed
+documents rather than partitions and claims one eligible delivery at a time
+with an atomic compare-and-set.
 
 `notification_templates` owns stable identity, source (`code` or `admin`),
 tenant scope, and lifecycle. Published content is immutable in
@@ -47,8 +52,17 @@ Delivery states are:
 - `cancelled`: terminal unsent work for a cancelled broadcast.
 
 Retryable provider rate limits, network failures, and gateway failures return to
-`pending`. Provider `Retry-After` metadata is honored; otherwise PostgreSQL
-applies exponential delay starting at 30 seconds and capped at 30 minutes.
+`pending`. Provider `Retry-After` metadata is honored; otherwise the selected
+persistence adapter applies exponential delay starting at 30 seconds and capped
+at 30 minutes.
+
+Related notification, delivery, snapshot, audit, and command mutations are
+atomic inside the selected database. MongoDB uses snapshot reads, majority
+writes, primary preference, and bounded transaction retries. Queue claims use
+expiring leases; completion must carry the current claim token, fencing a worker
+whose lease was reclaimed. Provider email, bot, and push calls happen outside
+the database transaction. Delivery is therefore at least once and relies on
+persisted retries plus provider/idempotency keys, not a distributed transaction.
 
 ## Activating the capability
 
@@ -57,8 +71,9 @@ pnpm nrb setup --capability notifications --non-interactive
 pnpm run docker:selected
 ```
 
-Dependency expansion selects PostgreSQL, S3, `notification-consumer`, and
-`notification-scheduler`. Setup writes the selected module composition into each
+Dependency expansion requires exactly one durable provider and also selects S3,
+`notification-consumer`, and `notification-scheduler`. Presets supply
+PostgreSQL; a workspace may swap it for MongoDB. Setup writes the selected module composition into each
 backend app's `capabilities.generated.ts`. APIs receive producer-only
 composition, the consumer owns audience work, and only the scheduler claims and
 sends deliveries. Removing the capability and rerunning setup removes those

@@ -6,6 +6,8 @@
  * E2E: full flow from config → plan → state → idempotent replay
  */
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { describe, it } from 'node:test';
 
 import { parseNrbConfig, schemaVersion } from './schema.js';
@@ -32,6 +34,7 @@ import {
   computeConfigDigest,
 } from './state.js';
 import {
+  generateBackendCapabilityBootstrap,
   generateBackendCapabilityModule,
   generateCapabilitiesManifest,
   generateComposeEnvironment,
@@ -41,6 +44,7 @@ import {
   plan,
   resolveConfig,
 } from './planner.js';
+import { planSummaryFixture } from './test-fixtures.js';
 
 /* ==================================================================
  * UNIT: operations.ts — path validation (C1)
@@ -439,6 +443,7 @@ describe('planner — M1 validateSelection rejection', () => {
     const config = parseNrbConfig({
       schemaVersion,
       apps: ['fullstack-e2e'],
+      capabilities: ['postgres'],
     });
     const resolved = resolveConfig(config);
     assert.deepEqual(resolved.apps, [
@@ -454,21 +459,37 @@ describe('planner — M1 validateSelection rejection', () => {
     ]);
   });
 
-  it('rejects config where expanded deps still have issues', () => {
-    // Notifications use the PostgreSQL queue, object storage, a dedicated
-    // consumer, and a dedicated scheduler. Dependency expansion wires all of
-    // them from scratch.
+  it('rejects database-dependent capabilities without a provider', () => {
     const config = parseNrbConfig({
       schemaVersion,
       capabilities: ['notifications'],
     });
+
+    assert.throws(() => resolveConfig(config), /exactly one durable database provider/);
+  });
+
+  it('resolves database-dependent capabilities with MongoDB', () => {
+    const config = parseNrbConfig({
+      schemaVersion,
+      capabilities: ['mongodb', 'notifications'],
+    });
     const resolved = resolveConfig(config);
-    assert.ok(resolved.capabilities.includes('postgres'));
+    assert.ok(resolved.capabilities.includes('mongodb'));
     assert.ok(resolved.capabilities.includes('s3'));
     assert.ok(resolved.apps.includes('notification-consumer'));
     assert.ok(resolved.apps.includes('notification-scheduler'));
     assert.ok(!resolved.capabilities.includes('telegram-bot'));
     assert.ok(!resolved.capabilities.includes('redis'));
+  });
+
+  it('rejects mixed durable database providers', () => {
+    const config = parseNrbConfig({
+      schemaVersion,
+      apps: ['user-app-api'],
+      capabilities: ['mongodb', 'postgres'],
+    });
+
+    assert.throws(() => resolveConfig(config), /conflicts with capability/);
   });
 });
 
@@ -500,12 +521,12 @@ describe('planner — generateConfigFile', () => {
 
 describe('planner — generateSummaryMd', () => {
   it('generates .nrb/summary.md path', () => {
-    const summary = {
+    const summary = planSummaryFixture({
       apps: ['admin-app'],
       capabilities: ['postgres'],
       preset: 'web',
       configHash: 'abc123',
-    };
+    });
     const result = generateSummaryMd(summary);
     assert.equal(result.path, '.nrb/summary.md');
     assert.ok(result.content.includes('# Setup Plan Summary'));
@@ -514,35 +535,36 @@ describe('planner — generateSummaryMd', () => {
   });
 
   it('summary content ends with trailing newline', () => {
-    const summary = {
+    const summary = planSummaryFixture({
       apps: ['a'],
       capabilities: ['b'],
       preset: 'minimal',
       configHash: 'x',
-    };
+    });
     const result = generateSummaryMd(summary);
     assert.ok(result.content.endsWith('\n'), 'Summary must end with trailing newline');
+    assert.ok(!result.content.endsWith('\n\n'), 'Summary must not end with a blank line');
   });
 
   it('no preset omits preset line', () => {
-    const summary = {
+    const summary = planSummaryFixture({
       apps: [],
       capabilities: [],
       preset: undefined,
       configHash: 'x',
-    };
+    });
     const result = generateSummaryMd(summary);
     assert.ok(!result.content.includes('Preset:'));
     assert.ok(result.content.includes('*No applications selected.*'));
   });
 
   it('content is deterministic (no timestamps or op counts)', () => {
-    const summary = {
+    const summary = planSummaryFixture({
       apps: ['a'],
       capabilities: ['b'],
       preset: 'minimal',
       configHash: 'fixed',
-    };
+    });
     const c1 = generateSummaryMd(summary);
     const c2 = generateSummaryMd(summary);
     assert.equal(c1.content, c2.content);
@@ -551,12 +573,14 @@ describe('planner — generateSummaryMd', () => {
 
 describe('planner — runtime workspace manifest', () => {
   it('groups enabled projects by platform for runtime tooling', () => {
-    const result = generateWorkspaceManifest({
-      apps: ['user-app', 'user-app-api', 'fullstack-e2e'],
-      capabilities: ['postgres'],
-      preset: 'web',
-      configHash: 'abc',
-    });
+    const result = generateWorkspaceManifest(
+      planSummaryFixture({
+        apps: ['user-app', 'user-app-api', 'fullstack-e2e'],
+        capabilities: ['postgres'],
+        preset: 'web',
+        configHash: 'abc',
+      }),
+    );
     const manifest = JSON.parse(result.content);
     assert.equal(result.path, '.nrb/workspace.json');
     assert.deepEqual(manifest.byPlatform.frontend, ['user-app']);
@@ -566,11 +590,11 @@ describe('planner — runtime workspace manifest', () => {
 });
 
 describe('planner — concrete capability activation', () => {
-  const summary = {
+  const summary = planSummaryFixture({
     apps: ['notification-consumer', 'notification-scheduler', 'user-app-api'],
     capabilities: ['notifications', 'postgres', 's3'],
     configHash: 'abc',
-  };
+  });
 
   it('records owned projects, services, and environment contracts', () => {
     const manifest = JSON.parse(generateCapabilitiesManifest(summary).content);
@@ -578,6 +602,7 @@ describe('planner — concrete capability activation', () => {
     assert.ok(notifications.projects.includes('@app/backend-feature-notification-main'));
     assert.ok(notifications.dockerServices.includes('notification-scheduler'));
     assert.ok(notifications.dockerServices.includes('notification-consumer'));
+    assert.ok(!notifications.dockerServices.includes('postgres'));
     assert.ok(notifications.environmentVariables.includes('NOTIFICATION_REQUESTS_PER_SECOND'));
     assert.ok(
       notifications.generatedFiles.includes(
@@ -596,6 +621,108 @@ describe('planner — concrete capability activation', () => {
     );
   });
 
+  it('resolves PostgreSQL ownership and feature flag wiring without MongoDB projects', () => {
+    const postgresSummary = {
+      ...summary,
+      capabilities: ['feature-flags', 'otel', ...summary.capabilities],
+    };
+    const manifest = JSON.parse(generateCapabilitiesManifest(postgresSummary).content);
+    const projects = manifest.capabilities.flatMap((entry: { projects: string[] }) => entry.projects);
+    const featureFlags = manifest.capabilities.find((entry: { id: string }) => entry.id === 'feature-flags');
+    const notifications = manifest.capabilities.find((entry: { id: string }) => entry.id === 'notifications');
+    const postgres = manifest.capabilities.find((entry: { id: string }) => entry.id === 'postgres');
+
+    assert.deepEqual(featureFlags.projects, ['@app/backend-postgres-main-feature-flags', '@app/common-feature-flags']);
+    assert.ok(notifications.projects.includes('@app/backend-postgres-main-notification'));
+    assert.deepEqual(postgres.projects, ['@app/backend-postgres-main', '@app/backend-postgres-main-auth']);
+    assert.ok(projects.every((project: string) => !project.includes('backend-mongodb')));
+
+    const generatedModule = generateBackendCapabilityModule('user-app-api', postgresSummary).content;
+    const generatedBootstrap = generateBackendCapabilityBootstrap('user-app-api', postgresSummary).content;
+    assert.match(generatedModule, /@Global\(\)/);
+    assert.match(generatedModule, /PostgresMainModule\.forRoot\(\)/);
+    assert.match(generatedModule, /AuthPostgresModule/);
+    assert.match(generatedModule, /NotificationPostgresModule/);
+    assert.match(generatedModule, /FeatureFlagsPostgresModule/);
+    assert.doesNotMatch(generatedModule, /OpenTelemetry|initOpenTelemetry/);
+    assert.match(generatedBootstrap, /from '@app\/backend-postgres-main-otel'/);
+    assert.match(generatedBootstrap, /createPostgresOpenTelemetryInstrumentations/);
+    assert.match(generatedBootstrap, /createOpenTelemetryInstrumentations/);
+    assert.match(generatedBootstrap, /initOpenTelemetry/);
+    assert.doesNotMatch(generatedBootstrap, /createMongoOpenTelemetryInstrumentations/);
+    assert.doesNotMatch(generatedModule, /backend-mongodb|MongoMainModule|AuthMongo/);
+    assert.doesNotMatch(generatedModule, /FeatureFlagsMongoModule/);
+  });
+
+  it('resolves MongoDB ownership and feature flag wiring without PostgreSQL projects or services', () => {
+    const mongodbSummary = {
+      ...summary,
+      capabilities: ['feature-flags', 'mongodb', 'notifications', 'otel', 's3'],
+    };
+    const manifest = JSON.parse(generateCapabilitiesManifest(mongodbSummary).content);
+    const projects = manifest.capabilities.flatMap((entry: { projects: string[] }) => entry.projects);
+    const featureFlags = manifest.capabilities.find((entry: { id: string }) => entry.id === 'feature-flags');
+    const notifications = manifest.capabilities.find((entry: { id: string }) => entry.id === 'notifications');
+    const mongodb = manifest.capabilities.find((entry: { id: string }) => entry.id === 'mongodb');
+
+    assert.deepEqual(featureFlags.projects, ['@app/backend-mongodb-main-feature-flags', '@app/common-feature-flags']);
+    assert.ok(notifications.projects.includes('@app/backend-mongodb-main-notification'));
+    assert.ok(!notifications.dockerServices.includes('postgres'));
+    assert.deepEqual(mongodb.projects, ['@app/backend-mongodb-main', '@app/backend-mongodb-main-auth']);
+    assert.ok(projects.every((project: string) => !project.includes('backend-postgres')));
+
+    const generatedModule = generateBackendCapabilityModule('user-app-api', mongodbSummary).content;
+    const generatedBootstrap = generateBackendCapabilityBootstrap('user-app-api', mongodbSummary).content;
+    assert.match(generatedModule, /@Global\(\)/);
+    assert.match(generatedModule, /MongoMainModule\.forRoot\(\)/);
+    assert.match(generatedModule, /AuthMongoPersistenceModule/);
+    assert.match(generatedModule, /NotificationMongoPersistenceModule/);
+    assert.match(generatedModule, /FeatureFlagsMongoPersistenceModule/);
+    assert.doesNotMatch(generatedModule, /OpenTelemetry|initOpenTelemetry/);
+    assert.match(generatedBootstrap, /from '@app\/backend-mongodb-main-otel'/);
+    assert.match(generatedBootstrap, /createMongoOpenTelemetryInstrumentations/);
+    assert.match(generatedBootstrap, /createOpenTelemetryInstrumentations/);
+    assert.match(generatedBootstrap, /initOpenTelemetry/);
+    assert.doesNotMatch(generatedBootstrap, /createPostgresOpenTelemetryInstrumentations/);
+    assert.doesNotMatch(generatedModule, /FeatureFlagsPostgresModule/);
+    assert.doesNotMatch(generatedModule, /backend-postgres|PostgresMainModule|AuthPostgres/);
+  });
+
+  it('keeps each generated user API source closure free of the opposite provider and driver', () => {
+    const workspaceRoot = process.cwd();
+    const generatedPath = 'apps/backend/user/user-app-api/src/capabilities.generated.ts';
+    const bootstrapPath = 'apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts';
+
+    for (const provider of ['postgres', 'mongodb'] as const) {
+      const providerSummary = planSummaryFixture({
+        apps: ['user-app-api'],
+        capabilities: ['otel', provider],
+        configHash: provider,
+      });
+      const closure = collectTypeScriptClosure(
+        workspaceRoot,
+        'apps/backend/user/user-app-api/src/main.ts',
+        new Map([
+          [generatedPath, generateBackendCapabilityModule('user-app-api', providerSummary).content],
+          [bootstrapPath, generateBackendCapabilityBootstrap('user-app-api', providerSummary).content],
+        ]),
+      );
+
+      if (provider === 'postgres') {
+        assert.ok([...closure.files].every((file) => !file.includes('/libs/backend/mongodb/')));
+        assert.ok(!closure.packages.has('mongodb'));
+        assert.ok(!closure.packages.has('@opentelemetry/instrumentation-mongodb'));
+        assert.ok(!closure.packages.has('mongodb-connection-string-url'));
+        assert.ok(!closure.packages.has('better-auth/adapters/mongodb'));
+      } else {
+        assert.ok([...closure.files].every((file) => !file.includes('/libs/backend/postgres/')));
+        assert.ok(!closure.packages.has('pg'));
+        assert.ok(!closure.packages.has('@opentelemetry/instrumentation-pg'));
+        assert.ok([...closure.packages].every((dependency) => !dependency.startsWith('@mikro-orm/')));
+      }
+    }
+  });
+
   it('generates producer wiring for APIs and delivery wiring for the scheduler', () => {
     const producer = generateBackendCapabilityModule('user-app-api', summary).content;
     const consumer = generateBackendCapabilityModule('notification-consumer', summary).content;
@@ -606,13 +733,132 @@ describe('planner — concrete capability activation', () => {
     assert.doesNotMatch(scheduler, /TelegramBotModule/);
   });
 
+  it('keeps telemetry bootstrap separate from Nest capability module evaluation', () => {
+    const telemetrySummary = planSummaryFixture({
+      apps: ['user-app-api'],
+      capabilities: ['otel', 'postgres'],
+      configHash: 'otel-order',
+    });
+    const generatedModule = generateBackendCapabilityModule('user-app-api', telemetrySummary);
+    const generatedBootstrap = generateBackendCapabilityBootstrap('user-app-api', telemetrySummary);
+
+    assert.equal(generatedBootstrap.path, 'apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts');
+    assert.doesNotMatch(generatedBootstrap.content, /PostgresMainModule|@nestjs\/common/);
+    assert.doesNotMatch(generatedModule.content, /initOpenTelemetry|instrumentation-pg/);
+  });
+
   it('generates compose and bootstrap activation environment', () => {
     const environment = generateComposeEnvironment(summary).content;
     assert.match(environment, /COMPOSE_PROFILES=.*notification-consumer/);
     assert.match(environment, /COMPOSE_PROFILES=.*notification-scheduler/);
+    assert.match(environment, /DATABASE_ENGINE=postgres/);
+    assert.match(environment, /AUTH_PERSISTENCE=postgres/);
+    assert.match(environment, /DATABASE_URL=postgres:\/\/postgres:postgres@localhost:5432\/nest_react_boilerplate/);
+    assert.match(
+      environment,
+      /CONTAINER_DATABASE_URL=postgres:\/\/postgres:postgres@postgres:5432\/nest_react_boilerplate/,
+    );
+    assert.doesNotMatch(environment, /MONGODB_URI=/);
     assert.match(environment, /OTEL_ENABLED=false/);
   });
+
+  it('generates transaction-capable local MongoDB environment without PostgreSQL values', () => {
+    const environment = generateComposeEnvironment({
+      ...summary,
+      capabilities: ['mongodb', 'notifications', 's3'],
+    }).content;
+
+    assert.match(environment, /DATABASE_ENGINE=mongodb/);
+    assert.match(environment, /AUTH_PERSISTENCE=mongodb/);
+    assert.match(
+      environment,
+      /MONGODB_URI=mongodb:\/\/mongodb\.localhost:27017\/nest_react_boilerplate\?replicaSet=rs0&retryWrites=true/,
+    );
+    assert.match(environment, /MONGODB_DATABASE=nest_react_boilerplate/);
+    assert.match(environment, /MONGODB_REPLICA_SET=rs0/);
+    assert.match(environment, /COMPOSE_PROFILES=.*mongodb/);
+    assert.doesNotMatch(environment, /DATABASE_URL=/);
+    assert.doesNotMatch(environment, /COMPOSE_PROFILES=.*postgres/);
+  });
+
+  it('always emits the provider selectors for selections without a database', () => {
+    const environment = generateComposeEnvironment(
+      planSummaryFixture({
+        apps: ['landing-app'],
+        capabilities: [],
+        configHash: 'abc',
+      }),
+    ).content;
+
+    assert.match(environment, /^DATABASE_ENGINE=$/mu);
+    assert.match(environment, /^AUTH_PERSISTENCE=$/mu);
+  });
 });
+
+function collectTypeScriptClosure(
+  workspaceRoot: string,
+  entry: string,
+  virtualFiles: ReadonlyMap<string, string>,
+): { files: Set<string>; packages: Set<string> } {
+  const tsconfig = JSON.parse(readFileSync(resolve(workspaceRoot, 'tsconfig.base.json'), 'utf8')) as {
+    compilerOptions: { paths: Record<string, string[]> };
+  };
+  const aliases = tsconfig.compilerOptions.paths;
+  const files = new Set<string>();
+  const packages = new Set<string>();
+  const pending = [resolve(workspaceRoot, entry)];
+  const imports = /\b(?:from\s+|import\s*\(\s*|import\s*)['"]([^'"]+)['"]/gu;
+
+  while (pending.length > 0) {
+    const file = pending.pop();
+    if (!file || files.has(file)) {
+      continue;
+    }
+    files.add(file);
+    const relativePath = file.slice(workspaceRoot.length + 1);
+    const content = virtualFiles.get(relativePath) ?? readFileSync(file, 'utf8');
+
+    for (const match of content.matchAll(imports)) {
+      const specifier = match[1];
+      if (!specifier) {
+        continue;
+      }
+      const dependency = resolveTypeScriptImport(workspaceRoot, dirname(file), specifier, aliases);
+      if (dependency) {
+        pending.push(dependency);
+      } else if (!specifier.startsWith('.')) {
+        packages.add(specifier);
+      }
+    }
+  }
+
+  return { files, packages };
+}
+
+function resolveTypeScriptImport(
+  workspaceRoot: string,
+  importerDirectory: string,
+  specifier: string,
+  aliases: Readonly<Record<string, string[]>>,
+): string | undefined {
+  const alias = aliases[specifier]?.[0];
+  const base = alias
+    ? resolve(workspaceRoot, alias)
+    : specifier.startsWith('.')
+      ? resolve(importerDirectory, specifier)
+      : undefined;
+  if (!base) {
+    return undefined;
+  }
+
+  const candidates = [
+    base,
+    `${base}.ts`,
+    base.endsWith('.js') ? `${base.slice(0, -3)}.ts` : '',
+    resolve(base, 'index.ts'),
+  ];
+  return candidates.find((candidate) => candidate.length > 0 && existsSync(candidate) && statSync(candidate).isFile());
+}
 
 /* ==================================================================
  * COMPONENT: planner + state — plan()
@@ -648,12 +894,18 @@ describe('planner — plan() basic', () => {
   });
 
   it('generated plan includes capability ownership and backend wiring files', () => {
-    const config = parseNrbConfig({ schemaVersion, capabilities: ['notifications'] });
+    const config = parseNrbConfig({ schemaVersion, capabilities: ['notifications', 'postgres'] });
     const result = plan(config, emptyState);
     assert.ok(result.operations.some((operation) => operation.path === '.nrb/capabilities.json'));
     assert.ok(
       result.operations.some(
         (operation) => operation.path === 'apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts',
+      ),
+    );
+    assert.ok(
+      result.operations.some(
+        (operation) =>
+          operation.path === 'apps/backend/telegram/telegram-bot-api/src/capabilities.bootstrap.generated.ts',
       ),
     );
   });
@@ -687,6 +939,18 @@ describe('planner — idempotency (empty replay)', () => {
     const second = plan(config, first.expectedState);
     const third = plan(config, second.expectedState);
     assert.equal(third.operations.length, 0);
+  });
+
+  it('MongoDB feature flag wiring is stable on replay', () => {
+    const config = parseNrbConfig({
+      schemaVersion,
+      apps: ['user-app-api'],
+      capabilities: ['feature-flags', 'mongodb'],
+    });
+    const first = plan(config, emptyState);
+    const second = plan(config, first.expectedState);
+
+    assert.equal(second.operations.length, 0);
   });
 });
 

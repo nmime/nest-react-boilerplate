@@ -55,6 +55,28 @@ const SKIP = SKIP_BY_ENV
     ? false
     : "local TCP port binding is unavailable in this execution environment";
 
+function runPostgresMigrations(databaseUrl, timeout) {
+  const migrateTsPath = resolve(__dirname, "migrate.ts");
+  const commonI18nPath = resolve(workspaceRoot, "libs/common/i18n/runtime/lib/src/index.ts");
+  const evaluate = `
+    import { createJiti } from "jiti";
+    const jiti = createJiti(import.meta.url, { alias: { "@app/common-i18n-runtime": ${JSON.stringify(commonI18nPath)} } });
+    const { runDatabaseMigrations } = await jiti.import(${JSON.stringify(migrateTsPath)});
+    await runDatabaseMigrations("postgres");
+  `;
+  return spawnSync(process.execPath, ["--input-type=module", "--eval", evaluate], {
+    cwd: workspaceRoot,
+    env: {
+      ...process.env,
+      AUTH_PERSISTENCE: "postgres",
+      DATABASE_URL: databaseUrl,
+      SWC_NODE_PROJECT: resolve(workspaceRoot, "tsconfig.base.json"),
+    },
+    encoding: "utf8",
+    timeout,
+  });
+}
+
 function runDocker(args) {
   return new Promise((resolve) => {
     const child = spawn("docker", args, { stdio: "pipe" });
@@ -160,15 +182,7 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
 
   describe("full migrate.ts script (e2e)", () => {
     it("runs the unified migration script successfully", async () => {
-      const runTsPath = resolve(workspaceRoot, "packages/tooling/bin/run-ts-command.mjs");
-      const migrateTsPath = resolve(__dirname, "migrate.ts");
-
-      const result = spawnSync(process.execPath, [runTsPath, migrateTsPath], {
-        cwd: workspaceRoot,
-        env: { ...process.env, DATABASE_URL: dbUrl, SWC_NODE_PROJECT: resolve(workspaceRoot, "tsconfig.base.json") },
-        encoding: "utf8",
-        timeout: 120_000,
-      });
+      const result = runPostgresMigrations(dbUrl, 120_000);
 
       if (result.status !== 0) {
         console.error("STDOUT:", result.stdout);
@@ -246,15 +260,7 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
     });
 
     it("is idempotent on second run", async () => {
-      const runTsPath = resolve(workspaceRoot, "packages/tooling/bin/run-ts-command.mjs");
-      const migrateTsPath = resolve(__dirname, "migrate.ts");
-
-      const result = spawnSync(process.execPath, [runTsPath, migrateTsPath], {
-        cwd: workspaceRoot,
-        env: { ...process.env, DATABASE_URL: dbUrl, SWC_NODE_PROJECT: resolve(workspaceRoot, "tsconfig.base.json") },
-        encoding: "utf8",
-        timeout: 60_000,
-      });
+      const result = runPostgresMigrations(dbUrl, 60_000);
 
       assert.strictEqual(result.status, 0, "Second run should succeed");
       const lines = (result.stdout ?? "").split("\n");

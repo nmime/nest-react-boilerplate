@@ -47,18 +47,18 @@ pnpm nrb init \
   --owner acme-org
 ```
 
-| Flag                  | Type    | Description                                                  |
-| --------------------- | ------- | ------------------------------------------------------------ |
-| `--name <title>`      | string  | Required product display name.                               |
-| `--domain <base>`     | string  | Required DNS base without protocol, port, path, or wildcard. |
-| `--package-name <id>` | string  | Root package name; defaults to the product slug.             |
-| `--app-slug <id>`     | string  | Product/application slug.                                    |
-| `--db-name <name>`    | string  | PostgreSQL database name.                                    |
-| `--apex-app <id>`     | string  | Apex owner: `landing-app` (default) or `site-app`.           |
-| `--owner <org>`       | string  | Repository/image owner replacing `your-github-org`.          |
-| `--dry-run`           | boolean | Print the file plan without writing.                         |
-| `--force`             | boolean | Allow a dirty/non-Git workspace and overwrite conflicts.     |
-| `--non-interactive`   | boolean | Compatibility flag; required values must still be explicit.  |
+| Flag                  | Type    | Description                                                    |
+| --------------------- | ------- | -------------------------------------------------------------- |
+| `--name <title>`      | string  | Required product display name.                                 |
+| `--domain <base>`     | string  | Required DNS base without protocol, port, path, or wildcard.   |
+| `--package-name <id>` | string  | Root package name; defaults to the product slug.               |
+| `--app-slug <id>`     | string  | Product/application slug.                                      |
+| `--db-name <name>`    | string  | Durable database name used by PostgreSQL and MongoDB examples. |
+| `--apex-app <id>`     | string  | Apex owner: `landing-app` (default) or `site-app`.             |
+| `--owner <org>`       | string  | Repository/image owner replacing `your-github-org`.            |
+| `--dry-run`           | boolean | Print the file plan without writing.                           |
+| `--force`             | boolean | Allow a dirty/non-Git workspace and overwrite conflicts.       |
+| `--non-interactive`   | boolean | Compatibility flag; required values must still be explicit.    |
 
 The old `pnpm init:project -- ...` root script calls the same implementation.
 Run initialization before `pnpm nrb setup`.
@@ -103,6 +103,16 @@ With no selection flags, interactive setup starts from `custom` on first run
 and from the current selection on later runs. Scripted additions are additive;
 use `--replace` only when intentionally replacing the complete selection.
 
+After applying capability wiring, setup derives `.nrb/closure.json` from the
+selected apps, capability-owned projects, and the live Nx graph. It also writes
+the selected-only `.nrb/closure/package.json` and
+`.nrb/closure/pnpm-workspace.yaml`. Setup does not install dependencies or
+generate `.nrb/closure/pnpm-lock.yaml`; use the explicit closure command below.
+Setup also refreshes the tracked, fail-closed `.helm/values-selection.yaml`
+overlay consumed by direct Helm, Argo CD, and Flux releases.
+The closure's `releaseImages` come from setup catalog ownership; durable
+provider selections include `migrator`, while provider-free selections do not.
+
 Exit codes: `0` success, `1` configuration or validation error.
 
 ### `doctor` / `project:doctor`
@@ -116,29 +126,71 @@ pnpm nrb doctor --json
 
 Exit codes: `0` all checks pass (or skip/warn), `1` any check failed.
 
+### `closure`
+
+Validate, install, or run the selected Nx/project/package closure.
+
+```bash
+pnpm nrb closure check
+pnpm nrb closure install
+pnpm nrb closure run build
+pnpm nrb closure run test -- --skip-nx-cache
+pnpm nrb closure materialize --all-reference --provider postgres
+pnpm nrb closure materialize --all-reference --provider mongodb
+```
+
+`check` is read-only. `install` is the only closure command that generates the
+selected pnpm lock. It removes prior root and workspace-package dependency
+links, installs from the selected lock into `.nrb/closure/node_modules`, and
+links only selected project roots to that clean tree. Use
+`pnpm run tooling:install` to explicitly restore the full maintainer/tooling
+workspace install. pnpm remains the canonical package manager. `run` accepts only targets present in `.nrb/closure.json`,
+always supplies an explicit Nx project list, and rejects `--all` or
+`--projects` overrides. Lint, typecheck, and test-like targets include every
+transitive closure project that owns that target. `materialize --all-reference` writes an explicit
+provider-specific maintainer context under `.nrb/reference/<provider>/`. The
+context contains `closure.json`, synthetic `nrb.config.json` and
+`workspace.json`, scoped package/workspace manifests, an offline-generated
+`pnpm-lock.yaml`, and `lock.json` integrity metadata. It never replaces or
+supplies a missing product selection.
+
+Serialized closure manifests separate exact product imports in
+`productExternalPackages` from source-tooling support in
+`toolingExternalPackages`. The scoped package manifest installs the former as
+dependencies and the latter as devDependencies.
+
+After the lock is current, `install` also normalizes `closure.json`,
+`nrb.config.json`, `workspace.json`, `package.json`, `pnpm-workspace.yaml`,
+`pnpm-lock.yaml`, and `lock.json` at the root of `.nrb/closure`. Dockerfile,
+selected Compose, production source-build Compose, and product Bake consume that
+directory only through the named `nrb-closure` BuildKit context. They do not
+read closure metadata from the default source context or fall back to the root
+workspace lock.
+
 ### `add`
 
 Add an app, library, or feature to the workspace.
 
 ```bash
 pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> [--port <port>] [--dry-run]
-pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> --description <purpose> [--scope <scope>]
-pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--dry-run]
+pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> --description <purpose> [--scope <scope>] [--database <provider>]
+pnpm nrb add feature <name> --api-app <api-name> --frontend-app <app-name> [--database <provider>] [--dry-run]
 ```
 
-| Flag                    | Type    | Description                                                              |
-| ----------------------- | ------- | ------------------------------------------------------------------------ |
-| `--dry-run`             | boolean | Show what would be done.                                                 |
-| `--kind <kind>`         | string  | Required app/lib platform.                                               |
-| `--renderer <renderer>` | string  | `vite`, `astro`, `vike`, `expo`, `nest-api`, `consumer`, or `scheduler`. |
-| `--port <port>`         | number  | Explicit free local port; omitted means first free canonical port.       |
-| `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.                 |
-| `--scope <scope>`       | string  | Owning domain scope for a library.                                       |
-| `--description <text>`  | string  | Required concrete library responsibility written to its README.          |
-| `--api-app <name>`      | string  | Required API application that owns a feature.                            |
-| `--frontend-app <name>` | string  | Required frontend application that hosts a feature.                      |
-| `--help`, `-h`          | boolean | Show usage.                                                              |
-| `--`                    |         | Pass remaining args to the underlying generator.                         |
+| Flag                    | Type    | Description                                                               |
+| ----------------------- | ------- | ------------------------------------------------------------------------- |
+| `--dry-run`             | boolean | Show what would be done.                                                  |
+| `--kind <kind>`         | string  | Required app/lib platform.                                                |
+| `--renderer <renderer>` | string  | `vite`, `astro`, `vike`, `expo`, `nest-api`, `consumer`, or `scheduler`.  |
+| `--port <port>`         | number  | Explicit free local port; omitted means first free canonical port.        |
+| `--type <type>`         | string  | Semantic library role used for layout and Nx boundaries.                  |
+| `--scope <scope>`       | string  | Owning domain scope for a library.                                        |
+| `--description <text>`  | string  | Required concrete library responsibility written to its README.           |
+| `--database <provider>` | string  | `postgres` or `mongodb`; features and backend data-access libraries only. |
+| `--api-app <name>`      | string  | Required API application that owns a feature.                             |
+| `--frontend-app <name>` | string  | Required frontend application that hosts a feature.                       |
+| `--help`, `-h`          | boolean | Show usage.                                                               |
+| `--`                    |         | Pass remaining args to the underlying generator.                          |
 
 Examples:
 
@@ -146,14 +198,18 @@ Examples:
 pnpm nrb add app billing-api --kind backend --renderer nest-api --port 3200
 pnpm nrb add app docs --kind frontend --renderer astro
 pnpm nrb add lib billing --kind backend --type feature-main --scope billing --description "Owns billing use cases and exposes the Nest feature module to billing APIs."
-pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --dry-run
+pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --database mongodb --dry-run
 ```
 
-An application generator writes a workspace package manifest. After generating
-an app, run `pnpm install` once to update `pnpm-lock.yaml` and create the new
-workspace links; then verify that `pnpm install --frozen-lockfile` is clean. A
-library generator uses the owning shared runtime manifest and does not add a
-package manifest by default. Never hand-edit the lockfile.
+An application generator writes Nx/source/test ownership without creating a
+package identity manifest. Application identity and targets belong in
+`project.json`; Astro and Expo receive dependency-only renderer manifests
+because their toolchains require nearest-package dependency metadata.
+External dependencies belong in `libs/backend/package.json` or
+`libs/frontend/package.json`; only when one of those manifests changes, run
+`pnpm install` and verify `pnpm install --frozen-lockfile`. A library generator
+uses the same owning platform manifest and does not add a package manifest by
+default. Never hand-edit the lockfile.
 
 An application generator creates source/Nx/test/README/AGENTS contracts only.
 Before calling a deployable complete, follow the selection, environment,
@@ -164,16 +220,34 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 
 ## Database commands
 
-| Command                        | Description                                            |
-| ------------------------------ | ------------------------------------------------------ |
-| `db:migrate`                   | Run database migrations.                               |
-| `db:migrations:check`          | Check migration naming and drift.                      |
-| `db:migrations:rollback-check` | Run migrations up/down/up against disposable Postgres. |
-| `db:reset`                     | Reset the local database.                              |
-| `db:seed`                      | Seed the local database.                               |
-| `db:backup`                    | Create a PostgreSQL backup.                            |
-| `db:restore`                   | Restore a PostgreSQL backup.                           |
-| `db:restore-drill`             | Run backup/restore drill or CI-safe dry-run.           |
+| Command                        | Description                                              |
+| ------------------------------ | -------------------------------------------------------- |
+| `db:migrate`                   | Run migrations for `DATABASE_ENGINE`/`AUTH_PERSISTENCE`. |
+| `db:migrations:check`          | Check migration naming and drift.                        |
+| `db:migrations:rollback-check` | Run PostgreSQL migrations up/down/up in Testcontainers.  |
+| `db:reset`                     | Reset and migrate the selected local provider.           |
+| `db:seed`                      | Seed the selected local provider transactionally.        |
+| `db:backup`                    | Create a selected-provider dump/archive.                 |
+| `db:restore`                   | Restore a selected-provider dump/archive.                |
+| `db:restore-drill`             | Run the selected-provider drill or CI-safe dry-run.      |
+
+Migration, reset, seed, backup, restore, and restore drill resolve the provider
+from the current selected closure after proving its config hash and live Nx graph
+digest are current. Provider-free selections fail, and any `DATABASE_ENGINE` or
+durable `AUTH_PERSISTENCE` value must agree with that closure. Only the selected
+provider command module is loaded, so PostgreSQL closures do not require MongoDB
+packages and MongoDB closures do not require PostgreSQL or MikroORM packages.
+MongoDB operations require `MONGODB_URI`, `MONGODB_DATABASE`, and an explicit
+`replicaSet` URI option. Production MongoDB backup/restore instead uses a
+deployment-wide `MONGODB_BACKUP_RESTORE_URI` or `_FILE`; this enables oplog
+capture/replay and must not select a database path.
+
+The final deployment migrator is not a local CLI compatibility fallback. Image
+construction selects its provider dependency set from the reviewed closure, then
+the final image runs without `nrb.config.json` or `.nrb`. At runtime it requires
+both `DATABASE_ENGINE` and `AUTH_PERSISTENCE` to explicitly select the same
+`postgres` or `mongodb` provider. Missing, memory, unknown, or conflicting values
+abort before any migration implementation is loaded.
 
 ## API commands
 
@@ -193,6 +267,10 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 | --------------- | ----------------------------------- |
 | `dev:fullstack` | Run the local fullstack dev helper. |
 
+Development selectors fail closed when setup configuration or the live Nx graph
+has changed since `.nrb/closure.json` was generated. Rerun `pnpm nrb setup`
+instead of using stale project or provider ownership.
+
 ## Docker commands
 
 | Command                | Description                                                   |
@@ -209,6 +287,7 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 | `project:generate-vertical-slice <name>` | Deprecated adapter to `add feature`.                          |
 | `project:check-library-configs`          | Validate Nx library config placement.                         |
 | `project:dependency-map`                 | Show dependency ownership and counts across workspace scopes. |
+| `closure check/install/run`              | Enforce the setup-selected Nx and pnpm dependency closure.    |
 
 ### `project:dependency-map`
 

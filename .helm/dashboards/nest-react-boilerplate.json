@@ -63,7 +63,7 @@
       "id": 4,
       "targets": [
         {
-          "expr": "max by (cronjob) (time() - kube_cronjob_status_last_schedule_time{cronjob=~\".*postgres-backup\"})",
+          "expr": "max by (cronjob) (time() - kube_cronjob_status_last_schedule_time{cronjob=~\".*-(postgres|mongodb)-backup\"})",
           "legendFormat": "{{cronjob}} seconds since scheduled",
           "refId": "A"
         }

@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ACCESSIBILITY-003
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';

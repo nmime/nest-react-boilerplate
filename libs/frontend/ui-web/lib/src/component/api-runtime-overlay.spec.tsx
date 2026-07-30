@@ -1,3 +1,5 @@
+// @requirements REQ-FRONTEND-ERROR-005
+// Evidence for: REQ-FRONTEND-ERROR-005
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';

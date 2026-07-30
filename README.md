@@ -15,7 +15,7 @@
     <a href="https://github.com/nmime/nest-react-boilerplate/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/nmime/nest-react-boilerplate/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white&color=22c55e" /></a>
     <a href="https://github.com/nmime/nest-react-boilerplate/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/nmime/nest-react-boilerplate?style=for-the-badge&logo=semanticrelease&logoColor=white&color=8b5cf6" /></a>
     <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
-    <img alt="pnpm 11.11.0" src="https://img.shields.io/badge/pnpm-11.11.0-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
+    <img alt="pnpm 11.15.1" src="https://img.shields.io/badge/pnpm-11.15.1-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
     <img alt="Bun 1.3.14 supported runtime" src="https://img.shields.io/badge/Bun_1.3.14-supported_runtime-FBF0DF?style=for-the-badge&logo=bun&logoColor=black" />
     <img alt="Nx 23" src="https://img.shields.io/badge/Nx-23-143055?style=for-the-badge&logo=nx&logoColor=white" />
     <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-0EA5E9?style=for-the-badge" /></a>
@@ -80,7 +80,7 @@ pnpm exec nx show projects
 | Requirement | Supported version or role                                                     |
 | ----------- | ----------------------------------------------------------------------------- |
 | Node.js     | `>=24 <25` — pinned by `.nvmrc`                                               |
-| pnpm        | `11.11.0` through Corepack                                                    |
+| pnpm        | `11.15.1` through Corepack                                                    |
 | Docker      | Local PostgreSQL or one-node MongoDB replica set and broader Compose profiles |
 | Bun         | `1.3.14` — supported alternative runtime                                      |
 
@@ -89,7 +89,7 @@ pnpm exec nx show projects
 ```bash
 nvm use
 corepack enable
-corepack prepare pnpm@11.11.0 --activate
+corepack prepare pnpm@11.15.1 --activate
 pnpm install --frozen-lockfile
 
 pnpm nrb setup
@@ -170,7 +170,7 @@ flowchart LR
 
 | Layer            | Technology and responsibility                                                                        |
 | ---------------- | ---------------------------------------------------------------------------------------------------- |
-| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.11.0, Node.js 24, and Bun 1.3.14 runtime support                          |
+| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.15.1, Node.js 24, and Bun 1.3.14 runtime support                          |
 | 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
 | 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
 | 🩷 **Data**      | PostgreSQL + MikroORM or native MongoDB, explicit migrations, Redis, NATS, S3/MinIO adapters         |
@@ -218,7 +218,14 @@ pnpm run check
 | Runtime code            | `pnpm run lint` · `pnpm run typecheck` · focused Nx/Vitest tests                            |
 | Security-sensitive work | `pnpm run test:security:secrets` plus targeted SAST/security checks                         |
 
-Testing spans unit and integration suites, Storybook interaction and visual checks, Playwright browser flows, Testcontainers-backed component tests, OpenAPI consumer/fuzz checks, property tests, and coverage thresholds. See [Testing](docs/testing.md), [Modern QA](docs/testing/modern-qa.md), and [Local Verification](docs/local-verification.md).
+Testing spans OpenSpec requirements with an explicit Cucumber disposition,
+Cucumber acceptance examples, Vitest unit and integration suites, Storybook
+interaction and visual checks, Playwright browser flows, Testcontainers-backed
+component tests, OpenAPI consumer/fuzz checks, property and mutation tests,
+exact-SHA evidence dossiers, and coverage thresholds. See
+[Specification Assurance](docs/specification-assurance.md),
+[Testing](docs/testing.md), [Modern QA](docs/testing/modern-qa.md), and
+[Local Verification](docs/local-verification.md).
 
 ## Repository layout
 
@@ -226,7 +233,7 @@ Testing spans unit and integration suites, Storybook interaction and visual chec
 apps/
 ├── frontend/                 # Vite, Astro, Vike, and Expo deployables
 ├── backend/<scope>/          # NestJS APIs, consumers, and schedulers
-└── e2e/                      # Cross-application Playwright projects
+└── e2e/                      # Cucumber acceptance and cross-application Playwright projects
 
 libs/
 ├── frontend/                 # UI, runtime, API support, clients, and frontend features
@@ -234,6 +241,7 @@ libs/
 └── common/                   # Cross-runtime contracts, i18n, notifications, and problem details
 
 packages/tooling/             # NRB setup, generators, checks, and repository automation
+openspec/                     # Durable requirements, change records, and evidence mappings
 docs/                         # Architecture, workflows, testing, deployment, and runbooks
 deploy/                       # Single-server lifecycle automation
 docker/                       # Production Compose topology and supporting configuration

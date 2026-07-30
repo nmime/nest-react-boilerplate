@@ -1,20 +1,37 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { Db } from 'mongodb';
 import { describe, expect, it, vi } from 'vitest';
 import {
   FeatureFlagCollectionName,
   FeatureFlagCollectionValidator,
   FeatureFlagEnabledIndexName,
+  FeatureFlagIndexes,
   FeatureFlagTenantKeyIndexName,
   initializeFeatureFlagCollection,
+  verifyFeatureFlagCollection,
 } from './feature-flag-mongo.collection';
 
 function createDatabase() {
   const createIndexes = vi.fn().mockResolvedValue([]);
   const createCollection = vi.fn().mockResolvedValue(undefined);
   const command = vi.fn().mockResolvedValue({ ok: 1 });
-  const collection = vi.fn(() => ({ createIndexes }));
-  const database = { createCollection, command, collection } as unknown as Db;
-  return { collection, command, createCollection, createIndexes, database };
+  const listIndexes = vi.fn(() => ({ toArray: () => Promise.resolve(FeatureFlagIndexes) }));
+  const listCollections = vi.fn(() => ({
+    toArray: () =>
+      Promise.resolve([
+        {
+          name: FeatureFlagCollectionName,
+          options: {
+            validator: FeatureFlagCollectionValidator,
+            validationAction: 'error',
+            validationLevel: 'strict',
+          },
+        },
+      ]),
+  }));
+  const collection = vi.fn(() => ({ createIndexes, listIndexes }));
+  const database = { createCollection, command, collection, listCollections } as unknown as Db;
+  return { collection, command, createCollection, createIndexes, database, listCollections, listIndexes };
 }
 
 describe('feature flag MongoDB collection initialization', () => {
@@ -56,5 +73,14 @@ describe('feature flag MongoDB collection initialization', () => {
 
     await expect(initializeFeatureFlagCollection(fixture.database)).rejects.toThrow('permission denied');
     expect(fixture.createIndexes).not.toHaveBeenCalled();
+  });
+
+  it('verifies the strict validator and tenant-scoped indexes', async () => {
+    const fixture = createDatabase();
+
+    await verifyFeatureFlagCollection(fixture.database);
+
+    expect(fixture.listCollections).toHaveBeenCalledWith({ name: FeatureFlagCollectionName }, { nameOnly: false });
+    expect(fixture.listIndexes).toHaveBeenCalledOnce();
   });
 });

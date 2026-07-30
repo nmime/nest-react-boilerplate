@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { LockMode } from '@mikro-orm/core';
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';

@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-TEMPLATE-003
 import { describe, expect, it } from 'vitest';
 import { NotificationErrorReason, NotificationStatus } from '@app/common-notifications';
 import { AppleApnsNotificationProvider } from './apple-apns-notification.provider';
@@ -12,6 +13,7 @@ describe('push notification providers', () => {
       provider.send({
         address: 'a'.repeat(64),
         deliveryId: 'delivery-1',
+        markDispatchStarted: async () => undefined,
         message: { kind: 'push', subject: 'Hello', text: 'World' },
       }),
     ).resolves.toMatchObject({
@@ -25,7 +27,12 @@ describe('push notification providers', () => {
     ['APNs', new AppleApnsNotificationProvider({ appleApns: {} } as never)],
   ])('%s rejects non-push messages', async (_label, provider) => {
     await expect(
-      provider.send({ address: 'target', deliveryId: 'delivery-2', message: { kind: 'bot', text: 'Wrong' } }),
+      provider.send({
+        address: 'target',
+        deliveryId: 'delivery-2',
+        markDispatchStarted: async () => undefined,
+        message: { kind: 'bot', text: 'Wrong' },
+      }),
     ).resolves.toMatchObject({
       status: NotificationStatus.Error,
       errorReason: NotificationErrorReason.UnsupportedChannel,

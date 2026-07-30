@@ -1,10 +1,11 @@
+// @requirements REQ-NOTIFY-PERSISTENCE-005
 import { describe, expect, it } from 'vitest';
 import { Migration20260715100000CreateNotifications } from './Migration20260715100000CreateNotifications';
 import { Migration20260720130000AddNotificationDeliveryClaim } from './Migration20260720130000AddNotificationDeliveryClaim';
 import { Migration20260721120000NotificationProvidersAndSensitivePayload } from './Migration20260721120000NotificationProvidersAndSensitivePayload';
 import { Migration20260721160000AdminNotificationBroadcasts } from './Migration20260721160000AdminNotificationBroadcasts';
 import { Migration20260726180000NotificationClaimTokens } from './Migration20260726180000NotificationClaimTokens';
-import { notificationMigrations } from './index';
+import { Migration20260729190000NotificationDeliveryClaimOwnership, notificationMigrations } from './index';
 
 function collectSql(migration: { addSql(sql: string): void }, run: () => void): string {
   const statements: string[] = [];
@@ -38,6 +39,32 @@ describe('Notification delivery-claim migration', () => {
     expect(notificationMigrations.indexOf(Migration20260715100000CreateNotifications)).toBeLessThan(
       notificationMigrations.indexOf(Migration20260720130000AddNotificationDeliveryClaim),
     );
+  });
+
+  it('adds opaque ownership and unknown-outcome columns in a new ordered migration', () => {
+    const migration = new Migration20260729190000NotificationDeliveryClaimOwnership(
+      undefined as never,
+      undefined as never,
+    );
+    const upSql = collectSql(migration, () => {
+      migration.up();
+    });
+    expect(upSql).toContain(
+      `add column if not exists "claim_token" uuid not null default '00000000-0000-0000-0000-000000000000'::uuid`,
+    );
+    expect(upSql).toContain(
+      `add column if not exists "dispatch_started_at" timestamptz not null default '1970-01-01 00:00:00+00'`,
+    );
+    expect(upSql).toContain('"ix__notification_deliveries__claim_token"');
+    expect(notificationMigrations.indexOf(Migration20260726180000NotificationClaimTokens)).toBeLessThan(
+      notificationMigrations.indexOf(Migration20260729190000NotificationDeliveryClaimOwnership),
+    );
+
+    const downSql = collectSql(migration, () => {
+      migration.down();
+    });
+    expect(downSql).toContain('drop column if exists "dispatch_started_at"');
+    expect(downSql).not.toContain('drop column if exists "claim_token"');
   });
 
   it('migrates legacy delivery providers and adds encrypted sensitive payload storage', () => {

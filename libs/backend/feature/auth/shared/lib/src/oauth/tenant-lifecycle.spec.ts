@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import { describe, expect, it } from 'vitest';
 import type { AuthenticatedRequest } from './access-control.types';
 import { DefaultAuthTenantId } from './tenant-context';

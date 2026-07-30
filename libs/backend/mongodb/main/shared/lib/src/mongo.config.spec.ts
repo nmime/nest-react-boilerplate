@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import { describe, expect, it } from 'vitest';
 import {
   createMongoClientOptions,
@@ -59,6 +60,9 @@ describe('MongoDB configuration', () => {
     expect(() => createMongoEnvironment({ MONGODB_URI: 'mongodb://user:secret@', MONGODB_DATABASE: 'app' })).toThrow(
       'MONGODB_URI must be a valid mongodb:// or mongodb+srv:// URI.',
     );
+    expect(() =>
+      createMongoEnvironment({ MONGODB_URI: 'mongodb://mongo-a,,mongo-b/app', MONGODB_DATABASE: 'app' }),
+    ).toThrow('MONGODB_URI must be a valid mongodb:// or mongodb+srv:// URI.');
     expect(() => createMongoEnvironment({ MONGODB_URI: baseEnv.MONGODB_URI })).toThrow(/MONGODB_DATABASE/u);
 
     try {

@@ -1,4 +1,8 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
+// Evidence for: REQ-AUTH-SESSION-002
 import { MikroORM } from '@mikro-orm/core';
+// Persistence evidence for REQ-AUTH-SESSION-002 and component recovery
+// evidence for REQ-RUNTIME-RECOVERY-002.
 import { Migrator } from '@mikro-orm/migrations';
 import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
@@ -210,7 +214,7 @@ describeIfDocker('AuthMainModule postgres component', () => {
     await supertest(httpServer).post('/auth/register').send({ email, password }).expect(201);
     await supertest(httpServer).post('/auth/register').send({ email, password }).expect(409);
 
-    const login = await supertest(httpServer).post('/auth/login').send({ email, password }).expect(201);
+    const login = await supertest(httpServer).post('/auth/login').send({ email, password }).expect(200);
 
     const body = login.body as AuthSessionResponse;
     expect(body.data.user.email).toBe(email);

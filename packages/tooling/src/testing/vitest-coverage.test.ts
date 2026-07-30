@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { resolve } from 'node:path';

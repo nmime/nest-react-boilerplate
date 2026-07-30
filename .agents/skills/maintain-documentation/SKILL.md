@@ -20,6 +20,14 @@ description: Create, update, reorganize, or review repository documentation whil
 6. When adding or renaming a skill, update `docs/agent-skills.md` and the workflow selector in `docs/ai/agent-workflows.md`; keep `agents/openai.yaml` aligned with `SKILL.md`.
 7. Verify commands, paths, links, anchors, behavior, and examples against live source. Do not retain stale claims for compatibility.
 
+## Specification lifecycle
+
+When documentation or skill guidance changes observable product, tooling, or
+agent workflow behavior, establish or update the governing requirement through
+`$specify-behavior` and synchronize the approved implementation and evidence
+through `$implement-specified-change`. Pure wording, indexing, and
+source-preserving corrections may retain existing requirements.
+
 ## Verification
 
 Run focused tests for changed documentation tooling, then:

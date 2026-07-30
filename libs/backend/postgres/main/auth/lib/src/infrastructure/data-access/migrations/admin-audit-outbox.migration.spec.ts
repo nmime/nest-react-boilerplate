@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { Migration20260605143000CreateAdminAuditLogs } from './Migration20260605143000CreateAdminAuditLogs';
 import { Migration20260606120000CreateTransactionalOutboxEvents } from './Migration20260606120000CreateTransactionalOutboxEvents';

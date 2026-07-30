@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ERROR-005
 import type { MergedOptions } from 'openapi-fetch';
 import { describe, expect, it, vi } from 'vitest';
 import { FrontendErrorKey } from './error-normalization';

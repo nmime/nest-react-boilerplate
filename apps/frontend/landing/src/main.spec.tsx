@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SSR-007
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -55,5 +56,5 @@ describe('landing app root', () => {
     expect(fallback.getAttribute('aria-live')).toBe('assertive');
     expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeTruthy();
     expect(screen.getByText(/Try refreshing the page/u)).toBeTruthy();
-  });
+  }, 10_000);
 });

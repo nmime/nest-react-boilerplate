@@ -1,6 +1,11 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { randomBytes } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { NodeAesGcmProviderTokenCrypto, type ProviderTokenCryptoKey } from './provider-token-crypto.service';
+import {
+  createNodeAesGcmProviderTokenCrypto,
+  NodeAesGcmProviderTokenCrypto,
+  type ProviderTokenCryptoKey,
+} from './provider-token-crypto.service';
 
 function keyResolver(keyId = 'key-2026-07'): () => ProviderTokenCryptoKey {
   const key = randomBytes(32);
@@ -8,6 +13,14 @@ function keyResolver(keyId = 'key-2026-07'): () => ProviderTokenCryptoKey {
 }
 
 describe('NodeAesGcmProviderTokenCrypto', () => {
+  it('creates the shared provider-token implementation through the PostgreSQL factory', () => {
+    const crypto = createNodeAesGcmProviderTokenCrypto(keyResolver());
+
+    expect(crypto).toBeInstanceOf(NodeAesGcmProviderTokenCrypto);
+    const encrypted = crypto.encrypt({ plaintext: 'provider-refresh-token' });
+    expect(crypto.decrypt(encrypted)).toBe('provider-refresh-token');
+  });
+
   it('round-trips plaintext without additional authenticated data', () => {
     const crypto = new NodeAesGcmProviderTokenCrypto(keyResolver());
 

@@ -1,9 +1,13 @@
 # @app/backend-mongodb-main-feature-flags
 
+## Purpose
+
 Native MongoDB persistence for tenant-scoped feature flags. The adapter owns a
 strict collection validator, deterministic indexes, provider-neutral record
 mapping, and idempotent initialization through the ordered MongoDB migration
 ledger.
+
+## Commands
 
 ```bash
 pnpm exec nx run @app/backend-mongodb-main-feature-flags:build

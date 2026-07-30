@@ -33,7 +33,7 @@ export const backendAppIds = [
 export type BackendAppId = (typeof backendAppIds)[number];
 
 /** All application IDs (union of frontend + backend + e2e). */
-export const appIds = [...frontendAppIds, ...backendAppIds, 'fullstack-e2e'] as const;
+export const appIds = [...frontendAppIds, ...backendAppIds, 'fullstack-e2e', 'acceptance-e2e'] as const;
 export type AppId = (typeof appIds)[number];
 
 /** Cross-cutting capabilities that can be toggled. */
@@ -127,7 +127,10 @@ export const NrbConfigSchema = z
       .default({ ...defaultProductConfig, mobileTargets: [...defaultProductConfig.mobileTargets] }),
     deployment: z
       .object({
-        targets: z.array(z.enum(deploymentTargetIds)).min(1).default([...defaultDeploymentConfig.targets]),
+        targets: z
+          .array(z.enum(deploymentTargetIds))
+          .min(1)
+          .default([...defaultDeploymentConfig.targets]),
         publicTopology: z.enum(publicTopologyIds).default(defaultDeploymentConfig.publicTopology),
         kubernetesDelivery: z.enum(kubernetesDeliveryIds).default(defaultDeploymentConfig.kubernetesDelivery),
         infrastructure: z

@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { getBetterAuthConfig } from './better-auth';
 

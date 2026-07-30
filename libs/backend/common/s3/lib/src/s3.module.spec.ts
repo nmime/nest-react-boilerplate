@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-STORAGE-007
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 import { AwsS3ObjectStorageClient } from './s3.aws-client';

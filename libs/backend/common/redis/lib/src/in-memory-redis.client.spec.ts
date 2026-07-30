@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { describe, expect, it, vi } from 'vitest';
 import { InMemoryRedisClient } from './in-memory-redis.client';
 
@@ -14,6 +15,25 @@ describe('InMemoryRedisClient set conditions', () => {
     const redis = new InMemoryRedisClient();
     await redis.set('k', 'v');
     await expect(redis.get('k')).resolves.toBe('v');
+  });
+});
+
+describe('InMemoryRedisClient owner-checked replacement', () => {
+  it('replaces and refreshes only the current owner value', async () => {
+    vi.useFakeTimers();
+    try {
+      const redis = new InMemoryRedisClient();
+      await redis.set('claim', 'owner-a');
+
+      await expect(redis.replaceIfValue('claim', 'owner-b', 'completed', 1_000)).resolves.toBe(false);
+      await expect(redis.replaceIfValue('claim', 'owner-a', 'completed', 1_000)).resolves.toBe(true);
+      await expect(redis.get('claim')).resolves.toBe('completed');
+
+      vi.advanceTimersByTime(1_001);
+      await expect(redis.get('claim')).resolves.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

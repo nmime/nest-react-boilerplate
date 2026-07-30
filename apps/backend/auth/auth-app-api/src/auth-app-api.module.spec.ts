@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import { Test, type TestingModule } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { BaseHealthController, HealthService } from '@app/backend-common-health';

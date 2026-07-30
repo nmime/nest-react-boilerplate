@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-DESIGN-008
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 

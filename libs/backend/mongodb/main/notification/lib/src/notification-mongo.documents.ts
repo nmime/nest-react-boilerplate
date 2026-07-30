@@ -106,6 +106,7 @@ export interface NotificationDeliveryDocument {
   priority: number;
   sendAfter: Date;
   sentAt: Date | null;
+  dispatchStartedAt: Date | null;
   claimToken: string | null;
   claimExpiresAt: Date | null;
   createdAt: Date;

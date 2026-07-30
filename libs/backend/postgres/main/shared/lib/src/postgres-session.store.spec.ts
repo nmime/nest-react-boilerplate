@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { FastifySessionObject as Session } from '@fastify/session';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -80,6 +81,7 @@ describe('PostgresSessionStore', () => {
     vi.useFakeTimers();
     const store = new PostgresSessionStore('postgres://database/app', 3600, 1_000);
     await store.init();
+    await store.init();
     mocks.query.mockClear();
 
     await vi.advanceTimersByTimeAsync(1_000);
@@ -89,6 +91,23 @@ describe('PostgresSessionStore', () => {
     mocks.query.mockClear();
     await vi.advanceTimersByTimeAsync(2_000);
     expect(mocks.query).not.toHaveBeenCalled();
+  });
+
+  it('returns misses and deletes expired sessions without starting a sweep', async () => {
+    const store = new PostgresSessionStore('postgres://database/app', 3600, 0);
+    await store.init();
+    mocks.query.mockClear();
+
+    await expect(getSession(store, 'missing-session')).resolves.toEqual({ error: null, session: null });
+
+    const expired = new Date(Date.now() - 60_000).toISOString();
+    mocks.query.mockResolvedValueOnce({
+      rows: [{ expire: expired, sess: { cookie: {}, user: 'ada' } }],
+    });
+    await expect(getSession(store, 'expired-session')).resolves.toEqual({ error: null, session: null });
+    expect(mocks.query).toHaveBeenCalledWith('DELETE FROM fastify_sessions WHERE sid = $1', ['expired-session']);
+
+    await store.close();
   });
 
   it('passes database errors to Fastify callbacks', async () => {

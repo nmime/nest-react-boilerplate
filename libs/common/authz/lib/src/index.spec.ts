@@ -1,4 +1,7 @@
+// @requirements REQ-AUTH-ACCESS-001
+// Evidence for: REQ-AUTH-ACCESS-001
 import { describe, expect, it } from 'vitest';
+// Domain evidence for REQ-AUTH-ACCESS-001.
 import {
   AdminAuthLoginAnalyticsReadPermission,
   AdminDashboardReadPermission,

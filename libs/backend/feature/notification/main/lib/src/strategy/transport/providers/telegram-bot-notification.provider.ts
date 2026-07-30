@@ -21,6 +21,10 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
     super();
   }
 
+  override readiness() {
+    return { provider: this.provider, configured: Boolean(this.config.botToken) };
+  }
+
   async send(input: NotificationProviderSendInput): Promise<NotificationProviderSendResult> {
     if (input.message.kind !== 'bot') {
       return this.invalidMessage();
@@ -48,9 +52,11 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
         }
       : { chat_id: input.address, text: input.message.text, ...toTelegramOptions(input, true) };
 
+    await this.beginDispatch(input);
     try {
       const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
         method: 'POST',
+        signal: input.signal,
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
       });

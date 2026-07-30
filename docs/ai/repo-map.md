@@ -10,6 +10,13 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 4. Use this file to choose the next focused docs and code paths.
 5. Verify behavior in source, tests, project configuration, generated contracts, and local commands before changing docs or code.
 
+For observable behavior, route through [Specification
+assurance](../specification-assurance.md), the owning
+`openspec/specs/<capability>/spec.md` and `verification.yaml`, and any active
+change. Use `$specify-behavior`, `$implement-specified-change`, and
+`$review-specification-assurance` for the authoring, execution, and independent
+review phases.
+
 ## Runtime surfaces
 
 | Surface                             | Paths                                                                                  | Primary docs                                                                                                                                                                                                                                        |

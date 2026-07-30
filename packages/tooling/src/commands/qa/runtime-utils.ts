@@ -3,6 +3,10 @@ import type { SpawnSyncOptions, StdioOptions } from "node:child_process";
 import type { Stats } from "node:fs";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
+import {
+  commandExists as commandExistsInPath,
+  packageManagerInvocation as resolvePackageManagerInvocation,
+} from "../../runtime/process.ts";
 import { consumerContracts, openApiContracts } from "../api/contracts-manifest.ts";
 
 /** Any value produced by JSON.parse; used where a shape is intentionally open. */
@@ -138,8 +142,8 @@ export interface ParsedArgs {
 export interface RunOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
-  shell?: boolean;
   stdio?: StdioOptions;
+  timeoutMs?: number;
 }
 
 export interface RunResult {
@@ -148,6 +152,8 @@ export interface RunResult {
   stdout: string;
   stderr: string;
   error?: string;
+  signal?: NodeJS.Signals;
+  timedOut?: boolean;
 }
 
 export interface CollectFilesOptions {
@@ -201,8 +207,7 @@ export function writeJson(path: string, value: unknown): void {
 }
 
 export function commandExists(command: string): boolean {
-  const result = process.platform === "win32" ? spawnSync("where", [command], { stdio: "ignore" }) : spawnSync("sh", ["-c", `command -v ${JSON.stringify(command)} >/dev/null 2>&1`], { stdio: "ignore" });
-  return result.status === 0;
+  return commandExistsInPath(command);
 }
 
 export function run(command: string, args: string[] = [], options: RunOptions = {}): RunResult {
@@ -210,8 +215,9 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     cwd: options.cwd ?? workspaceRoot,
     env: { ...process.env, ...(options.env ?? {}) },
     encoding: "utf8",
-    shell: options.shell ?? false,
+    shell: false,
     stdio: options.stdio ?? "pipe",
+    timeout: options.timeoutMs,
   };
   const result = spawnSync(command, args, spawnOptions);
   return {
@@ -220,7 +226,13 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     stdout: typeof result.stdout === "string" ? result.stdout : "",
     stderr: typeof result.stderr === "string" ? result.stderr : "",
     error: result.error?.message,
+    signal: result.signal ?? undefined,
+    timedOut: (result.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT",
   };
+}
+
+export function packageManagerInvocation(args: string[]): { command: string; args: string[] } {
+  return resolvePackageManagerInvocation(args);
 }
 
 export function defaultIgnore(rel: string): boolean {
@@ -229,6 +241,7 @@ export function defaultIgnore(rel: string): boolean {
     "node_modules",
     "dist",
     "coverage",
+    "cucumber-report",
     "test-results",
     "playwright-report",
     "validation-logs",

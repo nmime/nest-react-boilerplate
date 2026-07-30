@@ -47,6 +47,7 @@ import {
 } from '@app/common-notifications';
 import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
 import {
+  EmptyNotificationDeliveryClaimId,
   NotificationAudienceSnapshotEntity,
   NotificationAudienceSnapshotMemberEntity,
   NotificationBroadcastCommandEntity,
@@ -61,7 +62,6 @@ import {
   NotificationTemplateVersionChannelEntity,
   NotificationTemplateVersionEntity,
   UnclaimedNotificationBroadcastClaimId,
-  UnclaimedNotificationDeliveryClaimId,
   UnclaimedNotificationSegmentUploadClaimId,
 } from '../infrastructure/data-access/entities';
 
@@ -864,6 +864,103 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     });
   }
 
+  override async materializeNextBroadcastChunk(limit: number): Promise<number> {
+    return this.entityManager.transactional(async (em) => {
+      const broadcast = await em.findOne(
+        NotificationBroadcastEntity,
+        { status: NotificationBroadcastStatus.Sending, materializedAt: null },
+        {
+          orderBy: { updatedAt: 'ASC' },
+          lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE,
+        },
+      );
+      if (!broadcast) {
+        return 0;
+      }
+      const snapshot = await em.findOne(NotificationAudienceSnapshotEntity, {
+        broadcastId: broadcast.id,
+        status: NotificationAudienceSnapshotStatus.Completed,
+      });
+      if (!snapshot) {
+        return 0;
+      }
+      const version = await em.findOne(NotificationTemplateVersionEntity, { id: broadcast.templateVersionId });
+      if (!version) {
+        throw new Error('notification_template_version_missing');
+      }
+      const template = await em.findOne(NotificationTemplateEntity, { id: version.templateId });
+      if (!template) {
+        throw new Error('notification_template_missing');
+      }
+      const now = new Date();
+      const members = await em.find(
+        NotificationAudienceSnapshotMemberEntity,
+        { snapshotId: snapshot.id, materializedAt: null },
+        { limit, orderBy: { id: 'ASC' }, lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE },
+      );
+      if (members.length === 0) {
+        broadcast.materializedAt = now;
+        broadcast.updatedAt = now;
+        await em.flush();
+        return 0;
+      }
+      const existingNotifications = await em.find(NotificationEntity, {
+        broadcastId: broadcast.id,
+        $or: members.map((member) => ({ targetType: member.targetType, targetId: member.targetId })),
+      });
+      const existingTargets = new Set(
+        existingNotifications.map((notification) => `${notification.targetType}:${notification.targetId}`),
+      );
+      let created = 0;
+      for (const member of members) {
+        const targetKey = `${member.targetType}:${member.targetId}`;
+        if (!existingTargets.has(targetKey)) {
+          const variables = { ...broadcast.globalVariables, ...member.variables };
+          validateVariables(version.variablesSchema, variables);
+          const [data, sensitiveData] = splitSensitiveVariables(version.variablesSchema, variables);
+          const notification = new NotificationEntity({
+            targetType: member.targetType,
+            targetId: member.targetId,
+            template,
+            templateVersionId: version.id,
+            broadcastId: broadcast.id,
+            data,
+            extra: member.language ? { useLanguage: member.language } : null,
+            inAppVisible: false,
+            createdAt: now,
+          });
+          if (Object.keys(sensitiveData).length > 0) {
+            notification.sensitiveData = this.payloadCrypto.encrypt(
+              sensitiveData,
+              `notification:${notification.id}:${notification.targetType}:${notification.targetId}`,
+            );
+          }
+          const delivery = new NotificationDeliveryEntity({
+            notificationId: notification.id,
+            targetType: member.targetType,
+            targetId: member.targetId,
+            channel: broadcast.channel as NotificationDeliveryChannel,
+            status: NotificationStatus.Pending,
+            provider: broadcast.provider,
+            broadcastId: broadcast.id,
+            priority: mapBroadcastPriority(broadcast.priority),
+            createdAt: now,
+            updatedAt: now,
+          });
+          em.persist([notification, delivery]);
+          existingTargets.add(targetKey);
+          created += 1;
+        }
+        member.materializedAt = now;
+      }
+      broadcast.queuedCount += created;
+      broadcast.pendingCount += created;
+      broadcast.updatedAt = now;
+      await em.flush();
+      return created;
+    });
+  }
+
   async activateDueBroadcasts(now: Date): Promise<number> {
     return this.entityManager.nativeUpdate(
       NotificationBroadcastEntity,
@@ -1029,7 +1126,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       {
         status: nextDeliveryStatus,
         claimedAt: new Date(0),
-        claimToken: UnclaimedNotificationDeliveryClaimId,
+        claimToken: EmptyNotificationDeliveryClaimId,
         updatedAt: new Date(),
       },
     );
@@ -1050,7 +1147,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       {
         status: NotificationStatus.Cancelled,
         claimedAt: new Date(0),
-        claimToken: UnclaimedNotificationDeliveryClaimId,
+        claimToken: EmptyNotificationDeliveryClaimId,
         updatedAt: new Date(),
       },
     );

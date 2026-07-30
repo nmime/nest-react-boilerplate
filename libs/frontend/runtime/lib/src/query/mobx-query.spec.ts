@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { when } from 'mobx';
 import { describe, expect, it } from 'vitest';
 

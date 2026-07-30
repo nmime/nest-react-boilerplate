@@ -5,7 +5,7 @@ Production starts from one reviewed Git commit and images published under
 immutable artifact identity; a SHA-shaped registry tag still requires
 repository policy that prevents mutation. The repository supports
 single-host Compose, direct Helm, and Helm through Argo CD or Flux. PM2 remains
-an opt-in extension only when a product adds and owns an ecosystem config.
+an advanced native Node path through the shipped `ecosystem.config.cjs`.
 
 Use the canonical runbooks:
 
@@ -24,7 +24,7 @@ Use the canonical runbooks:
 ```mermaid
 flowchart LR
   commit[Reviewed Git SHA + current selected closure] --> release[Release selected images workflow]
-  release --> verify[SBOM, scan, signature, full-SHA tags and digests]
+  release --> verify[Signed SBOM, passing scan, SLSA provenance, signature, and digest]
   verify --> runtime{Selected runtime}
   runtime --> compose[Compose database + domain + TLS topology]
   runtime --> helm[Direct Helm]
@@ -121,10 +121,14 @@ kubectl apply -k deploy/flux
 Run the manual **Promote GitOps release** workflow with the exact source SHA
 after release images exist. It verifies the selected closure at that source
 revision, intersects its `releaseImages` with enabled Helm deployment ownership,
-using the matching setup-generated `.helm/values-selection.yaml`, requires every digest
-in that exact set, and opens a promotion PR. Tag-triggered image releases build
-the complete selected closure set; use `force_full` for a promotable manual
-image run. Unselected or disabled image values are not promoted.
+using the matching setup-generated `.helm/values-selection.yaml`, and requires
+every digest in that exact set. A registry manifest is not sufficient: each selected
+digest must have a valid keyless signature from the exact release workflow and
+source SHA plus signed SPDX SBOM, SLSA provenance, and passing Trivy policy
+attestations. The workflow opens `release/gitops-sha-<full-sha>` and creates a
+promotion PR. Tag-triggered image releases build the complete selected closure
+set; use `force_full` for a promotable manual image run. Unselected or disabled
+image values are not promoted.
 Only a reviewed merge changes the desired production version.
 
 ## Backup, verification, and rollback
@@ -138,3 +142,8 @@ selected mode. Direct Helm uses `helm history` and `helm rollback`. GitOps
 reverts or supersedes the promotion commit and lets the controller reconcile.
 Database restoration is required only when the schema is incompatible with the
 previous application; otherwise prefer a corrective forward migration.
+
+For an existing Kubernetes release, run the explicit-context, no-mutation live
+preflight from the direct Kubernetes runbook. It uses strict server-side dry-run
+for candidate admission and rollback, checks current rollout and release
+history, and requires a recent successful backup before release approval.

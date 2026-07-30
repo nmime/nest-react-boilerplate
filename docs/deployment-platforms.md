@@ -45,8 +45,11 @@ See [GITOPS.md](../GITOPS.md) for both controller setups.
 `release.config.mjs` selects exactly one semantic-release provider. GitHub
 Actions sets `RELEASE_PROVIDER=github` and uses the repository `GITHUB_TOKEN`.
 GitLab CI sets `RELEASE_PROVIDER=gitlab` and runs the release job on the default
-branch only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a protected CI/CD
-variable. GitLab uses `CI_REPOSITORY_URL` so release commits and tags target the
+branch push pipeline only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a
+protected CI/CD variable. Immediately before semantic-release, the job fetches
+the remote default branch and refuses to publish unless it still equals
+`CI_COMMIT_SHA`, preventing a delayed successful pipeline from releasing after
+the branch advances. GitLab uses `CI_REPOSITORY_URL` so release tags target the
 GitLab clone instead of this template's GitHub repository metadata.
 
 GitLab Helm jobs materialize an explicit provider-free, PostgreSQL, or MongoDB
@@ -60,8 +63,9 @@ Versioning baseline. `fix`, `perf`, and `revert` commits increment patch;
 `feat` increments minor; and `!` or a `BREAKING CHANGE:` footer increments
 major. Other accepted commit types do not publish by themselves. Squashing or
 rewriting commit history never changes a release number unless the release tag
-itself is deliberately replaced. Release commits are attributed to the same
-`nmime` author and committer identity required for agent-produced commits.
+itself is deliberately replaced. Releases tag the already-reviewed default
+branch commit and publish generated notes through the selected provider; they
+never push an unreviewed changelog commit to a protected branch.
 
 Semantic-release groups Conventional Commits into stable sections for
 features, fixes, performance, reverts, refactors, documentation, build, CI,

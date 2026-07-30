@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-TEMPLATE-003
 import { describe, expect, it, vi } from 'vitest';
 import {
   NotificationChannel,
@@ -25,7 +26,12 @@ describe(UserNotificationStrategy.name, () => {
         extra: null,
       },
     } as PendingNotificationDelivery;
-    const send = vi.fn().mockResolvedValue({ status: NotificationStatus.Sent });
+    const send = vi.fn(async ({ markDispatchStarted }: { markDispatchStarted: () => Promise<void> }) => {
+      await markDispatchStarted();
+      return { status: NotificationStatus.Sent };
+    });
+    const signal = new AbortController().signal;
+    const beforeProviderDispatch = vi.fn(() => Promise.resolve());
     const result = await new UserNotificationStrategy().handleNotification({
       pending,
       recipientResolver: { resolve: vi.fn().mockResolvedValue({ address: '123' }) } as never,
@@ -33,13 +39,18 @@ describe(UserNotificationStrategy.name, () => {
         resolve: vi.fn(() => ({ getMessage: () => ({ kind: 'bot', text: 'Hello' }) })),
       } as never,
       notificationProviderResolver: { resolve: vi.fn(() => ({ send })) } as never,
+      signal,
+      beforeProviderDispatch,
     });
+    expect(beforeProviderDispatch).toHaveBeenCalledOnce();
 
     expect(send).toHaveBeenCalledWith({
       address: '123',
       message: { kind: 'bot', text: 'Hello' },
       extra: null,
       deliveryId: '1',
+      signal,
+      markDispatchStarted: beforeProviderDispatch,
     });
     expect(result).toMatchObject({ id: '1', claimToken: 'claim-1', status: NotificationStatus.Sent });
   });

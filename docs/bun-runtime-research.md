@@ -8,7 +8,7 @@
 
 The repository supports Bun 1.3.14 as an alternative JavaScript runtime for a
 setup-selected compatibility contract. Node.js 24 remains the canonical build,
-coverage, and deployment runtime. pnpm 11.11.0 remains the only package manager
+coverage, and deployment runtime. pnpm 11.15.1 remains the only package manager
 and the only owner of dependency resolution, installs, lockfiles, workspace
 policy, and deployment dependency trees.
 
@@ -48,6 +48,13 @@ pnpm nrb closure install
 pnpm run bun:check
 ```
 
+The selected lane verifies the Nx graph, applicable Vite/Vike/Nest builds and
+tests, live Vike/Nest or headless process behavior, and runtime identity. Expo
+web export remains an explicit Node child-tool boundary because the current
+Expo/Metro toolchain is not supported under forced Bun. The Nest readiness
+probe verifies that runtime health reports Bun rather than Bun's Node
+compatibility version.
+
 Provider-backed lanes require Docker Compose. CI runs every preset; isolated
 landing, site, user frontend, admin frontend, mobile, user/admin API,
 Discord/Telegram selections; and separate MongoDB core and bot selections. The
@@ -83,9 +90,9 @@ and `.nrb/closure/pnpm-lock.yaml` is current. It then:
 7. Removes temporary artifacts and provider data when the probe finishes.
 
 This distinction matters because invoking an Nx launcher without Bun's shebang
-override can still execute Nx under Node. The command forces Nx and its child
-JavaScript tools to use the pinned Bun runtime while preserving pnpm as the
-package manager.
+override can still execute Nx under Node. The command forces supported Nx and
+child JavaScript tools to use the pinned Bun runtime, preserves explicit
+Node-owned boundaries such as Expo/Metro, and keeps pnpm as the package manager.
 
 ## Deployment relationship
 

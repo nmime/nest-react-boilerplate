@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-SESSION-002
 import { describe, expect, it } from 'vitest';
 import { AuthenticatedTheme, DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import { createAuthSession, toSessionPrincipal } from './auth-session.factory';

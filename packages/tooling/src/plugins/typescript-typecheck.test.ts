@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';

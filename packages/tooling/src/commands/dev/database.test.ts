@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import assert from 'node:assert/strict';
 import { spawnSync, type SpawnOptions } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';

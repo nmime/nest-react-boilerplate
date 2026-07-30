@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-HEALTH-001
 import { Logger } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ShutdownService } from './shutdown.service';

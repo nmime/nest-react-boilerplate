@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-BOUNDARY-010
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { describe, expect, it } from 'vitest';
 import { StaticDataConfigModule } from './static-data.config.module';

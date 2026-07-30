@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { makeAudit, makeOutbox, toDocument } from './auth-mongo-admin.repository';
 import { repositoryResult } from './auth-mongo.util';

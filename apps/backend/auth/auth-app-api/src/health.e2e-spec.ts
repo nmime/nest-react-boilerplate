@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import { randomUUID } from 'node:crypto';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
@@ -41,15 +42,17 @@ interface AuthSessionResponse {
 const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
 
 const capabilityImports =
-  (Reflect.getMetadata('imports', AuthAppApiCapabilitiesModule) as Array<
-    { module?: { name?: string }; name?: string }
-  > | null) ?? [];
+  (Reflect.getMetadata('imports', AuthAppApiCapabilitiesModule) as Array<{
+    module?: { name?: string };
+    name?: string;
+  }> | null) ?? [];
 const capabilityModuleNames = capabilityImports.map((entry) => entry.module?.name ?? entry.name ?? '');
-const selectedPersistence = capabilityModuleNames.some((name) => name.includes('Postgres'))
-  ? 'postgres'
-  : capabilityModuleNames.some((name) => name.includes('Mongo'))
-    ? 'mongodb'
-    : 'memory';
+let selectedPersistence: 'postgres' | 'mongodb' | 'memory' = 'memory';
+if (capabilityModuleNames.some((name) => name.includes('Postgres'))) {
+  selectedPersistence = 'postgres';
+} else if (capabilityModuleNames.some((name) => name.includes('Mongo'))) {
+  selectedPersistence = 'mongodb';
+}
 
 function readSessionId(cookieHeader: string | string[] | undefined): string | undefined {
   const header = Array.isArray(cookieHeader) ? cookieHeader[0] : cookieHeader;
@@ -373,7 +376,7 @@ describe('auth-app-api e2e', () => {
       headers: { 'content-type': 'application/json' },
       payload: JSON.stringify({ email: 'e2e@example.com', password }),
     });
-    expect(login.statusCode).toBe(201);
+    expect(login.statusCode).toBe(200);
     expect(login.json<AuthSessionResponse>().data.user.email).toBe('e2e@example.com');
 
     const bearerOnlyLogout = await app.inject({

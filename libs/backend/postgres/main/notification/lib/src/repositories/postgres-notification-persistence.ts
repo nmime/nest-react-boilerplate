@@ -10,8 +10,10 @@ import {
   NotificationTemplateNotFoundError,
   type CreateTemplateNotificationBatch,
   type CreateTemplateNotificationParams,
-  type FindPendingNotificationDeliveriesParams,
+  type ClaimPendingNotificationDeliveriesParams,
   type FindRecentNotificationDeliveryErrorsParams,
+  type NotificationDeliveryAttemptIdentity,
+  type NotificationDeliveryClaim,
   type NotificationDeliveryRoute,
   type UpsertNotificationTemplateParams,
 } from '@app/backend-feature-notification-shared';
@@ -32,16 +34,16 @@ import {
   NotificationTemplateStatus,
   type NotificationTemplateChannelRecord,
   type NotificationTemplateRecord,
-  type PendingNotificationDelivery,
 } from '@app/common-notifications';
 import { NotificationPayloadCryptoService } from '../notification-payload-crypto.service';
 import {
+  EmptyNotificationDeliveryClaimId,
+  EmptyNotificationDeliveryTimestamp,
   NotificationDeliveryEntity,
   NotificationEntity,
   NotificationTemplateEntity,
   NotificationTemplateVersionChannelEntity,
   NotificationTemplateVersionEntity,
-  UnclaimedNotificationDeliveryClaimId,
 } from '../infrastructure/data-access/entities';
 
 const defaultDeliveryChannels: NotificationDeliveryChannel[] = [NotificationChannel.Bot];
@@ -176,16 +178,17 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
     });
   }
 
-  async findPendingDeliveries<T = NotificationData>(
-    params: FindPendingNotificationDeliveriesParams,
-  ): Promise<PendingNotificationDelivery<T>[]> {
+  async claimPendingDeliveries<T = NotificationData>(
+    params: ClaimPendingNotificationDeliveriesParams,
+  ): Promise<NotificationDeliveryClaim<T> | null> {
     // Claim due deliveries atomically before returning them. Selecting with
     // FOR UPDATE SKIP LOCKED (PESSIMISTIC_PARTIAL_WRITE) inside a transaction and
     // stamping `claimedAt` guarantees two workers/replicas never pick the same row,
     // and the `claimedAt <= now - lease` filter lets a row that was claimed but never
     // saved (worker crash) become re-claimable only after the lease expires.
-    // saveDeliveryResults releases the claim (resets claimedAt) once processed.
+    // saveClaimedDeliveryResults releases the claim once processed.
     const claimableBefore = new Date(params.now.getTime() - DeliveryClaimLeaseSeconds * 1000);
+    const claimToken = randomUUID();
 
     return this.entityManager.transactional(async (em) => {
       const deliveries = await em.find(
@@ -195,18 +198,19 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
           status: NotificationStatus.Pending,
           sendAfter: { $lte: params.now },
           claimedAt: { $lte: claimableBefore },
+          dispatchStartedAt: EmptyNotificationDeliveryTimestamp,
           ...(params.targetId ? { targetId: params.targetId } : {}),
         },
         { limit: params.count, orderBy: { priority: 'DESC', id: 'ASC' }, lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE },
       );
 
       if (deliveries.length === 0) {
-        return [];
+        return null;
       }
 
       for (const delivery of deliveries) {
         delivery.claimedAt = params.now;
-        delivery.claimToken = randomUUID();
+        delivery.claimToken = claimToken;
       }
       await em.flush();
 
@@ -235,31 +239,52 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
         ]),
       );
 
-      return deliveries.flatMap((delivery) => {
+      const pendingDeliveries = deliveries.flatMap((delivery) => {
         const notification = notificationsById.get(delivery.notificationId);
         return notification && delivery.claimToken
           ? [{ claimToken: delivery.claimToken, delivery: mapDelivery(delivery), notification }]
           : [];
       });
+      return {
+        claimToken,
+        claimedAt: params.now,
+        leaseExpiresAt: new Date(params.now.getTime() + DeliveryClaimLeaseSeconds * 1000),
+        deliveries: pendingDeliveries,
+      };
     });
   }
 
-  async saveDeliveryResults(results: NotificationDeliveryResult[]): Promise<void> {
-    if (results.length === 0) {
-      return;
+  async renewDeliveryClaim(claimToken: string, now: Date): Promise<boolean> {
+    const updated = await this.entityManager.nativeUpdate(
+      NotificationDeliveryEntity,
+      { claimToken, status: NotificationStatus.Pending },
+      { claimedAt: now },
+    );
+    return updated > 0;
+  }
+
+  async beginClaimedDeliveryAttempts(
+    deliveries: NotificationDeliveryAttemptIdentity[],
+    claimToken: string,
+    now: Date,
+  ): Promise<NotificationDeliveryAttemptIdentity[]> {
+    if (deliveries.length === 0) {
+      return [];
     }
 
-    await this.entityManager.transactional(async (em) => {
-      for (const result of results) {
-        // Lock the still-pending token owner so completion and administrative transitions have one database order.
+    return this.entityManager.transactional(async (em) => {
+      const started: NotificationDeliveryAttemptIdentity[] = [];
+      for (const identity of deliveries) {
+        // Claim-token checks and writes are sequenced to keep lock ordering deterministic.
         // eslint-disable-next-line no-await-in-loop
         const delivery = await em.findOne(
           NotificationDeliveryEntity,
           {
-            id: result.id,
-            createdAt: result.createdAt,
+            id: identity.id,
+            createdAt: identity.createdAt,
             status: NotificationStatus.Pending,
-            claimToken: result.claimToken,
+            claimToken,
+            dispatchStartedAt: EmptyNotificationDeliveryTimestamp,
           },
           { lockMode: LockMode.PESSIMISTIC_WRITE },
         );
@@ -268,22 +293,62 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
         }
 
         delivery.attempts += 1;
+        delivery.dispatchStartedAt = now;
+        delivery.updatedAt = now;
+        started.push(identity);
+      }
+      await em.flush();
+      return started;
+    });
+  }
+
+  async saveClaimedDeliveryResults(results: NotificationDeliveryResult[], claimToken: string): Promise<void> {
+    if (results.length === 0) {
+      return;
+    }
+
+    await this.entityManager.transactional(async (em) => {
+      for (const result of results) {
+        if (result.claimToken !== claimToken) {
+          continue;
+        }
+        // Lock the still-pending token owner so completion and administrative transitions have one database order.
+        // eslint-disable-next-line no-await-in-loop
+        const delivery = await em.findOne(
+          NotificationDeliveryEntity,
+          {
+            id: result.id,
+            createdAt: result.createdAt,
+            status: NotificationStatus.Pending,
+            claimToken,
+          },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        if (!delivery) {
+          continue;
+        }
+
+        const now = new Date();
+        if (delivery.dispatchStartedAt.getTime() === EmptyNotificationDeliveryTimestamp.getTime()) {
+          delivery.attempts += 1;
+        }
         delivery.status = result.status;
         delivery.error = result.error ?? null;
-        delivery.updatedAt = new Date();
+        delivery.updatedAt = now;
         // Release the claim (reset to the epoch sentinel) so a rescheduled retry is
         // eligible again once its sendAfter passes (terminal rows keep it harmlessly).
         delivery.claimedAt = new Date(0);
-        delivery.claimToken = UnclaimedNotificationDeliveryClaimId;
+        delivery.claimToken = EmptyNotificationDeliveryClaimId;
+        delivery.dispatchStartedAt = new Date(EmptyNotificationDeliveryTimestamp.getTime());
 
         if (result.status === NotificationStatus.Sent) {
-          delivery.sentAt = delivery.updatedAt;
+          delivery.sentAt = now;
         } else if (result.status === NotificationStatus.Pending) {
           const retryDelaySeconds = Math.min(
             retryMaxDelaySeconds,
             Math.max(result.retryAfterSeconds ?? 0, retryBaseDelaySeconds * 2 ** Math.max(0, delivery.attempts - 1)),
           );
-          delivery.sendAfter = new Date(delivery.updatedAt.getTime() + retryDelaySeconds * 1000);
+          delivery.sendAfter = new Date(now.getTime() + retryDelaySeconds * 1000);
         }
       }
       await em.flush();
@@ -292,8 +357,14 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
 
   async countRecentDeliveryErrors(params: FindRecentNotificationDeliveryErrorsParams): Promise<number> {
     const count = await this.entityManager.count(NotificationDeliveryEntity, {
-      status: NotificationStatus.Error,
-      updatedAt: { $gt: params.fromDate },
+      $or: [
+        { status: NotificationStatus.Error, updatedAt: { $gt: params.fromDate } },
+        {
+          status: NotificationStatus.Pending,
+          dispatchStartedAt: { $ne: EmptyNotificationDeliveryTimestamp },
+          updatedAt: { $gt: params.fromDate },
+        },
+      ],
       ...(params.targetType ? { targetType: params.targetType } : {}),
     });
     return Math.min(count, params.limit);

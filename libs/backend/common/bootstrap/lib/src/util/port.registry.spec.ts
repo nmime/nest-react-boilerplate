@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
 import { describe, expect, it } from 'vitest';
 
 /**

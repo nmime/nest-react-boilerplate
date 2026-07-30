@@ -1,5 +1,5 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { DynamicModule, Global, Injectable, Module, type OnModuleInit } from '@nestjs/common';
+import { DynamicModule, Global, Module, type OnModuleInit } from '@nestjs/common';
 import {
   assertDurableDatabaseEnvironment,
   DurableDatabaseRuntimeInjectToken,
@@ -15,7 +15,6 @@ import {
 } from './postgres.health';
 import { PostgresSessionStore } from './postgres-session.store';
 
-@Injectable()
 class PostgresDurableDatabaseRuntime implements DurableDatabaseRuntime, OnModuleInit {
   readonly provider = 'postgres' as const;
 
@@ -53,7 +52,12 @@ export class PostgresMainModule {
         },
         PostgresReadinessHealthIndicator,
         PostgresMigrationsHealthIndicator,
-        PostgresDurableDatabaseRuntime,
+        {
+          provide: PostgresDurableDatabaseRuntime,
+          inject: [PostgresReadinessHealthIndicator, PostgresMigrationsHealthIndicator],
+          useFactory: (readiness: PostgresReadinessHealthIndicator, migrations: PostgresMigrationsHealthIndicator) =>
+            new PostgresDurableDatabaseRuntime(readiness, migrations),
+        },
         { provide: DurableDatabaseRuntimeInjectToken, useExisting: PostgresDurableDatabaseRuntime },
       ],
       exports: [

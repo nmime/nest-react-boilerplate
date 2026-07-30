@@ -32,6 +32,15 @@ preview, but never apply, vendor, package, or distribute its source.
   URLs, GitHub addresses, or arbitrary CLI options. A connected shadcn MCP may
   help discovery, but writes must still use the repository wrapper.
 
+## Specification lifecycle
+
+For a component addition or update that changes observable product or shared UI
+behavior, establish or update the governing requirements with
+`$specify-behavior` before applying source. Synchronize the component, owning
+consumers, executable test markers, sidecars, and evidence through
+`$implement-specified-change`. Pure non-persistent registry research does not
+create a behavior change.
+
 ## Workflow
 
 1. Discover items without writing:

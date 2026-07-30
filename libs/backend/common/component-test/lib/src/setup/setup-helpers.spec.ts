@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-RECOVERY-002
 import { describe, expect, it, vi } from 'vitest';
 import { createTestLogger } from '../util/test-logger';
 import { setupContainers, teardownContainers } from './setup-containers';

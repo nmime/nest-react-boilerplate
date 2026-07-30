@@ -1,4 +1,7 @@
+// @requirements REQ-FRONTEND-DESIGN-008
+// Evidence for: REQ-FRONTEND-ACCESSIBILITY-003 REQ-FRONTEND-DESIGN-008 REQ-FRONTEND-JOURNEY-001
 import { render, screen } from '@testing-library/react';
+// Renderer-domain evidence for REQ-FRONTEND-JOURNEY-001.
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {

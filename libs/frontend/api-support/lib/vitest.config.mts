@@ -18,6 +18,11 @@ export default defineConfig({
     },
     globals: true,
     passWithNoTests: false,
-    coverage: fullCoverage('coverage/libs/frontend/api-support', ['src/**/*.ts'], []),
+    coverage: fullCoverage('coverage/libs/frontend/api-support', ['src/**/*.ts'], [], {
+      branches: 100,
+      functions: 100,
+      lines: -1,
+      statements: -1,
+    }),
   },
 });

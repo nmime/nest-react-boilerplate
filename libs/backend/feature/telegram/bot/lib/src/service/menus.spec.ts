@@ -1,3 +1,5 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
+// Evidence for: REQ-SOCIAL-COMMANDS-003
 import { describe, expect, it, vi } from 'vitest';
 import { goBack, menuIdForRoute } from '../navigation';
 import { createTelegramMenus, replyForRoute, replyWithCurrentRoute, routeText } from './menus';

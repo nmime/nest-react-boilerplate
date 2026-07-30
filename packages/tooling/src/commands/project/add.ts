@@ -27,8 +27,8 @@ interface AddArgs {
   force: boolean;
   apiApp?: string;
   frontendApp?: string;
-  entityKind?: "frontend" | "backend" | "common";
-  renderer?: "vite" | "astro" | "vike" | "expo" | "nest-api" | "consumer" | "scheduler";
+  entityKind?: "frontend" | "backend" | "e2e" | "common";
+  renderer?: "vite" | "astro" | "vike" | "expo" | "nest-api" | "consumer" | "scheduler" | "cucumber";
   port?: number;
   libraryType?: string;
   scope?: string;
@@ -212,7 +212,7 @@ export async function runAddCommand(
   }
 
   if ((args.kind === "app" || args.kind === "lib") && !args.entityKind) {
-    process.stderr.write(`Error: add ${args.kind} requires --kind (${args.kind === "app" ? "frontend | backend" : "frontend | backend | common"})\n`);
+    process.stderr.write(`Error: add ${args.kind} requires --kind (${args.kind === "app" ? "frontend | backend | e2e" : "frontend | backend | common"})\n`);
     return 1;
   }
 
@@ -239,7 +239,7 @@ export async function runAddCommand(
 
   if (args.kind === "app" && !args.renderer) {
     process.stderr.write(
-      `Error: ${args.entityKind} applications require --renderer (${args.entityKind === "frontend" ? "vite | astro | vike | expo" : "nest-api | consumer | scheduler"})\n`,
+      `Error: ${args.entityKind} applications require --renderer (${args.entityKind === "frontend" ? "vite | astro | vike | expo" : args.entityKind === "e2e" ? "cucumber" : "nest-api | consumer | scheduler"})\n`,
     );
     return 1;
   }
@@ -251,6 +251,20 @@ export async function runAddCommand(
     !["nest-api", "consumer", "scheduler"].includes(args.renderer)
   ) {
     process.stderr.write('Error: backend applications support --renderer "nest-api", "consumer", or "scheduler"\n');
+    return 1;
+  }
+
+  if (
+    args.kind === "app" &&
+    args.entityKind === "e2e" &&
+    args.renderer !== "cucumber"
+  ) {
+    process.stderr.write('Error: e2e applications support only --renderer "cucumber"\n');
+    return 1;
+  }
+
+  if (args.kind === "app" && args.entityKind === "e2e" && args.port !== undefined) {
+    process.stderr.write("Error: e2e applications do not expose an HTTP port; omit --port.\n");
     return 1;
   }
 
@@ -387,8 +401,8 @@ Options:
   --dry-run             Show what would be done without making changes.
   --api-app <name>      Required API application that owns a feature.
   --frontend-app <name> Required frontend application that hosts a feature.
-  --kind <kind>         App/lib platform: frontend, backend, or common.
-  --renderer <renderer> App runtime: vite, astro, vike, expo, nest-api, consumer, or scheduler.
+  --kind <kind>         App/lib platform: frontend, backend, e2e, or common.
+  --renderer <renderer> App runtime: vite, astro, vike, expo, nest-api, consumer, scheduler, or cucumber.
   --port <number>       Optional local app port; omit it to select the first free canonical port.
   --type <type>         Semantic library type (common, util, ui, sdk, feature-main,
                         feature-admin, feature-shared, data-access, test-util, or asset).
@@ -402,6 +416,7 @@ Options:
 Examples:
   pnpm nrb add app payments-api --kind backend --renderer nest-api
   pnpm nrb add app portal --kind frontend --renderer vite
+  pnpm nrb add app acceptance-e2e --kind e2e --renderer cucumber
   pnpm nrb add lib currency --kind common --type util --scope shared --description "Normalizes currency amounts for API and browser consumers."
   pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --database postgres
   pnpm nrb add feature billing --api-app admin-app-api --frontend-app admin-app --database mongodb --dry-run\n`);

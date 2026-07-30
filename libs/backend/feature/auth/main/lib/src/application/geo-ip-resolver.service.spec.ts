@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { afterEach, describe, expect, it } from 'vitest';
 import { GeoIpResolverService, normalizeIp } from './geo-ip-resolver.service';
 

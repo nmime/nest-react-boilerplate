@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { AuthLoginEventEntity, AuthLoginEventEntitySchema, DefaultAuthTenantId } from './index';
 

@@ -1,4 +1,16 @@
-import { describe, expect, it } from 'vitest';
+// @requirements REQ-RUNTIME-DATABASE-008
+import type { Db } from 'mongodb';
+import { describe, expect, it, vi } from 'vitest';
+
+const migrationMocks = vi.hoisted(() => ({
+  verifyAppliedMongoMigrations: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock('@app/backend-mongodb-main', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@app/backend-mongodb-main')>();
+  return { ...original, verifyAppliedMongoMigrations: migrationMocks.verifyAppliedMongoMigrations };
+});
+
 import { MongoMainModule } from '@app/backend-mongodb-main';
 import { FeatureFlagProviderToken, FeatureFlagRepositoryToken } from '@app/common-feature-flags';
 import { MongoFeatureFlagRepository } from './feature-flag-mongo.repository';
@@ -8,6 +20,7 @@ import {
   FeatureFlagsMongoModule,
   FeatureFlagsMongoPersistenceModule,
 } from './feature-flags-mongo.module';
+import { featureFlagMongoMigrations } from './migrations';
 
 describe('FeatureFlagsMongoModule', () => {
   it('registers shared MongoDB and exports repository and provider tokens', () => {
@@ -31,5 +44,11 @@ describe('FeatureFlagsMongoModule', () => {
       ]),
     );
     expect(dynamicModule.exports).toContain(FeatureFlagsMongoPersistenceModule);
+  });
+
+  it('verifies feature-flag migrations during module initialization', async () => {
+    const database = {} as Db;
+    await new FeatureFlagMongoMigrationVerifier(database).onModuleInit();
+    expect(migrationMocks.verifyAppliedMongoMigrations).toHaveBeenCalledWith(database, featureFlagMongoMigrations);
   });
 });

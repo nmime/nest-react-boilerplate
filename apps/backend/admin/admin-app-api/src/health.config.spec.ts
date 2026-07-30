@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import type { FactoryProvider, InjectionToken, OptionalFactoryDependency } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import {
@@ -156,5 +157,25 @@ describe('AdminAppHealthServiceProvider', () => {
       ]),
     );
     expect(JSON.stringify(readiness)).not.toContain('mongodb://');
+  });
+
+  it('fails readiness when the selected database runtime is not wired', async () => {
+    const service = createService(createAdminAppHealthServiceProvider());
+
+    await expect(findCheck(service, 'database')).resolves.toMatchObject({ status: 'error', required: true });
+    await expect(service.checkReadiness()).resolves.toMatchObject({ data: { status: 'error' } });
+  });
+
+  it('preserves extra Postgres indicator names as optional dependencies', async () => {
+    const service = createService(
+      createAdminAppHealthServiceProvider(),
+      fakeRuntime('postgres', [
+        fakeIndicator('postgres'),
+        fakeIndicator('postgres-migrations'),
+        fakeIndicator('postgres-replica'),
+      ]),
+    );
+
+    await expect(findCheck(service, 'postgres-replica')).resolves.toMatchObject({ status: 'ok', required: false });
   });
 });

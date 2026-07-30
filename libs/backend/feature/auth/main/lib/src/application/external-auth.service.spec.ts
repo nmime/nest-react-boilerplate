@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-IDENTITY-005
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
 import type { Locale } from '@app/backend-common-i18n';

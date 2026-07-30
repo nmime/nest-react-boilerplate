@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { describe, expect, it } from 'vitest';
 import { BaseHealthController, HealthService } from '@app/backend-common-health';

@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ACCESSIBILITY-003
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { FrontendI18nProvider } from '@app/frontend-runtime';

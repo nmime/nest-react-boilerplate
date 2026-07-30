@@ -94,12 +94,42 @@ assert.ok(
   'Product release must not prime a direct Docker target without the selected nrb-closure context.',
 );
 has(releaseWorkflow, 'cache-to=type=gha,mode=max,scope=release-', 'release workflow exports BuildKit cache');
+for (const expected of [
+  'cosign sign --yes "$ref"',
+  'cosign attest --yes --type spdxjson',
+  'cosign attest --yes --type slsaprovenance1',
+  'cosign attest --yes --type "$SCAN_PREDICATE_TYPE"',
+  'result: "pass"',
+  'severities: ["CRITICAL", "HIGH"]',
+]) {
+  has(releaseWorkflow, expected, `release workflow signed evidence ${expected}`);
+}
 assert.ok(
   !releaseWorkflow.includes('types: [published]'),
   'release image workflow must not duplicate tag builds on release publication',
 );
 has(promotionWorkflow, '^[0-9a-f]{40}$', 'promotion accepts only a full 40-character SHA');
 has(promotionWorkflow, 'docker manifest inspect --verbose', 'promotion verifies candidate image digests');
+for (const expected of [
+  'cosign verify \\',
+  'cosign verify-attestation --type slsaprovenance1',
+  'cosign verify-attestation --type spdxjson',
+  'cosign verify-attestation --type "$SCAN_PREDICATE_TYPE"',
+  '--certificate-github-workflow-repository "$certificate_repository"',
+  '--certificate-github-workflow-sha "$RELEASE_SHA"',
+  '.predicate.result == "pass"',
+  '.predicate.buildDefinition.resolvedDependencies[]?; .digest.gitCommit == $sha',
+  'release/gitops-sha-$SHA',
+  'git config user.name "nmime"',
+  'git config user.email "66474195+nmime@users.noreply.github.com"',
+  'chore(deploy): promote',
+]) {
+  has(promotionWorkflow, expected, `promotion verification ${expected}`);
+}
+assert.ok(
+  !promotionWorkflow.includes('gitops/sha-') && !promotionWorkflow.includes('github-actions[bot]'),
+  'promotion must use a policy-compliant branch and repository identity',
+);
 has(promotionWorkflow, 'release-image-plan.mjs --names', 'promotion uses the canonical release-image inventory');
 has(promotionWorkflow, 'pnpm nrb closure check', 'promotion validates the candidate selected closure');
 has(promotionWorkflow, '--print-required', 'promotion intersects fresh closure and enabled deployment ownership');
@@ -127,7 +157,7 @@ has(promotionWorkflow, 'gh pr create', 'promotion opens a pull request');
 assert.ok(!promotionWorkflow.includes('workflow_run:'), 'promotion must not create a self-triggering main-commit loop');
 assert.ok(!promotionWorkflow.includes('HEAD:main'), 'promotion must never push directly to main');
 has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', args.sha)", 'tag updater requires the release workflow full SHA');
-has(tagUpdater, "'sha256:[0-9a-fA-F]{64}'", 'tag updater requires immutable image digests');
+has(tagUpdater, "re.fullmatch(r'sha256:[0-9a-fA-F]{64}', digest)", 'tag updater requires immutable image digests');
 has(
   tagUpdater,
   "default='.helm/values-selection.yaml'",

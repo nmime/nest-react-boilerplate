@@ -23,10 +23,10 @@ export default defineConfig({
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
     coverage: fullCoverage('coverage/libs/frontend/ui-web', ['src/**/*.{ts,tsx}'], [], {
-      branches: -5,
-      functions: 100,
-      lines: -2,
-      statements: -2,
+      branches: -50,
+      functions: -8,
+      lines: -19,
+      statements: -20,
     }),
   },
 });

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-STORAGE-007
 import { randomUUID } from 'node:crypto';
 import { CreateBucketCommand, DeleteBucketCommand } from '@aws-sdk/client-s3';
 import { describe, expect, it } from 'vitest';

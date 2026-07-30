@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-STORAGE-007
 import { describe, expect, it } from 'vitest';
 import { ObjectStorageOperationFailedException, S3OperationFailedException } from './s3-operation-failed.exception';
 

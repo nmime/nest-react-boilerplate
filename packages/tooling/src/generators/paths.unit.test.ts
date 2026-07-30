@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-GENERATORS-003
 /**
  * Path resolution tests for generated files.
  *

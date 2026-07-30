@@ -1,3 +1,5 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
+// Evidence for: REQ-SOCIAL-CONFIG-004
 import { describe, expect, it } from 'vitest';
 import {
   assertPollingRuntimeAllowed,

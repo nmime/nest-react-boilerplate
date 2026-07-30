@@ -1,1 +1,1 @@
-require('expo-router/entry');
+import 'expo-router/entry';

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-OBSERVABILITY-005
 import type Joi from 'joi';
 import { describe, expect, it, vi } from 'vitest';
 import { parseProvidersConfig } from './parse-providers-config.util';

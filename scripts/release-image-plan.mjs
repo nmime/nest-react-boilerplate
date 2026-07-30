@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createJiti } from 'jiti';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
-const pnpmVersion = '11.11.0';
+const pnpmVersion = '11.15.1';
 const jiti = createJiti(import.meta.url);
 const { appCatalog } = await jiti.import('../packages/tooling/src/setup/catalog.ts');
 const { materializeAllReferenceClosure, validateCurrentClosure } = await jiti.import(

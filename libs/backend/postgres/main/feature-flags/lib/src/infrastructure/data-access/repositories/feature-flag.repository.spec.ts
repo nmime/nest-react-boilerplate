@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-PREFERENCE-006
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
 import { DefaultFeatureFlagTenantId } from '@app/common-feature-flags';

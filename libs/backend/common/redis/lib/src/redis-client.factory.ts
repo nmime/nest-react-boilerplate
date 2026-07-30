@@ -130,6 +130,17 @@ export class RedisClientAdapter implements RedisClientLike {
     return Number(result) === 1;
   }
 
+  async replaceIfValue(key: string, expectedValue: string, replacementValue: string, ttlMs: number): Promise<boolean> {
+    const result = await this.runKnownLuaScript(
+      'replace-if-value',
+      key,
+      expectedValue,
+      replacementValue,
+      String(ttlMs),
+    );
+    return Number(result) === 1;
+  }
+
   async extendIfValue(key: string, expectedValue: string, ttlMs: number): Promise<boolean> {
     const result = await this.runKnownLuaScript('extend-if-value', key, expectedValue, String(ttlMs));
 

@@ -7,5 +7,14 @@ import { FeatureFlagsPostgresModule } from '@app/backend-postgres-main-feature-f
 import { NotificationPostgresModule } from '@app/backend-postgres-main-notification';
 
 @Global()
-@Module({ imports: [AuthPostgresModule, FeatureFlagsPostgresModule, NotificationPostgresModule, PostgresMainModule.forRoot(), S3Module.forRoot()], exports: [AuthPostgresModule, FeatureFlagsPostgresModule, NotificationPostgresModule, PostgresMainModule, S3Module] })
+@Module({
+  imports: [
+    AuthPostgresModule,
+    FeatureFlagsPostgresModule,
+    NotificationPostgresModule,
+    PostgresMainModule.forRoot(),
+    S3Module.forRoot(),
+  ],
+  exports: [AuthPostgresModule, FeatureFlagsPostgresModule, NotificationPostgresModule, PostgresMainModule, S3Module],
+})
 export class AdminAppApiCapabilitiesModule {}

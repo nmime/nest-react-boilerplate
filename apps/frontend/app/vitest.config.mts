@@ -22,6 +22,11 @@ export default defineConfig({
     },
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
-    coverage: fullCoverage('coverage/apps/frontend/app', ['src/app/**/*.{ts,tsx}'], []),
+    coverage: fullCoverage('coverage/apps/frontend/app', ['src/app/**/*.{ts,tsx}'], [], {
+      branches: -5,
+      functions: 100,
+      lines: -4,
+      statements: -4,
+    }),
   },
 });

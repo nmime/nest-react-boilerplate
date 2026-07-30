@@ -1,3 +1,4 @@
+// @requirements REQ-API-RESPONSE-006
 import { HttpStatus } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { getProblemDetailsSchema, problemDetailsOpenApiSchema } from '@app/backend-common-exception';

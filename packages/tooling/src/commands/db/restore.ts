@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @requirements REQ-SCAFFOLD-SAFETY-008
 import { existsSync } from 'node:fs';
 
 import { loadDotEnv } from './env-loader.ts';

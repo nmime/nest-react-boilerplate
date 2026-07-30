@@ -19,6 +19,13 @@ description: Integrate an optional repository capability into explicitly selecte
 5. Make de-selection behavior explicit when supported; never silently delete user-owned code or data.
 6. Add catalog, plan, repeatability, and doctor coverage plus source-backed CLI docs.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run focused setup/tooling tests, `pnpm run agent:verify`, `pnpm nrb doctor --json`, selected-project builds, and `git diff --check`. Report any manual secret, external account, migration, or deployment prerequisite separately.

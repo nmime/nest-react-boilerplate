@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { generateKeyPairSync, sign } from 'node:crypto';
 import { UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
@@ -22,6 +23,18 @@ describe('DiscordInteractionSecurity', () => {
         rawBody: Buffer.from('{}'),
         headers: {},
         publicKey: 'a'.repeat(64),
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('rejects a valid signature whose timestamp is outside the replay window', async () => {
+    const signed = signedDiscordRequest(Buffer.from('{"type":1}'), '1700000000');
+
+    await expect(
+      new DiscordInteractionSecurity().verify({
+        rawBody: signed.rawBody,
+        headers: { signature: signed.signature, timestamp: signed.timestamp },
+        publicKey: signed.publicKey,
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
@@ -85,9 +98,8 @@ describe('DiscordInteractionSecurity', () => {
   });
 });
 
-function signedDiscordRequest(rawBody: Buffer) {
+function signedDiscordRequest(rawBody: Buffer, timestamp = Math.floor(Date.now() / 1000).toString()) {
   const { privateKey, publicKey } = generateKeyPairSync('ed25519');
-  const timestamp = '1700000000';
   const signature = sign(null, Buffer.concat([Buffer.from(timestamp), rawBody]), privateKey).toString('hex');
   const publicKeyBytes = publicKey.export({ format: 'der', type: 'spki' });
 

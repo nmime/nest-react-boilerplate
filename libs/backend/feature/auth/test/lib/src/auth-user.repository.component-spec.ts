@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
+// Evidence for: REQ-AUTH-PERSISTENCE-007
 import { MikroORM } from '@mikro-orm/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';

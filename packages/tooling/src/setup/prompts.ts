@@ -229,19 +229,31 @@ async function promptProductAndDeployment(
   const mobileTargets: NrbConfig['product']['mobileTargets'] = [];
   if (apps.includes('mobile-app')) {
     for (const target of ['web', 'android', 'ios'] as const) {
-      if (isYes(await io.ask(`  Build mobile target ${target}`, currentProduct.mobileTargets.includes(target) ? 'y' : 'n'))) {
+      if (
+        isYes(
+          await io.ask(`  Build mobile target ${target}`, currentProduct.mobileTargets.includes(target) ? 'y' : 'n'),
+        )
+      ) {
         mobileTargets.push(target);
       }
     }
-    if (mobileTargets.length === 0) throw new Error('mobile-app requires at least one mobile target.');
+    if (mobileTargets.length === 0) {
+      throw new Error('mobile-app requires at least one mobile target.');
+    }
   }
   const targets: NrbConfig['deployment']['targets'] = [];
   for (const target of ['docker', 'single-server', 'kubernetes'] as const) {
-    if (isYes(await io.ask(`  Enable deployment target ${target}`, currentDeployment.targets.includes(target) ? 'y' : 'n'))) {
+    if (
+      isYes(
+        await io.ask(`  Enable deployment target ${target}`, currentDeployment.targets.includes(target) ? 'y' : 'n'),
+      )
+    ) {
       targets.push(target);
     }
   }
-  if (targets.length === 0) throw new Error('Select at least one deployment target.');
+  if (targets.length === 0) {
+    throw new Error('Select at least one deployment target.');
+  }
   const publicTopology = (await askChoice(
     io,
     'Choose public topology',
@@ -264,7 +276,9 @@ async function promptProductAndDeployment(
   )) as NrbConfig['deployment']['kubernetesDelivery'];
   const infrastructure = { ...currentDeployment.infrastructure };
   for (const capability of ['redis', 'nats', 's3'] as const) {
-    if (!capabilities.includes(capability)) continue;
+    if (!capabilities.includes(capability)) {
+      continue;
+    }
     infrastructure[capability] = (await askChoice(
       io,
       `Choose ${capability.toUpperCase()} ownership`,

@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { ConflictException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';

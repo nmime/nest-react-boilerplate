@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-STORAGE-007
 import { describe, expect, it, vi } from 'vitest';
 import { InMemoryRedisClient } from './in-memory-redis.client';
 import { RedisCacheService } from './redis-cache.service';

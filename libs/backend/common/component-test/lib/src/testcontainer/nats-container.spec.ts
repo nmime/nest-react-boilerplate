@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-RECOVERY-002
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   DefaultNatsClientPort,

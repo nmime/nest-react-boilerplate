@@ -6,10 +6,23 @@ import { derivePublicDomains, parseEnvFile, validateBaseDomain } from './compose
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const certificateModes = new Set(['dns-wildcard', 'exact-hosts', 'existing']);
+const frontendModes = new Set(['proxy', 'static']);
+/**
+ * Built SPA output directory per app, relative to the frontend dist root. In
+ * `static` mode nginx serves these directly, so no SPA process is needed.
+ * `site-app` is deliberately absent: it is Vike SSR and stays a proxied process.
+ */
+export const frontendDistDirectories = {
+  'landing-app': 'landing',
+  'user-app': 'app',
+  'admin-app': 'admin',
+  'mobile-app': 'mobile',
+};
 const publicModes = new Set(['single-domain', 'per-app-domains']);
-const profiles = new Set(['discord', 'telegram']);
+export const runtimeModes = new Set(['compose', 'native']);
+const profiles = new Set(['discord', 'notification-consumer', 'notification-scheduler', 'telegram']);
 const databaseEngines = new Set(['postgres', 'mongodb']);
-const databaseModes = new Set(['bundled-db', 'external-db']);
+const databaseModes = new Set(['bundled-db', 'external-db', 'native']);
 const appPorts = {
   ADMIN_APP_API_PORT: 3001,
   USER_APP_API_PORT: 3002,
@@ -93,6 +106,11 @@ function parseArguments(argv) {
       options.productionEnv = productionEnv;
       continue;
     }
+    const frontendMode = option('--frontend-mode');
+    if (frontendMode !== undefined) {
+      options.frontendMode = frontendMode;
+      continue;
+    }
     const phase = option('--phase');
     if (phase !== undefined) {
       options.phase = phase;
@@ -108,7 +126,7 @@ function parseArguments(argv) {
   return options;
 }
 
-export function loadSingleServerConfiguration({ productionEnv, serverEnv }) {
+export function loadSingleServerConfiguration({ productionEnv, serverEnv, frontendMode: frontendModeOverride }) {
   const serverPath = resolve(rootDir, serverEnv);
   const productionPath = resolve(rootDir, productionEnv);
   const server = readEnvironment(serverPath, 'Server environment');
@@ -117,7 +135,7 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv }) {
   const databaseEngine = production.DATABASE_ENGINE?.trim().toLowerCase() || 'postgres';
   if (!databaseEngines.has(databaseEngine)) fail('DATABASE_ENGINE must be postgres or mongodb.');
   const databaseMode = required(production, 'COMPOSE_DATABASE_MODE', 'the production environment');
-  if (!databaseModes.has(databaseMode)) fail('COMPOSE_DATABASE_MODE must be bundled-db or external-db.');
+  if (!databaseModes.has(databaseMode)) fail('COMPOSE_DATABASE_MODE must be bundled-db, external-db, or native.');
 
   if (production.COMPOSE_DOMAIN_MODE !== 'external-proxy') {
     fail('COMPOSE_DOMAIN_MODE must be external-proxy for the host Nginx deployment.');
@@ -136,6 +154,12 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv }) {
   for (const profile of enabledProfiles) {
     if (!profiles.has(profile)) fail(`Unsupported COMPOSE_PROFILES entry: ${profile}.`);
   }
+
+  // Which runtime this host supervises. `compose` runs the published images, `native`
+  // runs the built workspace under PM2. Defaulted so hosts provisioned before the
+  // axis existed keep their Compose behaviour.
+  const runtimeMode = (server.RUNTIME_MODE?.trim() || 'compose').toLowerCase();
+  if (!runtimeModes.has(runtimeMode)) fail('RUNTIME_MODE must be compose or native.');
 
   const certificateMode = required(server, 'CERTIFICATE_MODE', 'the server environment');
   if (!certificateModes.has(certificateMode)) {
@@ -209,7 +233,52 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv }) {
     fail('NGINX_CLIENT_MAX_BODY_SIZE must be a positive Nginx size such as 10m.');
   }
 
+  // Frontend serving: `proxy` forwards to SPA processes (containers), `static`
+  // serves the built dist tree from disk (native runtimes). Only validate the dist
+  // root in static mode so proxy renders keep working from any checkout path.
+  const frontendMode = (
+    frontendModeOverride ||
+    production.EXTERNAL_PROXY_FRONTEND_MODE?.trim() ||
+    (runtimeMode === 'native' ? 'static' : 'proxy')
+  ).toLowerCase();
+  if (!frontendModes.has(frontendMode)) {
+    fail('EXTERNAL_PROXY_FRONTEND_MODE must be proxy or static.');
+  }
+  // The native runtime supervises backend processes and the SSR site only; there is
+  // no SPA process for nginx to proxy to, so proxy mode could never come up.
+  if (runtimeMode === 'native' && frontendMode !== 'static') {
+    fail('RUNTIME_MODE=native serves SPAs from disk; set EXTERNAL_PROXY_FRONTEND_MODE=static.');
+  }
+  // Single-domain serves every frontend route from the primary bundle, and
+  // PRIMARY_APP can only be landing-app or site-app — never the user SPA that owns
+  // /telegram-mini-app. Static mode runs no SPA process to proxy that route to, so
+  // the Mini App needs the user SPA on its own host.
+  if (frontendMode === 'static' && publicMode === 'single-domain' && enabledProfiles.includes('telegram')) {
+    fail(
+      'The Telegram Mini App is a user-app route, which EXTERNAL_PROXY_PUBLIC_MODE=single-domain cannot serve from the primary bundle; use EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains with EXTERNAL_PROXY_FRONTEND_MODE=static.',
+    );
+  }
+  const configuredDistRoot = production.FRONTEND_DIST_ROOT?.trim();
+  const appRoot = server.APP_ROOT?.trim();
+  const frontendDistRoot = (configuredDistRoot || `${appRoot || ''}/dist/apps/frontend`).replace(/\/+$/u, '');
+  if (frontendMode === 'static') {
+    // Without either key the fallback collapses to the literal "/dist/apps/frontend",
+    // which is absolute and would pass every check below while serving nothing.
+    if (!configuredDistRoot && !appRoot) {
+      fail('Static frontend serving requires FRONTEND_DIST_ROOT, or APP_ROOT in the server environment.');
+    }
+    if (!frontendDistRoot.startsWith('/'))
+      fail('FRONTEND_DIST_ROOT must be an absolute path for static frontend serving.');
+    // Reject values nginx cannot take literally rather than allowlisting characters.
+    if (/[\s;"'$\{\}]/u.test(frontendDistRoot) || frontendDistRoot.split('/').includes('..')) {
+      fail('FRONTEND_DIST_ROOT must not contain whitespace, quotes, ;, $, braces, or a .. segment.');
+    }
+  }
+
   return {
+    frontendMode,
+    frontendDistRoot,
+    runtimeMode,
     certificateDirectory,
     certificateMode,
     certificateName,
@@ -260,8 +329,24 @@ ${proxyHeaders()}
   }`;
 }
 
-function frontendLocations(configuration, frontendPort, includeSingleDomainAuthRoutes = false) {
-  const { enabledProfiles, ports } = configuration;
+function frontendLocations(configuration, frontendPort, includeSingleDomainAuthRoutes = false, staticDirectory) {
+  const { enabledProfiles, frontendDistRoot, ports } = configuration;
+  // Static mode serves the built bundle from disk, proxy mode forwards to the SPA
+  // process. The interleaved routes below share the same handler as `/`, so both
+  // shapes must switch together — a static `/` with proxied `/auth` would forward
+  // to a process that does not exist in static mode.
+  const spaHandler = staticDirectory
+    ? `    root ${frontendDistRoot}/${staticDirectory};
+    try_files $uri $uri/ /index.html;`
+    : `    proxy_pass http://127.0.0.1:${frontendPort};
+${proxyHeaders()}`;
+  // `return` is rewrite-phase, so the 418 escape hatch still intercepts before the
+  // static content handler runs and error_page maps it to the API upstream.
+  const spaWithApiFallback = (path, apiName) => `  location ${path} {
+    if ($nrb_api_request) { return 418; }
+${spaHandler}
+    error_page 418 = @${apiName};
+  }`;
   const locations = [
     proxyLocation('/api/auth', ports.AUTH_APP_API_PORT, '= '),
     proxyLocation('/api/auth/', ports.AUTH_APP_API_PORT, '^~ '),
@@ -274,32 +359,25 @@ function frontendLocations(configuration, frontendPort, includeSingleDomainAuthR
           proxyLocation('/oauth/', ports.AUTH_APP_API_PORT, '^~ '),
         ]
       : []),
-    `  location /auth {
-    if ($nrb_api_request) { return 418; }
-    proxy_pass http://127.0.0.1:${frontendPort};
-${proxyHeaders()}
-    error_page 418 = @auth_api;
-  }`,
-    `  location /profile {
-    if ($nrb_api_request) { return 418; }
-    proxy_pass http://127.0.0.1:${frontendPort};
-${proxyHeaders()}
-    error_page 418 = @user_api;
-  }`,
+    spaWithApiFallback('/auth', 'auth_api'),
+    spaWithApiFallback('/profile', 'user_api'),
     proxyLocation('/admin/docs', ports.ADMIN_APP_API_PORT, '= '),
     proxyLocation('/admin/docs/', ports.ADMIN_APP_API_PORT, '^~ '),
-    `  location /admin {
-    if ($nrb_api_request) { return 418; }
-    proxy_pass http://127.0.0.1:${frontendPort};
-${proxyHeaders()}
-    error_page 418 = @admin_api;
-  }`,
+    spaWithApiFallback('/admin', 'admin_api'),
     ...(enabledProfiles.includes('telegram')
       ? [
           proxyLocation('/telegram', ports.TELEGRAM_BOT_API_PORT, '= '),
           proxyLocation('/telegram/', ports.TELEGRAM_BOT_API_PORT, '^~ '),
-          proxyLocation('/telegram-mini-app', ports.USER_APP_PORT, '= '),
-          proxyLocation('/telegram-mini-app/', ports.USER_APP_PORT, '^~ '),
+          // The Mini App is a client-side route of the user SPA. Gate on the
+          // deployment-wide mode, not this host's: static mode starts no SPA
+          // process anywhere, so even the SSR host must not proxy to one. The user
+          // host serves the route from disk through its history fallback.
+          ...(configuration.frontendMode === 'static'
+            ? []
+            : [
+                proxyLocation('/telegram-mini-app', ports.USER_APP_PORT, '= '),
+                proxyLocation('/telegram-mini-app/', ports.USER_APP_PORT, '^~ '),
+              ]),
         ]
       : []),
     ...(enabledProfiles.includes('discord')
@@ -311,9 +389,82 @@ ${proxyHeaders()}
     namedProxy('auth_api', ports.AUTH_APP_API_PORT),
     namedProxy('user_api', ports.USER_APP_API_PORT),
     namedProxy('admin_api', ports.ADMIN_APP_API_PORT),
-    proxyLocation('/', frontendPort),
+    // Static mode serves the built SPA from disk; proxy mode forwards to its process.
+    staticDirectory ? staticFrontendLocation(frontendDistRoot, staticDirectory) : proxyLocation('/', frontendPort),
   ];
   return locations.join('\n\n');
+}
+
+/**
+ * Response headers every public location must carry.
+ *
+ * ngx_http_headers_module does not merge `add_header` across levels: a location
+ * that declares one discards every inherited header. So any location below that
+ * sets Cache-Control has to restate the whole set, or the SPA's HTML and assets
+ * would be served without HSTS, nosniff, framing, and referrer protection.
+ */
+const securityHeaderDirectives = [
+  'add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;',
+  'add_header X-Content-Type-Options nosniff always;',
+  'add_header X-Frame-Options SAMEORIGIN always;',
+  'add_header Referrer-Policy strict-origin-when-cross-origin always;',
+  // SPA navigations and API calls deliberately share paths such as /admin/roles and
+  // are split by negotiated media type, so any shared cache must key on it.
+  'add_header Vary Accept always;',
+];
+
+/**
+ * Content-Security-Policy for served HTML only.
+ *
+ * It is deliberately not a server-level header: the same vhost proxies Swagger UI at
+ * /auth/docs and /admin/docs, which needs inline styles and its own script bundle.
+ */
+const htmlContentSecurityPolicy =
+  `add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; ` +
+  `img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; ` +
+  `form-action 'self'" always;`;
+
+const securityHeaders = (indent) => securityHeaderDirectives.map((directive) => `${indent}${directive}`).join('\n');
+
+/**
+ * Serve a built SPA from disk with history fallback.
+ *
+ * Immutable caching is scoped to the bundlers' content-hashed output directories
+ * (Vite `/assets/`, Expo web `/_expo/`) with `^~` rather than an extension regex:
+ * a regex outranks the plain `/auth`, `/profile` and `/admin` prefixes and would
+ * answer their API requests from disk, and it would also pin the per-deployment
+ * `/runtime-config.js` — which is rewritten in place — for a year.
+ */
+function staticFrontendLocation(distRoot, directory) {
+  const root = `${distRoot}/${directory}`;
+  const immutable = (path) => `  location ^~ ${path} {
+    root ${root};
+    try_files $uri =404;
+${securityHeaders('    ')}
+    add_header Cache-Control "public, max-age=31536000, immutable" always;
+  }`;
+  return `  location / {
+    root ${root};
+    try_files $uri $uri/ /index.html;
+  }
+
+  location = /index.html {
+    root ${root};
+${securityHeaders('    ')}
+    ${htmlContentSecurityPolicy}
+    add_header Cache-Control "no-store" always;
+  }
+
+  location = /runtime-config.js {
+    root ${root};
+    try_files $uri =404;
+${securityHeaders('    ')}
+    add_header Cache-Control "no-store" always;
+  }
+
+${immutable('/assets/')}
+
+${immutable('/_expo/')}`;
 }
 
 function tlsServer(configuration, host, body) {
@@ -332,10 +483,7 @@ function tlsServer(configuration, host, body) {
   ssl_session_tickets off;
   client_max_body_size ${clientMaxBodySize};
 
-  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-  add_header X-Content-Type-Options nosniff always;
-  add_header X-Frame-Options SAMEORIGIN always;
-  add_header Referrer-Policy strict-origin-when-cross-origin always;
+${securityHeaders('  ')}
 
   location = /_infra/health {
     access_log off;
@@ -343,19 +491,34 @@ function tlsServer(configuration, host, body) {
     return 200 "ok\\n";
   }
 
+  # Never expose dotfiles or repository metadata, even if a dist root ever contains them.
+  location = /.env { return 404; }
+
+  location ^~ /.git/ { return 404; }
+
 ${body}
 }`;
 }
 
+/**
+ * The dist directory nginx should serve for an app, or `undefined` when it must be
+ * proxied — either because the deployment proxies every frontend, or because the
+ * app has no static bundle (site-app is Vike SSR).
+ */
+function staticDirectoryFor(configuration, appId) {
+  return configuration.frontendMode === 'static' ? frontendDistDirectories[appId] : undefined;
+}
+
+const frontendPortKeys = {
+  'admin-app': 'ADMIN_APP_PORT',
+  'landing-app': 'LANDING_APP_PORT',
+  'mobile-app': 'MOBILE_APP_PORT',
+  'site-app': 'SITE_APP_PORT',
+  'user-app': 'USER_APP_PORT',
+};
+
 function frontendPort(configuration, appId) {
-  const keys = {
-    'admin-app': 'ADMIN_APP_PORT',
-    'landing-app': 'LANDING_APP_PORT',
-    'mobile-app': 'MOBILE_APP_PORT',
-    'site-app': 'SITE_APP_PORT',
-    'user-app': 'USER_APP_PORT',
-  };
-  return configuration.ports[keys[appId]];
+  return configuration.ports[frontendPortKeys[appId]];
 }
 
 export function renderNginx(configuration, phase = 'https') {
@@ -410,7 +573,18 @@ ${phase === 'https' ? '  location / { return 301 https://$host$request_uri; }' :
   const servers = [];
   if (configuration.publicMode === 'single-domain') {
     const primaryPort = frontendPort(configuration, configuration.primaryApp);
-    servers.push(tlsServer(configuration, configuration.domain, frontendLocations(configuration, primaryPort, true)));
+    servers.push(
+      tlsServer(
+        configuration,
+        configuration.domain,
+        frontendLocations(
+          configuration,
+          primaryPort,
+          true,
+          staticDirectoryFor(configuration, configuration.primaryApp),
+        ),
+      ),
+    );
   } else {
     const frontendEntries = [
       ['landing-app', 'LANDING_APP_DOMAIN'],
@@ -424,7 +598,12 @@ ${phase === 'https' ? '  location / { return 301 https://$host$request_uri; }' :
         tlsServer(
           configuration,
           configuration.domains[domainKey],
-          frontendLocations(configuration, frontendPort(configuration, appId)),
+          frontendLocations(
+            configuration,
+            frontendPort(configuration, appId),
+            false,
+            staticDirectoryFor(configuration, appId),
+          ),
         ),
       );
     }
@@ -446,6 +625,32 @@ ${phase === 'https' ? '  location / { return 301 https://$host$request_uri; }' :
   return `${prelude}\n\n${rejectUnknownTls}\n\n${servers.join('\n\n')}\n`;
 }
 
+/**
+ * The loopback ports that must have a listener for this exact topology, derived
+ * rather than enumerated: the observability stack only exists as Compose services,
+ * static mode replaces every SPA process with a dist tree, and the Vike SSR site
+ * keeps a process wherever its vhost is rendered.
+ */
+export function expectedListeningPorts(configuration) {
+  const { enabledProfiles, ports, primaryApp, publicMode, runtimeMode } = configuration;
+  const keys = ['ADMIN_APP_API_PORT', 'USER_APP_API_PORT', 'AUTH_APP_API_PORT'];
+  if (enabledProfiles.includes('discord')) keys.push('DISCORD_APP_API_PORT');
+  if (enabledProfiles.includes('telegram')) keys.push('TELEGRAM_BOT_API_PORT');
+
+  // Mirror the render: single-domain only serves the primary app (plus the user SPA
+  // when the Mini App route is proxied), per-app-domains serves every frontend. Each
+  // of those needs a process only when it is not served from a dist directory.
+  const renderedApps =
+    publicMode === 'single-domain'
+      ? [primaryApp, ...(enabledProfiles.includes('telegram') ? ['user-app'] : [])]
+      : ['landing-app', 'site-app', 'user-app', 'admin-app', 'mobile-app'];
+  for (const appId of unique(renderedApps)) {
+    if (!staticDirectoryFor(configuration, appId)) keys.push(frontendPortKeys[appId]);
+  }
+  if (runtimeMode === 'compose') keys.push(...Object.keys(privateInfrastructurePorts));
+  return unique(keys).map((key) => ({ key, port: configuration.hostPorts[key] ?? ports[key] }));
+}
+
 export function certificateDomains(configuration) {
   return configuration.certificateMode === 'dns-wildcard'
     ? [configuration.domain, `*.${configuration.domain}`]
@@ -455,9 +660,9 @@ export function certificateDomains(configuration) {
 function main() {
   try {
     const options = parseArguments(process.argv.slice(2));
-    if (!['certificate-domains', 'hosts', 'render-nginx', 'validate'].includes(options.command)) {
+    if (!['certificate-domains', 'expected-ports', 'hosts', 'render-nginx', 'validate'].includes(options.command)) {
       fail(
-        'Usage: node scripts/single-server-deployment.mjs <validate|hosts|certificate-domains|render-nginx> [--server-env path] [--production-env path] [--phase http|https] [--output path|-]',
+        'Usage: node scripts/single-server-deployment.mjs <validate|hosts|certificate-domains|expected-ports|render-nginx> [--server-env path] [--production-env path] [--phase http|https] [--frontend-mode proxy|static] [--output path|-]',
       );
     }
     const configuration = loadSingleServerConfiguration(options);
@@ -467,13 +672,29 @@ function main() {
           'WARNING: bundled MongoDB is a single-node replica set for transactions and is not highly available.',
         );
       }
+      // Name what is served from disk: "static" degrades to a proxy for an SSR
+      // primary, and an operator must be able to see that from the output.
+      const served = Object.keys(frontendDistDirectories)
+        .filter((appId) => staticDirectoryFor(configuration, appId))
+        .join(',');
       console.log(
-        `single-server configuration valid: database=${configuration.databaseEngine}/${configuration.databaseMode}, domains=${configuration.publicMode}, certificate=${configuration.certificateMode}, hosts=${configuration.publicHosts.length}`,
+        `single-server configuration valid: runtime=${configuration.runtimeMode}, ` +
+          `database=${configuration.databaseEngine}/${configuration.databaseMode}, domains=${configuration.publicMode}, ` +
+          `certificate=${configuration.certificateMode}, hosts=${configuration.publicHosts.length}, ` +
+          `frontends=${configuration.frontendMode}${served ? ` (from disk: ${served})` : ''}`,
       );
       return;
     }
     if (options.command === 'hosts') {
       console.log(configuration.publicHosts.join('\n'));
+      return;
+    }
+    if (options.command === 'expected-ports') {
+      console.log(
+        expectedListeningPorts(configuration)
+          .map(({ key, port }) => `${key}=${port}`)
+          .join('\n'),
+      );
       return;
     }
     if (options.command === 'certificate-domains') {

@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { AdminFeatureFlagsReadPermission, AdminFeatureFlagsWritePermission } from '@app/common-authz';
 import { describe, expect, it } from 'vitest';
 import { Migration20260722092000CreateCanonicalSessions } from './Migration20260722092000CreateCanonicalSessions';

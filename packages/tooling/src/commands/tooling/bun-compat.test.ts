@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,6 +11,7 @@ import { defaultOperationalFields } from '../../setup/test-fixtures.js';
 import {
   assertProviderIsolation,
   childHasExited,
+  createBunCompatibilityInvocation,
   createNodeBackedPnpmInvocation,
   createBunCompatibilityProbes,
   createBunRuntimeExecutionProbes,
@@ -30,6 +32,7 @@ function closure(options: {
   roots: string[];
   projects?: string[];
   externalPackages?: Record<string, string>;
+  targets?: Partial<SelectedClosureManifest['targets']>;
 }): SelectedClosureManifest {
   return {
     schemaVersion: 1,
@@ -38,7 +41,7 @@ function closure(options: {
     provider: options.provider,
     roots: options.roots,
     projects: options.projects ?? options.roots,
-    targets: { build: options.roots, test: options.roots, e2e: options.roots },
+    targets: { build: options.roots, test: options.roots, e2e: options.roots, ...options.targets },
     externalPackages: options.externalPackages ?? {},
     services: options.roots,
     releaseImages: options.roots,
@@ -86,6 +89,39 @@ describe('Bun compatibility contract', () => {
       () => resolveBunRuntimeSelection(closure({ provider: null, roots: ['user-app-api'] })),
       /require an explicit PostgreSQL or MongoDB provider/u,
     );
+  });
+
+  it('keeps selected Expo exports on Node while Bun owns the remaining closure probes', () => {
+    const probes = createBunCompatibilityProbes(
+      closure({ provider: null, roots: ['mobile-app'], targets: { export: ['mobile-app'] } }),
+    );
+    const expo = probes.find((probe) => probe.name === 'Selected closure exports');
+    assert.equal(expo?.runtime, 'node');
+    assert.ok(expo);
+
+    const expoInvocation = createBunCompatibilityInvocation(
+      expo,
+      { BUN_BE_BUN: '1', CI: 'true' },
+      '/runtime/bun',
+    );
+    assert.equal(expoInvocation.program, 'node');
+    assert.deepEqual(expoInvocation.args.slice(0, 3), [
+      'node_modules/nx/dist/bin/nx.js',
+      'run-many',
+      '-t',
+    ]);
+    assert.equal(expoInvocation.environment.BUN_BE_BUN, undefined);
+
+    const bunProbe = probes.find((probe) => probe.runtime === undefined);
+    assert.ok(bunProbe);
+    const bunInvocation = createBunCompatibilityInvocation(
+      bunProbe,
+      { BUN_BE_BUN: '1', CI: 'true' },
+      '/runtime/bun',
+    );
+    assert.equal(bunInvocation.program, '/runtime/bun');
+    assert.deepEqual(bunInvocation.args.slice(0, 3), ['run', '--bun', 'nx']);
+    assert.equal(bunInvocation.environment.BUN_BE_BUN, '1');
   });
 
   it('derives Nx probes only from the selected closure targets', () => {

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-OBSERVABILITY-005
 import { describe, expect, it, vi } from 'vitest';
 import { createPostHogAnalyticsPlugin } from './posthog.plugin';
 

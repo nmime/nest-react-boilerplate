@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-OBSERVABILITY-005
 import { EventEmitter } from 'node:events';
 import { ConsoleLogger, type LoggerService } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';

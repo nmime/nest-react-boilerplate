@@ -30,15 +30,15 @@ across every delivery shape:
 This is a polish-and-verify effort, not a rescue. The audit surfaced a small
 set of concrete, worthwhile candidates:
 
-| # | Finding | Type |
-|---|---|---|
-| 1 | Buildable-image "universe" hand-maintained across ~4 files that must stay in sync (`scripts/release-image-plan.mjs`, `docker/docker-compose.yml`, `docker/docker-compose.prod.build.yml`, `packages/tooling/src/setup/catalog.ts`) | Config drift risk |
-| 2 | No `readOnlyRootFilesystem` on any container | Hardening gap |
-| 3 | No committed `values-staging.yaml` (only a recipe comment) | Completeness |
-| 4 | HPA is CPU-only (no memory / custom metrics) | Scaling |
-| 5 | Backend builds via `tsc` (needs path-transform); no `composite`/`incremental` | Build speed |
-| 6 | Frontend Vite builds use defaults (no explicit chunking/compression/budgets) | Bundle size |
-| 7 | **Shared libs recompile once per app image in the release CI matrix** — each image runs `nx run <app>:build` on its own runner; the Nx cache is a BuildKit cache mount that `cache-to: type=gha` does not export, and the `builder` layer is keyed by `NX_PROJECT`, so lib compilation is never shared across images (local `nx run-many` is unaffected — libs build once there) — resolved by Option A (build-once + bake), 2026-07-23 | Build speed |
+| #   | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                 | Type              |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| 1   | Buildable-image "universe" hand-maintained across ~4 files that must stay in sync (`scripts/release-image-plan.mjs`, `docker/docker-compose.yml`, `docker/docker-compose.prod.build.yml`, `packages/tooling/src/setup/catalog.ts`)                                                                                                                                                                                                      | Config drift risk |
+| 2   | No `readOnlyRootFilesystem` on any container                                                                                                                                                                                                                                                                                                                                                                                            | Hardening gap     |
+| 3   | No committed `values-staging.yaml` (only a recipe comment)                                                                                                                                                                                                                                                                                                                                                                              | Completeness      |
+| 4   | HPA is CPU-only (no memory / custom metrics)                                                                                                                                                                                                                                                                                                                                                                                            | Scaling           |
+| 5   | Backend builds via `tsc` (needs path-transform); no `composite`/`incremental`                                                                                                                                                                                                                                                                                                                                                           | Build speed       |
+| 6   | Frontend Vite builds use defaults (no explicit chunking/compression/budgets)                                                                                                                                                                                                                                                                                                                                                            | Bundle size       |
+| 7   | **Shared libs recompile once per app image in the release CI matrix** — each image runs `nx run <app>:build` on its own runner; the Nx cache is a BuildKit cache mount that `cache-to: type=gha` does not export, and the `builder` layer is keyed by `NX_PROJECT`, so lib compilation is never shared across images (local `nx run-many` is unaffected — libs build once there) — resolved by Option A (build-once + bake), 2026-07-23 | Build speed       |
 
 ## Goals
 
@@ -163,7 +163,7 @@ Measure → change → re-measure. Keep only what beats baseline.
   budgets to catch regressions; confirm prod sourcemaps stay off outside E2E.
 - **Backend build (switchable option + benchmark)** — add swc/esbuild as an
   **alternative** backend build path while keeping `tsc` the default. This is
-  a boilerplate, so the deliverable is *choice plus evidence*: an alternate
+  a boilerplate, so the deliverable is _choice plus evidence_: an alternate
   Nx target/executor, an equivalent `@app/*` path handling for the alternate
   toolchain (swc `paths`/plugin or an esbuild paths plugin, validated against
   the pruned per-app `package.json` node resolution), and a documented
@@ -176,20 +176,20 @@ Measure → change → re-measure. Keep only what beats baseline.
 `test:docker-smoke` and the app boots; a change that only speeds things up but
 weakens verification is not kept.
 
-## Decision: image build strategy (vs the xrocket reference)
+## Decision: image build strategy (vs the in-house reference monorepo)
 
-The xrocket monorepo (`/Users/nmi/IT/Projects/xrocket/monorepo`, a reference,
-not part of this repo) was reviewed for its build approach. It uses Werf with
+A separate in-house product monorepo (a reference, not part of this repo) was
+reviewed for its build approach. It uses Werf with
 two Dockerfiles (one for all backends, one per frontend); the backend build
 runs a single `nx run-many -t build --projects='tag:platform:backend'`, bakes
-the whole `dist/` into one `wallet` image, and selects the running service at
+the whole `dist/` into one fat backend image, and selects the running service at
 **runtime** via Helm `args`. It compiles shared libs exactly once, aided by an
 Nx **S3/MinIO remote cache**.
 
-**Adopted:** xrocket's *insight* — compile the workspace once so shared libs
+**Adopted:** that reference's _insight_ — compile the workspace once so shared libs
 build a single time.
 
-**Not adopted:** its *machinery* — Werf, private base-image registry, external
+**Not adopted:** its _machinery_ — Werf, private base-image registry, external
 Helm chart, S3 remote cache, and the fat single-image + runtime-selection
 model. Reasons: a boilerplate must be self-contained/forkable; the remote
 cache conflicts with this project's deliberate no-remote-cache policy; and the
@@ -217,7 +217,7 @@ eliminated either way.
 - **Repo validators as gates** at every phase: `pnpm deploy:validate`
   (+`:docker`/`:helm`/`:gitops`/`:pm2`), `pnpm test:docker-smoke`,
   `helm lint`, `docker:manifests:check`, and `nx affected -t lint typecheck
-  test build` on the touched projects.
+test build` on the touched projects.
 - **Benchmarks** recorded as tables (cold/warm, per target) so speed claims
   are evidence-backed, not asserted.
 

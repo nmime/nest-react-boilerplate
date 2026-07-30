@@ -1,0 +1,4 @@
+schema: nrb-verifiable
+created: 2026-07-25
+goal: Apply repository-wide verifiable specifications, acceptance examples,
+  evidence mapping, and release enforcement.

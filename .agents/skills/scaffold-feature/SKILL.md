@@ -38,6 +38,13 @@ description: Scaffold a genuinely new application, library, or vertical feature 
 11. For a web app with a stable screen composition, add an app-owned `storybook/` story and explicitly register it in the shared web Storybook config. Keep Expo in the native lane.
 12. Add component and e2e coverage for auth, RBAC, validation, loading, empty, error, and success states. Do not use a screen story as proof of routing, production providers, authentication, API integration, or complete page flows.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 ```bash

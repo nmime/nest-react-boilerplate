@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-SELECTION-002
 import assert from 'node:assert/strict';
 import { lstatSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

@@ -1,9 +1,26 @@
+// @requirements REQ-SCAFFOLD-QUALITY-006
+// Evidence for: REQ-SCAFFOLD-QUALITY-006
 import * as assert from "node:assert/strict";
+import {
+  mkdtempSync,
+  mkdirSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { describe, it } from "node:test";
 import istanbulCoverage from "istanbul-lib-coverage";
 import istanbulReport from "istanbul-lib-report";
 import reports from "istanbul-reports";
 import path from "node:path";
+import {
+  buildStaticFileIndex,
+  isPathInsideRoot,
+  resolveExistingStaticFile,
+  resolveWorkspaceSubdirectory,
+} from "./frontend-browser-e2e-coverage-paths.ts";
 
 /**
  * Unit tests for the frontend-browser-e2e-coverage.ts module.
@@ -98,22 +115,55 @@ describe("frontend-browser-e2e-coverage: contentType helper", () => {
   });
 });
 
-describe("frontend-browser-e2e-coverage: isInsideRoot helper", () => {
-  function isInsideRoot(rootDir: string, candidate: string): boolean {
-    const rel = path.relative(rootDir, candidate);
-    return rel === "" || (!rel.startsWith("..") && !rel.includes(`..${path.sep}`));
-  }
-
+describe("frontend-browser-e2e-coverage: path confinement", () => {
   it("returns true for a file inside root", () => {
-    assert.equal(isInsideRoot("/app/dist", "/app/dist/index.html"), true);
+    assert.equal(isPathInsideRoot("/app/dist", "/app/dist/index.html"), true);
   });
 
   it("returns true for root itself", () => {
-    assert.equal(isInsideRoot("/app/dist", "/app/dist"), true);
+    assert.equal(isPathInsideRoot("/app/dist", "/app/dist"), true);
   });
 
   it("returns false for a path escaping root", () => {
-    assert.equal(isInsideRoot("/app/dist", "/app/dist/../../../etc/passwd"), false);
+    assert.equal(isPathInsideRoot("/app/dist", "/etc/passwd"), false);
+  });
+
+  it("rejects CLI directories outside their fixed workspace roots", () => {
+    assert.equal(
+      resolveWorkspaceSubdirectory("/workspace", "dist/apps/frontend/app", "dist", "--dist"),
+      path.resolve("/workspace/dist/apps/frontend/app"),
+    );
+    assert.throws(
+      () => resolveWorkspaceSubdirectory("/workspace", "../outside", "dist", "--dist"),
+      /must resolve inside dist/,
+    );
+  });
+
+  it("serves canonical files and falls back for traversal and symlink escapes", () => {
+    const workspace = mkdtempSync(path.join(tmpdir(), "frontend-coverage-paths-"));
+    const root = path.join(workspace, "dist");
+    const outside = path.join(workspace, "outside");
+    mkdirSync(root);
+    mkdirSync(outside);
+    writeFileSync(path.join(root, "index.html"), "index");
+    writeFileSync(path.join(root, "app.js"), "app");
+    writeFileSync(path.join(outside, "secret.txt"), "secret");
+    symlinkSync(path.join(outside, "secret.txt"), path.join(root, "escape.txt"));
+
+    try {
+      const fallback = realpathSync(path.join(root, "index.html"));
+      const staticFiles = buildStaticFileIndex(root);
+      assert.equal(
+        resolveExistingStaticFile(staticFiles, "/app.js"),
+        realpathSync(path.join(root, "app.js")),
+      );
+      assert.equal(resolveExistingStaticFile(staticFiles, "/../../outside/secret.txt"), fallback);
+      assert.equal(resolveExistingStaticFile(staticFiles, "/escape.txt"), fallback);
+      assert.equal(resolveExistingStaticFile(staticFiles, "/missing.js"), fallback);
+      assert.equal(resolveExistingStaticFile(staticFiles, "/%E0%A4%A"), fallback);
+    } finally {
+      rmSync(workspace, { force: true, recursive: true });
+    }
   });
 });
 

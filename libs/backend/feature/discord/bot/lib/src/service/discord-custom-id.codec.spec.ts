@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {

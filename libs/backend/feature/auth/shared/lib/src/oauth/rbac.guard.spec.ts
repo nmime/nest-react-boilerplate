@@ -1,7 +1,12 @@
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+// @requirements REQ-AUTH-CREDENTIAL-003
+import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it } from 'vitest';
-import { RequiredPermissionsMetadataKey } from './access-control.decorators';
+import {
+  PublicAuthMetadataKey,
+  RequiredPermissionsMetadataKey,
+  RequiredRolesMetadataKey,
+} from './access-control.decorators';
 import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-control.types';
 import { RbacGuard, type PermissionEvaluationResult } from './rbac.guard';
 import { DefaultAuthTenantId } from './tenant-context';
@@ -58,6 +63,17 @@ class MetadataRequiredGuard extends RbacGuard {
 }
 
 describe('RbacGuard domain extension points', () => {
+  it('admits public routes without requiring a principal', () => {
+    const handler = () => undefined;
+    Reflect.defineMetadata(PublicAuthMetadataKey, true, handler);
+
+    expect(new RbacGuard().canActivate(createContext({}, handler))).toBe(true);
+  });
+
+  it('rejects protected routes without an authenticated principal', () => {
+    expect(() => new RbacGuard().canActivate(createContext({}))).toThrow(UnauthorizedException);
+  });
+
   it('constructs with a default reflector and admits an authenticated principal', () => {
     const guard = new RbacGuard();
 
@@ -93,5 +109,29 @@ describe('RbacGuard domain extension points', () => {
         createContext({ user: createPrincipal({ permissions: ['domain:special'] }) }, handler),
       ),
     ).toThrow(ForbiddenException);
+  });
+
+  it('requires at least one matching role when role metadata is present', () => {
+    const handler = () => undefined;
+    Reflect.defineMetadata(RequiredRolesMetadataKey, ['admin', 'operator'], handler);
+
+    expect(() => {
+      new RbacGuard().canActivate(createContext({ user: createPrincipal({ roles: ['user'] }) }, handler));
+    }).toThrow('Required role is missing.');
+    expect(
+      new RbacGuard().canActivate(createContext({ user: createPrincipal({ roles: ['operator'] }) }, handler)),
+    ).toBe(true);
+  });
+
+  it('falls back to the principal permission set when no domain decision is provided', () => {
+    const handler = () => undefined;
+    Reflect.defineMetadata(RequiredPermissionsMetadataKey, ['profile:read'], handler);
+
+    expect(
+      new RbacGuard().canActivate(createContext({ user: createPrincipal({ permissions: ['profile:read'] }) }, handler)),
+    ).toBe(true);
+    expect(() => {
+      new RbacGuard().canActivate(createContext({ user: createPrincipal({ permissions: [] }) }, handler));
+    }).toThrow('Required permission is missing.');
   });
 });

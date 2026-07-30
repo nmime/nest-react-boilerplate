@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-SAFETY-008
 // @ts-nocheck
 /**
  * Unit tests for better-auth-schema.ts

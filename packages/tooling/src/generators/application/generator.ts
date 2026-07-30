@@ -1,23 +1,35 @@
+// Evidence for: REQ-SCAFFOLD-OWNERSHIP-001
 /**
+ * Static generator evidence for REQ-SCAFFOLD-OWNERSHIP-001.
+ *
  * Application generator — creates new applications following exact repository
- * conventions for frontend and backend kinds.
+ * conventions for frontend, backend, and end-to-end verification kinds.
  *
  * Canonical roots are apps/backend/<scope>/<name> for backend deployables and
- * apps/frontend/<name> for frontend deployables. Runtime-specific files are
- * derived from the selected renderer; identity, tags, and targets stay in the
- * generated project.json.
+ * apps/frontend/<name> for frontend deployables, and apps/e2e/<name> for
+ * verification applications. Runtime-specific files are derived from the
+ * selected renderer; identity, tags, and targets stay in project.json.
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
-import { defaultLocale } from '@app/common-i18n-runtime';
-import { cloneStyleBaseName, findAdjacentOwner, validateName, generateNames } from '../names.ts';
+import {
+  cloneStyleBaseName,
+  findAdjacentOwner,
+  generatedRequirementId,
+  validateName,
+  generateNames,
+} from '../names.ts';
 
 // ---------------------------------------------------------------------------
 
+// Generated shells start with the repository's canonical locale. Keep this
+// generator-owned so the generator can run before workspace path aliases exist.
+const defaultLocale = 'en';
+
 export interface ApplicationGeneratorOptions {
   name: string;
-  kind: 'frontend' | 'backend';
-  renderer?: 'vite' | 'astro' | 'vike' | 'expo' | 'nest-api' | 'consumer' | 'scheduler';
+  kind: 'frontend' | 'backend' | 'e2e';
+  renderer?: 'vite' | 'astro' | 'vike' | 'expo' | 'nest-api' | 'consumer' | 'scheduler' | 'cucumber';
   port?: number;
   /** Compatibility input rejected at runtime; custom roots violate ownership. */
   directory?: string;
@@ -46,6 +58,9 @@ function computeAppDirectory(kind: string, name: string): string {
   if (kind === 'backend') {
     return `apps/backend/${scope}/${name}`;
   }
+  if (kind === 'e2e') {
+    return `apps/e2e/${name.replace(/-e2e$/u, '')}`;
+  }
   return `apps/frontend/${name}`;
 }
 
@@ -53,6 +68,9 @@ function computeAppTags(kind: string, name: string): string[] {
   const scope = name.split('-')[0];
   if (kind === 'backend') {
     return ['platform:backend', 'type:backend-app', `scope:${scope}`];
+  }
+  if (kind === 'e2e') {
+    return ['platform:e2e', 'type:e2e', `scope:${name.replace(/-e2e$/u, '')}`];
   }
   return ['platform:frontend', 'type:frontend-app', `scope:${scope}`, 'fsd:layer:app'];
 }
@@ -106,6 +124,209 @@ function depth(dir: string): number {
 
 function dots(dir: string): string {
   return '../'.repeat(depth(dir));
+}
+
+// ---------------------------------------------------------------------------
+// Cucumber acceptance app skeleton
+// ---------------------------------------------------------------------------
+
+function createCucumberApp(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, tags: string[]): void {
+  const projectName = names.kebab;
+  const idStem = names.kebab.replace(/-e2e$/u, '').toUpperCase();
+  const requirementId = generatedRequirementId(names.kebab.replace(/-e2e$/u, ''));
+  const scenarioId = `SCN-${idStem}-SCAFFOLD-01`;
+  const d = dots(dir);
+
+  tree.write(
+    `${dir}/project.json`,
+    `${JSON.stringify(
+      {
+        name: projectName,
+        $schema: `${d}node_modules/nx/schemas/project-schema.json`,
+        sourceRoot: `${dir}/src`,
+        projectType: 'application',
+        tags,
+        targets: {
+          build: {
+            executor: 'nx:run-commands',
+            cache: true,
+            options: {
+              command: `tsc --noEmit -p ${dir}/tsconfig.json`,
+            },
+            inputs: ['default', '^production', { externalDependencies: ['typescript'] }],
+          },
+          typecheck: {
+            executor: 'nx:run-commands',
+            cache: true,
+            options: {
+              command: `tsc --noEmit -p ${dir}/tsconfig.json`,
+            },
+            inputs: ['default', '^production', { externalDependencies: ['typescript'] }],
+          },
+          test: {
+            executor: 'nx:run-commands',
+            cache: false,
+            options: {
+              commands: [
+                {
+                  command: `node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config ${dir}/cucumber.config.ts`,
+                  forwardAllArgs: false,
+                },
+              ],
+            },
+            inputs: ['default', '^production', { externalDependencies: ['@cucumber/cucumber'] }],
+            outputs: ['{workspaceRoot}/test-results/cucumber', '{workspaceRoot}/cucumber-report'],
+          },
+          acceptance: {
+            executor: 'nx:run-commands',
+            cache: false,
+            options: {
+              command: `node --import tsx node_modules/@cucumber/cucumber/bin/cucumber.js --config ${dir}/cucumber.config.ts`,
+            },
+            inputs: ['default', '^production', { externalDependencies: ['@cucumber/cucumber'] }],
+            outputs: ['{workspaceRoot}/test-results/cucumber', '{workspaceRoot}/cucumber-report'],
+          },
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  tree.write(
+    `${dir}/tsconfig.json`,
+    `${JSON.stringify(
+      {
+        extends: `${d}tsconfig.base.json`,
+        compilerOptions: {
+          allowImportingTsExtensions: true,
+          noEmit: true,
+          types: ['node'],
+        },
+        include: ['cucumber.config.ts', 'src/**/*.ts'],
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  tree.write(
+    `${dir}/package.json`,
+    `${JSON.stringify(
+      {
+        private: true,
+        type: 'module',
+        dependencies: {
+          tslib: '2.8.1',
+        },
+        devDependencies: {
+          '@cucumber/cucumber': '13.2.0',
+          '@types/node': '24.13.3',
+          tsx: '4.23.1',
+          typescript: '6.0.3',
+        },
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  tree.write(
+    `${dir}/cucumber.config.ts`,
+    `import type { IConfiguration } from '@cucumber/cucumber';
+
+export default {
+  paths: ['${dir}/features/**/*.feature'],
+  import: ['${dir}/src/**/*.ts'],
+  parallel: 1,
+  retry: 0,
+  format: [
+    'progress',
+    'message:test-results/cucumber/messages.ndjson',
+    'html:cucumber-report/index.html',
+    'junit:test-results/cucumber/junit.xml',
+  ],
+} satisfies Partial<IConfiguration>;
+`,
+  );
+  tree.write(
+    `${dir}/src/support/world.ts`,
+    `import {
+  setWorldConstructor,
+  World,
+  type IWorldOptions,
+} from '@cucumber/cucumber';
+
+export class AcceptanceWorld extends World {
+  observedOutcome: string | undefined;
+
+  constructor(options: IWorldOptions) {
+    super(options);
+  }
+}
+
+setWorldConstructor(AcceptanceWorld);
+`,
+  );
+  tree.write(
+    `${dir}/src/steps/acceptance.steps.ts`,
+    `import assert from 'node:assert/strict';
+import { Given, Then, When } from '@cucumber/cucumber';
+import type { AcceptanceWorld } from '../support/world.ts';
+
+Given('an isolated acceptance scenario', function (this: AcceptanceWorld) {
+  assert.equal(this.observedOutcome, undefined);
+});
+
+When('the generated acceptance project executes', function (this: AcceptanceWorld) {
+  this.observedOutcome = 'verified';
+});
+
+Then('the scenario records independently isolated evidence', function (this: AcceptanceWorld) {
+  assert.equal(this.observedOutcome, 'verified');
+});
+`,
+  );
+  tree.write(
+    `${dir}/features/acceptance.feature`,
+    `@${requirementId}
+Feature: Generated acceptance project
+
+  Rule: Executable examples use isolated scenario state
+
+    @${scenarioId}
+    Scenario: Run the generated acceptance contract
+      Given an isolated acceptance scenario
+      When the generated acceptance project executes
+      Then the scenario records independently isolated evidence
+`,
+  );
+  tree.write(
+    `${dir}/AGENTS.md`,
+    `# ${names.title} E2E instructions
+
+Follow the repository root \`AGENTS.md\` and \`apps/e2e/AGENTS.md\`.
+
+- Keep Gherkin declarative and in product-domain language.
+- Give every Rule a stable requirement tag and every Scenario a stable scenario tag.
+- Keep World state isolated per scenario and organize step definitions by domain.
+- Do not replace Vitest, contract tests, property tests, or Playwright journeys with Cucumber.
+`,
+  );
+  tree.write(
+    `${dir}/README.md`,
+    `# ${names.title}
+
+Cucumber.js executable acceptance specifications for repository capabilities.
+
+Run:
+
+\`\`\`bash
+pnpm exec nx run ${projectName}:acceptance
+\`\`\`
+
+Feature files own stakeholder-readable examples. OpenSpec owns normative
+requirements, while Vitest, contracts, property tests, Playwright, and runtime
+checks remain independent evidence lanes.
+`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -376,7 +597,8 @@ export const ${names.pascal}HealthServiceProvider: Provider = {
   // src/app.module.spec.ts — import from vitest, not globals
   tree.write(
     `${srcRoot}/${names.kebab}.module.spec.ts`,
-    `import { describe, it, expect } from "vitest";
+    `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, it, expect } from "vitest";
 import { ${names.pascal}Module } from "./${names.kebab}.module";
 
 describe("${names.pascal}Module", () => {
@@ -763,7 +985,8 @@ export function App() {
   // src/app.spec.tsx
   tree.write(
     `${srcRoot}/app.spec.tsx`,
-    `import { describe, it, expect } from "vitest";
+    `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, it, expect } from "vitest";
 import { App } from "./app";
 
 describe("App", () => {
@@ -879,7 +1102,8 @@ function writeRunCommandProject(
   );
   tree.write(
     `${dir}/scaffold.test.mjs`,
-    `import assert from "node:assert/strict";
+    `// @requirements ${generatedRequirementId(name)}
+import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
@@ -1131,14 +1355,17 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
     throw new Error(nameError);
   }
 
-  if (options.kind !== 'frontend' && options.kind !== 'backend') {
-    throw new Error(`Unsupported application kind "${options.kind}". Must be "frontend" or "backend".`);
+  if (options.kind !== 'frontend' && options.kind !== 'backend' && options.kind !== 'e2e') {
+    throw new Error(`Unsupported application kind "${options.kind}". Must be "frontend", "backend", or "e2e".`);
   }
 
-  const renderer = options.renderer ?? (options.kind === 'frontend' ? 'vite' : 'nest-api');
+  const renderer =
+    options.renderer ?? (options.kind === 'frontend' ? 'vite' : options.kind === 'backend' ? 'nest-api' : 'cucumber');
   const frontendRenderers = ['vite', 'astro', 'vike', 'expo'];
   const backendRenderers = ['nest-api', 'consumer', 'scheduler'];
-  const allowedRenderers = options.kind === 'frontend' ? frontendRenderers : backendRenderers;
+  const e2eRenderers = ['cucumber'];
+  const allowedRenderers =
+    options.kind === 'frontend' ? frontendRenderers : options.kind === 'backend' ? backendRenderers : e2eRenderers;
   if (!allowedRenderers.includes(renderer)) {
     throw new Error(
       `Unsupported ${options.kind} renderer "${renderer}". Must be one of: ${allowedRenderers.join(', ')}`,
@@ -1147,14 +1374,20 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
 
   const usedPorts = collectUsedAppPorts(tree);
   const isBackendProcess = renderer === 'consumer' || renderer === 'scheduler';
-  if (isBackendProcess && options.port !== undefined) {
-    throw new Error('Consumer and scheduler applications do not expose an HTTP port; omit --port.');
+  const isNonHttp = isBackendProcess || options.kind === 'e2e';
+  if (isNonHttp && options.port !== undefined) {
+    throw new Error(
+      options.kind === 'e2e'
+        ? 'E2E applications do not expose an HTTP port; omit --port.'
+        : 'Consumer and scheduler applications do not expose an HTTP port; omit --port.',
+    );
   }
-  const port = options.port ?? (isBackendProcess ? 3100 : nextAvailablePort(options.kind, usedPorts));
+  const port =
+    options.port ?? (isNonHttp ? 3100 : nextAvailablePort(options.kind as 'frontend' | 'backend', usedPorts));
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('Application port must be an integer between 1 and 65535.');
   }
-  if (!isBackendProcess && options.port !== undefined && usedPorts.has(port)) {
+  if (!isNonHttp && options.port !== undefined && usedPorts.has(port)) {
     throw new Error(`Application port ${port} is already used by another app. Choose a free port or omit --port.`);
   }
 
@@ -1197,6 +1430,8 @@ export async function applicationGenerator(tree: Tree, options: ApplicationGener
 
   if (options.kind === 'backend') {
     createBackendApp(tree, names, dir, tags, renderer as 'nest-api' | 'consumer' | 'scheduler', port);
+  } else if (options.kind === 'e2e') {
+    createCucumberApp(tree, names, dir, tags);
   } else {
     createFrontendApp(tree, names, dir, tags, renderer as 'vite' | 'astro' | 'vike' | 'expo', port);
   }

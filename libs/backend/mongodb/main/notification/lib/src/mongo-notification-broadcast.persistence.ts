@@ -930,6 +930,7 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
               priority: mapBroadcastPriority(broadcast.priority),
               sendAfter: now,
               sentAt: null,
+              dispatchStartedAt: null,
               claimToken: null,
               claimExpiresAt: null,
               createdAt: now,

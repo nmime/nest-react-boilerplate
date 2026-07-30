@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
 import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { firstValueFrom, of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';

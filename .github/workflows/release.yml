@@ -1,57 +1,75 @@
 name: Release
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
 permissions:
   contents: write
   issues: write
   pull-requests: write
-concurrency: release
+  actions: read
+concurrency:
+  group: release-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: github.repository == 'nmime/nest-react-boilerplate'
+    # Only the configured canonical repository releases. The workflow still
+    # requires the exact successful main CI commit below.
+    if: >-
+      github.repository == (vars.RELEASE_REPOSITORY || 'nmime/nest-react-boilerplate') &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa
-        with: { version: 11.11.0 }
+        with: { version: 11.15.1 }
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Verify the release commit is the successful CI commit and current main
+        env:
+          VERIFIED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$VERIFIED_SHA"
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "$VERIFIED_SHA"
       - run: pnpm exec semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_PROVIDER: github
-          GIT_AUTHOR_NAME: nmime
-          GIT_AUTHOR_EMAIL: 66474195+nmime@users.noreply.github.com
-          GIT_COMMITTER_NAME: nmime
-          GIT_COMMITTER_EMAIL: 66474195+nmime@users.noreply.github.com
-      # semantic-release tags its `chore(release) [skip ci]` commit and pushes
-      # with GITHUB_TOKEN, so the `push: tags: v*` trigger of release-images is
-      # suppressed (both by [skip ci] and by GitHub's token-recursion rule).
-      # Dispatch it explicitly on the new tag with a PAT so release images build,
+      # semantic-release tags the exact reviewed main commit that passed CI.
+      # GitHub's token-recursion
+      # rule still suppresses the `push: tags: v*` release-images trigger, so
+      # dispatch it explicitly on the new tag with a PAT so images build,
       # scan, and sign automatically. Requires a repo secret RELEASE_DISPATCH_PAT
       # (classic: `repo` + `workflow`, or fine-grained: Actions:write +
       # Contents:read). Without it this is a no-op and images are built by manual
-      # dispatch (`gh workflow run release-images.yml --ref <tag> -f force_full=true`).
-      # force_full always means every image in that tag's setup-selected closure.
+      # dispatch (`gh workflow run release-images.yml --ref <tag>`). Tag refs
+      # automatically build every image in that tag's setup-selected closure;
+      # `-f force_full=true` remains available for an explicit manual override.
       - name: Auto-build release images for the new tag
         if: success()
         env:
           GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_PAT }}
+          VERIFIED_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
             echo "::warning::RELEASE_DISPATCH_PAT not set — skipping automatic selected release-image build. Build manually: gh workflow run release-images.yml --ref <tag> -f force_full=true"
             exit 0
           fi
           git fetch origin --tags --quiet
-          NEW_TAG=$(git tag --points-at HEAD --sort=-v:refname | head -1)
+          NEW_TAG=$(git tag --points-at "$VERIFIED_SHA" --sort=-v:refname | head -1)
           if [ -z "$NEW_TAG" ]; then
             echo "No new release tag on HEAD; nothing to build."
             exit 0
           fi
-          echo "Dispatching release-images for ${NEW_TAG}"
-          gh workflow run release-images.yml --ref "$NEW_TAG" -f force_full=true
+          echo "Dispatching release-images for ${NEW_TAG} (full selected-image plan)"
+          gh workflow run release-images.yml --ref "$NEW_TAG"

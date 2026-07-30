@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it, vi } from 'vitest';
 import { BetterAuthDatabaseProviderInjectToken } from '@app/backend-feature-auth-shared';
 import { MongoClientToken, MongoDatabaseToken } from './mongo-runtime';

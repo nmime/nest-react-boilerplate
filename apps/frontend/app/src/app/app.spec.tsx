@@ -1,5 +1,5 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './app';
 
@@ -191,11 +191,16 @@ const expectFetchRequest = (
   return init as FetchInit;
 };
 
-const submitLogin = (email = 'user@example.com') => {
+// Waits for the async router to render the persistent shell (its nav is present
+// on every route) so the outlet content is available to query.
+const awaitShell = () => screen.findAllByRole('link', { name: 'Home' });
+
+const submitLogin = async (email = 'user@example.com') => {
+  await awaitShell();
   if (!screen.queryByLabelText('Login email')) {
     fireEvent.click(screen.getAllByRole('link', { name: 'Open' })[0]!);
   }
-  fireEvent.change(screen.getByLabelText('Login email'), {
+  fireEvent.change(await screen.findByLabelText('Login email'), {
     target: { value: email },
   });
   fireEvent.change(screen.getByLabelText('Login password'), {
@@ -220,8 +225,10 @@ describe('User app shell', () => {
     vi.unstubAllEnvs();
   });
 
-  it('renders a neutral account home through the shared shell', () => {
-    const html = renderToStaticMarkup(<App />);
+  it('renders a neutral account home through the shared shell', async () => {
+    const { container } = render(<App />);
+    await screen.findByText('Account essentials');
+    const html = container.innerHTML;
 
     expect(html).toContain('Nest React Boilerplate');
     expect(html).toContain('A clear place to manage your account.');
@@ -232,18 +239,33 @@ describe('User app shell', () => {
     expect(html).not.toContain('3003');
   });
 
-  it('returns through browser history for routes opened by the app', () => {
-    window.history.replaceState({ userAppNavigation: true }, '', '/settings');
-    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
-
+  it('returns through browser history for routes opened by the app', async () => {
     render(<App />);
+    await awaitShell();
+    fireEvent.click(screen.getAllByRole('link', { name: 'Settings' })[0]!);
+    await screen.findByText('Preferences');
+
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
     expect(back).toHaveBeenCalledOnce();
     back.mockRestore();
   });
 
-  it('renders every preserved user route without scaffold diagnostics', () => {
+  it('falls back to home when there is no in-app history to pop', async () => {
+    window.history.pushState({}, '', '/settings');
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+
+    render(<App />);
+    await awaitShell();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(await screen.findByText('Account essentials')).toBeTruthy();
+    expect(back).not.toHaveBeenCalled();
+    back.mockRestore();
+  });
+
+  it('renders every preserved user route without scaffold diagnostics', async () => {
     const routes = [
       '/',
       '/auth',
@@ -259,22 +281,22 @@ describe('User app shell', () => {
 
     for (const route of routes) {
       window.history.pushState({}, '', route);
-      const html = renderToStaticMarkup(<App />);
+      const { container, unmount } = render(<App />);
+      // eslint-disable-next-line no-await-in-loop -- routes render sequentially; each is unmounted before the next.
+      await awaitShell();
+      const html = container.innerHTML;
 
       expect(html).toContain('<main');
       expect(html).toContain('xr-mini-app-bottom-bar');
       expect(html).not.toContain('data-design-marker');
       expect(html).not.toContain('route readiness');
       expect(html).not.toContain('nonblank smoke');
+      unmount();
     }
   });
 
-  it('renders static markup without browser globals or usable storage', () => {
-    vi.stubGlobal('window', undefined);
-    expect(renderToStaticMarkup(<App />)).toContain('Nest React Boilerplate');
-    vi.unstubAllGlobals();
+  it('renders the home shell even when local storage access throws', async () => {
     installStorage();
-
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
       get: () => {
@@ -282,7 +304,9 @@ describe('User app shell', () => {
       },
     });
 
-    expect(renderToStaticMarkup(<App />)).toContain('Account essentials');
+    const { container } = render(<App />);
+    await screen.findByText('Account essentials');
+    expect(container.innerHTML).toContain('Nest React Boilerplate');
   });
 
   it('loads a profile after login establishes a cookie session', async () => {
@@ -298,7 +322,7 @@ describe('User app shell', () => {
     );
 
     render(<App />);
-    submitLogin('ready@example.com');
+    await submitLogin('ready@example.com');
 
     expect(await screen.findByText('Ready: ready@example.com')).toBeTruthy();
     expectFetchRequest(fetchMock, '/auth/me', {
@@ -322,7 +346,7 @@ describe('User app shell', () => {
     );
 
     render(<App />);
-    submitLogin('return@example.com');
+    await submitLogin('return@example.com');
 
     await waitFor(() => {
       expect(window.location.pathname).toBe('/profile');
@@ -333,7 +357,7 @@ describe('User app shell', () => {
   it('shows forbidden states for profile response and thrown failures', async () => {
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), jsonResponse({}, false, 403));
     const { unmount } = render(<App />);
-    submitLogin();
+    await submitLogin();
     expect(await screen.findByText('Forbidden: Request failed with 403.')).toBeTruthy();
     unmount();
 
@@ -341,14 +365,14 @@ describe('User app shell', () => {
       rejectsWith: 'network failed',
     });
     render(<App />);
-    submitLogin();
+    await submitLogin();
     expect(await screen.findByText('Forbidden: Profile request failed.')).toBeTruthy();
   });
 
   it('handles incomplete profile payloads and non-error auth rejections', async () => {
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), jsonResponse({ data: {} }));
     const { unmount } = render(<App />);
-    submitLogin();
+    await submitLogin();
     expect(await screen.findByText('Ready: unknown')).toBeTruthy();
     unmount();
     cleanup();
@@ -365,7 +389,7 @@ describe('User app shell', () => {
     vi.spyOn(rejectAuthResponse, 'json').mockImplementation(rejectAuthJson);
     setFetch(rejectAuthResponse);
     render(<App />);
-    submitLogin();
+    await submitLogin();
 
     await waitFor(() => {
       expect(screen.getByText('Sign in or register to continue.')).toBeTruthy();
@@ -383,7 +407,7 @@ describe('User app shell', () => {
     );
 
     render(<App />);
-    submitLogin();
+    await submitLogin();
 
     expect(await screen.findByText('Готово: profile-subject')).toBeTruthy();
     expectFetchRequest(fetchMock, '/auth/me', {
@@ -408,7 +432,7 @@ describe('User app shell', () => {
     );
 
     render(<App />);
-    submitLogin();
+    await submitLogin();
     expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
 
     chooseSelectOption('Language', 'ru');
@@ -466,7 +490,7 @@ describe('User app shell', () => {
     );
 
     render(<App />);
-    submitLogin();
+    await submitLogin();
     expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
 
     chooseSelectOption('Theme', 'dark');
@@ -507,7 +531,7 @@ describe('User app shell', () => {
     window.history.pushState({}, '', '/auth');
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText('Login email'), {
+    fireEvent.change(await screen.findByLabelText('Login email'), {
       target: { value: 'user@example.com' },
     });
     fireEvent.change(screen.getByLabelText('Login password'), {
@@ -523,7 +547,7 @@ describe('User app shell', () => {
     window.history.pushState({}, '', '/auth');
     const { unmount } = render(<App />);
 
-    fireEvent.change(screen.getByLabelText('Register display name'), {
+    fireEvent.change(await screen.findByLabelText('Register display name'), {
       target: { value: 'Registered User' },
     });
     fireEvent.change(screen.getByLabelText(/^(Register email|Email de registro)$/u), {
@@ -539,7 +563,7 @@ describe('User app shell', () => {
     setFetch(jsonResponse({ data: {} }));
     window.history.pushState({}, '', '/auth');
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Login' }));
     await waitFor(() => {
       expect(screen.getByText('Sign in or register to continue.')).toBeTruthy();
     });
@@ -553,7 +577,7 @@ describe('User app shell', () => {
     );
     window.history.pushState({}, '', '/auth');
     const { unmount } = render(<App />);
-    submitLogin();
+    await submitLogin();
     expect(await screen.findByText('Ready: after-auth@example.com')).toBeTruthy();
     unmount();
 
@@ -561,7 +585,7 @@ describe('User app shell', () => {
       rejectsWith: { detail: 'Object detail' },
     });
     render(<App />);
-    submitLogin();
+    await submitLogin();
     expect(await screen.findByText('Forbidden: Profile request failed.')).toBeTruthy();
   });
 
@@ -582,7 +606,7 @@ describe('User app shell', () => {
       }),
     );
     const { unmount } = render(<App />);
-    submitLogin();
+    await submitLogin();
     expect(await screen.findByText('Готово: locale@example.com')).toBeTruthy();
     unmount();
 
@@ -595,7 +619,7 @@ describe('User app shell', () => {
     );
     window.history.pushState({}, '', '/auth');
     render(<App />);
-    screen.getByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u).remove();
+    (await screen.findByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u)).remove();
     fireEvent.change(screen.getByLabelText(/^(Register email|Email для регистрации)$/u), {
       target: { value: 'registered@example.com' },
     });
@@ -622,7 +646,7 @@ describe('User app shell', () => {
     window.history.pushState({}, '', '/unknown');
     render(<App />);
 
-    expect(screen.getByText('Account essentials')).toBeTruthy();
+    expect(await screen.findByText('Account essentials')).toBeTruthy();
     expect(window.location.pathname).toBe('/unknown');
   });
 

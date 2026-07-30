@@ -1,3 +1,5 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
+// Evidence for: REQ-RUNTIME-LIFECYCLE-004
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
@@ -20,7 +22,9 @@ const mocks = vi.hoisted(() => {
     logger,
     middleware,
     nestCreate: vi.fn(() => Promise.resolve(app)),
+    initOpenTelemetry: vi.fn(),
     setupSwagger: vi.fn(),
+    shutdownOpenTelemetry: vi.fn(() => Promise.resolve()),
     getPortEnvVarName: vi.fn((appName: string) => {
       const segments = appName
         .trim()
@@ -48,6 +52,11 @@ vi.mock('@app/backend-common-logger', () => ({
   createLogger: mocks.createLogger,
 }));
 
+vi.mock('@app/backend-common-otel', () => ({
+  initOpenTelemetry: mocks.initOpenTelemetry,
+  shutdownOpenTelemetry: mocks.shutdownOpenTelemetry,
+}));
+
 vi.mock('@app/backend-common-swagger', () => ({
   setupSwagger: mocks.setupSwagger,
 }));
@@ -64,6 +73,8 @@ describe('bootstrap', () => {
   const originalEnvironment = {
     gracefulShutdown: process.env.GRACEFUL_SHUTDOWN,
     nodeEnv: process.env.NODE_ENV as string | undefined,
+    npmPackageVersion: process.env.npm_package_version,
+    otelServiceVersion: process.env.OTEL_SERVICE_VERSION,
     port: process.env.PORT,
     testApiPort: process.env.TEST_API_PORT,
   };
@@ -71,6 +82,8 @@ describe('bootstrap', () => {
   beforeEach(() => {
     delete process.env.GRACEFUL_SHUTDOWN;
     delete process.env.NODE_ENV;
+    delete process.env.npm_package_version;
+    delete process.env.OTEL_SERVICE_VERSION;
     delete process.env.PORT;
     delete process.env.TEST_API_PORT;
     vi.clearAllMocks();
@@ -79,12 +92,15 @@ describe('bootstrap', () => {
   afterEach(() => {
     process.env.GRACEFUL_SHUTDOWN = originalEnvironment.gracefulShutdown ?? '';
     process.env.NODE_ENV = originalEnvironment.nodeEnv ?? '';
+    process.env.npm_package_version = originalEnvironment.npmPackageVersion ?? '';
+    process.env.OTEL_SERVICE_VERSION = originalEnvironment.otelServiceVersion ?? '';
     process.env.PORT = originalEnvironment.port ?? '';
     process.env.TEST_API_PORT = originalEnvironment.testApiPort ?? '';
   });
 
   it('creates and listens with static options', async () => {
     process.env.NODE_ENV = 'test';
+    process.env.OTEL_SERVICE_VERSION = '1.2.3';
     const beforeListen = vi.fn();
     const afterListen = vi.fn();
 
@@ -99,7 +115,12 @@ describe('bootstrap', () => {
     });
 
     expect(app).toBe(mocks.app);
-    expect(mocks.nestCreate).toHaveBeenCalledWith(TestModule, {
+    expect(mocks.initOpenTelemetry).toHaveBeenCalledWith({
+      serviceName: 'test-api',
+      serviceVersion: '1.2.3',
+      environment: 'test',
+    });
+    expect(mocks.nestCreate).toHaveBeenCalledWith(expect.objectContaining({ imports: [TestModule] }), {
       logger: mocks.logger,
       rawBody: true,
     });
@@ -139,5 +160,6 @@ describe('bootstrap', () => {
     await expect(bootstrap({ name: 'broken-api', module: TestModule, port: 70_000 })).rejects.toThrow(
       'Invalid port for broken-api: 70000',
     );
+    expect(mocks.shutdownOpenTelemetry).toHaveBeenCalledOnce();
   });
 });

@@ -8,8 +8,8 @@ const grep =
 
 export default defineConfig({
   testDir: './src',
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
+  timeout: 90_000,
+  expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,

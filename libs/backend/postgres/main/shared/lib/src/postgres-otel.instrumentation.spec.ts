@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import { describe, expect, it } from 'vitest';
 import { createPostgresOpenTelemetryInstrumentations } from './postgres-otel.instrumentation';
 

@@ -85,7 +85,7 @@ pnpm nrb setup              # apply
 | Check             | Symptom                                                | Fix                                                                         |
 | ----------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
 | `runtime-version` | `Node.js v24.x.x — repository requires >=24 <25`       | `nvm use` or install the latest Node.js 24 release.                         |
-| `pnpm`            | `pnpm not found`                                       | `corepack enable && corepack prepare pnpm@11.11.0 --activate`.              |
+| `pnpm`            | `pnpm not found`                                       | `corepack enable && corepack prepare pnpm@11.15.1 --activate`.              |
 | `docker`          | `Docker not available`                                 | Install Docker Desktop or Docker Engine. Marked as optional for E2E.        |
 | `manifests`       | `Missing: package.json`                                | Check that you're in the workspace root.                                    |
 | `lock-file`       | `pnpm-lock.yaml not found`                             | Run `pnpm install`.                                                         |
@@ -239,8 +239,8 @@ pnpm install --frozen-lockfile
 
 ```bash
 corepack enable
-corepack prepare pnpm@11.11.0 --activate
-pnpm --version  # should show 11.11.0
+corepack prepare pnpm@11.15.1 --activate
+pnpm --version  # should show 11.15.1
 ```
 
 ## Environment variable issues

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RedisClientLike } from '@app/backend-common-redis';
 
@@ -67,6 +68,7 @@ const mocks = vi.hoisted(() => {
     fastifySession: vi.fn(),
     helmet: vi.fn(() => helmetMiddleware),
     helmetMiddleware,
+    initOpenTelemetry: vi.fn(),
     localeMiddleware,
     mergeVaryHeader: vi.fn((currentValue: unknown) =>
       typeof currentValue === 'string' && currentValue.length > 0
@@ -85,6 +87,7 @@ const mocks = vi.hoisted(() => {
     }),
     resolveLocaleFromRequest: vi.fn(() => 'en'),
     setupSwagger: vi.fn(),
+    shutdownOpenTelemetry: vi.fn(() => Promise.resolve()),
     translate: vi.fn((key: string) =>
       key === 'errors.rate-limited.title' ? 'Too Many Requests' : 'Too many requests.',
     ),
@@ -143,6 +146,11 @@ vi.mock('@app/backend-common-response', () => ({
 
 vi.mock('@app/backend-common-logger', () => ({
   createLogger: mocks.createLogger,
+}));
+
+vi.mock('@app/backend-common-otel', () => ({
+  initOpenTelemetry: mocks.initOpenTelemetry,
+  shutdownOpenTelemetry: mocks.shutdownOpenTelemetry,
 }));
 
 vi.mock('@app/backend-common-swagger', () => ({
@@ -246,6 +254,8 @@ describe('bootstrapNestApi', () => {
     mongoDatabase: process.env.MONGODB_DATABASE,
     mongoReplicaSet: process.env.MONGODB_REPLICA_SET,
     mongoUri: process.env.MONGODB_URI,
+    npmPackageVersion: process.env.npm_package_version,
+    otelServiceVersion: process.env.OTEL_SERVICE_VERSION,
     port: process.env.PORT,
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED,
     rateLimitInMemoryAllowed: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED,
@@ -273,6 +283,8 @@ describe('bootstrapNestApi', () => {
     delete process.env.MONGODB_DATABASE;
     delete process.env.MONGODB_REPLICA_SET;
     delete process.env.MONGODB_URI;
+    delete process.env.npm_package_version;
+    delete process.env.OTEL_SERVICE_VERSION;
     delete process.env.PORT;
     delete process.env.RATE_LIMIT_ENABLED;
     delete process.env.RATE_LIMIT_IN_MEMORY_ALLOWED;
@@ -302,6 +314,8 @@ describe('bootstrapNestApi', () => {
     process.env.MONGODB_DATABASE = originalEnvironment.mongoDatabase ?? '';
     process.env.MONGODB_REPLICA_SET = originalEnvironment.mongoReplicaSet ?? '';
     process.env.MONGODB_URI = originalEnvironment.mongoUri ?? '';
+    process.env.npm_package_version = originalEnvironment.npmPackageVersion ?? '';
+    process.env.OTEL_SERVICE_VERSION = originalEnvironment.otelServiceVersion ?? '';
     process.env.PORT = originalEnvironment.port ?? '';
     process.env.RATE_LIMIT_ENABLED = originalEnvironment.rateLimitEnabled ?? '';
     process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = originalEnvironment.rateLimitInMemoryAllowed ?? '';
@@ -331,9 +345,45 @@ describe('bootstrapNestApi', () => {
       logger: false,
       trustProxy: false,
     });
-    expect(mocks.nestCreate).toHaveBeenCalledWith(TestModule, expect.anything(), { bufferLogs: true, rawBody: true });
+    expect(mocks.nestCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ imports: [TestModule] }),
+      expect.anything(),
+      { bufferLogs: true, rawBody: true },
+    );
     expect(mocks.fastifyRegister).toHaveBeenCalledTimes(2);
     expect(mocks.app.listen).toHaveBeenCalledWith(3010);
+  });
+
+  it('initializes OpenTelemetry before creating the Nest application', async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.OTEL_SERVICE_VERSION = '2.3.4';
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+    });
+
+    expect(mocks.initOpenTelemetry).toHaveBeenCalledWith({
+      serviceName: 'test-api',
+      serviceVersion: '2.3.4',
+      environment: 'test',
+    });
+    expect(mocks.initOpenTelemetry.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.nestCreate.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('shuts OpenTelemetry down when Nest application creation fails', async () => {
+    mocks.nestCreate.mockRejectedValueOnce(new Error('Nest startup failed'));
+
+    await expect(
+      bootstrapNestApi(TestModule, {
+        appName: 'test-api',
+        port: 3010,
+      }),
+    ).rejects.toThrow('Nest startup failed');
+
+    expect(mocks.shutdownOpenTelemetry).toHaveBeenCalledOnce();
   });
 
   it('installs the redacting structured logger so buffered logs are not printed unredacted', async () => {
@@ -478,6 +528,18 @@ describe('bootstrapNestApi', () => {
       mocks.fastifySession,
       expect.not.objectContaining({ store: expect.anything() }),
     );
+  });
+
+  it('fails closed when the selected durable runtime capability is unavailable', async () => {
+    process.env.AUTH_PERSISTENCE = 'postgres';
+    mocks.app.get.mockImplementationOnce(() => {
+      throw new Error('provider not registered');
+    });
+
+    await expect(bootstrapNestApi(TestModule, { appName: 'test-api', port: 3010 })).rejects.toThrow(
+      'The selected backend does not include a durable database runtime. Rerun `pnpm nrb setup`.',
+    );
+    expect(mocks.app.get).toHaveBeenCalledWith(DurableDatabaseRuntimeInjectToken, { strict: false });
   });
 
   it('rejects an environment selector that differs from the compiled runtime', async () => {

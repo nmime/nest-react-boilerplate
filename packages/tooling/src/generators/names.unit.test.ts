@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-GENERATORS-003
 /**
  * Tests for the shared name utilities used by all generators.
  *
@@ -16,6 +17,7 @@ import {
   toTitle,
   toConstant,
   generateNames,
+  generatedRequirementId,
   validateName,
 } from './names.js';
 
@@ -118,6 +120,13 @@ describe('names utilities', () => {
       assert.equal(names.kebab, 'user-profile-settings-v2');
       assert.equal(names.pascal, 'UserProfileSettingsV2');
       assert.equal(names.camel, 'userProfileSettingsV2');
+    });
+  });
+
+  describe('generatedRequirementId', () => {
+    it('creates a valid deterministic bootstrap ID for single and multi-word owners', () => {
+      assert.equal(generatedRequirementId('billing'), 'REQ-BILLING-SCAFFOLD-001');
+      assert.equal(generatedRequirementId('Support Cases'), 'REQ-SUPPORT-CASES-SCAFFOLD-001');
     });
   });
 

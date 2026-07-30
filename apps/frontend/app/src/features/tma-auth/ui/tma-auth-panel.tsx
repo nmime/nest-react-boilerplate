@@ -1,7 +1,7 @@
 import type { TranslationKey, TranslationParams } from '@app/frontend-runtime';
 import { getErrorReason } from '../../../shared/lib';
 import { UiAlert, UiCard, UiLoading, UiToast } from '../../../shared/ui';
-import type { TmaDeepNavigationState, TmaLaunchIntent } from '../model';
+import type { TmaDeepNavigationState, TmaLaunchIntent } from '@app/frontend-feature-user-tma-auth';
 
 interface TmaAuthPanelProps {
   deepNavigationState: TmaDeepNavigationState;

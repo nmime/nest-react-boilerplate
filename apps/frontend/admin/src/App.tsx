@@ -1,5 +1,6 @@
-import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactElement, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { RouterProvider } from '@tanstack/react-router';
 import {
   configureApiLocale,
   createDefaultApiToastRules,
@@ -31,149 +32,29 @@ import {
   type Locale,
   type UiTheme,
 } from '@app/frontend-runtime';
-import { UiErrorBoundary, UiApiRuntimeOverlay, UiLoading, UiSection } from '@app/frontend-ui-web';
+import { UiErrorBoundary, UiApiRuntimeOverlay } from '@app/frontend-ui-web';
+import { useSessionPreferenceControls } from '@app/frontend-feature-shared-preferences';
 import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
 import { createAdminAccess, fetchAdminProfile } from './entities/admin-session';
 import {
-  getBrowserPath,
   getConfiguredAdminApiBaseUrl,
   getConfiguredAuthApiBaseUrl,
   getFrontendEnv,
+  stripSensitiveBrowserTokenParams,
   type AuthMePayload,
 } from './features/admin-auth';
 import { getPayloadTheme } from './features/admin-preferences';
-import { AuditPage } from './pages/audit';
-import { AuthLoginAnalyticsPage } from './pages/auth-login-analytics';
-import { DashboardPage } from './pages/dashboard';
-import { FeatureFlagsPage } from './pages/feature-flags';
-import { ForbiddenPage } from './pages/forbidden';
-import { NotFoundPage } from './pages/not-found';
-import { NotificationBroadcastsPage } from './pages/notification-broadcasts';
-import { NotificationSegmentsPage } from './pages/notification-segments';
-import { NotificationTemplatesPage } from './pages/notification-templates';
-import { ProfilePage } from './pages/profile';
-import { ProblemPresentationsPage } from './pages/problem-presentations';
-import { RolesPage } from './pages/roles';
-import { UsersPage } from './pages/users';
-import { fallbackTranslate, isUsersRoute, normalizeAdminPath, type AdminProfileState, type Translate } from './shared';
-import { AdminLayout } from './widgets/admin-shell';
+import { AdminRuntimeProvider } from './app/router/admin-runtime-context';
+import { createAdminRouter } from './app/router/admin-route-tree';
+import { type AdminProfileState } from './shared';
 
-export interface AdminRouteRuntime {
-  requestOptions?: ApiClientRequestOptions;
-}
+// The RBAC route matrix moved into the router module; re-exported so existing
+// route/page tests can keep asserting the matrix directly.
+export * from './app/router/admin-route-matrix';
 
 interface AdminAppProps {
   applyUserLocale: (locale: Locale) => void;
   applyUserTheme: (theme: UiTheme) => void;
-}
-
-/* eslint-disable sonarjs/cognitive-complexity -- route matrix is explicit for RBAC auditability. */
-function renderReadyAdminRoute(
-  path: string,
-  state: Extract<AdminProfileState, { status: 'ready' }>,
-  t: Translate,
-  runtime: AdminRouteRuntime,
-): ReactElement {
-  const routePath = normalizeAdminPath(path);
-  if (routePath === '/' || routePath === '/dashboard') {
-    return state.access.canReadDashboard ? (
-      <DashboardPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.dashboardMissing')} />
-    );
-  }
-  if (isUsersRoute(routePath)) {
-    return state.access.canReadUsers ? (
-      <UsersPage access={state.access} currentPath={path} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.usersMissing')} />
-    );
-  }
-  if (routePath === '/roles') {
-    return state.access.canReadRoles ? (
-      <RolesPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.rolesMissing')} />
-    );
-  }
-  if (routePath === '/audit' || routePath.startsWith('/audit/')) {
-    return state.access.canReadAudit ? (
-      <AuditPage currentPath={path} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.auditMissing')} />
-    );
-  }
-  if (routePath === '/auth/login-analytics') {
-    return state.access.canReadAuthLoginAnalytics ? (
-      <AuthLoginAnalyticsPage currentPath={path} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.authLoginAnalyticsMissing')} />
-    );
-  }
-  if (routePath === '/profile') {
-    return state.access.canReadProfile ? (
-      <ProfilePage payload={state.payload} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.profileMissing')} />
-    );
-  }
-  if (routePath === '/settings/errors') {
-    return state.access.canReadSettings ? (
-      <ProblemPresentationsPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.settingsMissing')} />
-    );
-  }
-  if (routePath === '/settings/feature-flags') {
-    return state.access.canReadFeatureFlags ? (
-      <FeatureFlagsPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.featureFlagsMissing')} />
-    );
-  }
-  if (routePath === '/notifications/templates') {
-    return state.access.canReadNotificationTemplates ? (
-      <NotificationTemplatesPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.notificationTemplatesMissing')} />
-    );
-  }
-  if (routePath === '/notifications/segments') {
-    return state.access.canReadNotificationSegments ? (
-      <NotificationSegmentsPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.notificationSegmentsMissing')} />
-    );
-  }
-  if (routePath === '/notifications/broadcasts') {
-    return state.access.canReadNotificationBroadcasts ? (
-      <NotificationBroadcastsPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.notificationBroadcastsMissing')} />
-    );
-  }
-  return <NotFoundPage />;
-}
-/* eslint-enable sonarjs/cognitive-complexity */
-
-export function renderAdminRoute(
-  path: string,
-  state: AdminProfileState,
-  t: Translate = fallbackTranslate,
-  runtime: AdminRouteRuntime = {},
-): ReactElement {
-  if (state.status === 'loading') {
-    return (
-      <UiSection eyebrow={t('admin.loadingEyebrow')} headingLevel={1} title={t('admin.loadingProfile')}>
-        <UiLoading label={t('admin.loadingProfile')} />
-      </UiSection>
-    );
-  }
-  if (state.status === 'forbidden') {
-    return <ForbiddenPage reason={state.reason} />;
-  }
-  const rendered = renderReadyAdminRoute(path, state, t, runtime);
-  return rendered;
 }
 
 async function fetchAuthMe(
@@ -227,7 +108,12 @@ const AdminWorkspace = ({ applyUserLocale, applyUserTheme }: Readonly<AdminAppPr
   const authClient = useAuthApiClient();
   const adminClient = useAdminApiClient();
   const queryClient = useQueryClient();
-  const [path] = useState(getBrowserPath);
+  // Strip sensitive token query params from the entry URL before the router
+  // reads location (previously done via getBrowserPath at mount).
+  const [router] = useState(() => {
+    stripSensitiveBrowserTokenParams();
+    return createAdminRouter();
+  });
 
   const authMeQuery = useQuery({
     placeholderData: (previousData) => previousData,
@@ -286,108 +172,42 @@ const AdminWorkspace = ({ applyUserLocale, applyUserTheme }: Readonly<AdminAppPr
     },
     retry: false,
   });
-  const renderedRoute = renderAdminRoute(path, state, t, {
-    requestOptions: adminRequestOptions,
-  });
-
-  if (state.status !== 'ready') {
-    return <main id="xr-content">{renderedRoute}</main>;
-  }
 
   return (
-    <AdminLayout
-      access={state.access}
-      currentPath={path}
-      isSigningOut={signOutMutation.isPending}
-      onSignOut={() => {
-        signOutMutation.mutate();
+    <AdminRuntimeProvider
+      value={{
+        state,
+        requestOptions: adminRequestOptions,
+        isSigningOut: signOutMutation.isPending,
+        onSignOut: () => {
+          signOutMutation.mutate();
+        },
       }}
     >
-      {renderedRoute}
-    </AdminLayout>
+      <RouterProvider router={router} />
+    </AdminRuntimeProvider>
   );
 };
 
 const AdminRoot = () => {
-  const [userLocale, setUserLocale] = useState<Locale | null>(null);
-  const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
-  const explicitLocale = useRef<Locale | null>(null);
-  const explicitTheme = useRef<UiTheme | null>(null);
-  const queryClient = useQueryClient();
-  const authClient = useAuthApiClient();
-
-  const preferencesMutation = useMutation({
-    mutationFn: (nextPreferences: { locale?: Locale; theme?: UiTheme }) =>
-      throwOnOpenApiErrorData(
-        authApi.authControllerUpdatePreferences(nextPreferences, {
-          ...authClient.requestOptions,
-        }),
-      ),
-    onSuccess: (body, nextPreferences) => {
-      const persistedLocale = normalizeLocale(body.locale);
-      const persistedTheme = getPayloadTheme(body);
-      explicitLocale.current = persistedLocale ?? nextPreferences.locale ?? explicitLocale.current;
-      explicitTheme.current = persistedTheme ?? nextPreferences.theme ?? explicitTheme.current;
-      /* v8 ignore next 6 -- preference mutation falls back through optional response/request/current values. */
-      setUserLocale(persistedLocale ?? nextPreferences.locale ?? userLocale ?? null);
-      /* v8 ignore next 3 -- preference mutation theme falls back through optional response/request/current values. */
-      setUserTheme(persistedTheme ?? nextPreferences.theme ?? userTheme ?? null);
-      void queryClient.invalidateQueries({
-        queryKey: authApi.getAuthControllerMeQueryKey(),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: adminApi.getAdminProfileControllerMeQueryKey(),
-      });
-    },
-    retry: false,
+  // The admin console shares the user apps' preference model. `guardExplicitOverrides`
+  // keeps a server-derived locale/theme from clobbering a choice the admin has
+  // explicitly made; the admin profile query is refreshed alongside auth/me.
+  const preferences = useSessionPreferenceControls({
+    guardExplicitOverrides: true,
+    invalidateQueryKeys: () => [adminApi.getAdminProfileControllerMeQueryKey()],
   });
-
-  const applyUserLocale = useCallback((nextLocale: Locale) => {
-    if (!explicitLocale.current) {
-      setUserLocale(nextLocale);
-    }
-  }, []);
-  const applyUserTheme = useCallback((nextTheme: UiTheme) => {
-    if (!explicitTheme.current) {
-      setUserTheme(nextTheme);
-    }
-  }, []);
-
-  const persistUserLocale = useCallback(
-    async (nextLocale: Locale) => {
-      explicitLocale.current = nextLocale;
-      setUserLocale(nextLocale);
-      try {
-        await preferencesMutation.mutateAsync({ locale: nextLocale });
-      } catch {
-        // Locale remains persisted locally and can be retried on the next switch.
-      }
-    },
-    [preferencesMutation],
-  );
-  const persistUserTheme = useCallback(
-    async (nextTheme: UiTheme) => {
-      explicitTheme.current = nextTheme;
-      setUserTheme(nextTheme);
-      try {
-        await preferencesMutation.mutateAsync({ theme: nextTheme });
-      } catch {
-        // Theme remains persisted locally and can be retried on the next switch.
-      }
-    },
-    [preferencesMutation],
-  );
 
   return (
     <FrontendI18nProvider
-      onLocaleChange={persistUserLocale}
-      onThemeChange={persistUserTheme}
+      onLocaleChange={preferences.persistUserLocale}
+      onThemeChange={preferences.persistUserTheme}
       translations={adminFrontendTranslations}
-      userLocale={userLocale}
-      userTheme={userTheme}
+      userLocale={preferences.userLocale}
+      userTheme={preferences.userTheme}
     >
       <ApiClientLocaleBridge>
-        <AdminWorkspace applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} />
+        <AdminWorkspace applyUserLocale={preferences.applyUserLocale} applyUserTheme={preferences.applyUserTheme} />
       </ApiClientLocaleBridge>
     </FrontendI18nProvider>
   );

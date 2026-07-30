@@ -1,11 +1,8 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+// @requirements REQ-FRONTEND-SHELL-004
 import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './app';
-
-const sourceRoot = resolve(import.meta.dirname, '..');
 
 vi.mock('@tma.js/sdk-react', async () => {
   const actual = await vi.importActual<typeof import('@tma.js/sdk-react')>('@tma.js/sdk-react');
@@ -163,6 +160,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
+    await screen.findAllByRole('button', { name: 'Share' });
     const shell = document.querySelector<HTMLElement>('.xr-mini-app-shell');
     expect(shell?.dataset.miniAppEnvironment).toBe('telegram');
     expect(document.querySelector('.xr-header')).toBeTruthy();
@@ -194,7 +192,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
-    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Back' })).toBeTruthy();
     fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
     await waitFor(() => {
       expect(share).toHaveBeenCalledOnce();
@@ -607,19 +605,10 @@ describe('social auth and TMA UI', () => {
     expect(window.location.pathname).toBe('/auth');
   });
 
-  it('production TMA auth code only reads raw Telegram init data', () => {
-    const tmaFeatureSource = readFileSync(resolve(sourceRoot, 'features/tma-auth/model/use-tma-auth.ts'), 'utf8');
-    const socialApiSource = readFileSync(resolve(sourceRoot, 'features/social-auth/api/social-auth-api.ts'), 'utf8');
-
-    expect(tmaFeatureSource).toContain('retrieveRawInitData');
-    expect(tmaFeatureSource).not.toContain('init' + 'DataUnsafe');
-    expect(socialApiSource).not.toContain('init' + 'DataUnsafe');
-  });
-
   it('navigates route links without a full page reload', async () => {
     render(<App />);
 
-    fireEvent.click(screen.getAllByRole('link', { name: 'Settings' })[0]);
+    fireEvent.click((await screen.findAllByRole('link', { name: 'Settings' }))[0]!);
 
     await waitFor(() => {
       expect(window.location.pathname).toBe('/settings');

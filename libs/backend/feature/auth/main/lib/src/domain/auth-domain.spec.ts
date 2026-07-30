@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { describe, expect, it, vi } from 'vitest';
 import { normalizeEmail } from './email-address';
 import { hashPassword, verifyPassword } from './password.service';

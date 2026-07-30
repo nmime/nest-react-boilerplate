@@ -1,13 +1,20 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { resolve, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const outputRoot = join(import.meta.dirname, '../../../../dist/apps/frontend/mobile');
-const indexPath = join(outputRoot, 'index.html');
+export const defaultWebOutputRoot = join(import.meta.dirname, '../../../../dist/apps/frontend/mobile');
 
-assert.equal(existsSync(indexPath), true, `Missing Expo web export: ${indexPath}`);
-const html = readFileSync(indexPath, 'utf8');
-assert.match(html, /<html/iu);
-assert.match(html, /<script/iu);
+export function assertExpoWebExport(outputRoot = defaultWebOutputRoot) {
+  const indexPath = join(outputRoot, 'index.html');
+  assert.equal(existsSync(indexPath), true, `Missing Expo web export: ${indexPath}`);
+  const html = readFileSync(indexPath, 'utf8');
+  assert.match(html, /<html/iu);
+  assert.match(html, /<script/iu);
 
-console.log('Expo web export smoke passed.');
+  return { indexPath };
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  console.log(JSON.stringify({ ...assertExpoWebExport(), platform: 'web', status: 'ok' }));
+}

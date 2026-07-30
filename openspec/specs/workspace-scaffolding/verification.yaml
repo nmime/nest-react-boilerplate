@@ -1,0 +1,282 @@
+version: 3
+capability: workspace-scaffolding
+owners:
+  product: tooling-maintainers
+  verification: generated-code-maintainers
+  security: security-maintainers
+  operations: release-engineering
+requirements:
+  - id: REQ-SCAFFOLD-OWNERSHIP-001
+    projects:
+      - '@repo/tooling'
+      - '@app/backend'
+      - '@app/frontend'
+      - acceptance-e2e
+    risk: high
+    profiles:
+      - tooling
+      - domain
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Generated ownership and layout invariants are proven directly from generator output and policy checks.
+      alternativeEvidence:
+        - static
+        - vitest
+    evidence:
+      - kind: static
+        file: packages/tooling/src/generators/application/generator.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/generators/application/generator.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/workspace-scaffolding/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-SELECTION-002
+    projects:
+      - '@repo/tooling'
+      - fullstack-e2e
+    risk: high
+    profiles:
+      - tooling
+      - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Workspace selection repeatability is a deterministic planner and filesystem contract.
+      alternativeEvidence:
+        - static
+        - vitest
+    evidence:
+      - kind: static
+        file: packages/tooling/src/setup/catalog.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/setup/planner.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/e2e/fullstack/tests/compose.test.ts
+        target: fullstack-e2e:test
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-GENERATORS-003
+    projects:
+      - '@repo/tooling'
+      - acceptance-e2e
+    risk: high
+    profiles:
+      - tooling
+      - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Generator idempotency and collision safety require direct dry-run and filesystem assertions.
+      alternativeEvidence:
+        - static
+        - vitest
+        - component
+    evidence:
+      - kind: static
+        file: packages/tooling/src/generators/feature/generator.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/generators/feature/generator.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/generators/application/generated.integration.ts
+        script: scaffold:verify
+        lanes:
+          - main
+          - nightly
+  - id: REQ-SCAFFOLD-INIT-004
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Initialization safety is a deterministic command, manifest, and filesystem contract.
+      alternativeEvidence:
+        - static
+        - vitest
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/project/init-project.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/project/init-project.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-TOOLING-005
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Setup convergence and catalog correctness require direct planner and filesystem assertions.
+      alternativeEvidence:
+        - static
+        - vitest
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/project/setup.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/project/setup.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-QUALITY-006
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Quality-lane routing and executable gate registration are tooling and operational contracts.
+      alternativeEvidence:
+        - static
+        - operations
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/testing/frontend-browser-e2e-coverage.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/testing/frontend-browser-e2e-coverage.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/test-orchestration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/world-class-gates.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/browser-matrix.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly
+  - id: REQ-SCAFFOLD-AGENTS-007
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Agent workflow discoverability is enforced by static policy validation and canonical documentation.
+      alternativeEvidence:
+        - static
+        - documentation
+    evidence:
+      - kind: static
+        file: packages/tooling/scripts/validate-agent-skills.mjs
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/scripts/validate-agent-skills.spec.mjs
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/workspace-scaffolding/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-SCAFFOLD-SAFETY-008
+    projects:
+      - '@repo/tooling'
+    risk: critical
+    profiles:
+      - tooling
+      - persistence
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Destructive-operation guards require direct static, component, and adversarial safety evidence.
+      alternativeEvidence:
+        - static
+        - component
+        - security
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/db/restore.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/db/restore-safety.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: packages/tooling/src/commands/db/restore-safety.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main

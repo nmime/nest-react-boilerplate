@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+const treeContainsFiles = (root) =>
+  existsSync(root) &&
+  readdirSync(root, { withFileTypes: true }).some(
+    (entry) => !entry.isDirectory() || treeContainsFiles(new URL(`${entry.name}/`, root)),
+  );
 const has = (text, needle, label = needle) =>
   assert.ok(text.includes(needle), `Missing expected deployment config: ${label}`);
 // Quote-agnostic: try single-quote and double-quote variants.
@@ -101,7 +106,7 @@ assert.ok(
   'Docker source builds must not fall back to the all-workspace manifest tree.',
 );
 assert.ok(
-  !existsSync(new URL('../docker/workspace-manifests', import.meta.url)) &&
+  !treeContainsFiles(new URL('../docker/workspace-manifests/', import.meta.url)) &&
     !existsSync(new URL('../scripts/sync-docker-workspace-manifests.mjs', import.meta.url)),
   'Retired Docker workspace manifest artifacts and their synchronizer must be removed.',
 );
@@ -115,6 +120,16 @@ has(
   dockerfile,
   'run-many -t build export',
   'Dockerfile builder supports non-build frontend targets such as mobile export',
+);
+has(
+  dockerfile,
+  'deployment-artifact.ts stage "${PROJECT}" /site-deploy',
+  'site runtime stages only its selected-closure deployment artifact',
+);
+has(
+  dockerfile,
+  'RUN pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts',
+  'site runtime installs only staged production dependencies',
 );
 has(
   dockerfile,
@@ -134,6 +149,7 @@ for (const expected of [
   "AUTH_TELEGRAM_ENABLED: 'true'",
   "TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'",
   "VITE_TELEGRAM_AUTH_ENABLED: 'true'",
+  'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app',
 ]) {
   has(runtimeOpsJob, expected, `runtime QA Telegram TMA fixture ${expected}`);
 }
@@ -166,6 +182,7 @@ has(
   'deployment-artifact.ts stage-migrator /migrator',
   'migrator stages only the selected provider dependency manifest',
 );
+has(migratorStage, 'USER 1000:1000', 'migrator image defaults to the numeric non-root node user');
 has(
   migratorStage,
   'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
@@ -199,14 +216,61 @@ assert.ok(
   !migratorStage.includes('COPY .nrb'),
   'Final migrator stage must not copy selected closure filesystem state.',
 );
+assert.ok(
+  !migratorStage.includes('/usr/local/bin/pnpm'),
+  'Migrator runtime must not include pnpm; migrations use the standalone Node runner.',
+);
+
+const localCompose = read('docker/docker-compose.yml');
+const localMigrateService = yamlMapEntry(localCompose, 'migrate');
+assert.ok(
+  !localMigrateService.includes('command:'),
+  'Local Compose must inherit the migrator image command instead of overriding it with workspace tooling.',
+);
+has(
+  localCompose,
+  'NATS_SERVERS: ${NATS_SERVERS:-nats://nats:4222}',
+  'Local Compose addresses the profile-gated NATS service when it is selected',
+);
+const productionCompose = read('docker/docker-compose.prod.yml');
+const productionMigrateCommand = section(
+  productionCompose,
+  'x-migrate-command: &migrate-command',
+  'x-backend-healthcheck: &backend-healthcheck',
+);
+has(
+  productionMigrateCommand,
+  'exec node docker/migrator-run.mjs',
+  'production Compose invokes the standalone migration runner after resolving the selected provider credential',
+);
+has(productionMigrateCommand, 'case "$${DATABASE_ENGINE:-}" in', 'production migration selects an explicit provider');
+has(productionMigrateCommand, 'MONGODB_URI', 'production migration resolves MongoDB credentials');
+has(
+  productionMigrateCommand,
+  'DATABASE_ENGINE must be selected by a production database overlay',
+  'production migration fails closed without a provider overlay',
+);
+assert.ok(
+  !productionMigrateCommand.includes('pnpm'),
+  'Production migrations must not depend on the package manager removed from runtime images.',
+);
 
 // Backend images ship per-app production dependencies computed from each app's
 // generated dist package.json + pruned lockfile, not the whole-workspace tree.
 const backendDepsStage = section(dockerfile, 'FROM builder AS backend-deps', 'FROM node:${NODE_VERSION} AS backend');
 has(
   backendDepsStage,
-  'pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts',
-  'backend-deps installs per-app prod dependencies from the fetched store with registry metadata fallback',
+  'COPY --from=nrb-closure pnpm-workspace.yaml ./pnpm-workspace.yaml',
+  'backend-deps retains the root override policy recorded in each generated lockfile',
+);
+has(
+  backendDepsStage,
+  'pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts',
+  'backend-deps installs the reviewed per-app production lockfile without re-resolution',
+);
+assert.ok(
+  !backendDepsStage.includes('--no-frozen-lockfile') && !backendDepsStage.includes('--ignore-workspace'),
+  'Backend dependency installation must not bypass the generated lockfile or its security overrides.',
 );
 has(
   backendDepsStage,
@@ -215,6 +279,7 @@ has(
 );
 has(backendDepsStage, 'WORKDIR /runtime', 'backend-deps installs outside the source workspace');
 const backendStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS backend', 'FROM nginxinc/nginx-unprivileged');
+has(backendStage, 'USER 1000:1000', 'backend image defaults to the numeric non-root node user');
 has(
   backendStage,
   'COPY --from=backend-deps /runtime/node_modules ./node_modules',
@@ -430,11 +495,18 @@ for (const [service, variable, port, profile] of [
   has(serviceBlock, 'host_ip: 127.0.0.1', `${service} production binds published ports to loopback`);
 }
 has(prodCompose, 'http://127.0.0.1:80/ready', 'prod backend healthcheck targets readiness-aware /ready endpoint');
+has(prodCompose, 'su-exec 1000:1000 node -e', 'prod backend healthcheck drops to numeric UID/GID 1000');
 assert.ok(
   !prodCompose.includes('http://127.0.0.1:80/health'),
   'Production Compose backend healthcheck must use readiness-aware /ready rather than liveness-only /health.',
 );
 has(prodCompose, 'http://127.0.0.1:8080/nginx-health', 'prod frontend healthcheck targets container port 8080');
+has(prodCompose, 'LANDING_USER_APP_URL: ${LANDING_USER_APP_URL:-}', 'landing receives a runtime user-app destination');
+has(
+  prodCompose,
+  'LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}',
+  'landing receives a runtime admin-app destination',
+);
 has(
   prodBuildCompose,
   'NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}',
@@ -516,6 +588,11 @@ has(
   'production Compose passes the auth return URL allowlist to backend containers',
 );
 const prodBackendService = section(prodCompose, 'x-backend-service:', '\nx-frontend-service:');
+has(
+  prodBackendService,
+  "user: '0:0'",
+  'production Compose elevates only the secret-loading backend entrypoint before it drops privileges',
+);
 assert.ok(!prodBackendService.includes('redis:'), 'production backends must not depend on unselected Redis.');
 has(prodRedisCompose, 'redis:', 'selected Redis overlay adds backend Redis dependencies');
 has(
@@ -679,7 +756,7 @@ has(
   'readFullstackSelection',
   'Full-stack e2e reads its application and service graph from the selected closure',
 );
-has(fullstackCompose, 'fullstackSelection.services', 'Full-stack e2e starts every selected closure service');
+has(fullstackCompose, '...stackServices', 'Full-stack e2e starts every selected closure service');
 has(fullstackCompose, 'DATABASE_ENGINE: databaseProvider', 'Full-stack e2e passes the selected database engine');
 has(fullstackCompose, 'DATABASE_URL:', 'Full-stack e2e configures the PostgreSQL connection path');
 has(fullstackCompose, 'MONGODB_URI:', 'Full-stack e2e configures the MongoDB connection path');
@@ -914,8 +991,40 @@ if (validateHelmStatic) {
   ]) {
     has(helmValues, expected, `Helm backup writable non-root volume context ${expected}`);
   }
+  const corootTemplate = read('.helm/templates/coroot.yaml');
+  const networkPolicyTemplate = read('.helm/templates/network-policy.yaml');
+  const valuesSchema = read('.helm/values.schema.json');
+  const liveKubernetesValidator = read('scripts/validate-kubernetes-live.mjs');
+  has(corootTemplate, 'if .Values.coroot.rbac.readSecrets', 'Coroot Secret access is an explicit opt-in');
+  has(helmValues, 'readSecrets: false', 'Coroot Secret access defaults off');
+  for (const expected of [
+    'app.kubernetes.io/component: otel-collector',
+    'operator: NotIn',
+    'port: 4318',
+    '.Values.networkPolicy.otelCollector.prometheusNamespace',
+    '.Values.networkPolicy.otelCollector.exporterNamespace',
+  ]) {
+    has(networkPolicyTemplate, expected, `Helm OTEL NetworkPolicy ${expected}`);
+  }
+  has(deploymentTemplate, 'LANDING_USER_APP_URL', 'Helm landing deployment derives the user-app destination');
+  has(deploymentTemplate, 'LANDING_ADMIN_APP_URL', 'Helm landing deployment derives the admin-app destination');
+  has(valuesSchema, '"minItems": 1', 'Helm schema requires at least one OTEL exporter port');
+  has(valuesSchema, '"maximum": 65535', 'Helm schema bounds OTEL exporter ports');
+  has(valuesSchema, '"pattern": "^[a-z0-9]', 'Helm schema validates OTEL namespace selectors');
+  for (const expected of [
+    "'--dry-run=server'",
+    "'--validate=strict'",
+    "'--force-conflicts'",
+    "'--no-hooks'",
+    "'rollout'",
+    "'history'",
+    'lastSuccessfulTime',
+  ]) {
+    has(liveKubernetesValidator, expected, `Kubernetes no-deploy validation ${expected}`);
+  }
 
   const productionValues = read('.helm/values-production.yaml');
+  has(productionValues, 'readSecrets: false', 'production Coroot Secret access remains disabled');
   const releaseWorkflow = read('.github/workflows/release-images.yml');
   const releaseImagePlan = read('scripts/release-image-plan.mjs');
   const setupCatalog = read('packages/tooling/src/setup/catalog.ts');

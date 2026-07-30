@@ -20,12 +20,14 @@ routes.
 - Build and publish immutable images for every fresh-closure workload enabled by
   effective Helm values. A durable-provider closure includes the migrator when
   migrations are enabled. The release workflow pushes `sha-<git-sha>` GHCR
-  tags, emits SBOM/provenance attestations, scans with Trivy, and signs digests
-  with cosign keyless GitHub OIDC.
-- Telegram's user-app entry is a Vite build-time feature. Set the repository
-  Actions variable `VITE_TELEGRAM_AUTH_ENABLED=true` before publishing the
-  release image used by a Telegram-enabled Helm environment; runtime Helm
-  values cannot retrofit a disabled button into an already-built bundle.
+  tags, emits signed SBOM and SLSA provenance attestations, scans with Trivy,
+  records a passing signed scan attestation, and signs digests with cosign
+  keyless GitHub OIDC.
+- Telegram's user-app entry is a **runtime** flag: set
+  `frontendRuntimeConfig.TELEGRAM_AUTH_ENABLED='true'` and the SPA container
+  renders it into `/runtime-config.js` at start, so the same immutable image
+  serves Telegram-enabled and disabled environments with no rebuild. (The
+  `VITE_TELEGRAM_AUTH_ENABLED` build arg remains only as the local-dev default.)
 - Select externally managed PostgreSQL or a transaction-capable MongoDB replica
   set with `database.engine`; MongoDB also requires matching non-empty
   `database.mongodb.replicaSet` and `replicaSet` URI options.
@@ -75,8 +77,22 @@ routes.
 - Enable ingress/TLS only after DNS and cert-manager/ingress are ready.
 - Keep the unique frontend/API host, TLS, and browser CORS mapping in
   `docs/frontend-deployment-topology.md`; the deployment validator enforces it.
+- The landing deployment derives its user/admin destinations from `ingress.hosts`.
+  Separate hosts become credential-free HTTPS URLs; a shared landing host must
+  give each app a non-root path and becomes a same-origin path. If an app has no
+  public ingress entry, the landing app keeps its local `/app` or `/admin`
+  fallback. No deployment hostname is baked into the frontend image.
 - Tune resources, HPA (with 300s scale-down stabilization), PDBs (`maxUnavailable: 1`), imagePullSecrets, and optional pod/container
   security contexts per environment.
+- Backend and migrator images default to numeric UID/GID 1000 so
+  `runAsNonRoot` works without image-user ambiguity. Production Compose alone
+  configures backend containers as root so the entrypoint can read root-owned
+  Docker secret mounts. The entrypoint drops before the app command, and backend
+  healthchecks drop before running Node, both to numeric UID/GID 1000.
+  The entrypoint checks only declared Docker secret filenames, so Kubernetes
+  service-account projections under `/var/run/secrets` do not trigger the
+  Compose-only guard. Kubernetes uses ConfigMap values plus explicit Secret key
+  references and never needs elevation.
 
 ## Render locally
 
@@ -136,6 +152,19 @@ production only after the platform dependencies exist:
   and restore only with the matching PostgreSQL or MongoDB workflow. The default
   backup pod runs as UID/GID 1000 and sets `fsGroup=1000` so its PVC or
   `emptyDir` mount is writable without root.
+- `networkPolicy.otelCollector` selects the Tempo exporter and Prometheus scrape
+  namespaces. The chart permits only the selected OTLP HTTP app-to-collector,
+  collector exporter, and collector scrape paths when NetworkPolicy is enabled.
+  The collector is explicitly excluded from the broader application policy;
+  Kubernetes unions every policy selecting a pod, so this exclusion is required
+  for the exporter allowlist to remain effective.
+  Namespace selectors must be Kubernetes namespace names and exporter ports must
+  contain at least one unique integer from 1 through 65535. The chart schema and
+  template both reject empty or malformed values rather than rendering an
+  unrestricted egress port rule.
+- `coroot.rbac.readSecrets` is false by default, including production. Coroot
+  workload discovery does not require Secret payloads; enabling cluster-wide
+  Secret `get`/`list` is an explicit product security exception.
 
 See `docs/operations/observability-dr.md` for the RPO/RTO policy, backup hook
 contract, restore steps, and incident runbook.

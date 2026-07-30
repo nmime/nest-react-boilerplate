@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { describe, expect, it } from 'vitest';
 import { AdminProfileController } from './interfaces/http/admin-profile.controller';

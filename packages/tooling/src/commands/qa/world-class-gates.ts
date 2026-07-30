@@ -1,9 +1,21 @@
 #!/usr/bin/env node
+// Evidence for: REQ-ASSURANCE-FRESHNESS-002 REQ-AUTH-AUDIT-008 REQ-NOTIFY-LIFECYCLE-002 REQ-RUNTIME-HEALTH-001 REQ-RUNTIME-MESSAGING-006 REQ-RUNTIME-OBSERVABILITY-005 REQ-RUNTIME-RECOVERY-002 REQ-SCAFFOLD-QUALITY-006 REQ-SOCIAL-LIFECYCLE-005 REQ-SOCIAL-SESSION-002
+// Scheduled operations evidence for REQ-ASSURANCE-FRESHNESS-002,
+// REQ-NOTIFY-LIFECYCLE-002, REQ-RUNTIME-HEALTH-001,
+// REQ-RUNTIME-RECOVERY-002, and REQ-SOCIAL-SESSION-002.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { dockerAvailable } from "../db/postgres-client.ts";
-import { commandExists, envList, ensureDir, parseArgs, readJson, run, writeJson } from "./runtime-utils.ts";
+import { crossBrowserProjects } from "./browser-matrix.ts";
+import { commandExists, envList, ensureDir, packageManagerInvocation, parseArgs, readJson, run, writeJson } from "./runtime-utils.ts";
+import {
+  boundedInteger,
+  disallowedRequiredSkips,
+  parseCommandArgv,
+  unknownWorldClassGates,
+  worldClassGateNames,
+} from "./world-class-policy.ts";
 
 const args = parseArgs();
 if (args.flags.has("dry-run")) {
@@ -18,6 +30,11 @@ const selectedGates = new Set(
     .map((value) => value.trim())
     .filter(Boolean),
 );
+const unknownGates = unknownWorldClassGates(selectedGates);
+if (unknownGates.length) {
+  console.error(`Unknown world-class gate(s): ${unknownGates.join(", ")}`);
+  process.exit(2);
+}
 const scripts = readJson<{ scripts?: Record<string, string> }>("package.json").scripts ?? {};
 
 /** Free-form evidence object each gate returns; fields vary by gate. */
@@ -44,6 +61,11 @@ interface ProbeResult {
   bytes: number;
 }
 
+interface ConfiguredCommand {
+  argv: string[];
+  source: string;
+}
+
 /** Reads the `.details` bag attached to gate assertion errors, if present. */
 function gateDetails(error: unknown): Record<string, unknown> {
   if (error !== null && typeof error === "object" && "details" in error) {
@@ -57,21 +79,6 @@ const results: GateResult[] = [];
 const ciMode = process.env.CI === "true";
 const allowCiSkips = process.env.WORLD_CLASS_ALLOW_CI_SKIPS === "1";
 let backupRestoreEvidence: GateEvidence | undefined;
-
-const requiredGates = [
-  "real-user-journey-e2e",
-  "load-stress-soak",
-  "chaos-resilience",
-  "disaster-recovery",
-  "backup-restore-ci",
-  "multi-tenant-security",
-  "browser-device-cloud-matrix",
-  "canary-synthetic-monitoring",
-  "observability",
-  "migration-rollback",
-  "concurrency-race",
-  "reliability-smoke",
-];
 
 function readText(path: string): string {
   try {
@@ -97,6 +104,14 @@ function missingRuntimeGate(reason: string, details: Record<string, unknown> = {
     status: ciMode && !allowCiSkips ? "failed" : "skipped",
     reason,
     details: { ...details, ciMode, allowCiSkipsEnv: "WORLD_CLASS_ALLOW_CI_SKIPS=1" },
+  };
+}
+
+function missingAuthoritativeCommand(reason: string, details: Record<string, unknown> = {}): GateEvidence {
+  return {
+    status: "failed",
+    reason,
+    details: { ...details, commandFormat: '["program","arg",...]' },
   };
 }
 
@@ -129,34 +144,52 @@ function firstEnv(names: string[]): { name: string; value: string } | null {
   return null;
 }
 
-function assertNonDryRunCommand(command: string, label: string): void {
-  assertGate(!/(^|\s)--dry-run(\s|$)|dry-run/i.test(command), `${label} must not use dry-run`, { command: redact(command) });
+function assertNonDryRunCommand(argv: readonly string[], label: string): void {
+  assertGate(!argv.some((value) => /(^|-)dry-run($|-)/iu.test(value)), `${label} must not use dry-run`, {
+    command: redact(argv.join(" ")),
+  });
 }
 
-function configuredCommand(names: string[], fallback: string): { command: string; source: string };
-function configuredCommand(names: string[], fallback?: string): { command: string; source: string } | null;
-function configuredCommand(names: string[], fallback?: string): { command: string; source: string } | null {
+function configuredCommand(names: string[], fallback: string[]): ConfiguredCommand;
+function configuredCommand(names: string[], fallback?: string[]): ConfiguredCommand | null;
+function configuredCommand(names: string[], fallback?: string[]): ConfiguredCommand | null {
   const fromEnv = firstEnv(names);
-  if (fromEnv) return { command: fromEnv.value, source: fromEnv.name };
-  if (fallback) return { command: fallback, source: "ci-safe-local-default" };
+  if (fromEnv) return { argv: parseCommandArgv(fromEnv.value, fromEnv.name), source: fromEnv.name };
+  if (fallback) return { argv: fallback, source: "ci-safe-local-default" };
   return null;
 }
 
-function runShell(label: string, command: string, extraEnv: NodeJS.ProcessEnv = {}): { commandHash: string; status: number; stdoutHash: string; stderrHash: string } {
-  assertNonDryRunCommand(command, label);
-  const result = run("sh", ["-c", command], { env: extraEnv });
+function runCommand(label: string, configured: ConfiguredCommand, extraEnv: NodeJS.ProcessEnv = {}): { commandHash: string; status: number; stdoutHash: string; stderrHash: string; timeoutMs: number } {
+  assertNonDryRunCommand(configured.argv, label);
+  const [requestedProgram, ...requestedArgs] = configured.argv;
+  assertGate(requestedProgram, `${label} command must not be empty`);
+  const invocation = requestedProgram === "pnpm"
+    ? packageManagerInvocation(requestedArgs)
+    : { command: requestedProgram, args: requestedArgs };
+  const timeoutMs = boundedInteger({
+    fallback: 1_800_000,
+    label: "WORLD_CLASS_COMMAND_TIMEOUT_MS",
+    max: 7_200_000,
+    min: 100,
+    value: process.env.WORLD_CLASS_COMMAND_TIMEOUT_MS,
+  });
+  const result = run(invocation.command, invocation.args, { env: extraEnv, timeoutMs });
   assertGate(result.status === 0, `${label} command failed`, {
-    command: redact(command),
+    command: redact(configured.argv.join(" ")),
     status: result.status,
     stdout: redact(tail(result.stdout)),
     stderr: redact(tail(result.stderr)),
     error: result.error,
+    signal: result.signal,
+    timedOut: result.timedOut,
+    timeoutMs,
   });
   return {
-    commandHash: sha256(command),
+    commandHash: sha256(JSON.stringify(configured.argv)),
     status: result.status,
     stdoutHash: sha256(result.stdout ?? ""),
     stderrHash: sha256(result.stderr ?? ""),
+    timeoutMs,
   };
 }
 
@@ -166,9 +199,13 @@ function urlsFrom(...names: string[]): string[] {
   return [...new Set(urls.map((url) => url.trim()).filter(Boolean))];
 }
 
-function positiveInt(value: string | number | undefined, fallback: number): number {
-  const parsed = Number.parseInt(String(value ?? ""), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+function focusedTestWorkers(): number {
+  return boundedInteger({
+    fallback: 2,
+    label: "VITEST_MAX_WORKERS",
+    max: 8,
+    value: process.env.VITEST_MAX_WORKERS,
+  });
 }
 
 function sleep(ms: number): Promise<void> {
@@ -194,7 +231,15 @@ async function probeUrl(url: string, options: ProbeOptions = {}): Promise<ProbeR
   let response: Response | undefined;
   try {
     response = await fetch(url, {
-      signal: AbortSignal.timeout(Number(process.env.QA_URL_TIMEOUT_MS ?? 15000)),
+      signal: AbortSignal.timeout(
+        boundedInteger({
+          fallback: 15_000,
+          label: "QA_URL_TIMEOUT_MS",
+          max: 120_000,
+          min: 100,
+          value: process.env.QA_URL_TIMEOUT_MS,
+        }),
+      ),
       headers: process.env.QA_CANARY_USER_AGENT ? { "user-agent": process.env.QA_CANARY_USER_AGENT } : undefined,
     });
   } catch (error) {
@@ -210,8 +255,8 @@ async function probeUrl(url: string, options: ProbeOptions = {}): Promise<ProbeR
 }
 
 async function probeUrlWithRetry(target: string, attempts: string | number | undefined, delay: string | number | undefined, options: ProbeOptions = {}): Promise<(ProbeResult & { attempts: number; failures: unknown[] }) | undefined> {
-  const cappedAttempts = Math.min(positiveInt(attempts, 1), 30);
-  const cappedDelay = Math.min(positiveInt(delay, 0), 30000);
+  const cappedAttempts = boundedInteger({ fallback: 1, label: "probe attempts", max: 30, value: attempts });
+  const cappedDelay = boundedInteger({ fallback: 0, label: "probe delay", max: 30_000, min: 0, value: delay });
   const failures: { attempt: number; message: string; details: Record<string, unknown> }[] = [];
   for (let attempt = 1; attempt <= cappedAttempts; attempt += 1) {
     try {
@@ -253,19 +298,32 @@ async function runGate(name: string, check: () => GateEvidence | Promise<GateEvi
   }
 }
 
-function realUserJourneyE2e() {
+async function realUserJourneyE2e() {
   requireScripts(["test:e2e"]);
   const spec = readText("apps/e2e/fullstack/src/fullstack.spec.ts");
   const signals = ["register", "profile", "admin", "frontend"];
   const present = signals.filter((signal) => spec.toLowerCase().includes(signal));
   assertGate(present.length === signals.length, "Fullstack e2e must cover registration, profile, admin, and frontend journeys", { present, signals });
-  return { spec: "apps/e2e/fullstack/src/fullstack.spec.ts", present };
+  const command = configuredCommand(["QA_USER_JOURNEY_COMMAND", "USER_JOURNEY_COMMAND"]);
+  if (!command) {
+    return missingAuthoritativeCommand(
+      "Real-user-journey evidence requires QA_USER_JOURNEY_COMMAND to execute the behavior flow; URL reachability is only canary evidence.",
+      { env: ["QA_USER_JOURNEY_COMMAND"] },
+    );
+  }
+  return {
+    mode: "authoritative-command",
+    source: command.source,
+    spec: "apps/e2e/fullstack/src/fullstack.spec.ts",
+    present,
+    ...runCommand("real user journey", command),
+  };
 }
 
 async function loadStressSoak() {
   requireScripts(["test:perf"]);
   const command = configuredCommand(["QA_LOAD_COMMAND", "LOAD_TEST_COMMAND"]);
-  if (command) return { mode: "command", source: command.source, ...runShell("load/stress/soak", command.command) };
+  if (command) return { mode: "command", source: command.source, ...runCommand("load/stress/soak", command) };
 
   const urls = urlsFrom("QA_LOAD_URLS", "QA_LOAD_URL", "PERF_API_URLS", "PERF_URLS");
   if (!urls.length) {
@@ -273,8 +331,8 @@ async function loadStressSoak() {
       env: ["QA_LOAD_COMMAND", "QA_LOAD_URLS", "QA_LOAD_URL", "PERF_API_URLS", "PERF_URLS"],
     });
   }
-  const requestsPerUrl = Number(process.env.QA_LOAD_REQUESTS ?? 20);
-  const budgetMs = Number(process.env.QA_LOAD_P95_BUDGET_MS ?? 1000);
+  const requestsPerUrl = boundedInteger({ fallback: 20, label: "QA_LOAD_REQUESTS", max: 200, value: process.env.QA_LOAD_REQUESTS });
+  const budgetMs = boundedInteger({ fallback: 1000, label: "QA_LOAD_P95_BUDGET_MS", max: 120_000, value: process.env.QA_LOAD_P95_BUDGET_MS });
   const samples: ProbeResult[] = [];
   for (const url of urls) {
     for (let index = 0; index < requestsPerUrl; index += 1) {
@@ -296,15 +354,20 @@ async function chaosResilience() {
   const target = urls[0];
   const before = await probeUrl(target, { allowNonServerError: true });
   const chaosService = process.env.QA_CHAOS_SERVICE;
+  if (chaosService) {
+    assertGate(/^[a-z0-9][a-z0-9_.-]*$/iu.test(chaosService), "QA_CHAOS_SERVICE contains unsupported characters", {
+      chaosService,
+    });
+  }
   const composeCommand =
     existsSync("docker/docker-compose.yml") && chaosService
-      ? `docker compose -f docker/docker-compose.yml restart ${chaosService}`
+      ? ["docker", "compose", "-f", "docker/docker-compose.yml", "restart", chaosService]
       : undefined;
   const command = configuredCommand(["QA_CHAOS_COMMAND", "CHAOS_TEST_COMMAND"], composeCommand);
   assertGate(command, "Chaos gate requires QA_CHAOS_COMMAND or an explicit QA_CHAOS_SERVICE", {
     env: ["QA_CHAOS_COMMAND", "QA_CHAOS_SERVICE"],
   });
-  const commandEvidence = runShell("chaos injection", command.command);
+  const commandEvidence = runCommand("chaos injection", command);
   const after = await probeUrlWithRetry(
     target,
     process.env.QA_CHAOS_PROBE_ATTEMPTS ?? 6,
@@ -314,16 +377,11 @@ async function chaosResilience() {
   return { mode: "command-and-probe", commandSource: command.source, before, after, ...commandEvidence };
 }
 
-function backupRestoreCommand(outputName: string): string {
-  const output = join("test-results", "world-class", outputName);
-  return `pnpm run db:backup -- --output ${output} && pnpm run db:restore -- --input ${output} --yes`;
-}
-
 function runBackupRestore() {
   if (backupRestoreEvidence) return backupRestoreEvidence;
   const explicitCommand = configuredCommand(["QA_BACKUP_RESTORE_COMMAND", "BACKUP_RESTORE_COMMAND"]);
   if (explicitCommand) {
-    backupRestoreEvidence = { mode: "command", source: explicitCommand.source, ...runShell("backup/restore", explicitCommand.command) };
+    backupRestoreEvidence = { mode: "command", source: explicitCommand.source, ...runCommand("backup/restore", explicitCommand) };
     return backupRestoreEvidence;
   }
 
@@ -339,19 +397,22 @@ function runBackupRestore() {
     return backupRestoreEvidence;
   }
 
-  const command = configuredCommand(["QA_BACKUP_RESTORE_COMMAND", "BACKUP_RESTORE_COMMAND"], backupRestoreCommand("backup-restore.dump"));
+  const output = join("test-results", "world-class", "backup-restore.dump");
+  const backupCommand = configuredCommand([], ["pnpm", "run", "db:backup", "--", "--output", output]);
+  const restoreCommand = configuredCommand([], ["pnpm", "run", "db:restore", "--", "--input", output, "--yes"]);
   backupRestoreEvidence = {
-    mode: "command",
-    source: command.source,
+    mode: "command-sequence",
+    source: backupCommand.source,
     postgresClientMode: hasDockerFallback ? "docker-fallback" : "local",
-    ...runShell("backup/restore", command.command),
+    backup: runCommand("backup", backupCommand),
+    restore: runCommand("restore", restoreCommand),
   };
   return backupRestoreEvidence;
 }
 
 function disasterRecovery() {
   const command = configuredCommand(["QA_DR_COMMAND", "DISASTER_RECOVERY_COMMAND"]);
-  if (command) return { mode: "command", source: command.source, ...runShell("disaster recovery", command.command) };
+  if (command) return { mode: "command", source: command.source, ...runCommand("disaster recovery", command) };
   return { mode: "backup-restore-runtime", ...runBackupRestore() };
 }
 
@@ -366,21 +427,21 @@ function backupRestoreCiGate() {
 }
 
 function multiTenantSecurity() {
-  const permissions: Record<"owner" | "member" | "auditor", Set<string>> = { owner: new Set(["tenant:read", "tenant:write", "admin:profile:read"]), member: new Set(["tenant:read"]), auditor: new Set(["tenant:read", "audit:read"]) };
-  const cases: [string, string, "owner" | "member" | "auditor", string, boolean][] = [["acme", "acme", "owner", "tenant:write", true], ["acme", "globex", "owner", "tenant:write", false], ["acme", "acme", "member", "tenant:write", false], ["globex", "globex", "auditor", "audit:read", true], ["globex", "acme", "auditor", "audit:read", false]];
-  const evaluated = cases.map(([actorTenant, resourceTenant, role, permission, expected]) => ({ actorTenant, resourceTenant, role, permission, expected, actual: actorTenant === resourceTenant && permissions[role]?.has(permission) === true }));
-  assertGate(evaluated.every((testCase) => testCase.actual === testCase.expected), "Permission matrix must fail closed across tenants", { evaluated });
-  return { cases: evaluated.length };
+  const command = configuredCommand(
+    ["QA_MULTI_TENANT_SECURITY_COMMAND", "MULTI_TENANT_SECURITY_COMMAND"],
+    ["pnpm", "exec", "nx", "run", "@app/backend-feature-auth-main:test", "--", "src/application/auth-tenant-isolation.spec.ts", `--maxWorkers=${focusedTestWorkers()}`],
+  );
+  return { mode: "command", source: command.source, ...runCommand("multi-tenant security", command) };
 }
 
 function browserDeviceCloudMatrix() {
   requireScripts(["test:e2e:matrix"]);
   const config = readText("playwright.extended.config.ts");
-  const projects = ["chromium", "firefox", "webkit", "mobile-chrome", "mobile-safari"];
+  const projects = [...crossBrowserProjects];
   const present = projects.filter((project) => config.includes(project));
   assertGate(present.length === projects.length, "Missing browser/device matrix", { present, projects });
-  const command = configuredCommand(["QA_BROWSER_MATRIX_COMMAND", "BROWSER_MATRIX_COMMAND"], "pnpm run test:e2e:matrix");
-  return { mode: "command", source: command.source, projects: present, ...runShell("browser/device matrix", command.command) };
+  const command = configuredCommand(["QA_BROWSER_MATRIX_COMMAND", "BROWSER_MATRIX_COMMAND"], ["pnpm", "run", "test:e2e:matrix"]);
+  return { mode: "command", source: command.source, projects: present, ...runCommand("browser/device matrix", command) };
 }
 
 async function canarySyntheticMonitoring() {
@@ -394,33 +455,25 @@ async function canarySyntheticMonitoring() {
   const checks: ProbeResult[] = [];
   for (const url of urls) checks.push(await probeUrl(url, { expectedStatuses }));
   const p95 = percentile(checks.map((check) => check.durationMs), 0.95);
-  const budgetMs = Number(process.env.QA_CANARY_P95_BUDGET_MS ?? 1500);
+  const budgetMs = boundedInteger({ fallback: 1500, label: "QA_CANARY_P95_BUDGET_MS", max: 120_000, value: process.env.QA_CANARY_P95_BUDGET_MS });
   assertGate(p95 <= budgetMs, "Synthetic canary latency SLO exceeded", { p95, budgetMs, urls });
   return { checks: checks.length, p95, budgetMs, statuses: [...expectedStatuses] };
 }
 
 function observability() {
   const command = configuredCommand(["QA_OBSERVABILITY_COMMAND", "OBSERVABILITY_COMMAND"]);
-  if (command) return { mode: "command", source: command.source, ...runShell("observability", command.command) };
-  const logs = [{ requestId: "req-001", tenantId: "acme", route: "/profile/me" }];
-  const traces = [{ traceId: "trace-001", spans: ["http.request", "db.query"] }];
-  const metrics = { durations: [22, 31, 44], requests: 3, errors: 0 };
-  assertGate(logs.every((log) => log.requestId && log.tenantId), "Logs lack correlation", { logs });
-  assertGate(traces.every((trace) => trace.spans.includes("db.query")), "Trace lacks datastore span", { traces });
-  assertGate(percentile(metrics.durations, 0.95) < 100 && metrics.errors === 0, "Metrics SLO failed", metrics);
-  return {
-    placeholder: true,
-    placeholderReason:
-      "Observability gate ran against in-repo fixtures; set QA_OBSERVABILITY_COMMAND for an authoritative runtime check.",
-    logs: logs.length,
-    traces: traces.length,
-    metrics: 3,
-  };
+  if (!command) {
+    return missingAuthoritativeCommand(
+      "Observability evidence requires QA_OBSERVABILITY_COMMAND to execute direct telemetry behavior or a runtime observability probe.",
+      { env: ["QA_OBSERVABILITY_COMMAND"] },
+    );
+  }
+  return { mode: "authoritative-command", source: command.source, ...runCommand("observability", command) };
 }
 
 function migrationRollback() {
   requireScripts(["db:migrations:rollback-check"]);
-  const defaultCommand = commandExists("docker") ? "pnpm run db:migrations:rollback-check" : undefined;
+  const defaultCommand = commandExists("docker") ? ["pnpm", "run", "db:migrations:rollback-check"] : undefined;
   const command = configuredCommand(["QA_MIGRATION_ROLLBACK_COMMAND", "MIGRATION_ROLLBACK_COMMAND"], defaultCommand);
   if (!command) {
     return missingRuntimeGate("Migration rollback gate requires Docker/Testcontainers or an explicit rollback command in CI; set QA_MIGRATION_ROLLBACK_COMMAND or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run.", {
@@ -429,48 +482,47 @@ function migrationRollback() {
     });
   }
 
-  return { mode: "command", source: command.source, ...runShell("migration rollback", command.command) };
+  return { mode: "command", source: command.source, ...runCommand("migration rollback", command) };
 }
 
-async function concurrencyRace() {
-  let created = false;
-  let writes = 0;
-  async function createOnce() {
-    await Promise.resolve();
-    if (created) return "duplicate";
-    created = true;
-    writes += 1;
-    return "created";
+function concurrencyRace() {
+  const command = configuredCommand(["QA_CONCURRENCY_COMMAND", "CONCURRENCY_TEST_COMMAND"]);
+  if (!command) {
+    return missingAuthoritativeCommand(
+      "Concurrency evidence requires QA_CONCURRENCY_COMMAND to execute a stateful contested operation; concurrent health probes are only reliability evidence.",
+      { env: ["QA_CONCURRENCY_COMMAND"] },
+    );
   }
-  const outcomes = await Promise.all(Array.from({ length: 64 }, () => createOnce()));
-  assertGate(writes === 1, "Duplicate concurrent write detected", { outcomes });
-  return { contenders: outcomes.length, writes };
+  return { mode: "authoritative-command", source: command.source, ...runCommand("concurrency/race", command) };
 }
 
-function reliabilitySmoke() {
-  const cycles = 500;
-  const modulus = 1009;
-  let state = 0;
-  let maxHeapDelta = 0;
-  const initialHeap = process.memoryUsage().heapUsed;
+async function reliabilitySmoke() {
+  const command = configuredCommand(["QA_RELIABILITY_COMMAND", "RELIABILITY_SMOKE_COMMAND"]);
+  if (command) return { mode: "command", source: command.source, ...runCommand("reliability smoke", command) };
+
+  const urls = urlsFrom("QA_RELIABILITY_URLS", "QA_CANARY_URLS", "CANARY_URLS");
+  if (!urls.length) {
+    return missingRuntimeGate("Reliability smoke requires an executable command or runtime targets in CI; set QA_RELIABILITY_COMMAND/QA_RELIABILITY_URLS or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run.", {
+      env: ["QA_RELIABILITY_COMMAND", "QA_RELIABILITY_URLS", "QA_CANARY_URLS", "CANARY_URLS"],
+    });
+  }
+  const cycles = boundedInteger({ fallback: 5, label: "QA_RELIABILITY_CYCLES", max: 100, value: process.env.QA_RELIABILITY_CYCLES });
+  const concurrency = boundedInteger({
+    fallback: 4,
+    label: "QA_RELIABILITY_CONCURRENCY",
+    max: 32,
+    value: process.env.QA_RELIABILITY_CONCURRENCY ?? process.env.QA_CONCURRENCY_REQUESTS,
+  });
+  const probes: ProbeResult[] = [];
   for (let cycle = 0; cycle < cycles; cycle += 1) {
-    state = (state + cycle * 17) % modulus;
-    if (cycle % 25 === 0) maxHeapDelta = Math.max(maxHeapDelta, process.memoryUsage().heapUsed - initialHeap);
+    probes.push(...await Promise.all(
+      urls.flatMap((url) => Array.from({ length: concurrency }, () => probeUrl(url))),
+    ));
   }
-  // Independently recompute the deterministic terminal state so this asserts that
-  // every cycle ran, not the trivially-true state >= 0.
-  let expectedState = 0;
-  for (let cycle = 0; cycle < cycles; cycle += 1) expectedState = (expectedState + cycle * 17) % modulus;
-  assertGate(state === expectedState, "Reliability state machine drifted from deterministic expectation", { state, expectedState });
-  assertGate(maxHeapDelta < 32 * 1024 * 1024, "Heap growth budget exceeded", { maxHeapDelta });
-  return {
-    placeholder: true,
-    placeholderReason:
-      "Reliability smoke is an in-process simulation; wire a runtime soak/chaos command for an authoritative signal.",
-    cycles,
-    state,
-    maxHeapDelta,
-  };
+  const p95 = percentile(probes.map((probe) => probe.durationMs), 0.95);
+  const budgetMs = boundedInteger({ fallback: 1500, label: "QA_RELIABILITY_P95_BUDGET_MS", max: 120_000, value: process.env.QA_RELIABILITY_P95_BUDGET_MS });
+  assertGate(p95 <= budgetMs, "Reliability smoke latency budget exceeded", { p95, budgetMs, cycles, urls });
+  return { mode: "bounded-runtime-probe", concurrency, cycles, probes: probes.length, p95, budgetMs, urls };
 }
 
 await runGate("real-user-journey-e2e", realUserJourneyE2e);
@@ -487,22 +539,19 @@ await runGate("concurrency-race", concurrencyRace);
 await runGate("reliability-smoke", reliabilitySmoke);
 
 const skipped = [
-  ...requiredGates.filter((gate) => selectedGates.size && !selectedGates.has(gate)).map((name) => ({ name, reason: "not selected" })),
   ...results.filter((result) => result.status === "skipped").map((result) => ({ name: result.name, reason: result.evidence?.reason })),
 ];
+const notSelected = worldClassGateNames
+  .filter((gate) => selectedGates.size && !selectedGates.has(gate))
+  .map((name) => ({ name, reason: "not selected" }));
 
-// Structural safeguard: a gate listed in requiredGates must never silently skip in CI.
-// Any required-gate skip (runtime-missing, not-selected, or otherwise) fails the run
-// unless WORLD_CLASS_ALLOW_CI_SKIPS=1 explicitly acknowledges the partial run.
-const requiredGateSet = new Set(requiredGates);
-const disallowedRequiredSkips =
-  ciMode && !allowCiSkips
-    ? skipped.filter((entry) => requiredGateSet.has(entry.name))
-    : [];
+// A selected gate remains fail-closed in CI. Gates outside a focused run are
+// reported separately and do not turn the selected gate into a false failure.
+const disallowedSkips = disallowedRequiredSkips({ allowCiSkips, ciMode, selectedGates, skipped });
 
 const failed = [
   ...results.filter((result) => result.status === "failed"),
-  ...disallowedRequiredSkips.map((entry) => ({
+  ...disallowedSkips.map((entry) => ({
     name: entry.name,
     status: "failed",
     message: `Required gate must not skip in CI without WORLD_CLASS_ALLOW_CI_SKIPS=1: ${entry.reason ?? "skipped"}`,
@@ -522,6 +571,7 @@ const report = {
   allowCiSkips,
   gates: results,
   skipped,
+  notSelected,
   placeholders,
   generatedAt: new Date().toISOString(),
 };
@@ -540,4 +590,4 @@ if (skipped.length) {
 if (placeholders.length) {
   console.warn(`World-class QA gates include ${placeholders.length} placeholder gate(s) that ran against fixtures, not authoritative runtime.`);
 }
-console.log(JSON.stringify({ status: report.status, gates: results.length, skipped: skipped.length, placeholders: placeholders.length, report: reportPath }));
+console.log(JSON.stringify({ status: report.status, gates: results.length, skipped: skipped.length, notSelected: notSelected.length, placeholders: placeholders.length, report: reportPath }));

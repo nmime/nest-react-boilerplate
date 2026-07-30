@@ -1,3 +1,4 @@
+// @requirements REQ-API-RESPONSE-006
 import { BadRequestException, ConflictException, Controller, Get, Logger } from '@nestjs/common';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';

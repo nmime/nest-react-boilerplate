@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { ClientSession, MongoClient, TransactionOptions } from 'mongodb';
 import { describe, expect, it, vi } from 'vitest';
 import { hasMongoErrorLabel, runInMongoTransaction, type MongoTransactionRetryOptions } from './mongo.transaction';

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { Db, Document, IndexDescriptionInfo } from 'mongodb';
 import { describe, expect, it, vi } from 'vitest';
 import { Migration20260726000000CreateBetterAuthCollections } from './Migration20260726000000CreateBetterAuthCollections';

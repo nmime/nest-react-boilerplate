@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-DESIGN-008
 import { existsSync, readdirSync, readFileSync, statSync, type Dirent } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';

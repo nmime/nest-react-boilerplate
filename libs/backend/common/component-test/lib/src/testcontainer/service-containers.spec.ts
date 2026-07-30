@@ -1,3 +1,5 @@
+// @requirements REQ-RUNTIME-RECOVERY-002
+// Evidence for: REQ-RUNTIME-RECOVERY-002
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { StartedTestContainer } from 'testcontainers';
 

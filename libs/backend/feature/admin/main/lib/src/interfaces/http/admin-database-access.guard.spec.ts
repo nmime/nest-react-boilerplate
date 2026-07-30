@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
@@ -29,12 +30,16 @@ function dependencies(input?: {
   userError?: boolean;
   accessError?: boolean;
   health?: boolean;
+  metadataMissing?: boolean;
   public?: boolean;
 }) {
   const metadata = {
-    getAllAndOverride: vi.fn((key: string) =>
-      key === PublicAuthMetadataKey ? (input?.public ?? false) : (input?.health ?? false),
-    ),
+    getAllAndOverride: vi.fn((key: string) => {
+      if (input?.metadataMissing) {
+        return undefined;
+      }
+      return key === PublicAuthMetadataKey ? (input?.public ?? false) : (input?.health ?? false);
+    }),
   } as unknown as Reflector;
   const users = {
     findById: vi.fn(async () =>
@@ -114,5 +119,13 @@ describe('AdminDatabaseAccessGuard', () => {
     await expect(publicRoute.guard.canActivate(contextFor({}))).resolves.toBe(true);
     expect(publicRoute.users.findById).not.toHaveBeenCalled();
     expect(publicRoute.roles.resolveEffectiveAccess).not.toHaveBeenCalled();
+  });
+
+  it('requires authentication when exclusion metadata is absent', async () => {
+    const { guard, roles, users } = dependencies({ metadataMissing: true });
+
+    await expect(guard.canActivate(contextFor({}))).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(users.findById).not.toHaveBeenCalled();
+    expect(roles.resolveEffectiveAccess).not.toHaveBeenCalled();
   });
 });

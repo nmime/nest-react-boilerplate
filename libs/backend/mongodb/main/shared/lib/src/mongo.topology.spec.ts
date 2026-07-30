@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { MongoClient } from 'mongodb';
 import { describe, expect, it, vi } from 'vitest';
 import {

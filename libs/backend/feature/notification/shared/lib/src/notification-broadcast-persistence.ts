@@ -190,6 +190,10 @@ export abstract class NotificationBroadcastPersistence {
   abstract failSnapshot(snapshotId: string, claimToken: string, message: string): Promise<void>;
   abstract claimBroadcastMaterialization(limit: number): Promise<NotificationBroadcastMaterializationContext | null>;
   abstract materializeBroadcastMembers(context: NotificationBroadcastMaterializationContext): Promise<number>;
+  async materializeNextBroadcastChunk(limit: number): Promise<number> {
+    const context = await this.claimBroadcastMaterialization(limit);
+    return context ? this.materializeBroadcastMembers(context) : 0;
+  }
   abstract activateDueBroadcasts(now: Date): Promise<number>;
   abstract refreshBroadcastStatistics(): Promise<number>;
 }

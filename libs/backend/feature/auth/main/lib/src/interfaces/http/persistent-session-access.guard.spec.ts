@@ -1,4 +1,7 @@
+// @requirements REQ-AUTH-SESSION-002
+// Evidence for: REQ-AUTH-SESSION-002
 import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+// Domain evidence for REQ-AUTH-SESSION-002.
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
 import { PublicAuthMetadataKey, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';

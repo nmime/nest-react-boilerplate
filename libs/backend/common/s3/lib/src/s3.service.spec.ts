@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-STORAGE-007
 import { describe, expect, it } from 'vitest';
 import { S3ConfigService } from './config';
 import { ObjectStorageOperationFailedException } from './exception';

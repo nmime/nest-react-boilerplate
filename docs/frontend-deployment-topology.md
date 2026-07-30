@@ -145,6 +145,50 @@ Do not publish default same-origin builds without the proxy in place. For
 standalone/static split-origin SPA hosting, set all explicit API origins and use
 a non-`same-origin` mode such as `VITE_API_BASE_URL_MODE=split-origin`.
 
+## Runtime browser config (one image, many environments)
+
+API origins are resolved at build time, but browser-safe **feature flags and
+landing application destinations are resolved at runtime**, so deployment
+topology changes never require rebuilding an SPA image. Each frontend container
+runs `docker/frontend-runtime-config.sh` from the nginx
+`/docker-entrypoint.d/` hook before serving, rendering the environment into
+`/runtime-config.js`:
+
+```js
+window.__APP_RUNTIME_CONFIG__ = {
+  telegramAuthEnabled: true,
+  userAppUrl: 'https://user-app.product.example',
+  adminAppUrl: 'https://admin-app.product.example',
+};
+```
+
+`index.html` loads that file before the app bundle, so
+`resolveFeatureFlag(runtimeValue, buildValue)` (from `@app/frontend-api-support`)
+reads it synchronously. Precedence is runtime → Vite build value → `false`, and an
+unset or unparsable runtime value falls through, so a deployment can only override
+a flag deliberately.
+
+| Surface        | How to set it                                                         |
+| -------------- | --------------------------------------------------------------------- |
+| Compose (prod) | `AUTH_TELEGRAM_ENABLED` / `DISCORD_AUTH_ENABLED` in `.env.production` |
+| Kubernetes     | `frontendRuntimeConfig.TELEGRAM_AUTH_ENABLED: 'true'` in Helm values  |
+| Local dev      | `VITE_TELEGRAM_AUTH_ENABLED` (build-time default)                     |
+
+Compose derives landing destinations from `PUBLIC_DOMAIN` and the declared
+public mode: `per-app-domains` uses the user/admin HTTPS origins, while
+`single-domain` uses same-origin `/app` and `/admin` paths. Helm derives the same
+contract from each enabled `ingress.hosts` service entry: a separate host becomes
+an HTTPS URL and a service sharing the landing host must use a non-root path.
+Neither deployment path bakes an environment hostname into the image.
+
+The startup generator and landing consumer both accept only same-origin paths or
+credential-free HTTPS URLs without query strings or fragments. Invalid or absent
+values are omitted and the landing app keeps its local `/app` and `/admin`
+fallback. `/runtime-config.js` remains same-origin under the existing CSP and is
+served `no-store` (an exact-match nginx location that outranks the year-long
+immutable rule for hashed assets). The file is public - **never put secrets in
+it**.
+
 ## Validation commands
 
 Run the repository checks before publishing frontend images or changing routing:

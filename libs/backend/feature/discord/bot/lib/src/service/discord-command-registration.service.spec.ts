@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscordCommandRegistrationService } from './discord-command-registration.service';
 import { DiscordBotConfig } from './discord-config';

@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { defaultRolePermissions, permissionCatalog, roleKeys } from '@app/common-authz';
 import { describe, expect, it } from 'vitest';
 import { Migration20260614120000CreateSocialAuthDataModel } from './Migration20260614120000CreateSocialAuthDataModel';

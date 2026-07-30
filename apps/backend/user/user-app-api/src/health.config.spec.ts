@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PROFILE-006
 import type { FactoryProvider, InjectionToken, OptionalFactoryDependency } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -137,5 +138,22 @@ describe('UserAppHealthServiceProvider', () => {
     const sessionConfig = await findCheck(service, 'session-config');
     expect(sessionConfig?.status).toBe('degraded');
     expect(sessionConfig?.details).toHaveProperty('secretConfigured');
+  });
+
+  it('fails readiness when the selected database runtime is not wired', async () => {
+    const service = createService(createUserAppHealthServiceProvider());
+
+    await expect(findCheck(service, 'database')).resolves.toMatchObject({ status: 'error', required: true });
+    await expect(service.checkReadiness()).resolves.toMatchObject({ data: { status: 'error' } });
+  });
+
+  it('preserves extra Postgres indicator names as optional dependencies', async () => {
+    const runtime = fakeRuntime('postgres');
+    const service = createService(createUserAppHealthServiceProvider(), {
+      ...runtime,
+      healthIndicators: [...runtime.healthIndicators, fakeIndicator('postgres-replica')],
+    });
+
+    await expect(findCheck(service, 'postgres-replica')).resolves.toMatchObject({ status: 'ok', required: false });
   });
 });

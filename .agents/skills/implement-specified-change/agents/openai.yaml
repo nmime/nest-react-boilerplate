@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Implement Specified Change'
+  short_description: 'Implement behavior from approved specifications'
+  default_prompt: 'Use $implement-specified-change to implement this approved behavior with synchronized evidence.'

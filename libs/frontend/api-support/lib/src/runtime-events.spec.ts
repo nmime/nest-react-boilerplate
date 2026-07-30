@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ERROR-005
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiRuntimeEventHub, type NormalizedApiErrorSnapshot } from './runtime-events';

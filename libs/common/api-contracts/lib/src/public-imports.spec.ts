@@ -1,3 +1,4 @@
+// @requirements REQ-API-COMPAT-002
 import { describe, expect, it } from 'vitest';
 import type { AdminApiSchemas, AuthApiContract, AuthApiSchemas, UserApiSchemas } from './index';
 

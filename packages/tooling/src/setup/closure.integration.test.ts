@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-SELECTION-002
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
@@ -64,7 +65,7 @@ describe('selected closure live Nx graph', () => {
 
     assert.equal(postgres.provider, 'postgres');
     assert.equal(mongodb.provider, 'mongodb');
-    assert.equal(postgres.roots.length, 13);
+    assert.equal(postgres.roots.length, 14);
     assert.deepEqual(postgres.releaseImages, mongodb.releaseImages);
     assert.equal(postgres.releaseImages.length, 13);
     assert.ok(postgres.services.includes('migrate'));

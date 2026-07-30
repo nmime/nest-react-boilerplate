@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-RECOVERY-002
 import { spawnSync } from 'node:child_process';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { afterEach, describe, expect, it, vi } from 'vitest';

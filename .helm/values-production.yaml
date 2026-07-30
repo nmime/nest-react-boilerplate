@@ -402,6 +402,8 @@ coroot:
     repository: ghcr.io/coroot/coroot
     tag: '1.0.0'
     pullPolicy: IfNotPresent
+  rbac:
+    readSecrets: false
   prometheusUrl: 'http://vmcluster-vmsingle.monitoring.svc.cluster.local:8429'
   resources:
     requests: { cpu: 100m, memory: 256Mi }

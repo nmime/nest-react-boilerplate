@@ -5,14 +5,14 @@ Use this guide with the root [README](README.md), [Command matrix](docs/command-
 ## Prerequisites
 
 - Node.js `>=24 <25`; use `.nvmrc` for the current local patch version.
-- pnpm `11.11.0` through Corepack.
+- pnpm `11.15.1` through Corepack.
 - Docker Compose for the selected local PostgreSQL or replica-set MongoDB
   service, container builds, smoke tests, and full-stack e2e.
 
 ```bash
 nvm use
 corepack enable
-corepack prepare pnpm@11.11.0 --activate
+corepack prepare pnpm@11.15.1 --activate
 pnpm install --frozen-lockfile
 cp .env.example .env
 ```

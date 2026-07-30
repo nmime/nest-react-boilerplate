@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import type { FactoryProvider, InjectionToken, OptionalFactoryDependency } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -148,5 +149,26 @@ describe('AuthAppHealthServiceProvider', () => {
 
     expect(readiness.data.status).toBe('error');
     expect(JSON.stringify(readiness)).not.toContain('mongodb://');
+  });
+
+  it('fails readiness when durable persistence is selected without a runtime', async () => {
+    vi.stubEnv('AUTH_PERSISTENCE', 'postgres');
+    const service = createService(createAuthAppHealthServiceProvider());
+
+    await expect(findCheck(service, 'auth-persistence')).resolves.toMatchObject({
+      status: 'ok',
+      details: expect.objectContaining({ mode: 'unconfigured', databaseRequired: true }),
+    });
+    await expect(findCheck(service, 'database')).resolves.toMatchObject({ status: 'error', required: true });
+  });
+
+  it('preserves extra Postgres indicator names as optional dependencies', async () => {
+    const runtime = fakeRuntime('postgres');
+    const service = createService(createAuthAppHealthServiceProvider(), {
+      ...runtime,
+      healthIndicators: [...runtime.healthIndicators, fakeIndicator('postgres-replica')],
+    });
+
+    await expect(findCheck(service, 'postgres-replica')).resolves.toMatchObject({ status: 'ok', required: false });
   });
 });

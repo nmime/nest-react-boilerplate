@@ -1,3 +1,4 @@
+// @requirements REQ-API-CLIENT-005
 import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import {

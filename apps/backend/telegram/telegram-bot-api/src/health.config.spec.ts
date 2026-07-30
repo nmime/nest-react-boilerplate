@@ -1,7 +1,9 @@
+// @requirements REQ-SOCIAL-INGRESS-001
 import type { FactoryProvider, InjectionToken, OptionalFactoryDependency } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { DurableDatabaseRuntimeInjectToken, type DurableDatabaseRuntime } from '@app/backend-common-bootstrap';
 import type { HealthIndicator, HealthService } from '@app/backend-common-health';
+import { RedisHealthIndicator } from '@app/backend-common-redis';
 import { createTelegramBotApiHealthServiceProvider } from './health.config';
 
 type HealthFactory = (...dependencies: unknown[]) => HealthService;
@@ -9,7 +11,7 @@ type HealthFactory = (...dependencies: unknown[]) => HealthService;
 const createService = (provider: FactoryProvider<HealthService>, ...dependencies: unknown[]) =>
   (provider.useFactory as HealthFactory)(...dependencies);
 
-const fakeMongoIndicator = (name: string, details: Record<string, unknown> = {}) =>
+const fakeIndicator = (name: string, details: Record<string, unknown> = {}) =>
   ({
     name,
     required: true,
@@ -19,10 +21,10 @@ const fakeMongoIndicator = (name: string, details: Record<string, unknown> = {})
 const mongoRuntime = (migrationStatus: 'error' | 'ok' = 'ok'): DurableDatabaseRuntime => ({
   provider: 'mongodb',
   healthIndicators: [
-    fakeMongoIndicator('mongodb', { reachable: true }),
-    fakeMongoIndicator('mongodb-transactions', { transactionCapable: true, topology: 'replica-set' }),
+    fakeIndicator('mongodb', { reachable: true }),
+    fakeIndicator('mongodb-transactions', { transactionCapable: true, topology: 'replica-set' }),
     {
-      ...fakeMongoIndicator('mongodb-migrations', { applied: migrationStatus === 'ok' }),
+      ...fakeIndicator('mongodb-migrations', { applied: migrationStatus === 'ok' }),
       check: () => ({ name: 'mongodb-migrations', status: migrationStatus, required: true }),
     },
   ],
@@ -69,6 +71,49 @@ describe('TelegramBotApiHealthServiceProvider', () => {
     expect(readiness.data.dependencies).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: 'database-migrations', status: 'error', required: true }),
+      ]),
+    );
+  });
+
+  it('makes Redis a required readiness dependency when webhook replay storage is wired', async () => {
+    const redisHealth = {
+      name: 'redis',
+      check: async () => ({ name: 'redis', status: 'error' as const }),
+    } satisfies Pick<RedisHealthIndicator, 'check' | 'name'>;
+    const provider = createTelegramBotApiHealthServiceProvider();
+
+    const readiness = await createService(provider, mongoRuntime(), redisHealth).checkReadiness();
+
+    expect(readiness.data.status).toBe('error');
+    expect(readiness.data.checks?.find(({ name }) => name === 'redis')?.required).toBe(true);
+    expect(injectionTokens(provider)).toEqual(
+      expect.arrayContaining([DurableDatabaseRuntimeInjectToken, RedisHealthIndicator]),
+    );
+  });
+
+  it('does not add a Redis dependency in polling mode composition', async () => {
+    const readiness = await createService(createTelegramBotApiHealthServiceProvider(), mongoRuntime()).checkReadiness();
+
+    expect(readiness.data.checks?.some(({ name }) => name === 'redis')).toBe(false);
+  });
+
+  it('normalizes Postgres indicators while preserving provider-specific names', async () => {
+    const runtime: DurableDatabaseRuntime = {
+      ...mongoRuntime(),
+      provider: 'postgres',
+      healthIndicators: [
+        fakeIndicator('postgres', { reachable: true }),
+        fakeIndicator('postgres-migrations', { pending: 0 }),
+        fakeIndicator('postgres-replica', { reachable: true }),
+      ],
+    };
+    const readiness = await createService(createTelegramBotApiHealthServiceProvider(), runtime).checkReadiness();
+
+    expect(readiness.data.dependencies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'database', required: true }),
+        expect.objectContaining({ name: 'database-migrations', required: false }),
+        expect.objectContaining({ name: 'postgres-replica', required: false }),
       ]),
     );
   });

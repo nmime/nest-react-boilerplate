@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it } from 'vitest';
 import { runInPostgresTransaction, type TransactionCapable } from './transaction';

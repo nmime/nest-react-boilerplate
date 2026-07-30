@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-LIFECYCLE-004
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveDefaultDevelopmentCorsOrigins } from './default-development-cors-origins';
 import { isRunningInContainer } from './util/container.util';

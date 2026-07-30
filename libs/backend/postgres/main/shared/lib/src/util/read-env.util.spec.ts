@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import { describe, expect, it, vi } from 'vitest';
 import { readBoolean, readPort, readSslRejectUnauthorized } from './read-env.util';
 

@@ -22,6 +22,13 @@ description: Propagate a public API change through OpenAPI, shared contracts, ge
 5. Test request validation, response shape, documented errors, auth requirements, and at least one generated-client consumer path.
 6. Keep generated files deterministic and source-attributable; unexpected unrelated churn is a failure to investigate.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run `pnpm run api:contracts:check`, `pnpm run api:clients:check`, owning API tests/build, affected frontend or service tests/builds, and `git diff --check`. State compatibility impact in the handoff.

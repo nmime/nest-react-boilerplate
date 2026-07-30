@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-PERSISTENCE-005
 import { randomUUID } from 'node:crypto';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
 import {
@@ -86,69 +87,100 @@ describe('Mongo notification persistence on a replica set', () => {
     const now = new Date(Date.now() + 1_000);
 
     const claims = await Promise.all([
-      notifications.findPendingDeliveries({ targetType: NotificationTargetType.TelegramChat, count: 1, now }),
-      notifications.findPendingDeliveries({ targetType: NotificationTargetType.TelegramChat, count: 1, now }),
-      notifications.findPendingDeliveries({ targetType: NotificationTargetType.TelegramChat, count: 1, now }),
+      notifications.claimPendingDeliveries({ targetType: NotificationTargetType.TelegramChat, count: 1, now }),
+      notifications.claimPendingDeliveries({ targetType: NotificationTargetType.TelegramChat, count: 1, now }),
+      notifications.claimPendingDeliveries({ targetType: NotificationTargetType.TelegramChat, count: 1, now }),
     ]);
 
-    expect(claims.flat()).toHaveLength(1);
-    expect(new Set(claims.flat().map((claim) => claim.claimToken)).size).toBe(1);
+    const ownedClaims = claims.filter((claim) => claim !== null);
+    expect(ownedClaims).toHaveLength(1);
+    expect(ownedClaims[0]?.deliveries).toHaveLength(1);
+    expect(ownedClaims[0]?.deliveries[0]?.claimToken).toBe(ownedClaims[0]?.claimToken);
+  });
+
+  it('uses one opaque token for every delivery in a claimed batch', async () => {
+    const { notifications } = repositories();
+    await createPendingNotification(notifications, '123');
+    await createPendingNotification(notifications, '456');
+
+    const claim = await notifications.claimPendingDeliveries({
+      targetType: NotificationTargetType.TelegramChat,
+      count: 2,
+      now: new Date(Date.now() + 1_000),
+    });
+
+    expect(claim?.deliveries).toHaveLength(2);
+    expect(new Set(claim?.deliveries.map((delivery) => delivery.claimToken))).toEqual(new Set([claim?.claimToken]));
+  });
+
+  it('renews only rows owned by the current claim token', async () => {
+    const { database, notifications } = repositories();
+    await createPendingNotification(notifications);
+    const claimedAt = new Date(Date.now() + 1_000);
+    const { claim, delivery } = await claimOne(notifications, claimedAt);
+    const renewedAt = new Date(claimedAt.getTime() + 10_000);
+
+    await expect(notifications.renewDeliveryClaim(claim.claimToken, renewedAt)).resolves.toBe(true);
+    await expect(notifications.renewDeliveryClaim(randomUUID(), renewedAt)).resolves.toBe(false);
+    await expect(
+      database
+        .collection<NotificationDeliveryDocument>(NotificationMongoCollections.deliveries)
+        .findOne({ _id: delivery.delivery.id }),
+    ).resolves.toMatchObject({
+      claimToken: claim.claimToken,
+      claimExpiresAt: new Date(renewedAt.getTime() + MongoNotificationClaimLeaseMs),
+    });
   });
 
   it('reclaims an expired lease and rejects completion from the stale token', async () => {
     const { database, notifications } = repositories();
     await createPendingNotification(notifications);
     const createdAt = new Date(Date.now() + 1_000);
-    const first = (
-      await notifications.findPendingDeliveries({
-        targetType: NotificationTargetType.TelegramChat,
-        count: 1,
-        now: createdAt,
-      })
-    )[0];
-    expect(first).toBeDefined();
-    if (!first) {
-      throw new Error('Expected the initial delivery claim.');
-    }
-    const second = (
-      await notifications.findPendingDeliveries({
-        targetType: NotificationTargetType.TelegramChat,
-        count: 1,
-        now: new Date(createdAt.getTime() + MongoNotificationClaimLeaseMs + 1),
-      })
-    )[0];
-    expect(second?.claimToken).not.toBe(first.claimToken);
-    if (!second) {
-      throw new Error('Expected the stale lease to be reclaimed.');
-    }
+    const first = await claimOne(notifications, createdAt);
+    const second = await claimOne(notifications, new Date(createdAt.getTime() + MongoNotificationClaimLeaseMs + 1));
+    expect(second.claim.claimToken).not.toBe(first.claim.claimToken);
+    await expect(notifications.renewDeliveryClaim(first.claim.claimToken, new Date())).resolves.toBe(false);
 
-    await notifications.saveDeliveryResults([
-      {
-        id: first.delivery.id,
-        createdAt: first.delivery.createdAt,
-        claimToken: first.claimToken,
-        status: NotificationStatus.Sent,
-      },
-    ]);
+    await notifications.saveClaimedDeliveryResults(
+      [
+        {
+          id: first.delivery.delivery.id,
+          createdAt: first.delivery.delivery.createdAt,
+          claimToken: first.claim.claimToken,
+          status: NotificationStatus.Sent,
+        },
+      ],
+      first.claim.claimToken,
+    );
     expect(
       await database
         .collection<NotificationDeliveryDocument>(NotificationMongoCollections.deliveries)
-        .findOne({ _id: first.delivery.id }),
-    ).toMatchObject({ status: NotificationStatus.Pending, claimToken: second.claimToken });
+        .findOne({ _id: first.delivery.delivery.id }),
+    ).toMatchObject({ status: NotificationStatus.Pending, claimToken: second.claim.claimToken });
 
-    await notifications.saveDeliveryResults([
-      {
-        id: second.delivery.id,
-        createdAt: second.delivery.createdAt,
-        claimToken: second.claimToken,
-        status: NotificationStatus.Sent,
-      },
-    ]);
+    await expect(
+      notifications.beginClaimedDeliveryAttempts(
+        [{ id: second.delivery.delivery.id, createdAt: second.delivery.delivery.createdAt }],
+        second.claim.claimToken,
+        new Date(),
+      ),
+    ).resolves.toHaveLength(1);
+    await notifications.saveClaimedDeliveryResults(
+      [
+        {
+          id: second.delivery.delivery.id,
+          createdAt: second.delivery.delivery.createdAt,
+          claimToken: second.claim.claimToken,
+          status: NotificationStatus.Sent,
+        },
+      ],
+      second.claim.claimToken,
+    );
     expect(
       await database
         .collection<NotificationDeliveryDocument>(NotificationMongoCollections.deliveries)
-        .findOne({ _id: second.delivery.id }),
-    ).toMatchObject({ status: NotificationStatus.Sent, claimToken: null });
+        .findOne({ _id: second.delivery.delivery.id }),
+    ).toMatchObject({ attempts: 1, status: NotificationStatus.Sent, dispatchStartedAt: null, claimToken: null });
   });
 
   it('fences an in-flight delivery result across pause, resume, and cancel', async () => {
@@ -186,16 +218,7 @@ describe('Mongo notification persistence on a replica set', () => {
     });
     const deliveries = database.collection<NotificationDeliveryDocument>(NotificationMongoCollections.deliveries);
     await deliveries.updateOne({}, { $set: { broadcastId } });
-    const firstClaim = (
-      await notifications.findPendingDeliveries({
-        targetType: NotificationTargetType.TelegramChat,
-        count: 1,
-        now: new Date(now.getTime() + 1_000),
-      })
-    )[0];
-    if (!firstClaim) {
-      throw new Error('Expected the broadcast delivery to be claimed.');
-    }
+    const firstClaim = await claimOne(notifications, new Date(now.getTime() + 1_000));
 
     await broadcasts.transitionBroadcast({
       broadcastId,
@@ -204,15 +227,18 @@ describe('Mongo notification persistence on a replica set', () => {
       idempotencyKey: randomUUID(),
       actorId,
     });
-    await notifications.saveDeliveryResults([
-      {
-        id: firstClaim.delivery.id,
-        createdAt: firstClaim.delivery.createdAt,
-        claimToken: firstClaim.claimToken,
-        status: NotificationStatus.Sent,
-      },
-    ]);
-    await expect(deliveries.findOne({ _id: firstClaim.delivery.id })).resolves.toMatchObject({
+    await notifications.saveClaimedDeliveryResults(
+      [
+        {
+          id: firstClaim.delivery.delivery.id,
+          createdAt: firstClaim.delivery.delivery.createdAt,
+          claimToken: firstClaim.claim.claimToken,
+          status: NotificationStatus.Sent,
+        },
+      ],
+      firstClaim.claim.claimToken,
+    );
+    await expect(deliveries.findOne({ _id: firstClaim.delivery.delivery.id })).resolves.toMatchObject({
       status: NotificationStatus.Paused,
       attempts: 0,
       claimToken: null,
@@ -226,32 +252,26 @@ describe('Mongo notification persistence on a replica set', () => {
       idempotencyKey: randomUUID(),
       actorId,
     });
-    await notifications.saveDeliveryResults([
-      {
-        id: firstClaim.delivery.id,
-        createdAt: firstClaim.delivery.createdAt,
-        claimToken: firstClaim.claimToken,
-        status: NotificationStatus.Sent,
-      },
-    ]);
-    await expect(deliveries.findOne({ _id: firstClaim.delivery.id })).resolves.toMatchObject({
+    await notifications.saveClaimedDeliveryResults(
+      [
+        {
+          id: firstClaim.delivery.delivery.id,
+          createdAt: firstClaim.delivery.delivery.createdAt,
+          claimToken: firstClaim.claim.claimToken,
+          status: NotificationStatus.Sent,
+        },
+      ],
+      firstClaim.claim.claimToken,
+    );
+    await expect(deliveries.findOne({ _id: firstClaim.delivery.delivery.id })).resolves.toMatchObject({
       status: NotificationStatus.Pending,
       attempts: 0,
       claimToken: null,
       claimExpiresAt: null,
     });
 
-    const secondClaim = (
-      await notifications.findPendingDeliveries({
-        targetType: NotificationTargetType.TelegramChat,
-        count: 1,
-        now: new Date(now.getTime() + 2_000),
-      })
-    )[0];
-    if (!secondClaim) {
-      throw new Error('Expected the resumed delivery to receive a new claim.');
-    }
-    expect(secondClaim.claimToken).not.toBe(firstClaim.claimToken);
+    const secondClaim = await claimOne(notifications, new Date(now.getTime() + 2_000));
+    expect(secondClaim.claim.claimToken).not.toBe(firstClaim.claim.claimToken);
     await broadcasts.transitionBroadcast({
       broadcastId,
       tenantId,
@@ -259,19 +279,99 @@ describe('Mongo notification persistence on a replica set', () => {
       idempotencyKey: randomUUID(),
       actorId,
     });
-    await notifications.saveDeliveryResults([
-      {
-        id: secondClaim.delivery.id,
-        createdAt: secondClaim.delivery.createdAt,
-        claimToken: secondClaim.claimToken,
-        status: NotificationStatus.Sent,
-      },
-    ]);
-    await expect(deliveries.findOne({ _id: secondClaim.delivery.id })).resolves.toMatchObject({
+    await notifications.saveClaimedDeliveryResults(
+      [
+        {
+          id: secondClaim.delivery.delivery.id,
+          createdAt: secondClaim.delivery.delivery.createdAt,
+          claimToken: secondClaim.claim.claimToken,
+          status: NotificationStatus.Sent,
+        },
+      ],
+      secondClaim.claim.claimToken,
+    );
+    await expect(deliveries.findOne({ _id: secondClaim.delivery.delivery.id })).resolves.toMatchObject({
       status: NotificationStatus.Cancelled,
       attempts: 0,
       claimToken: null,
       claimExpiresAt: null,
+    });
+  });
+
+  it('records a pre-dispatch failure only when its embedded and claim-level tokens agree', async () => {
+    const { database, notifications } = repositories();
+    await createPendingNotification(notifications);
+    const { claim, delivery } = await claimOne(notifications, new Date(Date.now() + 1_000));
+    const deliveries = database.collection<NotificationDeliveryDocument>(NotificationMongoCollections.deliveries);
+
+    await notifications.saveClaimedDeliveryResults(
+      [
+        {
+          id: delivery.delivery.id,
+          createdAt: delivery.delivery.createdAt,
+          claimToken: randomUUID(),
+          status: NotificationStatus.Pending,
+        },
+      ],
+      claim.claimToken,
+    );
+    await expect(deliveries.findOne({ _id: delivery.delivery.id })).resolves.toMatchObject({
+      attempts: 0,
+      claimToken: claim.claimToken,
+    });
+
+    await notifications.saveClaimedDeliveryResults(
+      [
+        {
+          id: delivery.delivery.id,
+          createdAt: delivery.delivery.createdAt,
+          claimToken: claim.claimToken,
+          status: NotificationStatus.Pending,
+        },
+      ],
+      claim.claimToken,
+    );
+    const persisted = await deliveries.findOne({ _id: delivery.delivery.id });
+    expect(persisted).toMatchObject({
+      attempts: 1,
+      status: NotificationStatus.Pending,
+      dispatchStartedAt: null,
+      claimToken: null,
+      claimExpiresAt: null,
+    });
+    expect(persisted?.sendAfter).toBeInstanceOf(Date);
+  });
+
+  it('quarantines a delivery when dispatch starts without a durable provider result', async () => {
+    const { database, notifications } = repositories();
+    await createPendingNotification(notifications);
+    const claimedAt = new Date(Date.now() + 1_000);
+    const { claim, delivery } = await claimOne(notifications, claimedAt);
+    const dispatchStartedAt = new Date(claimedAt.getTime() + 1_000);
+    const identity = { id: delivery.delivery.id, createdAt: delivery.delivery.createdAt };
+
+    await expect(
+      notifications.beginClaimedDeliveryAttempts([identity], claim.claimToken, dispatchStartedAt),
+    ).resolves.toEqual([identity]);
+    await expect(
+      notifications.claimPendingDeliveries({
+        targetType: NotificationTargetType.TelegramChat,
+        count: 1,
+        now: new Date(dispatchStartedAt.getTime() + MongoNotificationClaimLeaseMs + 1),
+      }),
+    ).resolves.toBeNull();
+    await expect(
+      notifications.countRecentDeliveryErrors({ fromDate: new Date(claimedAt.getTime() - 1), limit: 10 }),
+    ).resolves.toBe(1);
+    await expect(
+      database
+        .collection<NotificationDeliveryDocument>(NotificationMongoCollections.deliveries)
+        .findOne({ _id: delivery.delivery.id }),
+    ).resolves.toMatchObject({
+      attempts: 1,
+      status: NotificationStatus.Pending,
+      dispatchStartedAt,
+      claimToken: claim.claimToken,
     });
   });
 
@@ -330,14 +430,30 @@ describe('Mongo notification persistence on a replica set', () => {
   });
 });
 
-async function createPendingNotification(persistence: MongoNotificationPersistence): Promise<void> {
+async function claimOne(persistence: MongoNotificationPersistence, now: Date) {
+  const claim = await persistence.claimPendingDeliveries({
+    targetType: NotificationTargetType.TelegramChat,
+    count: 1,
+    now,
+  });
+  if (!claim) {
+    throw new Error('Expected a delivery claim.');
+  }
+  const delivery = claim.deliveries[0];
+  if (!delivery) {
+    throw new Error('Expected the claim to contain a delivery.');
+  }
+  return { claim, delivery };
+}
+
+async function createPendingNotification(persistence: MongoNotificationPersistence, targetId = '123'): Promise<void> {
   await persistence.upsertTemplate({
     code: 'delivery',
     channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Hello' } } }],
   });
   await persistence.create({
     targetType: NotificationTargetType.TelegramChat,
-    targetId: '123',
+    targetId,
     templateCode: 'delivery',
     inAppVisible: false,
   });

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

@@ -19,7 +19,8 @@ concurrency:
 
 env:
   HELM_VERSION: v4.2.3
-  PNPM_VERSION: 11.11.0
+  PNPM_VERSION: 11.15.1
+  SCAN_PREDICATE_TYPE: https://github.com/${{ github.repository }}/attestations/trivy-scan/v1
 
 jobs:
   promote:
@@ -68,7 +69,7 @@ jobs:
           fi
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "tag=sha-$SHA" >> "$GITHUB_OUTPUT"
-          echo "branch=gitops/sha-$SHA" >> "$GITHUB_OUTPUT"
+          echo "branch=release/gitops-sha-$SHA" >> "$GITHUB_OUTPUT"
 
       - name: Verify the candidate product-selected closure
         env:
@@ -94,6 +95,9 @@ jobs:
             exit 1
           fi
 
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
       - name: Collect candidate release image digests
         id: candidate-images
         env:
@@ -103,6 +107,19 @@ jobs:
         run: |
           set -euo pipefail
           printf '%s' "$DEPLOY_TOKEN" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+          certificate_identity_regexp='^https://github.com/${{ github.repository }}/\.github/workflows/release-images\.yml@refs/(heads|tags)/.+$'
+          certificate_oidc_issuer='https://token.actions.githubusercontent.com'
+          certificate_repository='${{ github.repository }}'
+          release_workflow="https://github.com/${{ github.repository }}/.github/workflows/release-images.yml@"
+          decode_attestations() {
+            local input="$1"
+            local output="$2"
+            : > "$output"
+            while IFS= read -r payload; do
+              printf '%s' "$payload" | base64 --decode >> "$output"
+              printf '\n' >> "$output"
+            done < <(jq -r '.payload' "$input")
+          }
           selected_args=()
           while IFS= read -r image; do
             if [ -n "$image" ]; then selected_args+=(--selected-image "$image"); fi
@@ -115,14 +132,71 @@ jobs:
           missing=()
           for image in "${images[@]}"; do
             reference="ghcr.io/${{ github.repository }}/$image:$IMAGE_TAG"
-            if digest="$(docker manifest inspect --verbose "$reference" 2>/dev/null | jq -r '.Descriptor.digest // empty')"; then
-              if [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
-                updates+=(--image "$image=$digest")
-                promoted+=("$image")
-                continue
-              fi
+            if ! manifest="$(docker manifest inspect --verbose "$reference" 2>/dev/null)"; then
+              missing+=("$image")
+              continue
             fi
-            missing+=("$image")
+            digest="$(jq -r '.Descriptor.digest // empty' <<< "$manifest")"
+            if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+              echo "::error::$reference resolved to an invalid digest: $digest"
+              exit 1
+            fi
+            digest_ref="ghcr.io/${{ github.repository }}/$image@$digest"
+            cosign verify \
+              --certificate-identity-regexp "$certificate_identity_regexp" \
+              --certificate-oidc-issuer "$certificate_oidc_issuer" \
+              --certificate-github-workflow-repository "$certificate_repository" \
+              --certificate-github-workflow-sha "$RELEASE_SHA" \
+              "$digest_ref" >/dev/null
+
+            evidence_dir="$(mktemp -d)"
+            cosign verify-attestation --type slsaprovenance1 \
+              --certificate-identity-regexp "$certificate_identity_regexp" \
+              --certificate-oidc-issuer "$certificate_oidc_issuer" \
+              --certificate-github-workflow-repository "$certificate_repository" \
+              --certificate-github-workflow-sha "$RELEASE_SHA" \
+              "$digest_ref" > "$evidence_dir/provenance.jsonl"
+            cosign verify-attestation --type spdxjson \
+              --certificate-identity-regexp "$certificate_identity_regexp" \
+              --certificate-oidc-issuer "$certificate_oidc_issuer" \
+              --certificate-github-workflow-repository "$certificate_repository" \
+              --certificate-github-workflow-sha "$RELEASE_SHA" \
+              "$digest_ref" > "$evidence_dir/sbom.jsonl"
+            cosign verify-attestation --type "$SCAN_PREDICATE_TYPE" \
+              --certificate-identity-regexp "$certificate_identity_regexp" \
+              --certificate-oidc-issuer "$certificate_oidc_issuer" \
+              --certificate-github-workflow-repository "$certificate_repository" \
+              --certificate-github-workflow-sha "$RELEASE_SHA" \
+              "$digest_ref" > "$evidence_dir/scan.jsonl"
+            decode_attestations "$evidence_dir/provenance.jsonl" "$evidence_dir/provenance-statements.jsonl"
+            decode_attestations "$evidence_dir/sbom.jsonl" "$evidence_dir/sbom-statements.jsonl"
+            decode_attestations "$evidence_dir/scan.jsonl" "$evidence_dir/scan-statements.jsonl"
+
+            jq -s -e \
+              --arg digest "${digest#sha256:}" \
+              --arg sha "$RELEASE_SHA" \
+              --arg workflow "$release_workflow" \
+              'any(.[];
+                any(.subject[]?; .digest.sha256 == $digest) and
+                (.predicate.runDetails.builder.id | startswith($workflow)) and
+                any(.predicate.buildDefinition.resolvedDependencies[]?; .digest.gitCommit == $sha)
+              )' "$evidence_dir/provenance-statements.jsonl" >/dev/null
+            jq -s -e \
+              --arg digest "${digest#sha256:}" \
+              'any(.[]; any(.subject[]?; .digest.sha256 == $digest) and .predicate.spdxVersion == "SPDX-2.3")' \
+              "$evidence_dir/sbom-statements.jsonl" >/dev/null
+            jq -s -e \
+              --arg digest "$digest" \
+              'any(.[];
+                .predicate.artifactDigest == $digest and
+                .predicate.result == "pass" and
+                .predicate.policy.severities == ["CRITICAL", "HIGH"] and
+                .predicate.policy.allowUnfixed == false
+              )' "$evidence_dir/scan-statements.jsonl" >/dev/null
+            rm -rf "$evidence_dir"
+
+            updates+=(--image "$image=$digest")
+            promoted+=("$image")
           done
           if [ "${#missing[@]}" -gt 0 ]; then
             echo "::error::Missing immutable candidate digests for selected and enabled images: ${missing[*]}"
@@ -159,11 +233,11 @@ jobs:
             echo "Production values already use the candidate digests for $IMAGE_TAG"
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "nmime"
+          git config user.email "66474195+nmime@users.noreply.github.com"
           git switch -C "$BRANCH"
           git add .helm/values-production.yaml
-          git commit -m "deploy: promote $IMAGE_TAG (${PROMOTED_IMAGES})"
+          git commit -m "chore(deploy): promote $IMAGE_TAG (${PROMOTED_IMAGES})"
           git push --force-with-lease origin "HEAD:$BRANCH"
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
@@ -180,7 +254,7 @@ jobs:
             PR_URL=$(gh pr create \
               --base main \
               --head "$BRANCH" \
-              --title "deploy: promote $IMAGE_TAG" \
-              --body "Promotes the verified immutable digests for the selected and enabled workloads \`$PROMOTED_IMAGES\` from \`$IMAGE_TAG\`. Unselected or disabled workloads retain their current values. Merge this PR to let Argo CD or Flux reconcile the release.")
+              --title "chore(deploy): promote $IMAGE_TAG" \
+              --body "Promotes the selected and enabled workloads \`$PROMOTED_IMAGES\` from \`$IMAGE_TAG\` using signature-verified immutable digests with signed SPDX SBOM, SLSA provenance, and successful Trivy scan attestations. Unselected or disabled workloads retain their currently deployed digests. Merge this PR to let Argo CD or Flux reconcile the release.")
           fi
           echo "Promotion PR: $PR_URL" >> "$GITHUB_STEP_SUMMARY"

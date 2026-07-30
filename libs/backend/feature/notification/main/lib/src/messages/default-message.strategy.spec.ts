@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-TEMPLATE-003
 import { describe, expect, it } from 'vitest';
 import {
   NotificationChannel,

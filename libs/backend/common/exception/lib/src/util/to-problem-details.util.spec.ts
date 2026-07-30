@@ -1,3 +1,4 @@
+// @requirements REQ-API-PROBLEM-001
 import { BadRequestException, HttpException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { Exception } from '../abstract/base.exception';

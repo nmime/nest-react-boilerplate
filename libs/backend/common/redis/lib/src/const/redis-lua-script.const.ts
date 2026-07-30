@@ -18,6 +18,15 @@ end
 return 0
 `;
 
+const replaceIfValueScript = `
+if redis.call("get", KEYS[1]) == ARGV[1] then
+  redis.call("psetex", KEYS[1], ARGV[3], ARGV[2])
+  return 1
+end
+
+return 0
+`;
+
 const incrementWithWindowScript = `
 local count = redis.call("incr", KEYS[1])
 local ttl = redis.call("pttl", KEYS[1])
@@ -32,6 +41,7 @@ return {count, ttl}
 export const redisLuaScripts = Object.freeze({
   'delete-if-value': deleteIfValueScript,
   'extend-if-value': extendIfValueScript,
+  'replace-if-value': replaceIfValueScript,
   'increment-window': incrementWithWindowScript,
 } as const);
 

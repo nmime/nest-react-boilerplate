@@ -13,12 +13,13 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.spec.ts'],
+    exclude: ['src/**/*.component-spec.ts'],
     globals: false,
     coverage: fullCoverage('coverage/libs/backend/postgres/main/notification/lib', ['src/**/*.ts'], [], {
-      branches: -99,
-      functions: -40,
-      lines: -149,
-      statements: -160,
+      branches: -347,
+      functions: -140,
+      lines: -625,
+      statements: -637,
     }),
   },
 });

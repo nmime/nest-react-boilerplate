@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SSR-007
 import type { ComponentType } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';

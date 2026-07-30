@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-SESSION-002
 import { UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { BetterAuthTelegramSessionService, toBetterAuthHeaders } from './better-auth-telegram-session.service';

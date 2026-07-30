@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { describe, expect, it, vi } from 'vitest';
 import { okAsync } from 'neverthrow';
 import {

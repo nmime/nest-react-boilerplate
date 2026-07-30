@@ -76,6 +76,15 @@ module.exports = [
               onlyDependOnLibsWithTags: ['platform:shared', 'platform:tooling'],
             },
             {
+              sourceTag: 'platform:e2e',
+              onlyDependOnLibsWithTags: [
+                'platform:backend',
+                'platform:frontend',
+                'platform:shared',
+                'platform:tooling',
+              ],
+            },
+            {
               sourceTag: 'type:app',
               onlyDependOnLibsWithTags: [
                 'type:feature-main',
@@ -106,6 +115,21 @@ module.exports = [
             {
               sourceTag: 'type:frontend-app',
               onlyDependOnLibsWithTags: ['type:feature-shared', 'type:ui', 'type:common', 'type:util', 'type:sdk'],
+            },
+            {
+              sourceTag: 'type:e2e',
+              onlyDependOnLibsWithTags: [
+                'type:feature-main',
+                'type:feature-admin',
+                'type:feature-shared',
+                'type:common',
+                'type:asset',
+                'type:data-access',
+                'type:test-util',
+                'type:ui',
+                'type:util',
+                'type:sdk',
+              ],
             },
             {
               sourceTag: 'type:feature-admin',

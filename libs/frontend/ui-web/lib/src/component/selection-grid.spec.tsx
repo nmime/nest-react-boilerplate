@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ACCESSIBILITY-003
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UiSelectionGrid } from './selection-grid';

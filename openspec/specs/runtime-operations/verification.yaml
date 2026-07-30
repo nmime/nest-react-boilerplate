@@ -1,0 +1,289 @@
+version: 3
+capability: runtime-operations
+owners:
+  product: runtime-maintainers
+  verification: reliability-engineering
+  security: security-maintainers
+  operations: platform-operations
+requirements:
+  - id: REQ-RUNTIME-HEALTH-001
+    projects:
+      - '@app/backend-common-health'
+    risk: high
+    profiles:
+      - domain
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Dependency health truth is proven directly at the service and operational probe layers.
+      alternativeEvidence:
+        - vitest
+        - operations
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/health/lib/src/health.service.spec.ts
+        target: '@app/backend-common-health:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:canary
+        lanes:
+          - nightly
+  - id: REQ-RUNTIME-RECOVERY-002
+    projects:
+      - '@app/backend-common-component-test'
+      - '@app/backend-postgres-main'
+    risk: critical
+    profiles:
+      - async
+      - persistence
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Recovery behavior requires real dependency failure drills and operational execution evidence.
+      alternativeEvidence:
+        - component
+        - operations
+    evidence:
+      - kind: component
+        file: libs/backend/common/component-test/lib/src/testcontainer/service-containers.spec.ts
+        target: '@app/backend-common-component-test:test'
+        lanes:
+          - main
+          - nightly
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly
+  - id: REQ-RUNTIME-CONFIG-003
+    projects:
+      - '@app/common-config'
+      - '@app/backend-common-i18n'
+    risk: high
+    profiles:
+      - domain
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Configuration validation and secret redaction are direct schema and adversarial assertions.
+      alternativeEvidence:
+        - vitest
+        - security
+    evidence:
+      - kind: vitest
+        file: libs/common/config/lib/src/create-config.spec.ts
+        target: '@app/common-config:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/common/config/lib/src/create-config.spec.ts
+        target: '@app/common-config:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-RUNTIME-LIFECYCLE-004
+    projects:
+      - admin-app-api
+      - auth-app-api
+      - discord-app-api
+      - notification-consumer
+      - notification-scheduler
+      - telegram-bot-api
+      - user-app-api
+      - '@app/backend-common-bootstrap'
+      - '@app/backend-common-health'
+    risk: critical
+    profiles:
+      - domain
+      - async
+    cucumber:
+      disposition: not-applicable
+      reason: Startup and shutdown resource behavior requires executable lifecycle and component evidence.
+      alternativeEvidence:
+        - component
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/bootstrap/lib/src/bootstrap.spec.ts
+        target: '@app/backend-common-bootstrap:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/common/component-test/lib/src/setup/container-manager.spec.ts
+        target: '@app/backend-common-component-test:test'
+        lanes:
+          - main
+          - nightly
+  - id: REQ-RUNTIME-OBSERVABILITY-005
+    projects:
+      - '@app/backend-common-analytics'
+      - '@app/backend-common-logger'
+      - '@app/backend-common-otel'
+    risk: high
+    profiles:
+      - domain
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Correlation and exporter failure handling are proven by direct telemetry and operational gates.
+      alternativeEvidence:
+        - operations
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/analytics/lib/src/analytics.service.spec.ts
+        target: '@app/backend-common-analytics:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: libs/backend/common/otel/lib/src/otel.runtime.spec.ts
+        script: test:observability
+        lanes:
+          - nightly
+  - id: REQ-RUNTIME-MESSAGING-006
+    projects:
+      - notification-consumer
+      - notification-scheduler
+      - '@app/backend-common-nats'
+      - '@app/backend-common-redis'
+      - '@app/common-websocket'
+    risk: critical
+    profiles:
+      - async
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Acknowledgement, retry, and idempotency guarantees require real messaging component evidence.
+      alternativeEvidence:
+        - component
+        - operations
+    evidence:
+      - kind: component
+        file: libs/backend/common/nats/lib/src/nats.runtime.spec.ts
+        target: '@app/backend-common-nats:test'
+        lanes:
+          - main
+          - nightly
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly
+  - id: REQ-RUNTIME-STORAGE-007
+    projects:
+      - '@app/backend-common-redis'
+      - '@app/backend-common-s3'
+    risk: high
+    profiles:
+      - domain
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Storage isolation and provider failure handling are direct security and domain assertions.
+      alternativeEvidence:
+        - security
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/s3/lib/src/s3.storage.spec.ts
+        target: '@app/backend-common-s3:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/common/s3/lib/src/s3.storage.spec.ts
+        target: '@app/backend-common-s3:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-RUNTIME-DATABASE-008
+    projects:
+      - '@app/backend-mongodb-main'
+      - '@app/backend-mongodb-main-feature-flags'
+      - '@app/backend-postgres-main'
+      - '@app/backend-postgres-main-auth'
+      - '@app/backend-postgres-main-feature-flags'
+      - '@app/backend-postgres-main-notification'
+      - '@repo/tooling'
+    risk: critical
+    profiles:
+      - persistence
+      - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Transaction and migration guarantees require executable behavior against real database components.
+      alternativeEvidence:
+        - component
+        - vitest
+    evidence:
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: vitest
+        file: libs/backend/postgres/main/shared/lib/src/data-source-options.spec.ts
+        target: '@app/backend-postgres-main:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-RUNTIME-DELIVERY-009
+    projects:
+      - '@repo/tooling'
+    risk: critical
+    profiles:
+      - operations
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Deployment manifest and secret-handling guarantees require operational and security inspection.
+      alternativeEvidence:
+        - operations
+        - security
+    evidence:
+      - kind: operations
+        file: scripts/deploy.spec.mjs
+        script: test:deploy
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: scripts/deploy.spec.mjs
+        script: test:deploy
+        lanes:
+          - main
+          - nightly
+  - id: REQ-RUNTIME-BOUNDARY-010
+    projects:
+      - '@app/backend-common-network'
+      - '@app/backend-common-static'
+    risk: high
+    profiles:
+      - domain
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Path, origin, and network boundary failures are best proven with adversarial executable assertions.
+      alternativeEvidence:
+        - security
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/common/static/lib/src/static-data.service.spec.ts
+        target: '@app/backend-common-static:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/common/static/lib/src/static-data.service.spec.ts
+        target: '@app/backend-common-static:test'
+        lanes:
+          - pr
+          - main

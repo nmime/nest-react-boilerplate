@@ -22,6 +22,25 @@ use the explicit `lint:all`, `typecheck:all`, `test:all`, `test:coverage:all`, `
 `test:e2e:all`, and `test:e2e:coverage:all` sweeps instead of inventing a
 default product selection.
 
+Normative requirements, Cucumber acceptance examples, and independent evidence
+lanes are described in
+[Specification assurance](specification-assurance.md). Start with:
+
+```bash
+pnpm run spec:validate
+pnpm exec nx run acceptance-e2e:acceptance
+pnpm run spec:verify -- --lane pr --base origin/main --head HEAD
+```
+
+Every repository-owned executable `*.spec.*`, `*.test.*`, `*.e2e-spec.*`, or
+`*.component-spec.*` file carries one `// @requirements REQ-...` inventory
+marker. Filename-shaped command modules such as `storybook-test.ts` are
+excluded. The marker links the whole file to durable behavior and project
+ownership; `verification.yaml` separately selects the high-signal evidence
+that satisfies each risk profile. Its version 3 Cucumber disposition makes
+acceptance evidence mandatory where selected and requires a concrete reason
+plus mapped alternative evidence everywhere else.
+
 Run heavier suites intentionally: `test:component`, `test:e2e`, `test:storybook`, `test:visual`, `test:docker-smoke`, `test:fullstack`, and the nightly/manual presets (`api:openapi:fuzz`, `test:a11y`, `test:e2e:matrix`, `test:perf`, `test:security:dast`, `test:mutation`).
 
 `pnpm run test:fullstack` fails closed unless `fullstack-e2e` belongs to the

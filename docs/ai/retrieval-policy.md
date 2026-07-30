@@ -9,8 +9,24 @@ This policy defines how agents should gather repository context before answering
 3. Check the current branch, target branch, and `origin/main` state when the task involves edits, review, commits, pushes, or deployment.
 4. Read the files named by the user.
 5. Read the nearest project config, package config, tests, and existing docs for the touched surface.
-6. Use [AI repo map](repo-map.md) to find adjacent architecture, testing, operations, and API docs.
-7. Verify claims through source, tests, generated artifacts, or current external primary sources when the answer depends on changing facts.
+6. For observable behavior, read the owning
+   `openspec/specs/<capability>/spec.md`, its version 3 `verification.yaml`, and
+   any active change before implementation or review.
+7. Use [AI repo map](repo-map.md) to find adjacent architecture, testing, operations, and API docs.
+8. Verify claims through source, tests, generated artifacts, or current external primary sources when the answer depends on changing facts.
+
+### Specification-driven behavior
+
+1. Use `$specify-behavior` when intent, invariants, ownership, or evidence is new
+   or changing.
+2. Use `$implement-specified-change` once the requirement and design are
+   approved.
+3. Read the complete executable-test inventory through `pnpm run spec:trace`
+   instead of treating individual test discovery as proof of full coverage.
+4. Confirm every requirement's Cucumber disposition: acceptance must map
+   Gherkin evidence; not-applicable must justify mapped alternative evidence.
+5. Use `$review-specification-assurance` to challenge omitted scenarios and
+   verify exact-SHA evidence independently.
 
 ## Task-specific retrieval additions
 

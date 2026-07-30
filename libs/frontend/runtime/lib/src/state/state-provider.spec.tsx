@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { observer } from 'mobx-react-lite';
 import { afterEach, describe, expect, it } from 'vitest';

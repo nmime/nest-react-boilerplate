@@ -106,11 +106,23 @@ const validateDocker = () => {
     ['--test', 'scripts/compose-production.spec.mjs'],
     options,
   );
+  run(
+    'Docker Compose production init scaffolder tests',
+    process.execPath,
+    ['--test', 'scripts/compose-production-init.spec.mjs'],
+    options,
+  );
   run('Standalone migrator provider tests', process.execPath, ['--test', 'docker/migrator-run.spec.mjs'], options);
   run(
     'Single-server deployment tests',
     process.execPath,
     ['--test', 'scripts/single-server-deployment.spec.mjs'],
+    options,
+  );
+  run(
+    'Native datastore provisioning tests',
+    process.execPath,
+    ['--test', 'scripts/native-datastores.spec.mjs'],
     options,
   );
   run(
@@ -149,6 +161,12 @@ const validateHelm = () => {
     options,
   );
   run('Helm rate-limit static config', process.execPath, ['scripts/validate-helm-rate-limit-config.mjs'], options);
+  run(
+    'Kubernetes no-deploy live preflight plan',
+    process.execPath,
+    ['scripts/validate-kubernetes-live.mjs', '--context=validation-only', '--plan'],
+    options,
+  );
 
   if (commandExists('helm')) {
     run('Helm render validation', 'bash', ['scripts/validate-helm.sh'], options);
@@ -157,7 +175,7 @@ const validateHelm = () => {
 
   if (requireHelm) {
     console.error(
-      'Helm executable not found; Helm render validation is required for --mode=helm or REQUIRE_HELM=true. Install Helm 3 or use a non-Helm validation mode.',
+      'Helm executable not found; Helm render validation is required for --mode=helm or REQUIRE_HELM=true. Install Helm 4 or use a non-Helm validation mode.',
     );
     process.exit(127);
   }
@@ -191,7 +209,19 @@ const validatePm2 = () => {
     return;
   }
   run('PM2 static config', process.execPath, ['scripts/validate-pm2-config.mjs']);
+  // The native release sequence and its secret resolution are shared with
+  // serverctl's RUNTIME_MODE=native path, so they are contract-checked here too.
+  run('Native release sequence tests', process.execPath, ['--test', 'scripts/native-release.spec.mjs']);
+  run('Native runtime environment tests', process.execPath, ['--test', 'scripts/native-runtime-env.spec.mjs']);
+  run('Native datastore provisioning tests', process.execPath, ['--test', 'scripts/native-datastores.spec.mjs']);
 };
+
+// The unified `pnpm deploy` planner spans every target, so its contract is
+// checked in all modes: a broken plan would misdeploy regardless of runtime.
+run('Unified deploy planner tests', process.execPath, ['--test', 'scripts/deploy.spec.mjs']);
+// The bake generator defines the release image set; keep it gated here rather than
+// relying on a standalone package.json script.
+run('Bake-file generator tests', process.execPath, ['--test', 'scripts/generate-bake-file.spec.mjs']);
 
 if (mode === 'docker') {
   validateDocker();

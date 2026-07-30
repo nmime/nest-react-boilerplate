@@ -1,4 +1,7 @@
+// @requirements REQ-AUTH-TENANT-004
+// Evidence for: REQ-AUTH-ACCESS-001 REQ-AUTH-SESSION-002 REQ-AUTH-TENANT-004
 import { UnauthorizedException } from '@nestjs/common';
+// Security evidence for REQ-AUTH-ACCESS-001 and REQ-AUTH-SESSION-002.
 import { describe, expect, it } from 'vitest';
 import { InMemoryAuthUserStore } from '../infrastructure/auth-user-store';
 import { AuthService } from './auth.service';

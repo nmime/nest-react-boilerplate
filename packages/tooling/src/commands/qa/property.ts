@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Evidence for: REQ-API-COMPAT-002
+// Property evidence for REQ-API-COMPAT-002.
 import { existsSync, readFileSync } from "node:fs";
 import { findOperation, loadOpenApiContracts, matchPathTemplate, parseArgs, readJson, schemaExample, validateSchema, writeJson } from "./runtime-utils.ts";
 

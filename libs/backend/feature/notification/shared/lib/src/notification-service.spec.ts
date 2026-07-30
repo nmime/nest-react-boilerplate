@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-TEMPLATE-003
 import { describe, it, expect } from 'vitest';
 import { NotificationService } from './notification-service';
 

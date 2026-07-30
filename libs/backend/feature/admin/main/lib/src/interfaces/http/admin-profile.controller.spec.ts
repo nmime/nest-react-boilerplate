@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { describe, expect, it } from 'vitest';
 import { DefaultAuthTenantId, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { AdminProfileReadPermission } from '@app/backend-feature-admin-shared';

@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-INIT-004
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { parseNrbConfig, schemaVersion } from './schema.js';

@@ -34,6 +34,12 @@ description: Select and run risk-based quality gates for browser and native fron
 - Distinguish component rendering, app composition, responsive web, native behavior, and production integration evidence.
 - For shared UI or token changes, broaden validation to every consuming frontend class.
 
+## Specification assurance
+
+For behavior-changing diffs, include
+`$review-specification-assurance` in the independent review so requirement
+completeness, ownership, evidence meaning, and exact-SHA provenance are checked.
+
 ## Report
 
 List commands and outcomes by risk, include artifact locations for failures, and state the exact unverified boundary. Pair with `../validate-change/SKILL.md` when the diff also changes backend, infrastructure, generators, or other non-frontend owners.

@@ -32,8 +32,10 @@ import { setupSwagger, type SwaggerAuthScheme } from '@app/backend-common-swagge
 import { createValidationPipe } from '@app/backend-common-validation';
 import { createRequestLoggingMiddleware } from './request-logging.middleware';
 import { createLogger } from '@app/backend-common-logger';
+import { initOpenTelemetry, shutdownOpenTelemetry } from '@app/backend-common-otel';
 import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
 import { problemInstanceForRequestId, problemTypeForCode } from '@app/common-problem-details';
+import { withOpenTelemetryLifecycle } from './open-telemetry-lifecycle';
 
 export interface BootstrapNestApiOptions {
   appName: string;
@@ -762,9 +764,26 @@ export async function bootstrapNestApi(
   module: Type<unknown> | DynamicModule,
   options: BootstrapNestApiOptions,
 ): Promise<void> {
+  initOpenTelemetry({
+    serviceName: options.appName,
+    serviceVersion: process.env.OTEL_SERVICE_VERSION ?? process.env.npm_package_version,
+    environment: process.env.NODE_ENV,
+  });
+  try {
+    await createAndStartNestApi(module, options);
+  } catch (error) {
+    await shutdownOpenTelemetry();
+    throw error;
+  }
+}
+
+async function createAndStartNestApi(
+  module: Type<unknown> | DynamicModule,
+  options: BootstrapNestApiOptions,
+): Promise<void> {
   const config = resolveBackendEnvironmentConfig(options);
   const app = await NestFactory.create<NestFastifyApplication>(
-    module,
+    withOpenTelemetryLifecycle(module),
     new FastifyAdapter({
       logger: false,
       trustProxy: config.trustProxy,

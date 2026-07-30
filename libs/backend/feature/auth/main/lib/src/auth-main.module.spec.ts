@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { describe, expect, it } from 'vitest';
 import { AuthMainModule, AuthPersistenceMode } from './auth-main.module';
 import { AuthController } from './interfaces/http/auth.controller';

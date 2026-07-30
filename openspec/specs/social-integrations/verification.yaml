@@ -1,0 +1,156 @@
+version: 3
+capability: social-integrations
+owners:
+  product: integrations-maintainers
+  verification: quality-engineering
+  security: security-maintainers
+  operations: platform-operations
+requirements:
+  - id: REQ-SOCIAL-INGRESS-001
+    projects:
+      - telegram-bot-api
+      - discord-app-api
+    risk: critical
+    profiles:
+      - domain
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Webhook authenticity and replay rejection are direct adversarial boundary assertions.
+      alternativeEvidence:
+        - security
+        - vitest
+    evidence:
+      - kind: vitest
+        file: apps/backend/telegram/telegram-bot-api/src/telegram-webhook.controller.spec.ts
+        target: telegram-bot-api:test
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: apps/backend/telegram/telegram-bot-api/src/telegram-webhook.controller.spec.ts
+        target: telegram-bot-api:test
+        lanes:
+          - pr
+          - main
+  - id: REQ-SOCIAL-SESSION-002
+    projects:
+      - '@app/backend-feature-telegram-bot'
+      - '@app/backend-feature-discord-bot'
+    risk: high
+    profiles:
+      - domain
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Session expiry and degraded storage behavior require direct adapter and operational evidence.
+      alternativeEvidence:
+        - vitest
+        - operations
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/telegram/bot/lib/src/storage/redis-session-adapter.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly
+  - id: REQ-SOCIAL-COMMANDS-003
+    projects:
+      - telegram-bot-api
+      - discord-app-api
+      - '@app/backend-feature-telegram-bot'
+      - '@app/backend-feature-discord-bot'
+      - '@app/backend-feature-telegram-shared'
+    risk: high
+    profiles:
+      - domain
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Command authorization and malformed input handling are direct security and domain assertions.
+      alternativeEvidence:
+        - security
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/telegram/bot/lib/src/service/menus.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/feature/telegram/bot/lib/src/service/menus.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-SOCIAL-CONFIG-004
+    projects:
+      - telegram-bot-api
+      - discord-app-api
+      - '@app/backend-feature-telegram-bot'
+      - '@app/backend-feature-discord-bot'
+      - '@app/i18n-en-bots'
+      - '@app/i18n-ru-bots'
+    risk: high
+    profiles:
+      - domain
+      - security
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Provider configuration and secret safety are proven by security checks and canonical documentation.
+      alternativeEvidence:
+        - security
+        - documentation
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/telegram/bot/lib/src/service/config.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/feature/telegram/bot/lib/src/service/config.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/social-integrations/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-SOCIAL-LIFECYCLE-005
+    projects:
+      - telegram-bot-api
+      - discord-app-api
+      - '@app/backend-feature-telegram-bot'
+      - '@app/backend-feature-discord-bot'
+    risk: critical
+    profiles:
+      - async
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Polling and webhook lifecycle transitions require executable component and operational evidence.
+      alternativeEvidence:
+        - component
+        - operations
+    evidence:
+      - kind: component
+        file: apps/backend/telegram/telegram-bot-api/src/telegram-polling.service.spec.ts
+        target: telegram-bot-api:test
+        lanes:
+          - main
+          - nightly
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly

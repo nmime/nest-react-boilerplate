@@ -22,7 +22,7 @@ env:
   NX_CACHE_DIRECTORY: .nx/cache
   NODE_VERSION_FILE: .nvmrc
   BUN_VERSION_FILE: .bun-version
-  PNPM_VERSION: 11.11.0
+  PNPM_VERSION: 11.15.1
 
 jobs:
   gitleaks:
@@ -106,9 +106,10 @@ jobs:
       - name: Validate branch and commit conventions
         env:
           BEFORE_SHA: ${{ github.event.before }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           if [[ -n "$GITHUB_HEAD_REF" ]]; then
-            pnpm run git:conventions -- --branch "$GITHUB_HEAD_REF" --range "origin/$GITHUB_BASE_REF..HEAD"
+            pnpm run git:conventions -- --branch "$GITHUB_HEAD_REF" --range "origin/$GITHUB_BASE_REF..$PR_HEAD_SHA"
           else
             pnpm run git:conventions -- --branch "$GITHUB_REF_NAME" --range "$BEFORE_SHA..HEAD"
           fi
@@ -140,6 +141,64 @@ jobs:
           name: fast-check-summary
           path: fast-check-summary.md
           if-no-files-found: ignore
+
+  spec-evidence:
+    name: Exact-SHA specification evidence
+    runs-on: ubuntu-22.04
+    needs: fast-check
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Nx computation cache
+        uses: ./.github/actions/nx-cache
+        with:
+          scope: spec-evidence
+
+      - name: Verify impacted requirements
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            lane=pr
+            base="origin/$BASE_REF"
+          else
+            lane=main
+            base="$BEFORE_SHA"
+            if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+              base="$(git rev-parse HEAD^)"
+            fi
+          fi
+          pnpm run spec:verify -- \
+            --lane "$lane" \
+            --base "$base" \
+            --head HEAD \
+            --report test-results/spec-evidence/ci.json
+
+      - name: Upload exact-SHA specification evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: exact-sha-specification-evidence
+          path: test-results/spec-evidence/**
+          if-no-files-found: error
 
   non-runtime-validation:
     name: Non-runtime validation gates
@@ -302,6 +361,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - fast-check
+      - spec-evidence
       - non-runtime-validation
     timeout-minutes: 60
 
@@ -338,13 +398,15 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
         run: |
+          # Tests run once, with coverage, in the "Enforce coverage thresholds"
+          # step below. Running a plain `test` here too would re-execute the same
+          # projects under a different Nx hash (coverage changes the task inputs).
           if [ "$EVENT_NAME" = "pull_request" ]; then
-            pnpm exec nx affected -t lint typecheck test build \
+            pnpm exec nx affected -t lint typecheck build \
               --base="origin/$BASE_REF" --head=HEAD
           else
             pnpm run lint:all
             pnpm run typecheck:all
-            pnpm run test:all
             pnpm run build:all
           fi
 
@@ -592,9 +654,12 @@ jobs:
       # The cross-browser matrix includes the real Telegram TMA auth journey.
       # Keep its explicitly fake signing token aligned with the fullstack fixture.
       AUTH_TELEGRAM_ENABLED: 'true'
+      EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
       TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
       VITE_TELEGRAM_AUTH_ENABLED: 'true'
-      COMPOSE_PROFILES: postgres,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app
+      # Six browser/device projects share the same runtime client address.
+      RATE_LIMIT_MAX: '1000'
+      COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app,site-app
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
       PLAYWRIGHT_AUTO_INSTALL: '1'
       POSTGRES_PORT: '5432'
@@ -604,6 +669,7 @@ jobs:
       ADMIN_APP_PORT: '8081'
       USER_APP_PORT: '8082'
       LANDING_APP_PORT: '8083'
+      SITE_APP_PORT: '8084'
       A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
@@ -612,7 +678,10 @@ jobs:
       QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
       QA_CHAOS_URLS: http://127.0.0.1:3002/health
       QA_CHAOS_SERVICE: user-app-api
-      QA_MIGRATION_ROLLBACK_COMMAND: pnpm run db:migrations:rollback-check
+      QA_USER_JOURNEY_COMMAND: '["pnpm","run","test:e2e:matrix","--","--project","chromium"]'
+      QA_CONCURRENCY_COMMAND: '["pnpm","exec","nx","run","@app/backend-postgres-main-notification:component-test","--","src/repositories/notification-concurrency.component-spec.ts","--maxWorkers=1"]'
+      QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
+      QA_MIGRATION_ROLLBACK_COMMAND: '["pnpm","run","db:migrations:rollback-check"]'
       POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.6-alpine
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -739,6 +808,7 @@ jobs:
     needs:
       - helm-validation
       - fast-check
+      - spec-evidence
       - non-runtime-validation
       - bun-compat
       - quality
@@ -764,11 +834,13 @@ jobs:
             echo "| --- | --- |"
             echo "| Helm render validation | ${{ needs.helm-validation.result }} |"
             echo "| Fast PR gate (ci:pr) | ${{ needs.fast-check.result }} |"
+            echo "| Exact-SHA specification evidence | ${{ needs.spec-evidence.result }} |"
             echo "| Non-runtime validation gates | ${{ needs.non-runtime-validation.result }} |"
             echo "| Bun compatibility contract | ${{ needs.bun-compat.result }} |"
             echo "| Nx quality gates | ${{ needs.quality.result }} |"
             echo "| MongoDB migrations, transactions, and adapters | ${{ needs.mongodb-validation.result }} |"
             echo "| Static/browser e2e coverage | ${{ needs.e2e.result }} |"
+            echo "| Storybook interaction and visual regression | ${{ needs.visual-regression.result }} |"
             echo "| Docker smoke stack | ${{ needs.docker-smoke.result }} |"
             echo "| Native security gates | ${{ needs.security-native.result }} |"
             echo "| Runtime QA/ops gates | ${{ needs.ops-gates.result }} |"
@@ -782,3 +854,27 @@ jobs:
           name: ci-status-summary
           path: ci-status-summary.md
           if-no-files-found: error
+
+      - name: Enforce every required CI result
+        env:
+          REQUIRED_RESULTS: >-
+            ${{ needs.helm-validation.result }}
+            ${{ needs.fast-check.result }}
+            ${{ needs.spec-evidence.result }}
+            ${{ needs.non-runtime-validation.result }}
+            ${{ needs.bun-compat.result }}
+            ${{ needs.quality.result }}
+            ${{ needs.mongodb-validation.result }}
+            ${{ needs.e2e.result }}
+            ${{ needs.visual-regression.result }}
+            ${{ needs.docker-smoke.result }}
+            ${{ needs.security-native.result }}
+            ${{ needs.ops-gates.result }}
+            ${{ needs.fullstack-e2e.result }}
+        run: |
+          for result in $REQUIRED_RESULTS; do
+            if [ "$result" != "success" ]; then
+              echo "::error::A required CI job finished with result: $result"
+              exit 1
+            fi
+          done

@@ -1,4 +1,7 @@
+// @requirements REQ-SCAFFOLD-INIT-004
 /**
+ * Repeatable setup evidence for REQ-SCAFFOLD-SELECTION-002.
+ *
  * Component and E2E tests for atomic apply with in-memory filesystem adapter.
  *
  * Tests: in-memory apply, rollback on injected failure, conflict refusal,

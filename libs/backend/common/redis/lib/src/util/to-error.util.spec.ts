@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { describe, expect, it } from 'vitest';
 import { toError } from './to-error.util';
 

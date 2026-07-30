@@ -35,7 +35,13 @@ monitoring:
     enabled: true
 ```
 
-The application already initializes OpenTelemetry from environment variables.
+Every API using `bootstrapNestApi` initializes OpenTelemetry as the first
+bootstrap operation, before environment resolution and Nest application
+construction, using the app name, environment, and service version. Static
+entrypoint imports have already been evaluated at that point; products that
+require instrumentation before any application-module import must own an
+explicit runtime preload. An awaited Nest lifecycle provider shuts the SDK down
+after application resources are disposed so buffered telemetry is flushed.
 When `monitoring.otel.enabled=true`, the chart writes `OTEL_ENABLED=true` and,
 by default, points `OTEL_EXPORTER_OTLP_ENDPOINT` at the in-cluster collector:
 
@@ -48,6 +54,19 @@ collector. Use `monitoring.otelCollector.config` to add tail-sampling, remote
 trace exporters, or vendor-specific auth headers. Keep secrets (for example
 `OTEL_EXPORTER_OTLP_HEADERS`) in an external Secret rather than plaintext values
 when they contain credentials.
+
+With `networkPolicy.enabled=true`, the chart permits the selected app-to-
+collector OTLP/HTTP path on 4318, collector-to-observability exporter path on
+4317, and monitoring namespace scrape path on 9464. Set
+`networkPolicy.otelCollector.exporterNamespace`, `exporterPorts`, and
+`prometheusNamespace` to the actual platform owners. A custom in-cluster OTLP
+endpoint also needs a matching product-owned NetworkPolicy; hosted HTTPS uses
+the separately controlled external egress rule.
+
+Coroot does not receive Secret access by default. Set
+`coroot.rbac.readSecrets=true` only after a product security review accepts
+cluster-wide Secret metadata and payload exposure; ordinary workload discovery
+uses the non-secret read-only resources in its ClusterRole.
 
 ## Alerts
 

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { describe, expect, it, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import type { NatsConnection } from '@nats-io/nats-core';

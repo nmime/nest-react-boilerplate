@@ -1,0 +1,197 @@
+version: 3
+capability: notification-delivery
+owners:
+  product: notification-maintainers
+  verification: quality-engineering
+  security: security-maintainers
+  operations: platform-operations
+requirements:
+  - id: REQ-NOTIFY-DELIVERY-001
+    projects:
+      - notification-consumer
+      - '@app/backend-feature-notification-main'
+      - '@app/backend-feature-notification-shared'
+      - '@app/common-notifications'
+    risk: high
+    profiles:
+      - acceptance
+      - domain
+    cucumber:
+      disposition: acceptance
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/notification-delivery.feature
+        scenario: SCN-NOTIFY-DELIVERY-01
+        target: acceptance-e2e:acceptance
+        lanes:
+          - pr
+          - main
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/notification-delivery.feature
+        scenario: SCN-NOTIFY-DELIVERY-02
+        target: acceptance-e2e:acceptance
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/common/notifications/lib/src/notification-contracts.spec.ts
+        target: '@app/common-notifications:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-NOTIFY-LIFECYCLE-002
+    projects:
+      - notification-consumer
+      - notification-scheduler
+      - '@app/backend-feature-notification-admin'
+      - '@app/backend-feature-notification-main'
+    risk: critical
+    profiles:
+      - domain
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Idempotent broadcast transitions and recovery are state-machine and operational invariants with direct evidence.
+      alternativeEvidence:
+        - vitest
+        - operations
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/notification/main/lib/src/service/notification-application.service.spec.ts
+        target: '@app/backend-feature-notification-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly
+  - id: REQ-NOTIFY-TEMPLATE-003
+    projects:
+      - '@app/backend-feature-notification-main'
+      - '@app/backend-feature-notification-shared'
+      - '@app/backend-postgres-main-notification'
+    risk: high
+    profiles:
+      - domain
+      - persistence
+    cucumber:
+      disposition: not-applicable
+      reason: Template immutability and channel persistence require domain and real-database verification.
+      alternativeEvidence:
+        - vitest
+        - component
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/notification/main/lib/src/service/notification-strategy-resolver.service.spec.ts
+        target: '@app/backend-feature-notification-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+  - id: REQ-NOTIFY-AUDIENCE-004
+    projects:
+      - '@app/backend-feature-notification-admin'
+      - '@app/backend-feature-notification-main'
+      - '@app/backend-postgres-main-notification'
+    risk: critical
+    profiles:
+      - domain
+      - persistence
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Tenant-safe audience materialization requires persistent and adversarial checks at recipient resolution.
+      alternativeEvidence:
+        - component
+        - security
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/notification/main/lib/src/service/notification-recipient-resolver.service.spec.ts
+        target: '@app/backend-feature-notification-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: libs/backend/feature/notification/main/lib/src/service/notification-recipient-resolver.service.spec.ts
+        target: '@app/backend-feature-notification-main:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-NOTIFY-PERSISTENCE-005
+    projects:
+      - notification-consumer
+      - notification-scheduler
+      - '@app/backend-feature-notification-main'
+      - '@app/backend-mongodb-main-notification'
+      - '@app/backend-postgres-main-notification'
+    risk: critical
+    profiles:
+      - persistence
+      - security
+      - async
+    cucumber:
+      disposition: not-applicable
+      reason: Durable retries, payload encryption, and outbox semantics must be exercised at database and security boundaries.
+      alternativeEvidence:
+        - component
+        - security
+    evidence:
+      - kind: component
+        file: packages/tooling/src/commands/db/migration.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: component
+        file: libs/backend/mongodb/main/notification/lib/src/notification-mongo.repository.component-spec.ts
+        target: '@app/backend-mongodb-main-notification:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: libs/backend/postgres/main/notification/lib/src/notification-payload-crypto.service.spec.ts
+        target: '@app/backend-postgres-main-notification:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-NOTIFY-PREFERENCE-006
+    projects:
+      - '@app/backend-postgres-main-feature-flags'
+      - '@app/common-feature-flags'
+      - '@app/frontend-feature-shared-preferences'
+      - '@app/frontend-feature-user-preferences'
+    risk: high
+    profiles:
+      - domain
+      - journey
+    cucumber:
+      disposition: not-applicable
+      reason: Preference controls and their recovery states are interactive browser behavior best verified as a real user journey.
+      alternativeEvidence:
+        - playwright
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/frontend/feature/user/preferences/lib/src/use-user-preference-controls.spec.tsx
+        target: '@app/frontend-feature-user-preferences:test'
+        lanes:
+          - pr
+          - main
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes:
+          - runtime

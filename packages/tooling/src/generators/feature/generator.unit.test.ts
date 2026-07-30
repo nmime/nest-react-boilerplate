@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-GENERATORS-003
+// Evidence for: REQ-SCAFFOLD-GENERATORS-003
 /**
  * Tests for the feature generator.
  *
@@ -6,6 +8,8 @@
  * E2E: full feature generation on in-memory tree, dry-run, duplicate rejection
  */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 async function createTree() {
@@ -16,8 +20,13 @@ async function createTree() {
     JSON.stringify({
       name: 'user-app-api',
       root: 'apps/backend/user/user-app-api',
+      sourceRoot: 'apps/backend/user/user-app-api/src',
       tags: ['type:backend-app'],
     }),
+  );
+  tree.write(
+    'apps/backend/user/user-app-api/src/main.ts',
+    'import { bootstrapNestApi } from "@app/backend-common-bootstrap";\nvoid bootstrapNestApi(UserAppApiModule, { appName: "user-app-api", port: 3100 });\n',
   );
   tree.write(
     'apps/backend/user/user-app-api/src/user-app-api.module.ts',
@@ -25,7 +34,21 @@ async function createTree() {
   );
   tree.write(
     'apps/frontend/app/project.json',
-    JSON.stringify({ name: 'user-app', root: 'apps/frontend/app', tags: ['type:frontend-app'] }),
+    JSON.stringify({
+      name: 'user-app',
+      root: 'apps/frontend/app',
+      sourceRoot: 'apps/frontend/app/src',
+      tags: ['type:frontend-app'],
+    }),
+  );
+  tree.write('apps/frontend/app/vite.config.mts', 'export default {};\n');
+  tree.write(
+    'packages/tooling/src/commands/db/generated-mongo-migrations.ts',
+    readFileSync(join(process.cwd(), 'packages/tooling/src/commands/db/generated-mongo-migrations.ts'), 'utf8'),
+  );
+  tree.write(
+    'packages/tooling/src/commands/db/orm-migration-config.ts',
+    readFileSync(join(process.cwd(), 'packages/tooling/src/commands/db/orm-migration-config.ts'), 'utf8'),
   );
   return tree;
 }
@@ -82,6 +105,91 @@ describe('feature generator', () => {
         () => featureGenerator(tree, { name: 'invoices' } as never),
         /requires explicit --api-app and --frontend-app owners/,
       );
+    });
+
+    it('rejects non-HTTP backend and non-Vite frontend owners before writes', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+      tree.write(
+        'apps/backend/billing/billing-consumer/project.json',
+        JSON.stringify({
+          name: 'billing-consumer',
+          root: 'apps/backend/billing/billing-consumer',
+          sourceRoot: 'apps/backend/billing/billing-consumer/src',
+          tags: ['type:backend-app'],
+        }),
+      );
+      tree.write(
+        'apps/backend/billing/billing-consumer/src/main.ts',
+        'void NestFactory.createApplicationContext(BillingConsumerModule);\n',
+      );
+      tree.write(
+        'apps/frontend/mobile/project.json',
+        JSON.stringify({
+          name: 'mobile-app',
+          root: 'apps/frontend/mobile',
+          sourceRoot: 'apps/frontend/mobile/src',
+          tags: ['type:frontend-app'],
+        }),
+      );
+      tree.write('apps/frontend/mobile/app.json', '{}\n');
+
+      const { featureGenerator } = await import('./generator.js');
+      await assert.rejects(
+        () =>
+          featureGenerator(tree, {
+            name: 'billing',
+            apiApp: 'billing-consumer',
+            frontendApp: 'user-app',
+            skipFormat: true,
+          }),
+        /require a Nest API owner.*consumers and schedulers are not supported/,
+      );
+      await assert.rejects(
+        () =>
+          featureGenerator(tree, {
+            name: 'billing',
+            apiApp: 'user-app-api',
+            frontendApp: 'mobile-app',
+            skipFormat: true,
+          }),
+        /require a Vite web application.*Astro, Vike, and Expo owners are not supported/,
+      );
+      assert.equal(tree.exists('libs/backend/feature/billing/main/lib/project.json'), false);
+    });
+
+    it('fails before writes when production migration registration is unsupported', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+      tree.delete('packages/tooling/src/commands/db/orm-migration-config.ts');
+
+      const { featureGenerator } = await import('./generator.js');
+      await assert.rejects(
+        () => featureGenerator(tree, { ...featureTargets, name: 'billing', skipFormat: true }),
+        /orm-migration-config\.ts is missing.*stopped before writes/i,
+      );
+      assert.equal(tree.exists('libs/backend/feature/billing/main/lib/project.json'), false);
+      assert.deepEqual(JSON.parse(tree.read('tsconfig.base.json', 'utf8')!), { compilerOptions: { paths: {} } });
+    });
+
+    it('fails before writes when the MongoDB migration registry is unsupported', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+      tree.delete('packages/tooling/src/commands/db/generated-mongo-migrations.ts');
+
+      const { featureGenerator } = await import('./generator.js');
+      await assert.rejects(
+        () =>
+          featureGenerator(tree, {
+            ...featureTargets,
+            name: 'billing',
+            database: 'mongodb',
+            skipFormat: true,
+          }),
+        /generated-mongo-migrations\.ts is missing.*stopped before writes/i,
+      );
+      assert.equal(tree.exists('libs/backend/feature/billing/main/lib/project.json'), false);
+      assert.deepEqual(JSON.parse(tree.read('tsconfig.base.json', 'utf8')!), { compilerOptions: { paths: {} } });
     });
   });
 
@@ -193,6 +301,10 @@ describe('feature generator', () => {
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/src/support-cases.controller.ts'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/src/support-cases.service.ts'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/src/support-cases.service.spec.ts'));
+      assert.match(
+        tree.read('libs/backend/feature/support-cases/main/lib/src/support-cases.service.spec.ts', 'utf8')!,
+        /^\/\/ @requirements REQ-SUPPORT-CASES-SCAFFOLD-001$/mu,
+      );
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/project.json'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/tsconfig.lib.json'));
       const coverageConfig = tree.read('libs/backend/feature/support-cases/main/lib/vitest.config.mts', 'utf8')!;
@@ -217,6 +329,17 @@ describe('feature generator', () => {
         ),
       );
       assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/src/support-cases-postgres.module.ts'));
+      const migrationIndex = tree.read(
+        'libs/backend/postgres/main/support-cases/lib/src/infrastructure/data-access/migrations/index.ts',
+        'utf8',
+      )!;
+      assert.match(migrationIndex, /export const supportCasesMigrations = \[/u);
+      const migrationRunner = tree.read('packages/tooling/src/commands/db/orm-migration-config.ts', 'utf8')!;
+      assert.match(
+        migrationRunner,
+        /const \{ supportCasesMigrations \} = require\("@app\/backend-postgres-main-support-cases"\);/u,
+      );
+      assert.match(migrationRunner, /\.\.\.notificationMigrations, \.\.\.supportCasesMigrations/u);
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/AGENTS.md'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/shared/lib/README.md'));
       assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/AGENTS.md'));
@@ -254,6 +377,13 @@ describe('feature generator', () => {
       assert.match(collection, /collMod/);
       assert.match(collection, /assertCollectionDefinition/);
       assert.doesNotMatch(collection, /OnModuleInit/);
+      for (const path of [
+        `${root}/src/support-cases-mongo.collection.spec.ts`,
+        `${root}/src/support-cases-mongo.repository.spec.ts`,
+        `${root}/src/support-cases-mongo.repository.component-spec.ts`,
+      ]) {
+        assert.match(tree.read(path, 'utf8')!, /^\/\/ @requirements REQ-SUPPORT-CASES-SCAFFOLD-001$/mu);
+      }
       const migration = tree.read(`${root}/src/migrations/Migration20260727000000InitializeSupportCases.ts`, 'utf8')!;
       assert.match(migration, /20260727000000_initialize_support_cases/);
       assert.match(migration, /verifySupportCasesCollection/);
@@ -268,6 +398,10 @@ describe('feature generator', () => {
         `${root}/src/index.ts`,
       ]);
       assert.equal(tsconfig.compilerOptions.paths['@app/backend-postgres-main-support-cases'], undefined);
+      assert.doesNotMatch(
+        tree.read('packages/tooling/src/commands/db/orm-migration-config.ts', 'utf8')!,
+        /supportCasesMongoMigrations/u,
+      );
     });
 
     it('keeps generated MongoDB migration registration deterministic', async () => {
@@ -292,6 +426,32 @@ describe('feature generator', () => {
 
       const registry = tree.read('packages/tooling/src/commands/db/generated-mongo-migrations.ts', 'utf8')!;
       assert.ok(registry.indexOf('alphaRecordsMongoMigrations') < registry.indexOf('zebraRecordsMongoMigrations'));
+    });
+
+    it('registers sequential feature migration lists after formatting the production runner', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+      const { featureGenerator } = await import('./generator.js');
+
+      await featureGenerator(tree, {
+        ...featureTargets,
+        name: 'billing-ledger',
+        migrationTimestamp: '20260713000001',
+      });
+      await featureGenerator(tree, {
+        ...featureTargets,
+        name: 'invoice-reconciliation',
+        migrationTimestamp: '20260713000002',
+      });
+
+      const runner = tree.read('packages/tooling/src/commands/db/orm-migration-config.ts', 'utf8')!;
+      assert.match(
+        runner,
+        /const\s+\{\s*billingLedgerMigrations,?\s*\}\s*=\s*require\(['"]@app\/backend-postgres-main-billing-ledger['"]\);/u,
+      );
+      assert.match(runner, /\.\.\.billingLedgerMigrations,[\s\S]*\.\.\.invoiceReconciliationMigrations/u);
+      assert.match(runner, /migrationsList:\s*\[\s*\n/u);
+      assert.equal((runner.match(/migrationsList:/gu) ?? []).length, 1);
     });
 
     it('creates frontend files', async () => {
@@ -422,8 +582,14 @@ describe('feature generator', () => {
       );
       tree.write(
         'apps/frontend/admin/project.json',
-        JSON.stringify({ name: 'admin-app', root: 'apps/frontend/admin', tags: ['type:frontend-app'] }),
+        JSON.stringify({
+          name: 'admin-app',
+          root: 'apps/frontend/admin',
+          sourceRoot: 'apps/frontend/admin/src',
+          tags: ['type:frontend-app'],
+        }),
       );
+      tree.write('apps/frontend/admin/vite.config.mts', 'export default {};\n');
 
       const { featureGenerator } = await import('./generator.js');
       await featureGenerator(tree, {
@@ -462,6 +628,7 @@ describe('feature generator', () => {
         assert.ok(!tree.exists('libs/backend/feature/invoices/shared/lib/src/index.ts'));
         assert.ok(logs.some((l) => l.includes('CREATE libs/backend/feature/invoices')));
         assert.ok(logs.some((l) => l.includes('UPDATE tsconfig.base.json')));
+        assert.ok(logs.some((l) => l.includes('production migration registration')));
         assert.ok(logs.some((l) => l.includes('Next steps')));
       } finally {
         console.log = origLog;
@@ -491,7 +658,11 @@ describe('feature generator', () => {
           false,
         );
         assert.ok(logs.some((line) => line.includes('Migration20260727000100InitializeInvoices')));
-        assert.ok(logs.some((line) => line.includes('generated-mongo-migrations.ts register invoicesMongoMigrations')));
+        assert.ok(
+          logs.some((line) =>
+            line.includes('generated-mongo-migrations.ts production migration registration (MongoDB)'),
+          ),
+        );
       } finally {
         console.log = origLog;
       }

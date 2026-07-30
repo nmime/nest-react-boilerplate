@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-CREDENTIAL-003
 import { UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-control.types';

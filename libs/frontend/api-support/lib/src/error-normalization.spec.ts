@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ERROR-005
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { configureApiLocale } from './api-locale';

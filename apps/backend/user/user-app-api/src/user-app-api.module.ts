@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, Reflector } from '@nestjs/core';
 import { BaseHealthController, HealthPrivateNetworkIpGuard } from '@app/backend-common-health';
 import { UserMainModule } from '@app/backend-feature-user-main';
 import { UserAppHealthServiceProvider } from './health.config';
@@ -12,6 +12,7 @@ import { UserDatabaseSessionAccessGuard } from './user-database-session-access.g
   providers: [
     UserAppHealthServiceProvider,
     HealthPrivateNetworkIpGuard,
+    Reflector,
     UserDatabaseSessionAccessGuard,
     { provide: APP_GUARD, useExisting: UserDatabaseSessionAccessGuard },
   ],

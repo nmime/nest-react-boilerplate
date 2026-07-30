@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it, vi } from 'vitest';
 import type { CleanupInterval } from '../type/auth-token-cleanup-internal.type';
 import { unrefTimer } from './timer.util';

@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { describe, expect, it } from 'vitest';
 import { createI18nMiddleware, resolveTelegramLocale } from './i18n';
 import type { TelegramBotContext } from './type';

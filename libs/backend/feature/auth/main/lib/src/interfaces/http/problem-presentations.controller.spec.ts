@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { ProblemPresentationsController } from './problem-presentations.controller';

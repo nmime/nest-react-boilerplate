@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-SAFETY-008
+// Evidence for: REQ-AUTH-TENANT-004 REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005 REQ-NOTIFY-TEMPLATE-003 REQ-RUNTIME-DATABASE-008 REQ-SCAFFOLD-SAFETY-008
 // @ts-nocheck
 /**
  * Integration tests for unified auth migration (migrate.ts + better-auth-schema.ts).

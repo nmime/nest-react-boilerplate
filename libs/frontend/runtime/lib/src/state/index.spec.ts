@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { describe, expect, it } from 'vitest';
 import * as stateExports from './index';
 

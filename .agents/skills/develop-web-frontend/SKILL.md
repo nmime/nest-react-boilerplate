@@ -25,6 +25,13 @@ description: Implement browser frontend features in the correct renderer and Fea
 6. Use component tests or Storybook interactions for component behavior and browser e2e for critical user journeys. Test portal behavior in browser mode.
 7. Put deterministic screen compositions in the owning app's `storybook/` directory and register them through the shared web Storybook config. Keep routing, production providers, authentication, API integration, and complete page flows in app browser tests.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run target lint, typecheck, tests, build, relevant Storybook/browser lanes, `pnpm run frontend:fsd:check`, and `git diff --check`. Validate each affected frontend separately; app-composition stories prove deterministic screen rendering, not deployable routing or integration.

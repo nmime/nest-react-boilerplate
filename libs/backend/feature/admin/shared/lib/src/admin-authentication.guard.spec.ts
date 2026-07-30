@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { type ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it } from 'vitest';

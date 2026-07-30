@@ -6,10 +6,11 @@ import {
   RuntimeHealthIndicator,
   type HealthIndicator,
 } from '@app/backend-common-health';
+import { RedisHealthIndicator } from '@app/backend-common-redis';
 
 export const DiscordAppApiHealthServiceProvider: FactoryProvider<HealthService> = {
   provide: HealthService,
-  useFactory: (database?: DurableDatabaseRuntime) => {
+  useFactory: (database: DurableDatabaseRuntime | undefined, redisHealth: RedisHealthIndicator) => {
     const memory =
       process.env.AUTH_PERSISTENCE === 'memory' || Boolean(process.env.VITEST && !process.env.AUTH_PERSISTENCE);
     return new HealthService({
@@ -30,10 +31,11 @@ export const DiscordAppApiHealthServiceProvider: FactoryProvider<HealthService> 
           ],
         }),
         ...databaseIndicators(database, memory),
+        redisHealth,
       ],
     });
   },
-  inject: [optionalProvider(DurableDatabaseRuntimeInjectToken)],
+  inject: [optionalProvider(DurableDatabaseRuntimeInjectToken), RedisHealthIndicator],
 };
 
 export function createDiscordAppApiHealthServiceProvider(): FactoryProvider<HealthService> {

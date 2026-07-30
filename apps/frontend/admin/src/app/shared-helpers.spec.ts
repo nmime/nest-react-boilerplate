@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TranslationKey } from '@app/frontend-runtime';
 import { createAdminAccess, normalizeClaimList } from '../entities/admin-session';

@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { NxGeneratorFn } from "./nx-generator-runner.js";

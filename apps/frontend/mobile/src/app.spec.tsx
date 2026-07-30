@@ -1,16 +1,23 @@
+// @requirements REQ-FRONTEND-NATIVE-006
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import Layout from './app/_layout';
 
 vi.mock('react-native-gesture-handler', () => ({}));
 
-vi.mock('@app/frontend-ui-native', () => ({
-  TamaguiProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  Theme: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  nativeTamaguiConfig: {},
-  designColors: { light: { primary: '#0f172a' } },
-  designRadii: { sm: 4, md: 8 },
-  designSpacing: { 2: 8, 3: 12, 4: 16, 5: 20, 6: 24 },
-}));
+vi.mock('@app/frontend-ui-native', async () => {
+  // Mock only the Tamagui React wrappers; use the REAL shared design tokens so
+  // native tests track the single source instead of encoding stale values.
+  const { designColors, designRadii, designSpacing } = await import('@app/common-design-tokens');
+  return {
+    TamaguiProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Theme: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    nativeTamaguiConfig: {},
+    designColors,
+    designRadii,
+    designSpacing,
+  };
+});
 
 vi.mock('react-native-safe-area-context', () => ({
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -27,8 +34,7 @@ describe('mobile app layout', () => {
     vi.resetModules();
   });
 
-  it('renders the root layout structure', async () => {
-    const Layout = (await import('./app/_layout')).default;
+  it('renders the root layout structure', () => {
     const view = render(<Layout />);
 
     expect(view.container).toBeTruthy();

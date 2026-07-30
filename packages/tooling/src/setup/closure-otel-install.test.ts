@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-SELECTION-002
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';

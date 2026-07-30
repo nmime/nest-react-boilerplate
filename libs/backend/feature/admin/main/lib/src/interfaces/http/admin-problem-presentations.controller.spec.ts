@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal, AuthenticatedRequest } from '@app/backend-feature-auth-shared';
 import { AdminProblemPresentationsController } from './admin-problem-presentations.controller';

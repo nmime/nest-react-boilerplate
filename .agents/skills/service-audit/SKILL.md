@@ -23,6 +23,12 @@ description: Audit a repository app, service, worker, frontend, or package again
 5. Check backend/frontend/common boundaries and confirm generated files are source-derived.
 6. Identify stale project names, package versions, commands, or removed paths in documentation.
 
+## Specification assurance
+
+For behavior-changing diffs, include
+`$review-specification-assurance` in the independent review so requirement
+completeness, ownership, evidence meaning, and exact-SHA provenance are checked.
+
 ## Verification
 
 Run the narrowest safe checks needed to confirm findings, then broaden only for

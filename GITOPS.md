@@ -35,7 +35,7 @@ flowchart LR
   tag --> plan[Release workflow validates the fresh selected closure]
   plan --> images[Build, scan, sign, and publish its complete selected image set]
   images --> promote[Run Promote GitOps release with the full 40-character Git SHA]
-  promote --> verify[Resolve selected full-SHA images to immutable digests and render Helm]
+  promote --> verify[Verify digest, signature, scan, SBOM, provenance, and render Helm]
   verify --> pr[Open a promotion pull request updating values-production.yaml]
   pr --> reconcile[Merge after CI; Argo CD or Flux reconciles]
 ```
@@ -47,16 +47,22 @@ The promotion workflow is manual by design. It:
    `releaseImages` with applications and migrations enabled by the matching
    setup-generated `.helm/values-selection.yaml` and effective Helm production values;
 3. requires every image in that exact set to have an immutable digest in GHCR,
-   on both initial and later promotions;
+   on both initial and later promotions, then verifies each digest's keyless
+   release-workflow signature, signed SPDX SBOM, SLSA provenance, and passing
+   Trivy scan attestation;
 4. rejects missing required digests and supplied unselected or disabled image
    digests, then updates the exact set to the full-SHA tag plus digest;
 5. leaves image values outside the selected-and-enabled set unchanged;
 6. renders the chart and validates both GitOps controller manifests;
-7. pushes a topic branch and opens a pull request.
+7. pushes `release/gitops-sha-<full-sha>` with the repository owner identity and
+   opens a pull request.
 
 It never commits directly to `main`, never shortens the image tag, and never
 creates a CI/deploy commit loop. Configure `GH_DEPLOY_TOKEN` with repository
 contents, pull-request, and package read access before using the workflow.
+Promotion fails when an image merely exists in the registry without all signed
+evidence or when the signing certificate does not name the exact repository,
+release workflow, and requested source SHA.
 
 The release planner uses Nx's affected graph for application images and a
 separate migration-path rule for the migration image, then intersects both with

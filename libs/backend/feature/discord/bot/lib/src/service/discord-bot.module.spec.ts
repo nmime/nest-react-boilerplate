@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { Test } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 import { DiscordAccountExternalAuthInjectToken } from '../type/discord-account.port';

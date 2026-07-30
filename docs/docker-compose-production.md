@@ -80,17 +80,28 @@ pnpm nrb init --name "Acme" --domain acme.example --owner acme-org --apex-app la
 `--apex-app` accepts exactly `landing-app` or `site-app`. The initializer updates
 `PRIMARY_APP` and every documented hostname together.
 
-Copy the environment file and create secret storage:
+Scaffold the environment file and secret storage. The recommended way is the
+init helper, which copies `.env.production` from the example, generates every
+locally-generatable secret (`0600`), and creates empty placeholder files for the
+externally-issued ones (`DATABASE_URL`, provider tokens, push keys) for you to
+fill. It is idempotent — existing secret files are never overwritten:
+
+```bash
+pnpm docker:prod:init                    # bundled-db by default
+pnpm docker:prod:init --database=external-db --profile=telegram,discord
+```
+
+Manual equivalent (must cover every secret the base stack mounts — note
+`notification_payload_encryption_key` and, for `bundled-db`, `postgres_password`):
 
 ```bash
 cp .env.production.example .env.production
-mkdir -p docker/secrets
-chmod 700 docker/secrets
-openssl rand -base64 48 > docker/secrets/session_secret.txt
-openssl rand -base64 48 > docker/secrets/better_auth_secret.txt
-openssl rand -base64 32 > docker/secrets/auth_provider_token_encryption_key.txt
-openssl rand -base64 32 > docker/secrets/redis_password.txt
-openssl rand -base64 32 > docker/secrets/grafana_admin_password.txt
+mkdir -p docker/secrets && chmod 700 docker/secrets
+for s in session_secret better_auth_secret; do openssl rand -base64 48 > "docker/secrets/$s.txt"; done
+for s in auth_provider_token_encryption_key notification_payload_encryption_key \
+         redis_password grafana_admin_password postgres_password; do
+  openssl rand -base64 32 > "docker/secrets/$s.txt"
+done
 chmod 600 .env.production docker/secrets/*.txt
 ```
 
@@ -125,8 +136,11 @@ app-ID subdomain; API hostnames do not change. In particular, an app called
 generic name.
 
 The edge modes derive `CORS_ORIGINS`, `BETTER_AUTH_URL`,
-`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_ALLOWED_RETURN_URLS`, Telegram webhook URLs, and bot
-web-app URLs from this mapping. Add exceptional origins through
+`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_ALLOWED_RETURN_URLS`, Telegram webhook URLs,
+bot web-app URLs, and the landing page's user/admin destinations from this
+mapping. Per-app mode emits the derived HTTPS app origins into the landing
+container's public runtime config; single-domain mode emits same-origin `/app`
+and `/admin` paths. Add exceptional origins through
 `CORS_EXTRA_ORIGINS` and `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS`. External-proxy mode
 can derive the same contract when `EXTERNAL_PROXY_PUBLIC_MODE` is set to
 `single-domain` or `per-app-domains`; without it, compatibility mode requires
@@ -346,7 +360,7 @@ both Caddyfiles, and the merged Compose models:
 
 ```bash
 pnpm run deploy:validate:docker
-pnpm run test:compose-production-config
+pnpm run test:deploy
 pnpm run docker:prod:config:check
 pnpm run docker:prod:config
 ```
@@ -356,11 +370,12 @@ ownership pair and, unless `external-proxy` is selected, exactly one `edge`
 service.
 
 Ownership-specific render commands remain available and use the selected
-`DATABASE_ENGINE`:
+`DATABASE_ENGINE`. Pass the ownership axis directly to render one without
+editing `.env.production`:
 
 ```bash
-pnpm run docker:prod:bundled-db:config
-pnpm run docker:prod:external-db:config
+pnpm run docker:prod:config --database=bundled-db
+pnpm run docker:prod:config --database=external-db
 ```
 
 The validator also checks the explicit auth overlays

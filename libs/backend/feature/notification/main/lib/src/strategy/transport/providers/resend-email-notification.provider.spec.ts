@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-TEMPLATE-003
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NotificationErrorReason, NotificationStatus } from '@app/common-notifications';
 import { ResendEmailNotificationProvider } from './resend-email-notification.provider';
@@ -11,11 +12,15 @@ describe(ResendEmailNotificationProvider.name, () => {
     const provider = new ResendEmailNotificationProvider({
       resend: { apiKey: 'key', from: 'Example <no-reply@example.com>' },
     } as never);
+    const signal = new AbortController().signal;
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
 
     await expect(
       provider.send({
         address: 'user@example.com',
         deliveryId: 'delivery-1',
+        markDispatchStarted,
+        signal,
         message: {
           kind: 'email',
           subject: 'Confirm',
@@ -33,9 +38,13 @@ describe(ResendEmailNotificationProvider.name, () => {
         },
       }),
     ).resolves.toEqual({ status: NotificationStatus.Sent });
+    expect(markDispatchStarted).toHaveBeenCalledOnce();
     expect(fetch).toHaveBeenCalledWith(
       'https://api.resend.com/emails',
-      expect.objectContaining({ headers: expect.objectContaining({ 'idempotency-key': 'notification-delivery-1' }) }),
+      expect.objectContaining({
+        signal,
+        headers: expect.objectContaining({ 'idempotency-key': 'notification-delivery-1' }),
+      }),
     );
     const request = fetch.mock.calls[0]?.[1] as RequestInit;
     expect(JSON.parse(typeof request.body === 'string' ? request.body : '')).toMatchObject({
@@ -50,16 +59,19 @@ describe(ResendEmailNotificationProvider.name, () => {
       vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: 'invalid sender' }), { status: 422 })),
     );
     const provider = new ResendEmailNotificationProvider({ resend: { apiKey: 'key', from: 'bad' } } as never);
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
 
     await expect(
       provider.send({
         address: 'user@example.com',
         deliveryId: 'delivery-1',
+        markDispatchStarted,
         message: { kind: 'email', subject: 'Confirm', text: '123456' },
       }),
     ).resolves.toMatchObject({
       status: NotificationStatus.Rejected,
       errorReason: NotificationErrorReason.ProviderRejected,
     });
+    expect(markDispatchStarted).toHaveBeenCalledOnce();
   });
 });

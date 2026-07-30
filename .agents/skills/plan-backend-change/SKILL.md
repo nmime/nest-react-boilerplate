@@ -37,6 +37,13 @@ description: Plan a backend API, consumer, scheduler, persistence, or shared-run
 8. Sequence work into independently verifiable slices with rollback or
    compatibility steps for schema, public contract, and queued-event changes.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Plan output
 
 Produce a compact implementation brief with:

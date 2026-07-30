@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
 import {

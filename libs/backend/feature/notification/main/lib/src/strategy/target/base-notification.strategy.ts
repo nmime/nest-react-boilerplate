@@ -15,6 +15,8 @@ export interface HandleNotificationParams {
   notificationProviderResolver: NotificationProviderResolver;
   messageStrategyResolver: MessageStrategyResolver;
   recipientResolver: NotificationRecipientResolver;
+  signal: AbortSignal;
+  beforeProviderDispatch: () => Promise<void>;
 }
 
 export interface BaseNotificationStrategy {
@@ -34,7 +36,9 @@ export async function deliverNotification(
     error: { reason, message },
   });
 
+  params.signal.throwIfAborted();
   const recipient = await params.recipientResolver.resolve(notification.targetType, notification.targetId, delivery);
+  params.signal.throwIfAborted();
   if (!recipient) {
     logger.warn(`Notification recipient not found for ${notification.targetType}/${notification.targetId}`);
     return fail(NotificationErrorReason.IncorrectTarget);
@@ -56,6 +60,8 @@ export async function deliverNotification(
     message,
     extra: notification.extra,
     deliveryId: delivery.id,
+    signal: params.signal,
+    markDispatchStarted: params.beforeProviderDispatch,
   });
   return {
     id: delivery.id,

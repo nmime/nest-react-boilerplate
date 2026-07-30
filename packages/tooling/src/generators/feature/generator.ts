@@ -1,3 +1,4 @@
+// Evidence for: REQ-SCAFFOLD-GENERATORS-003
 /**
  * Feature generator — generates vertical-slice features across backend
  * and frontend layers, preserving the current vertical-slice semantics.
@@ -13,7 +14,7 @@
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
-import { findAdjacentOwner, generateNames, validateName } from '../names.ts';
+import { findAdjacentOwner, generatedRequirementId, generateNames, validateName } from '../names.ts';
 import { readJsonFile, writeJsonFile } from '../../setup/adapters/nx-tree.ts';
 
 // ---------------------------------------------------------------------------
@@ -24,6 +25,10 @@ interface TemplateFile {
 }
 
 type DatabaseProvider = 'postgres' | 'mongodb';
+const productionMigrationRunnerPath = 'packages/tooling/src/commands/db/orm-migration-config.ts';
+const productionMigrationImportName = 'createPostgresMikroOrmOptions';
+const productionMigrationImportPath = 'libs/backend/postgres/main/shared/lib/src/data-source-options.ts';
+const productionMigrationListPattern = /migrationsList:\s*\[([\s\S]*?)\](?=\s*,)/gu;
 
 // ---------------------------------------------------------------------------
 
@@ -57,6 +62,10 @@ function permissionReadName(names: ReturnType<typeof generateNames>): string {
 
 function permissionWriteName(names: ReturnType<typeof generateNames>): string {
   return names.pascal + 'WritePermission';
+}
+
+function migrationsName(names: ReturnType<typeof generateNames>): string {
+  return `${names.camel}Migrations`;
 }
 
 function libDepth(dir: string): number {
@@ -532,7 +541,8 @@ export const ${names.camel}MongoMigrations = [Migration${migrationTimestamp}Init
     },
     {
       path: `${sourceRoot}/${names.kebab}-mongo.collection.spec.ts`,
-      contents: `import { describe, expect, it, vi } from "vitest";
+      contents: `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, expect, it, vi } from "vitest";
 import { ${names.pascal}CreatedAtIndexName, initialize${names.pascal}Collection } from "./${names.kebab}-mongo.collection";
 
 describe("initialize${names.pascal}Collection", () => {
@@ -555,7 +565,8 @@ describe("initialize${names.pascal}Collection", () => {
     },
     {
       path: `${sourceRoot}/${names.kebab}-mongo.repository.spec.ts`,
-      contents: `import { describe, expect, it, vi } from "vitest";
+      contents: `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, expect, it, vi } from "vitest";
 import { ${names.pascal}Repository } from "./${names.kebab}-mongo.repository";
 
 describe("${names.pascal}Repository", () => {
@@ -585,7 +596,8 @@ describe("${names.pascal}Repository", () => {
     },
     {
       path: `${sourceRoot}/${names.kebab}-mongo.repository.component-spec.ts`,
-      contents: `import { MongoDBContainer, type StartedMongoDBContainer } from "@testcontainers/mongodb";
+      contents: `// @requirements ${generatedRequirementId(names.kebab)}
+import { MongoDBContainer, type StartedMongoDBContainer } from "@testcontainers/mongodb";
 import { MongoClient } from "mongodb";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 // eslint-disable-next-line @nx/enforce-module-boundaries
@@ -658,6 +670,7 @@ function createBackendTemplateFiles(
   const base = `libs/backend/feature/${names.kebab}`;
   const mainAlias = backendFeatureMainAlias(names);
   const sharedAlias = backendFeatureSharedAlias(names);
+  const requirementId = generatedRequirementId(names.kebab);
 
   return [
     // Shared library
@@ -679,7 +692,8 @@ export const ${permissionWriteName(names)} = "${names.kebab}:write";
     },
     {
       path: `${base}/shared/lib/src/index.spec.ts`,
-      contents: `import { describe, expect, it } from "vitest";
+      contents: `// @requirements ${requirementId}
+import { describe, expect, it } from "vitest";
 import {
   type Create${names.pascal}Dto,
   type ${names.pascal}Dto,
@@ -748,8 +762,8 @@ describe("${names.pascal}Dto", () => {
       path: `${base}/main/lib/src/${names.kebab}.service.spec.ts`,
       contents:
         database === 'postgres'
-          ? `import { okAsync } from "neverthrow";\nimport { describe, expect, it } from "vitest";\nimport { ${names.pascal}Entity } from "${backendPostgresMainAlias(names)}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("persists and maps a ${names.title.toLowerCase()}", async () => {\n    const entity = new ${names.pascal}Entity({ name: "Example" });\n    const repository = { list: () => okAsync([entity]), create: () => okAsync(entity) };\n    const service = new ${names.pascal}Service(repository as never);\n    await expect(service.create({ name: "Example" })).resolves.toMatchObject({ name: "Example" });\n  });\n});\n`
-          : `import { okAsync } from "neverthrow";\nimport { describe, expect, it } from "vitest";\nimport type { ${names.pascal}Entity } from "${backendMongoMainAlias(names)}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("persists and maps a ${names.title.toLowerCase()}", async () => {\n    const entity: ${names.pascal}Entity = { id: "123e4567-e89b-12d3-a456-426614174000", name: "Example", createdAt: new Date() };\n    const repository = { list: () => okAsync([entity]), create: () => okAsync(entity) };\n    const service = new ${names.pascal}Service(repository as never);\n    await expect(service.create({ name: "Example" })).resolves.toMatchObject({ name: "Example" });\n  });\n});\n`,
+          ? `// @requirements ${requirementId}\nimport { okAsync } from "neverthrow";\nimport { describe, expect, it } from "vitest";\nimport { ${names.pascal}Entity } from "${backendPostgresMainAlias(names)}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("persists and maps a ${names.title.toLowerCase()}", async () => {\n    const entity = new ${names.pascal}Entity({ name: "Example" });\n    const repository = { list: () => okAsync([entity]), create: () => okAsync(entity) };\n    const service = new ${names.pascal}Service(repository as never);\n    await expect(service.create({ name: "Example" })).resolves.toMatchObject({ name: "Example" });\n  });\n});\n`
+          : `// @requirements ${requirementId}\nimport { okAsync } from "neverthrow";\nimport { describe, expect, it } from "vitest";\nimport type { ${names.pascal}Entity } from "${backendMongoMainAlias(names)}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("persists and maps a ${names.title.toLowerCase()}", async () => {\n    const entity: ${names.pascal}Entity = { id: "123e4567-e89b-12d3-a456-426614174000", name: "Example", createdAt: new Date() };\n    const repository = { list: () => okAsync([entity]), create: () => okAsync(entity) };\n    const service = new ${names.pascal}Service(repository as never);\n    await expect(service.create({ name: "Example" })).resolves.toMatchObject({ name: "Example" });\n  });\n});\n`,
     },
     projectJson(`${base}/main/lib`, mainAlias, `${base}/main/lib/src`, `dist/${base}/main`, [
       'platform:backend',
@@ -801,7 +815,8 @@ describe("${names.pascal}Dto", () => {
           },
           {
             path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration${migrationTimestamp}Create${names.pascal}.spec.ts`,
-            contents: `import { describe, expect, it } from "vitest";
+            contents: `// @requirements ${requirementId}
+import { describe, expect, it } from "vitest";
 import { Migration${migrationTimestamp}Create${names.pascal} } from "./Migration${migrationTimestamp}Create${names.pascal}";
 
 describe("Migration${migrationTimestamp}Create${names.pascal}", () => {
@@ -843,7 +858,12 @@ describe("Migration${migrationTimestamp}Create${names.pascal}", () => {
           },
           {
             path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/index.ts`,
-            contents: `export * from "./Migration${migrationTimestamp}Create${names.pascal}";\n`,
+            contents: `import { Migration${migrationTimestamp}Create${names.pascal} } from "./Migration${migrationTimestamp}Create${names.pascal}";
+
+export const ${migrationsName(names)} = [Migration${migrationTimestamp}Create${names.pascal}] as const;
+
+export * from "./Migration${migrationTimestamp}Create${names.pascal}";
+`,
           },
           projectJson(
             `libs/backend/postgres/main/${names.kebab}/lib`,
@@ -877,8 +897,8 @@ describe("Migration${migrationTimestamp}Create${names.pascal}", () => {
       path: `docs/features/${names.kebab}/scaffold.md`,
       contents:
         database === 'postgres'
-          ? `# ${names.title} scaffold\n\nThe backend route, persistence module, migration, and frontend page boundary are generated.\n\n## Finish the product flow\n\n1. Run \`pnpm api:contracts\` and \`pnpm api:clients\` after the API compiles.\n2. Add a frontend API wrapper that imports only \`@app/frontend-api-client\`.\n3. Register the page in the owning application router with translated copy.\n4. Add component and e2e coverage for loading, error, empty, success, auth, and RBAC states.\n`
-          : `# ${names.title} scaffold\n\nThe backend route, native MongoDB persistence module, idempotent indexes, and frontend page boundary are generated.\n\n## Finish the product flow\n\n1. Run \`pnpm api:contracts\` and \`pnpm api:clients\` after the API compiles.\n2. Add a frontend API wrapper that imports only \`@app/frontend-api-client\`.\n3. Register the page in the owning application router with translated copy.\n4. Add component and e2e coverage for loading, error, empty, success, auth, and RBAC states.\n`,
+          ? `# ${names.title} scaffold\n\nThe backend route, PostgreSQL persistence module, production-registered migration, and frontend page boundary are generated.\n\n## Finish the product flow\n\n1. Define or replace \`${requirementId}\` in OpenSpec and map the generated backend shared, main, and PostgreSQL projects before running \`pnpm spec:validate\`.\n2. Run \`pnpm api:contracts\` and \`pnpm api:clients\` after the API compiles.\n3. Add a frontend API wrapper that imports only \`@app/frontend-api-client\`.\n4. Register the page in the owning application router with translated copy.\n5. Add component and e2e coverage for loading, error, empty, success, auth, and RBAC states.\n`
+          : `# ${names.title} scaffold\n\nThe backend route, native MongoDB persistence module, production-registered migration, idempotent indexes, and frontend page boundary are generated.\n\n## Finish the product flow\n\n1. Define or replace \`${requirementId}\` in OpenSpec and map the generated backend shared, main, and MongoDB projects before running \`pnpm spec:validate\`.\n2. Run \`pnpm api:contracts\` and \`pnpm api:clients\` after the API compiles.\n3. Add a frontend API wrapper that imports only \`@app/frontend-api-client\`.\n4. Register the page in the owning application router with translated copy.\n5. Add component and e2e coverage for loading, error, empty, success, auth, and RBAC states.\n`,
     },
   ];
 }
@@ -936,6 +956,92 @@ function listFrontendApps(tree: Tree): string[] {
 
 function projectRoot(tree: Tree, projectName: string): string | undefined {
   return getProjects(tree).get(projectName)?.root;
+}
+
+function assertSupportedOwnerRuntimes(tree: Tree, apiApp: string, frontendApp: string): void {
+  const projects = getProjects(tree);
+  const apiRoot = projects.get(apiApp)?.root;
+  const apiMain = apiRoot ? tree.read(`${apiRoot}/src/main.ts`, 'utf8') : null;
+  if (!apiRoot || !apiMain || !/\bbootstrapNestApi\s*\(/u.test(apiMain)) {
+    throw new Error(
+      `Incompatible --api-app "${apiApp}". Vertical HTTP features require a Nest API owner that uses bootstrapNestApi; consumers and schedulers are not supported.`,
+    );
+  }
+
+  const frontendProject = projects.get(frontendApp);
+  const frontendRoot = frontendProject?.root;
+  if (
+    !frontendRoot ||
+    frontendProject.sourceRoot !== `${frontendRoot}/src` ||
+    !tree.exists(`${frontendRoot}/vite.config.mts`)
+  ) {
+    throw new Error(
+      `Incompatible --frontend-app "${frontendApp}". Vertical page features currently require a Vite web application with an src/pages FSD boundary; Astro, Vike, and Expo owners are not supported.`,
+    );
+  }
+}
+
+function planProductionMigrationRegistration(tree: Tree, names: ReturnType<typeof generateNames>): string {
+  const contents = tree.read(productionMigrationRunnerPath, 'utf8');
+  const registrationName = migrationsName(names);
+  const alias = backendPostgresMainAlias(names);
+  if (!contents) {
+    throw new Error(
+      `Cannot register ${alias} migrations: ${productionMigrationRunnerPath} is missing. Generation stopped before writes.`,
+    );
+  }
+  const importPathIndex = contents.indexOf(productionMigrationImportPath);
+  let importAnchor: string | undefined;
+  if (
+    importPathIndex >= 0 &&
+    contents.indexOf(productionMigrationImportPath, importPathIndex + productionMigrationImportPath.length) === -1
+  ) {
+    const importStart = contents.lastIndexOf('const', importPathIndex);
+    const importEnd = contents.indexOf(';', importPathIndex);
+    if (importStart >= 0 && importEnd >= importPathIndex) {
+      const candidate = contents.slice(importStart, importEnd + 1);
+      if (
+        candidate.includes(productionMigrationImportName) &&
+        candidate.includes('require') &&
+        candidate.includes('resolve')
+      ) {
+        importAnchor = candidate;
+      }
+    }
+  }
+  if (importAnchor === undefined) {
+    throw new Error(
+      `Cannot register ${alias} migrations: ${productionMigrationRunnerPath} does not expose the supported import anchor. Generation stopped before writes.`,
+    );
+  }
+  const migrationLists = [...contents.matchAll(productionMigrationListPattern)];
+  const migrationList = migrationLists[0];
+  const existingMigrations = migrationList?.[1];
+  const listStart = migrationList?.index;
+  if (
+    migrationLists.length !== 1 ||
+    migrationList === undefined ||
+    existingMigrations === undefined ||
+    listStart === undefined
+  ) {
+    throw new Error(
+      `Cannot register ${alias} migrations: ${productionMigrationRunnerPath} must contain exactly one migrationsList array. Generation stopped before writes.`,
+    );
+  }
+  if (contents.includes(alias) || contents.includes(registrationName)) {
+    throw new Error(
+      `Cannot register ${alias} migrations: the production migration runner already contains a partial or duplicate registration.`,
+    );
+  }
+
+  const migrationIndentation = /\n([ \t]*)\S/u.exec(existingMigrations)?.[1] ?? '  ';
+  const closingIndentation = /\n([ \t]*)$/u.exec(existingMigrations)?.[1] ?? '';
+  const updatedMigrations = existingMigrations.includes('\n')
+    ? `${existingMigrations.trimEnd()}\n${migrationIndentation}...${registrationName},\n${closingIndentation}`
+    : `${existingMigrations.trim()}${existingMigrations.trim() ? ', ' : ''}...${registrationName}`;
+  const withMigration = `${contents.slice(0, listStart)}${migrationList[0].replace(existingMigrations, updatedMigrations)}${contents.slice(listStart + migrationList[0].length)}`;
+  const importLine = `const { ${registrationName} } = require("${alias}");\n`;
+  return withMigration.replace(importAnchor, `${importLine}${importAnchor}`);
 }
 
 function defaultMigrationTimestamp(): string {
@@ -1010,36 +1116,32 @@ const mongoMigrationImportEnd = '// </nrb-generated-mongo-migration-imports>';
 const mongoMigrationEntryStart = '  // <nrb-generated-mongo-migration-entries>';
 const mongoMigrationEntryEnd = '  // </nrb-generated-mongo-migration-entries>';
 
-function registerMongoMigration(tree: Tree, names: ReturnType<typeof generateNames>, dryRun: boolean): void {
-  if (dryRun) {
-    console.log(`UPDATE ${mongoMigrationRegistryPath} register ${names.camel}MongoMigrations`);
-    return;
+function planMongoMigrationRegistration(tree: Tree, names: ReturnType<typeof generateNames>): string {
+  let contents = tree.read(mongoMigrationRegistryPath, 'utf8');
+  if (!contents) {
+    throw new Error(
+      `Cannot register ${backendMongoMainAlias(names)} migrations: ${mongoMigrationRegistryPath} is missing. Generation stopped before writes.`,
+    );
   }
-
-  const baseRegistry = `import type { MongoMigration } from "../../../../../libs/backend/mongodb/main/shared/lib/src/migrations/index.ts";
-
-${mongoMigrationImportStart}
-${mongoMigrationImportEnd}
-
-export const generatedMongoMigrations: readonly MongoMigration[] = [
-${mongoMigrationEntryStart}
-${mongoMigrationEntryEnd}
-];
-`;
-  let contents = tree.read(mongoMigrationRegistryPath, 'utf8') ?? baseRegistry;
+  const registrationName = `${names.camel}MongoMigrations`;
+  if (contents.includes(registrationName)) {
+    throw new Error(
+      `Cannot register ${backendMongoMainAlias(names)} migrations: the production migration registry already contains a partial or duplicate registration.`,
+    );
+  }
   contents = insertSortedGeneratedLine(
     contents,
     mongoMigrationImportStart,
     mongoMigrationImportEnd,
-    `import { ${names.camel}MongoMigrations } from "../../../../../libs/backend/mongodb/main/${names.kebab}/lib/src/migrations/index.ts";`,
+    `import { ${registrationName} } from "../../../../../libs/backend/mongodb/main/${names.kebab}/lib/src/migrations/index.ts";`,
   );
   contents = insertSortedGeneratedLine(
     contents,
     mongoMigrationEntryStart,
     mongoMigrationEntryEnd,
-    `  ...${names.camel}MongoMigrations,`,
+    `  ...${registrationName},`,
   );
-  tree.write(mongoMigrationRegistryPath, contents);
+  return contents;
 }
 
 function insertSortedGeneratedLine(contents: string, startMarker: string, endMarker: string, line: string): string {
@@ -1108,20 +1210,21 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
   }
 
   const validApiApps = listApiApps(tree);
-  if (validApiApps.length > 0 && !validApiApps.includes(apiApp)) {
+  if (!validApiApps.includes(apiApp)) {
     throw new Error(
       `Invalid --api-app "${apiApp}". Expected one of: ${validApiApps.join(', ') || '(none found under apps/backend)'}.`,
     );
   }
 
   const validFrontendApps = listFrontendApps(tree);
-  if (validFrontendApps.length > 0 && !validFrontendApps.includes(frontendApp)) {
+  if (!validFrontendApps.includes(frontendApp)) {
     throw new Error(`Invalid --frontend-app "${frontendApp}". Expected one of: ${validFrontendApps.join(', ')}.`);
   }
   const frontendRoot = projectRoot(tree, frontendApp);
   if (!frontendRoot) {
     throw new Error(`Cannot resolve --frontend-app "${frontendApp}" to an Nx project root.`);
   }
+  assertSupportedOwnerRuntimes(tree, apiApp, frontendApp);
 
   const otherDatabase = database === 'postgres' ? 'mongodb' : 'postgres';
   const tsconfig = readJsonFile(tree, 'tsconfig.base.json');
@@ -1150,6 +1253,18 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
       `Refusing to overwrite existing files or aliases. Modify the existing feature owner in place:\n${conflicts.join('\n')}`,
     );
   }
+  const migrationRegistration =
+    database === 'postgres'
+      ? {
+          path: productionMigrationRunnerPath,
+          contents: planProductionMigrationRegistration(tree, names),
+          description: 'production migration registration (PostgreSQL)',
+        }
+      : {
+          path: mongoMigrationRegistryPath,
+          contents: planMongoMigrationRegistration(tree, names),
+          description: `production migration registration (MongoDB): register ${names.camel}MongoMigrations`,
+        };
 
   for (const file of files) {
     if (options.dryRun) {
@@ -1168,12 +1283,10 @@ export async function featureGenerator(tree: Tree, options: FeatureGeneratorOpti
       compilerOptions.paths = { ...paths, ...newAliases };
       writeJsonFile(tree, 'tsconfig.base.json', tsconfig);
     }
+    tree.write(migrationRegistration.path, migrationRegistration.contents);
   } else {
     console.log('UPDATE tsconfig.base.json path aliases');
-  }
-
-  if (database === 'mongodb') {
-    registerMongoMigration(tree, names, options.dryRun === true);
+    console.log(`UPDATE ${migrationRegistration.path} ${migrationRegistration.description}`);
   }
 
   wireApiModule(tree, apiApp, names, options.dryRun === true);

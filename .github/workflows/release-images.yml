@@ -26,8 +26,9 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository }}
-  PNPM_VERSION: 11.11.0
+  PNPM_VERSION: 11.15.1
   HELM_VERSION: v4.2.3
+  SCAN_PREDICATE_TYPE: https://github.com/${{ github.repository }}/attestations/trivy-scan/v1
 
 jobs:
   image-plan:
@@ -172,17 +173,51 @@ jobs:
 
       - name: SBOM, scan, and sign each pushed digest
         run: |
-          mkdir -p sboms sarifs
+          mkdir -p attestations sboms sarifs
           IFS=',' read -ra NAMES <<< "${SELECTED_IMAGES}"
           scan_failed=0
           for name in "${NAMES[@]}"; do
             digest=$(jq -r --arg t "$name" '.[$t]."containerimage.digest"' bake-metadata.json)
+            if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+              echo "::error::build metadata returned an invalid digest for ${name}: ${digest}"
+              exit 1
+            fi
             ref="${IMAGE_PREFIX}/${name}@${digest}"
             syft "$ref" -o "spdx-json=sboms/sbom-${name}.spdx.json"
             if trivy image --format sarif --output "sarifs/trivy-${name}.sarif" \
               --pkg-types os,library --severity CRITICAL,HIGH --exit-code 1 "$ref"; then
               echo "::notice::scan PASS ${name}"
+              jq -n \
+                --arg builder "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}" \
+                --arg invocation "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}" \
+                --arg ref "$GITHUB_REF" \
+                --arg sha "$GITHUB_SHA" \
+                --arg source "git+${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" \
+                '{
+                  buildDefinition: {
+                    buildType: "https://github.com/Attestations/GitHubActionsWorkflow@v1",
+                    externalParameters: {ref: $ref},
+                    internalParameters: {},
+                    resolvedDependencies: [{uri: $source, digest: {gitCommit: $sha}}]
+                  },
+                  runDetails: {
+                    builder: {id: $builder},
+                    metadata: {invocationId: $invocation}
+                  }
+                }' > "attestations/provenance-${name}.json"
+              jq -n \
+                --arg digest "$digest" \
+                --arg scanner "pkg:github/aquasecurity/trivy@v0.72.0" \
+                '{
+                  scanner: {uri: $scanner},
+                  artifactDigest: $digest,
+                  result: "pass",
+                  policy: {severities: ["CRITICAL", "HIGH"], allowUnfixed: false}
+                }' > "attestations/scan-${name}.json"
               cosign sign --yes "$ref"
+              cosign attest --yes --type spdxjson --predicate "sboms/sbom-${name}.spdx.json" "$ref"
+              cosign attest --yes --type slsaprovenance1 --predicate "attestations/provenance-${name}.json" "$ref"
+              cosign attest --yes --type "$SCAN_PREDICATE_TYPE" --predicate "attestations/scan-${name}.json" "$ref"
             else
               findings=$(jq '[.runs[].results[]?] | length' "sarifs/trivy-${name}.sarif" 2>/dev/null || echo '?')
               echo "::error::scan FAIL ${name} (${findings} CRITICAL/HIGH findings)"

@@ -20,6 +20,13 @@ import { appCatalog } from '../../setup/catalog.js';
 export interface BunCompatibilityProbe {
   name: string;
   nxArgs: readonly string[];
+  runtime?: 'bun' | 'node';
+}
+
+export interface BunCompatibilityInvocation {
+  program: string;
+  args: readonly string[];
+  environment: NodeJS.ProcessEnv;
 }
 
 export interface BunRuntimeSelection {
@@ -98,6 +105,7 @@ export function createBunCompatibilityProbes(closure: SelectedClosureManifest): 
     probes.push({
       name: 'Selected closure exports',
       nxArgs: ['run-many', '-t', 'export', `--projects=${exportProjects.join(',')}`, '--skip-nx-cache'],
+      runtime: 'node',
     });
   }
   const testProjects = closure.targets.test ?? [];
@@ -147,9 +155,10 @@ export async function runBunCompatibilityCommand(context: CommandContext): Promi
 
     for (const probe of createBunCompatibilityProbes(closure)) {
       process.stdout.write(`\n==> ${probe.name}\n`);
-      const result = spawnSync(process.execPath, ['run', '--bun', 'nx', ...probe.nxArgs], {
+      const command = createBunCompatibilityInvocation(probe, environment, process.execPath);
+      const result = spawnSync(command.program, command.args, {
         cwd: context.workspaceRoot,
-        env: environment,
+        env: command.environment,
         stdio: 'inherit',
       });
       if (result.status !== 0) throw new Error(`${probe.name} failed with exit code ${result.status ?? 1}.`);
@@ -177,6 +186,28 @@ export async function runBunCompatibilityCommand(context: CommandContext): Promi
 
   process.stdout.write('\nBun compatibility contract passed.\n');
   return 0;
+}
+
+export function createBunCompatibilityInvocation(
+  probe: BunCompatibilityProbe,
+  environment: NodeJS.ProcessEnv,
+  bunExecutable: string,
+): BunCompatibilityInvocation {
+  const probeEnvironment = { ...environment };
+  if (probe.runtime === 'node') {
+    delete probeEnvironment.BUN_BE_BUN;
+    return {
+      program: 'node',
+      args: ['node_modules/nx/dist/bin/nx.js', ...probe.nxArgs],
+      environment: probeEnvironment,
+    };
+  }
+
+  return {
+    program: bunExecutable,
+    args: ['run', '--bun', 'nx', ...probe.nxArgs],
+    environment: probeEnvironment,
+  };
 }
 
 export function readPinnedBunVersion(workspaceRoot: string): string {

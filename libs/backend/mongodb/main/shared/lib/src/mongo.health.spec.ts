@@ -1,5 +1,16 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { MongoClient } from 'mongodb';
 import { describe, expect, it, vi } from 'vitest';
+
+const migrationMocks = vi.hoisted(() => ({
+  verifyAppliedMongoMigrations: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock('./migrations/mongo-migration', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./migrations/mongo-migration')>();
+  return { ...original, verifyAppliedMongoMigrations: migrationMocks.verifyAppliedMongoMigrations };
+});
+
 import { MongoDatabaseConfigService } from './mongo.config';
 import {
   MongoReadinessHealthIndicator,
@@ -9,6 +20,7 @@ import {
   type MongoDependencyHealthAdapter,
 } from './mongo.health';
 import { MongoTransactionTopologyError } from './mongo.topology';
+import { sharedMongoMigrations } from './migrations';
 
 const config = new MongoDatabaseConfigService({
   MONGODB_URI: 'mongodb://mongo/app?replicaSet=rs0',
@@ -37,15 +49,22 @@ describe('MongoDB health adapter', () => {
       logicalSessionTimeoutMinutes: 30,
       maxWireVersion: 17,
     });
-    const db = vi.fn((name: string) => ({ command: name === 'admin' ? helloCommand : pingCommand }));
+    const applicationDatabase = { command: pingCommand };
+    const adminDatabase = { command: helloCommand };
+    const db = vi.fn((name: string) => (name === 'admin' ? adminDatabase : applicationDatabase));
     const adapter = new NativeMongoHealthAdapter({ db } as unknown as MongoClient, config);
 
     await adapter.checkReadiness();
+    await adapter.checkMigrationReadiness();
     await expect(adapter.checkTransactionReadiness()).resolves.toEqual(
       expect.objectContaining({ kind: 'replica_set' }),
     );
     expect(db).toHaveBeenCalledWith('app');
     expect(pingCommand).toHaveBeenCalledWith({ ping: 1 });
+    expect(migrationMocks.verifyAppliedMongoMigrations).toHaveBeenCalledWith(
+      applicationDatabase,
+      sharedMongoMigrations,
+    );
   });
 });
 
@@ -75,6 +94,7 @@ describe('MongoDB health indicators', () => {
   it('uses custom names and degrades optional failed checks without exposing raw errors', async () => {
     const adapter = adapterStub({
       checkReadiness: vi.fn().mockRejectedValue('connection secret'),
+      checkMigrationReadiness: vi.fn().mockRejectedValue(new Error('migration detail')),
       checkTransactionReadiness: vi
         .fn()
         .mockRejectedValue(new MongoTransactionTopologyError('standalone_not_allowed', 'internal topology detail')),
@@ -86,6 +106,17 @@ describe('MongoDB health indicators', () => {
       status: 'degraded',
       required: false,
       details: { message: 'MongoDB readiness check failed.' },
+    });
+    await expect(
+      new MongoMigrationReadinessHealthIndicator(adapter, {
+        required: false,
+        migrationReadinessName: 'document-migrations',
+      }).check(),
+    ).resolves.toEqual({
+      name: 'document-migrations',
+      status: 'degraded',
+      required: false,
+      details: { message: 'MongoDB migration check failed.', type: 'Error' },
     });
     const transactionResult = await new MongoTransactionReadinessHealthIndicator(adapter, {
       required: false,

@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalException } from '@app/backend-common-exception';

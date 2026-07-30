@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nrb:spec-evidence:v3",
+  "title": "NRB requirement evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "capability", "owners", "requirements"],
+  "properties": {
+    "version": { "const": 3 },
+    "capability": { "type": "string", "pattern": "^[a-z][a-z0-9-]+$" },
+    "owners": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product", "verification"],
+      "properties": {
+        "product": { "type": "string", "minLength": 1 },
+        "verification": { "type": "string", "minLength": 1 },
+        "security": { "type": "string", "minLength": 1 },
+        "operations": { "type": "string", "minLength": 1 }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "projects", "risk", "profiles", "cucumber", "evidence"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^REQ-[A-Z0-9]+(?:-[A-Z0-9]+)+-[0-9]{3}$"
+          },
+          "projects": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "risk": {
+            "enum": ["low", "normal", "high", "critical"]
+          },
+          "profiles": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "acceptance",
+                "domain",
+                "api",
+                "journey",
+                "async",
+                "persistence",
+                "security",
+                "operations",
+                "tooling",
+                "documentation",
+                "mutation"
+              ]
+            }
+          },
+          "cucumber": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["disposition"],
+                "properties": {
+                  "disposition": { "const": "acceptance" }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["disposition", "reason", "alternativeEvidence"],
+                "properties": {
+                  "disposition": { "const": "not-applicable" },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 12,
+                    "maxLength": 240
+                  },
+                  "alternativeEvidence": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "enum": [
+                        "vitest",
+                        "playwright",
+                        "contract",
+                        "property",
+                        "component",
+                        "mutation",
+                        "security",
+                        "operations",
+                        "static",
+                        "documentation"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "file", "lanes"],
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "cucumber",
+                    "vitest",
+                    "playwright",
+                    "contract",
+                    "property",
+                    "component",
+                    "mutation",
+                    "security",
+                    "operations",
+                    "static",
+                    "documentation"
+                  ]
+                },
+                "file": { "type": "string", "minLength": 1 },
+                "lanes": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "enum": ["pr", "main", "nightly", "runtime"]
+                  }
+                },
+                "target": { "type": "string", "minLength": 3 },
+                "script": { "type": "string", "minLength": 1 },
+                "scenario": {
+                  "type": "string",
+                  "pattern": "^SCN-[A-Z0-9]+(?:-[A-Z0-9]+)+-[0-9]{2,3}$"
+                },
+                "description": { "type": "string", "minLength": 1 }
+              },
+              "allOf": [
+                {
+                  "not": {
+                    "type": "object",
+                    "required": ["target", "script"],
+                    "properties": {
+                      "target": true,
+                      "script": true
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

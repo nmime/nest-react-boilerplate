@@ -19,6 +19,7 @@ import {
   NotificationDeliverySchedulerService,
   NotificationDeliveryPartitionService,
   NotificationHealthService,
+  NotificationProviderReadinessService,
   NotificationRecipientResolverService,
   NotificationStrategyResolverService,
   NotificationSegmentResolverRegistry,
@@ -99,6 +100,7 @@ export class NotificationMainModule {
               GoogleFcmNotificationProvider,
               AppleApnsNotificationProvider,
               NotificationProviderResolver,
+              NotificationProviderReadinessService,
             ]
           : []),
         ...(enableConsumer || enableAdmin
@@ -119,7 +121,13 @@ export class NotificationMainModule {
       exports: [
         NotificationService,
         NotificationHealthService,
-        ...(enableScheduler ? [NotificationDeliverySchedulerService, NotificationBroadcastSchedulerService] : []),
+        ...(enableScheduler
+          ? [
+              NotificationDeliverySchedulerService,
+              NotificationBroadcastSchedulerService,
+              NotificationProviderReadinessService,
+            ]
+          : []),
         ...(enableConsumer ? [NotificationConsumerService] : []),
         ...(enableAdmin ? [NotificationAdminServiceInjectToken] : []),
       ],

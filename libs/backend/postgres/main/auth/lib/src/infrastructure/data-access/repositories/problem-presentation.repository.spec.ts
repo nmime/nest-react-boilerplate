@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import type { EntityManager } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import { AdminAuditLogEntity, DefaultAuthTenantId, ProblemPresentationEntity } from '../entities';

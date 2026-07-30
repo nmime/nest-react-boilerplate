@@ -1,3 +1,5 @@
+import { supportedLocales, type Locale } from '@app/frontend-runtime';
+
 export const mobileCapabilityCards = [
   {
     labelKey: 'mobile.card.account.label',
@@ -17,3 +19,13 @@ export const mobileCapabilityCards = [
 ] as const;
 
 export type MobileCapabilityCard = (typeof mobileCapabilityCards)[number];
+
+/**
+ * Locales offered by the home-screen switcher (drives the shared preference
+ * model). Derived from the single-source `supportedLocales` list rather than a
+ * hand-maintained enumeration, so a new locale surfaces here automatically.
+ */
+export const mobileLocaleOptions: ReadonlyArray<{ locale: Locale; label: string }> = supportedLocales.map((locale) => ({
+  locale,
+  label: locale.toUpperCase(),
+}));

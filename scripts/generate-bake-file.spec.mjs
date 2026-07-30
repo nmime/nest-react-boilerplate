@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-SAFETY-008
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';

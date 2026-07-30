@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-CONFIG-003
 import { describe, expect, it, vi } from 'vitest';
 import {
   I18nService,

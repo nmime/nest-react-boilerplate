@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-IDENTITY-005
 import { betterAuth } from 'better-auth';
 import { memoryAdapter, type MemoryDB } from 'better-auth/adapters/memory';
 import { sign } from '@tma.js/init-data-node';

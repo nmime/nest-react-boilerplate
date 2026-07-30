@@ -61,3 +61,8 @@ export interface RedisClientLike {
   extendIfValue(key: string, expectedValue: string, ttlMs: number): Promise<boolean>;
   pipeline(): RedisPipelineLike;
 }
+
+/** Optional atomic ownership capability for state machines that replace lock values. */
+export interface RedisOwnedValueClient extends RedisClientLike {
+  replaceIfValue(key: string, expectedValue: string, replacementValue: string, ttlMs: number): Promise<boolean>;
+}

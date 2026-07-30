@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-AUDIT-008
 import { describe, expect, it, vi } from 'vitest';
 import { okAsync } from 'neverthrow';
 import {

@@ -21,6 +21,13 @@ description: Build and maintain the repository-owned nrb CLI and validation scri
 5. Add unit tests for success, validation failure, partial state, repeated execution, and platform-sensitive paths.
 6. Keep validators deterministic, offline-capable, and actionable: errors must name the file, rule, and repair.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run targeted tooling tests, `pnpm run tooling:static-check`, applicable command smoke tests, docs formatting/checks, `pnpm run agent:verify` when agent or scaffolding behavior changes, and `git diff --check`.

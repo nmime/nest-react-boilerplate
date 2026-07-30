@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { AdminRolesWritePermission } from '@app/common-authz';
 import { describe, expect, it } from 'vitest';
 import { Migration20260704120000CreateRbacModel } from './Migration20260704120000CreateRbacModel';

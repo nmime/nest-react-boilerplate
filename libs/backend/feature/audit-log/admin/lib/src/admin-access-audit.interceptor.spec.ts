@@ -1,3 +1,5 @@
+// @requirements REQ-AUTH-AUDIT-008
+// Evidence for: REQ-AUTH-AUDIT-008
 import type { CallHandler, ExecutionContext } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { firstValueFrom, of } from 'rxjs';

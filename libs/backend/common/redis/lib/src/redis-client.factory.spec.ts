@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { Logger } from '@nestjs/common';
 import { createClient, createCluster, createSentinel } from 'redis';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -209,6 +210,22 @@ describe('RedisClientAdapter', () => {
 
     await adapter.get('k');
     expect(client.get).toHaveBeenCalledWith('k');
+  });
+
+  it('atomically replaces only the expected value and refreshes its TTL', async () => {
+    const client = fakeNativeClient({ sendCommand: vi.fn(() => Promise.resolve(1)) });
+    const adapter = new RedisClientAdapter(client, { keyPrefix: 'app:' });
+
+    await expect(adapter.replaceIfValue('claim', 'owner', 'completed', 60_000)).resolves.toBe(true);
+    expect(client.sendCommand).toHaveBeenCalledWith([
+      'EVAL',
+      expect.any(String),
+      '1',
+      'app:claim',
+      'owner',
+      'completed',
+      '60000',
+    ]);
   });
 
   it('maps set() modes and conditions onto native options', async () => {

@@ -1,3 +1,5 @@
+// @requirements REQ-SOCIAL-INGRESS-001
+// Evidence for: REQ-SOCIAL-LIFECYCLE-005
 import { describe, expect, it, vi } from 'vitest';
 import { run } from '@grammyjs/runner';
 import { TelegramPollingService } from './telegram-polling.service';

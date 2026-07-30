@@ -1,6 +1,33 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { Provider } from '@nestjs/common';
+import { DurableDatabaseRuntimeInjectToken, type BackendSessionStoreOptions } from '@app/backend-common-bootstrap';
 import { MongoClient, type Db, type MongoClientOptions } from 'mongodb';
 import { describe, expect, it, vi } from 'vitest';
+
+const migrationMocks = vi.hoisted(() => ({
+  verifyAppliedMongoMigrations: vi.fn(() => Promise.resolve()),
+}));
+const sessionStoreMocks = vi.hoisted(() => ({
+  close: vi.fn(() => Promise.resolve()),
+  constructor: vi.fn(),
+}));
+
+vi.mock('./migrations/mongo-migration', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./migrations/mongo-migration')>();
+  return { ...original, verifyAppliedMongoMigrations: migrationMocks.verifyAppliedMongoMigrations };
+});
+vi.mock('./mongo-session.store', () => ({
+  MongoSessionStore: class MongoSessionStoreMock {
+    constructor(env: NodeJS.ProcessEnv, defaultMaxAgeSeconds: number) {
+      sessionStoreMocks.constructor(env, defaultMaxAgeSeconds);
+    }
+
+    close(): Promise<void> {
+      return sessionStoreMocks.close();
+    }
+  },
+}));
+
 import { MongoClientToken, MongoDatabaseToken, MongoHealthOptionsToken } from './mongo.constants';
 import { MongoMigrationReadinessHealthIndicator } from './mongo.health';
 import { MongoDatabaseConfigService } from './mongo.config';
@@ -8,9 +35,12 @@ import {
   connectTransactionReadyMongoClient,
   MongoClientLifecycle,
   MongoMainModule,
+  MongoSharedMigrationVerifier,
   nativeMongoClientFactory,
   type MongoClientFactory,
 } from './mongo.module';
+import { MongoSessionStore } from './mongo-session.store';
+import { sharedMongoMigrations } from './migrations';
 
 const env = {
   MONGODB_URI: 'mongodb://mongo/app?replicaSet=rs0',
@@ -138,6 +168,58 @@ describe('MongoMainModule', () => {
       expect(MongoMainModule.forRoot().module).toBe(MongoMainModule);
     } finally {
       process.env = previous;
+    }
+  });
+
+  it('verifies shared migrations during module initialization', async () => {
+    const database = {} as Db;
+    await new MongoSharedMigrationVerifier(database).onModuleInit();
+    expect(migrationMocks.verifyAppliedMongoMigrations).toHaveBeenCalledWith(database, sharedMongoMigrations);
+  });
+
+  it('composes the durable runtime and creates the MongoDB session store', async () => {
+    const providers = MongoMainModule.forRoot({ env }).providers ?? [];
+    const runtimeTokenProvider = recordProvider(providers, DurableDatabaseRuntimeInjectToken);
+    type RuntimeUnderTest = {
+      readonly healthIndicators: readonly unknown[];
+      readonly provider: string;
+      createSessionStore(options: BackendSessionStoreOptions): MongoSessionStore;
+      onModuleInit(): void;
+    };
+    const Runtime = runtimeTokenProvider.useExisting as new (...indicators: unknown[]) => RuntimeUnderTest;
+    const indicators = [{ name: 'readiness' }, { name: 'transactions' }, { name: 'migrations' }];
+    const runtime = new Runtime(...indicators);
+    const previousDatabaseEngine = process.env.DATABASE_ENGINE;
+    const previousAuthPersistence = process.env.AUTH_PERSISTENCE;
+
+    try {
+      process.env.DATABASE_ENGINE = 'mongodb';
+      process.env.AUTH_PERSISTENCE = 'mongodb';
+      expect(() => {
+        runtime.onModuleInit();
+      }).not.toThrow();
+      expect(runtime.provider).toBe('mongodb');
+      expect(runtime.healthIndicators).toEqual(indicators);
+
+      const store = runtime.createSessionStore({
+        defaultMaxAgeSeconds: 3600,
+        env,
+        sweepIntervalMs: 60_000,
+      });
+      expect(store).toBeInstanceOf(MongoSessionStore);
+      expect(sessionStoreMocks.constructor).toHaveBeenCalledWith(env, 3600);
+      await store.close();
+    } finally {
+      if (previousDatabaseEngine === undefined) {
+        delete process.env.DATABASE_ENGINE;
+      } else {
+        process.env.DATABASE_ENGINE = previousDatabaseEngine;
+      }
+      if (previousAuthPersistence === undefined) {
+        delete process.env.AUTH_PERSISTENCE;
+      } else {
+        process.env.AUTH_PERSISTENCE = previousAuthPersistence;
+      }
     }
   });
 });

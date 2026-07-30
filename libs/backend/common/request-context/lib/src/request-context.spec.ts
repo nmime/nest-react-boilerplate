@@ -1,3 +1,5 @@
+// @requirements REQ-API-CONTEXT-003
+// Evidence for: REQ-API-CONTEXT-003
 import { describe, expect, it } from 'vitest';
 import { normalizeRequestId, requestContext } from './request-context';
 

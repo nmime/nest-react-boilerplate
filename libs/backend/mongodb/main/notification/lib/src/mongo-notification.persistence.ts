@@ -6,10 +6,12 @@ import {
   NotificationPersistence,
   NotificationTemplateChannelNotFoundError,
   NotificationTemplateNotFoundError,
+  type ClaimPendingNotificationDeliveriesParams,
   type CreateTemplateNotificationBatch,
   type CreateTemplateNotificationParams,
-  type FindPendingNotificationDeliveriesParams,
   type FindRecentNotificationDeliveryErrorsParams,
+  type NotificationDeliveryAttemptIdentity,
+  type NotificationDeliveryClaim,
   type NotificationDeliveryRoute,
   type UpsertNotificationTemplateParams,
 } from '@app/backend-feature-notification-shared';
@@ -29,7 +31,6 @@ import {
   type NotificationRecord,
   type NotificationTemplateChannelRecord,
   type NotificationTemplateRecord,
-  type PendingNotificationDelivery,
 } from '@app/common-notifications';
 import type { ClientSession, Collection, Db, MongoClient } from 'mongodb';
 import { MongoClientToken, MongoDatabaseToken, runInMongoTransaction } from './mongo-runtime';
@@ -191,12 +192,13 @@ export class MongoNotificationPersistence extends NotificationPersistence {
     });
   }
 
-  async findPendingDeliveries<T = NotificationData>(
-    params: FindPendingNotificationDeliveriesParams,
-  ): Promise<PendingNotificationDelivery<T>[]> {
+  async claimPendingDeliveries<T = NotificationData>(
+    params: ClaimPendingNotificationDeliveriesParams,
+  ): Promise<NotificationDeliveryClaim<T> | null> {
+    const claimToken = randomUUID();
+    const leaseExpiresAt = new Date(params.now.getTime() + MongoNotificationClaimLeaseMs);
     const claimed: NotificationDeliveryDocument[] = [];
     for (let index = 0; index < params.count; index += 1) {
-      const claimToken = randomUUID();
       // Each claim is a single indexed compare-and-set operation. Sorting makes competing workers deterministic.
       // eslint-disable-next-line no-await-in-loop
       const delivery = await this.deliveries.findOneAndUpdate(
@@ -204,13 +206,14 @@ export class MongoNotificationPersistence extends NotificationPersistence {
           targetType: params.targetType,
           status: NotificationStatus.Pending,
           sendAfter: { $lte: params.now },
+          dispatchStartedAt: null,
           $or: [{ claimExpiresAt: null }, { claimExpiresAt: { $lte: params.now } }],
           ...(params.targetId ? { targetId: params.targetId } : {}),
         },
         {
           $set: {
             claimToken,
-            claimExpiresAt: new Date(params.now.getTime() + MongoNotificationClaimLeaseMs),
+            claimExpiresAt: leaseExpiresAt,
             updatedAt: params.now,
           },
         },
@@ -222,7 +225,7 @@ export class MongoNotificationPersistence extends NotificationPersistence {
       claimed.push(delivery);
     }
     if (claimed.length === 0) {
-      return [];
+      return null;
     }
 
     const notificationIds = [...new Set(claimed.map((item) => item.notificationId))];
@@ -255,20 +258,58 @@ export class MongoNotificationPersistence extends NotificationPersistence {
         ];
       }),
     );
-    return claimed.flatMap((delivery) => {
+    const deliveries = claimed.flatMap((delivery) => {
       const notification = notificationById.get(delivery.notificationId);
       return notification && delivery.claimToken
         ? [{ claimToken: delivery.claimToken, delivery: mapDelivery(delivery), notification }]
         : [];
     });
+    return { claimToken, claimedAt: params.now, leaseExpiresAt, deliveries };
   }
 
-  async saveDeliveryResults(results: NotificationDeliveryResult[]): Promise<void> {
+  async renewDeliveryClaim(claimToken: string, now: Date): Promise<boolean> {
+    const renewed = await this.deliveries.updateMany(
+      { claimToken, status: NotificationStatus.Pending },
+      { $set: { claimExpiresAt: new Date(now.getTime() + MongoNotificationClaimLeaseMs) } },
+    );
+    return renewed.matchedCount > 0;
+  }
+
+  async beginClaimedDeliveryAttempts(
+    deliveries: NotificationDeliveryAttemptIdentity[],
+    claimToken: string,
+    now: Date,
+  ): Promise<NotificationDeliveryAttemptIdentity[]> {
+    const started: NotificationDeliveryAttemptIdentity[] = [];
+    for (const identity of deliveries) {
+      // Each delivery is fenced independently immediately before its provider call.
+      // eslint-disable-next-line no-await-in-loop
+      const result = await this.deliveries.updateOne(
+        {
+          _id: identity.id,
+          createdAt: identity.createdAt,
+          status: NotificationStatus.Pending,
+          claimToken,
+          dispatchStartedAt: null,
+        },
+        { $inc: { attempts: 1 }, $set: { dispatchStartedAt: now, updatedAt: now } },
+      );
+      if (result.modifiedCount > 0) {
+        started.push(identity);
+      }
+    }
+    return started;
+  }
+
+  async saveClaimedDeliveryResults(results: NotificationDeliveryResult[], claimToken: string): Promise<void> {
     if (results.length === 0) {
       return;
     }
     await runInMongoTransaction(this.client, async (session) => {
       for (const result of results) {
+        if (result.claimToken !== claimToken) {
+          continue;
+        }
         // A result is valid only while its token still owns a pending row; administrative transitions clear the token.
         // eslint-disable-next-line no-await-in-loop
         const delivery = await this.deliveries.findOne(
@@ -276,7 +317,7 @@ export class MongoNotificationPersistence extends NotificationPersistence {
             _id: result.id,
             createdAt: result.createdAt,
             status: NotificationStatus.Pending,
-            claimToken: result.claimToken,
+            claimToken,
           },
           { session },
         );
@@ -284,11 +325,12 @@ export class MongoNotificationPersistence extends NotificationPersistence {
           continue;
         }
         const now = new Date();
-        const attempts = delivery.attempts + 1;
+        const attempts = delivery.dispatchStartedAt ? delivery.attempts : delivery.attempts + 1;
         const update: Partial<NotificationDeliveryDocument> = {
           attempts,
           status: result.status,
           error: result.error ?? null,
+          dispatchStartedAt: null,
           claimToken: null,
           claimExpiresAt: null,
           updatedAt: now,
@@ -310,7 +352,8 @@ export class MongoNotificationPersistence extends NotificationPersistence {
             _id: result.id,
             createdAt: result.createdAt,
             status: NotificationStatus.Pending,
-            claimToken: result.claimToken,
+            claimToken,
+            dispatchStartedAt: delivery.dispatchStartedAt,
           },
           { $set: update },
           { session },
@@ -321,8 +364,14 @@ export class MongoNotificationPersistence extends NotificationPersistence {
 
   async countRecentDeliveryErrors(params: FindRecentNotificationDeliveryErrorsParams): Promise<number> {
     const count = await this.deliveries.countDocuments({
-      status: NotificationStatus.Error,
-      updatedAt: { $gt: params.fromDate },
+      $or: [
+        { status: NotificationStatus.Error, updatedAt: { $gt: params.fromDate } },
+        {
+          status: NotificationStatus.Pending,
+          dispatchStartedAt: { $ne: null },
+          updatedAt: { $gt: params.fromDate },
+        },
+      ],
       ...(params.targetType ? { targetType: params.targetType } : {}),
     });
     return Math.min(count, params.limit);
@@ -392,6 +441,7 @@ export class MongoNotificationPersistence extends NotificationPersistence {
           priority: params.priority ?? NotificationPriority.Default,
           sendAfter: params.sendAfter ?? createdAt,
           sentAt: null,
+          dispatchStartedAt: null,
           claimToken: null,
           claimExpiresAt: null,
           createdAt,

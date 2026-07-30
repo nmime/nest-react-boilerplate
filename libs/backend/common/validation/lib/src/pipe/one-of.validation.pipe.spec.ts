@@ -1,3 +1,4 @@
+// @requirements REQ-API-VALIDATION-004
 import { BadRequestException } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { OneOfValidationPipe } from './one-of.validation.pipe';

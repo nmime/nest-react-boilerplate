@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-DESIGN-008
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';

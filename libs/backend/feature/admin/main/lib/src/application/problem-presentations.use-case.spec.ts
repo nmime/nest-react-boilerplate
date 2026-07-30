@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { errAsync, okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal, ProblemPresentationRecord } from '@app/backend-feature-auth-shared';

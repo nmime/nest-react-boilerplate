@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-AUDIT-008
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { describe, expect, it } from 'vitest';
 import { AuditLogAdminController } from './audit-log-admin.controller';

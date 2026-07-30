@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -35,7 +36,7 @@ describe("project doctor runtime policy", () => {
   });
 
   it("accepts the exact pinned pnpm version", () => {
-    assert.equal(checkPnpmVersion("11.11.0").status, "pass");
+    assert.equal(checkPnpmVersion("11.15.1").status, "pass");
     assert.equal(checkPnpmVersion("11.12.0").status, "fail");
   });
 

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
 import { describe, expect, it, vi } from 'vitest';
 import type { NatsConnection } from '@nats-io/nats-core';
 import { closeNatsConnection } from './nats-client.factory';

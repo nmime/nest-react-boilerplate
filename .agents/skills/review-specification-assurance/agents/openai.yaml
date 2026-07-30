@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Review Specification Assurance'
+  short_description: 'Audit requirement and evidence completeness'
+  default_prompt: 'Use $review-specification-assurance to audit this change and its exact-SHA evidence.'

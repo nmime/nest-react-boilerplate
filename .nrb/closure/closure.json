@@ -83,9 +83,7 @@
     "user-app-api"
   ],
   "targets": {
-    "android": [
-      "mobile-app"
-    ],
+    "android": ["mobile-app"],
     "build": [
       "admin-app",
       "admin-app-api",
@@ -98,16 +96,8 @@
       "user-app",
       "user-app-api"
     ],
-    "build-deps": [
-      "admin-app",
-      "landing-app",
-      "user-app"
-    ],
-    "dev": [
-      "admin-app",
-      "landing-app",
-      "user-app"
-    ],
+    "build-deps": ["admin-app", "landing-app", "user-app"],
+    "dev": ["admin-app", "landing-app", "user-app"],
     "e2e": [
       "admin-app",
       "admin-app-api",
@@ -118,12 +108,8 @@
       "user-app",
       "user-app-api"
     ],
-    "export": [
-      "mobile-app"
-    ],
-    "ios": [
-      "mobile-app"
-    ],
+    "export": ["mobile-app"],
+    "ios": ["mobile-app"],
     "lint": [
       "@app/backend-common-bootstrap",
       "@app/backend-common-exception",
@@ -183,12 +169,7 @@
       "user-app",
       "user-app-api"
     ],
-    "preview": [
-      "admin-app",
-      "landing-app",
-      "site-app",
-      "user-app"
-    ],
+    "preview": ["admin-app", "landing-app", "site-app", "user-app"],
     "serve": [
       "admin-app",
       "admin-app-api",
@@ -201,14 +182,8 @@
       "user-app",
       "user-app-api"
     ],
-    "serve-static": [
-      "admin-app",
-      "landing-app",
-      "user-app"
-    ],
-    "start": [
-      "site-app"
-    ],
+    "serve-static": ["admin-app", "landing-app", "user-app"],
+    "start": ["site-app"],
     "test": [
       "@app/backend-common-bootstrap",
       "@app/backend-common-exception",
@@ -320,14 +295,8 @@
       "user-app",
       "user-app-api"
     ],
-    "watch-deps": [
-      "admin-app",
-      "landing-app",
-      "user-app"
-    ],
-    "web": [
-      "mobile-app"
-    ]
+    "watch-deps": ["admin-app", "landing-app", "user-app"],
+    "web": ["mobile-app"]
   },
   "productExternalPackages": {
     "@astrojs/check": "0.9.9",
@@ -509,14 +478,10 @@
   "product": {
     "ciMode": "product",
     "frontendApiMode": "same-origin",
-    "mobileTargets": [
-      "web"
-    ]
+    "mobileTargets": ["web"]
   },
   "deployment": {
-    "targets": [
-      "docker"
-    ],
+    "targets": ["docker"],
     "publicTopology": "single-domain",
     "kubernetesDelivery": "direct",
     "infrastructure": {

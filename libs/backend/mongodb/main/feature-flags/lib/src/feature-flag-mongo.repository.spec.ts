@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import type { Collection, Db } from 'mongodb';
 import { DefaultFeatureFlagTenantId } from '@app/common-feature-flags';
 import { describe, expect, it, vi } from 'vitest';
@@ -103,17 +104,22 @@ describe('MongoFeatureFlagRepository', () => {
 
   it('atomically upserts a new flag with defaults', async () => {
     const fixture = createRepository();
+    fixture.findOneAndUpdate.mockResolvedValue(document({ tenantId: DefaultFeatureFlagTenantId }));
 
-    const result = await fixture.repository.upsert({ tenantId, key: 'checkout.newflow', value: true });
+    const result = await fixture.repository.upsert({ key: 'checkout.newflow', value: true });
 
-    expect(result._unsafeUnwrap()).toMatchObject({ key: 'checkout.newflow', tenantId, value: true });
+    expect(result._unsafeUnwrap()).toMatchObject({
+      key: 'checkout.newflow',
+      tenantId: DefaultFeatureFlagTenantId,
+      value: true,
+    });
     expect(fixture.findOneAndUpdate).toHaveBeenCalledWith(
-      { tenantId, key: 'checkout.newflow' },
+      { tenantId: DefaultFeatureFlagTenantId, key: 'checkout.newflow' },
       {
         $set: { value: true, updatedAt: expect.any(Date) },
         $setOnInsert: {
           _id: expect.any(String),
-          tenantId,
+          tenantId: DefaultFeatureFlagTenantId,
           key: 'checkout.newflow',
           createdAt: expect.any(Date),
           description: '',

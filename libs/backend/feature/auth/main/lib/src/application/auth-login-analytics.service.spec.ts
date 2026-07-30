@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-ACCESS-001
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
 import type { AuthLoginEventRecord, AuthLoginEventRepositoryPort } from '@app/backend-feature-auth-shared';

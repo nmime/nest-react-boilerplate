@@ -21,6 +21,13 @@ description: Extend notification events, templates, providers, scheduling, and d
 5. Keep the scheduler responsible for due-work selection and the consumer responsible for execution; do not create competing schedule owners.
 6. Add provider contract tests plus end-to-end scheduler/consumer coverage for success, retryable failure, permanent failure, and duplicate delivery.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Verification
 
 Run notification library, scheduler, consumer, and affected producer tests/builds; run Docker-backed integration when required. Report external-provider live delivery as unverified unless an explicitly authorized controlled canary ran.

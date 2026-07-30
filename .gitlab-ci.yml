@@ -13,7 +13,7 @@ stages:
 variables:
   CI: 'true'
   NX_DAEMON: 'false'
-  PNPM_VERSION: '11.11.0'
+  PNPM_VERSION: '11.15.1'
   NODE_VERSION_FILE: .nvmrc
 
 # Include GitLab SAST/Dependency Scanning
@@ -80,11 +80,48 @@ fast-check:
       else
         pnpm run git:conventions -- --branch "$CI_COMMIT_BRANCH" --range "$CI_COMMIT_BEFORE_SHA..HEAD"
       fi
+    - pnpm run spec:validate
     - pnpm exec nx run-many -t lint --all
     - pnpm exec nx run-many -t typecheck --all
     - pnpm format:check
     - pnpm run test:all
   timeout: 30m
+
+spec-evidence:
+  stage: test
+  image: node:24.18.0-alpine
+  needs:
+    - fast-check
+  variables:
+    GIT_DEPTH: '0'
+  before_script:
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - |
+      if [ -n "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-}" ]; then
+        git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+        lane=pr
+        base="origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+      else
+        lane=main
+        base="$CI_COMMIT_BEFORE_SHA"
+        if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
+          base="$(git rev-parse HEAD^)"
+        fi
+      fi
+      pnpm run spec:verify -- \
+        --lane "$lane" \
+        --base "$base" \
+        --head HEAD \
+        --report test-results/spec-evidence/gitlab.json
+  artifacts:
+    when: always
+    paths:
+      - test-results/spec-evidence/
+    expire_in: 14 days
+  timeout: 45m
 
 full-check:
   stage: test
@@ -283,12 +320,21 @@ release:
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile
   script:
-    - pnpm exec semantic-release
+    - |
+      set -eu
+      test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"
+      git fetch --no-tags origin "$CI_DEFAULT_BRANCH"
+      if [ "$(git rev-parse FETCH_HEAD)" != "$CI_COMMIT_SHA" ]; then
+        echo "Refusing stale release: $CI_DEFAULT_BRANCH advanced after this pipeline started" >&2
+        exit 1
+      fi
+      pnpm exec semantic-release
   variables:
+    GIT_DEPTH: '0'
     RELEASE_PROVIDER: gitlab
     GIT_AUTHOR_NAME: nmime
     GIT_AUTHOR_EMAIL: 66474195+nmime@users.noreply.github.com
     GIT_COMMITTER_NAME: nmime
     GIT_COMMITTER_EMAIL: 66474195+nmime@users.noreply.github.com
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && ($GITLAB_TOKEN != null || $GL_TOKEN != null)'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && ($GITLAB_TOKEN != null || $GL_TOKEN != null)'

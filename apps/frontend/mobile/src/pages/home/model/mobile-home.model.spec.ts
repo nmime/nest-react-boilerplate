@@ -1,6 +1,7 @@
+// @requirements REQ-FRONTEND-NATIVE-006
 import { describe, expect, it } from 'vitest';
 
-import { mobileCapabilityCards } from './mobile-home.model';
+import { mobileCapabilityCards, mobileLocaleOptions } from './mobile-home.model';
 
 describe('mobile home model', () => {
   it('keeps the launch surface backed by concrete setup cards', () => {
@@ -9,5 +10,10 @@ describe('mobile home model', () => {
       'mobile.card.native.value',
       'mobile.card.delivery.value',
     ]);
+  });
+
+  it('offers the shared en/ru locale switch options', () => {
+    expect(mobileLocaleOptions.map((option) => option.locale)).toEqual(['en', 'ru']);
+    expect(mobileLocaleOptions.map((option) => option.label)).toEqual(['EN', 'RU']);
   });
 });

@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-DATABASE-008
 import { Logger } from '@nestjs/common';
 import { errAsync, okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';

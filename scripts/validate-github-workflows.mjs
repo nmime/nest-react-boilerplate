@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// Evidence for: REQ-ASSURANCE-RELEASE-003
+// Security and operations evidence for REQ-ASSURANCE-RELEASE-003.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -42,6 +44,8 @@ const ci = workflows.find((workflow) => workflow.name === 'ci.yml')?.text ?? '';
 const release = workflows.find((workflow) => workflow.name === 'release.yml')?.text ?? '';
 const releaseImagesWorkflow = workflows.find((workflow) => workflow.name === 'release-images.yml')?.text ?? '';
 const deployWorkflow = workflows.find((workflow) => workflow.name === 'deploy.yml')?.text ?? '';
+const nightlyAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-nightly.yml')?.text ?? '';
+const runtimeAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-runtime.yml')?.text ?? '';
 const githubReleaseNotes = readFileSync(new URL('../.github/release.yml', import.meta.url), 'utf8');
 const gitleaksConfig = readFileSync(new URL('../.gitleaks.toml', import.meta.url), 'utf8');
 const nxCacheAction = readFileSync(new URL('../.github/actions/nx-cache/action.yml', import.meta.url), 'utf8');
@@ -60,7 +64,7 @@ assert.ok(
 assert.ok(nxCacheAction.includes('path: .nx/cache'), 'Nx cache composite action must cache only Nx task outputs');
 assert.ok(!nxCacheAction.includes('secrets.'), 'Nx cache composite action must not receive secrets');
 assert.ok(ci.includes('NX_CACHE_DIRECTORY: .nx/cache'), 'CI must use the explicit Nx cache directory');
-for (const scope of ['fast', 'non-runtime', 'bun', 'quality', 'e2e', 'mongodb']) {
+for (const scope of ['fast', 'spec-evidence', 'non-runtime', 'bun', 'quality', 'e2e', 'mongodb']) {
   assert.ok(ci.includes(`scope: ${scope}`), `CI must restore the remote Nx cache for ${scope}`);
 }
 assert.ok(
@@ -72,8 +76,62 @@ assert.ok(
   'CI cache documentation must prohibit secret-bearing cache paths',
 );
 assert.ok(release.includes('RELEASE_PROVIDER: github'), 'release.yml must select only the GitHub release provider');
-assert.ok(release.includes('GIT_AUTHOR_NAME: nmime'), 'release.yml must preserve the nmime release author');
-assert.ok(release.includes('GIT_COMMITTER_NAME: nmime'), 'release.yml must preserve the nmime release committer');
+// The release repository is overridable so forks/adopters can enable CD, but
+// the upstream `nmime` default must be preserved.
+assert.ok(
+  release.includes("vars.RELEASE_REPOSITORY || 'nmime/nest-react-boilerplate'"),
+  'release.yml must gate releases on RELEASE_REPOSITORY with the nmime default',
+);
+assert.ok(
+  !release.includes('GIT_AUTHOR_NAME:') && !release.includes('GIT_COMMITTER_NAME:'),
+  'release.yml must not configure an identity for forbidden protected-branch release commits',
+);
+assert.ok(release.includes('workflow_run:'), 'release.yml must wait for the CI workflow');
+assert.ok(
+  release.includes("github.event.workflow_run.conclusion == 'success'"),
+  'release.yml must require a successful CI conclusion',
+);
+assert.ok(
+  release.includes('ref: ${{ github.event.workflow_run.head_sha }}'),
+  'release.yml must checkout the exact verified CI commit',
+);
+assert.ok(
+  release.includes('test "$(git rev-parse origin/main)" = "$VERIFIED_SHA"'),
+  'release.yml must refuse a stale successful CI commit after main advances',
+);
+assert.ok(
+  ci.includes('Enforce every required CI result'),
+  'ci.yml summary must fail when any required job did not succeed',
+);
+assert.ok(
+  ci.includes('origin/$GITHUB_BASE_REF..$PR_HEAD_SHA'),
+  'ci.yml must validate authored commits without including the synthetic pull-request merge commit',
+);
+for (const required of [
+  'name: Exact-SHA specification evidence',
+  'pnpm run spec:verify',
+  '--lane "$lane"',
+  '--base "$base"',
+  '--head HEAD',
+  '${{ needs.spec-evidence.result }}',
+]) {
+  assert.ok(ci.includes(required), `ci.yml missing exact-SHA specification gate: ${required}`);
+}
+for (const required of [
+  "cron: '21 1 * * *'",
+  'pnpm run spec:verify -- --all --lane nightly',
+  'docker compose -f docker/docker-compose.yml up -d --build',
+  'nightly-specification-assurance',
+]) {
+  assert.ok(nightlyAssurance.includes(required), `nightly assurance workflow missing required contract: ${required}`);
+}
+for (const required of [
+  'workflow_dispatch:',
+  'pnpm run spec:verify -- --all --lane runtime',
+  'runtime-specification-assurance',
+]) {
+  assert.ok(runtimeAssurance.includes(required), `runtime assurance workflow missing required contract: ${required}`);
+}
 for (const required of [
   'Build every setup-selected release image',
   'pnpm nrb closure install',
@@ -105,7 +163,7 @@ assert.ok(
   !releaseImagesWorkflow.includes('--all-reference') && !deployWorkflow.includes('--all-reference'),
   'Product release and promotion workflows must never bypass the selected closure with all-reference mode',
 );
-for (const required of ['pnpm run test:all', 'pnpm run test:coverage:all', 'pnpm run test:e2e:coverage:all']) {
+for (const required of ['pnpm run test:coverage:all', 'pnpm run test:e2e:coverage:all']) {
   assert.ok(ci.includes(required), `ci.yml missing explicit maintainer test command: ${required}`);
 }
 for (const required of [
@@ -159,6 +217,17 @@ for (const required of [
   'pnpm exec semantic-release',
   'RELEASE_PROVIDER: gitlab',
   '$GITLAB_TOKEN != null || $GL_TOKEN != null',
+  'spec-evidence:',
+  'pnpm run spec:validate',
+  'pnpm run spec:verify',
+  '--lane "$lane"',
+  '--base "$base"',
+  '--head HEAD',
+  'test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"',
+  'git fetch --no-tags origin "$CI_DEFAULT_BRANCH"',
+  'git rev-parse FETCH_HEAD',
+  'Refusing stale release',
+  '$CI_PIPELINE_SOURCE == "push"',
 ]) {
   assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing provider-isolated release contract: ${required}`);
 }
@@ -272,6 +341,14 @@ const gitlabReleaseConfig = buildReleaseConfig({
   CI_REPOSITORY_URL: 'https://gitlab-ci-token:example@gitlab.example.com/group/project.git',
 });
 const configuredReleasePlugins = new Set([...pluginNames(githubReleaseConfig), ...pluginNames(gitlabReleaseConfig)]);
+assert.ok(
+  !configuredReleasePlugins.has('@semantic-release/git'),
+  'semantic-release must not create an unverified release commit',
+);
+assert.ok(
+  !configuredReleasePlugins.has('@semantic-release/changelog'),
+  'semantic-release must not modify source after CI verification',
+);
 assert.deepEqual(
   releaseNoteTypes.map(({ type }) => type),
   ['feat', 'fix', 'perf', 'revert', 'refactor', 'docs', 'build', 'ci', 'test', 'chore'],
@@ -287,6 +364,18 @@ for (const plugin of configuredReleasePlugins) {
     `release.config.mjs plugin must be a direct dependency under pnpm: ${plugin}`,
   );
   await import(plugin);
+}
+for (const [provider, config] of [
+  ['GitHub', githubReleaseConfig],
+  ['GitLab', gitlabReleaseConfig],
+]) {
+  assert.deepEqual(
+    pluginNames(config).filter(
+      (plugin) => plugin === '@semantic-release/changelog' || plugin === '@semantic-release/git',
+    ),
+    [],
+    `${provider} releases must tag reviewed commits instead of pushing release commits to protected main`,
+  );
 }
 assert.deepEqual(
   pluginNames(githubReleaseConfig).filter(
@@ -360,7 +449,7 @@ assert.ok(
   'scheduled quality workflow must run the pinned visual regression matrix',
 );
 const runtimeComposeProfiles =
-  'COMPOSE_PROFILES: postgres,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app';
+  'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app';
 for (const [workflowName, workflowText] of [
   ['ci.yml', ci],
   ['quality-presets.yml', qualityPresets],
@@ -374,6 +463,22 @@ for (const [workflowName, workflowText] of [
     `${workflowName} runtime QA stack must seed the e2e bootstrap admin email`,
   );
   assert.ok(
+    /AUTH_TELEGRAM_ENABLED:\s*['"]true['"]/u.test(workflowText),
+    `${workflowName} runtime QA stack must enable the Telegram TMA fixture`,
+  );
+  assert.ok(
+    /EXTERNAL_AUTH_AUTO_PROVISION_ENABLED:\s*['"]true['"]/u.test(workflowText),
+    `${workflowName} runtime QA stack must enable external-auth fixture provisioning`,
+  );
+  assert.ok(
+    workflowText.includes("TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'"),
+    `${workflowName} runtime QA stack must use the fullstack Telegram signing fixture`,
+  );
+  assert.ok(
+    /RATE_LIMIT_MAX:\s*['"]1000['"]/u.test(workflowText),
+    `${workflowName} runtime QA stack must budget for the five-project browser matrix`,
+  );
+  assert.ok(
     workflowText.includes(runtimeComposeProfiles),
     `${workflowName} runtime QA stack must activate every required Compose profile`,
   );
@@ -385,7 +490,7 @@ for (const [workflowName, workflowText] of [
 for (const required of [
   'readFullstackSelection',
   'validateFullstackEnvironment',
-  'fullstackSelection.services',
+  'fullstackSelection?.services',
   "pickPort('MONGODB_PORT', 0)",
   'mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true',
   "selectedEnvironment.MONGODB_REPLICA_SET ?? 'rs0'",

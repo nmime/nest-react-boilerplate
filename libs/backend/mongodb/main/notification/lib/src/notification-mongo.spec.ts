@@ -1,3 +1,4 @@
+// @requirements REQ-NOTIFY-PERSISTENCE-005
 import {
   NotificationBroadcastStatus,
   NotificationChannel,

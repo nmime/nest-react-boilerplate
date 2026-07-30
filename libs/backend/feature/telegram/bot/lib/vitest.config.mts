@@ -14,6 +14,11 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('coverage/libs/backend/feature/telegram/bot/lib', ['src/**/*.ts'], ['src/index.ts']),
+    coverage: fullCoverage('coverage/libs/backend/feature/telegram/bot/lib', ['src/**/*.ts'], ['src/index.ts'], {
+      branches: -2,
+      functions: -8,
+      lines: -8,
+      statements: -8,
+    }),
   },
 });

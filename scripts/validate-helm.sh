@@ -123,6 +123,8 @@ helm template "${RELEASE_NAME}" "${CHART_DIR}" \
   -f "${POSTGRES_REFERENCE_VALUES}" \
   --namespace "${NAMESPACE}" \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set secrets.create=true \
   --set-string secrets.sessionSecret=ci-only-session-secret-minimum-32-characters \
   --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
@@ -152,6 +154,8 @@ helm template "${RELEASE_NAME}" "${CHART_DIR}" \
   --set database.engine=mongodb \
   --set-string database.mongodb.replicaSet=ci-rs \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set networkPolicy.enabled=true \
   --set secrets.create=true \
   --set-string secrets.sessionSecret=ci-only-session-secret-minimum-32-characters \
@@ -182,6 +186,8 @@ if helm template reused-runtime-backup-principal "${CHART_DIR}" \
   --set database.engine=mongodb \
   --set-string database.mongodb.replicaSet=ci-rs \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set secrets.create=true \
   --set-string secrets.sessionSecret=ci-only-session-secret-minimum-32-characters \
   --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
@@ -198,6 +204,8 @@ if helm template reused-migration-backup-principal "${CHART_DIR}" \
   --set database.engine=mongodb \
   --set-string database.mongodb.replicaSet=ci-rs \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set secrets.create=true \
   --set-string secrets.sessionSecret=ci-only-session-secret-minimum-32-characters \
   --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
@@ -252,6 +260,8 @@ for collision in runtime-migration runtime-backup migration-backup; do
     --set database.engine=mongodb \
     --set-string database.mongodb.replicaSet=ci-rs \
     --set backups.enabled=true \
+    --set backups.destination.pvc.enabled=true \
+    --set-string backups.destination.pvc.claimName=nrb-ci-backups \
     --set-string secrets.existingSecret="${runtime_secret}" \
     --set-string migrations.mongodbExistingSecret="${migration_secret}" \
     --set-string backups.mongodb.existingSecret="${backup_secret}" \
@@ -284,6 +294,8 @@ if helm template generated-migration-collision "${CHART_DIR}" \
   --set database.engine=mongodb \
   --set-string database.mongodb.replicaSet=ci-rs \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set secrets.create=true \
   --set-string secrets.sessionSecret=ci-only-session-secret-minimum-32-characters \
   --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
@@ -301,6 +313,8 @@ if helm template generated-backup-collision "${CHART_DIR}" \
   --set database.engine=mongodb \
   --set-string database.mongodb.replicaSet=ci-rs \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set secrets.create=true \
   --set-string secrets.sessionSecret=ci-only-session-secret-minimum-32-characters \
   --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
@@ -321,6 +335,8 @@ helm template generated-runtime-external-elevated "${CHART_DIR}" \
   --set database.engine=mongodb \
   --set-string database.mongodb.replicaSet=ci-rs \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set secrets.create=true \
   --set-string secrets.sessionSecret=ci-only-session-secret-minimum-32-characters \
   --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
@@ -354,6 +370,8 @@ helm template generated-backup-external-migration "${CHART_DIR}" \
   --set database.engine=mongodb \
   --set-string database.mongodb.replicaSet=ci-rs \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set secrets.create=true \
   --set-string secrets.sessionSecret=ci-only-session-secret-minimum-32-characters \
   --set-string secrets.betterAuthSecret=ci-only-better-auth-secret-minimum-32-characters \
@@ -403,6 +421,8 @@ helm template separate-mongodb-secrets "${CHART_DIR}" \
   --set database.engine=mongodb \
   --set-string database.mongodb.replicaSet=ci-rs \
   --set backups.enabled=true \
+  --set backups.destination.pvc.enabled=true \
+  --set-string backups.destination.pvc.claimName=nrb-ci-backups \
   --set-string secrets.existingSecret=runtime-mongodb \
   --set-string migrations.mongodbExistingSecret=migration-mongodb \
   --set-string backups.mongodb.existingSecret=backup-mongodb \
@@ -502,5 +522,8 @@ echo "==> kubeconform"
 "${KUBECONFORM}" -strict -ignore-missing-schemas "${TMP_DIR}/mongodb-separate-secrets.yaml"
 "${KUBECONFORM}" -strict -ignore-missing-schemas "${TMP_DIR}/mongodb-generated-runtime.yaml"
 "${KUBECONFORM}" -strict -ignore-missing-schemas "${TMP_DIR}/mongodb-generated-backup.yaml"
+
+echo "==> helm render assertions (node --test)"
+node --test "${ROOT_DIR}/scripts/helm-template.spec.mjs"
 
 echo "Helm validation passed. Rendered manifests are in ${TMP_DIR} until script exit."

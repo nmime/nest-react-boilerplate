@@ -1,0 +1,198 @@
+version: 3
+capability: repository-assurance
+owners:
+  product: repository-maintainers
+  verification: quality-engineering
+  security: security-maintainers
+  operations: release-engineering
+requirements:
+  - id: REQ-ASSURANCE-TRACE-001
+    projects:
+      - '@repo/tooling'
+      - acceptance-e2e
+    risk: critical
+    profiles:
+      - acceptance
+      - tooling
+      - documentation
+      - mutation
+    cucumber:
+      disposition: acceptance
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/assurance.feature
+        scenario: SCN-ASSURANCE-TRACE-01
+        target: acceptance-e2e:acceptance
+        lanes:
+          - pr
+          - main
+      - kind: static
+        file: packages/tooling/src/commands/spec/assurance.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/spec/assurance.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: mutation
+        file: packages/tooling/src/commands/qa/mutation.ts
+        script: test:mutation
+        lanes:
+          - nightly
+      - kind: documentation
+        file: openspec/specs/repository-assurance/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-ASSURANCE-FRESHNESS-002
+    projects:
+      - '@repo/tooling'
+    risk: critical
+    profiles:
+      - tooling
+      - operations
+    cucumber:
+      disposition: not-applicable
+      reason: Exact-SHA freshness is a provenance invariant verified by tooling and operational dossier execution.
+      alternativeEvidence:
+        - static
+        - operations
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/spec/assurance.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/spec/assurance.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        script: test:world-class
+        lanes:
+          - nightly
+  - id: REQ-ASSURANCE-RELEASE-003
+    projects:
+      - '@repo/tooling'
+    risk: critical
+    profiles:
+      - acceptance
+      - security
+      - operations
+    cucumber:
+      disposition: acceptance
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/release-provenance.feature
+        scenario: SCN-ASSURANCE-RELEASE-01
+        target: acceptance-e2e:acceptance
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: scripts/validate-github-workflows.mjs
+        script: ci:workflows:check
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/validate-github-workflows.mjs
+        script: ci:workflows:check
+        lanes:
+          - pr
+          - main
+  - id: REQ-ASSURANCE-INVENTORY-004
+    projects:
+      - '@repo/tooling'
+    risk: critical
+    profiles:
+      - tooling
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Complete executable-test inventory is a repository scan whose exact totals are asserted by tooling tests.
+      alternativeEvidence:
+        - static
+        - vitest
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/spec/assurance.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/spec/assurance.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/repository-assurance/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-ASSURANCE-WORKFLOW-005
+    projects:
+      - '@repo/tooling'
+    risk: high
+    profiles:
+      - tooling
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Skill routing and discoverability are structural repository contracts verified by static checks and documentation.
+      alternativeEvidence:
+        - static
+        - documentation
+    evidence:
+      - kind: static
+        file: packages/tooling/scripts/validate-agent-skills.mjs
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/scripts/validate-agent-skills.spec.mjs
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/repository-assurance/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-ASSURANCE-OWNERSHIP-006
+    projects:
+      - '@repo/tooling'
+    risk: critical
+    profiles:
+      - tooling
+    cucumber:
+      disposition: not-applicable
+      reason: Requirement-to-project ownership is a graph invariant best enforced through deterministic tooling and unit fixtures.
+      alternativeEvidence:
+        - static
+        - vitest
+    evidence:
+      - kind: static
+        file: packages/tooling/src/commands/spec/assurance.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/spec/assurance.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main

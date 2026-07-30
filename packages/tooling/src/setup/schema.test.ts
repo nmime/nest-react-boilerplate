@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-INIT-004 REQ-SCAFFOLD-SELECTION-002
 /**
  * Tests for setup schema, catalog, and presets.
  *
@@ -121,6 +122,7 @@ describe('schema — parseNrbConfig', () => {
 describe('schema — constants', () => {
   it('exports all known app IDs', () => {
     const expected = [
+      'acceptance-e2e',
       'admin-app',
       'user-app',
       'landing-app',
@@ -218,6 +220,7 @@ describe('catalog — appCatalog', () => {
       .sort();
 
     assert.deepEqual(reference, [
+      'acceptance-e2e',
       'admin-app',
       'admin-app-api',
       'auth-app-api',
@@ -257,6 +260,7 @@ describe('catalog — appCatalog', () => {
       'admin-app-api',
       'auth-app-api',
       'landing-app',
+      'site-app',
       'user-app',
       'user-app-api',
     ]);
@@ -561,12 +565,13 @@ describe('presets — lookup helpers', () => {
 });
 
 describe('presets — expandPreset', () => {
-  it('minimal: auth-app-api + user-app-api + postgres', () => {
+  it('minimal: acceptance + auth/user APIs + postgres', () => {
     const e = expandPreset('minimal');
     assert.ok(e.apps.includes('auth-app-api'));
     assert.ok(e.apps.includes('user-app-api'));
     assert.ok(e.capabilities.includes('postgres'));
-    assert.equal(e.apps.length, 2);
+    assert.ok(e.apps.includes('acceptance-e2e'));
+    assert.equal(e.apps.length, 3);
   });
 
   it('web: every core web app, API, and E2E project', () => {
@@ -574,6 +579,7 @@ describe('presets — expandPreset', () => {
     for (const app of [
       'admin-app',
       'admin-app-api',
+      'acceptance-e2e',
       'auth-app-api',
       'fullstack-e2e',
       'landing-app',
@@ -591,6 +597,7 @@ describe('presets — expandPreset', () => {
     for (const a of [
       'admin-app',
       'admin-app-api',
+      'acceptance-e2e',
       'user-app',
       'user-app-api',
       'auth-app-api',

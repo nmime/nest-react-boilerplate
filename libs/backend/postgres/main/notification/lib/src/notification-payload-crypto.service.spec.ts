@@ -1,4 +1,7 @@
+// @requirements REQ-NOTIFY-PERSISTENCE-005
+// Evidence for: REQ-NOTIFY-PERSISTENCE-005
 import { describe, expect, it } from 'vitest';
+// Persistence-focused evidence for REQ-NOTIFY-LIFECYCLE-002.
 import { NotificationPayloadCryptoService } from './notification-payload-crypto.service';
 
 describe(NotificationPayloadCryptoService.name, () => {

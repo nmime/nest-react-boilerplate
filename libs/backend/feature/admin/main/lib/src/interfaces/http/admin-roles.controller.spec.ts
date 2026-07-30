@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { okAsync, type ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';

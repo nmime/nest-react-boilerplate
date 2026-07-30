@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-OBSERVABILITY-005
 import { SpanStatusCode } from '@opentelemetry/api';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {

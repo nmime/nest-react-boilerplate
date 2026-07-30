@@ -33,9 +33,10 @@ selection in `.nrb/workspace.json`, and it can be rerun to add or remove apps.
 
 ## End-to-end projects
 
-| ID              | Nx project root      | Runtime                     | Class     | Template hostname | Required selection                                                                      |
-| --------------- | -------------------- | --------------------------- | --------- | ----------------- | --------------------------------------------------------------------------------------- |
-| `fullstack-e2e` | `apps/e2e/fullstack` | Playwright full-stack tests | Reference | Not deployable    | `admin-app`, `admin-app-api`, `auth-app-api`, `landing-app`, `user-app`, `user-app-api` |
+| ID               | Nx project root       | Runtime                                     | Class     | Template hostname | Required selection                                                                                  |
+| ---------------- | --------------------- | ------------------------------------------- | --------- | ----------------- | --------------------------------------------------------------------------------------------------- |
+| `fullstack-e2e`  | `apps/e2e/fullstack`  | Playwright full-stack tests                 | Reference | Not deployable    | `admin-app`, `admin-app-api`, `auth-app-api`, `landing-app`, `site-app`, `user-app`, `user-app-api` |
+| `acceptance-e2e` | `apps/e2e/acceptance` | Cucumber.js domain and API acceptance tests | Reference | Not deployable    | None                                                                                                |
 
 ## Domain ownership
 

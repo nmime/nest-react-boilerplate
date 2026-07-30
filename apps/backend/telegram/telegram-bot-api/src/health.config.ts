@@ -6,10 +6,11 @@ import {
   RuntimeHealthIndicator,
   type HealthIndicator,
 } from '@app/backend-common-health';
+import { RedisHealthIndicator } from '@app/backend-common-redis';
 
 export const TelegramBotApiHealthServiceProvider: FactoryProvider<HealthService> = {
   provide: HealthService,
-  useFactory: (database?: DurableDatabaseRuntime) =>
+  useFactory: (database?: DurableDatabaseRuntime, redisHealth?: RedisHealthIndicator) =>
     new HealthService({
       appName: 'telegram-bot-api',
       indicators: [
@@ -27,9 +28,10 @@ export const TelegramBotApiHealthServiceProvider: FactoryProvider<HealthService>
           ],
         }),
         ...(database ? normalizeDatabaseIndicators(database) : [missingDatabaseIndicator()]),
+        ...(redisHealth ? [redisHealth] : []),
       ],
     }),
-  inject: [optionalProvider(DurableDatabaseRuntimeInjectToken)],
+  inject: [optionalProvider(DurableDatabaseRuntimeInjectToken), optionalProvider(RedisHealthIndicator)],
 };
 
 export function createTelegramBotApiHealthServiceProvider(): FactoryProvider<HealthService> {

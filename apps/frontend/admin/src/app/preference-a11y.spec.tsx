@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SHELL-004
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';

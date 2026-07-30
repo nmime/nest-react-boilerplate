@@ -1,3 +1,5 @@
+// @requirements REQ-FRONTEND-ERROR-005
+// Evidence for: REQ-API-CLIENT-005
 import { describe, expect, it, vi } from 'vitest';
 import type { Locale } from '@app/frontend-i18n-shared';
 import {

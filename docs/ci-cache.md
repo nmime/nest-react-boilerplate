@@ -15,8 +15,34 @@ Only `.nx/cache` is persisted. Do not add `.env*`, Docker credentials,
 Fork pull requests can restore permitted base caches, but they do not receive
 deployment secrets and cannot write to the protected default-branch cache.
 
-For an organization that requires a dedicated Nx Cloud or object-store backend,
-create and scope that service outside this repository, add its token only as a
-protected CI secret, and keep this GitHub cache as the no-secret fallback. Do
-not put a remote-cache token in `nx.json`, source code, image build args, or
-production environment files.
+## Opt-in: shared Nx Cloud / object-store backend
+
+For an organization that wants a single cache shared across every job (and across
+developer machines) instead of the per-scope GitHub caches, layer a dedicated
+backend on top. Keep this GitHub cache as the no-secret fallback, and never put a
+remote-cache token in `nx.json`, source code, image build args, or production
+environment files.
+
+To enable **Nx Cloud** (no `nx.json` secret required):
+
+1. Run `pnpm exec nx connect` once — this adds a non-secret `nxCloudId` to `nx.json`.
+2. Add the access token as the protected repository secret `NX_CLOUD_ACCESS_TOKEN`.
+3. Expose it to each compute job (`fast-check`, `non-runtime-validation`,
+   `bun-compat`, `quality`, `e2e`, `visual-regression`) with a job-level env — never
+   the workflow top-level `env` (the `secrets` context is not available there) and
+   never `.github/actions/nx-cache` (the composite action must stay secret-free):
+
+   ```yaml
+   jobs:
+     quality:
+       env:
+         NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+   ```
+
+   When the secret is unset the value is empty and Nx silently falls back to the
+   GitHub Actions cache service, so adding the line is a safe no-op until you
+   provision the backend.
+
+For a **self-hosted S3/MinIO** cache, install the Nx self-hosted cache plugin and
+supply the bucket credentials through the standard `AWS_*` job-level env from CI
+secrets — again, never committed to `nx.json`.

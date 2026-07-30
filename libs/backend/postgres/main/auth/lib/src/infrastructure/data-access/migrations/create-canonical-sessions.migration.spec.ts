@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PERSISTENCE-007
 import { describe, expect, it } from 'vitest';
 import { authMigrations } from './index';
 import { Migration20260722091000DropLegacyAuthUserAccessCache } from './Migration20260722091000DropLegacyAuthUserAccessCache';

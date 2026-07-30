@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-GENERATORS-003
 /**
  * Tests for the library generator.
  *
@@ -110,6 +111,10 @@ describe('library generator', () => {
 
       const index = tree.read('libs/backend/common/shared-utils/lib/src/index.ts', 'utf8')!;
       assert.ok(index.includes('sharedUtilsVersion'));
+      assert.match(
+        tree.read('libs/backend/common/shared-utils/lib/src/index.spec.ts', 'utf8')!,
+        /^\/\/ @requirements REQ-SHARED-UTILS-SCAFFOLD-001$/mu,
+      );
     });
 
     it('creates vitest config', async () => {
@@ -199,6 +204,10 @@ describe('library generator', () => {
       assert.ok(tree.exists('libs/frontend/ui-components/lib/src/ui-components.component.tsx'));
       const component = tree.read('libs/frontend/ui-components/lib/src/ui-components.component.tsx', 'utf8')!;
       assert.ok(component.includes('UiComponentsComponent'));
+      assert.match(
+        tree.read('libs/frontend/ui-components/lib/src/index.spec.tsx', 'utf8')!,
+        /^\/\/ @requirements REQ-UI-COMPONENTS-SCAFFOLD-001$/mu,
+      );
     });
 
     it('creates source files with index barrel', async () => {

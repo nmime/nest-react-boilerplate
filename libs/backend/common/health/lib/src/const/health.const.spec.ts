@@ -1,3 +1,4 @@
+// @requirements REQ-RUNTIME-HEALTH-001
 import { HttpStatus } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { HealthHttpStatus } from './health.const';

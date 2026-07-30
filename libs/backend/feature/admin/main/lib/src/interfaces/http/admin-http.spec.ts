@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-TENANT-004
 import {
   BadRequestException,
   ConflictException,

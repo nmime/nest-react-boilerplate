@@ -1,3 +1,4 @@
+// Evidence for: REQ-SCAFFOLD-TOOLING-005
 /**
  * Setup command — interactive and non-interactive boilerplate configuration.
  *

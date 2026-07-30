@@ -67,7 +67,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "EXPO_NO_TELEMETRY=1 expo export --platform web --output-dir ../../../dist/apps/frontend/mobile"
+        "command": "node scripts/export-expo.mjs --platform web"
       },
       "inputs": [
         "production",
@@ -76,6 +76,21 @@
         }
       ],
       "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile"]
+    },
+    "export-android": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/mobile",
+        "command": "node scripts/export-expo.mjs --platform android"
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": ["@expo/metro-runtime", "expo", "react-native"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile-android"]
     },
     "build": {
       "executor": "nx:run-commands",
@@ -126,13 +141,12 @@
     "e2e": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": ["export"],
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "node scripts/smoke-expo-export.mjs"
+        "command": "node scripts/export-expo.mjs --platform all"
       },
       "inputs": ["production"],
-      "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile"]
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile", "{workspaceRoot}/dist/apps/frontend/mobile-android"]
     }
   }
 }

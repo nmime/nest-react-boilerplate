@@ -1,3 +1,4 @@
+// @requirements REQ-AUTH-PROFILE-006
 import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';

@@ -4,7 +4,7 @@ ARG TARGETPLATFORM
 ARG TARGETARCH
 
 ARG NODE_VERSION=24.18.0-alpine
-ARG PNPM_VERSION=11.11.0
+ARG PNPM_VERSION=11.15.1
 
 FROM node:${NODE_VERSION} AS workspace
 ARG PNPM_VERSION
@@ -66,6 +66,7 @@ COPY i18n ./i18n
 COPY tsconfig.base.json ./tsconfig.base.json
 COPY docker/migrator-run.mjs ./docker/migrator-run.mjs
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
+USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 CMD ["node", "docker/migrator-run.mjs"]
 
@@ -102,12 +103,10 @@ RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
 #   --prod            production dependencies only
 #   --prefer-offline  reuse the pnpm-fetch store first, with registry metadata
 #                     fallback for generated per-app lockfiles
-#   --ignore-workspace treat the dist output as a standalone project so pnpm
-#                     uses the app's generated lockfile, not the root workspace one
-#   --no-frozen-lockfile the workspace stage sets CI=true (frozen by default) and
-#                     the generated lockfile carries the root `overrides` block the
-#                     standalone dir cannot reproduce; the offline store is pinned to
-#                     the locked versions, so resolution stays deterministic
+#   --frozen-lockfile use the app's generated lockfile without re-resolving its
+#                     dependency graph. A copy of pnpm-workspace.yaml supplies the
+#                     exact root overrides recorded in that lockfile, including
+#                     security overrides for transitive production dependencies.
 #   --ignore-scripts  the standalone dir lacks the root `allowBuilds` policy, so pnpm
 #                     would fail on unapproved build scripts; backend runtime deps are
 #                     pure JS and need none
@@ -118,23 +117,17 @@ ARG RUNTIME_PROJECT
 # Drop esbuild/drizzle-kit: they arrive as dead weight via better-auth's
 # drizzle-kit dependency (this app uses MikroORM, not drizzle), are never run at
 # runtime, and their bundled Go binaries carry the bulk of the image's CVEs.
-# find-my-way: the standalone install runs --ignore-workspace, so the root
-# pnpm-workspace.yaml `find-my-way: 9.7.0` override does not apply and fastify's
-# ^9.6.0 resolves to the vulnerable 9.6.x (CVE-2026-47219). The workspace stage
-# already installed the overridden 9.7.0, so overlay that real 9.7.0 code onto
-# the pruned 9.6.x path.
 RUN PROJECT="${RUNTIME_PROJECT:-$NX_PROJECT}" \
   && test -n "${PROJECT}" \
   && node packages/tooling/bin/run-ts-command.mjs \
        packages/tooling/src/runtime/deployment-artifact.ts stage "${PROJECT}" /runtime
 WORKDIR /runtime
-RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
-  && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} + \
-  && for old in node_modules/.pnpm/find-my-way@9.6.*; do \
-       [ -d "$old" ] || continue; \
-       rm -rf "$old/node_modules/find-my-way"; \
-       cp -a /workspace/node_modules/.pnpm/find-my-way@9.7.0/node_modules/find-my-way "$old/node_modules/find-my-way"; \
-     done
+# Keep the generated lockfile's root policy active in this otherwise standalone
+# install. Without this file pnpm rejects a frozen install; allowing it to
+# re-resolve silently discards overrides and can reintroduce fixed CVEs.
+COPY --from=nrb-closure pnpm-workspace.yaml ./pnpm-workspace.yaml
+RUN pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
+  && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} +
 
 FROM node:${NODE_VERSION} AS backend
 ENV CONTAINER=true \
@@ -155,14 +148,14 @@ COPY --from=backend-deps /runtime/dist ./dist
 COPY --from=backend-deps /runtime/i18n ./i18n
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
+USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 
 # Vike's build output does not contain an application package or lockfile.
-# Deploy the owning workspace project with pnpm so the runtime receives a
-# portable, production-only dependency graph derived from the reviewed root
-# lockfile and supply-chain policy.
+# Stage the owning selected-closure project so the runtime receives only its
+# portable output and exact production dependency contract.
 FROM builder AS site-deps
 ARG NX_PROJECT
 ARG RUNTIME_PROJECT
@@ -201,6 +194,14 @@ USER root
 RUN apk add --no-cache wget
 COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
+# Per-deployment runtime config: the nginx entrypoint runs /docker-entrypoint.d/
+# hooks (as uid 101) before starting, so flags come from the container
+# environment instead of the Vite build. Only runtime-config.js is made writable
+# by the runtime user — the rest of the bundle stays immutable.
+COPY docker/frontend-runtime-config.sh /docker-entrypoint.d/40-frontend-runtime-config.sh
+RUN chmod +x /docker-entrypoint.d/40-frontend-runtime-config.sh \
+  && touch /usr/share/nginx/html/runtime-config.js \
+  && chown 101:101 /usr/share/nginx/html/runtime-config.js
 USER 101
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

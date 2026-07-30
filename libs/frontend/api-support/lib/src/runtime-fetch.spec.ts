@@ -1,3 +1,5 @@
+// @requirements REQ-FRONTEND-ERROR-005
+// Evidence for: REQ-FRONTEND-ERROR-005
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FrontendErrorKey } from './error-normalization';

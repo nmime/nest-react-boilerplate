@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-DESIGN-008
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {

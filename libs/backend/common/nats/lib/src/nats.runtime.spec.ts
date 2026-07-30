@@ -1,3 +1,5 @@
+// @requirements REQ-RUNTIME-MESSAGING-006
+// Evidence for: REQ-RUNTIME-MESSAGING-006
 import { spawnSync } from 'node:child_process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';

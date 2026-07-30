@@ -1,3 +1,5 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
+// Evidence for: REQ-SCAFFOLD-TOOLING-005
 /**
  * Unit and component tests for setup CLI, doctor, and prompts.
  *

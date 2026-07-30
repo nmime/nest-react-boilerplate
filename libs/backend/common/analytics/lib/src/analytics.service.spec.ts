@@ -1,3 +1,5 @@
+// @requirements REQ-RUNTIME-OBSERVABILITY-005
+// Evidence for: REQ-RUNTIME-OBSERVABILITY-005
 import { Logger } from '@nestjs/common';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';

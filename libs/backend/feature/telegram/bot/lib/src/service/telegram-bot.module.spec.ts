@@ -1,3 +1,4 @@
+// @requirements REQ-SOCIAL-COMMANDS-003
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TelegramBotInstanceInjectToken } from '../const';

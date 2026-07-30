@@ -1,3 +1,4 @@
+// @requirements REQ-API-RESPONSE-006
 import { describe, expect, it } from 'vitest';
 import { mergeVaryHeader, ProblemDetailsVaryHeaders } from './vary-header.util';
 

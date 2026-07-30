@@ -22,6 +22,13 @@ description: Plan a browser or native frontend change before implementation. Use
 8. Build a risk-based validation map: focused component tests, Storybook interactions, visual regression, app browser/mobile e2e, accessibility, performance, builds, and generated-artifact checks.
 9. Sequence work into independently verifiable steps. State decisions, assumptions, blockers, expected files/owners, and commands without inventing files before inspecting the source.
 
+## Specification lifecycle
+
+For observable behavior, establish or update the governing requirements with
+`$specify-behavior` before implementation. Execute the approved artifacts and
+synchronize test markers, sidecars, and evidence with
+`$implement-specified-change`.
+
 ## Plan output
 
 Produce a compact implementation brief with:

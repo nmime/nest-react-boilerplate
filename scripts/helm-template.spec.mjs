@@ -1,9 +1,10 @@
 // @requirements REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import {
   assertRecentBackup,
@@ -15,7 +16,57 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
 const chart = resolve(root, '.helm');
-const selectionValues = resolve(chart, 'values-selection.yaml');
+/**
+ * These assertions are about chart behaviour, so they must not inherit the ambient
+ * `.helm/values-selection.yaml` — `nrb setup` narrows that file to whatever the caller selected,
+ * and the helm-validation CI matrix narrows it to a single app before running this spec, which
+ * silently removed the Deployments the assertions are about. Derive a full reference selection
+ * from the chart's own app catalog instead, so the spec exercises the chart rather than whatever
+ * selection happens to be materialised.
+ */
+function writeReferenceSelection() {
+  const values = readFileSync(resolve(chart, 'values.yaml'), 'utf8');
+  const appsBlock = /^apps:\n((?:[ \t].*\n|\n)*)/mu.exec(values);
+  assert.ok(appsBlock, '.helm/values.yaml must declare an apps catalog for the reference selection');
+  const appKeys = [...appsBlock[1].matchAll(/^ {2}([a-zA-Z][a-zA-Z0-9]*):$/gmu)].map((match) => match[1]);
+  assert.ok(appKeys.length > 0, 'reference selection needs at least one app key from .helm/values.yaml');
+
+  // The chart also requires deployment.selectedApps, keyed by appId rather than by values key.
+  const appIds = [...appsBlock[1].matchAll(/^ {4}appId: (\S+)$/gmu)].map((match) => match[1]).sort();
+  assert.equal(appIds.length, appKeys.length, 'every app in .helm/values.yaml must declare an appId');
+
+  const body = [
+    '# Written by scripts/helm-template.spec.mjs — a full reference selection, never the ambient one.',
+    'database:',
+    '  engine: postgres',
+    'migrations:',
+    '  enabled: true',
+    'deployment:',
+    '  provider: postgres',
+    '  selectedApps:',
+    ...appIds.map((appId) => `    - ${appId}`),
+    'selection:',
+    '  ciMode: product',
+    '  frontendApiMode: same-origin',
+    '  mobileTargets: [web]',
+    '  deploymentTargets: [docker]',
+    '  publicTopology: single-domain',
+    '  kubernetesDelivery: direct',
+    '  infrastructure:',
+    '    redis: bundled',
+    '    nats: bundled',
+    '    s3: bundled',
+    'apps:',
+    ...appKeys.flatMap((key) => [`  ${key}:`, '    enabled: true']),
+    '',
+  ].join('\n');
+
+  const path = join(mkdtempSync(join(tmpdir(), 'nrb-helm-reference-selection-')), 'values-selection.yaml');
+  writeFileSync(path, body);
+  return path;
+}
+
+const selectionValues = writeReferenceSelection();
 const prodValues = resolve(chart, 'values-production.yaml');
 const otelEnabledArgs = [
   '--set',

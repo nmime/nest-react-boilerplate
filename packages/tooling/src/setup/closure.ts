@@ -333,11 +333,18 @@ function collectProductExternalPackages(
   }
 
   // TypeScript can inject tslib imports into compiled backend output even when
-  // source files have no explicit import for Nx to discover.
+  // source files have no explicit import for Nx to discover. Nest's ValidationPipe has the
+  // same shape of invisible requirement: it resolves class-transformer and class-validator
+  // through loadPackage() at construction time, and both are *optional* peers of
+  // @nestjs/common, so pnpm installs them only if something declares them. No source file
+  // imports class-transformer, so the edge-walk above cannot see it and a narrow selection
+  // produces a closure whose API exits 1 on boot.
   if (projects.some((project) => graph.nodes[project]?.data.tags?.includes('platform:backend'))) {
-    const tslib = findExternalNode(graph, 'tslib');
-    if (tslib) {
-      addExternalPackage(selected, tslib, forbidden);
+    for (const packageName of ['tslib', 'class-transformer', 'class-validator']) {
+      const external = findExternalNode(graph, packageName);
+      if (external) {
+        addExternalPackage(selected, external, forbidden);
+      }
     }
   }
 

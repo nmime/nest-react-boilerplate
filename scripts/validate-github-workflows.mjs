@@ -388,6 +388,21 @@ assert.ok(
   gitlabMongoFullstackJob.includes("NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/closure'"),
   '.gitlab-ci.yml MongoDB fullstack must pass its installed selected closure context.',
 );
+for (const staleOverride of [
+  'AUTH_PERSISTENCE:',
+  'COMPOSE_PROFILES:',
+  'DATABASE_ENGINE:',
+  'FULLSTACK_API_CRITICAL_ONLY:',
+  'FULLSTACK_CRITICAL_ONLY:',
+  'MONGODB_DATABASE:',
+  'MONGODB_REPLICA_SET:',
+  'MONGODB_URI:',
+]) {
+  assert.ok(
+    !gitlabMongoFullstackJob.includes(staleOverride),
+    `.gitlab-ci.yml MongoDB fullstack must derive ${staleOverride} from its selected closure and managed stack.`,
+  );
+}
 
 for (const [command, expectedCount] of [
   ['pnpm run deploy:validate:helm', 1],
@@ -560,14 +575,18 @@ for (const required of [
   'validateFullstackEnvironment',
   'fullstackSelection?.services',
   "pickPort('MONGODB_PORT', 0)",
-  'mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true',
+  '`mongodb://mongodb.localhost:${ports.mongodb}/${mongodbDatabase}?replicaSet=rs0&retryWrites=true`',
   "selectedEnvironment.MONGODB_REPLICA_SET ?? 'rs0'",
-  "'--entrypoint'",
+  "'--no-deps'",
   "'mongodb-init'",
   "'mongodb-migrate'",
 ]) {
   assert.ok(fullstackCompose.includes(required), `fullstack Compose helper missing provider contract: ${required}`);
 }
+assert.ok(
+  !fullstackCompose.includes('mongoInitCommand') && !fullstackCompose.includes("'--entrypoint'"),
+  'fullstack Compose must invoke the canonical MongoDB initializer without a weaker entrypoint override',
+);
 assert.ok(
   fullstackSpec.includes('@critical @api-critical registration and login preserve the durable API session'),
   'fullstack e2e must retain the API-only critical auth/session smoke for browserless CI runners',

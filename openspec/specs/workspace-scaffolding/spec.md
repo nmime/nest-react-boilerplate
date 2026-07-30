@@ -42,6 +42,12 @@ product code.
 - Presets expand to explicit catalog application identifiers.
 - An end-to-end project selects every application required by its runtime journeys.
 - In-place ownership wins over adjacent clones.
+- Repository formatting leaves setup-managed manifests and generated capability modules byte-stable.
+- Selected closures retain packages required by source, shared configuration,
+  test environments, and renderer commands without leaking unselected apps or
+  the opposite durable provider.
+- Managed full-stack MongoDB uses the selected port consistently for the
+  server, replica-set identity, migrations, and application connection URI.
 
 **Failure behavior:**
 
@@ -116,6 +122,14 @@ offline-capable where documented, and avoid hidden mutation or network effects.
 
 - Public root scripts remain thin stable entrypoints.
 - Mutating commands provide explicit apply intent and bounded targets.
+- Bun compatibility keeps Node-only child tools on Node, executes each selected
+  server artifact under canonical Node and pinned Bun, and verifies the artifact
+  reports the invoked child runtime identity.
+- Bun compatibility starts only the selected provider for one compatibility
+  run, keeps it available across closure tests and runtime probes, and requests
+  teardown on success or failure.
+- Bun compatibility gives Node-only descendants canonical Node identity and
+  applies finite request, command, process-tree termination, and cleanup bounds.
 
 **Failure behavior:**
 

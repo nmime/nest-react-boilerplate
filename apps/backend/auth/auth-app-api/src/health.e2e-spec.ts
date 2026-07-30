@@ -220,13 +220,14 @@ describe('auth-app-api e2e', () => {
   });
 
   it('uses only DB-backed cookie sessions for auth self endpoints', async () => {
+    const email = `e2e-${randomUUID()}@example.com`;
     const password = `e2e-${Date.now().toString(36)}-secret`;
     const register = await app.inject({
       method: 'POST',
       url: '/auth/register',
       headers: { 'content-type': 'application/json' },
       payload: JSON.stringify({
-        email: 'e2e@example.com',
+        email,
         password,
         displayName: 'E2E User',
       }),
@@ -235,7 +236,7 @@ describe('auth-app-api e2e', () => {
     const registerBody = register.json<AuthSessionResponse>();
     let registerCookieHeader = sessionCookieHeader(register);
     expect(registerCookieHeader).toContain('nrb.sid=');
-    expect(registerBody.data.user.email).toBe('e2e@example.com');
+    expect(registerBody.data.user.email).toBe(email);
     expect(registerBody.data.user.theme).toBe('system');
     expect(registerBody.data).not.toHaveProperty('accessToken');
     expect(registerBody.data).not.toHaveProperty('refreshToken');
@@ -252,7 +253,7 @@ describe('auth-app-api e2e', () => {
         user?: { theme?: UserThemePreference };
       };
     }>();
-    expect(sessionOnlyMeBody.data?.principal?.email).toBe('e2e@example.com');
+    expect(sessionOnlyMeBody.data?.principal?.email).toBe(email);
     expect(sessionOnlyMeBody.data?.user?.theme).toBe('system');
 
     const bearerOnlyMe = await app.inject({
@@ -374,10 +375,10 @@ describe('auth-app-api e2e', () => {
       method: 'POST',
       url: '/auth/login',
       headers: { 'content-type': 'application/json' },
-      payload: JSON.stringify({ email: 'e2e@example.com', password }),
+      payload: JSON.stringify({ email, password }),
     });
     expect(login.statusCode).toBe(200);
-    expect(login.json<AuthSessionResponse>().data.user.email).toBe('e2e@example.com');
+    expect(login.json<AuthSessionResponse>().data.user.email).toBe(email);
 
     const bearerOnlyLogout = await app.inject({
       method: 'POST',

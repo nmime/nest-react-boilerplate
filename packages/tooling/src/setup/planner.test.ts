@@ -732,10 +732,29 @@ describe('planner — concrete capability activation', () => {
     const producer = generateBackendCapabilityModule('user-app-api', summary).content;
     const consumer = generateBackendCapabilityModule('notification-consumer', summary).content;
     const scheduler = generateBackendCapabilityModule('notification-scheduler', summary).content;
+    assert.match(producer, /@Module\(\{\n {2}imports: \[\n(?: {4}.+,\n)+ {2}\],/);
+    assert.match(producer, /\n {2}exports: (?:\[\n(?: {4}.+,\n)+ {2}\]|\[.+\]),\n\}\)/);
+    assert.ok(producer.split('\n').every((line) => line.length <= 120));
     assert.match(producer, /enableScheduler: false/);
     assert.match(consumer, /enableConsumer: true/);
     assert.match(scheduler, /enableScheduler: true/);
     assert.doesNotMatch(scheduler, /TelegramBotModule/);
+  });
+
+  it('keeps generated module lists within the repository print width', () => {
+    const generated = generateBackendCapabilityModule(
+      'admin-app-api',
+      planSummaryFixture({
+        apps: ['admin-app-api'],
+        capabilities: ['feature-flags', 'notifications', 'postgres', 's3'],
+        configHash: 'formatted-module',
+      }),
+    ).content;
+
+    assert.match(
+      generated,
+      / {2}exports: \[AuthPostgresModule, FeatureFlagsPostgresModule, NotificationPostgresModule, PostgresMainModule, S3Module\],/,
+    );
   });
 
   it('keeps telemetry bootstrap separate from Nest capability module evaluation', () => {
@@ -775,6 +794,7 @@ describe('planner — concrete capability activation', () => {
 
     assert.match(environment, /DATABASE_ENGINE=mongodb/);
     assert.match(environment, /AUTH_PERSISTENCE=mongodb/);
+    assert.match(environment, /MONGODB_PORT=27017/);
     assert.match(
       environment,
       /MONGODB_URI=mongodb:\/\/mongodb\.localhost:27017\/nest_react_boilerplate\?replicaSet=rs0&retryWrites=true/,

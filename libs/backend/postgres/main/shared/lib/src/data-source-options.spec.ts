@@ -155,8 +155,7 @@ describe('Postgres MikroORM options', () => {
       POSTGRES_SSL: true,
       POSTGRES_LOGGING: true,
     });
-    const service = new PostgresDatabaseConfigService();
-    expect(service.port).toBe(DefaultPostgresPort);
+    expect(createPostgresEnvironment({}).POSTGRES_PORT).toBe(DefaultPostgresPort);
     expect(() =>
       readSslRejectUnauthorized({
         POSTGRES_SSL_REJECT_UNAUTHORIZED: 'definitely',

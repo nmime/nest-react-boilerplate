@@ -40,7 +40,7 @@ function collectTests(directory) {
 function run(args) {
   const result = spawnSync(process.execPath, args, {
     cwd: workspaceRoot,
-    env: { ...process.env, JITI_ALIAS: JSON.stringify(jitiAlias) },
+    env: { ...process.env, JITI_ALIAS: JSON.stringify(jitiAlias), NX_DAEMON: process.env.NX_DAEMON ?? 'false' },
     stdio: 'inherit',
   });
   if (result.error) throw result.error;

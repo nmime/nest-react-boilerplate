@@ -72,7 +72,7 @@ describe('MiniAppShell', () => {
         url: window.location.href,
       });
     });
-    expect(screen.getAllByText('Copied')).toHaveLength(2);
+    expect(await screen.findAllByText('Copied')).toHaveLength(2);
     expect(screen.getByText('Share link copied to clipboard.')).not.toBeNull();
     expect(runtime.useMiniAppBackButton).toHaveBeenCalledWith({ isVisible: true, onBack });
   });

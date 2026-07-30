@@ -75,20 +75,41 @@ void describe('fullstack selected closure', () => {
       }),
     );
     const originalRoot = process.env.NRB_WORKSPACE_ROOT;
+    const originalMongoPort = process.env.MONGODB_PORT;
+    const originalMongoUri = process.env.MONGODB_URI;
+    const originalMongoDatabase = process.env.MONGODB_DATABASE;
+    const originalDockerMongoUri = process.env.DOCKER_MONGODB_URI;
     process.env.NRB_WORKSPACE_ROOT = root;
+    process.env.MONGODB_PORT = '47123';
+    process.env.MONGODB_URI = 'mongodb://mongodb.localhost:27017/stale?replicaSet=rs0&retryWrites=true';
+    process.env.MONGODB_DATABASE = 'fullstack_test';
+    delete process.env.DOCKER_MONGODB_URI;
     try {
       const { composeEnv, databaseProvider, stackServices } = await import(`../src/compose.ts?fixture=${Date.now()}`);
       assert.equal(databaseProvider, 'mongodb');
       assert.deepEqual(stackServices, ['auth-app-api', 'mongodb', 'mongodb-init', 'mongodb-migrate', 'user-app']);
       assert.equal(composeEnv.COMPOSE_PROFILES, 'auth-app-api,mongodb,user-app');
       assert.equal(composeEnv.DATABASE_URL, undefined);
+      assert.equal(
+        composeEnv.MONGODB_URI,
+        'mongodb://mongodb.localhost:47123/fullstack_test?replicaSet=rs0&retryWrites=true',
+      );
+      assert.equal(composeEnv.MONGODB_DATABASE, 'fullstack_test');
       assert.doesNotMatch(composeEnv.COMPOSE_PROFILES ?? '', /(^|,)postgres(,|$)/u);
     } finally {
-      if (originalRoot === undefined) {
-        delete process.env.NRB_WORKSPACE_ROOT;
-      } else {
-        process.env.NRB_WORKSPACE_ROOT = originalRoot;
-      }
+      restoreEnv('NRB_WORKSPACE_ROOT', originalRoot);
+      restoreEnv('MONGODB_PORT', originalMongoPort);
+      restoreEnv('MONGODB_URI', originalMongoUri);
+      restoreEnv('MONGODB_DATABASE', originalMongoDatabase);
+      restoreEnv('DOCKER_MONGODB_URI', originalDockerMongoUri);
     }
   });
 });
+
+function restoreEnv(key: string, value: string | undefined): void {
+  if (value === undefined) {
+    delete process.env[key];
+    return;
+  }
+  process.env[key] = value;
+}

@@ -238,6 +238,7 @@ export function generateComposeEnvironment(summary: PlanSummary): { path: string
     `AUTH_PERSISTENCE=${databaseProvider}`,
     ...(databaseProvider === 'mongodb'
       ? [
+          'MONGODB_PORT=27017',
           'MONGODB_URI=mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true',
           'MONGODB_DATABASE=nest_react_boilerplate',
           'MONGODB_REPLICA_SET=rs0',

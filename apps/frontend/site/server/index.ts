@@ -59,7 +59,8 @@ if (existsSync(clientAssetsRoot)) {
   });
 }
 
-const healthPayload = { status: 'ok', service: 'site-app' } as const;
+const runtime = typeof Reflect.get(process.versions, 'bun') === 'string' ? 'bun' : 'node';
+const healthPayload = { status: 'ok', service: 'site-app', runtime } as const;
 
 app.get('/health', () => healthPayload);
 app.get('/live', () => healthPayload);

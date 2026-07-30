@@ -80,6 +80,10 @@ commands such as `bun install`, `bun add`, `bun update`, or `bunx`. `bun run
 - `better-auth`: pinned to **1.6.23** — overrides the stale `@better-auth/cli@1.4.21` transitive dependency to prevent installing `better-auth@1.4.21` (multiple CVEs). Single version enforced.
 - `drizzle-orm`: pinned to **0.45.2** — overrides the stale CLI transitive to prevent SQL injection in `drizzle-orm@0.41.0`. Single version enforced.
 - `typescript`: pinned to **6.0.3** across all workspaces until NestJS/Nx support TS 7.
+- `bson`: temporarily pinned to **7.2.0** because 7.3.1 calls
+  `node:v8.isBuildingSnapshot()`, which the pinned Bun 1.3.14 runtime does not
+  implement. Remove the override when the upstream Bun fix reaches a stable
+  release and the MongoDB Bun lanes pass.
 - `@fastify/static`: pinned to **10.1.2** for CVE-2026-7120 and
   CVE-2026-15074. Nest 11.1.28's peer metadata stops at 9.x, so
   `peerDependencyRules.allowedVersions` records the exact tested 10.1.2 edge

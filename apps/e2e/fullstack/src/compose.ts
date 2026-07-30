@@ -112,6 +112,7 @@ const writeStderrLine = (message: string): void => {
 };
 
 const selectedEnvironment = { ...process.env };
+const mongodbDatabase = selectedEnvironment.MONGODB_DATABASE ?? 'nest_react_boilerplate';
 
 export const composeEnv = {
   ...selectedEnvironment,
@@ -147,11 +148,9 @@ export const composeEnv = {
   MONGODB_URI:
     databaseProvider === 'mongodb'
       ? (selectedEnvironment.DOCKER_MONGODB_URI ??
-        selectedEnvironment.MONGODB_URI ??
-        'mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true')
+        `mongodb://mongodb.localhost:${ports.mongodb}/${mongodbDatabase}?replicaSet=rs0&retryWrites=true`)
       : undefined,
-  MONGODB_DATABASE:
-    databaseProvider === 'mongodb' ? (selectedEnvironment.MONGODB_DATABASE ?? 'nest_react_boilerplate') : undefined,
+  MONGODB_DATABASE: databaseProvider === 'mongodb' ? mongodbDatabase : undefined,
   MONGODB_REPLICA_SET: databaseProvider === 'mongodb' ? (selectedEnvironment.MONGODB_REPLICA_SET ?? 'rs0') : undefined,
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? '1',
   HOST: process.env.DOCKER_BACKEND_HOST ?? '0.0.0.0',
@@ -182,18 +181,6 @@ export const composeEnv = {
 export const stackIncludes = (service: string): boolean =>
   fullstackSelection === undefined || applicationServices.includes(service);
 const stackUpArgs = [...composeArgs, 'up', '--no-build', '-d', ...stackServices];
-const mongoInitCommand = `
-set -euo pipefail
-bash /opt/mongodb/prepare-replica-set.sh
-mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval '
-  const config = rs.conf();
-  if (config.members[0].host !== "mongodb.localhost:27017") {
-    config.members[0].host = "mongodb.localhost:27017";
-    rs.reconfig(config);
-  }
-'
-until mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)'; do sleep 2; done
-`;
 
 export function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -213,18 +200,7 @@ export async function upStack(): Promise<void> {
   const startStack = async (): Promise<void> => {
     if (databaseProvider === 'mongodb') {
       await run('docker', [...composeArgs, 'up', '--no-build', '-d', 'mongodb']);
-      // Bind-mounted scripts can lose their executable bit on some runners.
-      await run('docker', [
-        ...composeArgs,
-        'run',
-        '--rm',
-        '--no-deps',
-        '--entrypoint',
-        'bash',
-        'mongodb-init',
-        '-c',
-        mongoInitCommand,
-      ]);
+      await run('docker', [...composeArgs, 'run', '--rm', '--no-deps', 'mongodb-init']);
       await run('docker', [...composeArgs, 'run', '--rm', '--no-deps', 'mongodb-migrate']);
       const remainingServices = stackServices.filter(
         (service) => !['mongodb', 'mongodb-init', 'mongodb-migrate'].includes(service),

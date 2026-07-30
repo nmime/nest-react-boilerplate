@@ -1,5 +1,6 @@
 // @requirements REQ-RUNTIME-DATABASE-008
 import { describe, expect, it } from 'vitest';
+import { MongoClient } from 'mongodb';
 import {
   createMongoClientOptions,
   createMongoEnvironment,
@@ -94,33 +95,51 @@ describe('MongoDB configuration', () => {
     expect(() => createMongoEnvironment({ MONGODB_URI: uri, MONGODB_DATABASE: 'app' })).toThrow(expected);
   });
 
-  it('builds safe driver options and never allows overrides to weaken invariants', () => {
+  it('builds driver-compatible safe options and never allows overrides to weaken invariants', async () => {
     const config = new MongoDatabaseConfigService({
       ...baseEnv,
       MONGODB_APP_NAME: 'api',
       MONGODB_MIN_POOL_SIZE: 1,
       MONGODB_MAX_POOL_SIZE: 9,
     });
-    expect(createMongoClientOptions(config, { maxPoolSize: 7, retryWrites: true })).toEqual(
+    const options = createMongoClientOptions(config, {
+      connectTimeoutMS: 1_200,
+      serverSelectionTimeoutMS: 2_300,
+      maxPoolSize: 7,
+      retryWrites: true,
+    });
+    expect(options).toEqual(
       expect.objectContaining({
         appName: 'api',
         replicaSet: 'rs0',
+        connectTimeoutMS: 1_200,
+        serverSelectionTimeoutMS: 2_300,
         minPoolSize: 1,
         maxPoolSize: 7,
         retryReads: true,
         retryWrites: true,
         directConnection: false,
-        loadBalanced: false,
         writeConcern: { w: 'majority' },
       }),
     );
+    expect(options).not.toHaveProperty('loadBalanced');
+    const client = new MongoClient(config.uri, options);
+    await client.close();
 
     expect(() => createMongoClientOptions(config, { directConnection: true })).toThrow('directConnection');
     expect(() => createMongoClientOptions(config, { loadBalanced: true })).toThrow('loadBalanced');
+    expect(() => createMongoClientOptions(config, { loadBalanced: false })).toThrow('loadBalanced');
     expect(() => createMongoClientOptions(config, { retryWrites: false })).toThrow('retryWrites');
     expect(() => createMongoClientOptions(config, { writeConcern: { w: 1 } })).toThrow('majority');
     expect(() => createMongoClientOptions(config, { writeConcern: { w: 'majority', journal: false } })).toThrow(
       'journal',
+    );
+    expect(() => createMongoClientOptions(config, { connectTimeoutMS: 0 })).toThrow('connectTimeoutMS');
+    expect(() => createMongoClientOptions(config, { serverSelectionTimeoutMS: 0 })).toThrow('serverSelectionTimeoutMS');
+    expect(() => createMongoClientOptions(config, { minPoolSize: -1 })).toThrow('minPoolSize');
+    expect(() => createMongoClientOptions(config, { maxPoolSize: 0 })).toThrow('maxPoolSize');
+    expect(() => createMongoClientOptions(config, { minPoolSize: 8, maxPoolSize: 7 })).toThrow(
+      'minPoolSize must not exceed maxPoolSize',
     );
   });
 

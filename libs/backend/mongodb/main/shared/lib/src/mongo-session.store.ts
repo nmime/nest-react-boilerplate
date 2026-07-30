@@ -1,6 +1,5 @@
 import type { FastifySessionObject as Session } from '@fastify/session';
 import { MongoClient, type Collection } from 'mongodb';
-import ConnectionString from 'mongodb-connection-string-url';
 import {
   completeSessionGet,
   completeSessionMutation,
@@ -12,6 +11,7 @@ import {
   type SessionStoreGetCallback,
 } from '@app/backend-common-bootstrap';
 import { createMongoClientOptions, MongoDatabaseConfigService } from './mongo.config';
+import { MongoConnectionString } from './mongo-connection-string';
 
 interface MongoSessionDocument {
   expire: Date;
@@ -86,9 +86,9 @@ export class MongoSessionStore implements BackendSessionStore {
 }
 
 function assertMongoSessionUri(uri: string, expectedReplicaSet: string | undefined): void {
-  let parsed: ConnectionString;
+  let parsed: InstanceType<typeof MongoConnectionString>;
   try {
-    parsed = new ConnectionString(uri);
+    parsed = new MongoConnectionString(uri);
   } catch {
     throw new Error('MONGODB_URI must be a valid mongodb:// or mongodb+srv:// URI.');
   }

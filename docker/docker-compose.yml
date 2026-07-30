@@ -194,16 +194,20 @@ services:
     profiles: [mongodb]
     image: mongo:8.0.28-noble
     restart: unless-stopped
-    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all', '--port', '${MONGODB_PORT:-27017}']
     ports:
-      - '${MONGODB_PORT:-27017}:27017'
+      - '${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}'
     volumes:
       - mongodb-data:/data/db
     networks:
       default:
         aliases: [mongodb.localhost]
     healthcheck:
-      test: ['CMD-SHELL', 'mongosh --quiet --host localhost --eval "quit(db.hello().isWritablePrimary ? 0 : 1)"']
+      test:
+        [
+          'CMD-SHELL',
+          'mongosh --quiet --host localhost --port ${MONGODB_PORT:-27017} --eval "quit(db.hello().isWritablePrimary ? 0 : 1)"',
+        ]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -216,21 +220,13 @@ services:
     depends_on:
       mongodb:
         condition: service_started
+    environment:
+      MONGODB_ADVERTISED_HOST: 'mongodb.localhost:${MONGODB_PORT:-27017}'
+      MONGODB_INIT_TIMEOUT_SECONDS: '${MONGODB_INIT_TIMEOUT_SECONDS:-120}'
+      MONGODB_PORT: '${MONGODB_PORT:-27017}'
     volumes:
       - ./mongodb:/opt/mongodb:ro
-    entrypoint:
-      - bash
-      - -c
-      - |
-        /opt/mongodb/prepare-replica-set.sh
-        mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval '
-          const config = rs.conf();
-          if (config.members[0].host !== "mongodb.localhost:27017") {
-            config.members[0].host = "mongodb.localhost:27017";
-            rs.reconfig(config);
-          }
-        '
-        until mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)'; do sleep 2; done
+    entrypoint: ['bash', '/opt/mongodb/prepare-replica-set.sh']
 
   migrate:
     profiles: [postgres]

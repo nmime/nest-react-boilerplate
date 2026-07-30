@@ -1,24 +1,33 @@
 // @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { createServer as createHttpServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
+import { delimiter, dirname, isAbsolute, join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
+import { setTimeout as delay } from 'node:timers/promises';
 
 import { buildSelectedClosure, createLiveProjectGraph, type SelectedClosureManifest } from '../../setup/closure.js';
 import { expandPreset, presets } from '../../setup/presets.js';
 import { defaultOperationalFields } from '../../setup/test-fixtures.js';
 import {
   assertProviderIsolation,
+  assertRuntimeIdentity,
   childHasExited,
   createBunCompatibilityInvocation,
   createNodeBackedPnpmInvocation,
   createBunCompatibilityProbes,
   createBunRuntimeExecutionProbes,
   createHeadlessRuntimeEnvironment,
+  createLocalMongoUri,
+  isNodeOnlyTestProject,
   readPinnedBunVersion,
   resolveBunRuntimeSelection,
   resolveCanonicalNodeExecutable,
+  runBoundedCommand,
+  runWithCleanup,
+  waitForUrls,
 } from './bun-compat.js';
 
 const temporaryRoots: string[] = [];
@@ -47,6 +56,19 @@ function closure(options: {
     releaseImages: options.roots,
     ...defaultOperationalFields(),
   };
+}
+
+function createShimPath(): { bunNode: string; canonicalNode: string; path: string; pnpm: string } {
+  const bunShimRoot = mkdtempSync(join(tmpdir(), 'nrb-bun-node-path-'));
+  const nodeRoot = mkdtempSync(join(tmpdir(), 'nrb-pnpm-path-'));
+  temporaryRoots.push(bunShimRoot, nodeRoot);
+  const bunNode = join(bunShimRoot, 'node');
+  const canonicalNode = join(nodeRoot, 'node');
+  const pnpm = join(nodeRoot, 'pnpm');
+  writeFileSync(bunNode, '#!/bin/sh\n');
+  writeFileSync(canonicalNode, '#!/bin/sh\n');
+  writeFileSync(pnpm, '#!/usr/bin/env node\n');
+  return { bunNode, canonicalNode, path: `${bunShimRoot}${delimiter}${nodeRoot}`, pnpm };
 }
 
 describe('Bun compatibility contract', () => {
@@ -91,26 +113,26 @@ describe('Bun compatibility contract', () => {
     );
   });
 
-  it('keeps selected Expo exports on Node while Bun owns the remaining closure probes', () => {
+  it('keeps Node-only tools on Node while Bun owns the remaining closure probes', () => {
     const probes = createBunCompatibilityProbes(
-      closure({ provider: null, roots: ['mobile-app'], targets: { export: ['mobile-app'] } }),
+      closure({
+        provider: null,
+        roots: ['mobile-app', 'acceptance-e2e', 'orders-acceptance-e2e'],
+        targets: { export: ['mobile-app'], test: ['mobile-app', 'acceptance-e2e', 'orders-acceptance-e2e'] },
+      }),
     );
     const expo = probes.find((probe) => probe.name === 'Selected closure exports');
     assert.equal(expo?.runtime, 'node');
     assert.ok(expo);
-
-    const expoInvocation = createBunCompatibilityInvocation(
-      expo,
-      { BUN_BE_BUN: '1', CI: 'true' },
-      '/runtime/bun',
+    const acceptance = probes.find((probe) => probe.name === 'Node-only acceptance tests');
+    assert.equal(acceptance?.runtime, 'node');
+    assert.ok(acceptance?.nxArgs.includes('--projects=acceptance-e2e,orders-acceptance-e2e'));
+    assert.ok(
+      !probes.find((probe) => probe.name === 'Selected closure unit tests')?.nxArgs.includes('acceptance-e2e'),
     );
-    assert.equal(expoInvocation.program, 'node');
-    assert.deepEqual(expoInvocation.args.slice(0, 3), [
-      'node_modules/nx/dist/bin/nx.js',
-      'run-many',
-      '-t',
-    ]);
-    assert.equal(expoInvocation.environment.BUN_BE_BUN, undefined);
+    assert.equal(isNodeOnlyTestProject('acceptance-e2e'), true);
+    assert.equal(isNodeOnlyTestProject('orders-acceptance-e2e'), true);
+    assert.equal(isNodeOnlyTestProject('orders-e2e'), false);
 
     const bunProbe = probes.find((probe) => probe.runtime === undefined);
     assert.ok(bunProbe);
@@ -122,6 +144,59 @@ describe('Bun compatibility contract', () => {
     assert.equal(bunInvocation.program, '/runtime/bun');
     assert.deepEqual(bunInvocation.args.slice(0, 3), ['run', '--bun', 'nx']);
     assert.equal(bunInvocation.environment.BUN_BE_BUN, '1');
+  });
+
+  it("bypasses Bun's PATH node shim for Expo and Cucumber probes", () => {
+    const { bunNode, canonicalNode, path } = createShimPath();
+    const probes = createBunCompatibilityProbes(
+      closure({
+        provider: null,
+        roots: ['mobile-app', 'orders-acceptance-e2e'],
+        targets: { export: ['mobile-app'], test: ['orders-acceptance-e2e'] },
+      }),
+    );
+
+    for (const probeName of ['Selected closure exports', 'Node-only acceptance tests']) {
+      const probe = probes.find(({ name }) => name === probeName);
+      assert.ok(probe);
+      const invocation = createBunCompatibilityInvocation(
+        probe,
+        { PATH: path, BUN_BE_BUN: '1', CI: 'true' },
+        '/runtime/bun',
+      );
+      assert.equal(invocation.program, canonicalNode);
+      assert.notEqual(invocation.program, bunNode);
+      assert.notEqual(invocation.program, 'node');
+      assert.equal(isAbsolute(invocation.program), true);
+      assert.equal(invocation.environment.BUN_BE_BUN, undefined);
+      assert.equal(invocation.environment.PATH?.split(delimiter)[0], dirname(canonicalNode));
+      assert.equal(invocation.environment.npm_node_execpath, canonicalNode);
+    }
+  });
+
+  it('gives nested Node-only child tools canonical Node identity', () => {
+    const { bunNode, canonicalNode, path } = createShimPath();
+    rmSync(canonicalNode);
+    symlinkSync(process.execPath, canonicalNode);
+    writeFileSync(bunNode, '#!/bin/sh\nprintf "bun-node-shim\\n"\n');
+    chmodSync(bunNode, 0o755);
+    const invocation = createBunCompatibilityInvocation(
+      { name: 'Node-only probe', nxArgs: [], runtime: 'node' },
+      { PATH: path, BUN_BE_BUN: '1' },
+      '/runtime/bun',
+    );
+    const nested = spawnSync(
+      invocation.program,
+      [
+        '--input-type=module',
+        '--eval',
+        "import { spawnSync } from 'node:child_process'; const result = spawnSync('node', ['--version'], { encoding: 'utf8' }); process.stdout.write(result.stdout); process.exit(result.status ?? 1);",
+      ],
+      { encoding: 'utf8', env: invocation.environment },
+    );
+
+    assert.equal(nested.status, 0, nested.stderr);
+    assert.equal(nested.stdout.trim(), process.version);
   });
 
   it('derives Nx probes only from the selected closure targets', () => {
@@ -209,21 +284,124 @@ describe('Bun compatibility contract', () => {
   });
 
   it('runs pnpm through canonical Node instead of Bun shebang handling', () => {
-    const bunShimRoot = mkdtempSync(join(tmpdir(), 'nrb-bun-node-path-'));
-    const nodeRoot = mkdtempSync(join(tmpdir(), 'nrb-pnpm-path-'));
-    temporaryRoots.push(bunShimRoot, nodeRoot);
-    const node = join(nodeRoot, 'node');
-    const pnpm = join(nodeRoot, 'pnpm');
-    writeFileSync(join(bunShimRoot, 'node'), '#!/bin/sh\n');
-    writeFileSync(node, '#!/bin/sh\n');
-    writeFileSync(pnpm, '#!/usr/bin/env node\n');
+    const { canonicalNode, path, pnpm } = createShimPath();
 
-    assert.deepEqual(createNodeBackedPnpmInvocation(['install'], { PATH: `${bunShimRoot}${delimiter}${nodeRoot}` }), {
-      command: node,
+    assert.deepEqual(createNodeBackedPnpmInvocation(['install'], { PATH: path }), {
+      command: canonicalNode,
       args: [pnpm, 'install'],
     });
-    assert.equal(resolveCanonicalNodeExecutable({ PATH: `${bunShimRoot}${delimiter}${nodeRoot}` }), node);
+    assert.equal(resolveCanonicalNodeExecutable({ PATH: path }), canonicalNode);
     assert.throws(() => createNodeBackedPnpmInvocation([], { PATH: '' }), /pnpm is required on PATH/u);
+  });
+
+  it('uses the selected MongoDB port in compatibility connection strings', () => {
+    assert.equal(
+      createLocalMongoUri(47123, 'compat'),
+      'mongodb://mongodb.localhost:47123/compat?replicaSet=rs0&retryWrites=true',
+    );
+  });
+
+  it('enforces command deadlines and terminates descendant process trees', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-bounded-command-'));
+    temporaryRoots.push(root);
+    const heartbeatPath = join(root, 'heartbeat');
+    const childPidPath = join(root, 'child.pid');
+    const childScript = join(root, 'child.mjs');
+    const parentScript = join(root, 'parent.mjs');
+    writeFileSync(
+      childScript,
+      "import { appendFileSync } from 'node:fs'; process.on('SIGTERM', () => undefined); setInterval(() => appendFileSync(process.argv[2], 'x'), 20);",
+    );
+    writeFileSync(
+      parentScript,
+      `import { spawn } from 'node:child_process'; import { writeFileSync } from 'node:fs'; const child = spawn(process.execPath, [${JSON.stringify(childScript)}, ${JSON.stringify(heartbeatPath)}], { stdio: 'ignore' }); writeFileSync(${JSON.stringify(childPidPath)}, String(child.pid)); setInterval(() => undefined, 1000);`,
+    );
+
+    const started = Date.now();
+    try {
+      await assert.rejects(
+        runBoundedCommand(process.execPath, [parentScript], 'Hanging process tree', {
+          cwd: root,
+          stdio: 'ignore',
+          timeoutMs: 500,
+          terminationGraceMs: 50,
+          forceKillWaitMs: 250,
+        }),
+        /timed out after 500ms/u,
+      );
+      assert.ok(Date.now() - started < 1_500, 'command timeout exceeded its termination bound');
+      assert.equal(existsSync(heartbeatPath), true, 'descendant never started');
+      const heartbeatSize = statSync(heartbeatPath).size;
+      await delay(150);
+      assert.equal(statSync(heartbeatPath).size, heartbeatSize, 'descendant survived process-tree cleanup');
+    } finally {
+      if (existsSync(childPidPath)) {
+        try {
+          process.kill(Number.parseInt(readFileSync(childPidPath, 'utf8'), 10), 'SIGKILL');
+        } catch {
+          // The expected process-tree cleanup already removed the descendant.
+        }
+      }
+    }
+  });
+
+  it('aborts stalled readiness requests within the runtime deadline', async () => {
+    const server = createHttpServer(() => undefined);
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    const started = Date.now();
+    try {
+      await assert.rejects(
+        waitForUrls(
+          { exitCode: null, signalCode: null },
+          [`http://127.0.0.1:${address.port}/ready`],
+          { readyTimeoutMs: 150, requestTimeoutMs: 50 },
+        ),
+        /Runtime smoke timed out/u,
+      );
+      assert.ok(Date.now() - started < 1_000, 'readiness request exceeded its deadline');
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  it('preserves primary failures while reporting cleanup failures', async () => {
+    const primaryError = new Error('probe failed');
+    const cleanupError = new Error('cleanup failed');
+    let reportedCleanupError: unknown;
+    await assert.rejects(
+      runWithCleanup(
+        async () => {
+          throw primaryError;
+        },
+        async () => {
+          throw cleanupError;
+        },
+        (error) => {
+          reportedCleanupError = error;
+        },
+      ),
+      (error: unknown) => error === primaryError,
+    );
+    assert.equal(reportedCleanupError, cleanupError);
+  });
+
+  it('fails when cleanup is the only failure', async () => {
+    const cleanupError = new Error('cleanup failed');
+    await assert.rejects(
+      runWithCleanup(
+        async () => undefined,
+        async () => {
+          throw cleanupError;
+        },
+      ),
+      (error: unknown) => error === cleanupError,
+    );
   });
 
   it('recognizes both normal and signal-based child exits', () => {
@@ -232,10 +410,24 @@ describe('Bun compatibility contract', () => {
     assert.equal(childHasExited({ exitCode: null, signalCode: 'SIGTERM' }), true);
   });
 
-  it('provides a valid isolated notification key to headless runtime probes', () => {
+  it('rejects missing or mismatched child runtime identity', () => {
+    assert.doesNotThrow(() => assertRuntimeIdentity('bun', 'bun', 'site-app'));
+    assert.throws(
+      () => assertRuntimeIdentity('node', 'bun', 'site-app'),
+      /site-app did not report runtime=bun; received node/u,
+    );
+    assert.throws(
+      () => assertRuntimeIdentity(undefined, 'node', 'notification-consumer'),
+      /received no runtime identity/u,
+    );
+  });
+
+  it('provides isolated notification configuration to headless runtime probes', () => {
     const environment = createHeadlessRuntimeEnvironment({ NODE_PATH: '/workspace/node_modules' });
     assert.equal(environment.NODE_PATH, undefined);
     assert.match(environment.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY ?? '', /^[0-9a-f]{64}$/u);
     assert.equal(Buffer.from(environment.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY ?? '', 'hex').byteLength, 32);
+    assert.equal(environment.RESEND_API_KEY, 'bun-test-key');
+    assert.equal(environment.NOTIFICATION_EMAIL_FROM, 'Bun Compatibility <bun-compat@example.test>');
   });
 });

@@ -99,7 +99,7 @@ describe("project doctor runtime policy", () => {
       );
       writeFileSync(
         join(dockerDirectory, "docker-compose.yml"),
-        "services:\n  landing-app:\n    image: scratch\n    profiles: [landing-app]\n",
+        "services:\n  landing-app:\n    image: scratch\n    profiles: [landing-app]\n    environment:\n      NRB_CLOSURE_CONTEXT: ${NRB_CLOSURE_CONTEXT:?missing closure context}\n",
       );
       writeFileSync(
         join(stateDirectory, "capabilities.env"),

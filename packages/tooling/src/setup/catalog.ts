@@ -202,7 +202,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'optional',
     runtime: 'NestJS + Fastify integration API',
     publicHostname: 'discord-app-api.example.com',
-    requiresCapabilities: ['discord-bot'],
+    requiresCapabilities: ['discord-bot', 'redis'],
     requiresApps: [],
     conflictsWithCapabilities: [],
     requiresDurableDatabase: true,
@@ -220,7 +220,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'optional',
     runtime: 'NestJS + Fastify bot API',
     publicHostname: 'telegram-bot-api.example.com',
-    requiresCapabilities: ['telegram-bot'],
+    requiresCapabilities: ['redis', 'telegram-bot'],
     requiresApps: [],
     conflictsWithCapabilities: [],
     requiresDurableDatabase: true,
@@ -647,7 +647,7 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     environmentVariables: ['REDIS_URL'],
     backendWiring: [
       {
-        hosts: 'selected-backend',
+        hosts: ['admin-app-api', 'auth-app-api', 'notification-consumer', 'notification-scheduler', 'user-app-api'],
         importName: 'RedisModule',
         importPath: '@app/backend-common-redis',
         moduleExpression: 'RedisModule.forRoot()',

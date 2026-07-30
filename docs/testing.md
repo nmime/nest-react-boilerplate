@@ -20,7 +20,9 @@ they require a current `.nrb/closure.json` and run every transitive closure
 project that owns the requested target. Template CI and repository maintainers
 use the explicit `lint:all`, `typecheck:all`, `test:all`, `test:coverage:all`, `test:component:all`,
 `test:e2e:all`, and `test:e2e:coverage:all` sweeps instead of inventing a
-default product selection.
+default product selection. The static e2e coverage sweep excludes
+Docker-owned `fullstack-e2e`; its provider-specific browser proof runs through
+`test:fullstack`.
 
 Normative requirements, Cucumber acceptance examples, and independent evidence
 lanes are described in

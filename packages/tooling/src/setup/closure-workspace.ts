@@ -226,14 +226,20 @@ export async function materializeAllReferenceClosure(
 }
 
 function generateReferenceLock(contextRoot: string): void {
+  const invocation = referenceLockInvocation();
   // eslint-disable-next-line sonarjs/no-os-command-from-path -- reference contexts must use the repository's Corepack-selected pnpm.
-  const result = spawnSync('pnpm', ['install', '--lockfile-only', '--offline', '--ignore-scripts'], {
+  const result = spawnSync(invocation.command, invocation.args, {
     cwd: contextRoot,
     encoding: 'utf8',
   });
   if (result.status !== 0) {
-    throw new Error(
-      `Offline reference closure lock generation failed: ${result.stderr.trim() || result.stdout.trim()}`,
-    );
+    throw new Error(`Reference closure lock generation failed: ${result.stderr.trim() || result.stdout.trim()}`);
   }
+}
+
+export function referenceLockInvocation(): { command: string; args: string[] } {
+  return {
+    command: 'pnpm',
+    args: ['install', '--lockfile-only', '--prefer-offline', '--no-frozen-lockfile', '--ignore-scripts'],
+  };
 }

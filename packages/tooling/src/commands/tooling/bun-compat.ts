@@ -30,7 +30,7 @@ const COMMAND_TERMINATION_GRACE_MS = 2_000;
 const COMMAND_FORCE_KILL_WAIT_MS = 1_000;
 const HTTP_REQUEST_TIMEOUT_MS = 5_000;
 const HTTP_RUNTIME_READY_TIMEOUT_MS = 30_000;
-const PROVIDER_ENVIRONMENT_NAME = /^(?:AUTH_PERSISTENCE|COMPOSE_PROFILES|CONTAINER_DATABASE_URL|DATABASE_ENGINE|DATABASE_URL|DOCKER_DATABASE_URL|DOCKER_MONGODB_URI|MONGODB(?:_|$)|PG[A-Z0-9_]*|POSTGRES(?:_|$))/iu;
+const INFRASTRUCTURE_ENVIRONMENT_NAME = /^(?:AUTH_PERSISTENCE|AWS(?:_|$)|COMPOSE(?:_|$)|CONTAINER_DATABASE_URL|DATABASE_ENGINE|DATABASE_URL|DOCKER_DATABASE_URL|DOCKER_MONGODB_URI|MINIO(?:_|$)|MONGODB(?:_|$)|NATS(?:_|$)|NRB_CLOSURE_CONTEXT|PG[A-Z0-9_]*|POSTGRES(?:_|$)|REDIS(?:_|$)|S3(?:_|$))/iu;
 
 export interface BunCompatibilityProbe {
   name: string;
@@ -137,19 +137,66 @@ export function createBunCompatibilityProbes(closure: SelectedClosureManifest): 
   const testProjects = closure.targets.test ?? [];
   const nodeTestProjects = testProjects.filter(isNodeOnlyTestProject);
   const bunTestProjects = testProjects.filter((project) => !isNodeOnlyTestProject(project));
-  if (bunTestProjects.length > 0) {
+  const providerBunTestProjects = bunTestProjects.filter(isProviderApplicationTestProject);
+  const ordinaryBunTestProjects = bunTestProjects.filter((project) => !isProviderApplicationTestProject(project));
+  const providerNodeTestProjects = nodeTestProjects.filter(isProviderApplicationTestProject);
+  const ordinaryNodeTestProjects = nodeTestProjects.filter((project) => !isProviderApplicationTestProject(project));
+  if (ordinaryBunTestProjects.length > 0) {
     probes.push({
       name: 'Selected closure unit tests',
-      nxArgs: ['run-many', '-t', 'test', `--projects=${bunTestProjects.join(',')}`, '--parallel=1', '--skip-nx-cache'],
+      nxArgs: [
+        'run-many',
+        '-t',
+        'test',
+        `--projects=${ordinaryBunTestProjects.join(',')}`,
+        '--parallel=1',
+        '--skip-nx-cache',
+      ],
       environmentScope: 'test',
     });
   }
-  if (nodeTestProjects.length > 0) {
+  if (providerBunTestProjects.length > 0) {
+    probes.push({
+      name: 'Selected provider application tests',
+      nxArgs: [
+        'run-many',
+        '-t',
+        'test',
+        `--projects=${providerBunTestProjects.join(',')}`,
+        '--parallel=1',
+        '--skip-nx-cache',
+      ],
+      environmentScope: 'provider',
+    });
+  }
+  if (ordinaryNodeTestProjects.length > 0) {
     probes.push({
       name: 'Node-only closure tests',
-      nxArgs: ['run-many', '-t', 'test', `--projects=${nodeTestProjects.join(',')}`, '--parallel=1', '--skip-nx-cache'],
+      nxArgs: [
+        'run-many',
+        '-t',
+        'test',
+        `--projects=${ordinaryNodeTestProjects.join(',')}`,
+        '--parallel=1',
+        '--skip-nx-cache',
+      ],
       runtime: 'node',
       environmentScope: 'test',
+    });
+  }
+  if (providerNodeTestProjects.length > 0) {
+    probes.push({
+      name: 'Node-only provider application tests',
+      nxArgs: [
+        'run-many',
+        '-t',
+        'test',
+        `--projects=${providerNodeTestProjects.join(',')}`,
+        '--parallel=1',
+        '--skip-nx-cache',
+      ],
+      runtime: 'node',
+      environmentScope: 'provider',
     });
   }
   if ((closure.targets.e2e ?? []).includes('auth-app-api')) {
@@ -163,6 +210,10 @@ export function createBunCompatibilityProbes(closure: SelectedClosureManifest): 
 
 export function isNodeOnlyTestProject(project: string): boolean {
   return project === 'fullstack-e2e' || project === 'acceptance-e2e' || project.endsWith('-acceptance-e2e');
+}
+
+function isProviderApplicationTestProject(project: string): boolean {
+  return appCatalog[project as keyof typeof appCatalog]?.requiresDurableDatabase === true;
 }
 
 export async function runBunCompatibilityCommand(context: CommandContext): Promise<number> {
@@ -237,7 +288,7 @@ export function createBunCompatibilityProbeEnvironment(
   providerEnvironment: NodeJS.ProcessEnv,
 ): NodeJS.ProcessEnv {
   return probe.environmentScope === 'test'
-    ? withoutProviderEnvironment(providerEnvironment)
+    ? withoutInfrastructureEnvironment(providerEnvironment)
     : { ...providerEnvironment };
 }
 
@@ -440,7 +491,7 @@ function activeBunExecutable(): string | undefined {
 
 function compatibilityEnvironment(): NodeJS.ProcessEnv {
   const environment = isolatedRuntimeEnvironment({
-    ...withoutProviderEnvironment(process.env),
+    ...withoutInfrastructureEnvironment(process.env),
     CI: process.env.CI ?? 'true',
     DATABASE_URL: 'postgresql://compat:compat@127.0.0.1:1/compat',
     MONGODB_DATABASE: 'compat',
@@ -453,9 +504,18 @@ function compatibilityEnvironment(): NodeJS.ProcessEnv {
   return environment;
 }
 
-function withoutProviderEnvironment(environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+function withoutInfrastructureEnvironment(environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   return Object.fromEntries(
-    Object.entries(environment).filter(([name]) => !PROVIDER_ENVIRONMENT_NAME.test(name)),
+    Object.entries(environment).filter(([name]) => !INFRASTRUCTURE_ENVIRONMENT_NAME.test(name)),
+  );
+}
+
+export function createBunComposeProfiles(closure: SelectedClosureManifest): string[] {
+  const redisRequired =
+    closure.services.includes('redis') ||
+    closure.roots.some((root) => appCatalog[root as keyof typeof appCatalog]?.requiresCapabilities.includes('redis'));
+  return [closure.provider, ...(redisRequired ? ['redis'] : [])].filter(
+    (profile): profile is string => profile !== null,
   );
 }
 
@@ -526,12 +586,15 @@ async function startSelectedInfrastructure(
 
   const projectName = `nrbbun${closure.provider}${process.pid}`;
   const databasePort = await reserveAvailablePort();
+  const profiles = createBunComposeProfiles(closure);
+  const redisSelected = profiles.includes('redis');
+  const redisPort = redisSelected ? await reserveAvailablePort() : undefined;
   const compose = ['compose', '--project-name', projectName, '-f', 'docker/docker-compose.yml'];
   const databaseName = 'nest_react_boilerplate';
   const selectedEnvironment = isolatedRuntimeEnvironment({
-    ...withoutProviderEnvironment(environment),
+    ...withoutInfrastructureEnvironment(environment),
     COMPOSE_PROJECT_NAME: projectName,
-    COMPOSE_PROFILES: closure.provider,
+    COMPOSE_PROFILES: profiles.join(','),
     NRB_CLOSURE_CONTEXT: join(workspaceRoot, '.nrb/closure'),
     DATABASE_ENGINE: closure.provider,
     AUTH_PERSISTENCE: closure.provider,
@@ -553,6 +616,12 @@ async function startSelectedInfrastructure(
       MONGODB_REPLICA_SET: 'rs0',
     });
   }
+  if (redisPort !== undefined) {
+    Object.assign(selectedEnvironment, {
+      REDIS_PORT: String(redisPort),
+      REDIS_URL: `redis://127.0.0.1:${redisPort}/0`,
+    });
+  }
   const runCompose = async (args: string[], timeoutMs: number): Promise<void> => {
     await runBoundedCommand('docker', [...compose, ...args], `docker ${[...compose, ...args].join(' ')}`, {
       cwd: workspaceRoot,
@@ -563,6 +632,9 @@ async function startSelectedInfrastructure(
   };
 
   try {
+    if (redisSelected) {
+      await runCompose(['up', '-d', '--wait', 'redis'], COMPOSE_STARTUP_TIMEOUT_MS);
+    }
     if (closure.provider === 'postgres') {
       await runCompose(['up', '--build', '-d', '--wait', 'postgres'], COMPOSE_STARTUP_TIMEOUT_MS);
       await runCompose(['run', '--build', '--rm', '--no-deps', 'migrate'], COMPOSE_MIGRATION_TIMEOUT_MS);
@@ -723,7 +795,6 @@ async function runApiRuntimeSmoke(
       OTEL_SDK_DISABLED: 'true',
       RATE_LIMIT_STORE: 'memory',
       RATE_LIMIT_IN_MEMORY_ALLOWED: 'true',
-      REDIS_URL: '',
       NATS_SERVERS: '',
     }),
     urls: [`${baseUrl}/live`, readyUrl],

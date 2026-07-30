@@ -203,10 +203,16 @@ describe('catalog — appCatalog', () => {
     assert.ok(appCatalog['user-app'].requiresApps.includes('user-app-api'));
   });
 
-  it('telegram-bot-api requires telegram-bot capability', () => {
-    const e = appCatalog['telegram-bot-api'];
-    assert.ok(e.requiresCapabilities.includes('telegram-bot'));
-    assert.equal(e.requiresDurableDatabase, true);
+  it('bot APIs require their integration capability, Redis, and durable persistence', () => {
+    for (const [app, capability] of [
+      ['telegram-bot-api', 'telegram-bot'],
+      ['discord-app-api', 'discord-bot'],
+    ] as const) {
+      const entry = appCatalog[app];
+      assert.ok(entry.requiresCapabilities.includes(capability));
+      assert.ok(entry.requiresCapabilities.includes('redis'));
+      assert.equal(entry.requiresDurableDatabase, true);
+    }
   });
 
   it('classifies integrations and the notification scheduler as optional applications', () => {
@@ -439,7 +445,7 @@ describe('catalog — validateSelection', () => {
     assert.deepEqual(
       validateSelection(
         ['auth-app-api', 'telegram-bot-api', 'user-app', 'user-app-api'],
-        ['i18n', 'postgres', 'telegram-bot'],
+        ['i18n', 'postgres', 'redis', 'telegram-bot'],
       ),
       [],
     );
@@ -482,6 +488,11 @@ describe('catalog — expandDependencies', () => {
     assert.ok(!capabilities.includes('postgres'));
     assert.ok(!capabilities.includes('mongodb'));
     assert.ok(!capabilities.includes('telegram-bot'));
+  });
+
+  it('adds Redis to bot application selections', () => {
+    assert.ok(expandDependencies(['telegram-bot-api'], []).capabilities.includes('redis'));
+    assert.ok(expandDependencies(['discord-app-api'], []).capabilities.includes('redis'));
   });
 
   it('handles deep transitive chains', () => {

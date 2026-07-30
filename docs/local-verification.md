@@ -33,6 +33,10 @@ pnpm run test:docker-smoke
 pnpm run test:fullstack
 ```
 
+`test:e2e:coverage:all` covers every static coverage-compatible e2e target. It
+excludes Docker-owned `fullstack-e2e`, whose PostgreSQL and MongoDB browser proof
+runs through `test:fullstack` after Docker smoke succeeds.
+
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
 
 The PR/push CI workflow exposes a focused `Non-runtime validation gates` job
@@ -63,6 +67,8 @@ notification consumers and schedulers use headless process probes. CI covers
 every preset, standalone user/admin/Discord/Telegram selections, provider-free
 static output, and MongoDB core/bot custom selections. Provider-backed local
 selections require Docker Compose and fail rather than using memory persistence.
+Bot selections start their setup-selected Redis service for production replay
+protection and readiness.
 Expo/Metro export, Cucumber acceptance, and the fullstack `node:test` suite are
 part of the selected contract but run as explicit Node children. The canonical
 Node coverage and pnpm lockfile gates remain separate and mandatory.

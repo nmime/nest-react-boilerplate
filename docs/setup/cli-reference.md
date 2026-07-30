@@ -150,9 +150,10 @@ always supplies an explicit Nx project list, and rejects `--all` or
 transitive closure project that owns that target. `materialize --all-reference` writes an explicit
 provider-specific maintainer context under `.nrb/reference/<provider>/`. The
 context contains `closure.json`, synthetic `nrb.config.json` and
-`workspace.json`, scoped package/workspace manifests, an offline-generated
-`pnpm-lock.yaml`, and `lock.json` integrity metadata. It never replaces or
-supplies a missing product selection.
+`workspace.json`, scoped package/workspace manifests, a cache-preferred
+`pnpm-lock.yaml`, and `lock.json` integrity metadata. A cold package-manager
+cache may resolve metadata from the registry. It never replaces or supplies a
+missing product selection.
 
 Serialized closure manifests separate exact product imports in
 `productExternalPackages` from source-tooling support in

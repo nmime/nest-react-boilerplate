@@ -47,7 +47,7 @@
     "test:e2e": "pnpm nrb closure run e2e",
     "test:e2e:all": "nx run-many -t e2e --all --exclude fullstack-e2e",
     "test:e2e:coverage": "pnpm nrb closure run e2e -- --coverage",
-    "test:e2e:coverage:all": "nx run-many -t e2e --all --exclude fullstack-e2e -- --coverage",
+    "test:e2e:coverage:all": "nx run-many -t e2e --all --exclude=fullstack-e2e -- --coverage",
     "dev:db": "pnpm nrb dev database",
     "db:migrate": "pnpm --filter @repo/tooling tooling db migrate",
     "db:migrations:check": "pnpm --filter @repo/tooling tooling db migrations check",

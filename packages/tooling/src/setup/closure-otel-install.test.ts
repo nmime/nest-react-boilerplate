@@ -70,7 +70,11 @@ describe('selected OTel closure lock and install isolation', () => {
           );
           writeFileSync(join(root, 'pnpm-workspace.yaml'), renderClosureWorkspace(rootWorkspace));
 
-          runPnpm(root, ['install', '--lockfile-only', '--offline', '--ignore-scripts']);
+          // --prefer-offline, not --offline: CI caches the pnpm *store*, not the metadata cache, so a
+          // store-cache hit means the root --frozen-lockfile install fetches no metadata and a strict
+          // offline resolve here fails. The assertions below are about which instrumentation packages
+          // the closure resolves, not about offline capability.
+          runPnpm(root, ['install', '--lockfile-only', '--prefer-offline', '--ignore-scripts']);
           const lock = readFileSync(join(root, 'pnpm-lock.yaml'), 'utf8');
           for (const packageName of testCase.present) {
             assert.match(lock, new RegExp(escapeRegExp(packageName), 'u'));
@@ -80,7 +84,7 @@ describe('selected OTel closure lock and install isolation', () => {
           }
           assert.doesNotMatch(lock, /@opentelemetry\/auto-instrumentations-node/u);
 
-          runPnpm(root, ['install', '--prod', '--frozen-lockfile', '--offline', '--ignore-scripts']);
+          runPnpm(root, ['install', '--prod', '--frozen-lockfile', '--prefer-offline', '--ignore-scripts']);
           for (const packageName of testCase.present) {
             assert.equal(installed(root, packageName), true, packageName);
           }

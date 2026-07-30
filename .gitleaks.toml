@@ -37,6 +37,18 @@ regexes = [
   '''test-secret-placeholder-min-32-chars-long''',
 ]
 
+# Prose false positive: the default rule reads "…user/admin API,\nDiscord/Telegram selections"
+# as a key assignment and reports "Discord/Telegram" as the secret. No credential is present.
+[[rules.allowlists]]
+description = "Bun runtime research prose misread as an API key"
+condition = "AND"
+paths = [
+  '''^docs/bun-runtime-research\.md$''',
+]
+regexes = [
+  '''Discord/Telegram''',
+]
+
 [[rules]]
 id = "discord-client-id"
 
@@ -47,6 +59,8 @@ paths = [
   '''^apps/backend/discord/discord-app-api/src/discord-app-api\.module\.spec\.ts$''',
   '''^libs/backend/feature/discord/bot/lib/src/service/discord-command-registration\.service\.spec\.ts$''',
   '''^libs/backend/feature/discord/bot/lib/src/service/discord-config\.spec\.ts$''',
+  # Bun compatibility smoke fixture; the adjacent values are 'a'.repeat(64) and an empty token.
+  '''^packages/tooling/src/commands/tooling/bun-compat\.ts$''',
 ]
 regexes = [
   '''123456789012345678''',

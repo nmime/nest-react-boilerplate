@@ -693,6 +693,18 @@ describe('planner — concrete capability activation', () => {
     assert.doesNotMatch(generatedModule, /backend-postgres|PostgresMainModule|AuthPostgres/);
   });
 
+  it('leaves bot-owned Redis composition out of generated capability modules', () => {
+    const botSummary = planSummaryFixture({
+      apps: ['discord-app-api', 'telegram-bot-api'],
+      capabilities: ['discord-bot', 'postgres', 'redis', 'telegram-bot'],
+      configHash: 'bots',
+    });
+
+    for (const app of ['discord-app-api', 'telegram-bot-api'] as const) {
+      assert.doesNotMatch(generateBackendCapabilityModule(app, botSummary).content, /RedisModule/u);
+    }
+  });
+
   it('keeps each generated user API source closure free of the opposite provider and driver', () => {
     const workspaceRoot = process.cwd();
     const generatedPath = 'apps/backend/user/user-app-api/src/capabilities.generated.ts';

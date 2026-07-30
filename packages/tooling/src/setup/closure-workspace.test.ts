@@ -9,6 +9,7 @@ import type { SelectedClosureManifest } from './closure.js';
 import { appCatalog, capabilityCatalog, type DurableDatabaseProviderId } from './catalog.js';
 import {
   materializeAllReferenceClosure,
+  referenceLockInvocation,
   referenceClosureContextPath,
   validateCurrentClosure,
 } from './closure-workspace.js';
@@ -80,7 +81,7 @@ describe('current closure validation', () => {
 
 describe('all-reference closure context', () => {
   for (const provider of ['postgres', 'mongodb'] as const) {
-    it(`materializes a complete offline ${provider} context without a product selection`, async () => {
+    it(`materializes a complete isolated ${provider} context without a product selection`, async () => {
       const root = mkdtempSync(join(tmpdir(), `nrb-reference-${provider}-`));
       writeFileSync(
         join(root, 'package.json'),
@@ -121,6 +122,16 @@ describe('all-reference closure context', () => {
       }
     });
   }
+
+  it('prefers cached metadata but permits a cold runner to resolve the reference lock', () => {
+    const invocation = referenceLockInvocation();
+
+    assert.equal(invocation.command, 'pnpm');
+    assert.ok(invocation.args.includes('--prefer-offline'));
+    assert.ok(invocation.args.includes('--no-frozen-lockfile'));
+    assert.ok(!invocation.args.includes('--offline'));
+    assert.ok(invocation.args.includes('--ignore-scripts'));
+  });
 });
 
 function referenceFixture(provider: DurableDatabaseProviderId): SelectedClosureManifest {

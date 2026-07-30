@@ -58,7 +58,9 @@ Provider-backed lanes require Docker Compose. CI runs every preset; isolated
 landing, site, user frontend, admin frontend, mobile, user/admin API,
 Discord/Telegram selections; and separate MongoDB core and bot selections. The
 standalone frontend lanes prevent one renderer from masking another renderer's
-missing dependency. One lane never activates both database providers.
+missing dependency. Bot runtime lanes also start their setup-selected Redis
+service for replay protection. One lane never activates both database
+providers.
 
 ## Contract
 
@@ -71,8 +73,10 @@ and `.nrb/closure/pnpm-lock.yaml` is current. It then:
    and applicable auth API e2e targets under Bun, except for explicitly
    Node-owned child tools. Coverage remains in the canonical Node lane because
    Bun's Node compatibility does not provide the repository's inspector-backed
-   V8 coverage contract. Ordinary unit-test targets do not inherit production
-   provider selectors or connection values.
+   V8 coverage contract. Ordinary unit-test targets do not inherit
+   infrastructure selectors or connection values. Selected durable application
+   composition tests receive only the ephemeral compatibility-owned database
+   and supporting-service environment.
 3. Rebuilds the runtime projects through canonical pnpm/Node Nx execution so
    backend deployment manifests and pruned pnpm lockfiles are authoritative.
 4. Stages each selected runtime in a temporary directory outside the workspace.
@@ -82,7 +86,8 @@ and `.nrb/closure/pnpm-lock.yaml` is current. It then:
    leak in.
 5. Installs each staged production dependency tree with pnpm only, keeping
    canonical Node first for pnpm's child process.
-6. Runs every selected staged runtime artifact under both Node and Bun. A
+6. Runs every selected staged runtime artifact under both Node and Bun, keeping
+   explicitly selected supporting services such as Redis available. A
    selected Vike app gets health and rendered-route probes. Every selected
    backend API or bot root gets a real process startup, `/live`, `/ready`,
    runtime-identity, and graceful lifecycle probe. Notification consumers and

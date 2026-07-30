@@ -18,6 +18,7 @@ import {
   createBunCompatibilityInvocation,
   createBunCompatibilityProbeEnvironment,
   createBunCompatibilityProbes,
+  createBunComposeProfiles,
   createBunRuntimeExecutionProbes,
   createCanonicalNodeInvocation,
   createHeadlessRuntimeEnvironment,
@@ -43,6 +44,7 @@ function closure(options: {
   roots: string[];
   projects?: string[];
   externalPackages?: Record<string, string>;
+  services?: string[];
   targets?: Partial<SelectedClosureManifest['targets']>;
 }): SelectedClosureManifest {
   return {
@@ -54,7 +56,7 @@ function closure(options: {
     projects: options.projects ?? options.roots,
     targets: { build: options.roots, test: options.roots, e2e: options.roots, ...options.targets },
     externalPackages: options.externalPackages ?? {},
-    services: options.roots,
+    services: options.services ?? options.roots,
     releaseImages: options.roots,
     ...defaultOperationalFields(),
   };
@@ -226,17 +228,31 @@ describe('Bun compatibility contract', () => {
       assert.match(contract, new RegExp(expected));
     }
     assert.doesNotMatch(contract, /admin-app|mobile-app|user-app/u);
-    assert.ok(probes.find((probe) => probe.name === 'Selected closure unit tests')?.nxArgs.includes('--parallel=1'));
+    assert.ok(probes.find((probe) => probe.name === 'Selected provider application tests')?.nxArgs.includes('--parallel=1'));
   });
 
-  it('keeps provider runtime configuration out of closure unit tests', () => {
-    const testProbe = createBunCompatibilityProbes(
-      closure({ provider: 'postgres', roots: ['auth-app-api'], targets: { test: ['auth-app-api'] } }),
-    ).find((probe) => probe.name === 'Selected closure unit tests');
-    assert.ok(testProbe);
+  it('isolates ordinary tests while retaining compatibility infrastructure for app composition', () => {
+    const probes = createBunCompatibilityProbes(
+      closure({
+        provider: 'postgres',
+        roots: ['auth-app-api'],
+        projects: ['@app/common-config', 'auth-app-api'],
+        targets: { test: ['@app/common-config', 'auth-app-api'] },
+      }),
+    );
+    const ordinaryProbe = probes.find((probe) => probe.name === 'Selected closure unit tests');
+    const providerProbe = probes.find((probe) => probe.name === 'Selected provider application tests');
+    assert.ok(ordinaryProbe);
+    assert.ok(providerProbe);
+    assert.ok(ordinaryProbe.nxArgs.includes('--projects=@app/common-config'));
+    assert.ok(providerProbe.nxArgs.includes('--projects=auth-app-api'));
+    assert.equal(ordinaryProbe.environmentScope, 'test');
+    assert.equal(providerProbe.environmentScope, 'provider');
     const providerEnvironment = {
       AUTH_PERSISTENCE: 'postgres',
+      AWS_REGION: 'ambient',
       COMPOSE_PROFILES: 'postgres,auth-app-api',
+      COMPOSE_PROJECT_NAME: 'ambient-project',
       CONTAINER_DATABASE_URL: 'postgres://container',
       DATABASE_ENGINE: 'postgres',
       DATABASE_URL: 'postgres://host',
@@ -252,15 +268,30 @@ describe('Bun compatibility contract', () => {
       POSTGRES_PORT: '5432',
       POSTGRES_USER: 'ambient',
       Postgres_SslMode: 'require',
+      NATS_SERVERS: 'nats://ambient',
+      NRB_CLOSURE_CONTEXT: '/ambient/closure',
+      REDIS_URL: 'redis://ambient',
+      S3_ENDPOINT: 'https://ambient.example',
       UNRELATED_VALUE: 'preserved',
     };
 
-    const testEnvironment = createBunCompatibilityProbeEnvironment(testProbe, providerEnvironment);
+    const testEnvironment = createBunCompatibilityProbeEnvironment(ordinaryProbe, providerEnvironment);
     assert.deepEqual(testEnvironment, { UNRELATED_VALUE: 'preserved' });
+    assert.deepEqual(createBunCompatibilityProbeEnvironment(providerProbe, providerEnvironment), providerEnvironment);
+  });
+
+  it('starts only selected database and Redis compatibility profiles', () => {
     assert.deepEqual(
-      createBunCompatibilityProbeEnvironment({ name: 'build', nxArgs: [] }, providerEnvironment),
-      providerEnvironment,
+      createBunComposeProfiles(
+        closure({ provider: 'postgres', roots: ['discord-app-api'], services: ['postgres'] }),
+      ),
+      ['postgres', 'redis'],
     );
+    assert.deepEqual(
+      createBunComposeProfiles(closure({ provider: 'mongodb', roots: ['auth-app-api'], services: ['mongodb'] })),
+      ['mongodb'],
+    );
+    assert.deepEqual(createBunComposeProfiles(closure({ provider: null, roots: ['landing-app'] })), []);
   });
 
   it('fails closed on opposite-provider selections', () => {

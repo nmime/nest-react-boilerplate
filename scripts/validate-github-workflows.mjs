@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Evidence for: REQ-ASSURANCE-RELEASE-003
-// Security and operations evidence for REQ-ASSURANCE-RELEASE-003.
+// Evidence for: REQ-ASSURANCE-RELEASE-003 REQ-SCAFFOLD-QUALITY-006
+// Security, operations, and quality-lane evidence.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -166,6 +166,11 @@ assert.ok(
 for (const required of ['pnpm run test:coverage:all', 'pnpm run test:e2e:coverage:all']) {
   assert.ok(ci.includes(required), `ci.yml missing explicit maintainer test command: ${required}`);
 }
+assert.match(
+  scripts['test:e2e:coverage:all'] ?? '',
+  /--all --exclude=fullstack-e2e -- --coverage/u,
+  'Static e2e coverage must exclude the Docker-owned fullstack Playwright target',
+);
 for (const required of [
   '[extend]',
   'useDefault = true',

@@ -222,6 +222,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: static
+        file: scripts/validate-github-workflows.mjs
+        script: ci:workflows:check
+        lanes:
+          - pr
+          - main
       - kind: operations
         file: packages/tooling/src/commands/qa/world-class-gates.ts
         script: test:world-class

@@ -343,7 +343,11 @@ export function checkComposeSelection(workspaceRoot: string): DoctorCheck {
       {
         cwd: workspaceRoot,
         encoding: "utf8",
-        env: { ...process.env, ...selectedEnvironment },
+        env: {
+          ...process.env,
+          ...selectedEnvironment,
+          NRB_CLOSURE_CONTEXT: join(workspaceRoot, ".nrb", "closure"),
+        },
         timeout: 30000,
       },
     )

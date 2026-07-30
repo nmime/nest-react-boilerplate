@@ -94,18 +94,25 @@ describe('DiscordAppApiHealthServiceProvider', () => {
   });
 
   it('keeps memory test mode free of database checks while retaining Redis readiness', async () => {
-    const provider = createDiscordAppApiHealthServiceProvider();
-    const service = createService(provider, undefined, redisHealth);
+    const previousPersistence = process.env.AUTH_PERSISTENCE;
+    process.env.AUTH_PERSISTENCE = 'memory';
 
-    expect(injectionTokens(provider)).toContain(DurableDatabaseRuntimeInjectToken);
-    expect((await service.check()).checks.some(({ name }) => name.startsWith('database'))).toBe(false);
-    await expect(service.checkReadiness()).resolves.toMatchObject({
-      data: {
-        dependencies: expect.arrayContaining([
-          expect.objectContaining({ name: 'redis', status: 'ok', required: true }),
-        ]),
-      },
-    });
+    try {
+      const provider = createDiscordAppApiHealthServiceProvider();
+      const service = createService(provider, undefined, redisHealth);
+
+      expect(injectionTokens(provider)).toContain(DurableDatabaseRuntimeInjectToken);
+      expect((await service.check()).checks.some(({ name }) => name.startsWith('database'))).toBe(false);
+      await expect(service.checkReadiness()).resolves.toMatchObject({
+        data: {
+          dependencies: expect.arrayContaining([
+            expect.objectContaining({ name: 'redis', status: 'ok', required: true }),
+          ]),
+        },
+      });
+    } finally {
+      restoreEnv('AUTH_PERSISTENCE', previousPersistence);
+    }
   });
 
   it('fails readiness when durable persistence is selected without a runtime', async () => {

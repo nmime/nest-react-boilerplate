@@ -63,9 +63,7 @@ export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
         );
       }
     } finally {
-      if (timeout) {
-        clearTimeout(timeout);
-      }
+      clearTimeout(timeout);
     }
   }
 
@@ -78,9 +76,7 @@ export class AuthTokenCleanupService implements OnModuleInit, OnModuleDestroy {
     const cleanup = this.executeCleanup(now);
     this.activeCleanup = cleanup;
     return cleanup.finally(() => {
-      if (this.activeCleanup === cleanup) {
-        this.activeCleanup = undefined;
-      }
+      this.activeCleanup = undefined;
     });
   }
 

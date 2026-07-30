@@ -130,6 +130,8 @@ offline-capable where documented, and avoid hidden mutation or network effects.
   teardown on success or failure.
 - Bun compatibility gives Node-only descendants canonical Node identity and
   applies finite request, command, process-tree termination, and cleanup bounds.
+- Bun compatibility keeps selected infrastructure available without leaking
+  provider selectors or connection values into ordinary closure unit tests.
 
 **Failure behavior:**
 

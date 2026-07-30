@@ -71,16 +71,7 @@ export async function migrateMongoDatabase(env: NodeJS.ProcessEnv = process.env)
   readonly skipped: string[];
 }> {
   const config = createMongoMigrationEnvironment(env);
-  const options: MongoClientOptions = {
-    appName: "nrb-db-migrate",
-    directConnection: false,
-    loadBalanced: false,
-    retryWrites: true,
-    writeConcern: { w: "majority" },
-    serverSelectionTimeoutMS: positiveInteger(env.MONGODB_SERVER_SELECTION_TIMEOUT_MS, 10_000),
-    ...(config.replicaSet === undefined ? {} : { replicaSet: config.replicaSet }),
-  };
-  const client = new MongoClient(config.uri, options);
+  const client = new MongoClient(config.uri, createMongoMigrationClientOptions(config, env));
 
   try {
     await client.connect();
@@ -90,6 +81,20 @@ export async function migrateMongoDatabase(env: NodeJS.ProcessEnv = process.env)
   } finally {
     await client.close();
   }
+}
+
+export function createMongoMigrationClientOptions(
+  config: MongoMigrationEnvironment,
+  env: NodeJS.ProcessEnv = process.env,
+): MongoClientOptions {
+  return {
+    appName: "nrb-db-migrate",
+    directConnection: false,
+    retryWrites: true,
+    writeConcern: { w: "majority" },
+    serverSelectionTimeoutMS: positiveInteger(env.MONGODB_SERVER_SELECTION_TIMEOUT_MS, 10_000),
+    ...(config.replicaSet === undefined ? {} : { replicaSet: config.replicaSet }),
+  };
 }
 
 export function parseMongoUri(uri: string): ConnectionString {

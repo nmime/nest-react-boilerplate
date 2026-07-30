@@ -219,8 +219,10 @@ export function selectedProjectOutputPaths(
   project: string,
 ): string[] {
   const projects = selectedProjectClosure(graph, closure, project);
+  const metadata = releaseImageFor(project);
+  const outputProjects = metadata?.target === 'site-runtime' ? [project] : projects;
   const outputs = new Set<string>();
-  for (const selected of projects) {
+  for (const selected of outputProjects) {
     const target = graph.nodes[selected]?.data.targets?.build;
     if (!target) {
       continue;
@@ -230,7 +232,6 @@ export function selectedProjectOutputPaths(
     }
   }
 
-  const metadata = releaseImageFor(project);
   const requiredOutput =
     metadata?.buildOutput ?? (metadata?.target === 'site-runtime' ? 'dist/apps/frontend/site' : undefined);
   if (!requiredOutput) {

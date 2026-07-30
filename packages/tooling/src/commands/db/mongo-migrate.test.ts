@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { createMongoMigrationEnvironment, mongoMigrations } from "./mongo-migrate.ts";
+import { MongoClient } from "mongodb";
+import {
+  createMongoMigrationClientOptions,
+  createMongoMigrationEnvironment,
+  mongoMigrations,
+} from "./mongo-migrate.ts";
 
 describe("MongoDB migration environment", () => {
   it("composes every current persistence provider in deterministic ledger order", () => {
@@ -43,6 +48,18 @@ describe("MongoDB migration environment", () => {
         replicaSet: "rs0",
       },
     );
+  });
+
+  it("omits URI-only load balancing from MongoClient migration options", async () => {
+    const config = createMongoMigrationEnvironment({
+      MONGODB_URI: "mongodb://mongo/app?replicaSet=rs0&retryWrites=true",
+      MONGODB_DATABASE: "app",
+    });
+    const options = createMongoMigrationClientOptions(config);
+
+    assert.equal("loadBalanced" in options, false);
+    const client = new MongoClient(config.uri, options);
+    await client.close();
   });
 
   it("requires an explicit URI and database", () => {

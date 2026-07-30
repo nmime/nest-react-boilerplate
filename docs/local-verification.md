@@ -63,9 +63,9 @@ notification consumers and schedulers use headless process probes. CI covers
 every preset, standalone user/admin/Discord/Telegram selections, provider-free
 static output, and MongoDB core/bot custom selections. Provider-backed local
 selections require Docker Compose and fail rather than using memory persistence.
-Expo/Metro export is part of the selected contract but runs as an explicit Node
-child because that upstream toolchain is not supported under forced Bun. The canonical Node
-coverage and pnpm lockfile gates remain separate and mandatory.
+Expo/Metro export, Cucumber acceptance, and the fullstack `node:test` suite are
+part of the selected contract but run as explicit Node children. The canonical
+Node coverage and pnpm lockfile gates remain separate and mandatory.
 
 For documentation-only ops/QA/deployment changes, the focused parity slice is:
 

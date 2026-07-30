@@ -110,6 +110,7 @@ describe('AuthTokenCleanupService', () => {
   });
 
   it('waits for active cleanup before completing module shutdown', async () => {
+    vi.useFakeTimers();
     let releaseCleanup: (() => void) | undefined;
     const pendingCleanup = new Promise((resolve) => {
       releaseCleanup = () => {
@@ -132,6 +133,17 @@ describe('AuthTokenCleanupService', () => {
     await expect(running).resolves.toBe(true);
     await shutdown;
     expect(shutdownComplete).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('allows a later cleanup after the active run settles', async () => {
+    const { cleanupExpiredTokens, repository } = createRepositoryMock();
+    const cleanup = new AuthTokenCleanupService(repository);
+
+    await expect(cleanup.runCleanup()).resolves.toBe(true);
+    await expect(cleanup.runCleanup()).resolves.toBe(true);
+
+    expect(cleanupExpiredTokens).toHaveBeenCalledTimes(2);
   });
 
   it('continues shutdown after the active cleanup grace period expires', async () => {

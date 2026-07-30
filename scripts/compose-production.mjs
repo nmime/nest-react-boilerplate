@@ -67,6 +67,24 @@ const publicApps = [
   ['telegram-bot-api', 'TELEGRAM_BOT_API_DOMAIN'],
 ];
 
+export const productionComposeDiagnostics = Object.freeze({
+  dryRun: JSON.stringify({ status: 'validated', execution: 'skipped' }, null, 2),
+  start: 'Production Compose topology validated; starting Docker Compose.',
+  closureFailure:
+    'Production Compose closure validation failed; run `pnpm nrb closure check`. [NRB_COMPOSE_CLOSURE_INVALID]',
+  configurationFailure:
+    'Production Compose input validation failed; review the documented arguments and required settings. [NRB_COMPOSE_INPUT_INVALID]',
+  executionFailure:
+    'Production Compose execution failed; verify Docker availability and review Docker output. [NRB_COMPOSE_EXECUTION_FAILED]',
+});
+
+export function composeExecutionStatus(result, reportFailure = (message) => console.error(message)) {
+  if (result.error) throw result.error;
+  const status = result.status ?? 1;
+  if (status !== 0) reportFailure(productionComposeDiagnostics.executionFailure);
+  return status;
+}
+
 const fail = (message) => {
   throw new Error(message);
 };
@@ -648,6 +666,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
 }
 
 function main() {
+  let failureDiagnostic = productionComposeDiagnostics.closureFailure;
   try {
     if (process.env.NRB_CLOSURE_MANIFEST && process.env.NRB_ALL_REFERENCE !== 'true') {
       throw new Error('NRB_CLOSURE_MANIFEST is reserved for the explicit all-reference maintainer validation path.');
@@ -661,42 +680,22 @@ function main() {
         `Production Compose requires a fresh selected closure: ${(closureCheck.stderr || closureCheck.stdout).trim()}`,
       );
     }
+    failureDiagnostic = productionComposeDiagnostics.configurationFailure;
     const invocation = buildComposeInvocation(process.argv.slice(2));
     if (invocation.dryRun) {
-      console.log(
-        JSON.stringify(
-          {
-            action: invocation.action,
-            command: ['docker', ...invocation.args],
-            databaseMode: invocation.databaseMode,
-            databaseEngine: invocation.databaseEngine,
-            domainMode: invocation.domainMode,
-            profiles: invocation.profiles,
-            selectedApps: invocation.selectedApps,
-            selectedServices: invocation.selectedServices,
-            publicDomain: invocation.publicDomain,
-            publicDomainMode: invocation.publicDomainMode,
-            sourceBuild: invocation.sourceBuild,
-            tlsMode: invocation.tlsMode,
-          },
-          null,
-          2,
-        ),
-      );
+      console.log(productionComposeDiagnostics.dryRun);
       return;
     }
-    console.error(
-      `Production Compose: database=${invocation.databaseEngine}/${invocation.databaseMode}, domains=${invocation.domainMode}, tls=${invocation.tlsMode}, profiles=${invocation.profiles.join(',') || 'none'}`,
-    );
+    console.error(productionComposeDiagnostics.start);
+    failureDiagnostic = productionComposeDiagnostics.executionFailure;
     const result = spawnSync('docker', invocation.args, {
       cwd: rootDir,
       env: invocation.env,
       stdio: 'inherit',
     });
-    if (result.error) throw result.error;
-    process.exitCode = result.status ?? 1;
-  } catch (error) {
-    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = composeExecutionStatus(result);
+  } catch {
+    console.error(failureDiagnostic);
     process.exitCode = 1;
   }
 }

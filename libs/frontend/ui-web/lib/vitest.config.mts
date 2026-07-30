@@ -22,6 +22,7 @@ export default defineConfig({
     },
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
+    setupFiles: ['../../../../packages/tooling/src/testing/vitest-dom-cleanup.ts'],
     coverage: fullCoverage('coverage/libs/frontend/ui-web', ['src/**/*.{ts,tsx}'], [], {
       branches: -50,
       functions: -8,

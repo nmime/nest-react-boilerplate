@@ -103,10 +103,70 @@ assert.ok(
   ci.includes('Enforce every required CI result'),
   'ci.yml summary must fail when any required job did not succeed',
 );
+
+// Every gate job must be both awaited by and enforced in ci-status-summary. Without this a new
+// job silently becomes non-blocking: the summary asserts only that the enforce step exists.
+const ciJobNames = (() => {
+  const jobsIndex = ci.indexOf('\njobs:\n');
+  assert.ok(jobsIndex !== -1, 'ci.yml must declare a top-level jobs block');
+  return [...ci.slice(jobsIndex).matchAll(/^ {2}([a-zA-Z0-9_-]+):$/gmu)].map((match) => match[1]);
+})();
+assert.ok(ciJobNames.length > 5, `ci.yml job list could not be parsed (found ${ciJobNames.length})`);
+assert.ok(ciJobNames.includes('ci-status-summary'), 'ci.yml must define the ci-status-summary aggregator');
+
+const summaryNeedsMatch = /^ {2}ci-status-summary:\n(?:.*\n)*? {4}needs:\n((?: {6}- [a-zA-Z0-9_-]+\n)+)/mu.exec(ci);
+assert.ok(summaryNeedsMatch, 'ci.yml ci-status-summary must declare an explicit needs list');
+const awaitedJobs = new Set([...summaryNeedsMatch[1].matchAll(/- ([a-zA-Z0-9_-]+)/gu)].map((match) => match[1]));
+
+const requiredResultsMatch = /REQUIRED_RESULTS: >-\n((?:[^\S\n]+\$\{\{ needs\.[a-zA-Z0-9_-]+\.result \}\}\n)+)/u.exec(
+  ci,
+);
+assert.ok(requiredResultsMatch, 'ci.yml must declare REQUIRED_RESULTS as a list of needs results');
+const enforcedJobs = new Set(
+  [...requiredResultsMatch[1].matchAll(/needs\.([a-zA-Z0-9_-]+)\.result/gu)].map((match) => match[1]),
+);
+
+for (const job of ciJobNames) {
+  if (job === 'ci-status-summary') continue;
+  assert.ok(awaitedJobs.has(job), `ci.yml ci-status-summary needs must include every gate job; missing: ${job}`);
+  assert.ok(enforcedJobs.has(job), `ci.yml REQUIRED_RESULTS must enforce every gate job; missing: ${job}`);
+}
+for (const job of awaitedJobs) {
+  assert.ok(ciJobNames.includes(job), `ci.yml ci-status-summary needs a job that does not exist: ${job}`);
+}
 assert.ok(
   ci.includes('origin/$GITHUB_BASE_REF..$PR_HEAD_SHA'),
   'ci.yml must validate authored commits without including the synthetic pull-request merge commit',
 );
+// Gates that exist but run in no pipeline are dead QA surface; pin the ones that were added
+// after being found unwired, plus the e2e selection that must never reach the Docker suite.
+for (const required of [
+  'pnpm run frontend:fsd:check',
+  'pnpm run api:toast-config:check',
+  'pnpm run audit:licenses',
+  'pnpm run audit:full',
+]) {
+  assert.ok(ci.includes(required), `ci.yml must run the previously unwired gate: ${required}`);
+}
+assert.ok(
+  !/nx run-many -t e2e --all(?! --exclude fullstack-e2e)/u.test(JSON.stringify(scripts)),
+  'package.json e2e aggregates must exclude fullstack-e2e; the Docker-managed Playwright suite rejects forwarded flags and needs a Compose stack',
+);
+
+// A scheduled workflow has no pull request to turn red, so the gates it uniquely owns rot
+// invisibly unless failure is surfaced somewhere a human sees it.
+for (const [name, text] of [
+  ['quality-presets.yml', workflows.find((workflow) => workflow.name === 'quality-presets.yml')?.text ?? ''],
+  [
+    'spec-assurance-nightly.yml',
+    workflows.find((workflow) => workflow.name === 'spec-assurance-nightly.yml')?.text ?? '',
+  ],
+]) {
+  assert.ok(text.includes('if: failure()'), `${name} must surface failures from its scheduled run`);
+  assert.ok(text.includes('issues: write'), `${name} must be able to open its failure issue`);
+  assert.ok(text.includes('gh issue create'), `${name} failure reporter must open an issue when none is open`);
+}
+
 for (const required of [
   'name: Exact-SHA specification evidence',
   'pnpm run spec:verify',
@@ -252,15 +312,23 @@ for (const required of [
   "DOCKER_TLS_CERTDIR: ''",
   'mongodb-validation:',
   'docker-fullstack-mongodb:',
-  'COMPOSE_PROFILES: mongodb,user-app-api,auth-app-api',
   'DATABASE_ENGINE: mongodb',
   'AUTH_PERSISTENCE: mongodb',
-  "FULLSTACK_API_CRITICAL_ONLY: 'true'",
   'MONGODB_REPLICA_SET: rs0',
-  'pnpm run test:all',
-  'pnpm run test:e2e:all',
+  // The GitLab lane claims to mirror ci.yml, so it must evaluate the coverage contract too:
+  // plain `test:all` leaves coverage.enabled false and every threshold unchecked.
+  'pnpm run test:coverage:all',
+  'pnpm run test:e2e:coverage:all',
 ]) {
   assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing pinned CI contract: ${required}`);
+}
+// The fullstack selection derives Compose profiles from the installed closure and throws on any
+// service-reduction flag, so pinning either in CI makes the job fail before Docker starts.
+for (const forbidden of ['COMPOSE_PROFILES:', 'FULLSTACK_API_CRITICAL_ONLY', 'FULLSTACK_CRITICAL_ONLY']) {
+  assert.ok(
+    !gitlabJob('docker-fullstack-mongodb', 'storybook-tests').includes(forbidden),
+    `.gitlab-ci.yml docker-fullstack-mongodb must let setup derive the fullstack selection: ${forbidden}`,
+  );
 }
 for (const forbidden of ['COMPOSE_PROFILES: mongodb,postgres', 'COMPOSE_PROFILES: postgres,mongodb']) {
   assert.ok(!gitlabCi.includes(forbidden), `.gitlab-ci.yml must not enable both database providers: ${forbidden}`);

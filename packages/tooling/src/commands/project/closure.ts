@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
+import { availableParallelism, totalmem } from 'node:os';
 import { join, resolve } from 'node:path';
 
 import type { CommandContext } from '../../cli.js';
+import { resolveTestParallelism } from '../qa/test-orchestration.js';
 import { run, type RunResult } from '../../runtime/process.js';
 import {
   closureLockPath,
@@ -173,10 +175,37 @@ async function runTargetCommand(
   const execute = dependencies.execute ?? run;
   const result = execute(
     'pnpm',
-    ['exec', 'nx', 'run-many', '-t', target, `--projects=${projects.join(',')}`, ...forwarded],
+    [
+      'exec',
+      'nx',
+      'run-many',
+      '-t',
+      target,
+      `--projects=${projects.join(',')}`,
+      ...resolveClosureConcurrencyArguments(target, forwarded),
+      ...forwarded,
+    ],
     { cwd: workspaceRoot, stdio: 'inherit' },
   );
   return result.status;
+}
+
+/**
+ * `pnpm test`/`lint`/`typecheck` — and therefore the documented `check` and `check:fast`
+ * gates — route through here. Without a ceiling they run at Nx's default parallelism with
+ * each Vitest project spawning its own unbounded worker pool, which oversubscribes the
+ * machine and is what makes timeout-sensitive specs flake locally. The aggregate
+ * `test:all` path already derives both limits from CPU and memory; mirror it here.
+ */
+function resolveClosureConcurrencyArguments(target: string, forwarded: string[]): string[] {
+  if (target !== 'test' && target !== 'component-test') return [];
+  if (forwarded.some((argument) => argument.startsWith('--parallel'))) return [];
+
+  const parallel = resolveTestParallelism({
+    cpuCount: availableParallelism(),
+    memoryBytes: totalmem(),
+  });
+  return [`--parallel=${parallel}`];
 }
 
 async function requireCurrentClosure(

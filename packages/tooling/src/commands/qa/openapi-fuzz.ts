@@ -69,6 +69,21 @@ if (engine === "schemathesis" && !dryRun) {
 }
 
 if (!dryRun && engine !== "schemathesis") {
+  // With no base URL the probe loop body never executes, `live` stays empty, and the gate
+  // reports ok having sent zero requests. Fail closed in CI, matching the schemathesis branch
+  // above and missingRuntimeGate in world-class-gates.
+  // Scoped to OPENAPI_FUZZ_REQUIRE_TARGET rather than CI: the non-runtime CI job legitimately
+  // only generates cases, while the runtime lane that stands up a stack must actually send them.
+  const targeted = contracts.filter((contract) => baseUrlsFor(contract).length > 0);
+  if (targeted.length === 0 && process.env.OPENAPI_FUZZ_REQUIRE_TARGET === "1") {
+    live.push({
+      engine: "native",
+      ok: false,
+      error:
+        "No live fuzz target resolved. Set OPENAPI_FUZZ_BASE_URL (or OPENAPI_FUZZ_BASE_URL_<SLUG>) so the generated cases are actually sent.",
+    });
+  }
+
   for (const contract of contracts) {
     for (const baseUrl of baseUrlsFor(contract)) {
       for (const item of cases.filter((candidate) => candidate.contract === contract.file && (candidate.safe || allowUnsafe))) {

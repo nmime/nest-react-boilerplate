@@ -79,12 +79,30 @@ for (let seed = 0; seed < iterations; seed += 1) {
   }, { contract: contract.file, route });
 }
 
+// A bare catch that records ok:true converts any real counterexample into a pass, and
+// `typeof x.replaceAll(...) === "string"` cannot fail for any string input. Assert a property
+// that can actually be falsified — RFC 6901 escaping must round-trip — and report failures.
 try {
   const fastCheck = await import("fast-check");
-  await fastCheck.assert(fastCheck.property(fastCheck.string(), (value: string) => typeof value.replaceAll("~", "~0").replaceAll("/", "~1") === "string"), { numRuns: Math.min(iterations, 1000) });
-  checks.push({ name: "fast-check json-pointer smoke", ok: true, engine: "fast-check" });
-} catch {
-  checks.push({ name: "fast-check optional engine", ok: true, engine: "native", note: "Install fast-check or provide it in the runtime to enable the external engine." });
+  const escapePointerToken = (token: string): string => token.replaceAll("~", "~0").replaceAll("/", "~1");
+  const unescapePointerToken = (token: string): string => token.replaceAll("~1", "/").replaceAll("~0", "~");
+
+  await fastCheck.assert(
+    fastCheck.property(fastCheck.string(), (value: string) => unescapePointerToken(escapePointerToken(value)) === value),
+    { numRuns: Math.min(iterations, 1000) },
+  );
+  checks.push({ name: "fast-check json-pointer escaping round-trips", ok: true, engine: "fast-check" });
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const missingEngine = /Cannot find (?:module|package)|ERR_MODULE_NOT_FOUND/u.test(message);
+
+  if (missingEngine) {
+    // Absence of the optional engine is not a property failure, but it must be visible.
+    checks.push({ name: "fast-check optional engine unavailable", ok: true, engine: "native", note: message });
+  } else {
+    errors.push(`fast-check json-pointer escaping round-trips: ${message}`);
+    checks.push({ name: "fast-check json-pointer escaping round-trips", ok: false, engine: "fast-check", note: message });
+  }
 }
 
 writeJson(reportPath, { status: errors.length ? "failed" : "ok", iterations, checks, errors });

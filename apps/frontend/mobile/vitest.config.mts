@@ -20,8 +20,15 @@ export default defineConfig({
     passWithNoTests: false,
     coverage: fullCoverage(
       'coverage/apps/frontend/mobile',
-      ['src/app/**/*.{ts,tsx}', 'src/pages/**/*.{ts,tsx}'],
-      ['src/app/_layout.tsx', 'src/app/index.tsx', 'src/pages/home/ui/**/*'],
+      ['src/**/*.{ts,tsx}'],
+      // expo-router entrypoints need the native runtime and cannot render under jsdom.
+      ['src/app/_layout.tsx', 'src/app/index.tsx'],
+      {
+        branches: -2,
+        functions: 100,
+        lines: -1,
+        statements: -1,
+      },
     ),
   },
 });

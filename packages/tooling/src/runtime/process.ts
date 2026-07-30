@@ -44,6 +44,10 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     shell: options.shell ?? false,
     stdio: options.stdio ?? 'pipe',
     timeout: options.timeoutMs,
+    // spawnSync defaults to a 1 MiB output buffer and SIGTERMs the child past it, with
+    // `status` coming back null. Coerced to 1 below, that reads as a genuine gate failure when
+    // it is really harness truncation — verbose gates (semgrep --json over the whole repo) hit it.
+    maxBuffer: 64 * 1024 * 1024,
   };
 
   if (spawnOptions.stdio !== 'inherit') {

@@ -18,6 +18,7 @@ export default defineConfig({
     },
     globals: true,
     passWithNoTests: false,
+    setupFiles: ['../../../../packages/tooling/src/testing/vitest-dom-cleanup.ts'],
     coverage: fullCoverage(
       'coverage/libs/frontend/api-client',
       ['src/**/*.ts', 'src/**/*.tsx'],

@@ -235,6 +235,18 @@ jobs:
       - name: Check library configuration standards
         run: pnpm run lib:configs:check
 
+      - name: Check frontend feature-sliced boundaries
+        run: pnpm run frontend:fsd:check
+
+      - name: Check generated toast configuration
+        run: pnpm run api:toast-config:check
+
+      - name: Check dependency licences
+        run: pnpm run audit:licenses
+
+      - name: Audit the full dependency tree
+        run: pnpm run audit:full
+
       - name: Check generated OpenAPI contracts
         run: pnpm run api:contracts:check
 
@@ -806,6 +818,7 @@ jobs:
     name: CI status summary
     runs-on: ubuntu-22.04
     needs:
+      - gitleaks
       - helm-validation
       - fast-check
       - spec-evidence
@@ -832,6 +845,7 @@ jobs:
             echo
             echo "| Job | Result |"
             echo "| --- | --- |"
+            echo "| Gitleaks secret scan | ${{ needs.gitleaks.result }} |"
             echo "| Helm render validation | ${{ needs.helm-validation.result }} |"
             echo "| Fast PR gate (ci:pr) | ${{ needs.fast-check.result }} |"
             echo "| Exact-SHA specification evidence | ${{ needs.spec-evidence.result }} |"
@@ -858,6 +872,7 @@ jobs:
       - name: Enforce every required CI result
         env:
           REQUIRED_RESULTS: >-
+            ${{ needs.gitleaks.result }}
             ${{ needs.helm-validation.result }}
             ${{ needs.fast-check.result }}
             ${{ needs.spec-evidence.result }}

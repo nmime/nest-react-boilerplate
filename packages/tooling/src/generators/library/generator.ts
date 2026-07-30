@@ -579,6 +579,8 @@ describe("${names.pascal} library boundary", () => {
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { workspaceTsconfigAliases } from "${d}config/vite/workspace-tsconfig-aliases.mjs";
+// nx-ignore-next-line
+import { fullCoverage } from "${d}packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
   resolve: {
@@ -592,6 +594,11 @@ export default defineConfig({
     environment: "happy-dom",
     include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.spec.tsx", "src/**/*.test.tsx"],
     globals: false,
+    coverage: fullCoverage(
+      "coverage/${dir}",
+      ["src/**/*.{ts,tsx}"],
+      [],
+    ),
   },
 });
 `,

@@ -26,8 +26,11 @@ const runRuntimeSmoke = actualDockerRuntimeAvailable;
 
 if (!runRuntimeSmoke) {
   describe('NATS runtime smoke', () => {
-    it('does not start without an actual Docker runtime', () => {
-      expect(runRuntimeSmoke).toBe(false);
+    // A passing `expect(false).toBe(false)` here reported success with zero verification, and a
+    // slow `docker info` probe on a machine that *does* have Docker silently took this branch.
+    // A reported skip keeps the absence visible; the probe below fails closed in CI.
+    it.skip('requires an actual Docker runtime', () => {
+      expect(runRuntimeSmoke).toBe(true);
     });
   });
 } else {
@@ -256,13 +259,21 @@ function hasActualDockerRuntime(): boolean {
     return false;
   }
 
+  // Fail closed in CI, matching hasDockerRuntime() in the shared component-test helper: a
+  // missing daemon there is an infrastructure fault, not a reason to skip the smoke.
+  if (process.env.CI === 'true') {
+    return true;
+  }
+
   const dockerBinaryPaths = ['docker', '/usr/bin/docker', '/usr/local/bin/docker', '/opt/homebrew/bin/docker'] as const;
 
   return dockerBinaryPaths.some((dockerBinaryPath) => {
     try {
+      // 5s was tight enough that a loaded machine with a healthy daemon timed out and the
+      // suite degraded to a pass. `docker info` contacts the daemon, so allow for it.
       const result = spawnSync(dockerBinaryPath, ['info'], {
         stdio: 'ignore',
-        timeout: 5_000,
+        timeout: 30_000,
       });
       return result.status === 0;
     } catch {

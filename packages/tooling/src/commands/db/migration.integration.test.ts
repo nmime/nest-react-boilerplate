@@ -116,9 +116,12 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
     ]);
     assert.strictEqual(startCode, 0, "Failed to start test PostgreSQL container");
 
-    // Wait for readiness
+    // Wait for readiness. The budget must stay well inside the hook timeout above but not be
+    // so tight that a cold or loaded Docker daemon reports a false failure — a 30s budget
+    // inside a 120s hook was the tighter of the two and produced exactly that.
+    const readinessBudgetMs = 90_000;
     const startTime = Date.now();
-    while (Date.now() - startTime < 30_000) {
+    while (Date.now() - startTime < readinessBudgetMs) {
       const pool = new Pool({
         connectionString: `postgres://postgres:postgres@127.0.0.1:${port}/${TEST_DB_NAME}`,
       });
@@ -132,7 +135,13 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
         await new Promise((r) => setTimeout(r, 500));
       }
     }
-    assert.ok(dbUrl, "PostgreSQL did not become ready within 30s");
+    if (!dbUrl) {
+      // Surface why, so a genuine container fault is not indistinguishable from a slow start.
+      const logs = await runDocker(["logs", "--tail", "40", TEST_CONTAINER]).catch(() => null);
+      assert.fail(
+        `PostgreSQL did not become ready within ${readinessBudgetMs / 1000}s. Container logs:\n${logs?.stdout ?? logs?.stderr ?? "<unavailable>"}`,
+      );
+    }
   }, { timeout: 120_000 });
 
   after(async () => {

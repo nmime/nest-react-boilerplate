@@ -38,6 +38,8 @@ export interface OpenApiSchema {
   examples?: unknown[];
   default?: unknown;
   properties?: Record<string, OpenApiSchema>;
+  /** `true`/a schema opts a closed object out of undeclared-property checking. */
+  additionalProperties?: boolean | OpenApiSchema;
   items?: OpenApiSchema;
   oneOf?: OpenApiSchema[];
   anyOf?: OpenApiSchema[];
@@ -218,6 +220,10 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     shell: false,
     stdio: options.stdio ?? "pipe",
     timeout: options.timeoutMs,
+    // spawnSync defaults to a 1 MiB output buffer and SIGTERMs the child past it, with
+    // `status` coming back null. Coerced to 1 below, that reads as a genuine gate failure when
+    // it is really harness truncation — verbose gates (semgrep --json over the whole repo) hit it.
+    maxBuffer: 64 * 1024 * 1024,
   };
   const result = spawnSync(command, args, spawnOptions);
   return {
@@ -403,6 +409,15 @@ export function validateSchema(value: unknown, schema: OpenApiSchema | undefined
       const record = value as Record<string, unknown>;
       for (const key of resolved.required ?? []) if (!Object.hasOwn(record, key)) errors.push(`${path}.${key}: missing required property`);
       for (const [key, child] of Object.entries(resolved.properties ?? {})) if (Object.hasOwn(record, key)) errors.push(...validateSchema(record[key], child, doc, `${path}.${key}`, new Set(seen)));
+      // Walking only declared keys makes this check one-directional: a provider that drops or
+      // renames a property still validates, which is exactly the breaking change consumer
+      // contracts exist to catch. Enforce the other direction whenever the schema is closed —
+      // a schema with no properties is free-form, and additionalProperties opts out explicitly.
+      const declaredProperties = resolved.properties ?? {};
+      const opensAdditional = resolved.additionalProperties === true || typeof resolved.additionalProperties === "object";
+      if (Object.keys(declaredProperties).length > 0 && !opensAdditional) {
+        for (const key of Object.keys(record)) if (!Object.hasOwn(declaredProperties, key)) errors.push(`${path}.${key}: not declared by the provider schema`);
+      }
     }
   }
   return errors;

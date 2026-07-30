@@ -22,11 +22,12 @@ export default defineConfig({
     },
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
-    coverage: fullCoverage('coverage/apps/frontend/app', ['src/app/**/*.{ts,tsx}'], [], {
-      branches: -5,
-      functions: 100,
-      lines: -4,
-      statements: -4,
+    setupFiles: ['../../../packages/tooling/src/testing/vitest-dom-cleanup.ts'],
+    coverage: fullCoverage('coverage/apps/frontend/app', ['src/**/*.{ts,tsx}'], [], {
+      branches: -23,
+      functions: -3,
+      lines: -15,
+      statements: -15,
     }),
   },
 });

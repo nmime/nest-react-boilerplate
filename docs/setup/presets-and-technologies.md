@@ -51,7 +51,8 @@ Run selected infrastructure/apps with:
 pnpm run docker:selected
 ```
 
-Use `pnpm run docker:fullstack` only when intentionally starting every Compose profile.
+`pnpm run docker:fullstack` is an alias for the same command and starts the same
+setup-selected profiles; neither command starts every Compose profile.
 
 ## Dependency expansion example
 

@@ -1,7 +1,7 @@
 // @requirements REQ-FRONTEND-SHELL-004
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 const domMocks = vi.hoisted(() => {
   let renderedTree: unknown;
@@ -30,8 +30,10 @@ vi.mock('./App', () => ({
   },
 }));
 
+let renderedTree: ReactNode;
+
 describe('admin app root', () => {
-  afterEach(() => {
+  afterAll(() => {
     cleanup();
     document.body.innerHTML = '';
     domMocks.clear();
@@ -40,21 +42,29 @@ describe('admin app root', () => {
     vi.resetModules();
   });
 
-  it('wraps the root render in the shared assertive error boundary fallback', async () => {
+  beforeAll(async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     document.body.innerHTML = '<div id="root"></div>';
 
+    // Importing the entry pulls in the whole application module graph, and the bundler
+    // transform for it dominates the runtime. Billing that to hookTimeout keeps the
+    // per-test budget for assertions instead of transform work, which is what made this
+    // spec flake under parallel load.
     await import('./main');
 
+    renderedTree = domMocks.getRenderedTree() as ReactNode;
+  });
+
+  it('wraps the root render in the shared assertive error boundary fallback', () => {
     expect(domMocks.createRootMock).toHaveBeenCalledWith(document.getElementById('root'));
     expect(domMocks.renderMock).toHaveBeenCalledTimes(1);
 
-    render(<>{domMocks.getRenderedTree() as ReactNode}</>);
+    render(<>{renderedTree}</>);
 
     const fallback = screen.getByRole('alert');
 
     expect(fallback.getAttribute('aria-live')).toBe('assertive');
     expect(screen.getByRole('heading', { name: 'Something went wrong' })).toBeTruthy();
     expect(screen.getByText(/Try refreshing the page/u)).toBeTruthy();
-  }, 10_000);
+  });
 });

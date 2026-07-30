@@ -65,7 +65,11 @@ export const fullCoverage = (
     '**/capabilities.bootstrap.generated.ts',
     '**/bootstrap.runtime.ts',
     '**/generated/**',
-    '**/migrations/**',
+    // Numbered DDL files and their barrel are generated migration payloads. Anything else in
+    // a migrations directory is hand-written runner logic and must stay measured — excluding
+    // the whole directory hid a 359-line migration engine that has its own spec.
+    '**/migrations/Migration[0-9]*.ts',
+    '**/migrations/index.ts',
     '**/node_modules/**',
     ...exclude,
   ],

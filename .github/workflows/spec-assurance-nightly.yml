@@ -107,3 +107,30 @@ jobs:
             coverage/**
             reports/mutation/**
           if-no-files-found: error
+
+  report-failure:
+    name: Surface Nightly specification assurance failure
+    needs: [assurance]
+    if: failure()
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      issues: write
+    timeout-minutes: 10
+    steps:
+      # A scheduled workflow has no pull request to turn red, so a silent failure means the
+      # gates it uniquely owns can rot indefinitely. Surface it as a deduplicated issue.
+      - name: Open or update the Nightly specification assurance failure issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: 'Nightly specification assurance failed'
+        run: |
+          existing="$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')"
+          body="The scheduled \`spec-assurance-nightly\` workflow failed. Run: $RUN_URL"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$TITLE" --body "$body"
+          fi

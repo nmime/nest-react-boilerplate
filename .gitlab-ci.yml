@@ -149,7 +149,7 @@ full-check:
     - pnpm run test:property
     - pnpm run lint:all
     - pnpm run typecheck:all
-    - pnpm run test:all
+    - pnpm run test:coverage:all
   timeout: 60m
 
 mongodb-validation:
@@ -182,7 +182,7 @@ e2e-tests:
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile
   script:
-    - pnpm run test:e2e:all
+    - pnpm run test:e2e:coverage:all
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -250,11 +250,9 @@ docker-fullstack-mongodb:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
     AUTH_PERSISTENCE: mongodb
-    COMPOSE_PROFILES: mongodb,user-app-api,auth-app-api
     DATABASE_ENGINE: mongodb
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ''
-    FULLSTACK_API_CRITICAL_ONLY: 'true'
     MONGODB_DATABASE: nest_react_boilerplate
     MONGODB_REPLICA_SET: rs0
     MONGODB_URI: 'mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true'

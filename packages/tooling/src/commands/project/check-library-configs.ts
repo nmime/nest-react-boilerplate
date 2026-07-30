@@ -33,6 +33,10 @@ export function runCheckLibraryConfigs(
     if (existsSync(directory)) walk(directory, root, errors);
   }
 
+  for (const directory of [join(root, "apps"), join(root, "libs")]) {
+    if (existsSync(directory)) walkCoverageContract(directory, root, errors);
+  }
+
   if (errors.length > 0) {
     console.error("Library config placement check failed:");
 
@@ -66,6 +70,59 @@ function walk(directory: string, root: string, errors: string[]): void {
     }
 
     checkFile(absolutePath, root, errors);
+  }
+}
+
+/**
+ * A vitest config without a `coverage` block silently opts the whole project out of the
+ * repo's coverage contract: `--coverage` then produces a report with undefined thresholds
+ * and vitest's threshold check continues without failing. Nothing else in the workspace
+ * detects that, so enforce it structurally here.
+ */
+function walkCoverageContract(
+  directory: string,
+  root: string,
+  errors: string[],
+): void {
+  for (const entry of readdirSync(directory)) {
+    const absolutePath = join(directory, entry);
+    const stats = lstatSync(absolutePath);
+
+    if (stats.isSymbolicLink()) {
+      continue;
+    }
+
+    if (stats.isDirectory()) {
+      if (entry === "node_modules" || entry === "dist") {
+        continue;
+      }
+
+      walkCoverageContract(absolutePath, root, errors);
+      continue;
+    }
+
+    // Only the unit config, which backs each project's `test` target and therefore its
+    // coverage floor. The component/e2e/storybook lanes are secondary runners over specs the
+    // unit lane already measures, so they deliberately carry no threshold block of their own.
+    if (entry !== "vitest.config.mts") {
+      continue;
+    }
+
+    const path = relative(root, absolutePath).split(sep).join("/");
+    const contents = readFileSync(absolutePath, "utf8");
+
+    if (!/\bfullCoverage\s*\(/u.test(contents)) {
+      errors.push(
+        `${path}: vitest config must build its coverage block with the shared fullCoverage() contract from packages/tooling/src/testing/vitest-coverage.mts`,
+      );
+      continue;
+    }
+
+    if (!/\bcoverage\s*:/u.test(contents)) {
+      errors.push(
+        `${path}: vitest config imports fullCoverage() but never assigns it to test.coverage`,
+      );
+    }
   }
 }
 

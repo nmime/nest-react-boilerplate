@@ -906,16 +906,25 @@ export default defineConfig(() => {
     `${dir}/vitest.config.mts`,
     `import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { workspaceTsconfigAliases } from "${d}config/vite/workspace-tsconfig-aliases.mjs";
+// nx-ignore-next-line
+import { fullCoverage } from "${d}packages/tooling/src/testing/vitest-coverage.mts";
 
 export default defineConfig({
+  root: import.meta.dirname,
   cacheDir: "${d}node_modules/.cache/vitest",
-  resolve: { tsconfigPaths: true },
+  resolve: { tsconfigPaths: true, alias: workspaceTsconfigAliases() },
   plugins: [react()],
   test: {
-    globals: true,
+    globals: false,
     environment: "happy-dom",
-    include: ["**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"],
+    include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.spec.tsx", "src/**/*.test.tsx"],
     passWithNoTests: false,
+    coverage: fullCoverage(
+      "coverage/${dir}",
+      ["src/**/*.{ts,tsx}"],
+      [],
+    ),
   },
 });
 `,
@@ -986,12 +995,20 @@ export function App() {
   tree.write(
     `${srcRoot}/app.spec.tsx`,
     `// @requirements ${generatedRequirementId(names.kebab)}
-import { describe, it, expect } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 import { App } from "./app";
 
+// Vitest globals are off, so Testing Library's auto-cleanup hook never registers.
+afterEach(cleanup);
+
 describe("App", () => {
-  it("should be defined", () => {
-    expect(App).toBeDefined();
+  it("renders the shell heading inside the runtime providers", () => {
+    document.title = "${names.kebab}";
+
+    render(<App />);
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("${names.kebab}");
   });
 });
 `,
@@ -1092,7 +1109,8 @@ function writeRunCommandProject(
           test: {
             executor: 'nx:run-commands',
             cache: true,
-            options: { cwd: dir, command: 'node --test scaffold.test.mjs' },
+            options: { cwd: dir, command: 'vitest run --config vitest.config.mts' },
+            outputs: [`{workspaceRoot}/coverage/${dir}`],
           },
         },
       },
@@ -1100,18 +1118,55 @@ function writeRunCommandProject(
       2,
     ) + '\n',
   );
-  tree.write(
-    `${dir}/scaffold.test.mjs`,
-    `// @requirements ${generatedRequirementId(name)}
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import test from "node:test";
+}
 
-test("generated application metadata is coherent", async () => {
-  const project = JSON.parse(await readFile(new URL("./project.json", import.meta.url), "utf8"));
-  assert.equal(project.name, "${name}");
-  assert.equal(project.projectType, "application");
-  assert.equal(project.sourceRoot, "${sourceRoot}");
+/**
+ * Emits the shared coverage contract for the run-command application renderers
+ * (astro/vike/expo). Without this they inherit no thresholds at all, so their test
+ * target reports a pass while enforcing nothing.
+ */
+function writeScaffoldVitestConfig(
+  tree: Tree,
+  dir: string,
+  options: {
+    include: string[];
+    coverageInclude: string[];
+    coverageExclude?: string[];
+    react?: boolean;
+    reactNativeAlias?: boolean;
+  },
+): void {
+  const d = dots(dir);
+  const list = (values: string[]) => values.map((value) => `"${value}"`).join(', ');
+  const alias = options.reactNativeAlias
+    ? `{\n      "react-native": "react-native-web",\n      ...workspaceTsconfigAliases(),\n    }`
+    : 'workspaceTsconfigAliases()';
+
+  tree.write(
+    `${dir}/vitest.config.mts`,
+    `/// <reference types="vitest" />
+import { defineConfig } from "vitest/config";
+import { workspaceTsconfigAliases } from "${d}config/vite/workspace-tsconfig-aliases.mjs";
+// nx-ignore-next-line
+import { fullCoverage } from "${d}packages/tooling/src/testing/vitest-coverage.mts";
+${options.react ? 'import react from "@vitejs/plugin-react";\n' : ''}
+export default defineConfig({
+  root: import.meta.dirname,
+  cacheDir: "${d}node_modules/.vitest/${dir}",
+  resolve: {
+    tsconfigPaths: true,
+    alias: ${alias},
+  },
+${options.react ? '  plugins: [react()],\n' : ''}  test: {
+    environment: "jsdom",
+    include: [${list(options.include)}],
+    passWithNoTests: false,
+    coverage: fullCoverage(
+      "coverage/${dir}",
+      [${list(options.coverageInclude)}],
+      [${list(options.coverageExclude ?? [])}],
+    ),
+  },
 });
 `,
   );
@@ -1166,7 +1221,9 @@ export default defineConfig({
   tree.write(
     `${dir}/src/pages/index.astro`,
     `---
-const title = "${names.title}";
+import { pageTitle } from "../shared/page-metadata";
+
+const title = pageTitle();
 ---
 
 <html lang="${defaultLocale}">
@@ -1176,6 +1233,38 @@ const title = "${names.title}";
 `,
   );
   tree.write(`${dir}/src/env.d.ts`, '/// <reference types="astro/client" />\n');
+  // .astro templates are not unit-testable, so the scaffold keeps its page metadata in a
+  // plain module. That gives the coverage contract something real to enforce from day one.
+  tree.write(
+    `${dir}/src/shared/page-metadata.ts`,
+    `export const siteTitle = "${names.title}";
+
+export function pageTitle(section?: string): string {
+  return section ? \`\${section} · \${siteTitle}\` : siteTitle;
+}
+`,
+  );
+  tree.write(
+    `${dir}/src/shared/page-metadata.spec.ts`,
+    `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, expect, it } from "vitest";
+import { pageTitle, siteTitle } from "./page-metadata";
+
+describe("pageTitle", () => {
+  it("returns the bare site title when no section is given", () => {
+    expect(pageTitle()).toBe(siteTitle);
+  });
+
+  it("prefixes the section ahead of the site title", () => {
+    expect(pageTitle("Pricing")).toBe(\`Pricing · \${siteTitle}\`);
+  });
+});
+`,
+  );
+  writeScaffoldVitestConfig(tree, dir, {
+    include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
+    coverageInclude: ['src/**/*.{ts,tsx}'],
+  });
   writeFrontendPolicy(tree, names, dir);
 }
 
@@ -1232,6 +1321,32 @@ export default defineConfig({
 }
 `,
   );
+  tree.write(
+    `${dir}/pages/index/+Page.spec.tsx`,
+    `// @requirements ${generatedRequirementId(names.kebab)}
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import Page from "./+Page";
+
+// Vitest globals are off, so Testing Library's auto-cleanup hook never registers.
+afterEach(cleanup);
+
+describe("index page", () => {
+  it("renders the scaffold heading", () => {
+    render(<Page />);
+
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("${names.title}");
+  });
+});
+`,
+  );
+  writeScaffoldVitestConfig(tree, dir, {
+    include: ['pages/**/*.spec.ts', 'pages/**/*.spec.tsx'],
+    coverageInclude: ['pages/**/*.{ts,tsx}'],
+    // +config.ts is Vike build configuration, not runtime logic.
+    coverageExclude: ['pages/+config.ts'],
+    react: true,
+  });
   writeFrontendPolicy(tree, names, dir);
 }
 
@@ -1303,7 +1418,15 @@ module.exports = configureWorkspaceMetro(config, { projectRoot, workspaceRoot })
   );
   tree.write(
     `${dir}/tsconfig.json`,
-    `${JSON.stringify({ extends: 'expo/tsconfig.base', compilerOptions: { strict: true }, include: ['app/**/*.ts', 'app/**/*.tsx', 'expo-env.d.ts'] }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        extends: 'expo/tsconfig.base',
+        compilerOptions: { strict: true },
+        include: ['app/**/*.ts', 'app/**/*.tsx', 'shared/**/*.ts', 'shared/**/*.tsx', 'expo-env.d.ts'],
+      },
+      null,
+      2,
+    )}\n`,
   );
   tree.write(`${dir}/expo-env.d.ts`, '/// <reference types="expo/types" />\n');
   tree.write(
@@ -1314,11 +1437,46 @@ module.exports = configureWorkspaceMetro(config, { projectRoot, workspaceRoot })
     `${dir}/app/index.tsx`,
     `import { Text, View } from "react-native";
 
+import { screenTitle } from "../shared/screen-metadata";
+
 export default function HomeScreen() {
-  return <View accessibilityRole="summary"><Text accessibilityRole="header">${names.title}</Text></View>;
+  return <View accessibilityRole="summary"><Text accessibilityRole="header">{screenTitle()}</Text></View>;
 }
 `,
   );
+  // Route modules under app/ are expo-router entrypoints that need the native runtime, so the
+  // covered seam lives outside the router tree — mirroring apps/frontend/mobile.
+  tree.write(
+    `${dir}/shared/screen-metadata.ts`,
+    `export const appTitle = "${names.title}";
+
+export function screenTitle(screen?: string): string {
+  return screen ? \`\${appTitle} · \${screen}\` : appTitle;
+}
+`,
+  );
+  tree.write(
+    `${dir}/shared/screen-metadata.spec.ts`,
+    `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, expect, it } from "vitest";
+import { appTitle, screenTitle } from "./screen-metadata";
+
+describe("screenTitle", () => {
+  it("returns the bare app title when no screen is given", () => {
+    expect(screenTitle()).toBe(appTitle);
+  });
+
+  it("appends the screen name after the app title", () => {
+    expect(screenTitle("Settings")).toBe(\`\${appTitle} · Settings\`);
+  });
+});
+`,
+  );
+  writeScaffoldVitestConfig(tree, dir, {
+    include: ['shared/**/*.spec.ts', 'shared/**/*.spec.tsx'],
+    coverageInclude: ['shared/**/*.{ts,tsx}'],
+    reactNativeAlias: true,
+  });
   writeFrontendPolicy(tree, names, dir);
 }
 

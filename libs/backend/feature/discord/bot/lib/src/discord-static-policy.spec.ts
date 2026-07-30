@@ -5,16 +5,26 @@ import { describe, expect, it } from 'vitest';
 
 const workspaceRoot = join(__dirname, '../../../../../../../');
 const discordRoots = ['libs/backend/feature/discord/bot/lib', 'apps/backend/discord/discord-app-api'];
+// Assembled from fragments so this spec's own source does not contain the specifiers it
+// forbids (sourceFiles() walks this file too). Separators must match the real package names.
 const forbiddenModules = [
   ['@sapphire', 'framework'].join('/'),
   ['discord', 'x'].join(''),
   ['detri', 'tus'].join(''),
-  ['@discord', 'js', 'builders'].join(''),
-  ['@discord', 'js', 'rest'].join(''),
+  ['@discordjs', 'builders'].join('/'),
+  ['@discordjs', 'rest'].join('/'),
   ['discord', 'js'].join('.'),
 ];
 
 describe('Discord static policy', () => {
+  it('assembles every forbidden specifier into a well-formed package name', () => {
+    // Guard against a mistyped separator silently disabling an entry: '@discordjsbuilders'
+    // would match no import and no dependency, so the rule below would be unenforceable.
+    for (const moduleName of forbiddenModules) {
+      expect(moduleName).toMatch(/^(?:@[a-z0-9-]+\/)?[a-z0-9][a-z0-9.-]*$/u);
+    }
+  });
+
   it('does not reintroduce forbidden Discord SDK dependencies', () => {
     const packageJson = JSON.parse(readFileSync(join(workspaceRoot, 'package.json'), 'utf8')) as {
       dependencies?: Record<string, string>;

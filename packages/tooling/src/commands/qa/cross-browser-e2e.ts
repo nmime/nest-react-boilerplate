@@ -85,6 +85,15 @@ if (!usesExternalRuntimeStack && process.env.PLAYWRIGHT_MANAGE_STACK !== "1") {
     reason: "Set PLAYWRIGHT_BASE_URL, every FULLSTACK_*_URL, or PLAYWRIGHT_MANAGE_STACK=1 to run the matrix",
     report: reportPath,
   }));
+  // Exiting 0 here made this an unfalsifiable gate: world-class-gates' real-user-journey check
+  // only inspects the exit code, so a misconfigured matrix counted as journey evidence. Skipping
+  // stays available for interactive local runs only.
+  if (process.env.CI === "true" || process.env.PLAYWRIGHT_REQUIRE_STACK === "1") {
+    console.error(
+      "cross-browser-e2e: refusing to report success without a runtime stack. Set PLAYWRIGHT_BASE_URL, every FULLSTACK_*_URL, or PLAYWRIGHT_MANAGE_STACK=1.",
+    );
+    process.exit(2);
+  }
   process.exit(0);
 }
 if (process.env.PLAYWRIGHT_AUTO_INSTALL === "1") {

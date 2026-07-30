@@ -169,15 +169,7 @@ function runNxTarget(target: ScaffoldVerificationTarget, project: string, resour
 
   execFileSync(
     join(workspaceRoot, 'node_modules/.bin/nx'),
-    [
-      'run',
-      `${project}:${target}`,
-      '--excludeTaskDependencies',
-      '--parallel=1',
-      '--skip-nx-cache',
-      '--output-style=static',
-      '--verbose',
-    ],
+    ['run', `${project}:${target}`, '--parallel=1', '--skip-nx-cache', '--output-style=static', '--verbose'],
     {
       cwd: workspaceRoot,
       env: childEnvironment,

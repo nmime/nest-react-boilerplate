@@ -224,7 +224,7 @@ test('API and SSR readiness endpoints identify the Docker services', async () =>
 
   const siteReady = await fetch(`${urls.siteApp}/ready`);
   expect(siteReady.status).toBe(200);
-  await expect(siteReady.json()).resolves.toEqual({ service: 'site-app', status: 'ok' });
+  await expect(siteReady.json()).resolves.toEqual({ runtime: 'node', service: 'site-app', status: 'ok' });
 });
 
 test('landing journey exposes public destinations at the 320px viewport floor', async ({ page }) => {

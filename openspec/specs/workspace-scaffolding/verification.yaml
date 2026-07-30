@@ -69,6 +69,12 @@ requirements:
           - pr
           - main
       - kind: vitest
+        file: packages/tooling/src/setup/closure.integration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
         file: apps/e2e/fullstack/tests/compose.test.ts
         target: fullstack-e2e:test
         lanes:
@@ -143,7 +149,7 @@ requirements:
       - domain
     cucumber:
       disposition: not-applicable
-      reason: Setup convergence and catalog correctness require direct planner and filesystem assertions.
+      reason: Repository command safety and cross-runtime Bun orchestration, including canonical child runtime identity and a bounded provider lifecycle, require direct static and executable tooling assertions.
       alternativeEvidence:
         - static
         - vitest
@@ -156,6 +162,18 @@ requirements:
           - main
       - kind: vitest
         file: packages/tooling/src/commands/project/setup.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: static
+        file: packages/tooling/src/commands/tooling/bun-compat.ts
+        target: '@repo/tooling:static-check'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/tooling/bun-compat.test.ts
         target: '@repo/tooling:test'
         lanes:
           - pr

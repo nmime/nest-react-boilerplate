@@ -1,4 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
+import { classToPlain, plainToInstance } from 'class-transformer';
 import type { ValidationError } from 'class-validator';
 import { problemTypeForCode } from '@app/backend-common-exception';
 import { ClientDataValidationException } from './exception';
@@ -80,6 +81,7 @@ export function createValidationPipe(): ValidationPipe {
     transform: true,
     whitelist: true,
     forbidNonWhitelisted: true,
+    transformerPackage: { classToPlain, plainToInstance },
     exceptionFactory: (errors) => new ClientDataValidationException(createValidationExceptionBody(errors).errors),
   });
 }

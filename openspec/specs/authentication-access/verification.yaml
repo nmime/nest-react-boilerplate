@@ -254,6 +254,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: vitest
+        file: libs/backend/postgres/main/auth/lib/src/auth-token-cleanup.service.spec.ts
+        target: '@app/backend-postgres-main-auth:test'
+        lanes:
+          - pr
+          - main
   - id: REQ-AUTH-AUDIT-008
     projects:
       - '@app/backend-feature-admin-main'

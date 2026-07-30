@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createConfig } from '@app/common-config';
 import Joi from 'joi';
 import type { MongoClientOptions } from 'mongodb';
-import ConnectionString from 'mongodb-connection-string-url';
+import { MongoConnectionString } from './mongo-connection-string';
 import {
   DefaultMongoConnectTimeoutMs,
   DefaultMongoMaxPoolSize,
@@ -101,7 +101,7 @@ export function createMongoClientOptions(
   assertSafeMongoClientOptions(config.uri, config.replicaSet, overrides);
   const replicaSet = resolveExpectedReplicaSet(config.uri, config.replicaSet, overrides.replicaSet);
 
-  return {
+  const options: MongoClientOptions = {
     appName: config.appName,
     connectTimeoutMS: config.connectTimeoutMs,
     serverSelectionTimeoutMS: config.serverSelectionTimeoutMs,
@@ -111,10 +111,11 @@ export function createMongoClientOptions(
     ...overrides,
     retryWrites: true,
     directConnection: false,
-    loadBalanced: false,
     writeConcern: { w: 'majority' },
     ...(replicaSet === undefined ? {} : { replicaSet }),
   };
+  assertSafeMongoClientOptionBounds(options);
+  return options;
 }
 
 export function resolveExpectedReplicaSet(
@@ -139,7 +140,7 @@ function validateMongoUriInput(value: unknown): void {
   }
 
   try {
-    const parsed = new ConnectionString(value);
+    const parsed = new MongoConnectionString(value);
     if (parsed.hosts.some((host) => host.trim() === '')) {
       throw new Error('Unsupported MongoDB URI.');
     }
@@ -170,8 +171,8 @@ function assertSafeMongoClientOptions(
   if (options.directConnection === true) {
     throw new Error('MongoDB directConnection is not allowed for the transaction-capable runtime.');
   }
-  if (options.loadBalanced === true) {
-    throw new Error('MongoDB loadBalanced mode is not allowed because startup must verify deployment topology.');
+  if (options.loadBalanced !== undefined) {
+    throw new Error('MongoDB loadBalanced must be configured in the URI, not in MongoClientOptions.');
   }
   if (options.retryWrites === false) {
     throw new Error('MongoDB retryWrites cannot be disabled for the transaction-capable runtime.');
@@ -185,6 +186,29 @@ function assertSafeMongoClientOptions(
   resolveExpectedReplicaSet(uri, configuredReplicaSet, options.replicaSet);
 }
 
+function assertSafeMongoClientOptionBounds(options: Readonly<MongoClientOptions>): void {
+  const { connectTimeoutMS, serverSelectionTimeoutMS, minPoolSize, maxPoolSize } = options;
+  assertPositiveBoundedInteger(connectTimeoutMS, 'connectTimeoutMS');
+  assertPositiveBoundedInteger(serverSelectionTimeoutMS, 'serverSelectionTimeoutMS');
+  assertNonnegativeBoundedInteger(minPoolSize, 'minPoolSize');
+  assertPositiveBoundedInteger(maxPoolSize, 'maxPoolSize');
+  if (minPoolSize > maxPoolSize) {
+    throw new Error('MongoDB minPoolSize must not exceed maxPoolSize.');
+  }
+}
+
+function assertPositiveBoundedInteger(value: unknown, optionName: string): asserts value is number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(`MongoDB ${optionName} must be a positive bounded integer.`);
+  }
+}
+
+function assertNonnegativeBoundedInteger(value: unknown, optionName: string): asserts value is number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    throw new Error(`MongoDB ${optionName} must be a nonnegative bounded integer.`);
+  }
+}
+
 function assertMajorityWriteConcern(value: string | number | undefined): void {
   if (value !== undefined && String(value).toLowerCase() !== 'majority') {
     throw new Error('MongoDB write concern cannot be weaker than majority.');
@@ -192,7 +216,7 @@ function assertMajorityWriteConcern(value: string | number | undefined): void {
 }
 
 function mongoUriOption(uri: string, optionName: string): string | undefined {
-  const values = [...new ConnectionString(uri).searchParams.entries()]
+  const values = [...new MongoConnectionString(uri).searchParams.entries()]
     .filter(([name]) => name.toLowerCase() === optionName)
     .map(([, value]) => value);
   if (values.length > 1 && values.some((value) => value !== values[0])) {

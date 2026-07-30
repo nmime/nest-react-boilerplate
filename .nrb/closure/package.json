@@ -110,6 +110,7 @@
     "react-native": "0.86.0",
     "react-native-gesture-handler": "2.32.0",
     "react-native-safe-area-context": "5.7.0",
+    "react-native-web": "0.21.2",
     "redis": "6.1.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
@@ -161,10 +162,11 @@
     "tsconfig-paths": "4.2.0",
     "typescript-eslint": "8.65.0",
     "typescript-transform-paths": "4.0.0",
+    "vite-plugin-istanbul": "9.0.1",
     "yaml": "2.9.0"
   },
   "nrb": {
     "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
-    "graphDigest": "177e7b37caf4cf70eaa0e4402108a8a96227c8ee99c3c603e813bb1c253aa038"
+    "graphDigest": "42917745171909a31f4184461783d4cc9d0118591f87c0ede46a02df9d194dca"
   }
 }

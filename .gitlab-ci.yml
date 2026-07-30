@@ -249,15 +249,8 @@ docker-fullstack-mongodb:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
-    AUTH_PERSISTENCE: mongodb
-    COMPOSE_PROFILES: mongodb,user-app-api,auth-app-api
-    DATABASE_ENGINE: mongodb
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ''
-    FULLSTACK_API_CRITICAL_ONLY: 'true'
-    MONGODB_DATABASE: nest_react_boilerplate
-    MONGODB_REPLICA_SET: rs0
-    MONGODB_URI: 'mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true'
     NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/closure'
   timeout: 45m
 

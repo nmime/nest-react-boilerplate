@@ -35,11 +35,14 @@ function graph(
     '@nx/react',
     '@nx/vite',
     '@swc/helpers',
+    '@tailwindcss/vite',
     '@typescript-eslint/eslint-plugin',
     '@typescript-eslint/parser',
+    '@vitejs/plugin-react',
     'eslint',
     'eslint-config-prettier',
     'eslint-plugin-sonarjs',
+    'happy-dom',
     'jiti',
     'jsdom',
     'jsonc-eslint-parser',
@@ -47,6 +50,7 @@ function graph(
     'typescript',
     'typescript-eslint',
     'typescript-transform-paths',
+    'vite-plugin-istanbul',
     'zod',
     ...(options.externalPackages ?? []),
     ...(options.toolingPackages ?? []),
@@ -117,11 +121,14 @@ describe('selected closure', () => {
       '@nx/react': '1.0.0',
       '@nx/vite': '1.0.0',
       '@swc/helpers': '1.0.0',
+      '@tailwindcss/vite': '1.0.0',
       '@typescript-eslint/eslint-plugin': '1.0.0',
       '@typescript-eslint/parser': '1.0.0',
+      '@vitejs/plugin-react': '1.0.0',
       eslint: '1.0.0',
       'eslint-config-prettier': '1.0.0',
       'eslint-plugin-sonarjs': '1.0.0',
+      'happy-dom': '1.0.0',
       jiti: '1.0.0',
       jsdom: '1.0.0',
       'jsonc-eslint-parser': '1.0.0',
@@ -129,6 +136,7 @@ describe('selected closure', () => {
       typescript: '1.0.0',
       'typescript-eslint': '1.0.0',
       'typescript-transform-paths': '1.0.0',
+      'vite-plugin-istanbul': '1.0.0',
     });
     const serialized = JSON.parse(renderSelectedClosure(first)) as Record<string, unknown>;
     assert.equal(serialized.externalPackages, undefined);
@@ -147,6 +155,27 @@ describe('selected closure', () => {
 
     assert.equal(selected.productExternalPackages?.['string-format'], '1.0.0');
     assert.equal(selected.productExternalPackages?.['@types/string-format'], '1.0.0');
+  });
+
+  it('includes renderer command packages only for their selected application', () => {
+    const fixture = graph({
+      projects: { 'landing-app': ['build'], 'mobile-app': ['build', 'export'] },
+      externalPackages: ['react-native-web'],
+    });
+
+    const mobile = buildSelectedClosure(fixture, {
+      apps: ['mobile-app'],
+      capabilities: [],
+      configHash: digest,
+    });
+    const landing = buildSelectedClosure(fixture, {
+      apps: ['landing-app'],
+      capabilities: [],
+      configHash: digest,
+    });
+
+    assert.equal(mobile.productExternalPackages?.['react-native-web'], '1.0.0');
+    assert.equal(landing.productExternalPackages?.['react-native-web'], undefined);
   });
 
   it('does not expose non-Compose e2e roots as services', () => {

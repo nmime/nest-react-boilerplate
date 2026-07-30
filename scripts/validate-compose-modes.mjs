@@ -28,6 +28,8 @@ const providedTls = read('docker/docker-compose.prod.edge-provided-tls.yml');
 const secretEntrypoint = read('docker/secret-entrypoint.sh');
 const mongoEntrypoint = read('docker/mongodb/start-authenticated-replica-set.sh');
 const mongoProductionUsers = read('docker/mongodb/create-production-user.js');
+const developmentCompose = read('docker/docker-compose.yml');
+const developmentMongoInitializer = read('docker/mongodb/prepare-replica-set.sh');
 const databaseConsumers = [
   'migrate',
   'admin-app-api',
@@ -128,6 +130,33 @@ assert.ok(bundledMongo.includes('\n  mongodb:\n'), 'Bundled MongoDB overlay must
 assert.ok(mongoEntrypoint.includes('--replSet'), 'Bundled MongoDB must use a replica set.');
 assert.ok(bundledMongo.includes('mongodb_keyfile'), 'Bundled MongoDB must use keyfile authentication.');
 assert.ok(bundledMongo.includes('mongodb-init:'), 'Bundled MongoDB must define idempotent preparation.');
+assert.ok(
+  developmentCompose.includes("'${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}'"),
+  'Development MongoDB must publish the selected port to the same container port.',
+);
+assert.ok(
+  developmentCompose.includes("'--port', '${MONGODB_PORT:-27017}'"),
+  'Development mongod must listen on the selected port.',
+);
+assert.ok(
+  developmentCompose.includes("entrypoint: ['bash', '/opt/mongodb/prepare-replica-set.sh']"),
+  'Development MongoDB initialization must use the canonical checked initializer.',
+);
+for (const required of [
+  'set -euo pipefail',
+  'MONGODB_INIT_TIMEOUT_SECONDS',
+  'readonly deadline=',
+  'timeout --foreground --kill-after=2s',
+  "retry_before_deadline 'replica-set preparation'",
+  "retry_before_deadline 'replica-set member reconfiguration'",
+  "retry_before_deadline 'primary readiness'",
+  '--file /opt/mongodb/transaction-smoke.js',
+]) {
+  assert.ok(
+    developmentMongoInitializer.includes(required),
+    `Development MongoDB initializer missing bounded checked step: ${required}`,
+  );
+}
 for (const role of ["'readWrite'", "'dbAdmin'", "'backup'", "'restore'"]) {
   assert.ok(mongoProductionUsers.includes(`role: ${role}`), `Bundled MongoDB must provision the ${role} role.`);
 }
@@ -418,7 +447,7 @@ const assertResolvedNamedContexts = (model, label) => {
 };
 assertResolvedNamedContexts(productionSourceBuildModel, 'production source-build Compose');
 
-const renderSelected = (provider) => {
+const renderSelected = (provider, environment = {}) => {
   const result = spawnSync(
     'docker',
     [
@@ -440,6 +469,7 @@ const renderSelected = (provider) => {
         ...process.env,
         AUTH_PERSISTENCE: provider,
         DATABASE_ENGINE: provider,
+        ...environment,
         NRB_CLOSURE_CONTEXT: closureContextFixture,
       },
     },
@@ -450,8 +480,26 @@ const renderSelected = (provider) => {
   }
   return JSON.parse(result.stdout);
 };
-assertResolvedNamedContexts(renderSelected('postgres'), 'selected PostgreSQL Compose');
-assertResolvedNamedContexts(renderSelected('mongodb'), 'selected MongoDB Compose');
+const selectedPostgresCompose = renderSelected('postgres');
+const selectedMongoCompose = renderSelected('mongodb', { MONGODB_PORT: '37117' });
+assertResolvedNamedContexts(selectedPostgresCompose, 'selected PostgreSQL Compose');
+assertResolvedNamedContexts(selectedMongoCompose, 'selected MongoDB Compose');
+assert.deepEqual(
+  selectedMongoCompose.services.mongodb.ports.map(({ published, target }) => ({ published, target })),
+  [{ published: '37117', target: 37117 }],
+  'A non-default MongoDB port must be identical on the host and in the container.',
+);
+assert.deepEqual(selectedMongoCompose.services.mongodb.command.slice(-2), ['--port', '37117']);
+assert.equal(selectedMongoCompose.services['mongodb-init'].environment.MONGODB_PORT, '37117');
+assert.equal(
+  selectedMongoCompose.services['mongodb-init'].environment.MONGODB_ADVERTISED_HOST,
+  'mongodb.localhost:37117',
+);
+assert.equal(selectedMongoCompose.services['mongodb-init'].environment.MONGODB_INIT_TIMEOUT_SECONDS, '120');
+assert.deepEqual(selectedMongoCompose.services['mongodb-init'].entrypoint, [
+  'bash',
+  '/opt/mongodb/prepare-replica-set.sh',
+]);
 
 for (const model of [bundledTelegramModel, externalTelegramModel]) {
   const auth = model.services['auth-app-api'];

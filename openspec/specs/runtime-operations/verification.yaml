@@ -234,6 +234,18 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: component
+        file: libs/backend/mongodb/main/shared/lib/src/mongo.transaction.component-spec.ts
+        target: '@app/backend-mongodb-main:component-test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/mongo-migrate.component.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
   - id: REQ-RUNTIME-DELIVERY-009
     projects:
       - '@repo/tooling'

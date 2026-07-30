@@ -173,6 +173,7 @@ describe('application generator', () => {
       assert.doesNotMatch(main, /^import .*billing-consumer\.module/m);
       assert.equal(main.includes('bootstrapNestApi'), false);
       assert.match(main, /Application context successfully started/);
+      assert.match(main, /runtime=\$\{runtime\}/);
       assert.equal(tree.exists('apps/backend/billing/billing-consumer/package.json'), false);
     });
 

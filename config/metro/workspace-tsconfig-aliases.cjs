@@ -27,7 +27,7 @@ function resolveWorkspaceAlias(moduleName, workspaceRoot, aliases) {
     }
 
     const wildcard = moduleName.slice(prefix.length, moduleName.length - suffix.length || undefined);
-    return path.resolve(workspaceRoot, target.replace('*', wildcard));
+    return path.resolve(workspaceRoot, target.replaceAll('*', wildcard));
   }
   return undefined;
 }

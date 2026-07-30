@@ -152,6 +152,8 @@ semantics.
 
 - Session and token revocation is durable.
 - Duplicate identity or role assignment obeys declared uniqueness.
+- Scheduled token cleanup does not overlap and cannot block application
+  shutdown beyond its finite cleanup grace period.
 
 **Failure behavior:**
 

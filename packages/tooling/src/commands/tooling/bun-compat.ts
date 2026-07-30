@@ -1,8 +1,9 @@
-import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
+// Evidence for: REQ-SCAFFOLD-TOOLING-005
+import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { delimiter, dirname, join } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 import type { CommandContext } from '../../cli.js';
@@ -16,6 +17,18 @@ import {
 import { detectJavaScriptRuntime } from '../../runtime/environment.js';
 import { providerExternalPackages, type SelectedClosureManifest } from '../../setup/closure.js';
 import { appCatalog } from '../../setup/catalog.js';
+
+const NX_PROBE_TIMEOUT_MS = 30 * 60_000;
+const DEPLOYMENT_BUILD_TIMEOUT_MS = 30 * 60_000;
+const DEPLOYMENT_INSTALL_TIMEOUT_MS = 15 * 60_000;
+const COMPOSE_CHECK_TIMEOUT_MS = 30_000;
+const COMPOSE_STARTUP_TIMEOUT_MS = 20 * 60_000;
+const COMPOSE_MIGRATION_TIMEOUT_MS = 15 * 60_000;
+const COMPOSE_CLEANUP_TIMEOUT_MS = 5 * 60_000;
+const COMMAND_TERMINATION_GRACE_MS = 2_000;
+const COMMAND_FORCE_KILL_WAIT_MS = 1_000;
+const HTTP_REQUEST_TIMEOUT_MS = 5_000;
+const HTTP_RUNTIME_READY_TIMEOUT_MS = 30_000;
 
 export interface BunCompatibilityProbe {
   name: string;
@@ -45,6 +58,15 @@ export interface BunRuntimeExecutionProbe {
 export interface NodeBackedPnpmInvocation {
   command: string;
   args: string[];
+}
+
+export interface BoundedCommandOptions {
+  cwd: string;
+  env?: NodeJS.ProcessEnv;
+  stdio?: 'ignore' | 'inherit';
+  timeoutMs: number;
+  terminationGraceMs?: number;
+  forceKillWaitMs?: number;
 }
 
 export function resolveBunRuntimeSelection(closure: SelectedClosureManifest): BunRuntimeSelection {
@@ -109,10 +131,19 @@ export function createBunCompatibilityProbes(closure: SelectedClosureManifest): 
     });
   }
   const testProjects = closure.targets.test ?? [];
-  if (testProjects.length > 0) {
+  const nodeTestProjects = testProjects.filter(isNodeOnlyTestProject);
+  const bunTestProjects = testProjects.filter((project) => !isNodeOnlyTestProject(project));
+  if (bunTestProjects.length > 0) {
     probes.push({
       name: 'Selected closure unit tests',
-      nxArgs: ['run-many', '-t', 'test', `--projects=${testProjects.join(',')}`, '--parallel=1', '--skip-nx-cache'],
+      nxArgs: ['run-many', '-t', 'test', `--projects=${bunTestProjects.join(',')}`, '--parallel=1', '--skip-nx-cache'],
+    });
+  }
+  if (nodeTestProjects.length > 0) {
+    probes.push({
+      name: 'Node-only acceptance tests',
+      nxArgs: ['run-many', '-t', 'test', `--projects=${nodeTestProjects.join(',')}`, '--parallel=1', '--skip-nx-cache'],
+      runtime: 'node',
     });
   }
   if ((closure.targets.e2e ?? []).includes('auth-app-api')) {
@@ -122,6 +153,10 @@ export function createBunCompatibilityProbes(closure: SelectedClosureManifest): 
     });
   }
   return probes;
+}
+
+export function isNodeOnlyTestProject(project: string): boolean {
+  return project === 'acceptance-e2e' || project.endsWith('-acceptance-e2e');
 }
 
 export async function runBunCompatibilityCommand(context: CommandContext): Promise<number> {
@@ -153,32 +188,34 @@ export async function runBunCompatibilityCommand(context: CommandContext): Promi
       `Bun ${runtime.version} compatibility contract (${closure.provider ?? 'provider-free'} selected closure)\n`,
     );
 
-    for (const probe of createBunCompatibilityProbes(closure)) {
-      process.stdout.write(`\n==> ${probe.name}\n`);
-      const command = createBunCompatibilityInvocation(probe, environment, process.execPath);
-      const result = spawnSync(command.program, command.args, {
-        cwd: context.workspaceRoot,
-        env: command.environment,
-        stdio: 'inherit',
-      });
-      if (result.status !== 0) throw new Error(`${probe.name} failed with exit code ${result.status ?? 1}.`);
-    }
-
-    if (selection.projects.length > 0) {
-      await buildCanonicalDeploymentArtifacts(context.workspaceRoot, selection.projects, environment);
-    }
     const infrastructure = await startSelectedInfrastructure(context.workspaceRoot, closure, environment);
-    try {
+    await runWithCleanup(async () => {
+      const selectedEnvironment = isolatedRuntimeEnvironment({
+        ...environment,
+        ...infrastructure.runtimeEnvironment,
+      });
+      for (const probe of createBunCompatibilityProbes(closure)) {
+        process.stdout.write(`\n==> ${probe.name}\n`);
+        const command = createBunCompatibilityInvocation(probe, selectedEnvironment, process.execPath);
+        await runBoundedCommand(command.program, command.args, probe.name, {
+          cwd: context.workspaceRoot,
+          env: command.environment,
+          stdio: 'inherit',
+          timeoutMs: NX_PROBE_TIMEOUT_MS,
+        });
+      }
+
+      if (selection.projects.length > 0) {
+        await buildCanonicalDeploymentArtifacts(context.workspaceRoot, selection.projects, selectedEnvironment);
+      }
       await runSelectedRuntimeSmokes({
         workspaceRoot: context.workspaceRoot,
         closure,
         graph,
         selection,
-        environment: { ...environment, ...infrastructure.runtimeEnvironment },
+        environment: selectedEnvironment,
       });
-    } finally {
-      await infrastructure.stop();
-    }
+    }, infrastructure.stop);
   } catch (error: unknown) {
     process.stderr.write(`${errorMessage(error)}\n`);
     return 1;
@@ -196,8 +233,11 @@ export function createBunCompatibilityInvocation(
   const probeEnvironment = { ...environment };
   if (probe.runtime === 'node') {
     delete probeEnvironment.BUN_BE_BUN;
+    const nodeExecutable = resolveCanonicalNodeExecutable(probeEnvironment);
+    probeEnvironment.PATH = executableFirstPath(nodeExecutable, probeEnvironment.PATH);
+    probeEnvironment.npm_node_execpath = nodeExecutable;
     return {
-      program: 'node',
+      program: nodeExecutable,
       args: ['node_modules/nx/dist/bin/nx.js', ...probe.nxArgs],
       environment: probeEnvironment,
     };
@@ -208,6 +248,27 @@ export function createBunCompatibilityInvocation(
     args: ['run', '--bun', 'nx', ...probe.nxArgs],
     environment: probeEnvironment,
   };
+}
+
+export async function runWithCleanup<T>(
+  operation: () => Promise<T>,
+  cleanup: () => Promise<void>,
+  reportCleanupError: (error: unknown) => void = reportCleanupFailure,
+): Promise<T> {
+  let operationFailed = false;
+  try {
+    return await operation();
+  } catch (error: unknown) {
+    operationFailed = true;
+    throw error;
+  } finally {
+    try {
+      await cleanup();
+    } catch (cleanupError: unknown) {
+      if (!operationFailed) throw cleanupError;
+      reportCleanupError(cleanupError);
+    }
+  }
 }
 
 export function readPinnedBunVersion(workspaceRoot: string): string {
@@ -237,10 +298,19 @@ export function resolveCanonicalNodeExecutable(
   return existsSync(siblingNode) ? siblingNode : executableOnPath('node', environment);
 }
 
+function executableFirstPath(executable: string, currentPath: string | undefined): string {
+  const executableDirectory = dirname(executable);
+  const remainingDirectories = (currentPath ?? '')
+    .split(delimiter)
+    .filter(Boolean)
+    .filter((directory) => resolve(directory) !== resolve(executableDirectory));
+  return [executableDirectory, ...remainingDirectories].join(delimiter);
+}
+
 function executableOnPath(name: string, environment: NodeJS.ProcessEnv): string {
   const executable = environment.PATH?.split(delimiter)
     .filter(Boolean)
-    .map((directory) => join(directory, name))
+    .map((directory) => resolve(directory, name))
     .find((candidate) => existsSync(candidate));
   if (!executable) throw new Error(`${name} is required on PATH for deployment dependency installation.`);
   return executable;
@@ -286,7 +356,7 @@ async function buildCanonicalDeploymentArtifacts(
   environment: NodeJS.ProcessEnv,
 ): Promise<void> {
   process.stdout.write('\n==> Canonical pnpm/Node deployment artifacts\n');
-  const result = spawnSync(
+  await runBoundedCommand(
     resolveCanonicalNodeExecutable(environment),
     [
       join(workspaceRoot, 'node_modules/nx/dist/bin/nx.js'),
@@ -296,9 +366,9 @@ async function buildCanonicalDeploymentArtifacts(
       `--projects=${projects.join(',')}`,
       '--skip-nx-cache',
     ],
-    { cwd: workspaceRoot, env: environment, stdio: 'inherit' },
+    'Canonical deployment build',
+    { cwd: workspaceRoot, env: environment, stdio: 'inherit', timeoutMs: DEPLOYMENT_BUILD_TIMEOUT_MS },
   );
-  if (result.status !== 0) throw new Error(`Canonical deployment build failed with exit code ${result.status ?? 1}.`);
 }
 
 interface InfrastructureHandle {
@@ -312,7 +382,13 @@ async function startSelectedInfrastructure(
   environment: NodeJS.ProcessEnv,
 ): Promise<InfrastructureHandle> {
   if (!closure.provider) return { runtimeEnvironment: {}, stop: async () => undefined };
-  if (spawnSync('docker', ['compose', 'version'], { cwd: workspaceRoot, stdio: 'ignore' }).status !== 0) {
+  try {
+    await runBoundedCommand('docker', ['compose', 'version'], 'Docker Compose version check', {
+      cwd: workspaceRoot,
+      stdio: 'ignore',
+      timeoutMs: COMPOSE_CHECK_TIMEOUT_MS,
+    });
+  } catch (error: unknown) {
     throw new Error(`Docker Compose is required for the ${closure.provider} Bun runtime probe.`);
   }
 
@@ -348,56 +424,54 @@ async function startSelectedInfrastructure(
   } else {
     Object.assign(selectedEnvironment, {
       MONGODB_PORT: String(databasePort),
-      MONGODB_URI: `mongodb://mongodb.localhost:27017/${databaseName}?replicaSet=rs0&retryWrites=true`,
+      MONGODB_URI: createLocalMongoUri(databasePort, databaseName),
       MONGODB_DATABASE: databaseName,
       MONGODB_REPLICA_SET: 'rs0',
     });
   }
-  const runCompose = (args: string[]) => {
-    const result = spawnSync('docker', [...compose, ...args], {
+  const runCompose = async (args: string[], timeoutMs: number): Promise<void> => {
+    await runBoundedCommand('docker', [...compose, ...args], `docker ${[...compose, ...args].join(' ')}`, {
       cwd: workspaceRoot,
       env: selectedEnvironment,
       stdio: 'inherit',
+      timeoutMs,
     });
-    if (result.status !== 0) throw new Error(`docker ${[...compose, ...args].join(' ')} failed with ${result.status ?? 1}.`);
   };
 
   try {
     if (closure.provider === 'postgres') {
-      runCompose(['up', '--build', '-d', '--wait', 'postgres']);
-      runCompose(['run', '--build', '--rm', '--no-deps', 'migrate']);
+      await runCompose(['up', '--build', '-d', '--wait', 'postgres'], COMPOSE_STARTUP_TIMEOUT_MS);
+      await runCompose(['run', '--build', '--rm', '--no-deps', 'migrate'], COMPOSE_MIGRATION_TIMEOUT_MS);
     } else {
-      runCompose(['up', '--build', '-d', 'mongodb']);
-      runCompose(['run', '--rm', '--no-deps', 'mongodb-init']);
-      runCompose(['run', '--build', '--rm', '--no-deps', 'mongodb-migrate']);
+      await runCompose(['up', '--build', '-d', 'mongodb'], COMPOSE_STARTUP_TIMEOUT_MS);
+      await runCompose(['run', '--rm', '--no-deps', 'mongodb-init'], COMPOSE_MIGRATION_TIMEOUT_MS);
+      await runCompose(['run', '--build', '--rm', '--no-deps', 'mongodb-migrate'], COMPOSE_MIGRATION_TIMEOUT_MS);
     }
-  } catch (error) {
-    spawnSync('docker', [...compose, 'down', '--volumes', '--remove-orphans'], {
-      cwd: workspaceRoot,
-      env: selectedEnvironment,
-      stdio: 'inherit',
-    });
+  } catch (error: unknown) {
+    try {
+      await runCompose(['down', '--volumes', '--remove-orphans'], COMPOSE_CLEANUP_TIMEOUT_MS);
+    } catch (cleanupError: unknown) {
+      reportCleanupFailure(cleanupError);
+    }
     throw error;
   }
 
   const runtimeEnvironment = isolatedRuntimeEnvironment({ ...selectedEnvironment });
   delete runtimeEnvironment.CONTAINER_DATABASE_URL;
   if (closure.provider === 'mongodb') {
-    runtimeEnvironment.MONGODB_URI =
-      `mongodb://mongodb.localhost:${databasePort}/${databaseName}?replicaSet=rs0&retryWrites=true`;
+    runtimeEnvironment.MONGODB_URI = createLocalMongoUri(databasePort, databaseName);
   }
 
   return {
     runtimeEnvironment,
     stop: async () => {
-      const result = spawnSync('docker', [...compose, 'down', '--volumes', '--remove-orphans'], {
-        cwd: workspaceRoot,
-        env: selectedEnvironment,
-        stdio: 'inherit',
-      });
-      if (result.status !== 0) throw new Error(`Bun runtime database cleanup failed with ${result.status ?? 1}.`);
+      await runCompose(['down', '--volumes', '--remove-orphans'], COMPOSE_CLEANUP_TIMEOUT_MS);
     },
   };
+}
+
+export function createLocalMongoUri(port: number, databaseName: string): string {
+  return `mongodb://mongodb.localhost:${port}/${databaseName}?replicaSet=rs0&retryWrites=true`;
 }
 
 async function runSelectedRuntimeSmokes(options: {
@@ -418,7 +492,7 @@ async function runSelectedRuntimeSmokes(options: {
         closure: options.closure,
         project,
       });
-      installDeploymentArtifact(artifact, options.environment);
+      await installDeploymentArtifact(artifact, options.environment);
       for (const runtime of [
         { name: 'node' as const, executable: resolveCanonicalNodeExecutable(options.environment) },
         { name: 'bun' as const, executable: process.execPath },
@@ -433,16 +507,19 @@ async function runSelectedRuntimeSmokes(options: {
   }
 }
 
-function installDeploymentArtifact(artifact: StagedDeploymentArtifact, environment: NodeJS.ProcessEnv): void {
+async function installDeploymentArtifact(
+  artifact: StagedDeploymentArtifact,
+  environment: NodeJS.ProcessEnv,
+): Promise<void> {
   process.stdout.write(`\n==> pnpm deployment dependency closure: ${artifact.project}\n`);
   const plan = deploymentInstallPlan(artifact);
   const invocation = createNodeBackedPnpmInvocation(plan.args, environment);
-  const result = spawnSync(invocation.command, invocation.args, {
+  await runBoundedCommand(invocation.command, invocation.args, `${artifact.project} dependency install`, {
     cwd: plan.cwd,
     env: isolatedRuntimeEnvironment(environment),
     stdio: 'inherit',
+    timeoutMs: DEPLOYMENT_INSTALL_TIMEOUT_MS,
   });
-  if (result.status !== 0) throw new Error(`${artifact.project} dependency install failed with ${result.status ?? 1}.`);
 }
 
 async function runSiteRuntimeSmoke(
@@ -459,6 +536,11 @@ async function runSiteRuntimeSmoke(
     cwd: artifact.artifactRoot,
     environment: isolatedRuntimeEnvironment({ ...environment, NODE_ENV: 'production', SITE_APP_PORT: String(port) }),
     urls: [`http://127.0.0.1:${port}/health`, `http://127.0.0.1:${port}/`, `http://127.0.0.1:${port}/problems`],
+    validate: async (signal) => {
+      const response = await fetch(`http://127.0.0.1:${port}/health`, { signal });
+      const body = (await response.json()) as { runtime?: string };
+      assertRuntimeIdentity(body.runtime, runtime.name, artifact.project);
+    },
   });
 }
 
@@ -521,15 +603,13 @@ async function runApiRuntimeSmoke(
       NATS_SERVERS: '',
     }),
     urls: [`${baseUrl}/live`, readyUrl],
-    validate: async () => {
-      const response = await fetch(readyUrl);
+    validate: async (signal) => {
+      const response = await fetch(readyUrl, { signal });
       const body = (await response.json()) as {
         data?: { checks?: Array<{ name?: string; details?: { runtime?: string } }> };
       };
       const runtimeCheck = body.data?.checks?.find((check) => check.name === 'runtime');
-      if (runtimeCheck?.details?.runtime !== runtime.name) {
-        throw new Error(`${artifact.project} readiness did not report runtime=${runtime.name}.`);
-      }
+      assertRuntimeIdentity(runtimeCheck?.details?.runtime, runtime.name, artifact.project);
     },
   });
 }
@@ -544,6 +624,7 @@ async function runHeadlessRuntimeSmoke(
     cwd: artifact.artifactRoot,
     env: createHeadlessRuntimeEnvironment(environment),
     stdio: ['ignore', 'pipe', 'pipe'],
+    detached: process.platform !== 'win32',
   });
   let output = '';
   child.stdout?.on('data', (chunk: Buffer) => {
@@ -558,7 +639,10 @@ async function runHeadlessRuntimeSmoke(
     const deadline = Date.now() + 30_000;
     while (Date.now() < deadline) {
       if (childHasExited(child)) throw new Error(`${artifact.project} exited before application-context startup.`);
-      if (output.includes('Application context successfully started')) return;
+      if (output.includes('Application context successfully started')) {
+        assertRuntimeIdentity(runtimeFromProcessOutput(output), runtime.name, artifact.project);
+        return;
+      }
       await delay(100);
     }
     throw new Error(`${artifact.project} application-context startup timed out.`);
@@ -574,6 +658,8 @@ export function createHeadlessRuntimeEnvironment(environment: NodeJS.ProcessEnv)
     OTEL_ENABLED: 'false',
     OTEL_SDK_DISABLED: 'true',
     NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: '00'.repeat(32),
+    RESEND_API_KEY: 'bun-test-key',
+    NOTIFICATION_EMAIL_FROM: 'Bun Compatibility <bun-compat@example.test>',
     S3_ENDPOINT: '',
     S3_ACCESS_KEY: '',
     S3_SECRET_KEY: '',
@@ -587,7 +673,7 @@ interface HttpRuntimeOptions {
   cwd: string;
   environment: NodeJS.ProcessEnv;
   urls: readonly string[];
-  validate?: () => Promise<void>;
+  validate?: (signal: AbortSignal) => Promise<void>;
 }
 
 async function runHttpRuntime(options: HttpRuntimeOptions): Promise<void> {
@@ -596,44 +682,54 @@ async function runHttpRuntime(options: HttpRuntimeOptions): Promise<void> {
     cwd: options.cwd,
     env: isolatedRuntimeEnvironment(options.environment),
     stdio: ['ignore', 'inherit', 'inherit'],
+    detached: process.platform !== 'win32',
   });
   try {
     await waitForUrls(child, options.urls);
-    await options.validate?.();
+    await options.validate?.(AbortSignal.timeout(HTTP_REQUEST_TIMEOUT_MS));
   } finally {
     await stopChild(child);
   }
 }
 
-async function waitForUrls(child: ChildProcess, urls: readonly string[]): Promise<void> {
-  const deadline = Date.now() + 30_000;
+export async function waitForUrls(
+  child: Pick<ChildProcess, 'exitCode' | 'signalCode'>,
+  urls: readonly string[],
+  options: { readyTimeoutMs?: number; requestTimeoutMs?: number } = {},
+): Promise<void> {
+  const readyTimeoutMs = options.readyTimeoutMs ?? HTTP_RUNTIME_READY_TIMEOUT_MS;
+  const requestTimeoutMs = options.requestTimeoutMs ?? HTTP_REQUEST_TIMEOUT_MS;
+  const deadline = Date.now() + readyTimeoutMs;
   let lastError: unknown;
   while (Date.now() < deadline) {
     if (childHasExited(child)) throw new Error(`Runtime process exited before becoming ready with code ${child.exitCode}.`);
     try {
       for (const url of urls) {
-        const response = await fetch(url);
+        const remainingMs = Math.max(1, deadline - Date.now());
+        const response = await fetch(url, {
+          signal: AbortSignal.timeout(Math.min(requestTimeoutMs, remainingMs)),
+        });
         if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
       }
       return;
     } catch (error: unknown) {
       lastError = error;
-      await delay(250);
+      await delay(Math.min(250, Math.max(1, deadline - Date.now())));
     }
   }
   throw new Error(`Runtime smoke timed out: ${errorMessage(lastError)}`);
 }
 
 async function stopChild(child: ChildProcess): Promise<void> {
-  if (childHasExited(child)) return;
-  child.kill('SIGTERM');
+  if (processTreeHasExited(child)) return;
+  signalChildProcessTree(child, 'SIGTERM');
   for (let attempt = 0; attempt < 100; attempt += 1) {
-    if (childHasExited(child)) return;
+    if (processTreeHasExited(child)) return;
     await delay(100);
   }
-  child.kill('SIGKILL');
+  signalChildProcessTree(child, 'SIGKILL');
   for (let attempt = 0; attempt < 50; attempt += 1) {
-    if (childHasExited(child)) return;
+    if (processTreeHasExited(child)) return;
     await delay(100);
   }
   throw new Error('Runtime probe child did not stop after SIGTERM; SIGKILL was required for cleanup.');
@@ -641,6 +737,124 @@ async function stopChild(child: ChildProcess): Promise<void> {
 
 export function childHasExited(child: Pick<ChildProcess, 'exitCode' | 'signalCode'>): boolean {
   return child.exitCode !== null || child.signalCode !== null;
+}
+
+export function assertRuntimeIdentity(
+  actual: string | undefined,
+  expected: 'bun' | 'node',
+  project: string,
+): void {
+  if (actual !== expected) {
+    throw new Error(`${project} did not report runtime=${expected}; received ${actual ?? 'no runtime identity'}.`);
+  }
+}
+
+function runtimeFromProcessOutput(output: string): string | undefined {
+  return output.match(/Application context successfully started \(runtime=(bun|node)\)/u)?.[1];
+}
+
+function processTreeHasExited(child: ChildProcess): boolean {
+  if (process.platform === 'win32' || !child.pid) {
+    return childHasExited(child);
+  }
+  try {
+    process.kill(-child.pid, 0);
+    return false;
+  } catch (error: unknown) {
+    return (error as NodeJS.ErrnoException).code === 'ESRCH';
+  }
+}
+
+export async function runBoundedCommand(
+  program: string,
+  args: readonly string[],
+  description: string,
+  options: BoundedCommandOptions,
+): Promise<void> {
+  if (!Number.isFinite(options.timeoutMs) || options.timeoutMs <= 0) {
+    throw new Error(`${description} requires a positive finite timeout.`);
+  }
+  const terminationGraceMs = options.terminationGraceMs ?? COMMAND_TERMINATION_GRACE_MS;
+  const forceKillWaitMs = options.forceKillWaitMs ?? COMMAND_FORCE_KILL_WAIT_MS;
+  if (!Number.isFinite(terminationGraceMs) || terminationGraceMs < 0) {
+    throw new Error(`${description} requires a finite non-negative termination grace period.`);
+  }
+  if (!Number.isFinite(forceKillWaitMs) || forceKillWaitMs < 0) {
+    throw new Error(`${description} requires a finite non-negative force-kill wait.`);
+  }
+
+  await new Promise<void>((resolveCommand, rejectCommand) => {
+    const child = spawn(program, [...args], {
+      cwd: options.cwd,
+      env: options.env,
+      stdio: options.stdio ?? 'inherit',
+      detached: process.platform !== 'win32',
+    });
+    const timeoutError = new Error(`${description} timed out after ${options.timeoutMs}ms.`);
+    let timedOut = false;
+    let forceKillSent = false;
+    let settled = false;
+    let forceKillTimer: NodeJS.Timeout | undefined;
+    let forceKillWaitTimer: NodeJS.Timeout | undefined;
+
+    const timeoutTimer = setTimeout(() => {
+      timedOut = true;
+      signalChildProcessTree(child, 'SIGTERM');
+      forceKillTimer = setTimeout(() => {
+        forceKillSent = true;
+        signalChildProcessTree(child, 'SIGKILL');
+        forceKillWaitTimer = setTimeout(() => finish(timeoutError), forceKillWaitMs);
+      }, terminationGraceMs);
+    }, options.timeoutMs);
+
+    const finish = (error?: unknown): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutTimer);
+      if (forceKillTimer) clearTimeout(forceKillTimer);
+      if (forceKillWaitTimer) clearTimeout(forceKillWaitTimer);
+      if (error) rejectCommand(error);
+      else resolveCommand();
+    };
+
+    child.once('error', finish);
+    child.once('close', (code, signal) => {
+      if (timedOut) {
+        if (forceKillSent) {
+          finish(timeoutError);
+        }
+        return;
+      }
+      if (code === 0) {
+        finish();
+        return;
+      }
+      finish(new Error(`${description} failed with exit code ${code ?? signal ?? 1}.`));
+    });
+  });
+}
+
+function signalChildProcessTree(child: ChildProcess, signal: NodeJS.Signals): void {
+  if (!child.pid) return;
+  if (process.platform === 'win32') {
+    const taskkill = spawn(
+      'taskkill',
+      ['/pid', String(child.pid), '/T', ...(signal === 'SIGKILL' ? ['/F'] : [])],
+      { stdio: 'ignore', windowsHide: true },
+    );
+    taskkill.once('error', () => {
+      child.kill(signal);
+    });
+    taskkill.unref();
+    return;
+  }
+  try {
+    process.kill(-child.pid, signal);
+  } catch {
+    if (!childHasExited(child)) {
+      child.kill(signal);
+    }
+  }
 }
 
 async function reserveAvailablePort(): Promise<number> {
@@ -662,4 +876,8 @@ async function reserveAvailablePort(): Promise<number> {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function reportCleanupFailure(error: unknown): void {
+  process.stderr.write(`Bun compatibility cleanup also failed: ${errorMessage(error)}\n`);
 }

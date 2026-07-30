@@ -1,6 +1,6 @@
 // @requirements REQ-AUTH-PERSISTENCE-007
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { errAsync, okAsync } from 'neverthrow';
+import { errAsync, ok, okAsync } from 'neverthrow';
 import { Logger } from '@nestjs/common';
 import { AuthTokenCleanupService, resolveAuthTokenCleanupConfig } from './auth-token-cleanup.service';
 import type { AuthTokenRepository } from './infrastructure/data-access/repositories';
@@ -27,6 +27,7 @@ describe('AuthTokenCleanupService', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -62,20 +63,20 @@ describe('AuthTokenCleanupService', () => {
     expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
   });
 
-  it('logs and skips scheduling when cleanup is disabled', () => {
+  it('logs and skips scheduling when cleanup is disabled', async () => {
     const previousEnabled = process.env.AUTH_TOKEN_CLEANUP_ENABLED;
     process.env.AUTH_TOKEN_CLEANUP_ENABLED = 'false';
     const { cleanupExpiredTokens, repository } = createRepositoryMock();
     const cleanup = new AuthTokenCleanupService(repository);
 
     cleanup.onModuleInit();
-    cleanup.onModuleDestroy();
+    await cleanup.onModuleDestroy();
 
     expect(cleanupExpiredTokens).not.toHaveBeenCalled();
     restoreEnv('AUTH_TOKEN_CLEANUP_ENABLED', previousEnabled);
   });
 
-  it('runs an immediate cleanup on startup when configured', () => {
+  it('runs an immediate cleanup on startup when configured', async () => {
     vi.useFakeTimers();
     const previousEnabled = process.env.AUTH_TOKEN_CLEANUP_ENABLED;
     const previousInterval = process.env.AUTH_TOKEN_CLEANUP_INTERVAL_MS;
@@ -88,9 +89,8 @@ describe('AuthTokenCleanupService', () => {
 
     cleanup.onModuleInit();
     expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
-    cleanup.onModuleDestroy();
+    await cleanup.onModuleDestroy();
 
-    vi.useRealTimers();
     restoreEnv('AUTH_TOKEN_CLEANUP_ENABLED', previousEnabled);
     restoreEnv('AUTH_TOKEN_CLEANUP_INTERVAL_MS', previousInterval);
     restoreEnv('AUTH_TOKEN_CLEANUP_RUN_ON_START', previousRunOnStart);
@@ -109,7 +109,46 @@ describe('AuthTokenCleanupService', () => {
     expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
   });
 
-  it('schedules and clears interval based on environment config', () => {
+  it('waits for active cleanup before completing module shutdown', async () => {
+    let releaseCleanup: (() => void) | undefined;
+    const pendingCleanup = new Promise((resolve) => {
+      releaseCleanup = () => {
+        resolve(ok({ userTokensDeleted: 0 }));
+      };
+    });
+    const cleanupExpiredTokens = vi.fn(() => pendingCleanup);
+    const repository = { cleanupExpiredTokens } as unknown as AuthTokenRepository;
+    const cleanup = new AuthTokenCleanupService(repository);
+
+    const running = cleanup.runCleanup();
+    let shutdownComplete = false;
+    const shutdown = cleanup.onModuleDestroy().then(() => {
+      shutdownComplete = true;
+    });
+    await Promise.resolve();
+    expect(shutdownComplete).toBe(false);
+
+    releaseCleanup?.();
+    await expect(running).resolves.toBe(true);
+    await shutdown;
+    expect(shutdownComplete).toBe(true);
+  });
+
+  it('continues shutdown after the active cleanup grace period expires', async () => {
+    vi.useFakeTimers();
+    const cleanupExpiredTokens = vi.fn(() => new Promise(() => undefined));
+    const repository = { cleanupExpiredTokens } as unknown as AuthTokenRepository;
+    const cleanup = new AuthTokenCleanupService(repository);
+
+    void cleanup.runCleanup();
+    const shutdown = cleanup.onModuleDestroy();
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    await expect(shutdown).resolves.toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith('Auth token cleanup did not finish within 5000ms; shutdown will continue.');
+  });
+
+  it('schedules and clears interval based on environment config', async () => {
     vi.useFakeTimers();
     const previousEnabled = process.env.AUTH_TOKEN_CLEANUP_ENABLED;
     const previousInterval = process.env.AUTH_TOKEN_CLEANUP_INTERVAL_MS;
@@ -125,11 +164,10 @@ describe('AuthTokenCleanupService', () => {
     expect(cleanupExpiredTokens).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
-    cleanup.onModuleDestroy();
+    await cleanup.onModuleDestroy();
     vi.advanceTimersByTime(60_000);
     expect(cleanupExpiredTokens).toHaveBeenCalledTimes(1);
 
-    vi.useRealTimers();
     restoreEnv('AUTH_TOKEN_CLEANUP_ENABLED', previousEnabled);
     restoreEnv('AUTH_TOKEN_CLEANUP_INTERVAL_MS', previousInterval);
     restoreEnv('AUTH_TOKEN_CLEANUP_RUN_ON_START', previousRunOnStart);

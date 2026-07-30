@@ -1,7 +1,9 @@
 # RPO/RTO policy
 
-- **Production RPO:** 60 minutes for PostgreSQL data, enforced by an hourly
-  backup CronJob and stale-backup alert.
+- **Production RPO:** 60 minutes for the selected durable provider, enforced by
+  hourly backups and provider/platform freshness monitoring. The checked-in
+  PrometheusRule uses stable backup workload labels for either bundled provider;
+  managed databases also require platform-native freshness evidence.
 - **Production RTO:** 60 minutes for database restore once a target cluster is
   available; 4 hours for complete application rebuild including DNS/ingress.
 - **Backup retention:** at least 14 days of hourly recovery points in durable

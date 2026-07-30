@@ -1,5 +1,8 @@
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import { ProblemPresentationRepository, type ProblemPresentationEntity } from '@app/backend-postgres-main-auth';
+import type {
+  AuthenticatedPrincipal,
+  ProblemPresentationRecord,
+  ProblemPresentationRepositoryPort,
+} from '@app/backend-feature-auth-shared';
 import type {
   AdminProblemPresentationCatalog,
   AdminProblemPresentationView,
@@ -12,10 +15,10 @@ import { AdminApplicationError } from './admin-errors';
 import { resolveTenantId, unwrapRepositoryResult } from './util';
 
 export class ProblemPresentationsUseCase {
-  constructor(private readonly presentations: ProblemPresentationRepository) {}
+  constructor(private readonly presentations: ProblemPresentationRepositoryPort) {}
 
   async list(principal: AuthenticatedPrincipal): Promise<AdminProblemPresentationCatalog> {
-    const overrides = unwrapRepositoryResult<ProblemPresentationEntity[]>(
+    const overrides = unwrapRepositoryResult<ProblemPresentationRecord[]>(
       await this.presentations.list(resolveTenantId(principal)),
     );
     return { items: overrides.map(toPresentationView) };
@@ -71,7 +74,7 @@ export class ProblemPresentationsUseCase {
   }
 }
 
-const toPresentationView = (override: ProblemPresentationEntity): AdminProblemPresentationView => ({
+const toPresentationView = (override: ProblemPresentationRecord): AdminProblemPresentationView => ({
   comment: override.comment,
   display: override.display,
   messageEn: override.messageEn,

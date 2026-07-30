@@ -29,6 +29,7 @@ import { plan, resolveConfig } from "../../setup/planner.js";
 import { emptyState } from "../../setup/state.js";
 import { expandPreset } from "../../setup/presets.js";
 import type { PromptIo, PromptResult } from "../../setup/prompts.js";
+import type { SetupCommandDependencies } from "./setup.js";
 
 // ---------------------------------------------------------------------------
 // Import commands under test
@@ -69,6 +70,21 @@ function captureStderr(fn: () => void): string {
   }
   return chunks.join("");
 }
+
+const setupDependencies: SetupCommandDependencies = {
+  synchronizeClosure: async () => ({
+    changed: false,
+    invalidatedLock: false,
+    artifacts: {
+      caddyfile: { path: ".nrb/Caddyfile.per-app-domains", content: "# generated\n" },
+      singleDomainCaddyfile: { path: ".nrb/Caddyfile.single-domain", content: "# generated\n" },
+      manifest: { path: ".nrb/closure.json", content: "{}\n" },
+      helmValues: { path: ".helm/values-selection.yaml", content: "deployment: {}\n" },
+      packageManifest: { path: ".nrb/closure/package.json", content: "{}\n" },
+      workspaceManifest: { path: ".nrb/closure/pnpm-workspace.yaml", content: "packages: []\n" },
+    },
+  }),
+};
 
 // ============================================================================
 // UNIT: setup.ts — argument parser
@@ -283,8 +299,11 @@ describe("setup — repeatable command selection", () => {
     const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-setup-command-"));
     const context = (argv: string[]) => ({ argv, packageRoot: "/mock/packages/tooling", workspaceRoot });
     try {
-      assert.equal(await runSetupCommand(context(["--replace", "--app", "landing-app", "--non-interactive"])), 0);
-      assert.equal(await runSetupCommand(context(["--app", "user-app", "--non-interactive"])), 0);
+      assert.equal(
+        await runSetupCommand(context(["--replace", "--app", "landing-app", "--non-interactive"]), setupDependencies),
+        0,
+      );
+      assert.equal(await runSetupCommand(context(["--app", "user-app", "--non-interactive"]), setupDependencies), 0);
       const afterAdd = readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8");
       const selected = JSON.parse(afterAdd) as { apps: string[] };
       assert.deepEqual(selected.apps, ["auth-app-api", "landing-app", "user-app", "user-app-api"]);
@@ -298,7 +317,7 @@ describe("setup — repeatable command selection", () => {
       assert.equal(existsSync(join(workspaceRoot, "services")), false, "setup must not invent a services tree");
       assert.equal(existsSync(join(workspaceRoot, "starter-app")), false, "setup must not invent a default app");
 
-      assert.equal(await runSetupCommand(context(["--app", "user-app", "--non-interactive"])), 0);
+      assert.equal(await runSetupCommand(context(["--app", "user-app", "--non-interactive"]), setupDependencies), 0);
       assert.equal(readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8"), afterAdd);
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
@@ -322,12 +341,64 @@ describe("setup — repeatable command selection", () => {
     }
   });
 
+  it("synchronizes the closure on provider swap and idempotent replay", async () => {
+    const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-setup-closure-"));
+    const selections: Array<{ capabilities: string[]; configHash: string }> = [];
+    const dependencies: SetupCommandDependencies = {
+      synchronizeClosure: async (_root, selection) => {
+        selections.push({ capabilities: selection.capabilities, configHash: selection.configHash });
+        const result = await setupDependencies.synchronizeClosure!(_root, selection);
+        return { ...result, changed: false };
+      },
+    };
+    const context = (argv: string[]) => ({ argv, packageRoot: "/mock/packages/tooling", workspaceRoot });
+    try {
+      assert.equal(
+        await runSetupCommand(
+          context(["--replace", "--app", "user-app-api", "--capability", "postgres", "--non-interactive"]),
+          dependencies,
+        ),
+        0,
+      );
+      assert.equal(
+        await runSetupCommand(
+          context([
+            "--remove-capability",
+            "postgres",
+            "--capability",
+            "mongodb",
+            "--non-interactive",
+          ]),
+          dependencies,
+        ),
+        0,
+      );
+      assert.equal(await runSetupCommand(context(["--app", "user-app-api", "--non-interactive"]), dependencies), 0);
+      assert.deepEqual(selections.map(({ capabilities }) => capabilities), [
+        ["postgres"],
+        ["mongodb"],
+        ["mongodb"],
+      ]);
+      assert.notEqual(selections[0]?.configHash, selections[1]?.configHash);
+      assert.equal(selections[1]?.configHash, selections[2]?.configHash);
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
   it("applies the interactive prompt result instead of discarding it", async () => {
     const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-setup-interactive-"));
     try {
       const promptRunner = async (): Promise<PromptResult> => ({
         apps: ["site-app"],
         capabilities: [],
+        product: { ciMode: "product", frontendApiMode: "same-origin", mobileTargets: ["web"] },
+        deployment: {
+          targets: ["docker"],
+          publicTopology: "single-domain",
+          kubernetesDelivery: "direct",
+          infrastructure: { redis: "bundled", nats: "bundled", s3: "bundled" },
+        },
         prune: false,
         force: false,
         dryRun: false,
@@ -335,6 +406,7 @@ describe("setup — repeatable command selection", () => {
       const status = await runSetupCommandInteractive(
         { argv: [], packageRoot: "/mock/packages/tooling", workspaceRoot },
         promptRunner,
+        setupDependencies,
       );
       assert.equal(status, 0);
       const config = JSON.parse(readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8")) as {
@@ -570,6 +642,13 @@ describe("prompts — buildConfig", () => {
       preset: "web",
       apps: ["user-app"],
       capabilities: ["postgres"],
+      product: { ciMode: "product", frontendApiMode: "same-origin", mobileTargets: ["web"] },
+      deployment: {
+        targets: ["docker"],
+        publicTopology: "single-domain",
+        kubernetesDelivery: "direct",
+        infrastructure: { redis: "bundled", nats: "bundled", s3: "bundled" },
+      },
       prune: false,
       force: true,
       dryRun: false,
@@ -587,6 +666,13 @@ describe("prompts — buildConfig", () => {
       preset: "minimal",
       apps: [],
       capabilities: [],
+      product: { ciMode: "product", frontendApiMode: "same-origin", mobileTargets: ["web"] },
+      deployment: {
+        targets: ["docker"],
+        publicTopology: "single-domain",
+        kubernetesDelivery: "direct",
+        infrastructure: { redis: "bundled", nats: "bundled", s3: "bundled" },
+      },
       prune: false,
       force: false,
       dryRun: false,

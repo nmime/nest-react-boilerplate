@@ -64,11 +64,13 @@ export interface CreateNotificationSegmentUploadInput {
 }
 
 export interface ClaimedNotificationSegmentUpload extends NotificationSegmentUploadRecord {
+  claimToken: string;
   tenantId: string;
 }
 
 export interface CompleteNotificationSegmentUploadInput {
   uploadId: string;
+  claimToken: string;
   members: NotificationAudienceMember[];
   totalRows: number;
   duplicateRows: number;
@@ -109,12 +111,14 @@ export interface NotificationBroadcastTransitionInput {
 }
 
 export interface NotificationSnapshotCollectionContext {
+  claimToken: string;
   snapshot: NotificationAudienceSnapshotRecord;
   broadcast: NotificationBroadcastRecord;
   segments: NotificationSegmentRecord[];
 }
 
 export interface NotificationBroadcastMaterializationContext {
+  claimToken: string;
   broadcast: NotificationBroadcastRecord;
   snapshotId: string;
   template: NotificationTemplateAdminRecord;
@@ -160,7 +164,7 @@ export abstract class NotificationBroadcastPersistence {
   abstract getSegmentUpload(id: string, tenantId: string): Promise<NotificationSegmentUploadRecord | null>;
   abstract claimSegmentUpload(now: Date): Promise<ClaimedNotificationSegmentUpload | null>;
   abstract completeSegmentUpload(input: CompleteNotificationSegmentUploadInput): Promise<void>;
-  abstract failSegmentUpload(uploadId: string, errors: string[]): Promise<void>;
+  abstract failSegmentUpload(uploadId: string, claimToken: string, errors: string[]): Promise<void>;
   abstract listStaticSegmentMembers(segmentId: string): Promise<NotificationAudienceMember[]>;
 
   abstract listBroadcasts(
@@ -178,10 +182,18 @@ export abstract class NotificationBroadcastPersistence {
     input: NotificationBroadcastTransitionInput,
   ): Promise<NotificationBroadcastRecord | null>;
   abstract claimSnapshot(now: Date): Promise<NotificationSnapshotCollectionContext | null>;
-  abstract completeSnapshot(snapshotId: string, members: NotificationAudienceMember[]): Promise<void>;
-  abstract failSnapshot(snapshotId: string, message: string): Promise<void>;
+  abstract completeSnapshot(
+    snapshotId: string,
+    claimToken: string,
+    members: NotificationAudienceMember[],
+  ): Promise<void>;
+  abstract failSnapshot(snapshotId: string, claimToken: string, message: string): Promise<void>;
   abstract claimBroadcastMaterialization(limit: number): Promise<NotificationBroadcastMaterializationContext | null>;
   abstract materializeBroadcastMembers(context: NotificationBroadcastMaterializationContext): Promise<number>;
+  async materializeNextBroadcastChunk(limit: number): Promise<number> {
+    const context = await this.claimBroadcastMaterialization(limit);
+    return context ? this.materializeBroadcastMembers(context) : 0;
+  }
   abstract activateDueBroadcasts(now: Date): Promise<number>;
   abstract refreshBroadcastStatistics(): Promise<number>;
 }

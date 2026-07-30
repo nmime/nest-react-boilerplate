@@ -17,6 +17,10 @@ pnpm --filter @repo/tooling tooling ui registry add --source magicui ripple --vi
 pnpm --filter @repo/tooling tooling tooling static-check
 pnpm --filter @repo/tooling tooling project dependency-map --json
 pnpm --filter @repo/tooling tooling db migrations rollback-check
+pnpm nrb closure check
+pnpm nrb closure install
+pnpm nrb closure run build
+pnpm nrb closure materialize --all-reference --provider postgres
 pnpm --filter @repo/tooling tooling spec validate
 pnpm --filter @repo/tooling tooling spec verify --lane pr --base origin/main --head HEAD
 pnpm run bun:check
@@ -32,22 +36,34 @@ TS-first command implementations live under `packages/tooling/src/commands` grou
 - `dev/` local fullstack orchestration.
 - `project/` repository/project maintenance helpers.
   `project dependency-map` reports live dependency ownership and counts for every pnpm workspace.
+  `closure` derives and enforces setup-selected Nx projects, exact product
+  external packages, and separately declared tooling support packages. Setup
+  writes selected manifests only; lock generation and installation require the
+  explicit `closure install` command, which replaces prior workspace links with
+  `.nrb/closure/node_modules`. Use `pnpm run tooling:install` only when
+  explicitly restoring the full maintainer workspace. Maintainer reference
+  closure generation is explicit and provider-specific.
 - `images/` asset optimization helpers such as PNG/JPG/JPEG to WebP conversion.
 - `ui/` reviewed source-owned shadcn/Magic UI discovery and import helpers.
   Aceternity is non-persistent research preview only: this template never
   applies or distributes it, and each downstream product must explicitly own
   any later licence, dependency, source, integration, and test decision.
 - `testing/` Storybook, browser e2e coverage, and visual regression helpers.
-- `qa/` local QA presets for OpenAPI lint/fuzz, consumer contracts, accessibility, browser matrix, performance, security SAST/secret scanning/DAST, mutation, and property checks.
+- `qa/` local QA presets for resource-aware aggregate tests, OpenAPI lint/fuzz, consumer contracts, accessibility, browser matrix, performance, security SAST/secret scanning/DAST, mutation, and property checks.
 - `spec/` OpenSpec validation, complete trace generation, revision impact
   calculation, executable-test marker enforcement, requirement-level project
   ownership, lane-aware evidence execution, and dossier rendering.
 
 Do not add root-level `tools/` wrappers. New local commands should be routed through `repo-tooling`.
 
-`repo-tooling tooling static-check` is the safe static validation entrypoint for operational TypeScript tooling. It checks help-only CLI imports, command module presence, TypeScript typechecking, package-script references, generator regression tests, and stale architecture/version denylist terms, including retired Postgres shared-library path spellings, without executing deploy, Docker, destructive, or runtime-heavy scripts. `repo-tooling db migrations rollback-check` is intentionally separate: it is the real Testcontainers/PostgreSQL rollback check and requires a Docker-capable environment.
+`repo-tooling tooling static-check` is the safe static validation entrypoint for operational TypeScript tooling. It checks help-only CLI imports, command module presence, TypeScript typechecking, package-script references, generator regression tests, and stale architecture/version denylist terms, including retired Postgres shared-library path spellings, without executing deploy, Docker, destructive, or runtime-heavy scripts. Local `.claude/worktrees/**` storage is outside every repository inventory. Historical working specs under `docs/superpowers/**` are excluded only from the current architecture/version denylist and remain subject to applicable safety and structure rules. `repo-tooling db migrations rollback-check` is intentionally separate: it is the real Testcontainers/PostgreSQL rollback check and requires a Docker-capable environment.
 
 All QA presets are designed to be useful locally without depending on GitHub Actions. Expensive presets support `--dry-run` and environment variables documented in `docs/testing/modern-qa.md` so CI can choose a different cadence later.
+
+World-class executable command overrides are shell-free JSON argv arrays. The
+CLI reuses the active pnpm/Corepack module on every platform and applies a
+bounded timeout. Journey, observability, and concurrency evidence requires an
+explicit behavior command; HTTP-only probes remain canary/reliability evidence.
 
 ## CI/security/deployment guardrails
 
@@ -64,4 +80,4 @@ All QA presets are designed to be useful locally without depending on GitHub Act
 - `pnpm run branch:cleanup:check` previews merged-branch cleanup. `pnpm run branch:cleanup -- --apply` is required to delete local merged branches; remote deletion additionally requires `--remote`. Protected branches (`main`, `master`, `develop`, `release/*`, `hotfix/*`, production/staging names, and `origin/HEAD`) are never candidates.
 - `pnpm run git:conventions` validates typed branch names, Conventional Commit subjects, linear history, and agent attribution. Human and trusted dependency-bot identities are accepted; known assistant identities must be replaced by exact `nmime` author/committer ownership. Use `--branch <name> --range <revision-range>` for CI or history audits.
 
-Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, and `.npmrc` strictness. Use Node 24.18.0 and pnpm 11.15.1 for the canonical toolchain. Bun 1.3.14 is pinned through `.bun-version`; `pnpm run bun:check` runs its supported alternative-runtime contract locally and in CI.
+Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, and `.npmrc` strictness. Use Node 24.18.0 and pnpm 11.15.1 for the canonical toolchain. Bun 1.3.14 is pinned through `.bun-version`; after `pnpm nrb closure install`, `pnpm run bun:check` runs every selected server deployment artifact through real isolated startup/readiness/lifecycle or headless process probes under Node and Bun. Bun is a runtime only, never a second package manager.

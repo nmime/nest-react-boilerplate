@@ -1,6 +1,7 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync } from 'neverthrow';
+import { AdminAuditLogTransactionError } from '@app/backend-feature-auth-shared';
 import {
   AdminAuditLogEntity,
   DefaultAuthTenantId,
@@ -29,13 +30,6 @@ export interface AdminAuditLogTransactionalRecordInput<T> {
   // commit or roll back together.
   operation: (entityManager: EntityManager) => Promise<T>;
   audit: (result: T) => AdminAuditLogEntityInput;
-}
-
-export class AdminAuditLogTransactionError extends Error {
-  constructor(cause: unknown) {
-    super('Admin audit transaction failed.', { cause });
-    this.name = 'AdminAuditLogTransactionError';
-  }
 }
 
 class AdminAuditedOperationError extends Error {

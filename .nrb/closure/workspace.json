@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
+  "preset": null,
+  "apps": [
+    "admin-app",
+    "admin-app-api",
+    "auth-app-api",
+    "landing-app",
+    "mobile-app",
+    "notification-consumer",
+    "notification-scheduler",
+    "site-app",
+    "user-app",
+    "user-app-api"
+  ],
+  "capabilities": ["authz", "design-tokens", "feature-flags", "i18n", "notifications", "postgres", "s3"],
+  "product": {
+    "ciMode": "product",
+    "frontendApiMode": "same-origin",
+    "mobileTargets": ["web"]
+  },
+  "deployment": {
+    "targets": ["docker"],
+    "publicTopology": "single-domain",
+    "kubernetesDelivery": "direct",
+    "infrastructure": {
+      "redis": "bundled",
+      "nats": "bundled",
+      "s3": "bundled"
+    }
+  },
+  "byPlatform": {
+    "backend": ["admin-app-api", "auth-app-api", "notification-consumer", "notification-scheduler", "user-app-api"],
+    "e2e": [],
+    "frontend": ["admin-app", "landing-app", "mobile-app", "site-app", "user-app"]
+  }
+}

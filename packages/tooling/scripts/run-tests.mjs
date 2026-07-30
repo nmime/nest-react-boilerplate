@@ -9,6 +9,10 @@ const testRoot = resolve(workspaceRoot, 'packages/tooling/src');
 const inProcessTest = 'packages/tooling/src/commands/project/setup.test.ts';
 const integrationTest = 'packages/tooling/src/commands/db/migration.integration.test.ts';
 const skipIntegration = process.env.SKIP_INTEGRATION === '1';
+const testConcurrency = process.env.NODE_TEST_CONCURRENCY ?? '2';
+if (!/^[1-9]\d*$/.test(testConcurrency)) {
+  throw new Error(`NODE_TEST_CONCURRENCY must be a positive integer, received: ${testConcurrency}`);
+}
 const jitiAlias = {
   ...JSON.parse(process.env.JITI_ALIAS || '{}'),
   '@app/common-i18n-runtime': resolve(workspaceRoot, 'libs/common/i18n/runtime/lib/src/index.ts'),
@@ -46,8 +50,15 @@ if (isolatedTests.length === 0 || !tests.includes(inProcessTest) || !tests.inclu
 // Keep the Docker integration file out of the parallel unit-test burst. The
 // setup CLI test exercises process output, which can corrupt Node 24's
 // child-process test protocol, so only that file is run in-process.
-run(['--test', '--import', 'jiti/register', ...isolatedTests]);
+run(['--test', `--test-concurrency=${testConcurrency}`, '--import', 'jiti/register', ...isolatedTests]);
 if (!skipIntegration) {
-  run(['--test', '--import', 'jiti/register', integrationTest]);
+  run(['--test', `--test-concurrency=${testConcurrency}`, '--import', 'jiti/register', integrationTest]);
 }
-run(['--test', '--test-isolation=none', '--import', 'jiti/register', inProcessTest]);
+run([
+  '--test',
+  `--test-concurrency=${testConcurrency}`,
+  '--test-isolation=none',
+  '--import',
+  'jiti/register',
+  inProcessTest,
+]);

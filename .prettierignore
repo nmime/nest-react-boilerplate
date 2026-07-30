@@ -23,6 +23,11 @@ playwright-report
 
 .cache
 
+# Local agent worktrees and archived implementation records are not canonical source.
+.claude/worktrees/**
+.superpowers/**
+docs/superpowers/**
+
 tmp
 
 *.log

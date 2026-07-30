@@ -1,8 +1,16 @@
-import { bootstrapNestApi, resolveDefaultDevelopmentCorsOrigins } from '@app/backend-common-bootstrap';
-import { DiscordAppApiModule } from './discord-app-api.module';
+import { initializeCapabilities } from './capabilities.bootstrap.generated';
 
-void bootstrapNestApi(DiscordAppApiModule, {
-  appName: 'discord-app-api',
-  corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
-  port: 3007,
-});
+async function bootstrap(): Promise<void> {
+  initializeCapabilities('discord-app-api');
+  const [bootstrapModule, appModule] = await Promise.all([
+    import('./bootstrap.runtime'),
+    import('./discord-app-api.module'),
+  ]);
+  await bootstrapModule.bootstrapNestApi(appModule.DiscordAppApiModule, {
+    appName: 'discord-app-api',
+    corsOrigins: bootstrapModule.resolveDefaultDevelopmentCorsOrigins(),
+    port: 3007,
+  });
+}
+
+void bootstrap();

@@ -23,19 +23,11 @@ export interface BetterAuthConfigOptions {
   sessionMaxAge?: number;
 }
 
-export function getBetterAuthConfig(_orm: unknown, options: BetterAuthConfigOptions = {}): Auth {
-  const dbUrl = process.env.DATABASE_URL;
-
-  if (!dbUrl && process.env.OPENAPI_ENABLED !== 'true') {
-    throw new Error('DATABASE_URL is required for Better-Auth PostgreSQL driver');
-  }
-
-  const database = dbUrl ? new (require('pg').Pool)({ connectionString: dbUrl }) : undefined;
-
+export function getBetterAuthConfig(database: unknown, options: BetterAuthConfigOptions = {}): Auth {
   const baseURL = getBaseUrl();
   const telegramOidc = resolveTelegramOidcConfig(options);
   const opts: BetterAuthOptions = {
-    database,
+    database: database as BetterAuthOptions['database'],
     baseURL,
     trustedOrigins: options.trustedOrigins ?? getTrustedOrigins(),
 

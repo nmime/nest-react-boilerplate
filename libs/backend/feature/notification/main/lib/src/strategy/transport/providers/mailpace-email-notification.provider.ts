@@ -18,10 +18,16 @@ import {
 @Injectable()
 export class MailPaceEmailNotificationProvider extends NotificationProviderStrategy {
   readonly provider = NotificationDeliveryProvider.MailPace;
+  override readonly idempotentRetries = true;
   private readonly logger = new Logger(MailPaceEmailNotificationProvider.name);
 
   constructor(private readonly config: NotificationConfigService) {
     super();
+  }
+
+  override readiness() {
+    const { serverToken, from } = this.config.mailPace;
+    return { provider: this.provider, configured: Boolean(serverToken && from) };
   }
 
   async send(input: NotificationProviderSendInput): Promise<NotificationProviderSendResult> {
@@ -42,9 +48,30 @@ export class MailPaceEmailNotificationProvider extends NotificationProviderStrat
       };
     }
 
+    const body = JSON.stringify({
+      from,
+      to: input.address,
+      subject: input.message.subject,
+      textbody: input.message.text,
+      ...(input.message.html ? { htmlbody: input.message.html } : {}),
+      ...(input.message.attachments?.length
+        ? {
+            attachments: input.message.attachments.map((attachment) => {
+              return {
+                name: attachment.filename ?? attachment.cid,
+                content: attachment.source,
+                content_type: attachment.contentType ?? 'application/octet-stream',
+                ...(attachment.inline ? { cid: `<${attachment.cid}>` } : {}),
+              };
+            }),
+          }
+        : {}),
+    });
+    await this.beginDispatch(input);
     try {
       const response = await fetch('https://app.mailpace.com/api/v1/send', {
         method: 'POST',
+        signal: input.signal,
         headers: {
           accept: 'application/json',
           'content-type': 'application/json',
@@ -52,25 +79,7 @@ export class MailPaceEmailNotificationProvider extends NotificationProviderStrat
           'idempotency-key': `notification-${input.deliveryId}`,
           'user-agent': 'nest-react-boilerplate/notification-scheduler',
         },
-        body: JSON.stringify({
-          from,
-          to: input.address,
-          subject: input.message.subject,
-          textbody: input.message.text,
-          ...(input.message.html ? { htmlbody: input.message.html } : {}),
-          ...(input.message.attachments?.length
-            ? {
-                attachments: input.message.attachments.map((attachment) => {
-                  return {
-                    name: attachment.filename ?? attachment.cid,
-                    content: attachment.source,
-                    content_type: attachment.contentType ?? 'application/octet-stream',
-                    ...(attachment.inline ? { cid: `<${attachment.cid}>` } : {}),
-                  };
-                }),
-              }
-            : {}),
-        }),
+        body,
       });
       if (response.ok) {
         return { status: NotificationStatus.Sent };

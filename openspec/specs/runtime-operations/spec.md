@@ -157,26 +157,29 @@ failure conversion without leaking data across owners.
 - **WHEN** a storage key attempts to escape its namespace
 - **THEN** the adapter rejects it before provider access
 
-### Requirement: [REQ-RUNTIME-DATABASE-008] PostgreSQL changes preserve integrity
+### Requirement: [REQ-RUNTIME-DATABASE-008] Database changes preserve integrity
 
-Transactions, migrations, repositories, sessions, and feature persistence SHALL
-preserve constraints, rollback behavior, idempotency, and tenant boundaries.
+PostgreSQL and MongoDB transactions, migrations, repositories, sessions, and
+feature persistence SHALL preserve provider-appropriate integrity controls,
+atomic failure behavior, idempotency, and tenant boundaries.
 
 **Evidence profile:** persistence, domain
 
 **Invariants:**
 
-- Failed transactions do not expose partial committed state.
-- Migration ordering and tracking remain deterministic.
+- Failed transactional writes do not expose partial durable state.
+- Migration ordering, tracking, validators, constraints, and indexes remain
+  deterministic for the selected provider.
 
 **Failure behavior:**
 
-- Constraint, connection, or rollback failure remains observable and safe.
+- Constraint, validation, connection, or transaction failure remains observable
+  and safe.
 
 #### Scenario: Failed transaction
 
-- **WHEN** an operation fails before commit
-- **THEN** the transaction leaves no partial durable state
+- **WHEN** an operation fails before durable completion
+- **THEN** the selected provider leaves no partial durable state
 
 ### Requirement: [REQ-RUNTIME-DELIVERY-009] Deployment artifacts are reproducible
 

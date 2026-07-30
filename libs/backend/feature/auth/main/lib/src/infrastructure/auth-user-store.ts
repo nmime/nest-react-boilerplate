@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync, okAsync } from 'neverthrow';
 import type { Locale } from '@app/backend-common-i18n';
 import {
@@ -7,8 +7,10 @@ import {
   DefaultAuthTenantId,
   normalizeUserThemePreference,
   type UserThemePreference,
+  AuthUserRepositoryInjectToken,
+  type AuthUserPersistenceRecord as PersistedAuthUserRecord,
+  type AuthUserRepositoryPort,
 } from '@app/backend-feature-auth-shared';
-import { AuthUserRepository, type AuthUserEntity } from '@app/backend-postgres-main-auth';
 
 export interface AuthUserRecord {
   id: string;
@@ -103,7 +105,7 @@ export function toAuthUserRecord(entity: {
 /* v8 ignore start -- Nest decorator metadata is framework glue, not runtime branch logic. */
 @Injectable()
 export class PostgresAuthUserStore implements AuthUserStore {
-  constructor(private readonly repository: AuthUserRepository) {}
+  constructor(@Inject(AuthUserRepositoryInjectToken) private readonly repository: AuthUserRepositoryPort) {}
   /* v8 ignore stop */
 
   create(input: CreateAuthUserInput): ResultAsync<AuthUserRecord, AuthUserStoreError> {
@@ -120,13 +122,13 @@ export class PostgresAuthUserStore implements AuthUserStore {
 
     return this.repository
       .findByEmail(email, tenantId)
-      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   findById(id: string, tenantId: string = DefaultAuthTenantId): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .findById(id, tenantId)
-      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   setLocale(
@@ -144,7 +146,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .setPreferences(id, preferences, tenantId)
-      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   recordLogin(
@@ -154,7 +156,7 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .recordLogin(id, loggedInAt, tenantId)
-      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
   syncProviderAvatar(
@@ -164,7 +166,14 @@ export class PostgresAuthUserStore implements AuthUserStore {
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
     return this.repository
       .syncProviderAvatar(id, input, tenantId)
-      .map((entity: AuthUserEntity | null) => (entity ? toAuthUserRecord(entity) : null));
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
+  }
+}
+
+@Injectable()
+export class MongoAuthUserStore extends PostgresAuthUserStore {
+  constructor(@Inject(AuthUserRepositoryInjectToken) repository: AuthUserRepositoryPort) {
+    super(repository);
   }
 }
 

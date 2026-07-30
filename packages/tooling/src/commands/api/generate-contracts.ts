@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import {
   openApiContracts,
   type OpenApiContract,
 } from "./contracts-manifest.ts";
+import { isOpenApiPreviewApplication, runOpenApiPreview } from "./openapi-preview.ts";
 
 interface GenerateContractsArgs {
   dryRun: boolean;
@@ -43,140 +44,17 @@ function parseArgs(argv: string[]): GenerateContractsArgs {
   return args;
 }
 
-const wait = (ms: number) =>
-  new Promise((resolveWait) => setTimeout(resolveWait, ms));
-
-function readPositiveIntegerEnv(name: string, fallback: number): number {
-  const value = Number.parseInt(process.env[name] ?? "", 10);
-  return Number.isFinite(value) && value > 0 ? value : fallback;
-}
-
-function waitForChildExit(
-  child: ChildProcess,
-  timeoutMs: number,
-): Promise<boolean> {
-  if (child.exitCode !== null || child.signalCode !== null) {
-    return Promise.resolve(true);
-  }
-
-  return new Promise((resolveExit) => {
-    const cleanup = () => {
-      clearTimeout(timeout);
-      child.off("exit", done);
-      child.off("error", done);
-    };
-    const done = () => {
-      cleanup();
-      resolveExit(true);
-    };
-    const timeout = setTimeout(() => {
-      cleanup();
-      resolveExit(false);
-    }, timeoutMs);
-
-    child.once("exit", done);
-    child.once("error", done);
-  });
-}
-
-function signalChild(child: ChildProcess, signal: NodeJS.Signals): void {
-  if (process.platform !== "win32" && child.pid !== undefined) {
-    try {
-      process.kill(-child.pid, signal);
-      return;
-    } catch {
-      // Fall back to signaling the direct child when process-group signaling is unavailable.
-    }
-  }
-
-  child.kill(signal);
-}
-
-async function stopChild(child: ChildProcess): Promise<void> {
-  if (child.exitCode !== null || child.signalCode !== null) return;
-
-  signalChild(child, "SIGTERM");
-  if (await waitForChildExit(child, 5000)) return;
-
-  signalChild(child, "SIGKILL");
-  await waitForChildExit(child, 5000);
-}
-
-async function fetchOpenApi({
+function writeOpenApi({
   app,
-  port,
   output,
 }: {
   app: string;
-  port: number;
   output: string;
-}): Promise<void> {
-  const env = {
-    ...process.env,
-    OPENAPI_ENABLED: "true",
-    OPENAPI_PATH: "docs",
-    AUTH_PERSISTENCE: "memory",
-    SESSION_SECRET: process.env.SESSION_SECRET ?? "openapi-export-session-secret-only",
-    AUTH_OAUTH_ENABLED: "false",
-    // Contract export uses the in-memory auth adapter and must not require a live database.
-    DATABASE_URL: "",
-    PORT: String(port),
-  };
-  // Nx's content-addressed cache remains correct for contract generation and
-  // avoids recompiling the complete dependency graph for every API.
-  const command = ["pnpm", "exec", "nx", "serve", app];
-  const readyAttempts = readPositiveIntegerEnv("OPENAPI_READY_ATTEMPTS", 240);
-  const child = spawn(command[0], command.slice(1), {
-    detached: process.platform !== "win32",
-    env,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  let logs = "";
-
-  child.stdout.on("data", (chunk) => {
-    logs += chunk.toString();
-  });
-  child.stderr.on("data", (chunk) => {
-    logs += chunk.toString();
-  });
-
-  try {
-    const url = `http://127.0.0.1:${port}/docs/openapi.json`;
-    let body = "";
-
-    for (let attempt = 0; attempt < readyAttempts; attempt += 1) {
-      try {
-        const response = await fetch(url);
-        if (response.ok) {
-          body = await response.text();
-          break;
-        }
-      } catch {
-        // Retry until the app has finished booting.
-      }
-
-      if (child.exitCode !== null || child.signalCode !== null) {
-        throw new Error(
-          `${app} exited before its OpenAPI endpoint became ready (exitCode=${String(child.exitCode)}, signal=${String(child.signalCode)}). Logs:\n${logs.slice(-4000)}`,
-        );
-      }
-
-      await wait(1000);
-    }
-
-    if (!body) {
-      throw new Error(
-        `${app} OpenAPI endpoint did not become ready after ${readyAttempts} attempts. Logs:\n${logs.slice(
-          -4000,
-        )}`,
-      );
-    }
-
-    mkdirSync(dirname(output), { recursive: true });
-    writeFileSync(output, `${JSON.stringify(JSON.parse(body), null, 2)}\n`);
-  } finally {
-    await stopChild(child);
+}): void {
+  if (!isOpenApiPreviewApplication(app)) {
+    throw new Error(`OpenAPI preview is not configured for ${app}.`);
   }
+  runOpenApiPreview(app, output);
 }
 
 function generateTypes({ input, output }: { input: string; output: string }) {
@@ -243,9 +121,8 @@ if (args.dryRun) {
 }
 
 for (const item of plan) {
-  await fetchOpenApi({
+  writeOpenApi({
     app: item.app,
-    port: item.port,
     output: item.openApiOutput,
   });
   generateTypes({ input: item.openApiOutput, output: item.typesOutput });

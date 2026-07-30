@@ -13,6 +13,8 @@ import {
 
 const fixture = ({
   certificateMode = 'exact-hosts',
+  databaseEngine = 'postgres',
+  databaseMode = 'bundled-db',
   primaryApp = 'landing-app',
   profiles = '',
   publicMode = 'per-app-domains',
@@ -40,6 +42,8 @@ const fixture = ({
     [
       'PUBLIC_DOMAIN=product.example',
       `PRIMARY_APP=${primaryApp}`,
+      `DATABASE_ENGINE=${databaseEngine}`,
+      `COMPOSE_DATABASE_MODE=${databaseMode}`,
       'COMPOSE_DOMAIN_MODE=external-proxy',
       'COMPOSE_TLS_MODE=external',
       `EXTERNAL_PROXY_PUBLIC_MODE=${publicMode}`,
@@ -64,6 +68,17 @@ const fixture = ({
     cleanup: () => rmSync(directory, { force: true, recursive: true }),
   };
 };
+
+test('accepts all database engine and ownership combinations independently', (context) => {
+  for (const databaseEngine of ['postgres', 'mongodb']) {
+    for (const databaseMode of ['bundled-db', 'external-db']) {
+      const current = fixture({ databaseEngine, databaseMode });
+      context.after(current.cleanup);
+      assert.equal(current.configuration.databaseEngine, databaseEngine);
+      assert.equal(current.configuration.databaseMode, databaseMode);
+    }
+  }
+});
 
 test('derives every exact app-id host and only enables selected optional APIs', (context) => {
   const { configuration, cleanup } = fixture({ profiles: 'telegram,discord' });
@@ -156,7 +171,7 @@ test('rejects a Compose-owned edge and unsupported public modes', (context) => {
   context.after(first.cleanup);
   writeFileSync(
     first.configuration.productionPath,
-    'PUBLIC_DOMAIN=product.example\nPRIMARY_APP=landing-app\nCOMPOSE_DOMAIN_MODE=per-app-domains\nCOMPOSE_TLS_MODE=automatic\nEXTERNAL_PROXY_PUBLIC_MODE=per-app-domains\n',
+    'PUBLIC_DOMAIN=product.example\nPRIMARY_APP=landing-app\nDATABASE_ENGINE=postgres\nCOMPOSE_DATABASE_MODE=bundled-db\nCOMPOSE_DOMAIN_MODE=per-app-domains\nCOMPOSE_TLS_MODE=automatic\nEXTERNAL_PROXY_PUBLIC_MODE=per-app-domains\n',
   );
   assert.throws(
     () =>
@@ -171,7 +186,7 @@ test('rejects a Compose-owned edge and unsupported public modes', (context) => {
   context.after(second.cleanup);
   writeFileSync(
     second.configuration.productionPath,
-    'PUBLIC_DOMAIN=product.example\nPRIMARY_APP=landing-app\nCOMPOSE_DOMAIN_MODE=external-proxy\nCOMPOSE_TLS_MODE=external\nEXTERNAL_PROXY_PUBLIC_MODE=implicit\n',
+    'PUBLIC_DOMAIN=product.example\nPRIMARY_APP=landing-app\nDATABASE_ENGINE=postgres\nCOMPOSE_DATABASE_MODE=bundled-db\nCOMPOSE_DOMAIN_MODE=external-proxy\nCOMPOSE_TLS_MODE=external\nEXTERNAL_PROXY_PUBLIC_MODE=implicit\n',
   );
   assert.throws(
     () =>
@@ -186,7 +201,7 @@ test('rejects a Compose-owned edge and unsupported public modes', (context) => {
   context.after(third.cleanup);
   writeFileSync(
     third.configuration.productionPath,
-    'PUBLIC_DOMAIN=product.example\nPRIMARY_APP=landing-app\nCOMPOSE_DOMAIN_MODE=external-proxy\nCOMPOSE_TLS_MODE=external\nEXTERNAL_PROXY_PUBLIC_MODE=per-app-domains\nADMIN_APP_PORT=3000\n',
+    'PUBLIC_DOMAIN=product.example\nPRIMARY_APP=landing-app\nDATABASE_ENGINE=postgres\nCOMPOSE_DATABASE_MODE=bundled-db\nCOMPOSE_DOMAIN_MODE=external-proxy\nCOMPOSE_TLS_MODE=external\nEXTERNAL_PROXY_PUBLIC_MODE=per-app-domains\nADMIN_APP_PORT=3000\n',
   );
   assert.throws(
     () =>

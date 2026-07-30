@@ -9,6 +9,7 @@ import {
   DiscordInteractionSecurity,
 } from '@app/backend-feature-discord-bot';
 import { DiscordInteractionsController } from './discord-interactions.controller';
+import { DiscordInteractionReplayProtection } from './discord-interaction-replay-protection';
 
 const snapshot = {
   applicationId: '123456789012345678',
@@ -22,12 +23,18 @@ const snapshot = {
 async function controller(
   verify = vi.fn().mockResolvedValue(undefined),
   route = vi.fn().mockResolvedValue({ type: 1 }),
+  replay = {
+    reserve: vi.fn().mockResolvedValue({ key: 'discord:1', ownerValue: 'processing:owner' }),
+    complete: vi.fn().mockResolvedValue(undefined),
+    release: vi.fn().mockResolvedValue(undefined),
+  },
 ) {
   const moduleRef = await Test.createTestingModule({
     controllers: [DiscordInteractionsController],
     providers: [
       { provide: DiscordBotConfig, useValue: { snapshot: () => snapshot } },
       { provide: DiscordInteractionSecurity, useValue: { verify } },
+      { provide: DiscordInteractionReplayProtection, useValue: replay },
       { provide: DiscordInteractionRouter, useValue: { route } },
     ],
   }).compile();
@@ -36,6 +43,7 @@ async function controller(
     moduleRef,
     controller: moduleRef.get(DiscordInteractionsController),
     verify,
+    ...replay,
     route,
   };
 }
@@ -70,6 +78,8 @@ describe('DiscordInteractionsController', () => {
       headers: { signature: 'sig', timestamp: 'ts' },
       publicKey: snapshot.publicKey,
     });
+    expect(setup.reserve).toHaveBeenCalledWith(pingBody.id);
+    expect(setup.complete).toHaveBeenCalledWith({ key: 'discord:1', ownerValue: 'processing:owner' });
     expect(setup.route).toHaveBeenCalledWith(pingBody, {
       customIdSecret: snapshot.customIdSecret,
       tenantId: snapshot.defaultTenantId,
@@ -85,6 +95,7 @@ describe('DiscordInteractionsController', () => {
       BadRequestException,
     );
     expect(setup.verify).not.toHaveBeenCalled();
+    expect(setup.reserve).not.toHaveBeenCalled();
     expect(setup.route).not.toHaveBeenCalled();
     await setup.moduleRef.close();
   });
@@ -96,6 +107,53 @@ describe('DiscordInteractionsController', () => {
       setup.controller.interactions(toControllerRequest({ rawBody: Buffer.from('{"type":1}') }), 'sig', 'ts', pingBody),
     ).rejects.toThrow('bad signature');
     expect(setup.route).not.toHaveBeenCalled();
+    await setup.moduleRef.close();
+  });
+
+  it('does not route a replayed interaction', async () => {
+    const setup = await controller(vi.fn().mockResolvedValue(undefined), vi.fn(), {
+      reserve: vi.fn().mockRejectedValue(new Error('replayed')),
+      complete: vi.fn(),
+      release: vi.fn(),
+    });
+
+    await expect(
+      setup.controller.interactions(toControllerRequest({ rawBody: Buffer.from('{"type":1}') }), 'sig', 'ts', pingBody),
+    ).rejects.toThrow('replayed');
+    expect(setup.route).not.toHaveBeenCalled();
+    await setup.moduleRef.close();
+  });
+
+  it('releases only its reservation when routing fails', async () => {
+    const routeError = new Error('transient route failure');
+    const setup = await controller(vi.fn().mockResolvedValue(undefined), vi.fn().mockRejectedValue(routeError));
+
+    await expect(
+      setup.controller.interactions(toControllerRequest({ rawBody: Buffer.from('{"type":1}') }), 'sig', 'ts', pingBody),
+    ).rejects.toBe(routeError);
+    expect(setup.release).toHaveBeenCalledWith({ key: 'discord:1', ownerValue: 'processing:owner' });
+    expect(setup.complete).not.toHaveBeenCalled();
+    await setup.moduleRef.close();
+  });
+
+  it('does not release a successfully routed interaction when completion storage fails', async () => {
+    const completionError = new Error('completion unavailable');
+    const replay = {
+      reserve: vi.fn().mockResolvedValue({ key: 'discord:1', ownerValue: 'processing:owner' }),
+      complete: vi.fn().mockRejectedValue(completionError),
+      release: vi.fn(),
+    };
+    const setup = await controller(
+      vi.fn().mockResolvedValue(undefined),
+      vi.fn().mockResolvedValue({ type: 1 }),
+      replay,
+    );
+
+    await expect(
+      setup.controller.interactions(toControllerRequest({ rawBody: Buffer.from('{"type":1}') }), 'sig', 'ts', pingBody),
+    ).rejects.toBe(completionError);
+    expect(setup.route).toHaveBeenCalledOnce();
+    expect(setup.release).not.toHaveBeenCalled();
     await setup.moduleRef.close();
   });
 });

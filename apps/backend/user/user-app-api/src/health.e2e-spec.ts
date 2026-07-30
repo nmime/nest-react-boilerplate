@@ -1,11 +1,16 @@
 // @requirements REQ-AUTH-PROFILE-006
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- Fastify inject response JSON is intentionally dynamic in e2e tests. */
-import { MikroORM } from '@mikro-orm/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import type { Response as InjectResponse } from 'light-my-request';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+  DurableDatabaseRuntimeInjectToken,
+  type DurableDatabaseProviderId,
+  type DurableDatabaseRuntime,
+} from '@app/backend-common-bootstrap';
 import { createValidationPipe } from '@app/backend-common-validation';
+import { UserAppApiCapabilitiesModule } from './capabilities.generated';
 import { UserAppApiModule } from './user-app-api.module';
 
 interface HealthEnvelope {
@@ -20,27 +25,33 @@ interface HealthEnvelope {
 
 const parseHealthEnvelope = (response: InjectResponse): HealthEnvelope => response.json<HealthEnvelope>();
 
-describe('user-app-api health e2e', () => {
+const capabilityImports =
+  (Reflect.getMetadata('imports', UserAppApiCapabilitiesModule) as Array<{
+    module?: { name?: string };
+    name?: string;
+  }> | null) ?? [];
+const capabilityModuleNames = capabilityImports.map((entry) => entry.module?.name ?? entry.name ?? '');
+let selectedDatabaseProvider: DurableDatabaseProviderId | undefined;
+if (capabilityModuleNames.some((name) => name.includes('Postgres'))) {
+  selectedDatabaseProvider = 'postgres';
+} else if (capabilityModuleNames.some((name) => name.includes('Mongo'))) {
+  selectedDatabaseProvider = 'mongodb';
+}
+
+const runDatabaseE2e = selectedDatabaseProvider !== undefined && process.env.RUN_DATABASE_E2E === 'true';
+
+describe.runIf(runDatabaseE2e)('user-app-api health e2e', () => {
   let app: NestFastifyApplication | undefined;
-  const ormMock = {
-    close: vi.fn(() => Promise.resolve()),
-    em: {
-      fork: vi.fn(() => ormMock.em),
-      getConnection: () => ({ execute: vi.fn(() => Promise.resolve()) }),
-      getRepository: () => ({}),
-    },
-    getMigrator: () => ({
-      getPendingMigrations: vi.fn(() => Promise.resolve([])),
-    }),
-  };
 
   beforeAll(async () => {
+    process.env.AUTH_PERSISTENCE = selectedDatabaseProvider;
+    process.env.DATABASE_ENGINE = selectedDatabaseProvider;
+    process.env.DATABASE_URL ??= 'postgresql://test:test@127.0.0.1:1/test';
+    process.env.MONGODB_DATABASE ??= 'test';
+    process.env.MONGODB_URI ??= 'mongodb://127.0.0.1:1/test';
     const moduleRef = await Test.createTestingModule({
       imports: [UserAppApiModule],
-    })
-      .overrideProvider(MikroORM)
-      .useValue(ormMock)
-      .compile();
+    }).compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
     app.useGlobalPipes(createValidationPipe());
@@ -51,6 +62,8 @@ describe('user-app-api health e2e', () => {
     // `app` stays unset if `beforeAll` throws before assignment; guard so
     // teardown does not mask the original setup failure with a TypeError.
     await app?.close();
+    delete process.env.AUTH_PERSISTENCE;
+    delete process.env.DATABASE_ENGINE;
   });
 
   it('GET /health returns shared liveness-compatible health details', async () => {
@@ -68,9 +81,9 @@ describe('user-app-api health e2e', () => {
         expect.objectContaining({ name: 'i18n' }),
         expect.objectContaining({ name: 'session-config' }),
         expect.objectContaining({
-          name: 'postgres',
+          name: 'database',
           status: 'ok',
-          required: false,
+          required: true,
         }),
       ]),
     });
@@ -97,10 +110,14 @@ describe('user-app-api health e2e', () => {
         status: expect.stringMatching(/^(ok|degraded)$/),
         dependencies: expect.arrayContaining([
           expect.objectContaining({
-            name: 'postgres',
+            name: 'database',
             status: 'ok',
+            required: true,
+            details: expect.objectContaining({ skipped: expect.any(Boolean) }),
+          }),
+          expect.objectContaining({
+            name: 'database-migrations',
             required: false,
-            details: expect.objectContaining({ skipped: false }),
           }),
           expect.objectContaining({
             name: 'redis',
@@ -117,25 +134,26 @@ describe('user-app-api health e2e', () => {
     });
   });
 
-  it('GET /ready degrades safely when optional Postgres is unavailable', async () => {
+  it('GET /ready fails safely when the selected durable database is unavailable', async () => {
     const sensitiveValue = ['sensitive', 'health', 'fixture'].join('-');
-    const connectionError = ['password=', sensitiveValue, ' postgres://', 'user:', sensitiveValue, '@db:5432/app'].join(
-      '',
-    );
-    const failingOrmMock = {
-      ...ormMock,
-      em: {
-        ...ormMock.em,
-        getConnection: () => ({
-          execute: vi.fn(() => Promise.reject(new Error(connectionError))),
-        }),
+    const failingDatabaseRuntime: DurableDatabaseRuntime = {
+      provider: selectedDatabaseProvider ?? 'postgres',
+      healthIndicators: [
+        {
+          name: selectedDatabaseProvider ?? 'database',
+          required: true,
+          check: () => Promise.reject(new Error(`password=${sensitiveValue}`)),
+        },
+      ],
+      createSessionStore: () => {
+        throw new Error('Session storage is not used by health tests.');
       },
     };
     const moduleRef = await Test.createTestingModule({
       imports: [UserAppApiModule],
     })
-      .overrideProvider(MikroORM)
-      .useValue(failingOrmMock)
+      .overrideProvider(DurableDatabaseRuntimeInjectToken)
+      .useValue(failingDatabaseRuntime)
       .compile();
     const failingApp = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
 
@@ -144,15 +162,15 @@ describe('user-app-api health e2e', () => {
       const response = await failingApp.inject({ method: 'GET', url: '/ready' });
       const body = parseHealthEnvelope(response);
 
-      expect(response.statusCode).toBe(200);
+      expect(response.statusCode).toBe(503);
       expect(body.data).toMatchObject({
         app: 'user-app-api',
-        status: 'degraded',
+        status: 'error',
         dependencies: expect.arrayContaining([
           expect.objectContaining({
-            name: 'postgres',
+            name: 'database',
             status: 'error',
-            required: false,
+            required: true,
             detail: expect.not.stringContaining(sensitiveValue),
             details: expect.objectContaining({
               message: expect.not.stringContaining(sensitiveValue),

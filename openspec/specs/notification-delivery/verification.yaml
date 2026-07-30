@@ -135,6 +135,7 @@ requirements:
       - notification-consumer
       - notification-scheduler
       - '@app/backend-feature-notification-main'
+      - '@app/backend-mongodb-main-notification'
       - '@app/backend-postgres-main-notification'
     risk: critical
     profiles:
@@ -151,6 +152,12 @@ requirements:
       - kind: component
         file: packages/tooling/src/commands/db/migration.integration.test.ts
         target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
+      - kind: component
+        file: libs/backend/mongodb/main/notification/lib/src/notification-mongo.repository.component-spec.ts
+        target: '@app/backend-mongodb-main-notification:component-test'
         lanes:
           - main
           - nightly

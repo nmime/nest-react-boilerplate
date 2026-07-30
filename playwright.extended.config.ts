@@ -1,6 +1,15 @@
 import { defineConfig, devices } from "@playwright/test";
+import {
+  assertExternalStackUrlsConfigured,
+  hasExternalStackUrlConfiguration,
+  urls,
+} from "./apps/e2e/fullstack/src/compose";
 
-const manageStack = !process.env.PLAYWRIGHT_BASE_URL && process.env.PLAYWRIGHT_MANAGE_STACK !== "0";
+const hasExternalStack = hasExternalStackUrlConfiguration();
+const manageStack = process.env.PLAYWRIGHT_MANAGE_STACK === "1" || (!hasExternalStack && process.env.PLAYWRIGHT_MANAGE_STACK !== "0");
+if (!manageStack) {
+  assertExternalStackUrlsConfigured();
+}
 
 export default defineConfig({
   testDir: "apps/e2e/fullstack/src",
@@ -19,13 +28,17 @@ export default defineConfig({
   globalTeardown: manageStack ? "./apps/e2e/fullstack/src/global-teardown.ts" : undefined,
   grepInvert: process.env.PLAYWRIGHT_INCLUDE_QUARANTINED === "1" ? undefined : /@quarantine/,
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:8082",
+    baseURL: urls.userApp,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "chromium-320",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 320, height: 720 } },
+    },
     { name: "firefox", use: { ...devices["Desktop Firefox"] } },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
     { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },

@@ -1,21 +1,33 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createJiti } from 'jiti';
 import { buildComposeInvocation } from './compose-production.mjs';
+import { normalizedClosureContextFiles } from './closure-build-context.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
+const jiti = createJiti(import.meta.url);
+const { renderClosureCaddyfile, renderClosureSingleDomainCaddyfile } = await jiti.import(
+  '../packages/tooling/src/setup/closure-materializer.ts',
+);
 const read = (path) => readFileSync(join(rootDir, path), 'utf8');
 const base = read('docker/docker-compose.prod.yml');
 const bundled = read('docker/docker-compose.prod.bundled-db.yml');
 const external = read('docker/docker-compose.prod.external-db.yml');
+const bundledMongo = read('docker/docker-compose.prod.mongodb-bundled-db.yml');
+const externalMongo = read('docker/docker-compose.prod.mongodb-external-db.yml');
+const redis = read('docker/docker-compose.prod.redis.yml');
 const telegram = read('docker/docker-compose.prod.telegram.yml');
 const discord = read('docker/docker-compose.prod.discord.yml');
 const edge = read('docker/docker-compose.prod.edge.yml');
 const providedTls = read('docker/docker-compose.prod.edge-provided-tls.yml');
 const secretEntrypoint = read('docker/secret-entrypoint.sh');
+const mongoEntrypoint = read('docker/mongodb/start-authenticated-replica-set.sh');
+const mongoProductionUsers = read('docker/mongodb/create-production-user.js');
 const databaseConsumers = [
   'migrate',
   'admin-app-api',
@@ -23,9 +35,59 @@ const databaseConsumers = [
   'auth-app-api',
   'discord-app-api',
   'telegram-bot-api',
+  'notification-scheduler',
+  'notification-consumer',
 ];
+const productionApps = [
+  'admin-app',
+  'admin-app-api',
+  'auth-app-api',
+  'discord-app-api',
+  'landing-app',
+  'mobile-app',
+  'notification-consumer',
+  'notification-scheduler',
+  'site-app',
+  'telegram-bot-api',
+  'user-app',
+  'user-app-api',
+];
+const productionClosure = (provider, profiles, apps, services) => {
+  const selectedOptionalApps = profiles.map((profile) =>
+    profile === 'discord' ? 'discord-app-api' : profile === 'telegram' ? 'telegram-bot-api' : profile,
+  );
+  const selectedApps =
+    apps ??
+    productionApps.filter(
+      (app) =>
+        !['discord-app-api', 'notification-consumer', 'notification-scheduler', 'telegram-bot-api'].includes(app) ||
+        selectedOptionalApps.includes(app),
+    );
+  return {
+    edgeCaddyfiles: {
+      'per-app-domains': closureCaddyfileFixture,
+      'single-domain': closureSingleDomainCaddyfileFixture,
+    },
+    provider,
+    releaseImages: [...(provider ? ['migrator'] : []), ...selectedApps].sort(),
+    roots: [...selectedApps].sort(),
+    selectedApps: [...selectedApps].sort(),
+    services: (
+      services ??
+      (provider === 'postgres'
+        ? ['migrate', 'postgres', 'redis']
+        : provider === 'mongodb'
+          ? ['mongodb', 'mongodb-init', 'mongodb-migrate', 'redis']
+          : [])
+    ).sort(),
+  };
+};
 
 assert.ok(!base.includes('\n  postgres:\n'), 'The production base Compose file must not select a database topology.');
+assert.ok(!base.includes('\n  mongodb:\n'), 'The production base Compose file must not select a database topology.');
+assert.ok(!base.includes('\n  redis:\n'), 'The production base Compose file must not include unselected Redis.');
+assert.ok(!base.includes('      redis:\n'), 'The production base Compose file must not depend on unselected Redis.');
+assert.ok(redis.includes('\n  redis:\n'), 'The Redis overlay must define Redis.');
 assert.ok(
   secretEntrypoint.includes('load_secret DATABASE_URL /run/secrets/database_url'),
   'The production entrypoint must load the external database URL secret.',
@@ -34,6 +96,10 @@ assert.ok(
   secretEntrypoint.includes('load_secret POSTGRES_PASSWORD /run/secrets/postgres_password'),
   'The production entrypoint must load the bundled PostgreSQL secret.',
 );
+assert.ok(secretEntrypoint.includes('load_secret MONGODB_URI /run/secrets/mongodb_uri'));
+assert.ok(secretEntrypoint.includes('load_secret MONGODB_URI /run/secrets/mongodb_migration_uri'));
+assert.ok(secretEntrypoint.includes('load_secret MONGODB_PASSWORD /run/secrets/mongodb_password'));
+assert.ok(secretEntrypoint.includes('load_secret MONGODB_PASSWORD /run/secrets/mongodb_migration_password'));
 for (const [variable, path] of [
   ['SESSION_SECRET', 'session_secret'],
   ['AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY', 'auth_provider_token_encryption_key'],
@@ -45,8 +111,12 @@ for (const [variable, path] of [
   );
 }
 assert.ok(
-  secretEntrypoint.includes('exec su-exec node "$@"'),
+  secretEntrypoint.includes('exec su-exec 1000:1000 "$@"'),
   'The production entrypoint must drop privileges before running application commands.',
+);
+assert.ok(
+  secretEntrypoint.includes('if has_declared_docker_secret; then'),
+  'A non-root process must fail closed only for declared Docker secrets.',
 );
 assert.ok(bundled.includes('\n  postgres:\n'), 'Bundled-db overlay must define PostgreSQL.');
 assert.ok(bundled.includes('postgres-data:'), 'Bundled-db overlay must persist PostgreSQL data.');
@@ -54,6 +124,22 @@ assert.ok(bundled.includes('postgres_password:'), 'Bundled-db overlay must defin
 assert.ok(!external.includes('\n  postgres:\n'), 'External-db overlay must not define PostgreSQL.');
 assert.ok(external.includes('database_url:'), 'External-db overlay must define the database URL secret.');
 assert.ok(external.includes('DATABASE_URL_FILE'), 'External-db overlay must expose a configurable secret-file path.');
+assert.ok(bundledMongo.includes('\n  mongodb:\n'), 'Bundled MongoDB overlay must define MongoDB.');
+assert.ok(mongoEntrypoint.includes('--replSet'), 'Bundled MongoDB must use a replica set.');
+assert.ok(bundledMongo.includes('mongodb_keyfile'), 'Bundled MongoDB must use keyfile authentication.');
+assert.ok(bundledMongo.includes('mongodb-init:'), 'Bundled MongoDB must define idempotent preparation.');
+for (const role of ["'readWrite'", "'dbAdmin'", "'backup'", "'restore'"]) {
+  assert.ok(mongoProductionUsers.includes(`role: ${role}`), `Bundled MongoDB must provision the ${role} role.`);
+}
+assert.ok(mongoProductionUsers.includes("actions: ['anyAction']"), 'MongoDB oplog replay requires anyAction.');
+assert.ok(mongoProductionUsers.includes('anyResource: true'), 'MongoDB oplog replay requires anyResource privileges.');
+assert.ok(!externalMongo.includes('\n  mongodb:\n'), 'External MongoDB overlay must not define MongoDB.');
+assert.ok(externalMongo.includes('mongodb_uri:'), 'External MongoDB overlay must define its URI secret.');
+assert.ok(externalMongo.includes('mongodb_migration_uri:'), 'External MongoDB must define its migration URI secret.');
+assert.ok(
+  externalMongo.includes('mongodb_backup_restore_uri:'),
+  'External MongoDB must define its backup/restore URI secret.',
+);
 assert.ok(telegram.includes('AUTH_TELEGRAM_ENABLED'), 'Telegram overlay must enable tenant Telegram auth.');
 assert.ok(telegram.includes('TELEGRAM_OIDC_ENABLED'), 'Telegram overlay must enable Better Auth Telegram OIDC.');
 assert.ok(telegram.includes('telegram_bot_token'), 'Telegram overlay must mount the TMA signature secret.');
@@ -81,9 +167,12 @@ assert.ok(
 for (const service of databaseConsumers) {
   assert.ok(bundled.includes(`  ${service}:`), `Bundled-db overlay must wire ${service}.`);
   assert.ok(external.includes(`  ${service}:`), `External-db overlay must wire ${service}.`);
+  assert.ok(bundledMongo.includes(`  ${service}:`), `Bundled MongoDB overlay must wire ${service}.`);
+  assert.ok(externalMongo.includes(`  ${service}:`), `External MongoDB overlay must wire ${service}.`);
 }
-
-const dockerAvailable = spawnSync('docker', ['compose', 'version'], { cwd: rootDir, stdio: 'ignore' }).status === 0;
+const dockerAvailable =
+  process.env.SKIP_DOCKER_TESTS !== 'true' &&
+  spawnSync('docker', ['compose', 'version'], { cwd: rootDir, stdio: 'ignore' }).status === 0;
 if (!dockerAvailable) {
   if (process.env.REQUIRE_DOCKER_COMPOSE === 'true') {
     console.error('Docker Compose is required for deployment mode validation but is unavailable.');
@@ -93,22 +182,63 @@ if (!dockerAvailable) {
   process.exit(0);
 }
 
-const render = ({ database, domains, profiles = [], tls }) => {
+const missingContext = spawnSync(
+  'docker',
+  ['compose', '-f', 'docker/docker-compose.yml', '--profile', 'landing-app', 'config'],
+  {
+    cwd: rootDir,
+    encoding: 'utf8',
+    env: { ...process.env, NRB_CLOSURE_CONTEXT: '' },
+  },
+);
+assert.notEqual(missingContext.status, 0, 'Direct Compose source builds must reject a missing nrb-closure context.');
+assert.match(
+  `${missingContext.stderr ?? ''}${missingContext.stdout ?? ''}`,
+  /NRB_CLOSURE_CONTEXT/u,
+  'Missing source-build context failure must identify NRB_CLOSURE_CONTEXT.',
+);
+
+const render = ({
+  apps,
+  database,
+  domains,
+  engine = 'postgres',
+  environment = {},
+  profiles = [],
+  services,
+  sourceBuild = false,
+  tls,
+}) => {
   const arguments_ = [
     'config',
     '--env-file=.env.production.example',
-    `--database=${database}`,
+    ...(database ? [`--database=${database}`] : []),
+    ...(engine ? [`--engine=${engine}`] : []),
     `--domains=${domains}`,
     `--tls=${tls}`,
     ...profiles.map((profile) => `--profile=${profile}`),
+    ...(sourceBuild ? ['--source-build'] : []),
     '--format',
     'json',
   ];
-  const invocation = buildComposeInvocation(arguments_, {
-    ...process.env,
-    IMAGE_TAG: 'sha-0123456789abcdef0123456789abcdef01234567',
-    TELEGRAM_OIDC_CLIENT_ID: '123456789',
-  });
+  const invocation = buildComposeInvocation(
+    arguments_,
+    {
+      ...process.env,
+      IMAGE_TAG: 'sha-0123456789abcdef0123456789abcdef01234567',
+      TELEGRAM_OIDC_CLIENT_ID: '123456789',
+      MONGODB_REPLICA_SET: 'rs0',
+      MONGODB_URI_FILE: mongoUriFile,
+      MONGODB_MIGRATION_URI_FILE: mongoMigrationUriFile,
+      MONGODB_BACKUP_RESTORE_URI_FILE: mongoBackupRestoreUriFile,
+      ...(engine ? {} : { COMPOSE_DATABASE_MODE: '', DATABASE_ENGINE: '' }),
+      ...environment,
+    },
+    {
+      readProductionClosure: () => productionClosure(engine || null, profiles, apps, services),
+      resolveSelectedProductClosureContext: () => closureContextFixture,
+    },
+  );
   const result = spawnSync('docker', invocation.args, {
     cwd: rootDir,
     encoding: 'utf8',
@@ -116,6 +246,9 @@ const render = ({ database, domains, profiles = [], tls }) => {
   });
   if (result.error) throw result.error;
   if (result.status !== 0) {
+    process.stderr.write(
+      `Compose fixture failed: provider=${engine || 'none'}, database=${database || 'none'}, apps=${(apps ?? ['default']).join(',')}\n`,
+    );
     process.stderr.write(result.stderr ?? result.stdout ?? 'Docker Compose render failed.\n');
     process.exit(result.status ?? 1);
   }
@@ -127,16 +260,58 @@ const networkNames = (service) =>
   Array.isArray(service.networks) ? service.networks : Object.keys(service.networks ?? {});
 const volumeTargets = (service) => (service.volumes ?? []).map((volume) => volume.target ?? volume);
 
+const temporaryDirectory = mkdtempSync(join(tmpdir(), 'nrb-compose-render-'));
+const closureContextFixture = join(temporaryDirectory, 'normalized-closure');
+mkdirSync(closureContextFixture);
+for (const file of normalizedClosureContextFiles) writeFileSync(join(closureContextFixture, file), `${file}\n`);
+const closureCaddyfileFixture = join(temporaryDirectory, 'Caddyfile.per-app-domains');
+writeFileSync(
+  closureCaddyfileFixture,
+  renderClosureCaddyfile({ releaseImages: ['migrator', ...productionApps].sort() }),
+);
+const closureSingleDomainCaddyfileFixture = join(temporaryDirectory, 'Caddyfile.single-domain');
+writeFileSync(
+  closureSingleDomainCaddyfileFixture,
+  renderClosureSingleDomainCaddyfile({ releaseImages: ['migrator', ...productionApps].sort() }),
+);
+const mongoUriFile = join(temporaryDirectory, 'mongodb_uri.txt');
+const mongoMigrationUriFile = join(temporaryDirectory, 'mongodb_migration_uri.txt');
+const mongoBackupRestoreUriFile = join(temporaryDirectory, 'mongodb_backup_restore_uri.txt');
+writeFileSync(mongoUriFile, 'mongodb://user:password@mongo/nest_react_boilerplate?replicaSet=rs0&retryWrites=true\n');
+writeFileSync(
+  mongoMigrationUriFile,
+  'mongodb://migration:password@mongo/nest_react_boilerplate?replicaSet=rs0&retryWrites=true\n',
+);
+writeFileSync(
+  mongoBackupRestoreUriFile,
+  'mongodb://backup:password@mongo/?authSource=admin&replicaSet=rs0&retryWrites=true\n',
+);
+process.on('exit', () => rmSync(temporaryDirectory, { force: true, recursive: true }));
+
 const bundledModel = render({
   database: 'bundled-db',
   domains: 'external-proxy',
-  profiles: ['telegram', 'discord'],
+  profiles: ['telegram', 'discord', 'notification-scheduler', 'notification-consumer'],
   tls: 'external',
 });
 const externalModel = render({
   database: 'external-db',
   domains: 'external-proxy',
-  profiles: ['telegram', 'discord'],
+  profiles: ['telegram', 'discord', 'notification-scheduler', 'notification-consumer'],
+  tls: 'external',
+});
+const bundledMongoModel = render({
+  database: 'bundled-db',
+  domains: 'external-proxy',
+  engine: 'mongodb',
+  profiles: ['telegram', 'discord', 'notification-scheduler', 'notification-consumer'],
+  tls: 'external',
+});
+const externalMongoModel = render({
+  database: 'external-db',
+  domains: 'external-proxy',
+  engine: 'mongodb',
+  profiles: ['telegram', 'discord', 'notification-scheduler', 'notification-consumer'],
   tls: 'external',
 });
 const singleDomainModel = render({ database: 'bundled-db', domains: 'single-domain', tls: 'automatic' });
@@ -157,9 +332,126 @@ const externalTelegramModel = render({
 const allOptionalModel = render({
   database: 'bundled-db',
   domains: 'per-app-domains',
-  profiles: ['telegram', 'discord'],
+  profiles: ['telegram', 'discord', 'notification-consumer', 'notification-scheduler'],
   tls: 'automatic',
 });
+const productionSourceBuildModel = render({
+  database: 'bundled-db',
+  domains: 'external-proxy',
+  sourceBuild: true,
+  tls: 'external',
+});
+const providerFreeModel = render({
+  apps: ['landing-app'],
+  database: undefined,
+  domains: 'external-proxy',
+  engine: null,
+  tls: 'external',
+});
+const backendOnlyEnvironment = {
+  AUTH_ALLOWED_RETURN_URLS: 'https://client.example.com',
+  BETTER_AUTH_TRUSTED_ORIGINS: 'https://client.example.com',
+  BETTER_AUTH_URL: 'https://auth.example.com',
+  CORS_ORIGINS: 'https://client.example.com',
+  EXTERNAL_PROXY_PUBLIC_MODE: '',
+};
+const selectedPostgresModel = render({
+  apps: ['auth-app-api', 'user-app-api'],
+  database: 'external-db',
+  domains: 'external-proxy',
+  engine: 'postgres',
+  environment: backendOnlyEnvironment,
+  services: ['migrate', 'postgres'],
+  tls: 'external',
+});
+const selectedMongoModel = render({
+  apps: ['auth-app-api'],
+  database: 'external-db',
+  domains: 'external-proxy',
+  engine: 'mongodb',
+  environment: backendOnlyEnvironment,
+  services: ['mongodb', 'mongodb-init', 'mongodb-migrate'],
+  tls: 'external',
+});
+const selectedNotificationModel = render({
+  apps: ['notification-consumer'],
+  database: 'external-db',
+  domains: 'external-proxy',
+  engine: 'postgres',
+  environment: backendOnlyEnvironment,
+  profiles: ['notification-consumer'],
+  services: ['migrate', 'notification-consumer', 'postgres'],
+  tls: 'external',
+});
+const customFrontendModel = render({
+  apps: ['site-app'],
+  database: undefined,
+  domains: 'external-proxy',
+  engine: null,
+  environment: { PRIMARY_APP: 'site-app' },
+  tls: 'external',
+});
+
+assert.deepEqual(Object.keys(providerFreeModel.services), ['landing-app']);
+assert.ok(!providerFreeModel.services.migrate);
+assert.ok(!providerFreeModel.services.postgres);
+assert.deepEqual(Object.keys(selectedPostgresModel.services).sort(), ['auth-app-api', 'migrate', 'user-app-api']);
+assert.ok(!selectedPostgresModel.services['admin-app-api']);
+assert.ok(!selectedPostgresModel.secrets.redis_password);
+assert.ok(!secretNames(selectedPostgresModel.services['auth-app-api']).includes('redis_password'));
+assert.deepEqual(Object.keys(selectedMongoModel.services).sort(), ['auth-app-api', 'migrate']);
+assert.ok(!selectedMongoModel.services['user-app-api']);
+assert.deepEqual(Object.keys(selectedNotificationModel.services).sort(), ['migrate', 'notification-consumer']);
+assert.ok(!selectedNotificationModel.services['notification-consumer'].depends_on?.redis);
+assert.deepEqual(Object.keys(customFrontendModel.services), ['site-app']);
+
+const assertResolvedNamedContexts = (model, label) => {
+  const builds = Object.entries(model.services).filter(([, service]) => service.build);
+  assert.ok(builds.length > 0, `${label} must render Dockerfile builds.`);
+  for (const [serviceName, service] of builds) {
+    assert.equal(
+      service.build.additional_contexts?.['nrb-closure'],
+      closureContextFixture,
+      `${label} service ${serviceName} omits the resolved nrb-closure context.`,
+    );
+  }
+};
+assertResolvedNamedContexts(productionSourceBuildModel, 'production source-build Compose');
+
+const renderSelected = (provider) => {
+  const result = spawnSync(
+    'docker',
+    [
+      'compose',
+      '-f',
+      'docker/docker-compose.yml',
+      '--profile',
+      provider,
+      '--profile',
+      'user-app-api',
+      'config',
+      '--format',
+      'json',
+    ],
+    {
+      cwd: rootDir,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        AUTH_PERSISTENCE: provider,
+        DATABASE_ENGINE: provider,
+        NRB_CLOSURE_CONTEXT: closureContextFixture,
+      },
+    },
+  );
+  if (result.status !== 0) {
+    process.stderr.write(result.stderr ?? result.stdout ?? 'Selected Docker Compose render failed.\n');
+    process.exit(result.status ?? 1);
+  }
+  return JSON.parse(result.stdout);
+};
+assertResolvedNamedContexts(renderSelected('postgres'), 'selected PostgreSQL Compose');
+assertResolvedNamedContexts(renderSelected('mongodb'), 'selected MongoDB Compose');
 
 for (const model of [bundledTelegramModel, externalTelegramModel]) {
   const auth = model.services['auth-app-api'];
@@ -178,6 +470,9 @@ assert.ok(!externalTelegramModel.services['auth-app-api'].depends_on?.postgres);
 
 assert.ok(bundledModel.services.postgres, 'Bundled-db render must include PostgreSQL.');
 assert.ok(!externalModel.services.postgres, 'External-db render must exclude PostgreSQL.');
+assert.ok(bundledMongoModel.services.mongodb, 'Bundled MongoDB render must include MongoDB.');
+assert.ok(bundledMongoModel.services['mongodb-init'], 'Bundled MongoDB render must include preparation.');
+assert.ok(!externalMongoModel.services.mongodb, 'External MongoDB render must exclude MongoDB.');
 assert.ok(bundledModel.secrets.session_secret, 'Production render must include the generated session secret.');
 assert.ok(
   bundledModel.secrets.auth_provider_token_encryption_key,
@@ -199,8 +494,45 @@ assert.ok(bundledModel.secrets.postgres_password, 'Bundled-db render must includ
 assert.ok(!bundledModel.secrets.database_url, 'Bundled-db render must not include database_url.');
 assert.ok(externalModel.secrets.database_url, 'External-db render must include database_url.');
 assert.ok(!externalModel.secrets.postgres_password, 'External-db render must not include postgres_password.');
+assert.ok(bundledMongoModel.secrets.mongodb_password, 'Bundled MongoDB render must include its application password.');
+assert.ok(bundledMongoModel.secrets.mongodb_migration_password, 'Bundled MongoDB must include a migration password.');
+assert.ok(
+  bundledMongoModel.secrets.mongodb_backup_restore_password,
+  'Bundled MongoDB must include a backup/restore password.',
+);
+assert.ok(bundledMongoModel.secrets.mongodb_root_password, 'Bundled MongoDB render must include its root password.');
+assert.ok(bundledMongoModel.secrets.mongodb_keyfile, 'Bundled MongoDB render must include its keyfile.');
+assert.ok(!bundledMongoModel.secrets.database_url, 'Bundled MongoDB render must exclude PostgreSQL URL secrets.');
+assert.ok(externalMongoModel.secrets.mongodb_uri, 'External MongoDB render must include its URI secret.');
+assert.ok(externalMongoModel.secrets.mongodb_migration_uri, 'External MongoDB must include its migration URI secret.');
+assert.ok(!externalMongoModel.secrets.postgres_password, 'External MongoDB render must exclude PostgreSQL secrets.');
 assert.ok(!bundledModel.services.edge, 'External-proxy mode must not start a Compose-owned edge.');
 assert.ok(!externalModel.services.edge, 'External-proxy mode must not start a Compose-owned edge.');
+
+for (const service of [
+  'migrate',
+  'admin-app-api',
+  'user-app-api',
+  'auth-app-api',
+  'discord-app-api',
+  'telegram-bot-api',
+  'notification-scheduler',
+  'notification-consumer',
+]) {
+  assert.equal(
+    allOptionalModel.services[service].user,
+    '0:0',
+    `${service} must elevate only the secret-loading entrypoint before it drops privileges.`,
+  );
+}
+
+for (const service of ['admin-app-api', 'user-app-api', 'auth-app-api', 'discord-app-api', 'telegram-bot-api']) {
+  assert.match(
+    allOptionalModel.services[service].healthcheck.test.join(' '),
+    /su-exec 1000:1000 node/u,
+    `${service} healthcheck must run Node as numeric UID/GID 1000.`,
+  );
+}
 
 for (const service of databaseConsumers) {
   const bundledService = bundledModel.services[service];
@@ -232,6 +564,27 @@ for (const service of databaseConsumers) {
   );
 }
 
+for (const service of databaseConsumers) {
+  const bundledService = bundledMongoModel.services[service];
+  const externalService = externalMongoModel.services[service];
+  assert.equal(bundledService.environment.DATABASE_ENGINE, 'mongodb');
+  assert.equal(externalService.environment.DATABASE_ENGINE, 'mongodb');
+  assert.ok(
+    secretNames(bundledService).includes(service === 'migrate' ? 'mongodb_migration_password' : 'mongodb_password'),
+  );
+  assert.ok(!secretNames(bundledService).includes('postgres_password'));
+  assert.ok(bundledService.depends_on?.['mongodb-init']);
+  assert.ok(secretNames(externalService).includes(service === 'migrate' ? 'mongodb_migration_uri' : 'mongodb_uri'));
+  assert.ok(!secretNames(externalService).includes('database_url'));
+  assert.ok(!externalService.depends_on?.mongodb);
+}
+for (const model of [bundledModel, externalModel]) {
+  assert.ok(!model.services.mongodb);
+  assert.ok(!model.services['mongodb-init']);
+  assert.ok(!model.secrets.mongodb_uri);
+  assert.ok(!model.secrets.mongodb_password);
+}
+
 assert.ok(
   networkNames(externalModel.services.migrate).includes('app'),
   'External-db migration service needs an egress-capable network.',
@@ -239,11 +592,13 @@ assert.ok(
 
 const singleEdge = singleDomainModel.services.edge;
 assert.equal(singleEdge.image, 'caddy:2.11.4-alpine');
-assert.equal(singleEdge.command[3], '/etc/caddy/Caddyfile.single-domain');
+assert.equal(singleEdge.command[3], '/nrb/Caddyfile.selected');
 assert.equal(singleEdge.environment.PUBLIC_DOMAIN, 'example.com');
 assert.equal(singleEdge.environment.PRIMARY_APP_UPSTREAM, 'landing-app:8080');
 assert.equal(singleDomainModel.services['auth-app-api'].environment.CORS_ORIGINS, 'https://example.com');
 assert.equal(singleDomainModel.services['auth-app-api'].environment.AUTH_ALLOWED_RETURN_URLS, 'https://example.com');
+assert.equal(singleDomainModel.services['landing-app'].environment.LANDING_USER_APP_URL, '/app');
+assert.equal(singleDomainModel.services['landing-app'].environment.LANDING_ADMIN_APP_URL, '/admin');
 assert.deepEqual(
   singleEdge.ports.map(({ host_ip: hostIp, protocol, published, target }) => ({ hostIp, protocol, published, target })),
   [
@@ -254,9 +609,22 @@ assert.deepEqual(
 );
 
 const perAppEdge = perAppDomainModel.services.edge;
-assert.equal(perAppEdge.command[3], '/etc/caddy/Caddyfile.per-app-domains');
+assert.equal(perAppEdge.command[3], '/nrb/Caddyfile.selected');
 assert.equal(perAppEdge.environment.LANDING_APP_DOMAIN, 'example.com');
 assert.equal(perAppEdge.environment.AUTH_APP_API_DOMAIN, 'auth-app-api.example.com');
+assert.equal(
+  perAppDomainModel.services['landing-app'].environment.LANDING_USER_APP_URL,
+  'https://user-app.example.com',
+);
+assert.equal(
+  perAppDomainModel.services['landing-app'].environment.LANDING_ADMIN_APP_URL,
+  'https://admin-app.example.com',
+);
+assert.equal(
+  Object.hasOwn(perAppDomainModel.services['user-app'].environment, 'LANDING_USER_APP_URL'),
+  false,
+  'landing application destinations must not be injected into unrelated frontends',
+);
 assert.equal(perAppEdge.read_only, true);
 assert.ok(networkNames(perAppEdge).includes('app'));
 assert.ok(perAppDomainModel.volumes['caddy-data']);
@@ -289,7 +657,7 @@ const caddyEnvironment = {
   USER_APP_DOMAIN: 'user-app.example.com',
 };
 
-const validateCaddy = (config, optionalRoutes) => {
+const validateCaddy = (config, optionalRoutes, generatedConfig) => {
   const environmentArguments = Object.entries({ ...caddyEnvironment, EDGE_OPTIONAL_ROUTES: optionalRoutes }).flatMap(
     ([key, value]) => ['-e', `${key}=${value}`],
   );
@@ -300,12 +668,13 @@ const validateCaddy = (config, optionalRoutes) => {
       '--rm',
       '-v',
       `${join(rootDir, 'docker/caddy')}:/etc/caddy:ro`,
+      ...(generatedConfig ? ['-v', `${generatedConfig}:/nrb/Caddyfile.selected:ro`] : []),
       ...environmentArguments,
       'caddy:2.11.4-alpine',
       'caddy',
       'validate',
       '--config',
-      `/etc/caddy/${config}`,
+      generatedConfig ? config : `/etc/caddy/${config}`,
       '--adapter',
       'caddyfile',
     ],
@@ -319,8 +688,10 @@ const validateCaddy = (config, optionalRoutes) => {
 };
 
 validateCaddy('Caddyfile.single-domain', 'default');
+validateCaddy('/nrb/Caddyfile.selected', 'default', closureSingleDomainCaddyfileFixture);
 for (const optionalRoutes of ['default', 'discord', 'telegram', 'discord-telegram']) {
   validateCaddy('Caddyfile.per-app-domains', optionalRoutes);
+  validateCaddy('/nrb/Caddyfile.selected', optionalRoutes, closureCaddyfileFixture);
 }
 
 console.log(
@@ -328,8 +699,9 @@ console.log(
     status: 'ok',
     modes: {
       database: ['bundled-db', 'external-db'],
+      databaseEngine: ['postgres', 'mongodb'],
       domains: ['external-proxy', 'single-domain', 'per-app-domains'],
-      profiles: ['discord', 'telegram'],
+      profiles: ['discord', 'notification-consumer', 'notification-scheduler', 'telegram'],
       tls: ['external', 'automatic', 'provided'],
     },
   }),

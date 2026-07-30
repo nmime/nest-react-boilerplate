@@ -26,7 +26,7 @@
       "executor": "nx:run-commands",
       "cache": false,
       "options": {
-        "command": "VITE_E2E_COVERAGE=true VITE_API_BASE_URL_MODE=same-origin node_modules/.bin/vite build --config apps/frontend/app/vite.config.mts && node packages/tooling/bin/repo-tooling.mjs testing frontend-browser-e2e-coverage --dist dist/apps/frontend/app --app-name user-app --contains \"A clear place to manage your account.\" --coverage-dir coverage/e2e/apps/frontend/app"
+        "command": "VITE_E2E_COVERAGE=true VITE_API_BASE_URL_MODE=same-origin node_modules/.bin/vite build --config apps/frontend/app/vite.config.mts && node packages/tooling/bin/repo-tooling.mjs testing frontend-browser-e2e-coverage --dist dist/apps/frontend/app --app-name user-app --contains \"A clear place to manage your account.\" --coverage-dir coverage/e2e/apps/frontend/app && node apps/frontend/app/scripts/assert-browser-coverage.mjs"
       },
       "inputs": [
         "production",

@@ -46,16 +46,15 @@ pnpm nrb add app billing-scheduler \
   --dry-run
 ```
 
-The generator creates `project.json`, package/TypeScript/test configuration,
-Nest entrypoint and module, tests, plus nearest `README.md` and `AGENTS.md`.
+The generator creates `project.json`, TypeScript/test configuration, Nest
+entrypoint and module, tests, plus nearest `README.md` and `AGENTS.md`. It does
+not create an application package manifest.
 A `nest-api` scaffold already uses `bootstrapNestApi` and exposes `/health`,
 `/health/private`, `/live`, and `/ready`.
 
-## 3. Install and prove the generated project
+## 3. Prove the generated project
 
 ```bash
-pnpm install
-pnpm install --frozen-lockfile
 pnpm exec nx show project billing-app-api
 pnpm exec nx run billing-app-api:build
 pnpm exec nx run billing-app-api:test
@@ -63,7 +62,9 @@ pnpm exec nx run billing-app-api:serve
 ```
 
 Do not hand-edit `pnpm-lock.yaml`. Review the generated Nx tags and local port
-before adding product code.
+before adding product code. If the service needs a missing external package,
+declare it in `libs/backend/package.json`, run `pnpm install`, and prove a
+subsequent `pnpm install --frozen-lockfile`.
 
 ## 4. Add domain logic through libraries
 

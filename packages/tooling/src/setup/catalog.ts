@@ -30,6 +30,21 @@ export interface AppEntry {
   requiresApps: AppId[];
   /** Capabilities that conflict with this app. */
   conflictsWithCapabilities: CapabilityId[];
+  /** Whether this app needs one durable database provider. */
+  requiresDurableDatabase?: boolean;
+  /** Immutable image metadata for release/Bake planning. Omit for non-image projects. */
+  releaseImage?: ReleaseImageEntry;
+}
+
+export interface ReleaseImageEntry {
+  target: 'backend' | 'frontend' | 'site-runtime';
+  /** Values key used by the application Helm chart. */
+  helmValuesKey: string;
+  /** Production Compose container port; omit for background-only images. */
+  composePort?: number;
+  buildOutput?: string;
+  frontendOutput?: string;
+  nxTarget?: string;
 }
 
 /**
@@ -49,6 +64,12 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     requiresCapabilities: ['authz'],
     requiresApps: ['admin-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
+    releaseImage: {
+      target: 'frontend',
+      helmValuesKey: 'adminApp',
+      composePort: 8080,
+      frontendOutput: 'dist/apps/frontend/admin',
+    },
   },
   'user-app': {
     id: 'user-app',
@@ -60,6 +81,12 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     requiresCapabilities: ['i18n'],
     requiresApps: ['user-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
+    releaseImage: {
+      target: 'frontend',
+      helmValuesKey: 'userApp',
+      composePort: 8080,
+      frontendOutput: 'dist/apps/frontend/app',
+    },
   },
   'landing-app': {
     id: 'landing-app',
@@ -71,6 +98,12 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    releaseImage: {
+      target: 'frontend',
+      helmValuesKey: 'landingApp',
+      composePort: 8080,
+      frontendOutput: 'dist/apps/frontend/landing',
+    },
   },
   'site-app': {
     id: 'site-app',
@@ -82,6 +115,11 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    releaseImage: {
+      target: 'site-runtime',
+      helmValuesKey: 'siteApp',
+      composePort: 80,
+    },
   },
   'mobile-app': {
     id: 'mobile-app',
@@ -93,6 +131,13 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     requiresCapabilities: ['design-tokens'],
     requiresApps: ['auth-app-api', 'user-app-api'],
     conflictsWithCapabilities: [],
+    releaseImage: {
+      target: 'frontend',
+      helmValuesKey: 'mobileApp',
+      composePort: 8080,
+      frontendOutput: 'dist/apps/frontend/mobile',
+      nxTarget: 'export',
+    },
   },
 
   /* --- Backend apps --- */
@@ -103,9 +148,16 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'reference',
     runtime: 'NestJS + Fastify API',
     publicHostname: 'admin-app-api.example.com',
-    requiresCapabilities: ['postgres', 'authz', 'notifications'],
+    requiresCapabilities: ['authz', 'feature-flags', 'notifications'],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    requiresDurableDatabase: true,
+    releaseImage: {
+      target: 'backend',
+      helmValuesKey: 'adminAppApi',
+      composePort: 80,
+      buildOutput: 'dist/apps/backend/admin/admin-app-api',
+    },
   },
   'user-app-api': {
     id: 'user-app-api',
@@ -114,9 +166,16 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'reference',
     runtime: 'NestJS + Fastify API',
     publicHostname: 'user-app-api.example.com',
-    requiresCapabilities: ['postgres'],
+    requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    requiresDurableDatabase: true,
+    releaseImage: {
+      target: 'backend',
+      helmValuesKey: 'userAppApi',
+      composePort: 80,
+      buildOutput: 'dist/apps/backend/user/user-app-api',
+    },
   },
   'auth-app-api': {
     id: 'auth-app-api',
@@ -125,9 +184,16 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'reference',
     runtime: 'NestJS + Fastify API',
     publicHostname: 'auth-app-api.example.com',
-    requiresCapabilities: ['postgres'],
+    requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    requiresDurableDatabase: true,
+    releaseImage: {
+      target: 'backend',
+      helmValuesKey: 'authAppApi',
+      composePort: 80,
+      buildOutput: 'dist/apps/backend/auth/auth-app-api',
+    },
   },
   'discord-app-api': {
     id: 'discord-app-api',
@@ -136,9 +202,16 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'optional',
     runtime: 'NestJS + Fastify integration API',
     publicHostname: 'discord-app-api.example.com',
-    requiresCapabilities: ['discord-bot', 'postgres'],
+    requiresCapabilities: ['discord-bot'],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    requiresDurableDatabase: true,
+    releaseImage: {
+      target: 'backend',
+      helmValuesKey: 'discordAppApi',
+      composePort: 80,
+      buildOutput: 'dist/apps/backend/discord/discord-app-api',
+    },
   },
   'telegram-bot-api': {
     id: 'telegram-bot-api',
@@ -147,9 +220,16 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'optional',
     runtime: 'NestJS + Fastify bot API',
     publicHostname: 'telegram-bot-api.example.com',
-    requiresCapabilities: ['telegram-bot', 'postgres'],
+    requiresCapabilities: ['telegram-bot'],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    requiresDurableDatabase: true,
+    releaseImage: {
+      target: 'backend',
+      helmValuesKey: 'telegramBotApi',
+      composePort: 80,
+      buildOutput: 'dist/apps/backend/telegram/telegram-bot-api',
+    },
   },
   'notification-scheduler': {
     id: 'notification-scheduler',
@@ -158,9 +238,15 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'optional',
     runtime: 'NestJS scheduled-job process',
     publicHostname: null,
-    requiresCapabilities: ['postgres'],
+    requiresCapabilities: ['notifications'],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    requiresDurableDatabase: true,
+    releaseImage: {
+      target: 'backend',
+      helmValuesKey: 'notificationScheduler',
+      buildOutput: 'dist/apps/backend/notification/notification-scheduler',
+    },
   },
   'notification-consumer': {
     id: 'notification-consumer',
@@ -169,9 +255,15 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     classification: 'optional',
     runtime: 'NestJS background consumer process',
     publicHostname: null,
-    requiresCapabilities: ['postgres', 's3'],
+    requiresCapabilities: ['notifications', 's3'],
     requiresApps: [],
     conflictsWithCapabilities: [],
+    requiresDurableDatabase: true,
+    releaseImage: {
+      target: 'backend',
+      helmValuesKey: 'notificationConsumer',
+      buildOutput: 'dist/apps/backend/notification/notification-consumer',
+    },
   },
   /* --- E2E --- */
   'fullstack-e2e': {
@@ -182,7 +274,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     runtime: 'Playwright full-stack tests',
     publicHostname: null,
     requiresCapabilities: [],
-    requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'user-app', 'user-app-api'],
+    requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'site-app', 'user-app', 'user-app-api'],
     conflictsWithCapabilities: [],
   },
   'acceptance-e2e': {
@@ -209,11 +301,18 @@ export interface CapabilityEntry {
   requiresCapabilities: CapabilityId[];
   requiresApps: AppId[];
   conflictsWith: CapabilityId[];
+  requiresDurableDatabase?: boolean;
   ownedProjects: string[];
+  providerOwnedProjects?: Partial<Record<DurableDatabaseProviderId, string[]>>;
+  telemetryWiring?: BackendTelemetryWiring;
+  providerTelemetryInstrumentation?: BackendModuleImport;
   dockerServices: string[];
   environmentVariables: string[];
   backendWiring: BackendModuleWiring[];
+  providerBackendWiring?: Partial<Record<DurableDatabaseProviderId, BackendModuleWiring[]>>;
 }
+
+export type DurableDatabaseProviderId = 'postgres' | 'mongodb';
 
 export interface BackendModuleWiring {
   hosts: 'selected-backend' | AppId[];
@@ -228,8 +327,15 @@ export interface BackendModuleImport {
   importPath: string;
 }
 
+export interface BackendTelemetryWiring {
+  hosts: 'selected-backend' | AppId[];
+  initializer: BackendModuleImport;
+  instrumentationFactory: BackendModuleImport;
+}
+
 export interface BackendCapabilityModuleEntry {
   path: string;
+  bootstrapPath: string;
   className: string;
 }
 
@@ -237,30 +343,37 @@ export const backendCapabilityModuleCatalog: Readonly<Partial<Record<AppId, Read
   {
     'admin-app-api': {
       path: 'apps/backend/admin/admin-app-api/src/capabilities.generated.ts',
+      bootstrapPath: 'apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts',
       className: 'AdminAppApiCapabilitiesModule',
     },
     'user-app-api': {
       path: 'apps/backend/user/user-app-api/src/capabilities.generated.ts',
+      bootstrapPath: 'apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts',
       className: 'UserAppApiCapabilitiesModule',
     },
     'auth-app-api': {
       path: 'apps/backend/auth/auth-app-api/src/capabilities.generated.ts',
+      bootstrapPath: 'apps/backend/auth/auth-app-api/src/capabilities.bootstrap.generated.ts',
       className: 'AuthAppApiCapabilitiesModule',
     },
     'discord-app-api': {
       path: 'apps/backend/discord/discord-app-api/src/capabilities.generated.ts',
+      bootstrapPath: 'apps/backend/discord/discord-app-api/src/capabilities.bootstrap.generated.ts',
       className: 'DiscordAppApiCapabilitiesModule',
     },
     'telegram-bot-api': {
       path: 'apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts',
+      bootstrapPath: 'apps/backend/telegram/telegram-bot-api/src/capabilities.bootstrap.generated.ts',
       className: 'TelegramBotApiCapabilitiesModule',
     },
     'notification-scheduler': {
       path: 'apps/backend/notification/notification-scheduler/src/capabilities.generated.ts',
+      bootstrapPath: 'apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts',
       className: 'NotificationSchedulerCapabilitiesModule',
     },
     'notification-consumer': {
       path: 'apps/backend/notification/notification-consumer/src/capabilities.generated.ts',
+      bootstrapPath: 'apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts',
       className: 'NotificationConsumerCapabilitiesModule',
     },
   } as const;
@@ -326,35 +439,55 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     id: 'feature-flags',
     label: 'Feature Flags',
     activation: 'nest-module',
-    requiresCapabilities: ['postgres'],
+    requiresCapabilities: [],
     requiresApps: [],
     conflictsWith: [],
-    ownedProjects: ['@app/common-feature-flags', '@app/backend-postgres-main-feature-flags'],
-    dockerServices: ['postgres'],
+    requiresDurableDatabase: true,
+    ownedProjects: ['@app/common-feature-flags'],
+    providerOwnedProjects: {
+      postgres: ['@app/backend-postgres-main-feature-flags'],
+      mongodb: ['@app/backend-mongodb-main-feature-flags'],
+    },
+    dockerServices: [],
     environmentVariables: [],
-    backendWiring: [
-      {
-        hosts: 'selected-backend',
-        importName: 'FeatureFlagsPostgresModule',
-        importPath: '@app/backend-postgres-main-feature-flags',
-        moduleExpression: 'FeatureFlagsPostgresModule',
-      },
-    ],
+    backendWiring: [],
+    providerBackendWiring: {
+      postgres: [
+        {
+          hosts: 'selected-backend',
+          importName: 'FeatureFlagsPostgresModule',
+          importPath: '@app/backend-postgres-main-feature-flags',
+          moduleExpression: 'FeatureFlagsPostgresModule',
+        },
+      ],
+      mongodb: [
+        {
+          hosts: 'selected-backend',
+          importName: 'FeatureFlagsMongoPersistenceModule',
+          importPath: '@app/backend-mongodb-main-feature-flags',
+          moduleExpression: 'FeatureFlagsMongoPersistenceModule',
+        },
+      ],
+    },
   },
   notifications: {
     id: 'notifications',
     label: 'Notifications',
     activation: 'nest-module',
-    requiresCapabilities: ['postgres', 's3'],
+    requiresCapabilities: ['s3'],
     requiresApps: ['notification-consumer', 'notification-scheduler'],
     conflictsWith: [],
+    requiresDurableDatabase: true,
     ownedProjects: [
       '@app/common-notifications',
       '@app/backend-feature-notification-shared',
       '@app/backend-feature-notification-main',
-      '@app/backend-postgres-main-notification',
     ],
-    dockerServices: ['postgres', 'notification-consumer', 'notification-scheduler'],
+    providerOwnedProjects: {
+      postgres: ['@app/backend-postgres-main-notification'],
+      mongodb: ['@app/backend-mongodb-main-notification'],
+    },
+    dockerServices: ['notification-consumer', 'notification-scheduler'],
     environmentVariables: [
       'NOTIFICATION_DELIVERIES_PER_ITERATION',
       'NOTIFICATION_REQUESTS_PER_SECOND',
@@ -401,6 +534,24 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
         moduleExpression: 'NotificationMainModule.forRoot({ enableConsumer: true, exposeHttp: false })',
       },
     ],
+    providerBackendWiring: {
+      postgres: [
+        {
+          hosts: 'selected-backend',
+          importName: 'NotificationPostgresModule',
+          importPath: '@app/backend-postgres-main-notification',
+          moduleExpression: 'NotificationPostgresModule',
+        },
+      ],
+      mongodb: [
+        {
+          hosts: 'selected-backend',
+          importName: 'NotificationMongoPersistenceModule',
+          importPath: '@app/backend-mongodb-main-notification',
+          moduleExpression: 'NotificationMongoPersistenceModule',
+        },
+      ],
+    },
   },
   'design-tokens': {
     id: 'design-tokens',
@@ -432,11 +583,57 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     activation: 'infrastructure',
     requiresCapabilities: [],
     requiresApps: [],
-    conflictsWith: [],
-    ownedProjects: ['@app/backend-postgres-main'],
+    conflictsWith: ['mongodb'],
+    ownedProjects: ['@app/backend-postgres-main', '@app/backend-postgres-main-auth'],
     dockerServices: ['postgres', 'migrate'],
     environmentVariables: ['DATABASE_URL'],
-    backendWiring: [],
+    providerTelemetryInstrumentation: {
+      importName: 'createPostgresOpenTelemetryInstrumentations',
+      importPath: '@app/backend-postgres-main-otel',
+    },
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'PostgresMainModule',
+        importPath: '@app/backend-postgres-main',
+        moduleExpression: 'PostgresMainModule.forRoot()',
+      },
+      {
+        hosts: 'selected-backend',
+        importName: 'AuthPostgresModule',
+        importPath: '@app/backend-postgres-main-auth',
+        moduleExpression: 'AuthPostgresModule',
+      },
+    ],
+  },
+  mongodb: {
+    id: 'mongodb',
+    label: 'MongoDB Database',
+    activation: 'infrastructure',
+    requiresCapabilities: [],
+    requiresApps: [],
+    conflictsWith: ['postgres'],
+    ownedProjects: ['@app/backend-mongodb-main', '@app/backend-mongodb-main-auth'],
+    dockerServices: ['mongodb', 'mongodb-init', 'mongodb-migrate'],
+    environmentVariables: ['MONGODB_URI', 'MONGODB_DATABASE', 'MONGODB_REPLICA_SET'],
+    providerTelemetryInstrumentation: {
+      importName: 'createMongoOpenTelemetryInstrumentations',
+      importPath: '@app/backend-mongodb-main-otel',
+    },
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'MongoMainModule',
+        importPath: '@app/backend-mongodb-main',
+        moduleExpression: 'MongoMainModule.forRoot()',
+      },
+      {
+        hosts: 'selected-backend',
+        importName: 'AuthMongoPersistenceModule',
+        importPath: '@app/backend-mongodb-main-auth',
+        moduleExpression: 'AuthMongoPersistenceModule',
+      },
+    ],
   },
   redis: {
     id: 'redis',
@@ -531,6 +728,17 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     ownedProjects: ['@app/backend-common-otel'],
     dockerServices: [],
     environmentVariables: ['OTEL_ENABLED', 'OTEL_EXPORTER_OTLP_ENDPOINT'],
+    telemetryWiring: {
+      hosts: 'selected-backend',
+      initializer: {
+        importName: 'initOpenTelemetry',
+        importPath: '@app/backend-common-otel',
+      },
+      instrumentationFactory: {
+        importName: 'createOpenTelemetryInstrumentations',
+        importPath: '@app/backend-common-otel',
+      },
+    },
     backendWiring: [],
   },
   swagger: {
@@ -598,6 +806,11 @@ export interface ValidationIssue {
   entity: string;
 }
 
+export const durableDatabaseProviderIds = [
+  'postgres',
+  'mongodb',
+] as const satisfies readonly DurableDatabaseProviderId[];
+
 /**
  * Validate a set of app IDs and capability IDs against the catalog.
  *
@@ -607,6 +820,7 @@ export interface ValidationIssue {
  *  3. No app is listed in a capability's `conflictsWithCapabilities`.
  *  4. Every capability's `requiresCapabilities` is satisfied.
  *  5. No two conflicting capabilities are both enabled.
+ *  6. Database-dependent selections have one durable database provider.
  */
 export function validateSelection(
   apps: readonly AppId[],
@@ -615,6 +829,7 @@ export function validateSelection(
   const capSet = new Set(capabilities);
   const appSet = new Set(apps);
   const issues: ValidationIssue[] = [];
+  const databaseDependants: string[] = [];
 
   for (const appId of apps) {
     const app = appCatalog[appId];
@@ -625,6 +840,10 @@ export function validateSelection(
         message: `Unknown app ID: ${appId}`,
       });
       continue;
+    }
+
+    if (app.requiresDurableDatabase) {
+      databaseDependants.push(appId);
     }
 
     // Check required capabilities
@@ -673,6 +892,10 @@ export function validateSelection(
       continue;
     }
 
+    if (cap.requiresDurableDatabase) {
+      databaseDependants.push(capId);
+    }
+
     // Required capabilities
     for (const reqCap of cap.requiresCapabilities) {
       if (!capSet.has(reqCap)) {
@@ -704,6 +927,15 @@ export function validateSelection(
         });
       }
     }
+  }
+
+  const selectedDatabaseProviders = durableDatabaseProviderIds.filter((provider) => capSet.has(provider));
+  if (databaseDependants.length > 0 && selectedDatabaseProviders.length === 0) {
+    issues.push({
+      type: 'missing_dependency',
+      entity: databaseDependants[0] ?? 'database',
+      message: `${databaseDependants.join(', ')} require exactly one durable database provider ("postgres" or "mongodb")`,
+    });
   }
 
   return issues;

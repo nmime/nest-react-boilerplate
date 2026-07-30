@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Inject,
   Optional,
   Param,
@@ -128,6 +130,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(AuthSessionViewDto)
   async login(@Body() input: LoginDto, @Req() request: AuthenticatedRequest): Promise<OkResponse<AuthSessionView>> {

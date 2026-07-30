@@ -8,11 +8,14 @@ import {
   isLocalDevelopmentDatabase,
   resolvePassword,
 } from "./seed-safety.ts";
+import { isLocalMongoDatabase } from "./mongo-client.ts";
 
 const localDatabase = "postgres://postgres:postgres@localhost:5432/nest_react_boilerplate";
 const productionDatabase = "postgres://postgres:postgres@db.example.com:5432/app";
 // The default prod deployment shares this host+db name with local dev.
 const defaultDatabase = "postgres://postgres:postgres@postgres:5432/nest_react_boilerplate";
+const defaultMongoDatabase = "mongodb://mongo:nest@mongo:27017/nest_react_boilerplate?replicaSet=rs0";
+const setupMongoDatabase = "mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0";
 
 function defaultArgs(overrides = {}) {
   return {
@@ -85,6 +88,12 @@ describe("db seed safety guard", () => {
     assert.equal(
       isLocalDevelopmentDatabase(defaultDatabase, { NODE_ENV: "development" }),
       true,
+    );
+    assert.equal(isLocalMongoDatabase(defaultMongoDatabase, {}), true);
+    assert.equal(isLocalMongoDatabase(setupMongoDatabase, {}), true);
+    assert.equal(
+      isLocalDevelopmentDatabase("postgres://postgres:postgres@mongo:5432/nest_react_boilerplate", {}),
+      false,
     );
   });
 

@@ -19,8 +19,8 @@ Start with these reference files:
 - `libs/backend/feature/auth/main/lib/src/application/telegram-oidc.ts` — generic OIDC provider with signed ID-token verification.
 - `libs/backend/feature/auth/main/lib/src/application/plugins/telegram.ts` — custom Better Auth endpoint that creates a provider account and session.
 - `libs/backend/feature/auth/main/lib/src/application/better-auth-telegram-session.service.ts` — guarded Better Auth-to-application identity projection.
-- `packages/tooling/src/commands/db/better-auth-schema.ts` — Better Auth PostgreSQL schema managed by `pnpm db:migrate`.
-- `libs/backend/postgres/main/auth/**` — tenant/RBAC auth entities, repositories, and explicit migrations.
+- `packages/tooling/src/commands/db/migrate.ts` — provider-dispatched Better Auth and application migrations.
+- `libs/backend/{postgres,mongodb}/main/auth/**` — mutually exclusive tenant/RBAC auth adapters and explicit migrations.
 
 Currently implemented providers depend on the workspace configuration. Check `.env.example` for `AUTH_*` variables.
 
@@ -56,17 +56,22 @@ const opts: BetterAuthOptions = {
 
 ## 4. Database migrations
 
-Better Auth's common provider/account fields belong in `better-auth-schema.ts`. Tenant/RBAC provider channels or provider-specific application data belong in an explicit MikroORM migration. Never use `POSTGRES_SYNCHRONIZE=true`.
+Better Auth's common provider/account fields belong in the selected provider's
+explicit schema/migration path. Tenant/RBAC provider channels or
+provider-specific application data belong in a MikroORM migration for
+PostgreSQL or an idempotent native migration with strict validators/indexes for
+MongoDB. Never use `POSTGRES_SYNCHRONIZE=true`.
 
 ```bash
-# Apply the committed MikroORM migrations and idempotent Better Auth schema:
+# Apply committed migrations for DATABASE_ENGINE/AUTH_PERSISTENCE:
 pnpm db:migrate
 
 # Verify naming, registration, and drift:
 pnpm db:migrations:check
 ```
 
-Follow [database migration standards](../database-migrations.md): explicit `NOT NULL`, `VARCHAR` plus checks instead of enums, deterministic constraint/index names.
+Follow [database migration standards](../database-migrations.md), including the
+provider-specific SQL or MongoDB validator/index/ledger rules.
 
 ## 5. Product-specific callback handling
 
@@ -90,7 +95,7 @@ async googleSession(@Req() request: AuthenticatedRequest) {
 
 Preserve the existing dual-session boundary:
 
-- Better Auth stores its user, provider account, OAuth state, and session in PostgreSQL and issues its secure cookie.
+- Better Auth stores its user, provider account, OAuth state, and session in the selected durable provider and issues its secure cookie.
 - `ExternalAuthService` stores tenant-owned provider identities and establishes the single first-party application session used by the auth, user, and admin APIs. Better Auth cookies never authorize those APIs directly.
 
 Do not replace the existing Better Auth `database`, `account`, `secret`, state-storage, trusted-origin, or session settings with an in-memory example.
@@ -112,7 +117,7 @@ const opts: BetterAuthOptions = {
 
 Before production, review:
 
-- **Session storage**: PostgreSQL for Better Auth plus the repository's application-session policy.
+- **Session storage**: the selected PostgreSQL or MongoDB adapter for Better Auth plus the repository's application-session policy.
 - **Application sessions**: lifetime, rolling renewal, logout, and server-side revocation policy.
 - **Provider credentials**: encryption, rotation, and revocation when an OAuth provider returns credentials that must be retained.
 - **Password reset**: email delivery and token expiry.

@@ -1,15 +1,19 @@
 import { Module } from '@nestjs/common';
-import { PostgresMainModule } from '@app/backend-postgres-main';
 import {
-  AdminAuditLogRepository,
-  AdminUserMutationRepository,
-  AuthPostgresModule,
-  AuthRoleRepository,
-  AuthUserRepository,
-  ProblemPresentationRepository,
-} from '@app/backend-postgres-main-auth';
-import { FeatureFlagRepository, FeatureFlagsPostgresModule } from '@app/backend-postgres-main-feature-flags';
+  AdminAuditLogRepositoryInjectToken,
+  AdminUserMutationRepositoryInjectToken,
+  AuthRoleRepositoryInjectToken,
+  AuthUserRepositoryInjectToken,
+  ProblemPresentationRepositoryInjectToken,
+  type AdminAuditLogRepositoryPort,
+  type AdminUserMutationRepositoryPort,
+  type AuthRoleRepositoryPort,
+  type AuthUserRepositoryPort,
+  type ProblemPresentationRepositoryPort,
+} from '@app/backend-feature-auth-shared';
+import { FeatureFlagRepositoryToken } from '@app/common-feature-flags';
 import {
+  type AdminFeatureFlagRepository,
   AdminFeatureFlagsUseCase,
   GetAdminProfileUseCase,
   AdminRolesUseCase,
@@ -26,7 +30,6 @@ import {
 } from './interfaces/http';
 
 @Module({
-  imports: [PostgresMainModule.forRoot(), AuthPostgresModule, FeatureFlagsPostgresModule],
   controllers: [
     AdminFeatureFlagsController,
     AdminProfileController,
@@ -38,34 +41,43 @@ import {
     AdminDatabaseAccessGuard,
     {
       provide: AdminFeatureFlagsUseCase,
-      inject: [FeatureFlagRepository, AdminAuditLogRepository],
-      useFactory: (featureFlags: FeatureFlagRepository, auditLogs: AdminAuditLogRepository) =>
+      inject: [FeatureFlagRepositoryToken, AdminAuditLogRepositoryInjectToken],
+      useFactory: (featureFlags: AdminFeatureFlagRepository, auditLogs: AdminAuditLogRepositoryPort) =>
         new AdminFeatureFlagsUseCase(featureFlags, auditLogs),
     },
     GetAdminProfileUseCase,
     {
       provide: AdminUsersUseCase,
-      inject: [AuthUserRepository, AdminAuditLogRepository, AdminUserMutationRepository, AuthRoleRepository],
+      inject: [
+        AuthUserRepositoryInjectToken,
+        AdminAuditLogRepositoryInjectToken,
+        AdminUserMutationRepositoryInjectToken,
+        AuthRoleRepositoryInjectToken,
+      ],
       useFactory: (
-        users: AuthUserRepository,
-        auditLogs: AdminAuditLogRepository,
-        adminUserMutations: AdminUserMutationRepository,
-        roles: AuthRoleRepository,
+        users: AuthUserRepositoryPort,
+        auditLogs: AdminAuditLogRepositoryPort,
+        adminUserMutations: AdminUserMutationRepositoryPort,
+        roles: AuthRoleRepositoryPort,
       ) => new AdminUsersUseCase(users, auditLogs, adminUserMutations, roles),
     },
     {
       provide: AdminRolesUseCase,
-      inject: [AuthRoleRepository, AdminUserMutationRepository, AdminAuditLogRepository],
+      inject: [
+        AuthRoleRepositoryInjectToken,
+        AdminUserMutationRepositoryInjectToken,
+        AdminAuditLogRepositoryInjectToken,
+      ],
       useFactory: (
-        roles: AuthRoleRepository,
-        adminUserMutations: AdminUserMutationRepository,
-        auditLogs: AdminAuditLogRepository,
+        roles: AuthRoleRepositoryPort,
+        adminUserMutations: AdminUserMutationRepositoryPort,
+        auditLogs: AdminAuditLogRepositoryPort,
       ) => new AdminRolesUseCase(roles, adminUserMutations, auditLogs),
     },
     {
       provide: ProblemPresentationsUseCase,
-      inject: [ProblemPresentationRepository],
-      useFactory: (presentations: ProblemPresentationRepository) => new ProblemPresentationsUseCase(presentations),
+      inject: [ProblemPresentationRepositoryInjectToken],
+      useFactory: (presentations: ProblemPresentationRepositoryPort) => new ProblemPresentationsUseCase(presentations),
     },
   ],
   exports: [AdminDatabaseAccessGuard],

@@ -1,4 +1,4 @@
-import type { AuthRoleWithPermissions } from '@app/backend-postgres-main-auth';
+import type { AuthRoleWithPermissions } from '@app/backend-feature-auth-shared';
 import type { AdminRoleView } from '../../domain';
 import { orderPermissionKeys } from '../util';
 

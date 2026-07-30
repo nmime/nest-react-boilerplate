@@ -1,4 +1,4 @@
-import { Injectable, Logger, type OnApplicationBootstrap, type OnApplicationShutdown } from '@nestjs/common';
+import { Injectable, Logger, type BeforeApplicationShutdown, type OnApplicationBootstrap } from '@nestjs/common';
 import { S3Service } from '@app/backend-common-s3';
 import { NotificationBroadcastPersistence } from '@app/backend-feature-notification-shared';
 import { NotificationSegmentKind, type NotificationAudienceMember } from '@app/common-notifications';
@@ -7,12 +7,13 @@ import { NotificationCsvService } from './notification-csv.service';
 import { NotificationSegmentResolverRegistry } from './notification-segment-resolver-registry.service';
 
 @Injectable()
-export class NotificationConsumerService implements OnApplicationBootstrap, OnApplicationShutdown {
+export class NotificationConsumerService implements OnApplicationBootstrap, BeforeApplicationShutdown {
   private readonly logger = new Logger(NotificationConsumerService.name);
   private readonly intervalMs: number;
   private readonly materializationChunkSize: number;
   private readonly csvLimits: { maxBytes: number; maxRows: number };
   private timer?: NodeJS.Timeout;
+  private iteration?: Promise<void>;
   private stopped = false;
   private running = false;
 
@@ -32,11 +33,12 @@ export class NotificationConsumerService implements OnApplicationBootstrap, OnAp
     this.schedule(0);
   }
 
-  onApplicationShutdown(): void {
+  async beforeApplicationShutdown(): Promise<void> {
     this.stopped = true;
     if (this.timer) {
       clearTimeout(this.timer);
     }
+    await this.iteration;
   }
 
   async runOnce(): Promise<number> {
@@ -47,10 +49,7 @@ export class NotificationConsumerService implements OnApplicationBootstrap, OnAp
     if (await this.processSnapshot()) {
       handled += 1;
     }
-    const materialization = await this.persistence.claimBroadcastMaterialization(this.materializationChunkSize);
-    if (materialization) {
-      handled += await this.persistence.materializeBroadcastMembers(materialization);
-    }
+    handled += await this.persistence.materializeNextBroadcastChunk(this.materializationChunkSize);
     return handled;
   }
 
@@ -58,7 +57,15 @@ export class NotificationConsumerService implements OnApplicationBootstrap, OnAp
     if (this.stopped) {
       return;
     }
-    this.timer = setTimeout(() => void this.iterate(), delay);
+    this.timer = setTimeout(() => {
+      const iteration = this.iterate();
+      this.iteration = iteration;
+      void iteration.finally(() => {
+        if (this.iteration === iteration) {
+          this.iteration = undefined;
+        }
+      });
+    }, delay);
     this.timer.unref();
   }
 
@@ -89,10 +96,10 @@ export class NotificationConsumerService implements OnApplicationBootstrap, OnAp
         throw new Error('notification_csv_object_missing');
       }
       const parsed = this.csv.parse(object.body, this.csvLimits);
-      await this.persistence.completeSegmentUpload({ uploadId: upload.id, ...parsed });
+      await this.persistence.completeSegmentUpload({ uploadId: upload.id, claimToken: upload.claimToken, ...parsed });
     } catch (error) {
       this.logger.warn(`Notification CSV upload ${upload.id} failed: ${safeMessage(error)}`);
-      await this.persistence.failSegmentUpload(upload.id, [safeMessage(error)]);
+      await this.persistence.failSegmentUpload(upload.id, upload.claimToken, [safeMessage(error)]);
     }
     return true;
   }
@@ -130,10 +137,10 @@ export class NotificationConsumerService implements OnApplicationBootstrap, OnAp
           cursor = page.nextCursor;
         } while (cursor);
       }
-      await this.persistence.completeSnapshot(context.snapshot.id, members);
+      await this.persistence.completeSnapshot(context.snapshot.id, context.claimToken, members);
     } catch (error) {
       this.logger.warn(`Notification audience snapshot ${context.snapshot.id} failed: ${safeMessage(error)}`);
-      await this.persistence.failSnapshot(context.snapshot.id, safeMessage(error));
+      await this.persistence.failSnapshot(context.snapshot.id, context.claimToken, safeMessage(error));
     }
     return true;
   }

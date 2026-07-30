@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => {
   const app = {
     enableCors: vi.fn(),
     enableShutdownHooks: vi.fn(),
+    get: vi.fn<(token: unknown, options?: unknown) => unknown>(() => undefined),
     getHttpAdapter: vi.fn(() => ({
       getInstance: () => fastifyInstance,
     })),
@@ -33,7 +34,18 @@ const mocks = vi.hoisted(() => {
   };
   const helmetMiddleware = vi.fn();
   const localeMiddleware = vi.fn();
-  const poolQuery = vi.fn<(...args: unknown[]) => Promise<{ rows: unknown[] }>>(() => Promise.resolve({ rows: [] }));
+  const sessionStore = {
+    close: vi.fn(() => Promise.resolve()),
+    destroy: vi.fn(),
+    get: vi.fn(),
+    init: vi.fn(() => Promise.resolve()),
+    set: vi.fn(),
+  };
+  const durableRuntime = {
+    createSessionStore: vi.fn(() => sessionStore),
+    healthIndicators: [],
+    provider: 'postgres' as const,
+  };
   const redisClient = {
     incrementWithWindow: vi.fn(),
     ping: vi.fn(() => Promise.resolve('PONG')),
@@ -56,6 +68,7 @@ const mocks = vi.hoisted(() => {
     fastifySession: vi.fn(),
     helmet: vi.fn(() => helmetMiddleware),
     helmetMiddleware,
+    initOpenTelemetry: vi.fn(),
     localeMiddleware,
     mergeVaryHeader: vi.fn((currentValue: unknown) =>
       typeof currentValue === 'string' && currentValue.length > 0
@@ -63,10 +76,8 @@ const mocks = vi.hoisted(() => {
         : 'Accept-Language, X-Locale, X-Language, Cookie',
     ),
     nestCreate: vi.fn(() => Promise.resolve(app)),
-    poolQuery,
-    Pool: vi.fn(function PoolMock() {
-      return { query: poolQuery };
-    }),
+    durableRuntime,
+    sessionStore,
     redisClient,
     exceptionsFilter: vi.fn(function ExceptionsFilterMock() {
       return undefined;
@@ -76,6 +87,7 @@ const mocks = vi.hoisted(() => {
     }),
     resolveLocaleFromRequest: vi.fn(() => 'en'),
     setupSwagger: vi.fn(),
+    shutdownOpenTelemetry: vi.fn(() => Promise.resolve()),
     translate: vi.fn((key: string) =>
       key === 'errors.rate-limited.title' ? 'Too Many Requests' : 'Too many requests.',
     ),
@@ -100,10 +112,6 @@ vi.mock('@fastify/session', () => ({
 
 vi.mock('helmet', () => ({
   default: mocks.helmet,
-}));
-
-vi.mock('pg', () => ({
-  Pool: mocks.Pool,
 }));
 
 vi.mock('@app/backend-common-redis', () => ({
@@ -140,6 +148,11 @@ vi.mock('@app/backend-common-logger', () => ({
   createLogger: mocks.createLogger,
 }));
 
+vi.mock('@app/backend-common-otel', () => ({
+  initOpenTelemetry: mocks.initOpenTelemetry,
+  shutdownOpenTelemetry: mocks.shutdownOpenTelemetry,
+}));
+
 vi.mock('@app/backend-common-swagger', () => ({
   setupSwagger: mocks.setupSwagger,
 }));
@@ -152,7 +165,12 @@ vi.mock('./util/port.util', async (importOriginal) => {
   return await importOriginal<typeof import('./util/port.util')>();
 });
 
-import { bootstrapNestApi, RedisRateLimitStore, resolveBackendEnvironmentConfig } from './index';
+import {
+  bootstrapNestApi,
+  DurableDatabaseRuntimeInjectToken,
+  RedisRateLimitStore,
+  resolveBackendEnvironmentConfig,
+} from './index';
 
 class TestModule {}
 
@@ -209,12 +227,6 @@ const flushAsyncMiddleware = () =>
     setTimeout(resolve, 0);
   });
 
-interface CapturedStore {
-  get: (sessionId: string, callback: (error: unknown, session?: unknown) => void) => void;
-  set: (sessionId: string, session: unknown, callback: (error?: unknown) => void) => void;
-  destroy: (sessionId: string, callback: (error?: unknown) => void) => void;
-}
-
 const middlewareAt = (index: number): TestMiddleware => {
   const middleware: unknown = mocks.app.use.mock.calls[index]?.[0];
   if (typeof middleware !== 'function') {
@@ -223,38 +235,6 @@ const middlewareAt = (index: number): TestMiddleware => {
 
   return middleware as TestMiddleware;
 };
-
-const getSessionStore = (): CapturedStore => {
-  const options = mocks.fastifyRegister.mock.calls.find(
-    (call) => call[1] && typeof call[1] === 'object' && 'store' in call[1],
-  )?.[1] as { store?: CapturedStore } | undefined;
-  if (!options?.store) {
-    throw new Error('Expected a Fastify session store to be registered.');
-  }
-
-  return options.store;
-};
-
-const storeGet = (store: CapturedStore, sessionId: string) =>
-  new Promise<{ error: unknown; session?: unknown }>((resolve) => {
-    store.get(sessionId, (error, session) => {
-      resolve({ error, session });
-    });
-  });
-
-const storeSet = (store: CapturedStore, sessionId: string, session: unknown) =>
-  new Promise<unknown>((resolve) => {
-    store.set(sessionId, session, (error) => {
-      resolve(error);
-    });
-  });
-
-const storeDestroy = (store: CapturedStore, sessionId: string) =>
-  new Promise<unknown>((resolve) => {
-    store.destroy(sessionId, (error) => {
-      resolve(error);
-    });
-  });
 
 const lastMiddleware = (): TestMiddleware => {
   const middleware: unknown = mocks.app.use.mock.calls.at(-1)?.[0];
@@ -267,9 +247,15 @@ const lastMiddleware = (): TestMiddleware => {
 
 describe('bootstrapNestApi', () => {
   const originalEnvironment = {
+    authPersistence: process.env.AUTH_PERSISTENCE,
     databaseUrl: process.env.DATABASE_URL,
     host: process.env.HOST,
     nodeEnv: process.env.NODE_ENV as string | undefined,
+    mongoDatabase: process.env.MONGODB_DATABASE,
+    mongoReplicaSet: process.env.MONGODB_REPLICA_SET,
+    mongoUri: process.env.MONGODB_URI,
+    npmPackageVersion: process.env.npm_package_version,
+    otelServiceVersion: process.env.OTEL_SERVICE_VERSION,
     port: process.env.PORT,
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED,
     rateLimitInMemoryAllowed: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED,
@@ -290,9 +276,15 @@ describe('bootstrapNestApi', () => {
   };
 
   beforeEach(() => {
+    delete process.env.AUTH_PERSISTENCE;
     delete process.env.DATABASE_URL;
     delete process.env.HOST;
     delete process.env.NODE_ENV;
+    delete process.env.MONGODB_DATABASE;
+    delete process.env.MONGODB_REPLICA_SET;
+    delete process.env.MONGODB_URI;
+    delete process.env.npm_package_version;
+    delete process.env.OTEL_SERVICE_VERSION;
     delete process.env.PORT;
     delete process.env.RATE_LIMIT_ENABLED;
     delete process.env.RATE_LIMIT_IN_MEMORY_ALLOWED;
@@ -311,12 +303,19 @@ describe('bootstrapNestApi', () => {
     delete process.env.TEST_API_PORT;
     delete process.env.TRUST_PROXY;
     vi.clearAllMocks();
+    mocks.app.get.mockReturnValue(undefined);
   });
 
   afterEach(() => {
+    process.env.AUTH_PERSISTENCE = originalEnvironment.authPersistence ?? '';
     process.env.DATABASE_URL = originalEnvironment.databaseUrl ?? '';
     process.env.HOST = originalEnvironment.host ?? '';
     process.env.NODE_ENV = originalEnvironment.nodeEnv ?? '';
+    process.env.MONGODB_DATABASE = originalEnvironment.mongoDatabase ?? '';
+    process.env.MONGODB_REPLICA_SET = originalEnvironment.mongoReplicaSet ?? '';
+    process.env.MONGODB_URI = originalEnvironment.mongoUri ?? '';
+    process.env.npm_package_version = originalEnvironment.npmPackageVersion ?? '';
+    process.env.OTEL_SERVICE_VERSION = originalEnvironment.otelServiceVersion ?? '';
     process.env.PORT = originalEnvironment.port ?? '';
     process.env.RATE_LIMIT_ENABLED = originalEnvironment.rateLimitEnabled ?? '';
     process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = originalEnvironment.rateLimitInMemoryAllowed ?? '';
@@ -346,9 +345,45 @@ describe('bootstrapNestApi', () => {
       logger: false,
       trustProxy: false,
     });
-    expect(mocks.nestCreate).toHaveBeenCalledWith(TestModule, expect.anything(), { bufferLogs: true, rawBody: true });
+    expect(mocks.nestCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ imports: [TestModule] }),
+      expect.anything(),
+      { bufferLogs: true, rawBody: true },
+    );
     expect(mocks.fastifyRegister).toHaveBeenCalledTimes(2);
     expect(mocks.app.listen).toHaveBeenCalledWith(3010);
+  });
+
+  it('initializes OpenTelemetry before creating the Nest application', async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.OTEL_SERVICE_VERSION = '2.3.4';
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+    });
+
+    expect(mocks.initOpenTelemetry).toHaveBeenCalledWith({
+      serviceName: 'test-api',
+      serviceVersion: '2.3.4',
+      environment: 'test',
+    });
+    expect(mocks.initOpenTelemetry.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.nestCreate.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('shuts OpenTelemetry down when Nest application creation fails', async () => {
+    mocks.nestCreate.mockRejectedValueOnce(new Error('Nest startup failed'));
+
+    await expect(
+      bootstrapNestApi(TestModule, {
+        appName: 'test-api',
+        port: 3010,
+      }),
+    ).rejects.toThrow('Nest startup failed');
+
+    expect(mocks.shutdownOpenTelemetry).toHaveBeenCalledOnce();
   });
 
   it('installs the redacting structured logger so buffered logs are not printed unredacted', async () => {
@@ -449,105 +484,27 @@ describe('bootstrapNestApi', () => {
     expect(response.statusCode).toBe(429);
   });
 
-  it('persists sessions through the Postgres-backed Fastify session store', async () => {
-    process.env.DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/app';
+  it('delegates durable sessions to the compiled database runtime', async () => {
+    process.env.AUTH_PERSISTENCE = 'postgres';
     process.env.SESSION_SECRET = 'x'.repeat(32);
+    mocks.app.get.mockReturnValue(mocks.durableRuntime);
 
     await bootstrapNestApi(TestModule, {
       appName: 'test-api',
       port: 3010,
     });
 
-    const store = getSessionStore();
-    expect(mocks.Pool).toHaveBeenCalledWith({
-      connectionString: 'postgres://postgres:postgres@localhost:5432/app',
+    expect(mocks.app.get).toHaveBeenCalledWith(DurableDatabaseRuntimeInjectToken, { strict: false });
+    expect(mocks.durableRuntime.createSessionStore).toHaveBeenCalledWith({
+      defaultMaxAgeSeconds: 604_800,
+      env: process.env,
+      sweepIntervalMs: 600_000,
     });
-    expect(mocks.poolQuery).toHaveBeenCalledWith(
-      expect.stringContaining('CREATE TABLE IF NOT EXISTS fastify_sessions'),
+    expect(mocks.sessionStore.init).toHaveBeenCalledOnce();
+    expect(mocks.fastifyRegister).toHaveBeenCalledWith(
+      mocks.fastifySession,
+      expect.objectContaining({ store: mocks.sessionStore }),
     );
-
-    mocks.poolQuery.mockClear();
-    const future = new Date(Date.now() + 60_000);
-    mocks.poolQuery.mockResolvedValueOnce({
-      rows: [
-        {
-          sess: { cookie: { expires: future.toISOString() }, user: 'ada' },
-          expire: future.toISOString(),
-        },
-      ],
-    });
-    const valid = await storeGet(store, 'valid-session');
-    expect(valid.error).toBeNull();
-    expect(valid.session).toMatchObject({ user: 'ada' });
-    expect((valid.session as { cookie: { expires: unknown } }).cookie.expires).toBeInstanceOf(Date);
-
-    mocks.poolQuery.mockResolvedValueOnce({
-      rows: [
-        {
-          sess: { cookie: { expires: future } },
-          expire: future,
-        },
-      ],
-    });
-    await expect(storeGet(store, 'date-cookie-session')).resolves.toMatchObject({
-      error: null,
-    });
-
-    mocks.poolQuery.mockResolvedValueOnce({
-      rows: [
-        {
-          sess: { cookie: { expires: 'not-a-date' } },
-          expire: future,
-        },
-      ],
-    });
-    await expect(storeGet(store, 'invalid-cookie-session')).resolves.toMatchObject({
-      error: null,
-    });
-
-    mocks.poolQuery.mockResolvedValueOnce({ rows: [] });
-    await expect(storeGet(store, 'missing-session')).resolves.toEqual({
-      error: null,
-      session: null,
-    });
-
-    mocks.poolQuery
-      .mockResolvedValueOnce({
-        rows: [{ sess: { cookie: {} }, expire: new Date(Date.now() - 1_000) }],
-      })
-      .mockResolvedValueOnce({ rows: [] });
-    await expect(storeGet(store, 'expired-session')).resolves.toEqual({
-      error: null,
-      session: null,
-    });
-    expect(mocks.poolQuery).toHaveBeenCalledWith('DELETE FROM fastify_sessions WHERE sid = $1', ['expired-session']);
-
-    const getError = new Error('select failed');
-    mocks.poolQuery.mockRejectedValueOnce(getError);
-    await expect(storeGet(store, 'broken-session')).resolves.toEqual({
-      error: getError,
-      session: undefined,
-    });
-
-    mocks.poolQuery.mockResolvedValue({ rows: [] });
-    await expect(storeSet(store, 'date-session', { cookie: { expires: future } })).resolves.toBeUndefined();
-    await expect(
-      storeSet(store, 'original-max-age-session', {
-        cookie: { expires: 'not-a-date', originalMaxAge: 1_234 },
-      }),
-    ).resolves.toBeUndefined();
-    await expect(storeSet(store, 'max-age-session', { cookie: { maxAge: 2_345 } })).resolves.toBeUndefined();
-    await expect(storeSet(store, 'fallback-session', {})).resolves.toBeUndefined();
-
-    const setError = new Error('insert failed');
-    mocks.poolQuery.mockRejectedValueOnce(setError);
-    await expect(storeSet(store, 'broken-set', {})).resolves.toBe(setError);
-
-    mocks.poolQuery.mockResolvedValueOnce({ rows: [] });
-    await expect(storeDestroy(store, 'delete-session')).resolves.toBeUndefined();
-    const destroyError = new Error('delete failed');
-    mocks.poolQuery.mockRejectedValueOnce(destroyError);
-    await expect(storeDestroy(store, 'broken-delete')).resolves.toBe(destroyError);
 
     const closeHook = mocks.fastifyInstance.addHook.mock.calls.find((call) => call[0] === 'onClose')?.[1] as
       (() => Promise<void>) | undefined;
@@ -555,6 +512,55 @@ describe('bootstrapNestApi', () => {
       throw new Error('Expected the session store to register close.');
     }
     await closeHook();
+    expect(mocks.sessionStore.close).toHaveBeenCalledOnce();
+  });
+
+  it('does not resolve a durable runtime for in-memory sessions', async () => {
+    process.env.AUTH_PERSISTENCE = 'memory';
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+    });
+
+    expect(mocks.app.get).not.toHaveBeenCalled();
+    expect(mocks.fastifyRegister).toHaveBeenCalledWith(
+      mocks.fastifySession,
+      expect.not.objectContaining({ store: expect.anything() }),
+    );
+  });
+
+  it('fails closed when the selected durable runtime capability is unavailable', async () => {
+    process.env.AUTH_PERSISTENCE = 'postgres';
+    mocks.app.get.mockImplementationOnce(() => {
+      throw new Error('provider not registered');
+    });
+
+    await expect(bootstrapNestApi(TestModule, { appName: 'test-api', port: 3010 })).rejects.toThrow(
+      'The selected backend does not include a durable database runtime. Rerun `pnpm nrb setup`.',
+    );
+    expect(mocks.app.get).toHaveBeenCalledWith(DurableDatabaseRuntimeInjectToken, { strict: false });
+  });
+
+  it('rejects an environment selector that differs from the compiled runtime', async () => {
+    process.env.AUTH_PERSISTENCE = 'mongodb';
+    process.env.SESSION_SECRET = 'x'.repeat(32);
+    mocks.app.get.mockReturnValue(mocks.durableRuntime);
+
+    await expect(bootstrapNestApi(TestModule, { appName: 'test-api', port: 3010 })).rejects.toThrow(
+      'AUTH_PERSISTENCE=mongodb does not match the compiled postgres provider.',
+    );
+  });
+
+  it('closes a provider-owned session store when initialization fails', async () => {
+    process.env.AUTH_PERSISTENCE = 'postgres';
+    mocks.app.get.mockReturnValue(mocks.durableRuntime);
+    mocks.sessionStore.init.mockRejectedValueOnce(new Error('initialization failed'));
+
+    await expect(bootstrapNestApi(TestModule, { appName: 'test-api', port: 3010 })).rejects.toThrow(
+      'initialization failed',
+    );
+    expect(mocks.sessionStore.close).toHaveBeenCalledOnce();
   });
 
   it('validates session, port, and production configuration failures', async () => {
@@ -599,14 +605,6 @@ describe('bootstrapNestApi', () => {
     vi.clearAllMocks();
     delete process.env.SESSION_COOKIE_SAME_SITE;
     process.env.NODE_ENV = 'production';
-    await expect(bootstrapNestApi(TestModule, { appName: 'test-api', port: 3010 })).rejects.toThrow(
-      'DATABASE_URL must be configured in production for server-side sessions.',
-    );
-
-    vi.clearAllMocks();
-    delete process.env.SESSION_COOKIE_SAME_SITE;
-    process.env.NODE_ENV = 'production';
-    process.env.DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/app';
     process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = 'true';
     await expect(bootstrapNestApi(TestModule, { appName: 'test-api', port: 3010 })).rejects.toThrow(
       'SESSION_SECRET must be configured in production.',
@@ -877,40 +875,6 @@ describe('bootstrapNestApi', () => {
         REDIS_MODE: 'sentinel',
       }),
     ).toThrow('REDIS_SENTINEL_GROUP_IDENTIFIER is required');
-  });
-
-  it('sweeps expired sessions on an interval and stops the sweep on shutdown', async () => {
-    process.env.DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/app';
-    process.env.SESSION_SECRET = 'x'.repeat(32);
-    process.env.SESSION_SWEEP_INTERVAL_MS = '1000';
-    vi.useFakeTimers();
-
-    try {
-      await bootstrapNestApi(TestModule, {
-        appName: 'test-api',
-        port: 3010,
-      });
-      const store = getSessionStore() as unknown as {
-        close: () => Promise<void>;
-        init: () => Promise<void>;
-      };
-
-      await store.init();
-      mocks.poolQuery.mockClear();
-      await vi.advanceTimersByTimeAsync(1_000);
-      expect(mocks.poolQuery).toHaveBeenCalledWith('DELETE FROM fastify_sessions WHERE expire <= $1', [
-        expect.any(Date),
-      ]);
-
-      await store.close();
-      await store.close();
-      mocks.poolQuery.mockClear();
-      await vi.advanceTimersByTimeAsync(5_000);
-      expect(mocks.poolQuery).not.toHaveBeenCalled();
-    } finally {
-      vi.useRealTimers();
-      delete process.env.SESSION_SWEEP_INTERVAL_MS;
-    }
   });
 
   it('removes expired in-memory rate-limit buckets during periodic cleanup', async () => {

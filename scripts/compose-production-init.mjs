@@ -36,10 +36,11 @@ export const generatableSecrets = {
 
 /** The overlay files contributing top-level `secrets:` for a given topology. */
 export function computeOverlayFiles({ database = 'bundled-db', profiles = [] } = {}) {
-  // A host-installed PostgreSQL has no compose overlay, but the native runtime needs
-  // the same generated password, so reuse the bundled-db secret set for discovery.
+  // Host-installed datastores have no Compose services, but their secret contracts
+  // match the separate bundled PostgreSQL and Redis overlays.
   const secretSource = database === 'native' ? 'bundled-db' : database;
   const files = ['docker/docker-compose.prod.yml', `docker/docker-compose.prod.${secretSource}.yml`];
+  if (database === 'native') files.push('docker/docker-compose.prod.redis.yml');
   if (profiles.includes('telegram')) files.push('docker/docker-compose.prod.telegram.yml');
   if (profiles.includes('discord')) files.push('docker/docker-compose.prod.discord.yml');
   return files;

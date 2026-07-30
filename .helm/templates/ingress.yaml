@@ -10,10 +10,26 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.className | quote }}
   tls:
-    {{- toYaml .Values.ingress.tls | nindent 4 }}
+    {{- range $tls := .Values.ingress.tls }}
+    {{- $enabledHosts := list }}
+    {{- range $hostname := $tls.hosts }}
+    {{- range $host := $.Values.ingress.hosts }}
+    {{- if and (eq $host.host $hostname) (or (not (hasKey $host "enabled")) $host.enabled) (eq (include "boilerplate.appEnabled" (dict "root" $ "appId" $host.service)) "true") }}
+    {{- $enabledHosts = append $enabledHosts $hostname }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- if gt (len $enabledHosts) 0 }}
+    - secretName: {{ $tls.secretName }}
+      hosts:
+        {{- range $hostname := $enabledHosts }}
+        - {{ $hostname | quote }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
   rules:
     {{- range $host := .Values.ingress.hosts }}
-    {{- if or (not (hasKey $host "enabled")) $host.enabled }}
+    {{- if and (or (not (hasKey $host "enabled")) $host.enabled) (eq (include "boilerplate.appEnabled" (dict "root" $ "appId" $host.service)) "true") }}
     - host: {{ $host.host | quote }}
       http:
         paths:

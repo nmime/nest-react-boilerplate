@@ -6,6 +6,7 @@ import {
   verifyWebhookSecret,
   type TelegramBotInstance,
 } from '@app/backend-feature-telegram-bot';
+import { TelegramUpdateReplayProtection } from './telegram-update-replay-protection';
 
 @Controller('telegram/webhook')
 export class TelegramWebhookController implements OnApplicationBootstrap {
@@ -16,6 +17,7 @@ export class TelegramWebhookController implements OnApplicationBootstrap {
   constructor(
     @Inject(TelegramBotInstanceInjectToken)
     private readonly telegram: TelegramBotInstance,
+    private readonly replayProtection: TelegramUpdateReplayProtection,
   ) {
     assertWebhookRuntimeAllowed(telegram.config);
     this.webhookSecret = telegram.config.webhookSecret;
@@ -41,8 +43,18 @@ export class TelegramWebhookController implements OnApplicationBootstrap {
       throw new ForbiddenException('telegram_webhook_secret_invalid');
     }
 
-    await this.ensureBotInitialized();
-    await this.telegram.bot.handleUpdate(update as never);
+    const reservation = await this.replayProtection.reserve(update);
+    if (!reservation) {
+      return { ok: true };
+    }
+    try {
+      await this.ensureBotInitialized();
+      await this.telegram.bot.handleUpdate(update as never);
+    } catch (error) {
+      await this.replayProtection.release(reservation);
+      throw error;
+    }
+    await this.replayProtection.complete(reservation);
     return { ok: true };
   }
 

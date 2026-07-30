@@ -18,6 +18,10 @@ This boilerplate supports deployment from GitHub or GitLab.
 
 Helm charts in `.helm/` are platform-agnostic. They reference container images by repository/tag — adjust the `image.repository` values for your registry:
 
+Every product render must load setup-generated `.helm/values-selection.yaml` last. It
+is platform-agnostic and prevents environment values from enabling an app or
+migrator outside the fresh selected closure.
+
 - GitHub: `ghcr.io/your-github-org/nest-react-boilerplate/${service}`
 - GitLab: `registry.gitlab.com/${CI_PROJECT_PATH}/${service}`
 
@@ -27,8 +31,10 @@ The promotion workflow (`.github/workflows/deploy.yml`) is GitHub-specific and
 opens a reviewed image-tag PR. Argo CD and Flux manifests are provider-agnostic.
 For GitLab:
 
-1. Build and verify all release image digests and their full-SHA tags.
-2. Update every image tag in `.helm/values-production.yaml` on a topic branch.
+1. Build and verify full-SHA image digests for the fresh selected closure.
+2. Intersect that inventory with enabled Helm deployment ownership and update
+   exactly those image tags and digests in `.helm/values-production.yaml` on a
+   topic branch.
 3. Run `pnpm run deploy:validate:gitops` and merge through normal review.
 4. Let Argo CD or Flux reconcile the same chart and values.
 
@@ -39,9 +45,18 @@ See [GITOPS.md](../GITOPS.md) for both controller setups.
 `release.config.mjs` selects exactly one semantic-release provider. GitHub
 Actions sets `RELEASE_PROVIDER=github` and uses the repository `GITHUB_TOKEN`.
 GitLab CI sets `RELEASE_PROVIDER=gitlab` and runs the release job on the default
-branch only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a protected CI/CD
-variable. GitLab uses `CI_REPOSITORY_URL` so release tags target the GitLab
-clone instead of this template's GitHub repository metadata.
+branch push pipeline only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a
+protected CI/CD variable. Immediately before semantic-release, the job fetches
+the remote default branch and refuses to publish unless it still equals
+`CI_COMMIT_SHA`, preventing a delayed successful pipeline from releasing after
+the branch advances. GitLab uses `CI_REPOSITORY_URL` so release tags target the
+GitLab clone instead of this template's GitHub repository metadata.
+
+GitLab Helm jobs materialize an explicit provider-free, PostgreSQL, or MongoDB
+selection before rendering. Docker smoke uses provider-specific all-reference
+contexts, while each fullstack job installs its matching selected closure and
+passes `.nrb/closure` as `NRB_CLOSURE_CONTEXT`; no Docker build falls back to
+the default source context.
 
 Both providers use the latest `vMAJOR.MINOR.PATCH` tag as the Semantic
 Versioning baseline. `fix`, `perf`, and `revert` commits increment patch;

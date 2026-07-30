@@ -1,5 +1,22 @@
 #!/usr/bin/env node
-import { assertLocalDevelopmentDatabase, loadDotEnv, postgresConnectionString, redactedConnectionString } from "./env-loader.ts"; import { authMigrationTableName, initAuthMigrationOrm, migrationNames } from "./orm-migration-config.ts";
-loadDotEnv(); const connectionString = postgresConnectionString();
-async function main() { assertLocalDevelopmentDatabase(connectionString); const orm = await initAuthMigrationOrm(); try { await orm.schema.drop({ dropForeignKeys: true, dropMigrationsTable: true, wrap: true }); const applied = await orm.migrator.up(); console.log(JSON.stringify({ status: "reset", database: redactedConnectionString(connectionString), droppedSchema: true, migrationsTable: authMigrationTableName, executed: migrationNames(applied), executedCount: applied.length })); } finally { await orm.close(true); } }
-main().catch((error) => { console.error(error instanceof Error ? error.message : String(error)); process.exit(1); });
+import { loadDotEnv } from './env-loader.ts';
+import { resolveDatabaseMigrationProvider } from './migration-provider.ts';
+import { loadProviderCommandModule } from './provider-command.ts';
+
+export async function runResetCommand(): Promise<void> {
+  loadDotEnv();
+  const provider = await resolveDatabaseMigrationProvider();
+  const implementation = await loadProviderCommandModule(provider, 'reset');
+  const reset = (provider === 'postgres'
+    ? implementation.resetPostgresDatabase
+    : implementation.resetMongoDatabase) as () => Promise<void>;
+  await reset();
+}
+
+const invokedDirectly = process.argv[1]?.endsWith('reset.ts') || process.argv[1]?.endsWith('reset.js');
+if (invokedDirectly) {
+  runResetCommand().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });
+}

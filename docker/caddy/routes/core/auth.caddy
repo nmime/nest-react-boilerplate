@@ -1,0 +1,20 @@
+@better_auth path /api/auth /api/auth/*
+handle @better_auth {
+	reverse_proxy auth-app-api:80
+}
+
+@auth_docs path /auth/docs /auth/docs/*
+handle @auth_docs {
+	reverse_proxy auth-app-api:80
+}
+
+@auth_api {
+	path /auth /auth/*
+	not {
+		method GET HEAD
+		header Accept *text/html*
+	}
+}
+handle @auth_api {
+	reverse_proxy auth-app-api:80
+}

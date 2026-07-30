@@ -1,6 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { verifyKey } from 'discord-interactions';
 
+const maximumTimestampSkewMs = 5 * 60 * 1000;
+
 export interface DiscordSignatureHeaders {
   signature?: string | string[];
   timestamp?: string | string[];
@@ -17,6 +19,14 @@ export class DiscordInteractionSecurity {
     const timestamp = first(input.headers.timestamp);
     if (!signature || !timestamp) {
       throw new UnauthorizedException('Missing Discord signature headers.');
+    }
+    const timestampMs = Number(timestamp) * 1000;
+    if (
+      !/^\d{10,11}$/u.test(timestamp) ||
+      !Number.isSafeInteger(timestampMs) ||
+      Math.abs(Date.now() - timestampMs) > maximumTimestampSkewMs
+    ) {
+      throw new UnauthorizedException('Stale Discord request timestamp.');
     }
     const ok = await verifyKey(input.rawBody, signature, timestamp, input.publicKey);
     if (!ok) {

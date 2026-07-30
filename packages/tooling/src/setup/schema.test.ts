@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-INIT-004
+// @requirements REQ-SCAFFOLD-INIT-004 REQ-SCAFFOLD-SELECTION-002
 /**
  * Tests for setup schema, catalog, and presets.
  *
@@ -150,6 +150,7 @@ describe('schema — constants', () => {
       'design-tokens',
       'authz',
       'postgres',
+      'mongodb',
       'redis',
       's3',
       'static-data',
@@ -205,7 +206,7 @@ describe('catalog — appCatalog', () => {
   it('telegram-bot-api requires telegram-bot capability', () => {
     const e = appCatalog['telegram-bot-api'];
     assert.ok(e.requiresCapabilities.includes('telegram-bot'));
-    assert.ok(e.requiresCapabilities.includes('postgres'));
+    assert.equal(e.requiresDurableDatabase, true);
   });
 
   it('classifies integrations and the notification scheduler as optional applications', () => {
@@ -259,6 +260,7 @@ describe('catalog — appCatalog', () => {
       'admin-app-api',
       'auth-app-api',
       'landing-app',
+      'site-app',
       'user-app',
       'user-app-api',
     ]);
@@ -289,12 +291,30 @@ describe('catalog — capabilityCatalog', () => {
     }
   });
 
-  it('notifications requires its persistence, object storage, consumer, and scheduler', () => {
-    assert.deepEqual(capabilityCatalog['notifications'].requiresCapabilities, ['postgres', 's3']);
+  it('notifications requires durable persistence, object storage, consumer, and scheduler', () => {
+    assert.equal(capabilityCatalog['notifications'].requiresDurableDatabase, true);
+    assert.deepEqual(capabilityCatalog['notifications'].requiresCapabilities, ['s3']);
     assert.deepEqual(capabilityCatalog['notifications'].requiresApps, [
       'notification-consumer',
       'notification-scheduler',
     ]);
+  });
+
+  it('MongoDB capability owns initialization and migration services', () => {
+    assert.deepEqual(capabilityCatalog.mongodb.dockerServices, ['mongodb', 'mongodb-init', 'mongodb-migrate']);
+  });
+
+  it('assigns database telemetry imports to exactly one durable provider', () => {
+    assert.deepEqual(capabilityCatalog.postgres.providerTelemetryInstrumentation, {
+      importName: 'createPostgresOpenTelemetryInstrumentations',
+      importPath: '@app/backend-postgres-main-otel',
+    });
+    assert.deepEqual(capabilityCatalog.mongodb.providerTelemetryInstrumentation, {
+      importName: 'createMongoOpenTelemetryInstrumentations',
+      importPath: '@app/backend-mongodb-main-otel',
+    });
+    assert.equal(capabilityCatalog.otel.providerTelemetryInstrumentation, undefined);
+    assert.equal(capabilityCatalog.otel.telemetryWiring?.initializer.importPath, '@app/backend-common-otel');
   });
 
   it('every capability references valid IDs', () => {
@@ -399,7 +419,7 @@ describe('catalog — validateSelection', () => {
   it('reports capability dependencies for notifications without its queue and scheduler', () => {
     const issues = validateSelection([], ['notifications']);
     assert.ok(
-      issues.some((i) => i.message.includes('postgres')) &&
+      issues.some((i) => i.message.includes('durable database provider')) &&
         issues.some((i) => i.message.includes('notification-scheduler')),
       `Got: ${issues.map((i) => i.message).join('; ')}`,
     );
@@ -409,7 +429,7 @@ describe('catalog — validateSelection', () => {
     assert.deepEqual(
       validateSelection(
         ['admin-app', 'admin-app-api', 'auth-app-api', 'notification-consumer', 'notification-scheduler'],
-        ['authz', 'design-tokens', 'notifications', 'postgres', 's3'],
+        ['authz', 'design-tokens', 'feature-flags', 'notifications', 'postgres', 's3'],
       ),
       [],
     );
@@ -423,6 +443,20 @@ describe('catalog — validateSelection', () => {
       ),
       [],
     );
+  });
+
+  it('accepts MongoDB as the durable database provider', () => {
+    assert.deepEqual(validateSelection(['auth-app-api', 'user-app-api'], ['mongodb']), []);
+  });
+
+  it('rejects database-dependent selections without a provider', () => {
+    const issues = validateSelection(['user-app-api'], []);
+    assert.ok(issues.some((issue) => issue.message.includes('exactly one durable database provider')));
+  });
+
+  it('rejects selecting both durable database providers', () => {
+    const issues = validateSelection(['user-app-api'], ['mongodb', 'postgres']);
+    assert.ok(issues.some((issue) => issue.type === 'conflict'));
   });
 });
 
@@ -445,7 +479,8 @@ describe('catalog — expandDependencies', () => {
   it('adds transitive capability dependencies', () => {
     const { capabilities } = expandDependencies([], ['notifications']);
     assert.ok(capabilities.includes('notifications'));
-    assert.ok(capabilities.includes('postgres'));
+    assert.ok(!capabilities.includes('postgres'));
+    assert.ok(!capabilities.includes('mongodb'));
     assert.ok(!capabilities.includes('telegram-bot'));
   });
 
@@ -453,7 +488,7 @@ describe('catalog — expandDependencies', () => {
     const { capabilities } = expandDependencies(['admin-app'], []);
     assert.ok(capabilities.includes('authz'));
     assert.ok(!capabilities.includes('design-tokens'));
-    assert.ok(capabilities.includes('postgres'));
+    assert.ok(!capabilities.includes('postgres'));
   });
 
   it('is idempotent', () => {
@@ -578,14 +613,15 @@ describe('presets — expandPreset', () => {
     }
   });
 
-  it('enterprise: every supported app and capability', () => {
+  it('enterprise: every supported app and the PostgreSQL capability set', () => {
     const e = expandPreset('enterprise');
     for (const a of appIds) {
       assert.ok(e.apps.includes(a), `enterprise missing app: ${a}`);
     }
-    for (const c of capabilityIds) {
+    for (const c of capabilityIds.filter((capability) => capability !== 'mongodb')) {
       assert.ok(e.capabilities.includes(c), `enterprise missing cap: ${c}`);
     }
+    assert.ok(!e.capabilities.includes('mongodb'));
   });
 
   it('bots: telegram + discord apps and capabilities', () => {
@@ -610,6 +646,14 @@ describe('presets — expandPreset', () => {
       const e = expandPreset(id);
       const issues = validateSelection(e.apps, e.capabilities);
       assert.deepEqual(issues, [], `${id}: ${issues.map((i) => i.message).join('; ')}`);
+    }
+  });
+
+  it('keeps every existing preset on PostgreSQL', () => {
+    for (const id of presetIds) {
+      const capabilities = expandPreset(id).capabilities;
+      assert.ok(capabilities.includes('postgres'), `${id} must keep PostgreSQL`);
+      assert.ok(!capabilities.includes('mongodb'), `${id} must not add MongoDB`);
     }
   });
 
@@ -646,7 +690,7 @@ describe('component — schema → preset → catalog', () => {
     const c = parseNrbConfig({
       schemaVersion,
       apps: ['telegram-bot-api'],
-      capabilities: ['telegram-bot'],
+      capabilities: ['mongodb', 'telegram-bot'],
     });
     const e = expandDependencies(c.apps, c.capabilities);
     assert.ok(e.apps.includes('telegram-bot-api'));
@@ -685,11 +729,19 @@ describe('component — preset monotonicity', () => {
  * E2E: Full flow — parse example JSON → expand → validate
  * ================================================================== */
 describe('e2e — example config flow', () => {
+  it('keeps nrb.config.example.json valid after dependency expansion', () => {
+    const raw = JSON.parse(readFileSync(resolve(process.cwd(), 'nrb.config.example.json'), 'utf8'));
+    const config = parseNrbConfig(raw);
+    const expanded = expandDependencies(config.apps, config.capabilities);
+    assert.deepEqual(validateSelection(expanded.apps, expanded.capabilities), []);
+    assert.ok(expanded.capabilities.includes('postgres'));
+  });
+
   it('parses an explicit app selection and validates dependency expansion', () => {
     const raw = {
       schemaVersion: '1.0.0',
       apps: ['landing-app', 'user-app'],
-      capabilities: ['otel', 'swagger'],
+      capabilities: ['otel', 'postgres', 'swagger'],
       options: { prune: false, force: false, dryRun: false, nonInteractive: false },
     };
     const c = parseNrbConfig(raw);

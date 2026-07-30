@@ -22,7 +22,8 @@ The auth feature exports reusable access-control primitives:
 
 - `SessionAuthGuard` accepts only the HttpOnly server-session cookie.
 - `AUTH_PERSISTENCE=memory` is rejected in production; use the default `postgres` persistence with `DATABASE_URL`.
-- Protected auth, user, and admin requests reload account status and effective RBAC from PostgreSQL before authorization.
+- Protected auth, user, and admin requests reload account status and effective
+  RBAC from the selected PostgreSQL or MongoDB provider before authorization.
 - `RbacGuard` enforces `@RequireRoles()` and `@RequirePermissions()` metadata.
 - Role checks are any-of; permission checks require all listed permissions.
 - `@Public()` can mark health or intentionally anonymous routes.

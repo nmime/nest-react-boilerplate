@@ -91,7 +91,7 @@ describe('AuthOAuthService', () => {
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr().code).toBe('provider_error');
-    expect(result._unsafeUnwrapErr().message).toContain('Invalid URL');
+    expect(result._unsafeUnwrapErr().message).toMatch(/Invalid URL|cannot be parsed as a URL/u);
   });
 
   it('successfully consumes an exact matching state once', async () => {

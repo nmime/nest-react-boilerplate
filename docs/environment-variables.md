@@ -8,14 +8,15 @@ every test, CI, generator, or deployment variable.
 
 Use the template that matches the runtime you are configuring:
 
-| File                                      | Purpose                                                                |
-| ----------------------------------------- | ---------------------------------------------------------------------- |
-| `.env.example`                            | Canonical local application and infrastructure settings.               |
-| `.env.local.example`                      | Local override template; active keys stay aligned with `.env.example`. |
-| `.env.test.example`                       | Deterministic test settings.                                           |
-| `.env.staging.example`                    | Staging-oriented example values.                                       |
-| `.env.production.example`                 | Production Compose, domains, secret-file paths, and safe placeholders. |
-| `deploy/single-server/server.env.example` | Host bootstrap, Nginx, Certbot, and certificate-mode settings.         |
+| File                                          | Purpose                                                                |
+| --------------------------------------------- | ---------------------------------------------------------------------- |
+| `.env.example`                                | Canonical local application and infrastructure settings.               |
+| `.env.local.example`                          | Local override template; active keys stay aligned with `.env.example`. |
+| `.env.test.example`                           | Deterministic test settings.                                           |
+| `.env.staging.example`                        | Staging-oriented example values.                                       |
+| `.env.production.example`                     | Production Compose, domains, secret-file paths, and safe placeholders. |
+| `deploy/single-server/server.env.example`     | Host bootstrap, Nginx, Certbot, and certificate-mode settings.         |
+| `deploy/single-server/production.env.example` | Single-host engine/ownership and provider secret-file overlay.         |
 
 The example files are the exhaustive operator-facing inventory. Runtime Joi
 schemas and the production deployment validators enforce the values consumed by
@@ -46,15 +47,18 @@ metadata determines what is started; it does not contain production secrets.
 | ----------------- | ---------------------- | --------------------------------------------------------------------------------------- |
 | `NODE_ENV`        | Always                 | Selects development, test, or production behavior.                                      |
 | `HOST` / `PORT`   | Optional               | HTTP bind address and service port.                                                     |
+| `DATABASE_ENGINE` | Durable persistence    | Exactly `postgres` or `mongodb`; must match durable `AUTH_PERSISTENCE`.                 |
 | `DATABASE_URL`    | PostgreSQL-backed APIs | PostgreSQL connection URL.                                                              |
+| `MONGODB_URI`     | MongoDB-backed APIs    | Native-driver URI for a transaction-capable topology; never log its credentials.        |
 | `CORS_ORIGINS`    | Production APIs        | Comma-separated browser origins. Wildcards are not accepted by the production contract. |
 | `TRUST_PROXY`     | Behind a trusted proxy | Enables forwarded client/protocol handling.                                             |
 | `LOG_LEVEL`       | Optional               | Runtime log threshold.                                                                  |
 | `OPENAPI_ENABLED` | Optional               | Enables the API's OpenAPI route/export behavior; production defaults to disabled.       |
 | `OPENAPI_PATH`    | Optional               | Service-local OpenAPI path.                                                             |
 
-Local Compose provides `CONTAINER_DATABASE_URL`; production Compose derives or
-loads `DATABASE_URL` from the selected bundled/external database overlay.
+Local Compose provides the selected provider's connection settings. Production
+Compose derives/loads `DATABASE_URL` for PostgreSQL or `MONGODB_URI` for MongoDB
+from the selected bundled/external database overlay.
 
 ## Auth and sessions
 
@@ -65,7 +69,7 @@ loads `DATABASE_URL` from the selected bundled/external database overlay.
 | `BETTER_AUTH_URL`                              | Better Auth                               | Public Better Auth origin.                                                                                        |
 | `BETTER_AUTH_TRUSTED_ORIGINS`                  | Browser auth                              | Comma-separated origins accepted by Better Auth.                                                                  |
 | `AUTH_ALLOWED_RETURN_URLS`                     | External browser auth                     | Comma-separated absolute frontend origins accepted as post-auth returns.                                          |
-| `AUTH_PERSISTENCE`                             | Optional                                  | `postgres` for the real persistence path; memory is test/development only.                                        |
+| `AUTH_PERSISTENCE`                             | Optional                                  | `postgres` or `mongodb` for durable persistence; `memory` is test/development only.                               |
 | `AUTH_GEOIP_DATABASE_PATH`                     | Optional                                  | Absolute path to an operator-mounted GeoIP2/GeoLite2 City MMDB. Empty disables enrichment without blocking login. |
 | `AUTH_LOGIN_NETWORK_RETENTION_DAYS`            | Optional                                  | Days to retain exact IP address and user agent; defaults to 30.                                                   |
 | `AUTH_LOGIN_EVENT_RETENTION_DAYS`              | Optional                                  | Days to retain the append-only login event and coarse dimensions; defaults to 365.                                |
@@ -103,17 +107,66 @@ when its app was selected and provider-issued credentials are populated.
 The server bootstrap creates protected empty files for provider-issued secrets;
 it cannot fabricate valid Telegram or Discord credentials.
 
-## PostgreSQL, Redis, NATS, and static data
+## Durable database provider
+
+PostgreSQL and MongoDB are mutually exclusive. Existing presets and examples
+select PostgreSQL until intentionally changed. Setup writes both
+`DATABASE_ENGINE` and `AUTH_PERSISTENCE`; production Compose and Helm validate
+the same pairing.
+
+### PostgreSQL
 
 | Variable                                  | Purpose                                                                                                     |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `POSTGRES_POOL_MIN` / `POSTGRES_POOL_MAX` | MikroORM connection-pool bounds. `POSTGRES_POOL_MIN` may be zero; `POSTGRES_POOL_MAX` must be at least one. |
 | `POSTGRES_POOL_IDLE_TIMEOUT_MS`           | Idle PostgreSQL connection lifetime in milliseconds.                                                        |
-| `REDIS_URL` / `REDIS_HOSTS`               | Single-node URL and/or the comma-separated endpoints used by cluster/sentinel modes.                        |
-| `REDIS_LAZY_CONNECT`                      | Defers the initial Redis connection until first use; defaults to `true`.                                    |
-| `NATS_SERVERS`                            | Comma-separated NATS server URLs. Empty disables the optional NATS integration.                             |
-| `NATS_TOKEN`                              | Optional token authentication; mutually exclusive with `NATS_USER`/`NATS_PASS`.                             |
-| `STATIC_DATA_ROOT`                        | Root directory used by the backend static-data provider; defaults to `data` in the environment templates.   |
+
+`DATABASE_URL` takes precedence for runtime connection configuration. Local
+Compose also uses `CONTAINER_DATABASE_URL`; external production ownership uses
+`DATABASE_URL_FILE`. Keep `POSTGRES_SYNCHRONIZE=false` and apply MikroORM
+migrations explicitly.
+
+### MongoDB
+
+| Variable                                          | Purpose                                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `MONGODB_URI` / `MONGODB_URI_FILE`                | Runtime URI or production external-database secret file.                                    |
+| `MONGODB_DATABASE`                                | Explicit database name; must match a non-empty URI database path when one is present.       |
+| `MONGODB_REPLICA_SET`                             | Expected replica-set name; must match the URI and deployed topology.                        |
+| `MONGODB_APP_NAME`                                | Optional native-driver application name.                                                    |
+| `MONGODB_CONNECT_TIMEOUT_MS`                      | Positive connection timeout; runtime default `10000`.                                       |
+| `MONGODB_SERVER_SELECTION_TIMEOUT_MS`             | Positive server-selection timeout; runtime default `5000`, deployment examples use `10000`. |
+| `MONGODB_MIN_POOL_SIZE` / `MONGODB_MAX_POOL_SIZE` | Pool bounds; minimum may be zero and must not exceed the positive maximum.                  |
+| `MONGODB_PORT`                                    | Published local-development port; default `27017`.                                          |
+| `MONGODB_USER` / `MONGODB_ROOT_USER`              | Bundled production application/root identities; passwords remain secret-file-only.          |
+| `MONGODB_MIGRATION_USER`                          | Bundled migration identity with application-database DDL privileges.                        |
+| `MONGODB_BACKUP_RESTORE_USER`                     | Bundled deployment-wide backup/restore identity authenticated against `admin`.              |
+| `MONGODB_PASSWORD_FILE`                           | Bundled application-user password file.                                                     |
+| `MONGODB_MIGRATION_PASSWORD_FILE`                 | Bundled migration-user password file.                                                       |
+| `MONGODB_BACKUP_RESTORE_PASSWORD_FILE`            | Bundled backup/restore-user password file.                                                  |
+| `MONGODB_MIGRATION_URI_FILE`                      | External migration-principal URI secret file.                                               |
+| `MONGODB_BACKUP_RESTORE_URI` / `_FILE`            | Deployment-wide backup/restore URI with no database path and `authSource=admin`.            |
+| `MONGODB_ROOT_PASSWORD_FILE`                      | Bundled root-user password file.                                                            |
+| `MONGODB_KEYFILE_FILE`                            | Bundled replica-set internal-auth keyfile.                                                  |
+| `MONGODB_DATABASE_TOOLS_USE_DOCKER`               | Forces the pinned Docker fallback for `mongodump`/`mongorestore`.                           |
+| `MONGODB_DATABASE_TOOLS_DOCKER_NETWORK`           | Optional Docker network for tools; bundled production uses the internal Compose network.    |
+
+URIs must use `mongodb://` or `mongodb+srv://`; `directConnection=true`,
+`loadBalanced=true`, and `retryWrites=false` are rejected. The first-class
+setup, database-operation, Compose, and Helm paths require an explicit
+unsharded replica set. Local/bundled one-node mode provides transactions but not
+HA; production should use a managed or operator-owned multi-node replica set.
+Standalone MongoDB is rejected.
+
+### Redis, NATS, and static data
+
+| Variable                    | Purpose                                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `REDIS_URL` / `REDIS_HOSTS` | Single-node URL and/or the comma-separated endpoints used by cluster/sentinel modes.                      |
+| `REDIS_LAZY_CONNECT`        | Defers the initial Redis connection until first use; defaults to `true`.                                  |
+| `NATS_SERVERS`              | Comma-separated NATS server URLs. Empty disables the optional NATS integration.                           |
+| `NATS_TOKEN`                | Optional token authentication; mutually exclusive with `NATS_USER`/`NATS_PASS`.                           |
+| `STATIC_DATA_ROOT`          | Root directory used by the backend static-data provider; defaults to `data` in the environment templates. |
 
 See [NATS foundation](nats.md) and the environment templates for the remaining
 timeouts, reconnect settings, Redis topology options, and service-specific
@@ -173,7 +226,7 @@ email provider (`resend` or `mailpace`).
 | `NOTIFICATION_APNS_SANDBOX`                                                            | Uses Apple's development endpoint when `true`.                                                                                 |
 
 Select both `notification-consumer` and `notification-scheduler` runtime
-profiles. The consumer needs PostgreSQL and configured S3 storage but receives
+profiles. The consumer needs the selected durable provider and configured S3 storage but receives
 no provider secret; the scheduler receives only the credentials for enabled
 providers. See [Notifications](notifications.md).
 
@@ -211,6 +264,7 @@ falling back to example domains.
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `PUBLIC_DOMAIN`              | Base domain such as `example.com`; no scheme, path, port, or wildcard.                                                                 |
 | `PRIMARY_APP`                | `landing-app` or `site-app`; owns the apex domain.                                                                                     |
+| `DATABASE_ENGINE`            | `postgres` or `mongodb`; independent from ownership but must match auth persistence and provider secrets.                              |
 | `COMPOSE_DATABASE_MODE`      | `bundled-db` or `external-db`.                                                                                                         |
 | `COMPOSE_DOMAIN_MODE`        | `single-domain`, `per-app-domains`, or `external-proxy`.                                                                               |
 | `EXTERNAL_PROXY_PUBLIC_MODE` | `single-domain` or `per-app-domains` for host Nginx.                                                                                   |
@@ -223,6 +277,14 @@ apex. Single-domain mode publishes the selected surfaces through the apex edge
 routes. See
 [Docker Compose Production](docker-compose-production.md) and
 [Single-server Deployment](single-server-deployment.md).
+
+The four supported single-host pairs are PostgreSQL/MongoDB crossed with
+`bundled-db`/`external-db`. Bundled MongoDB requires separate runtime,
+migration, and backup/restore credentials plus root authentication and a
+keyfile. External MongoDB requires separate runtime, migration, and
+backup/restore URI files with one matching non-empty `replicaSet` option.
+Kubernetes uses `database.engine` plus `database.ownership=external-db`; the
+application chart never provisions either database.
 
 ## Safe initialization
 

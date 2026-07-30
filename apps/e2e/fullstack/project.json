@@ -5,6 +5,13 @@
   "projectType": "application",
   "tags": ["platform:e2e", "type:e2e", "scope:fullstack"],
   "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "node --test --import jiti/register apps/e2e/fullstack/tests/*.test.ts"
+      }
+    },
     "e2e": {
       "executor": "nx:run-commands",
       "cache": false,

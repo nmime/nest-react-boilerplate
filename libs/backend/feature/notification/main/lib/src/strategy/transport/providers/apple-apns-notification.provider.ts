@@ -21,6 +21,14 @@ export class AppleApnsNotificationProvider extends NotificationProviderStrategy 
     super();
   }
 
+  override readiness() {
+    const { teamId, keyId, bundleId, privateKey } = this.config.appleApns;
+    return {
+      provider: this.provider,
+      configured: Boolean(teamId && keyId && bundleId && privateKey),
+    };
+  }
+
   async send(input: NotificationProviderSendInput): Promise<NotificationProviderSendResult> {
     if (input.message.kind !== 'push') {
       return unsupportedPush();
@@ -45,27 +53,44 @@ export class AppleApnsNotificationProvider extends NotificationProviderStrategy 
     if (Buffer.byteLength(payload) > 4096) {
       return invalidPush('APNs payload exceeds 4096 bytes.');
     }
+    let token: string;
     try {
-      const token = await this.providerToken(config);
+      token = await this.providerToken(config);
+    } catch (error) {
+      return this.networkFailure(error);
+    }
+
+    await this.beginDispatch(input);
+    try {
       const authority = config.sandbox ? 'https://api.sandbox.push.apple.com' : 'https://api.push.apple.com';
-      const response = await requestApns(authority, input.address, payload, {
-        authorization: `bearer ${token}`,
-        'apns-topic': config.bundleId,
-        'apns-push-type': 'alert',
-        'apns-priority': input.extra?.disableNotification ? '5' : '10',
-      });
+      const response = await requestApns(
+        authority,
+        input.address,
+        payload,
+        {
+          authorization: `bearer ${token}`,
+          'apns-topic': config.bundleId,
+          'apns-push-type': 'alert',
+          'apns-priority': input.extra?.disableNotification ? '5' : '10',
+        },
+        input.signal,
+      );
       if (response.status === 403) {
         this.cachedToken = undefined;
       }
       return mapApnsResponse(response);
     } catch (error) {
-      this.logger.warn(`APNs notification request failed: ${safeNetworkError(error)}`);
-      return {
-        status: NotificationStatus.Pending,
-        errorReason: NotificationErrorReason.NetworkError,
-        errorMessage: safeNetworkError(error),
-      };
+      return this.networkFailure(error);
     }
+  }
+
+  private networkFailure(error: unknown): NotificationProviderSendResult {
+    this.logger.warn(`APNs notification request failed: ${safeNetworkError(error)}`);
+    return {
+      status: NotificationStatus.Pending,
+      errorReason: NotificationErrorReason.NetworkError,
+      errorMessage: safeNetworkError(error),
+    };
   }
 
   private async providerToken(config: NotificationConfigService['appleApns']): Promise<string> {
@@ -131,8 +156,13 @@ function requestApns(
   deviceToken: string,
   payload: string,
   headers: Record<string, string>,
+  signal?: AbortSignal,
 ): Promise<ApnsResponse> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(asError(signal.reason));
+      return;
+    }
     const session: ClientHttp2Session = connect(authority);
     let settled = false;
     const finish = (action: () => void) => {
@@ -140,9 +170,17 @@ function requestApns(
         return;
       }
       settled = true;
+      signal?.removeEventListener('abort', onAbort);
       session.close();
       action();
     };
+    const onAbort = () => {
+      finish(() => {
+        session.destroy();
+        reject(asError(signal?.reason));
+      });
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
     session.once('error', (error) => {
       finish(() => {
         reject(asError(error));

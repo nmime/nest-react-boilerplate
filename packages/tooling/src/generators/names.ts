@@ -65,6 +65,14 @@ export function generateNames(raw: string): GeneratedNames {
 }
 
 /**
+ * Deterministic placeholder used by generated executable tests until product
+ * owners define or replace it in OpenSpec.
+ */
+export function generatedRequirementId(raw: string): string {
+  return `REQ-${toKebab(raw).toUpperCase()}-SCAFFOLD-001`;
+}
+
+/**
  * Validate a generator name: must result in a non-empty kebab-case string.
  * Returns an error message or `null` if valid.
  */

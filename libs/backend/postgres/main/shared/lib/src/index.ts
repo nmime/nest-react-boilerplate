@@ -3,4 +3,5 @@ export * from './database.config';
 export * from './postgres.config.module';
 export * from './postgres.health';
 export * from './postgres.module';
+export * from './postgres-session.store';
 export * from './transaction';

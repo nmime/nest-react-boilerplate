@@ -10,10 +10,16 @@ import {
 @Injectable()
 export class ResendEmailNotificationProvider extends NotificationProviderStrategy {
   readonly provider = NotificationDeliveryProvider.Resend;
+  override readonly idempotentRetries = true;
   private readonly logger = new Logger(ResendEmailNotificationProvider.name);
 
   constructor(private readonly config: NotificationConfigService) {
     super();
+  }
+
+  override readiness() {
+    const { apiKey, from } = this.config.resend;
+    return { provider: this.provider, configured: Boolean(apiKey && from) };
   }
 
   async send(input: NotificationProviderSendInput): Promise<NotificationProviderSendResult> {
@@ -25,31 +31,34 @@ export class ResendEmailNotificationProvider extends NotificationProviderStrateg
       return configurationError('RESEND_API_KEY and NOTIFICATION_EMAIL_FROM are required for Resend delivery.');
     }
 
+    const body = JSON.stringify({
+      from,
+      to: [input.address],
+      subject: input.message.subject,
+      text: input.message.text,
+      ...(input.message.html ? { html: input.message.html } : {}),
+      ...(input.message.attachments?.length
+        ? {
+            attachments: input.message.attachments.map((attachment) => ({
+              filename: attachment.filename ?? attachment.cid,
+              ...(isHttpsUrl(attachment.source) ? { path: attachment.source } : { content: attachment.source }),
+              ...(attachment.cid ? { content_id: attachment.cid } : {}),
+            })),
+          }
+        : {}),
+    });
+    await this.beginDispatch(input);
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
+        signal: input.signal,
         headers: {
           authorization: `Bearer ${apiKey}`,
           'content-type': 'application/json',
           'idempotency-key': `notification-${input.deliveryId}`,
           'user-agent': 'nest-react-boilerplate/notification-scheduler',
         },
-        body: JSON.stringify({
-          from,
-          to: [input.address],
-          subject: input.message.subject,
-          text: input.message.text,
-          ...(input.message.html ? { html: input.message.html } : {}),
-          ...(input.message.attachments?.length
-            ? {
-                attachments: input.message.attachments.map((attachment) => ({
-                  filename: attachment.filename ?? attachment.cid,
-                  ...(isHttpsUrl(attachment.source) ? { path: attachment.source } : { content: attachment.source }),
-                  ...(attachment.cid ? { content_id: attachment.cid } : {}),
-                })),
-              }
-            : {}),
-        }),
+        body,
       });
       if (response.ok) {
         return { status: NotificationStatus.Sent };

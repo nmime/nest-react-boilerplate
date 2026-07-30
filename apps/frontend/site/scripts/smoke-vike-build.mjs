@@ -3,7 +3,7 @@ import { join, relative, resolve } from 'node:path';
 
 const appName = 'site-app';
 const distRoot = resolve(import.meta.dirname, '../../../../dist/apps/frontend/site');
-const runtimePackagePath = resolve(import.meta.dirname, '../package.json');
+const runtimeDependenciesPath = resolve(import.meta.dirname, '../runtime-dependencies.json');
 const expectedCopy = 'A dependable home for the pages people return to.';
 
 const containsExactUrl = (contents, expectedValue) => {
@@ -67,8 +67,7 @@ if (!existsSync(serverEntry)) {
   throw new Error(`[${appName}] missing compiled Fastify server entry at ${serverEntry}`);
 }
 
-const runtimePackage = JSON.parse(readFileSync(runtimePackagePath, 'utf8'));
-const declaredRuntimePackages = new Set(Object.keys(runtimePackage.dependencies ?? {}));
+const declaredRuntimePackages = new Set(JSON.parse(readFileSync(runtimeDependenciesPath, 'utf8')));
 const serverOutput = readBuiltTextFiles(join(distRoot, 'server')).join('\n');
 const bareImports = [...serverOutput.matchAll(/(?:from\s+|import\s*\()(['"])([^'"]+)\1/gu)].map(
   ([, , specifier]) => specifier,

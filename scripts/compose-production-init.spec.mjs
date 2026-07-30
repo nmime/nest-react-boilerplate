@@ -213,12 +213,11 @@ test('run can emit the generated secrets as an env file for non-container runtim
   assert.equal(summary.emittedEnv, emitted);
 });
 
-test('native database reuses the bundled-db secret set (it needs a Postgres password)', () => {
-  // There is no compose overlay for a host-installed PostgreSQL, but the native
-  // runtime still needs the same generated password.
+test('native datastores discover PostgreSQL and Redis secrets from separate overlays', () => {
   assert.deepEqual(computeOverlayFiles({ database: 'native', profiles: [] }), [
     'docker/docker-compose.prod.yml',
     'docker/docker-compose.prod.bundled-db.yml',
+    'docker/docker-compose.prod.redis.yml',
   ]);
   const tmp = withTempRoot();
   const summary = run(

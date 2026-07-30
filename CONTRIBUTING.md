@@ -6,7 +6,8 @@ Use this guide with the root [README](README.md), [Command matrix](docs/command-
 
 - Node.js `>=24 <25`; use `.nvmrc` for the current local patch version.
 - pnpm `11.15.1` through Corepack.
-- Docker Compose for PostgreSQL, container builds, smoke tests, and full-stack e2e.
+- Docker Compose for the selected local PostgreSQL or replica-set MongoDB
+  service, container builds, smoke tests, and full-stack e2e.
 
 ```bash
 nvm use
@@ -51,8 +52,17 @@ Documentation, Build, CI, Tests, and Maintenance sections.
 ## Workspace rules
 
 - Put backend deployables under `apps/backend/<scope>/**` and frontend deployables under `apps/frontend/**`.
-- Keep shared libraries in their current split: `libs/backend/common/**`, `libs/backend/feature/<scope>/<layer>/lib/**`, `libs/backend/postgres/main/shared/lib`, `libs/frontend/**`, and the remaining cross-runtime `libs/common/**` set. Root translation catalogs live in thin scoped files under `i18n/<locale>/<scope>/<component>.json`; keep each file under 60 keys and 90 non-empty lines.
-- Canonical PostgreSQL shared infrastructure is `libs/backend/postgres/main/shared/lib`; feature persistence libraries live below the owning scope, for example `libs/backend/postgres/main/auth/lib`.
+- Keep shared libraries in their current split: `libs/backend/common/**`,
+  `libs/backend/feature/<scope>/<layer>/lib/**`,
+  `libs/backend/{postgres,mongodb}/main/**`, `libs/frontend/**`, and the
+  cross-runtime `libs/common/**` set. Root translation catalogs live in thin
+  scoped files under `i18n/<locale>/<scope>/<component>.json`; keep each file
+  under 60 keys and 90 non-empty lines.
+- Canonical provider infrastructure lives in
+  `libs/backend/{postgres,mongodb}/main/shared/lib`; feature persistence
+  libraries live below the owning provider and scope, for example
+  `libs/backend/postgres/main/auth/lib` or
+  `libs/backend/mongodb/main/auth/lib`.
 - Canonical OpenAPI producer output is `apps/backend/*/*-app-api/contracts/openapi/*.json`; shared generated contract review types are in `libs/common/api-contracts/lib/src/generated`; frontend generated clients are in `libs/frontend/api-client/lib/src/generated`.
 - Do not invent top-level contract directories, alternate OpenAPI consumer folders, or duplicate generated-client locations.
 - Use Nx project names in commands.
@@ -139,6 +149,8 @@ Example:
 ## Deployment and documentation changes
 
 - Keep the root `Dockerfile` aligned with current Nx project names and output paths.
-- Keep the root `docker-compose.yml` focused on local PostgreSQL and `docker/docker-compose.yml` focused on the full stack.
+- Keep the root `docker-compose.yml` focused on selectable local PostgreSQL or
+  replica-set MongoDB services and `docker/docker-compose.yml` focused on the
+  selected full stack.
 - Update Docker, CI, runbook, or troubleshooting docs whenever operational behavior changes.
 - Document only behavior that is verified in source or by running the relevant command.

@@ -19,6 +19,7 @@ spec:
       valuesFiles:
         - values.yaml
         - values-production.yaml
+        - values-selection.yaml
   install:
     createNamespace: true
     remediation:

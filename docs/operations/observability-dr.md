@@ -3,7 +3,7 @@
 This runbook defines the production SRE baseline for `nest-react-boilerplate`.
 The Helm chart ships all resources behind toggles so local/dev installs remain
 small while production can enable telemetry, Prometheus alerts, dashboards, and
-scheduled PostgreSQL backups.
+scheduled selected-provider backups.
 
 ## SLO, RPO, and RTO targets
 
@@ -11,7 +11,7 @@ scheduled PostgreSQL backups.
 | --------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
 | API availability      | 99.9% monthly for auth/user/admin APIs                               | Prometheus alerts and Grafana dashboard                      |
 | API latency           | p95 < 1s for backend HTTP requests over 5 minutes                    | OTLP HTTP metrics exported through the collector             |
-| Backup RPO            | <= 60 minutes in production                                          | `postgres-backup` CronJob schedule and freshness alert       |
+| Backup RPO            | <= 60 minutes in production                                          | Selected-provider CronJob schedule and external backup proof |
 | Restore RTO           | <= 60 minutes for database-only restore, <= 4 hours full environment | Quarterly restore drill record                               |
 | Restore drill cadence | Quarterly and before major data-model releases                       | `pnpm run db:restore:drill` output attached to change record |
 
@@ -35,7 +35,13 @@ monitoring:
     enabled: true
 ```
 
-The application already initializes OpenTelemetry from environment variables.
+Every API using `bootstrapNestApi` initializes OpenTelemetry as the first
+bootstrap operation, before environment resolution and Nest application
+construction, using the app name, environment, and service version. Static
+entrypoint imports have already been evaluated at that point; products that
+require instrumentation before any application-module import must own an
+explicit runtime preload. An awaited Nest lifecycle provider shuts the SDK down
+after application resources are disposed so buffered telemetry is flushed.
 When `monitoring.otel.enabled=true`, the chart writes `OTEL_ENABLED=true` and,
 by default, points `OTEL_EXPORTER_OTLP_ENDPOINT` at the in-cluster collector:
 
@@ -49,6 +55,19 @@ trace exporters, or vendor-specific auth headers. Keep secrets (for example
 `OTEL_EXPORTER_OTLP_HEADERS`) in an external Secret rather than plaintext values
 when they contain credentials.
 
+With `networkPolicy.enabled=true`, the chart permits the selected app-to-
+collector OTLP/HTTP path on 4318, collector-to-observability exporter path on
+4317, and monitoring namespace scrape path on 9464. Set
+`networkPolicy.otelCollector.exporterNamespace`, `exporterPorts`, and
+`prometheusNamespace` to the actual platform owners. A custom in-cluster OTLP
+endpoint also needs a matching product-owned NetworkPolicy; hosted HTTPS uses
+the separately controlled external egress rule.
+
+Coroot does not receive Secret access by default. Set
+`coroot.rbac.readSecrets=true` only after a product security review accepts
+cluster-wide Secret metadata and payload exposure; ordinary workload discovery
+uses the non-secret read-only resources in its ClusterRole.
+
 ## Alerts
 
 The chart renders a `PrometheusRule` when
@@ -59,6 +78,11 @@ The chart renders a `PrometheusRule` when
 - OTLP collector scrape outage;
 - stale backup CronJob schedule beyond the RPO window;
 - failed backup jobs.
+
+The backup alerts select the chart's stable backup workload labels rather than a
+provider-specific CronJob name, so they follow whichever durable provider the
+release selects. Managed databases still require provider-platform freshness
+monitoring in addition to chart job monitoring.
 
 Page alerts should route to the primary on-call. Warning alerts should route to
 the service Slack/Teams channel. Tune severities and thresholds per environment.
@@ -71,7 +95,7 @@ dashboard includes replica health, OTLP request rate, OTLP p95 latency, and
 backup freshness panels. Add environment-specific variables in Grafana after
 import if your metric labels differ.
 
-## PostgreSQL backups
+## Database backups
 
 Backups are opt-in:
 
@@ -79,6 +103,8 @@ Backups are opt-in:
 backups:
   enabled: true
   schedule: '17 * * * *' # hourly => <= 60 minute RPO
+  mongodb:
+    existingSecret: nest-react-boilerplate-mongodb-backup-restore
   destination:
     objectStore:
       enabled: true
@@ -95,14 +121,16 @@ backups:
     keepLast: 336 # two weeks of hourly local copies when a PVC is mounted
 ```
 
-The default image is `postgres:17.6-alpine`, which contains `pg_dump` but not
-cloud CLIs or encryption tools. For production, set `backups.image` to a hardened
-ops image that includes the selected upload/encryption tools (`aws`, `age`,
-`gpg`, `rclone`, etc.). The CronJob exports these hook variables:
+The CronJob dispatches from `database.engine`. PostgreSQL uses `pg_dump`; MongoDB
+uses `mongodump --archive --gzip --oplog` with a deployment-wide URI. Configure `backups.image` for
+PostgreSQL or `backups.mongodbImage` for MongoDB. Production images must also
+contain selected upload/encryption tools (`aws`, `age`, `gpg`, `rclone`, etc.).
+The CronJob exports these hook variables:
 
 - `BACKUP_FILE` - path to the dump produced by `pg_dump`;
 - `BACKUP_BUCKET` and `BACKUP_PREFIX` - object-store destination values;
-- `DATABASE_URL` - loaded from the application Secret;
+- `DATABASE_URL` from the application Secret for PostgreSQL, or
+  `MONGODB_BACKUP_RESTORE_URI` from `backups.mongodb.existingSecret` for MongoDB;
 - any keys from `backups.destination.objectStore.existingSecret` and
   `backups.encryption.existingSecret`.
 
@@ -115,18 +143,19 @@ source of truth for DR.
 
 1. Declare an incident and freeze destructive writes if possible.
 2. Identify the restore point that satisfies the incident RPO.
-3. Provision or select the target PostgreSQL instance.
+3. Provision or select an isolated target using the same durable provider and a
+   transaction-capable replica set for MongoDB.
 4. Download and decrypt the backup artifact.
 5. Run a dry-run command first:
 
    ```bash
-   DATABASE_URL=postgres://... pnpm run db:restore -- --input ./postgres.dump --dry-run --force
+   pnpm run db:restore -- --input ./provider-backup --dry-run --force
    ```
 
 6. Restore after approval:
 
    ```bash
-   DATABASE_URL=postgres://... pnpm run db:restore -- --input ./postgres.dump --yes --force
+   pnpm run db:restore -- --input ./provider-backup --yes --force
    ```
 
 7. Run migrations if the restored backup predates the currently deployed app.
@@ -143,12 +172,21 @@ and paths still work without requiring a live database or `pg_dump` binaries:
 pnpm run db:restore:drill -- --ci --dry-run
 ```
 
-For a real local drill against a disposable database:
+For a real local drill against a disposable selected-provider database:
 
 ```bash
 DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate_dr \
   pnpm run db:restore:drill -- --output test-results/dr/postgres.dump --yes
 ```
+
+For MongoDB, set matching `DATABASE_ENGINE=mongodb`,
+`AUTH_PERSISTENCE=mongodb`, `MONGODB_DATABASE`, `MONGODB_REPLICA_SET`, and a
+deployment-wide `MONGODB_BACKUP_RESTORE_URI` or `_FILE`, then use an
+`.archive.gz` output. The URI must omit a database path and authenticate the
+dedicated backup/restore principal against `admin`; the generated restore uses
+`--oplogReplay`, which also requires a custom role with `anyAction` on
+`anyResource`. A CI dry run proves provider dispatch, command construction,
+and secret redaction only; it does not prove that an archive can restore.
 
 Never run a non-dry-run restore against production without an approved incident
 or change ticket.

@@ -42,6 +42,12 @@
       "description": "Owning product/domain scope; defaults to the first name segment",
       "x-priority": "optional"
     },
+    "database": {
+      "type": "string",
+      "description": "Database provider for backend data-access libraries; derived from setup when available",
+      "enum": ["postgres", "mongodb"],
+      "x-priority": "optional"
+    },
     "description": {
       "type": "string",
       "description": "Concrete responsibility, public API, or intended consumers for the local README",

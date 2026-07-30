@@ -1,19 +1,23 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { ResultAsync, okAsync } from 'neverthrow';
 import {
-  AuthLinkTokenRepository,
-  AuthMethodRepository,
-  AuthProviderTokenRepository,
-  ExternalIdentityRepository,
+  AuthLinkTokenRepositoryInjectToken,
+  AuthMethodRepositoryInjectToken,
+  AuthProviderTokenRepositoryInjectToken,
+  ExternalIdentityRepositoryInjectToken,
   type AuthLinkTokenPurpose,
-  type AuthLinkTokenEntity,
-  type AuthMethodEntity,
+  type AuthLinkTokenRecord as PersistedAuthLinkTokenRecord,
+  type AuthMethodPersistenceRecord as PersistedAuthMethodRecord,
   type AuthMethodType,
   type ExternalAuthProvider,
-  type ExternalIdentityEntity,
+  type ExternalIdentityPersistenceRecord as PersistedExternalIdentityRecord,
+  type AuthLinkTokenRepositoryPort,
+  type AuthMethodRepositoryPort,
+  type AuthProviderTokenRepositoryPort,
+  type ExternalIdentityRepositoryPort,
   type ProviderTokenCrypto,
   type RedactedAuthProviderTokenView,
-} from '@app/backend-postgres-main-auth';
+} from '@app/backend-feature-auth-shared';
 import type {
   AuthMethodRecord,
   CreateLinkTokenInput,
@@ -32,10 +36,10 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   private readonly crypto: ProviderTokenCrypto | null;
 
   constructor(
-    private readonly identities: ExternalIdentityRepository,
-    private readonly methods: AuthMethodRepository,
-    private readonly linkTokens: AuthLinkTokenRepository,
-    private readonly providerTokens: AuthProviderTokenRepository,
+    @Inject(ExternalIdentityRepositoryInjectToken) private readonly identities: ExternalIdentityRepositoryPort,
+    @Inject(AuthMethodRepositoryInjectToken) private readonly methods: AuthMethodRepositoryPort,
+    @Inject(AuthLinkTokenRepositoryInjectToken) private readonly linkTokens: AuthLinkTokenRepositoryPort,
+    @Inject(AuthProviderTokenRepositoryInjectToken) private readonly providerTokens: AuthProviderTokenRepositoryPort,
     @Optional() crypto?: ProviderTokenCrypto,
   ) {
     this.crypto = crypto ?? createEnvProviderTokenCrypto();
@@ -48,13 +52,13 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   ): ResultAsync<ExternalIdentityRecord | null, SocialAuthStoreError> {
     return this.identities
       .findByProviderSubject(provider, providerSubject, tenantId)
-      .map((value: ExternalIdentityEntity | null) => (value ? toIdentityRecord(value) : null));
+      .map((value: PersistedExternalIdentityRecord | null) => (value ? toIdentityRecord(value) : null));
   }
 
   listIdentities(userId: string, tenantId: string): ResultAsync<ExternalIdentityRecord[], SocialAuthStoreError> {
     return this.identities
       .findByUser(userId, tenantId)
-      .map((items: ExternalIdentityEntity[]) => items.map(toIdentityRecord));
+      .map((items: PersistedExternalIdentityRecord[]) => items.map(toIdentityRecord));
   }
 
   upsertIdentity(input: UpsertIdentityInput): ResultAsync<ExternalIdentityRecord, SocialAuthStoreError> {
@@ -77,7 +81,9 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   }
 
   listMethods(userId: string, tenantId: string): ResultAsync<AuthMethodRecord[], SocialAuthStoreError> {
-    return this.methods.findByUser(userId, tenantId).map((items: AuthMethodEntity[]) => items.map(toMethodRecord));
+    return this.methods
+      .findByUser(userId, tenantId)
+      .map((items: PersistedAuthMethodRecord[]) => items.map(toMethodRecord));
   }
 
   countMethods(userId: string, tenantId: string): ResultAsync<number, SocialAuthStoreError> {
@@ -96,7 +102,7 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   ): ResultAsync<LinkTokenRecord | null, SocialAuthStoreError> {
     return this.linkTokens
       .consumeToken(tokenHash, purpose, tenantId, now)
-      .map((value: AuthLinkTokenEntity | null) => (value ? toLinkTokenRecord(value) : null));
+      .map((value: PersistedAuthLinkTokenRecord | null) => (value ? toLinkTokenRecord(value) : null));
   }
 
   revokeLinkToken(
@@ -150,5 +156,18 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
           }),
         ),
       );
+  }
+}
+
+@Injectable()
+export class MongoSocialAuthStore extends PostgresSocialAuthStore {
+  constructor(
+    @Inject(ExternalIdentityRepositoryInjectToken) identities: ExternalIdentityRepositoryPort,
+    @Inject(AuthMethodRepositoryInjectToken) methods: AuthMethodRepositoryPort,
+    @Inject(AuthLinkTokenRepositoryInjectToken) linkTokens: AuthLinkTokenRepositoryPort,
+    @Inject(AuthProviderTokenRepositoryInjectToken) providerTokens: AuthProviderTokenRepositoryPort,
+    @Optional() crypto?: ProviderTokenCrypto,
+  ) {
+    super(identities, methods, linkTokens, providerTokens, crypto);
   }
 }

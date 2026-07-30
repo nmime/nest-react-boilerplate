@@ -120,13 +120,13 @@ describe('frontend platform utilities', () => {
         locale: 'en-GB',
         timeZone: 'UTC',
       }),
-    ).toBe('2 Jan 2024, 03:04');
+    ).toMatch(/^2 Jan 2024(?:,| at) 03:04$/u);
     expect(
       formatDateTime(new Date('2024-01-02T03:04:00Z'), {
         locale: 'en-GB',
         timeZone: 'UTC',
       }),
-    ).toBe('2 Jan 2024, 03:04');
+    ).toMatch(/^2 Jan 2024(?:,| at) 03:04$/u);
     expect(formatDateTime('not-a-date')).toBe('not-a-date');
   });
 

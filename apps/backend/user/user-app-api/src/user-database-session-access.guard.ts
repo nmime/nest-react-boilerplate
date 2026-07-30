@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -13,16 +14,19 @@ import {
   readSessionPrincipal,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
+  AuthUserRepositoryInjectToken,
+  AuthUserRoleRepositoryInjectToken,
+  type AuthUserRepositoryPort,
+  type AuthUserRoleRepositoryPort,
 } from '@app/backend-feature-auth-shared';
-import { AuthUserRepository, AuthUserRoleRepository } from '@app/backend-postgres-main-auth';
 
 /** Database-authoritative session authentication for the user API. */
 @Injectable()
 export class UserDatabaseSessionAccessGuard implements CanActivate {
   constructor(
     private readonly metadata: Reflector,
-    private readonly users: AuthUserRepository,
-    private readonly roles: AuthUserRoleRepository,
+    @Inject(AuthUserRepositoryInjectToken) private readonly users: AuthUserRepositoryPort,
+    @Inject(AuthUserRoleRepositoryInjectToken) private readonly roles: AuthUserRoleRepositoryPort,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

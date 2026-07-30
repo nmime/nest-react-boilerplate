@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { NodeAesGcmProviderTokenCrypto, type ProviderTokenCrypto } from '@app/backend-postgres-main-auth';
+import { NodeAesGcmProviderTokenCrypto, type ProviderTokenCrypto } from '@app/backend-feature-auth-shared';
 
 export function createEnvProviderTokenCrypto(): ProviderTokenCrypto | null {
   if (process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED !== 'true') {

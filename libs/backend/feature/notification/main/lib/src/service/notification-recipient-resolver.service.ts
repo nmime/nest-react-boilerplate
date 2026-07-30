@@ -1,5 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { AuthUserRepository, ExternalIdentityRepository } from '@app/backend-postgres-main-auth';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  AuthProvider,
+  AuthUserRepositoryInjectToken,
+  ExternalIdentityRepositoryInjectToken,
+  type AuthUserRepositoryPort,
+  type ExternalIdentityRepositoryPort,
+} from '@app/backend-feature-auth-shared';
 import {
   NotificationRecipientResolver,
   type ResolvedNotificationRecipient,
@@ -32,8 +38,10 @@ export class NotificationRecipientLookupError extends Error {
 @Injectable()
 export class NotificationRecipientResolverService extends NotificationRecipientResolver {
   constructor(
-    private readonly externalIdentityRepository: ExternalIdentityRepository,
-    private readonly authUserRepository: AuthUserRepository,
+    @Inject(ExternalIdentityRepositoryInjectToken)
+    private readonly externalIdentityRepository: ExternalIdentityRepositoryPort,
+    @Inject(AuthUserRepositoryInjectToken)
+    private readonly authUserRepository: AuthUserRepositoryPort,
   ) {
     super();
   }
@@ -75,7 +83,8 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
       // delivery is retried instead of being permanently marked as an incorrect target.
       throw new NotificationRecipientLookupError(targetType, targetId, identitiesResult.error.message);
     }
-    const provider = delivery.provider === NotificationDeliveryProvider.TelegramBot ? 'telegram' : 'discord';
+    const provider =
+      delivery.provider === NotificationDeliveryProvider.TelegramBot ? AuthProvider.Telegram : AuthProvider.Discord;
     if (
       delivery.provider !== NotificationDeliveryProvider.TelegramBot &&
       delivery.provider !== NotificationDeliveryProvider.DiscordBot

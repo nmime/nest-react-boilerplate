@@ -10,7 +10,6 @@ import {
 } from '@app/frontend-api-support';
 import {
   FrontendI18nProvider,
-  MiniAppProvider,
   FrontendQueryProvider,
   FrontendStateProvider,
   translate,
@@ -22,6 +21,7 @@ import { UiApiRuntimeOverlay } from '@app/frontend-ui-web';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 import { useUserPreferenceControls } from '../../features/preferences';
 import { getAuthApiBaseUrl, getFrontendEnv, getUserApiBaseUrl } from '../../shared/config';
+import { MiniAppProvider } from '../../shared/mini-app';
 import { UiErrorBoundary } from '../../shared/ui';
 import { AuthRedirectBridge } from './auth-redirect-bridge';
 import { UserRouter } from '../router/user-router';

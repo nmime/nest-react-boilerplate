@@ -23,14 +23,27 @@ import type { CommandContext } from "../../cli.js";
 import { safeParseNrbConfig, schemaVersion } from "../../setup/schema.js";
 import { configHash, migrateState, emptyState, hashString } from "../../setup/state.js";
 import {
+  generateBackendCapabilityBootstrap,
   generateBackendCapabilityModule,
   generateCapabilitiesManifest,
   generateComposeEnvironment,
   resolveConfig,
+  type PlanSummary,
 } from "../../setup/planner.js";
 import { backendCapabilityModuleCatalog } from "../../setup/catalog.js";
 import { parseGeneratedEnvironment } from "../../setup/environment.js";
 import { detectJavaScriptRuntime, type JavaScriptRuntimeInfo } from "../../runtime/environment.js";
+import {
+  validateGeneratedSelectionEnvironment,
+  validateSelectedComposeServices,
+  validateSelectedDatabaseEnvironment,
+} from "../docker/selected.js";
+import { checkClosureArtifacts } from "../../setup/closure-materializer.js";
+import {
+  buildConfiguredClosure,
+  readConfiguredClosure,
+  readConfiguredSelection,
+} from "../../setup/closure-workspace.js";
 
 // ---------------------------------------------------------------------------
 // Check types
@@ -247,14 +260,19 @@ export function checkCapabilityActivation(workspaceRoot: string): DoctorCheck {
     const summary = {
       apps: resolved.apps,
       capabilities: resolved.capabilities,
+      product: parsed.data.product,
+      deployment: parsed.data.deployment,
       preset: resolved.preset,
       configHash: configHash(parsed.data),
-    };
+    } satisfies PlanSummary;
     const expected = [
       generateCapabilitiesManifest(summary),
       generateComposeEnvironment(summary),
       ...Object.keys(backendCapabilityModuleCatalog).map((appId) =>
         generateBackendCapabilityModule(appId as (typeof resolved.apps)[number], summary),
+      ),
+      ...Object.keys(backendCapabilityModuleCatalog).map((appId) =>
+        generateBackendCapabilityBootstrap(appId as (typeof resolved.apps)[number], summary),
       ),
     ];
     const drifted = expected
@@ -290,38 +308,58 @@ export function checkComposeSelection(workspaceRoot: string): DoctorCheck {
     };
   }
 
+  let selectedEnvironment: Record<string, string>;
+  let provider: ReturnType<typeof validateSelectedDatabaseEnvironment>;
+  let expectedServices: string[];
+  try {
+    const closure = readConfiguredClosure(workspaceRoot);
+    const selection = readConfiguredSelection(workspaceRoot);
+    selectedEnvironment = parseGeneratedEnvironment(readFileSync(environmentPath, "utf8"));
+    validateGeneratedSelectionEnvironment(closure, selection, selectedEnvironment);
+    provider = validateSelectedDatabaseEnvironment(closure.provider, selectedEnvironment);
+    expectedServices = closure.services;
+  } catch (err: unknown) {
+    return {
+      name: "compose-selection",
+      status: "fail",
+      message: `Invalid selected database state: ${errorMessage(err)} — rerun setup`,
+    };
+  }
+
   try {
     execFileSync("docker", ["--version"], { encoding: "utf8", timeout: 10000 });
   } catch {
     return {
       name: "compose-selection",
       status: "skip",
-      message: "Docker not available — selected Compose graph was not checked",
+      message: `Docker not available — selected ${provider ?? "provider-free"} Compose graph was not checked`,
     };
   }
 
   try {
-    const selectedEnvironment = parseGeneratedEnvironment(readFileSync(environmentPath, "utf8"));
-    execFileSync(
+    const services = execFileSync(
       "docker",
-      ["compose", "--env-file", environmentPath, "-f", composePath, "config", "--quiet"],
+      ["compose", "--env-file", environmentPath, "-f", composePath, "config", "--services"],
       {
         cwd: workspaceRoot,
         encoding: "utf8",
         env: { ...process.env, ...selectedEnvironment },
         timeout: 30000,
       },
-    );
+    )
+      .split(/\r?\n/u)
+      .filter(Boolean);
+    validateSelectedComposeServices(provider, expectedServices, services);
     return {
       name: "compose-selection",
       status: "pass",
-      message: "Selected Compose service graph resolves",
+      message: `Selected ${provider ?? "provider-free"} Compose service graph resolves`,
     };
-  } catch {
+  } catch (err: unknown) {
     return {
       name: "compose-selection",
       status: "fail",
-      message: "Selected Compose service graph is invalid — rerun setup or fix service dependencies",
+      message: `Selected ${provider ?? "provider-free"} Compose service graph is invalid: ${errorMessage(err)}`,
     };
   }
 }
@@ -344,6 +382,45 @@ function checkToolingPackage(workspaceRoot: string): DoctorCheck {
     return { name: "tooling-package", status: "pass", message: `@repo/tooling v${pkg.version} — repo-tooling + nrb bins present` };
   } catch (err: unknown) {
     return { name: "tooling-package", status: "fail", message: `Failed to parse tooling package.json: ${errorMessage(err)}` };
+  }
+}
+
+export async function checkSelectedClosure(workspaceRoot: string): Promise<DoctorCheck> {
+  if (!existsSync(join(workspaceRoot, "nrb.config.json"))) {
+    return { name: "selected-closure", status: "skip", message: "Run setup to generate a selected closure" };
+  }
+  try {
+    const expected = await buildConfiguredClosure(workspaceRoot);
+    const actual = readConfiguredClosure(workspaceRoot);
+    const checked = checkClosureArtifacts(workspaceRoot, expected);
+    if (!checked.valid || JSON.stringify(actual) !== JSON.stringify(expected)) {
+      return {
+        name: "selected-closure",
+        status: "fail",
+        message: `${checked.problems.join(", ") || ".nrb/closure.json does not match the live Nx graph"} — rerun setup`,
+      };
+    }
+    if (checked.lockStatus === "stale") {
+      return {
+        name: "selected-closure",
+        status: "fail",
+        message: "Selected pnpm lock is stale — run `pnpm nrb closure install`",
+      };
+    }
+    if (checked.lockStatus === "missing") {
+      return {
+        name: "selected-closure",
+        status: "warn",
+        message: `${actual.projects.length} projects selected; run \`pnpm nrb closure install\` when a scoped install is needed`,
+      };
+    }
+    return {
+      name: "selected-closure",
+      status: "pass",
+      message: `${actual.projects.length} projects, ${Object.keys(actual.productExternalPackages ?? {}).length} product packages, and ${Object.keys(actual.toolingExternalPackages ?? {}).length} tooling packages resolve`,
+    };
+  } catch (err: unknown) {
+    return { name: "selected-closure", status: "fail", message: `${errorMessage(err)} — rerun setup` };
   }
 }
 
@@ -370,6 +447,7 @@ export async function runDoctorCommand(
     checkCapabilityActivation(workspaceRoot),
     checkComposeSelection(workspaceRoot),
     checkToolingPackage(workspaceRoot),
+    await checkSelectedClosure(workspaceRoot),
   ];
 
   if (jsonOutput) {

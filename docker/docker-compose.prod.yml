@@ -11,7 +11,6 @@ x-backend-env: &backend-env
   PORT: 80
   TRUST_PROXY: ${TRUST_PROXY:-true}
   CORS_ORIGINS: ${CORS_ORIGINS:?set comma-separated production origins}
-  AUTH_PERSISTENCE: postgres
   AUTH_GEOIP_DATABASE_PATH: ${AUTH_GEOIP_DATABASE_PATH:-}
   AUTH_LOGIN_NETWORK_RETENTION_DAYS: ${AUTH_LOGIN_NETWORK_RETENTION_DAYS:-30}
   AUTH_LOGIN_EVENT_RETENTION_DAYS: ${AUTH_LOGIN_EVENT_RETENTION_DAYS:-365}
@@ -58,10 +57,10 @@ x-backend-env: &backend-env
   AUTH_OAUTH_CLIENT_SECRET: ${AUTH_OAUTH_CLIENT_SECRET:-}
   AUTH_OAUTH_REDIRECT_URI: ${AUTH_OAUTH_REDIRECT_URI:-}
   RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
-  RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-redis}
+  RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-auto}
   RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
   RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
-  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  REDIS_URL: ${REDIS_URL:-}
   REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-nrb:}
   REDIS_LAZY_CONNECT: ${REDIS_LAZY_CONNECT:-true}
   NATS_SERVERS: ${NATS_SERVERS:-}
@@ -73,18 +72,6 @@ x-backend-env: &backend-env
   OPENAPI_ENABLED: ${OPENAPI_ENABLED:-false}
   OPENAPI_PATH: ${OPENAPI_PATH:-docs}
   LOG_LEVEL: ${LOG_LEVEL:-info}
-  POSTGRES_HOST: postgres
-  POSTGRES_PORT: 5432
-  POSTGRES_USER: ${POSTGRES_USER:-nest_react_boilerplate}
-  POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
-  POSTGRES_SSL: ${POSTGRES_SSL:-false}
-  POSTGRES_SSL_REJECT_UNAUTHORIZED: ${POSTGRES_SSL_REJECT_UNAUTHORIZED:-true}
-  POSTGRES_SYNCHRONIZE: 'false'
-  POSTGRES_LOGGING: ${POSTGRES_LOGGING:-false}
-  POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-2}
-  POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-10}
-  POSTGRES_POOL_IDLE_TIMEOUT_MS: ${POSTGRES_POOL_IDLE_TIMEOUT_MS:-30000}
-  POSTGRES_SLOW_QUERY_MS: ${POSTGRES_SLOW_QUERY_MS:-}
   OTEL_ENABLED: ${OTEL_ENABLED:-true}
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
   OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
@@ -107,35 +94,53 @@ x-backend-command: &backend-command
   - sh
   - -ec
   - |
-    if [ -z "$${DATABASE_URL:-}" ]; then
-      if [ -z "$${POSTGRES_PASSWORD:-}" ]; then
-        echo "DATABASE_URL is unavailable: select the bundled-db or external-db Compose overlay" >&2
-        exit 1
-      fi
-      DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
-      export DATABASE_URL
-    fi
+    case "$${DATABASE_ENGINE:-}" in
+      postgres)
+        if [ -z "$${DATABASE_URL:-}" ]; then
+          [ -n "$${POSTGRES_PASSWORD:-}" ] || { echo "POSTGRES_PASSWORD is unavailable: select a PostgreSQL database overlay" >&2; exit 1; }
+          DATABASE_URL="$$(node -e "const e = encodeURIComponent; const v = process.env; process.stdout.write('postgres://'+e(v.POSTGRES_USER ?? '')+':'+e(v.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(v.POSTGRES_DB ?? ''));")"
+          export DATABASE_URL
+        fi
+        ;;
+      mongodb)
+        if [ -z "$${MONGODB_URI:-}" ]; then
+          [ -n "$${MONGODB_PASSWORD:-}" ] || { echo "MONGODB_PASSWORD is unavailable: select a MongoDB database overlay" >&2; exit 1; }
+          MONGODB_URI="$$(node -e "const e = encodeURIComponent; const v = process.env; process.stdout.write('mongodb://'+e(v.MONGODB_USER ?? '')+':'+e(v.MONGODB_PASSWORD ?? '')+'@mongodb:27017/'+e(v.MONGODB_DATABASE ?? '')+'?authSource='+e(v.MONGODB_DATABASE ?? '')+'&replicaSet='+e(v.MONGODB_REPLICA_SET ?? '')+'&retryWrites=true');")"
+          export MONGODB_URI
+        fi
+        ;;
+      *) echo "DATABASE_ENGINE must be selected by a production database overlay" >&2; exit 1 ;;
+    esac
     exec node "$${BUILD_OUTPUT:?set BUILD_OUTPUT}"
 
 x-migrate-command: &migrate-command
   - sh
   - -ec
   - |
-    if [ -z "$${DATABASE_URL:-}" ]; then
-      if [ -z "$${POSTGRES_PASSWORD:-}" ]; then
-        echo "DATABASE_URL is unavailable: select the bundled-db or external-db Compose overlay" >&2
-        exit 1
-      fi
-      DATABASE_URL="$$(node -e "const e = encodeURIComponent; const env = process.env; process.stdout.write('postgres://'+e(env.POSTGRES_USER ?? '')+':'+e(env.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(env.POSTGRES_DB ?? ''));")"
-      export DATABASE_URL
-    fi
+    case "$${DATABASE_ENGINE:-}" in
+      postgres)
+        if [ -z "$${DATABASE_URL:-}" ]; then
+          [ -n "$${POSTGRES_PASSWORD:-}" ] || { echo "POSTGRES_PASSWORD is unavailable: select a PostgreSQL database overlay" >&2; exit 1; }
+          DATABASE_URL="$$(node -e "const e = encodeURIComponent; const v = process.env; process.stdout.write('postgres://'+e(v.POSTGRES_USER ?? '')+':'+e(v.POSTGRES_PASSWORD ?? '')+'@postgres:5432/'+e(v.POSTGRES_DB ?? ''));")"
+          export DATABASE_URL
+        fi
+        ;;
+      mongodb)
+        if [ -z "$${MONGODB_URI:-}" ]; then
+          [ -n "$${MONGODB_PASSWORD:-}" ] || { echo "MONGODB_PASSWORD is unavailable: select a MongoDB database overlay" >&2; exit 1; }
+          MONGODB_URI="$$(node -e "const e = encodeURIComponent; const v = process.env; process.stdout.write('mongodb://'+e(v.MONGODB_USER ?? '')+':'+e(v.MONGODB_PASSWORD ?? '')+'@mongodb:27017/'+e(v.MONGODB_DATABASE ?? '')+'?authSource='+e(v.MONGODB_DATABASE ?? '')+'&replicaSet='+e(v.MONGODB_REPLICA_SET ?? '')+'&retryWrites=true');")"
+          export MONGODB_URI
+        fi
+        ;;
+      *) echo "DATABASE_ENGINE must be selected by a production database overlay" >&2; exit 1 ;;
+    esac
     exec node docker/migrator-run.mjs
 
 x-backend-healthcheck: &backend-healthcheck
   test:
     [
       'CMD-SHELL',
-      'node -e "fetch(''http://127.0.0.1:80/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+      'su-exec 1000:1000 node -e "fetch(''http://127.0.0.1:80/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
     ]
   interval: 10s
   timeout: 5s
@@ -152,13 +157,15 @@ x-frontend-healthcheck: &frontend-healthcheck
 x-backend-service: &backend-service
   restart: unless-stopped
   logging: *default-logging
+  # The image defaults to UID 1000. Compose configures the container as root so
+  # the entrypoint can read root-owned secret mounts. The entrypoint drops before
+  # the app command, and the healthcheck drops before running Node.
+  user: '0:0'
   networks: [app, database]
-  secrets: [session_secret, better_auth_secret, redis_password, notification_payload_encryption_key]
+  secrets: [session_secret, better_auth_secret, notification_payload_encryption_key]
   environment: *backend-env
   command: *backend-command
   depends_on:
-    redis:
-      condition: service_healthy
     migrate:
       condition: service_completed_successfully
   healthcheck: *backend-healthcheck
@@ -171,13 +178,14 @@ x-frontend-service: &frontend-service
   # Browser-safe runtime flags rendered into /runtime-config.js at container
   # start, so toggling a feature never requires rebuilding the SPA image. Never
   # place secrets here — the generated file is served to every browser.
-  environment:
+  environment: &frontend-runtime-env
     TELEGRAM_AUTH_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
     DISCORD_AUTH_ENABLED: ${DISCORD_AUTH_ENABLED:-false}
 
 x-notification-scheduler-service: &notification-scheduler-service
   restart: unless-stopped
   logging: *default-logging
+  user: '0:0'
   networks: [app, database]
   secrets:
     [
@@ -192,8 +200,6 @@ x-notification-scheduler-service: &notification-scheduler-service
   environment: *backend-env
   command: *backend-command
   depends_on:
-    redis:
-      condition: service_healthy
     migrate:
       condition: service_completed_successfully
 
@@ -209,32 +215,11 @@ x-site-healthcheck: &site-healthcheck
   start_period: 30s
 
 services:
-  redis:
-    image: redis:7.4.3-alpine
-    restart: unless-stopped
-    logging: *default-logging
-    command:
-      - sh
-      - -ec
-      - |
-        umask 077
-        printf 'appendonly yes\nrequirepass %s\n' "$$(cat /run/secrets/redis_password)" >/tmp/redis.conf
-        exec redis-server /tmp/redis.conf
-    secrets: [redis_password]
-    volumes:
-      - redis-data:/data
-    networks: [database]
-    healthcheck:
-      test: ['CMD-SHELL', 'REDISCLI_AUTH="$$(cat /run/secrets/redis_password)" redis-cli ping']
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 5s
-
   migrate:
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     logging: *default-logging
     restart: 'no'
+    user: '0:0'
     networks: [app, database]
     environment: *backend-env
     command: *migrate-command
@@ -265,7 +250,6 @@ services:
       - better_auth_secret
       - auth_provider_token_encryption_key
       - notification_payload_encryption_key
-      - redis_password
     ports:
       - target: 80
         published: '${AUTH_APP_API_PORT:-3003}'
@@ -287,7 +271,6 @@ services:
     secrets:
       [
         session_secret,
-        redis_password,
         notification_payload_encryption_key,
         discord_bot_token,
         discord_public_key,
@@ -312,14 +295,7 @@ services:
       TELEGRAM_BOT_SESSION_TTL_SECONDS: ${TELEGRAM_BOT_SESSION_TTL_SECONDS:-1209600}
       TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: ${TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS:-1000}
       TELEGRAM_BOT_RATE_LIMIT: ${TELEGRAM_BOT_RATE_LIMIT:-3}
-    secrets:
-      [
-        session_secret,
-        redis_password,
-        notification_payload_encryption_key,
-        telegram_bot_token,
-        telegram_bot_webhook_secret,
-      ]
+    secrets: [session_secret, notification_payload_encryption_key, telegram_bot_token, telegram_bot_webhook_secret]
     ports:
       - target: 80
         published: '${TELEGRAM_BOT_API_PORT:-3013}'
@@ -334,6 +310,7 @@ services:
   notification-consumer:
     restart: unless-stopped
     logging: *default-logging
+    user: '0:0'
     networks: [app, database]
     profiles: [notification-consumer]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/notification-consumer:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
@@ -341,8 +318,6 @@ services:
     environment: *backend-env
     command: *backend-command
     depends_on:
-      redis:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
 
@@ -375,13 +350,10 @@ services:
   landing-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/landing-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    depends_on:
-      auth-app-api:
-        condition: service_healthy
-      user-app-api:
-        condition: service_healthy
-      admin-app-api:
-        condition: service_healthy
+    environment:
+      <<: *frontend-runtime-env
+      LANDING_USER_APP_URL: ${LANDING_USER_APP_URL:-}
+      LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}
     ports:
       - target: 8080
         published: '${LANDING_APP_PORT:-4202}'
@@ -393,13 +365,6 @@ services:
     logging: *default-logging
     networks: [app]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/site-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    depends_on:
-      auth-app-api:
-        condition: service_healthy
-      user-app-api:
-        condition: service_healthy
-      admin-app-api:
-        condition: service_healthy
     ports:
       - target: 80
         published: '${SITE_APP_PORT:-4203}'
@@ -538,7 +503,6 @@ networks:
     internal: true
 
 volumes:
-  redis-data:
   prometheus-data:
   grafana-data:
   alertmanager-data:
@@ -552,8 +516,6 @@ secrets:
     file: ${AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE:-./secrets/auth_provider_token_encryption_key.txt}
   notification_payload_encryption_key:
     file: ${NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE:-./secrets/notification_payload_encryption_key.txt}
-  redis_password:
-    file: ${REDIS_PASSWORD_FILE:-./secrets/redis_password.txt}
   grafana_admin_password:
     file: ${GRAFANA_ADMIN_PASSWORD_FILE:-./secrets/grafana_admin_password.txt}
   telegram_bot_token:

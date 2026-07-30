@@ -83,7 +83,7 @@ Use the current package baseline:
 
 - `vike@0.4.260`
 - `vike-react@0.6.25`
-- `fastify@5.10.0` with `@fastify/static@9.3.0` for the Node server, wiring
+- `fastify@5.10.0` with `@fastify/static@10.1.2` for the Node server, wiring
   Vike's `renderPage` from `vike/server` in
   `apps/frontend/site/server/index.ts` and matching the backend preference for
   Fastify.

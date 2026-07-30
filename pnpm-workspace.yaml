@@ -1,9 +1,12 @@
 packages:
   - 'apps/frontend/*'
-  - 'apps/backend/*/*'
   - 'libs/backend'
   - 'libs/frontend'
   - 'packages/tooling'
+
+# Applications are Nx projects rather than pnpm packages. Hoist the platform
+# dependency groups so app source resolves their external packages.
+shamefullyHoist: true
 
 overrides:
   '@fastify/static': '10.1.2'
@@ -80,19 +83,30 @@ packageExtensions:
   '@stryker-mutator/core@9.6.1':
     dependencies:
       typescript: '6.0.3'
+  # Nest's file-type dependency reaches debug through this tokenizer. Declare
+  # the optional color peer here so root and backend workspace installs share
+  # one NestJS singleton graph instead of resolving peer-context duplicates.
+  '@tokenizer/inflate@0.4.1':
+    dependencies:
+      supports-color: '10.2.2'
   'react-native-worklets@0.10.0':
     dependencies:
       '@babel/generator': '7.29.7'
       '@babel/traverse': '7.29.7'
+  # @tamagui/popper imports react-dom directly but exposes it only as a
+  # transitive peer through internal packages. Declare the real edge so pnpm's
+  # isolated linker and Bun resolve the same mobile dependency tree.
+  '@tamagui/popper@2.5.0':
+    dependencies:
+      'react-dom': '19.2.3'
+  '@tamagui/floating@2.5.0':
+    dependencies:
+      'react-dom': '19.2.3'
 
 # Escape hatch for the hard audit:ci gate: when an advisory has no upstream
 # fix, list the CVE id here with a tracking issue instead of unblocking ad hoc.
 auditConfig:
   ignoreCves: []
-
-# Use pnpm's current deploy implementation to produce pruned, portable runtime
-# directories for workspace applications instead of copying the shared store.
-injectWorkspacePackages: true
 
 # Supply-chain quarantine: reject versions published less than a day ago.
 # Raise toward 10080 (7 days) once the dependency set stops churning weekly;
@@ -123,7 +137,6 @@ minimumReleaseAgeExclude:
   - '@nx/docker@23.1.0'
   - '@nx/eslint-plugin@23.1.0'
   - '@nx/eslint@23.1.0'
-  - '@nx/jest@23.1.0'
   - '@nx/js@23.1.0'
   - '@nx/module-federation@23.1.0'
   - '@nx/nest@23.1.0'
@@ -196,50 +209,6 @@ minimumReleaseAgeExclude:
   - 'prettier@3.8.4'
   - 'storybook@10.4.4'
   - '@storybook/addon-vitest@10.4.4'
-  - '@opentelemetry/instrumentation-amqplib@0.66.0'
-  - '@opentelemetry/instrumentation-aws-lambda@0.71.0'
-  - '@opentelemetry/instrumentation-aws-sdk@0.74.0'
-  - '@opentelemetry/instrumentation-bunyan@0.64.0'
-  - '@opentelemetry/instrumentation-cassandra-driver@0.64.0'
-  - '@opentelemetry/instrumentation-connect@0.62.0'
-  - '@opentelemetry/instrumentation-cucumber@0.35.0'
-  - '@opentelemetry/instrumentation-dataloader@0.36.0'
-  - '@opentelemetry/instrumentation-dns@0.62.0'
-  - '@opentelemetry/instrumentation-express@0.67.0'
-  - '@opentelemetry/instrumentation-fs@0.38.0'
-  - '@opentelemetry/instrumentation-generic-pool@0.62.0'
-  - '@opentelemetry/instrumentation-graphql@0.67.0'
-  - '@opentelemetry/instrumentation-hapi@0.65.0'
-  - '@opentelemetry/instrumentation-host-metrics@0.2.0'
-  - '@opentelemetry/instrumentation-kafkajs@0.28.0'
-  - '@opentelemetry/instrumentation-knex@0.63.0'
-  - '@opentelemetry/instrumentation-koa@0.67.0'
-  - '@opentelemetry/instrumentation-lru-memoizer@0.63.0'
-  - '@opentelemetry/instrumentation-memcached@0.62.0'
-  - '@opentelemetry/instrumentation-mongodb@0.72.0'
-  - '@opentelemetry/instrumentation-mongoose@0.65.0'
-  - '@opentelemetry/instrumentation-mysql2@0.65.0'
-  - '@opentelemetry/instrumentation-mysql@0.65.0'
-  - '@opentelemetry/instrumentation-nestjs-core@0.65.0'
-  - '@opentelemetry/instrumentation-net@0.63.0'
-  - '@opentelemetry/instrumentation-openai@0.17.0'
-  - '@opentelemetry/instrumentation-oracledb@0.44.0'
-  - '@opentelemetry/instrumentation-pg@0.71.0'
-  - '@opentelemetry/instrumentation-pino@0.65.0'
-  - '@opentelemetry/instrumentation-redis@0.67.0'
-  - '@opentelemetry/instrumentation-restify@0.64.0'
-  - '@opentelemetry/instrumentation-router@0.63.0'
-  - '@opentelemetry/instrumentation-runtime-node@0.32.0'
-  - '@opentelemetry/instrumentation-socket.io@0.66.0'
-  - '@opentelemetry/instrumentation-tedious@0.38.0'
-  - '@opentelemetry/instrumentation-undici@0.29.0'
-  - '@opentelemetry/instrumentation-winston@0.63.0'
-  - '@opentelemetry/resource-detector-alibaba-cloud@0.34.0'
-  - '@opentelemetry/resource-detector-aws@2.19.0'
-  - '@opentelemetry/resource-detector-azure@0.27.0'
-  - '@opentelemetry/resource-detector-container@0.8.10'
-  - '@opentelemetry/resource-detector-gcp@0.54.0'
-  - '@opentelemetry/sql-common@0.42.0'
   - '@grammyjs/types@3.28.0'
   - grammy@1.44.0
 

@@ -1,7 +1,12 @@
 import { type Attributes } from '@opentelemetry/api';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { FastifyOtelInstrumentation } from '@fastify/otel';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import type { Instrumentation } from '@opentelemetry/instrumentation';
+import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
+import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
+import { RuntimeNodeInstrumentation } from '@opentelemetry/instrumentation-runtime-node';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import {
@@ -45,8 +50,21 @@ export function createOpenTelemetrySdkConfig(
       }),
       exportIntervalMillis: readPositiveInteger(env.OTEL_METRIC_EXPORT_INTERVAL, DefaultMetricExportIntervalMs),
     }),
-    instrumentations: options.instrumentations ?? getNodeAutoInstrumentations(defaultInstrumentationConfig()),
+    instrumentations: options.instrumentations ?? createOpenTelemetryInstrumentations(),
   };
+}
+
+export function createOpenTelemetryInstrumentations(
+  providerInstrumentations: readonly Instrumentation[] = [],
+): Instrumentation[] {
+  return [
+    new HttpInstrumentation(),
+    new FastifyOtelInstrumentation({ registerOnInitialization: true }),
+    new NestInstrumentation(),
+    new RedisInstrumentation(),
+    new RuntimeNodeInstrumentation(),
+    ...providerInstrumentations,
+  ];
 }
 
 function readPositiveInteger(value: string | undefined, fallback: number): number {
@@ -56,18 +74,4 @@ function readPositiveInteger(value: string | undefined, fallback: number): numbe
 
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function defaultInstrumentationConfig(): Parameters<typeof getNodeAutoInstrumentations>[0] {
-  return {
-    '@opentelemetry/instrumentation-fs': { enabled: false },
-    '@opentelemetry/instrumentation-http': { enabled: true },
-    '@opentelemetry/instrumentation-fastify': { enabled: true },
-    '@opentelemetry/instrumentation-pg': { enabled: true },
-    '@opentelemetry/instrumentation-redis': { enabled: true },
-    '@opentelemetry/instrumentation-redis-4': { enabled: true },
-    '@opentelemetry/instrumentation-nestjs-core': { enabled: true },
-    // `as unknown as` retained: the exported InstrumentationConfigMap omits some
-    // of these instrumentation keys, so `satisfies` fights the third-party types.
-  } as unknown as Parameters<typeof getNodeAutoInstrumentations>[0];
 }

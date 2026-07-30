@@ -1,0 +1,15 @@
+@admin_docs path /admin/docs /admin/docs/*
+handle @admin_docs {
+	reverse_proxy admin-app-api:80
+}
+
+@admin_api {
+	path /admin /admin/*
+	not {
+		method GET HEAD
+		header Accept *text/html*
+	}
+}
+handle @admin_api {
+	reverse_proxy admin-app-api:80
+}

@@ -3,7 +3,9 @@
 ## Purpose
 
 Provides shared MikroORM/PostgreSQL configuration, root module composition,
-transactions, dependency health adapters, and migration-readiness indicators.
+transactions, dependency health adapters, migration-readiness indicators, and
+the PostgreSQL-only OpenTelemetry instrumentation factory used by generated
+provider composition.
 
 ## Commands
 

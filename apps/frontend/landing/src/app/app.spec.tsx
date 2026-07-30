@@ -1,12 +1,16 @@
 // @requirements REQ-FRONTEND-SSR-007
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from '.';
+import { getAuthApiDocsHref } from '../features/landing-actions';
 import { LandingReactIsland } from './landing-react-island';
 
 describe('Landing app', () => {
   afterEach(() => {
+    cleanup();
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 
   it('renders neutral template copy and preserves reference links', () => {
@@ -33,11 +37,44 @@ describe('Landing app', () => {
   });
 
   it('uses a configured auth API docs URL when provided', () => {
-    vi.stubEnv('VITE_AUTH_API_BASE_URL', 'https://auth.example.test/');
+    expect(
+      getAuthApiDocsHref({
+        DEV: false,
+        MODE: 'production',
+        VITE_API_BASE_URL_MODE: 'explicit',
+        VITE_AUTH_API_BASE_URL: 'https://auth.example.test/',
+      }),
+    ).toBe('https://auth.example.test/docs');
+  });
 
-    const html = renderToStaticMarkup(<App />);
+  it('uses runtime-configured application origins after hydration', async () => {
+    vi.stubGlobal('__APP_RUNTIME_CONFIG__', {
+      adminAppUrl: 'https://admin.example.test/',
+      userAppUrl: '/account',
+    });
 
-    expect(html).toContain('href="https://auth.example.test/docs"');
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Preview user app' }).getAttribute('href')).toBe('/account');
+      expect(screen.getByRole('link', { name: 'Preview admin app' }).getAttribute('href')).toBe(
+        'https://admin.example.test',
+      );
+    });
+  });
+
+  it('rejects unsafe runtime-configured application destinations', async () => {
+    vi.stubGlobal('__APP_RUNTIME_CONFIG__', {
+      adminAppUrl: 'http://admin.example.test',
+      userAppUrl: '//attacker.example.test/app',
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Preview user app' }).getAttribute('href')).toBe('/app');
+      expect(screen.getByRole('link', { name: 'Preview admin app' }).getAttribute('href')).toBe('/admin');
+    });
   });
 
   it('keeps the docs action available when production config falls back', () => {

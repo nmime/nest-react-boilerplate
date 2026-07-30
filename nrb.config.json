@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "apps": [
+    "admin-app",
+    "admin-app-api",
+    "auth-app-api",
+    "landing-app",
+    "mobile-app",
+    "notification-consumer",
+    "notification-scheduler",
+    "site-app",
+    "user-app",
+    "user-app-api"
+  ],
+  "capabilities": ["authz", "design-tokens", "feature-flags", "i18n", "notifications", "postgres", "s3"],
+  "product": {
+    "ciMode": "product",
+    "frontendApiMode": "same-origin",
+    "mobileTargets": ["web"]
+  },
+  "deployment": {
+    "targets": ["docker"],
+    "publicTopology": "single-domain",
+    "kubernetesDelivery": "direct",
+    "infrastructure": {
+      "redis": "bundled",
+      "nats": "bundled",
+      "s3": "bundled"
+    }
+  },
+  "options": {
+    "prune": false,
+    "force": false,
+    "dryRun": false,
+    "nonInteractive": true
+  }
+}

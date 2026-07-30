@@ -54,6 +54,7 @@ export const Default: Story = {
     await expect(
       canvas.getAllByRole('link', { name: /Dashboard/u }).some((link) => link.getAttribute('aria-current') === 'page'),
     ).toBe(true);
+    await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth);
     document.documentElement.setAttribute('data-visual-ready', 'true');
   },
 };

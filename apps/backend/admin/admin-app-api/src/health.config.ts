@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { MikroORM } from '@mikro-orm/core';
-import type { InjectionToken, OptionalFactoryDependency, Provider } from '@nestjs/common';
+import type { FactoryProvider, InjectionToken, OptionalFactoryDependency } from '@nestjs/common';
 import {
   EnvHealthIndicator,
   HealthService,
@@ -10,91 +9,94 @@ import {
   type HealthIndicator,
   type HealthIndicatorResult,
 } from '@app/backend-common-health';
+import { DurableDatabaseRuntimeInjectToken, type DurableDatabaseRuntime } from '@app/backend-common-bootstrap';
 import { supportedLocales } from '@app/backend-common-i18n';
 import { NatsHealthIndicator } from '@app/backend-common-nats';
 import { RedisHealthIndicator } from '@app/backend-common-redis';
-import {
-  MikroOrmPostgresHealthAdapter,
-  PostgresMigrationsHealthIndicator,
-  PostgresReadinessHealthIndicator,
-} from '@app/backend-postgres-main';
 
-const appName = 'admin-app-api';
-
-export const AdminAppHealthServiceProvider: Provider = {
+export const AdminAppHealthServiceProvider: FactoryProvider<HealthService> = {
   provide: HealthService,
-  useFactory: (orm?: MikroORM, redisHealth?: RedisHealthIndicator, natsHealth?: NatsHealthIndicator) =>
+  useFactory: (
+    database: DurableDatabaseRuntime | undefined,
+    redisHealth: RedisHealthIndicator | undefined,
+    natsHealth: NatsHealthIndicator | undefined,
+  ) =>
     new HealthService({
-      appName,
-      indicators: createHealthIndicators({ orm, redisHealth, natsHealth }),
+      appName: 'admin-app-api',
+      indicators: [
+        new RuntimeHealthIndicator(),
+        new EnvHealthIndicator({
+          name: 'config',
+          required: false,
+          optionalVariables: ['AUTH_PERSISTENCE', 'DATABASE_ENGINE', 'SESSION_SECRET', 'REDIS_URL', 'NATS_SERVERS'],
+        }),
+        new I18nAssetsHealthIndicator({ rootPath: resolveI18nRootPath(), locales: supportedLocales, required: false }),
+        ...databaseIndicators(database),
+        redisHealth ? withRequired(redisHealth, false) : skippedIndicator('redis'),
+        natsHealth ? withRequired(natsHealth, false) : skippedIndicator('nats'),
+      ],
     }),
-  inject: [optionalProvider(MikroORM), optionalProvider(RedisHealthIndicator), optionalProvider(NatsHealthIndicator)],
+  inject: [
+    optionalProvider(DurableDatabaseRuntimeInjectToken),
+    optionalProvider(RedisHealthIndicator),
+    optionalProvider(NatsHealthIndicator),
+  ],
 };
 
-interface HealthIndicatorDependencies {
-  orm?: MikroORM;
-  redisHealth?: RedisHealthIndicator;
-  natsHealth?: NatsHealthIndicator;
+export function createAdminAppHealthServiceProvider(): FactoryProvider<HealthService> {
+  return AdminAppHealthServiceProvider;
 }
 
-function createHealthIndicators({ orm, redisHealth, natsHealth }: HealthIndicatorDependencies): HealthIndicator[] {
-  const postgresAdapter = new MikroOrmPostgresHealthAdapter(orm ?? null);
-
-  return [
-    new RuntimeHealthIndicator(),
-    new EnvHealthIndicator({
-      name: 'config',
-      required: false,
-      optionalVariables: ['DATABASE_URL', 'SESSION_SECRET', 'REDIS_URL', 'NATS_SERVERS'],
-    }),
-    new I18nAssetsHealthIndicator({
-      rootPath: resolveI18nRootPath(),
-      locales: supportedLocales,
-      required: false,
-    }),
-    withRequired(
-      new PostgresReadinessHealthIndicator(postgresAdapter, {
-        mandatory: true,
-      }),
-      true,
-    ),
-    withRequired(
-      new PostgresMigrationsHealthIndicator(postgresAdapter, {
-        mandatory: false,
-      }),
-      false,
-    ),
-    redisHealth ? withRequired(redisHealth, false) : createSkippedOptionalDependencyIndicator('redis'),
-    natsHealth ? withRequired(natsHealth, false) : createSkippedOptionalDependencyIndicator('nats'),
-  ];
+function databaseIndicators(runtime: DurableDatabaseRuntime | undefined): HealthIndicator[] {
+  return runtime ? normalizeDatabaseIndicators(runtime) : [missingDatabaseIndicator()];
 }
 
-function withRequired(indicator: HealthIndicator, required: boolean): HealthIndicator {
-  return {
-    name: indicator.name,
-    required,
-    async check(context) {
-      return { ...(await indicator.check(context)), required };
-    },
-  };
+function normalizeDatabaseIndicators(runtime: DurableDatabaseRuntime): HealthIndicator[] {
+  const names =
+    runtime.provider === 'mongodb'
+      ? ['database', 'database-transactions', 'database-migrations']
+      : ['database', 'database-migrations'];
+  return runtime.healthIndicators.map((indicator, index) =>
+    withRequired(indicator, index === 0 || runtime.provider === 'mongodb', names[index] ?? indicator.name),
+  );
 }
 
 function resolveI18nRootPath(): string | undefined {
-  const candidates = [join(process.cwd(), 'i18n'), join(process.cwd(), '../../../i18n')];
-  return candidates.find((candidate) => existsSync(candidate));
+  return [join(process.cwd(), 'i18n'), join(process.cwd(), '../../../i18n')].find(existsSync);
 }
 
-function createSkippedOptionalDependencyIndicator(name: 'redis' | 'nats'): HealthIndicator {
+function missingDatabaseIndicator(): HealthIndicator {
+  return {
+    name: 'database',
+    required: true,
+    check: () => ({
+      name: 'database',
+      status: 'error',
+      required: true,
+      details: { message: 'Selected database provider is not configured.' },
+    }),
+  };
+}
+
+function skippedIndicator(name: string): HealthIndicator {
   return {
     name,
     required: false,
-    check(): HealthIndicatorResult {
-      return {
-        name,
-        status: 'ok',
-        required: false,
-        details: { enabled: false, skipped: true, reason: 'not_configured' },
-      };
+    check: (): HealthIndicatorResult => ({
+      name,
+      status: 'ok',
+      required: false,
+      details: { enabled: false, skipped: true, reason: 'not_configured' },
+    }),
+  };
+}
+
+function withRequired(indicator: HealthIndicator, required: boolean, name = indicator.name): HealthIndicator {
+  return {
+    name,
+    required,
+    async check(context) {
+      return { ...(await indicator.check(context)), name, required };
     },
   };
 }

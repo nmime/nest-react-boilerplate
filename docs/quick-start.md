@@ -128,13 +128,28 @@ cp .env.example .env
 
 Review `.env` and replace placeholder secrets with real values from your secret manager. Never commit real `.env` files.
 
-## 6. Start the database
+## 6. Start the selected database
 
 ```bash
 pnpm run dev:db
 ```
 
-This starts PostgreSQL via Docker Compose. Run migrations:
+Every preset currently selects PostgreSQL. To use the first-class MongoDB
+alternative, swap the capability before starting infrastructure:
+
+```bash
+pnpm nrb setup --remove-capability postgres --capability mongodb --non-interactive
+```
+
+For the default PostgreSQL selection, `pnpm run dev:db` starts PostgreSQL. For
+MongoDB, start and initialize its local one-node replica set instead:
+
+```bash
+docker compose --profile mongodb up -d mongodb mongodb-init
+```
+
+The one-node replica set supports transactions but is not highly available. Run
+the provider-dispatched migrations:
 
 ```bash
 pnpm run db:migrate

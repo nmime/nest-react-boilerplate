@@ -1,5 +1,4 @@
 {
-  "name": "acceptance-e2e",
   "private": true,
   "type": "module",
   "dependencies": {

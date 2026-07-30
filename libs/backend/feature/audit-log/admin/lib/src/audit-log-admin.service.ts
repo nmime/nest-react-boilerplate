@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   AdminAuditActions,
-  AdminAuditLogRepository,
+  AdminAuditLogRepositoryInjectToken,
   AdminAuditLogTransactionError,
-  type AdminAuditLogEntity,
+  type AdminAuditLogRecord,
+  type AdminAuditLogRepositoryPort,
   type AdminAuditAction,
   type AdminAuditLogListInput,
-} from '@app/backend-postgres-main-auth';
+} from '@app/backend-feature-auth-shared';
 import { AdminAuditResources, AuditLogAdminDefaultPageSize, AuditLogAdminMaxPageSize } from './audit-log-admin.const';
 import type { AuditLogAdminListQueryDto, AuditLogAdminViewDto } from './audit-log-admin.dto';
 
@@ -42,7 +43,7 @@ export interface AuditLogAdminMutationInput<T> extends Omit<AuditLogAdminRecordI
 
 @Injectable()
 export class AuditLogAdminService {
-  constructor(private readonly auditLogs: AdminAuditLogRepository) {}
+  constructor(@Inject(AdminAuditLogRepositoryInjectToken) private readonly auditLogs: AdminAuditLogRepositoryPort) {}
 
   async record(input: AuditLogAdminRecordInput): Promise<AuditLogAdminViewDto> {
     const result = await this.auditLogs.record(toAuditLogEntityInput(input));
@@ -120,7 +121,7 @@ const normalizeLimit = (value?: number): number =>
 
 const normalizeOffset = (value?: number): number => Math.max(0, value ?? 0);
 
-export const toAuditLogAdminView = (entity: AdminAuditLogEntity): AuditLogAdminViewDto => ({
+export const toAuditLogAdminView = (entity: AdminAuditLogRecord): AuditLogAdminViewDto => ({
   id: entity.id,
   tenantId: entity.tenantId,
   ...(entity.actorUserId ? { actorUserId: entity.actorUserId } : {}),

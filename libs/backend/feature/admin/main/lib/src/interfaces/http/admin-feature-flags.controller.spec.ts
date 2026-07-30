@@ -7,8 +7,7 @@ import {
   type AuthenticatedPrincipal,
 } from '@app/backend-feature-auth-shared';
 import { AdminFeatureFlagsReadPermission, AdminFeatureFlagsWritePermission } from '@app/backend-feature-admin-shared';
-import { FeatureFlagEntity } from '@app/backend-postgres-main-feature-flags';
-import { AdminFeatureFlagsUseCase } from '../../application';
+import { type AdminFeatureFlagRecord, AdminFeatureFlagsUseCase } from '../../application';
 import { AdminFeatureFlagsController } from './admin-feature-flags.controller';
 
 const principal: AuthenticatedPrincipal = {
@@ -19,12 +18,17 @@ const principal: AuthenticatedPrincipal = {
 };
 
 const createController = () => {
-  const entity = new FeatureFlagEntity({
+  const now = new Date('2026-07-26T00:00:00.000Z');
+  const entity: AdminFeatureFlagRecord = {
+    id: '00000000-0000-4000-8000-000000000010',
     tenantId: principal.tenantId,
     key: 'checkout.newflow',
     value: true,
     description: 'New checkout',
-  });
+    enabled: true,
+    createdAt: now,
+    updatedAt: now,
+  };
   const featureFlags = {
     list: vi.fn(() => okAsync([entity])),
     findByKey: vi.fn(() => okAsync(null)),

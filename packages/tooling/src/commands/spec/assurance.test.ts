@@ -1,6 +1,7 @@
 // @requirements REQ-ASSURANCE-INVENTORY-004
 // Evidence for: REQ-ASSURANCE-FRESHNESS-002 REQ-ASSURANCE-INVENTORY-004 REQ-ASSURANCE-OWNERSHIP-006 REQ-ASSURANCE-TRACE-001
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import {
   mkdtempSync,
   mkdirSync,
@@ -12,6 +13,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, test } from 'node:test';
 import {
+  calculateImpactFromChangedFiles,
+  calculateImpact,
   createTraceReport,
   loadAssuranceModel,
   verifyRequirements,
@@ -99,6 +102,22 @@ requirements:
 `,
   );
   return workspace;
+}
+
+function runGit(workspace: string, args: string[]): string {
+  const result = spawnSync('git', args, {
+    cwd: workspace,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      GIT_AUTHOR_EMAIL: 'fixture@example.com',
+      GIT_AUTHOR_NAME: 'Fixture',
+      GIT_COMMITTER_EMAIL: 'fixture@example.com',
+      GIT_COMMITTER_NAME: 'Fixture',
+    },
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  return result.stdout.trim();
 }
 
 function verificationFile(workspace: string): string {
@@ -195,6 +214,80 @@ test('builds a complete trace and selects only the requested evidence lane', () 
   });
   assert.deepEqual(pr.runs.map(({ key }) => key), ['fixture:test']);
   assert.deepEqual(nightly.runs.map(({ key }) => key), ['fixture:static-check']);
+});
+
+test('repository-global source, config, workflow, and policy changes select every requirement', () => {
+  const workspace = fixtureWorkspace();
+  const model = loadAssuranceModel(workspace);
+  const fixtureRequirement = model.requirements.get('REQ-FIXTURE-RULE-001');
+  assert.ok(fixtureRequirement);
+  model.projects.set('independent', {
+    name: 'independent',
+    root: 'apps/independent',
+    targets: new Set(['test']),
+  });
+  model.requirements.set('REQ-INDEPENDENT-RULE-002', {
+    ...fixtureRequirement,
+    id: 'REQ-INDEPENDENT-RULE-002',
+    projects: ['independent'],
+    evidence: fixtureRequirement.evidence.map((evidence) => ({
+      ...evidence,
+      file: 'apps/independent/evidence.test.ts',
+      target: 'independent:test',
+    })),
+  });
+
+  for (const file of [
+    'package.json',
+    '.github/workflows/ci.yml',
+    'AGENTS.md',
+    'docs/ai/agent-policy.md',
+    'packages/tooling/src/runtime/process.ts',
+    'packages/tooling/config/spec-evidence.schema.json',
+  ]) {
+    const report = calculateImpactFromChangedFiles(model, 'base', 'head', [file]);
+    assert.deepEqual(report.requirementIds, ['REQ-FIXTURE-RULE-001', 'REQ-INDEPENDENT-RULE-002'], file);
+  }
+});
+
+test('a deleted repository-global file selects every requirement through the real Git diff', () => {
+  const workspace = fixtureWorkspace();
+  mkdirSync(join(workspace, '.github/workflows'), { recursive: true });
+  writeFileSync(join(workspace, '.github/workflows/ci.yml'), 'name: fixture\n');
+  runGit(workspace, ['init', '--quiet']);
+  runGit(workspace, ['add', '.']);
+  runGit(workspace, ['commit', '--quiet', '-m', 'fixture base']);
+  const base = runGit(workspace, ['rev-parse', 'HEAD']);
+  rmSync(join(workspace, '.github/workflows/ci.yml'));
+  runGit(workspace, ['add', '-A']);
+  runGit(workspace, ['commit', '--quiet', '-m', 'delete workflow']);
+  const head = runGit(workspace, ['rev-parse', 'HEAD']);
+  const model = loadAssuranceModel(workspace);
+
+  const report = calculateImpact(model, base, head);
+
+  assert.deepEqual(report.changedFiles, ['.github/workflows/ci.yml']);
+  assert.deepEqual(report.requirementIds, ['REQ-FIXTURE-RULE-001']);
+});
+
+test('project-owned source changes retain focused requirement impact', () => {
+  const workspace = fixtureWorkspace();
+  const model = loadAssuranceModel(workspace);
+  const fixtureRequirement = model.requirements.get('REQ-FIXTURE-RULE-001');
+  assert.ok(fixtureRequirement);
+  model.projects.set('independent', {
+    name: 'independent',
+    root: 'apps/independent',
+    targets: new Set(['test']),
+  });
+  model.requirements.set('REQ-INDEPENDENT-RULE-002', {
+    ...fixtureRequirement,
+    id: 'REQ-INDEPENDENT-RULE-002',
+    projects: ['independent'],
+  });
+
+  const report = calculateImpactFromChangedFiles(model, 'base', 'head', ['apps/fixture/source.ts']);
+  assert.deepEqual(report.requirementIds, ['REQ-FIXTURE-RULE-001']);
 });
 
 test('accepts a justified not-applicable disposition backed by mapped alternative evidence', () => {
@@ -445,14 +538,33 @@ test('keeps the complete repository disposition inventory synchronized', () => {
   const report = createTraceReport(model);
 
   assert.deepEqual(model.errors, []);
-  assert.equal(report.totals.requirements, 58);
-  assert.equal(report.totals.requirementsWithCucumberDisposition, 58);
-  assert.equal(report.totals.acceptanceRequirements, 5);
-  assert.equal(report.totals.cucumberNotApplicableRequirements, 53);
-  assert.equal(report.totals.projects, 90);
-  assert.equal(report.totals.coveredProjects, 90);
-  assert.equal(report.totals.behaviorTests, 447);
-  assert.equal(report.totals.tracedBehaviorTests, 447);
+  const expectedInventory = {
+    projects: 94,
+    behaviorTests: 510,
+    features: 5,
+    scenarios: 8,
+    requirements: 58,
+    acceptanceRequirements: 5,
+    evidence: 148,
+  };
+  assert.deepEqual(report.totals, {
+    ...expectedInventory,
+    coveredProjects: expectedInventory.projects,
+    tracedBehaviorTests: expectedInventory.behaviorTests,
+    requirementsWithCucumberDisposition: expectedInventory.requirements,
+    cucumberNotApplicableRequirements:
+      expectedInventory.requirements - expectedInventory.acceptanceRequirements,
+  });
+  assert.ok(
+    model.requirements
+      .get('REQ-RUNTIME-OBSERVABILITY-005')
+      ?.evidence.some(
+        ({ file, script }) =>
+          file === 'libs/backend/common/otel/lib/src/otel.runtime.spec.ts' &&
+          script === 'test:observability',
+      ),
+    'The OTLP runtime test must be selected as authoritative observability evidence.',
+  );
 });
 
 test('rejects an Nx project without capability ownership', () => {

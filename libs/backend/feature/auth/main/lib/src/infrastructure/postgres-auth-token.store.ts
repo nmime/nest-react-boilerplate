@@ -1,7 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync } from 'neverthrow';
-import { DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
-import { AuthTokenRepository, type AuthUserTokenEntity } from '@app/backend-postgres-main-auth';
+import {
+  AuthTokenRepositoryInjectToken,
+  DefaultAuthTenantId,
+  type AuthTokenRepositoryPort,
+  type AuthUserTokenRecord as PersistedAuthUserTokenRecord,
+} from '@app/backend-feature-auth-shared';
 import type {
   AuthTokenStore,
   AuthTokenStoreError,
@@ -17,7 +21,7 @@ import { mapTokenStoreError, toUserActionTokenRecord } from './util/auth-token-s
 /* v8 ignore start -- Nest decorator metadata is framework glue, not runtime branch logic. */
 @Injectable()
 export class PostgresAuthTokenStore implements AuthTokenStore {
-  constructor(private readonly repository: AuthTokenRepository) {}
+  constructor(@Inject(AuthTokenRepositoryInjectToken) private readonly repository: AuthTokenRepositoryPort) {}
   /* v8 ignore stop */
 
   issueUserActionToken(input: UserActionTokenIssueInput): ResultAsync<IssuedUserActionToken, AuthTokenStoreError> {
@@ -42,7 +46,14 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError> {
     return this.repository
       .consumeUserToken(hashOpaqueToken(token), purpose, tenantId)
-      .map((entity: AuthUserTokenEntity | null) => (entity ? toUserActionTokenRecord(entity) : null))
+      .map((entity: PersistedAuthUserTokenRecord | null) => (entity ? toUserActionTokenRecord(entity) : null))
       .mapErr(mapTokenStoreError);
+  }
+}
+
+@Injectable()
+export class MongoAuthTokenStore extends PostgresAuthTokenStore {
+  constructor(@Inject(AuthTokenRepositoryInjectToken) repository: AuthTokenRepositoryPort) {
+    super(repository);
   }
 }

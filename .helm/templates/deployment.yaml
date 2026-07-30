@@ -1,4 +1,29 @@
 {{- $root := . -}}
+{{- $databaseEngine := include "boilerplate.databaseEngine" . -}}
+{{- $runtimeSecretKeys := list
+  "SESSION_SECRET"
+  "AUTH_LOGIN_ANALYTICS_IP_HASH_SECRET"
+  "BETTER_AUTH_SECRET"
+  "AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY"
+  "NOTIFICATION_PAYLOAD_ENCRYPTION_KEY"
+  "TELEGRAM_BOT_TOKEN"
+  "TELEGRAM_OIDC_CLIENT_SECRET"
+  "TELEGRAM_BOT_WEBHOOK_SECRET"
+  "DISCORD_BOT_TOKEN"
+  "DISCORD_CLIENT_SECRET"
+  "DISCORD_PUBLIC_KEY"
+  "DISCORD_CUSTOM_ID_SECRET"
+  "RESEND_API_KEY"
+  "MAILPACE_SERVER_TOKEN"
+  "NOTIFICATION_FCM_PRIVATE_KEY"
+  "NOTIFICATION_APNS_PRIVATE_KEY"
+  "REDIS_PASSWORD"
+  "S3_ACCESS_KEY"
+  "S3_SECRET_KEY"
+  "OTEL_EXPORTER_OTLP_HEADERS"
+  "OTEL_EXPORTER_OTLP_METRICS_HEADERS"
+  "OTEL_EXPORTER_OTLP_TRACES_HEADERS"
+-}}
 {{- range $name, $app := .Values.apps }}
 {{- if $app.enabled }}
 ---
@@ -47,12 +72,13 @@ spec:
             - name: http
               containerPort: {{ $app.port }}
           {{- end }}
-          {{- if ne $app.kind "background" }}
           env:
+            {{- if ne $app.kind "background" }}
             # Keep the application listener aligned with the chart container
             # port. Nginx frontends ignore this variable.
             - name: PORT
               value: {{ $app.port | quote }}
+            {{- end }}
             {{- if eq $app.kind "frontend" }}
             {{- /*
               Browser-safe runtime flags. The SPA entrypoint renders these into
@@ -63,14 +89,35 @@ spec:
             - name: {{ $flag }}
               value: {{ $value | quote }}
             {{- end }}
+            {{- if and (eq (kebabcase $name) "landing-app") $root.Values.ingress.enabled $root.Values.apps.userApp.enabled }}
+            - name: LANDING_USER_APP_URL
+              value: {{ include "boilerplate.landingAppDestination" (dict "root" $root "service" "user-app" "fallback" "/app") | quote }}
             {{- end }}
-          {{- end }}
+            {{- if and (eq (kebabcase $name) "landing-app") $root.Values.ingress.enabled $root.Values.apps.adminApp.enabled }}
+            - name: LANDING_ADMIN_APP_URL
+              value: {{ include "boilerplate.landingAppDestination" (dict "root" $root "service" "admin-app" "fallback" "/admin") | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if or (eq $app.kind "backend") (eq $app.kind "background") }}
+            {{- range $runtimeSecretKeys }}
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "boilerplate.secretName" $root }}
+                  key: {{ . }}
+                  optional: true
+            {{- end }}
+            - name: {{ ternary "DATABASE_URL" "MONGODB_URI" (eq $databaseEngine "postgres") }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "boilerplate.secretName" $root }}
+                  key: {{ ternary "DATABASE_URL" "MONGODB_URI" (eq $databaseEngine "postgres") }}
+                  optional: true
+            {{- end }}
           {{- if or (eq $app.kind "backend") (eq $app.kind "background") }}
           envFrom:
             - configMapRef:
                 name: {{ include "boilerplate.fullname" $root }}-config
-            - secretRef:
-                name: {{ include "boilerplate.secretName" $root }}
           {{- end }}
           {{- if and $root.Values.frontendNginx.enabled $app.nginxConfig }}
           volumeMounts:

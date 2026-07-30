@@ -4,7 +4,7 @@ This template now includes scaffolding for production auth and multi-tenant life
 
 ## Tenant model
 
-Postgres migrations create:
+Provider migrations create equivalent tenant records. PostgreSQL uses:
 
 - `auth_tenants` with slug/domain/status.
 - `auth_tenant_memberships` for user membership and tenant roles.
@@ -32,9 +32,9 @@ HTTP tenant helpers live in `@app/backend-feature-auth-shared`:
 - `x-tenant-domain` / `x-nrb-tenant-domain` and `Host` are normalized as domain hints for future tenant lookup.
 - session guards reject a request when the requested tenant id does not match the authenticated principal.
 
-## Tenant FK policy
+## Tenant relationship policy
 
-Tenant membership rows use database FKs to tenants and users because membership
+PostgreSQL tenant membership rows use database FKs to tenants and users because membership
 records are operational joins and should be removed with either side. Tenant
 invitations use an FK to `auth_tenants`, but `invited_by_user_id` intentionally
 has no FK: invitations may be bootstrapped or imported with the default zero UUID
@@ -45,22 +45,28 @@ that requires a live inviter should validate it before creating an invitation.
 history can retain actor/resource identifiers after account or tenant deletion;
 audit mutation semantics are owned separately from tenant lifecycle scaffolding.
 
+MongoDB has no foreign keys. Its strict validators and compound unique indexes
+enforce document shape and tenant-local uniqueness, while application
+transactions enforce relationship and last-administrator invariants. Tenant-wide
+admin mutations serialize through the `auth_tenant_serialization` document;
+revisioned settings use expected-revision CAS.
+
 ## Session and one-time action-token foundations
 
 First-party authentication uses only the database-backed HttpOnly cookie
 session. The auth feature's separate token-store interface exists solely for
-single-use account actions and has in-memory and PostgreSQL implementations:
+single-use account actions and has in-memory, PostgreSQL, and MongoDB implementations:
 
 - email verification token issue/consume hooks;
 - password reset token issue/consume hooks.
 
-`AUTH_PERSISTENCE=postgres` binds `PostgresAuthTokenStore` to the migrated
-`auth_user_tokens` table. Production rejects the in-memory mode; it remains
+`AUTH_PERSISTENCE=postgres|mongodb` binds the matching durable token store.
+Production rejects the in-memory mode; it remains
 available for tests and local development without a database. These opaque,
 hashed, tenant-bound tokens cannot authenticate an API request and are consumed
 once by the matching email-verification or password-reset operation.
 
-`AuthPostgresModule` also registers `AuthTokenCleanupService`, a lightweight
+The selected auth persistence module also registers `AuthTokenCleanupService`, a lightweight
 background interval that calls `AuthTokenRepository.cleanupExpiredTokens()` to
 remove expired user-action tokens. Migration
 `Migration20260722090000DropLegacyRefreshTokens` removes the retired

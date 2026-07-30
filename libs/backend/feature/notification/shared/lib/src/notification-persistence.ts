@@ -12,11 +12,23 @@ import type {
   UpsertNotificationTemplateParams,
 } from './types';
 
-export interface FindPendingNotificationDeliveriesParams {
+export interface ClaimPendingNotificationDeliveriesParams {
   targetType: NotificationTargetType;
   targetId?: string;
   count: number;
   now: Date;
+}
+
+export interface NotificationDeliveryClaim<T = NotificationData> {
+  claimToken: string;
+  claimedAt: Date;
+  leaseExpiresAt: Date;
+  deliveries: PendingNotificationDelivery<T>[];
+}
+
+export interface NotificationDeliveryAttemptIdentity {
+  id: string;
+  createdAt: Date;
 }
 
 export interface FindRecentNotificationDeliveryErrorsParams {
@@ -38,11 +50,19 @@ export abstract class NotificationPersistence {
 
   abstract createBatch<T>(params: CreateTemplateNotificationBatch<T>): Promise<NotificationRecord<T>[]>;
 
-  abstract findPendingDeliveries<T = NotificationData>(
-    params: FindPendingNotificationDeliveriesParams,
-  ): Promise<PendingNotificationDelivery<T>[]>;
+  abstract claimPendingDeliveries<T = NotificationData>(
+    params: ClaimPendingNotificationDeliveriesParams,
+  ): Promise<NotificationDeliveryClaim<T> | null>;
 
-  abstract saveDeliveryResults(results: NotificationDeliveryResult[]): Promise<void>;
+  abstract renewDeliveryClaim(claimToken: string, now: Date): Promise<boolean>;
+
+  abstract beginClaimedDeliveryAttempts(
+    deliveries: NotificationDeliveryAttemptIdentity[],
+    claimToken: string,
+    now: Date,
+  ): Promise<NotificationDeliveryAttemptIdentity[]>;
+
+  abstract saveClaimedDeliveryResults(results: NotificationDeliveryResult[], claimToken: string): Promise<void>;
 
   abstract countRecentDeliveryErrors(params: FindRecentNotificationDeliveryErrorsParams): Promise<number>;
 }

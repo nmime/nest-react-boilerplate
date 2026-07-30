@@ -63,4 +63,13 @@ describe('site home page', () => {
     const links = screen.getAllByRole('link', { name: /[A-Za-z]/ });
     expect(links).toHaveLength(2);
   });
+
+  it('renders the server-owned problem registry as accessible articles', async () => {
+    const { Page: ProblemsPage } = await import('../problems/+Page');
+    render(<ProblemsPage />);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'site.problems.title' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2, name: 'about:blank' })).toBeTruthy();
+    expect(screen.getAllByRole('article').length).toBeGreaterThan(1);
+  });
 });

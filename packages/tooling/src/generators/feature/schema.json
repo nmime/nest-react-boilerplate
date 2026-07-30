@@ -24,6 +24,13 @@
       "x-prompt": "Which frontend application hosts this feature?",
       "x-priority": "important"
     },
+    "database": {
+      "type": "string",
+      "description": "Durable database provider; derived from setup when available",
+      "enum": ["postgres", "mongodb"],
+      "x-prompt": "Which durable database provider owns this feature?",
+      "x-priority": "important"
+    },
     "migrationTimestamp": {
       "oneOf": [
         { "type": "string", "pattern": "^[0-9]{14}$" },

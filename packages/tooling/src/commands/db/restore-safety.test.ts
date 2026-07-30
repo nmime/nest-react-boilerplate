@@ -3,9 +3,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { assertRestoreSafety } from "./restore-safety.ts";
+import { isLocalMongoDatabase } from "./mongo-client.ts";
 
 const localDatabase = "postgres://postgres:postgres@localhost:5432/nest_react_boilerplate";
 const productionDatabase = "postgres://postgres:postgres@db.example.com:5432/app";
+const localMongoDatabase = "mongodb://mongo:nest@mongo:27017/nest_react_boilerplate?replicaSet=rs0";
 
 function restoreArgs(overrides = {}) {
   return { force: false, input: "backups/app.dump", yes: true, ...overrides };
@@ -25,6 +27,12 @@ describe("db restore safety guard", () => {
   it("allows --force against a local development database", () => {
     assert.doesNotThrow(() =>
       assertRestoreSafety(restoreArgs({ force: true }), localDatabase, { env: {} }),
+    );
+    assert.doesNotThrow(() =>
+      assertRestoreSafety(restoreArgs({ force: true }), localMongoDatabase, {
+        env: {},
+        isLocalDevelopmentDatabase: isLocalMongoDatabase,
+      }),
     );
   });
 

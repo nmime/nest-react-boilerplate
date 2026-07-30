@@ -40,6 +40,7 @@ product code.
 **Invariants:**
 
 - Presets expand to explicit catalog application identifiers.
+- An end-to-end project selects every application required by its runtime journeys.
 - In-place ownership wins over adjacent clones.
 
 **Failure behavior:**
@@ -54,7 +55,9 @@ product code.
 ### Requirement: [REQ-SCAFFOLD-GENERATORS-003] All ownership generators are deterministic
 
 Application, library, feature, and setup generators SHALL produce canonical,
-repeatable ownership without overwriting an existing owner.
+repeatable ownership without overwriting an existing owner. Generated
+persistence and executable tests SHALL remain reachable by the production
+migration and assurance contracts.
 
 **Evidence profile:** tooling, domain
 
@@ -62,10 +65,19 @@ repeatable ownership without overwriting an existing owner.
 
 - Renderer, kind, scope, tags, aliases, and root layout remain compatible.
 - Dry-run and apply use the same plan.
+- Vertical features target only supported HTTP API and web renderer owners.
+- Generated migrations are explicitly registered with the production runner.
+- Every generated executable test carries a deterministic bootstrap requirement
+  marker for downstream OpenSpec ownership.
+- Scaffold canaries retain finite, resource-aware timeouts per generated
+  project rather than sharing one all-or-nothing process budget.
+- Scaffold canaries lock the workspace, refuse existing owner roots, and remove
+  only roots created by the current invocation.
 
 **Failure behavior:**
 
-- Invalid options, collisions, clone-style names, and force replacement fail.
+- Invalid options, owner runtimes, migration registration contracts, collisions,
+  clone-style names, and force replacement fail before generated writes.
 
 #### Scenario: Existing owner
 
@@ -126,6 +138,13 @@ blockers.
 
 - A required skip cannot become a passing result.
 - Reports identify their command and evidence boundary.
+- Real-user journey, observability, and concurrency gates pass only after an
+  explicitly configured authoritative argv command executes successfully.
+- URL-only reachability remains canary or reliability evidence.
+- External commands and request concurrency have finite validated bounds.
+- Focused gates report unselected gates separately without making them skipped.
+- The browser matrix includes a 320px Chromium viewport.
+- Aggregate test limits constrain both Nx/Vitest and Node test-runner fan-out.
 
 **Failure behavior:**
 

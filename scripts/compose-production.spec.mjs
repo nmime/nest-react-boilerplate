@@ -8,8 +8,10 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   buildComposeInvocation as buildComposeInvocationBase,
+  composeExecutionStatus,
   derivePublicDomains,
   parseEnvFile,
+  productionComposeDiagnostics,
   validateBaseDomain,
   validateExternalMongoUri,
 } from './compose-production.mjs';
@@ -49,6 +51,41 @@ const buildComposeInvocation = (argv, environment = {}, dependencies = {}) =>
 const mongoClosureDependencies = {
   readProductionClosure: () => closure('mongodb', allApps, ['mongodb', 'mongodb-init', 'mongodb-migrate', 'redis']),
 };
+
+test('keeps production Compose process diagnostics fixed and secret-safe', () => {
+  const serialized = JSON.stringify(productionComposeDiagnostics);
+
+  assert.deepEqual(JSON.parse(productionComposeDiagnostics.dryRun), {
+    status: 'validated',
+    execution: 'skipped',
+  });
+  assert.match(productionComposeDiagnostics.start, /starting Docker Compose/u);
+  assert.match(productionComposeDiagnostics.closureFailure, /pnpm nrb closure check/u);
+  assert.match(productionComposeDiagnostics.configurationFailure, /documented arguments and required settings/u);
+  assert.match(productionComposeDiagnostics.executionFailure, /Docker availability/u);
+  assert.doesNotMatch(serialized, /database|domain|profile|public|secret|tls/iu);
+});
+
+test('reports fixed execution diagnostics for Docker launch and exit failures', () => {
+  const diagnostics = [];
+  assert.equal(
+    composeExecutionStatus({ status: 0 }, (message) => diagnostics.push(message)),
+    0,
+  );
+  assert.deepEqual(diagnostics, []);
+
+  assert.equal(
+    composeExecutionStatus({ status: 17 }, (message) => diagnostics.push(message)),
+    17,
+  );
+  assert.deepEqual(diagnostics, [productionComposeDiagnostics.executionFailure]);
+
+  const launchError = new Error('docker unavailable');
+  assert.throws(
+    () => composeExecutionStatus({ error: launchError }, () => undefined),
+    (error) => error === launchError,
+  );
+});
 
 test('frontend runtime config emits only same-origin or HTTPS landing destinations', (context) => {
   const temporaryDirectory = mkdtempSync(join(tmpdir(), 'nrb-frontend-runtime-config-'));

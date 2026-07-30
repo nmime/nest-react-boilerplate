@@ -1,7 +1,7 @@
 # Bun runtime support
 
 - Research date: 2026-07-19
-- Runtime contract updated: 2026-07-27
+- Runtime contract updated: 2026-07-31
 - Tested Bun: `1.3.14`
 
 ## Decision
@@ -50,10 +50,9 @@ pnpm run bun:check
 
 The selected lane verifies the Nx graph, applicable Vite/Vike/Nest builds and
 tests, live Vike/Nest or headless process behavior, and runtime identity. Expo
-web export remains an explicit Node child-tool boundary because the current
-Expo/Metro toolchain is not supported under forced Bun. The Nest readiness
-probe verifies that runtime health reports Bun rather than Bun's Node
-compatibility version.
+web export, Cucumber acceptance, and the fullstack `node:test` suite remain
+explicit Node child-tool boundaries. The Nest readiness probe verifies that
+runtime health reports Bun rather than Bun's Node compatibility version.
 
 Provider-backed lanes require Docker Compose. CI runs every preset; isolated
 landing, site, user frontend, admin frontend, mobile, user/admin API,
@@ -69,16 +68,20 @@ and `.nrb/closure/pnpm-lock.yaml` is current. It then:
 1. Verifies that the selected project and external-package closure contains no
    opposite-provider ownership.
 2. Lists only closure projects, then runs available selected build/export, test,
-   and applicable auth API e2e
-   targets under Bun. Coverage remains in the canonical Node lane because Bun's
-   Node compatibility does not provide the repository's inspector-backed V8
-   coverage contract.
+   and applicable auth API e2e targets under Bun, except for explicitly
+   Node-owned child tools. Coverage remains in the canonical Node lane because
+   Bun's Node compatibility does not provide the repository's inspector-backed
+   V8 coverage contract. Ordinary unit-test targets do not inherit production
+   provider selectors or connection values.
 3. Rebuilds the runtime projects through canonical pnpm/Node Nx execution so
    backend deployment manifests and pruned pnpm lockfiles are authoritative.
-4. Stages each selected runtime and only its transitive built outputs in a
-   temporary directory outside the workspace. The staged process environment
-   removes `NODE_PATH` so undeclared workspace dependencies cannot leak in.
-5. Installs each staged production dependency tree with pnpm only.
+4. Stages each selected runtime in a temporary directory outside the workspace.
+   Backend artifacts include their transitive built outputs; the bundled Vike
+   runtime includes only its explicit application output. The staged process
+   environment removes `NODE_PATH` so undeclared workspace dependencies cannot
+   leak in.
+5. Installs each staged production dependency tree with pnpm only, keeping
+   canonical Node first for pnpm's child process.
 6. Runs every selected staged runtime artifact under both Node and Bun. A
    selected Vike app gets health and rendered-route probes. Every selected
    backend API or bot root gets a real process startup, `/live`, `/ready`,
@@ -92,16 +95,17 @@ and `.nrb/closure/pnpm-lock.yaml` is current. It then:
 This distinction matters because invoking an Nx launcher without Bun's shebang
 override can still execute Nx under Node. The command forces supported Nx and
 child JavaScript tools to use the pinned Bun runtime, preserves explicit
-Node-owned boundaries such as Expo/Metro, and keeps pnpm as the package manager.
+Node-owned boundaries such as Expo/Metro, Cucumber, and `node:test`, and keeps
+pnpm as the package manager.
 
 ## Deployment relationship
 
 Docker source builds consume the same selected closure metadata and lock. They
-reject build projects outside `releaseImages`, stage only each runtime's
-transitive output closure, and install runtime dependencies outside the source
-workspace. The migrator manifest is filtered to the selected PostgreSQL or
-MongoDB dependency set. Final runtime images do not copy the workspace-wide
-`dist` tree or inherit `NODE_PATH`.
+reject build projects outside `releaseImages`, stage each backend runtime's
+transitive output closure or the site's explicit bundled output, and install
+runtime dependencies outside the source workspace. The migrator manifest is
+filtered to the selected PostgreSQL or MongoDB dependency set. Final runtime
+images do not copy the workspace-wide `dist` tree or inherit `NODE_PATH`.
 
 The final migrator image is intentionally different from local database
 commands. Its dependency set is selected while building the image, but runtime

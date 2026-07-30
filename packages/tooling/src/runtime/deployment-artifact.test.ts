@@ -86,7 +86,7 @@ function siteClosure(): SelectedClosureManifest {
     graphDigest: 'b'.repeat(64),
     provider: null,
     roots: ['site-app'],
-    projects: ['site-app'],
+    projects: ['@app/common-i18n-keys', 'site-app'],
     targets: { build: ['site-app'] },
     externalPackages: {
       '@fastify/static': '1.0.0',
@@ -109,8 +109,19 @@ function siteGraph() {
           },
         },
       },
+      '@app/common-i18n-keys': {
+        data: {
+          root: 'libs/common/i18n/keys/lib',
+          targets: {
+            build: { options: { outputPath: 'dist/libs/common/i18n-keys' } },
+          },
+        },
+      },
     },
-    dependencies: { 'site-app': [] },
+    dependencies: {
+      'site-app': [{ target: '@app/common-i18n-keys' }],
+      '@app/common-i18n-keys': [],
+    },
   };
 }
 
@@ -240,6 +251,7 @@ void describe('deployment artifact closure', () => {
       dependencies: Record<string, string>;
     };
     assert.equal(artifact.kind, 'site');
+    assert.deepEqual(artifact.outputPaths, ['dist/apps/frontend/site']);
     assert.equal(manifest.name, 'site-app');
     assert.equal(manifest.type, 'module');
     assert.deepEqual(manifest.dependencies, { '@fastify/static': '1.0.0', fastify: '1.0.0' });

@@ -1,6 +1,6 @@
 // Evidence for: REQ-SCAFFOLD-TOOLING-005
-import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, join, resolve } from 'node:path';
@@ -15,6 +15,7 @@ import {
   type StagedDeploymentArtifact,
 } from '../../runtime/deployment-artifact.js';
 import { detectJavaScriptRuntime } from '../../runtime/environment.js';
+import { packageManagerInvocation } from '../../runtime/process.js';
 import { providerExternalPackages, type SelectedClosureManifest } from '../../setup/closure.js';
 import { appCatalog } from '../../setup/catalog.js';
 
@@ -29,11 +30,13 @@ const COMMAND_TERMINATION_GRACE_MS = 2_000;
 const COMMAND_FORCE_KILL_WAIT_MS = 1_000;
 const HTTP_REQUEST_TIMEOUT_MS = 5_000;
 const HTTP_RUNTIME_READY_TIMEOUT_MS = 30_000;
+const PROVIDER_ENVIRONMENT_NAME = /^(?:AUTH_PERSISTENCE|COMPOSE_PROFILES|CONTAINER_DATABASE_URL|DATABASE_ENGINE|DATABASE_URL|DOCKER_DATABASE_URL|DOCKER_MONGODB_URI|MONGODB(?:_|$)|PG[A-Z0-9_]*|POSTGRES(?:_|$))/iu;
 
 export interface BunCompatibilityProbe {
   name: string;
   nxArgs: readonly string[];
   runtime?: 'bun' | 'node';
+  environmentScope?: 'provider' | 'test';
 }
 
 export interface BunCompatibilityInvocation {
@@ -58,6 +61,7 @@ export interface BunRuntimeExecutionProbe {
 export interface NodeBackedPnpmInvocation {
   command: string;
   args: string[];
+  environment: NodeJS.ProcessEnv;
 }
 
 export interface BoundedCommandOptions {
@@ -137,13 +141,15 @@ export function createBunCompatibilityProbes(closure: SelectedClosureManifest): 
     probes.push({
       name: 'Selected closure unit tests',
       nxArgs: ['run-many', '-t', 'test', `--projects=${bunTestProjects.join(',')}`, '--parallel=1', '--skip-nx-cache'],
+      environmentScope: 'test',
     });
   }
   if (nodeTestProjects.length > 0) {
     probes.push({
-      name: 'Node-only acceptance tests',
+      name: 'Node-only closure tests',
       nxArgs: ['run-many', '-t', 'test', `--projects=${nodeTestProjects.join(',')}`, '--parallel=1', '--skip-nx-cache'],
       runtime: 'node',
+      environmentScope: 'test',
     });
   }
   if ((closure.targets.e2e ?? []).includes('auth-app-api')) {
@@ -156,7 +162,7 @@ export function createBunCompatibilityProbes(closure: SelectedClosureManifest): 
 }
 
 export function isNodeOnlyTestProject(project: string): boolean {
-  return project === 'acceptance-e2e' || project.endsWith('-acceptance-e2e');
+  return project === 'fullstack-e2e' || project === 'acceptance-e2e' || project.endsWith('-acceptance-e2e');
 }
 
 export async function runBunCompatibilityCommand(context: CommandContext): Promise<number> {
@@ -196,7 +202,8 @@ export async function runBunCompatibilityCommand(context: CommandContext): Promi
       });
       for (const probe of createBunCompatibilityProbes(closure)) {
         process.stdout.write(`\n==> ${probe.name}\n`);
-        const command = createBunCompatibilityInvocation(probe, selectedEnvironment, process.execPath);
+        const probeEnvironment = createBunCompatibilityProbeEnvironment(probe, selectedEnvironment);
+        const command = createBunCompatibilityInvocation(probe, probeEnvironment, process.execPath);
         await runBoundedCommand(command.program, command.args, probe.name, {
           cwd: context.workspaceRoot,
           env: command.environment,
@@ -225,6 +232,15 @@ export async function runBunCompatibilityCommand(context: CommandContext): Promi
   return 0;
 }
 
+export function createBunCompatibilityProbeEnvironment(
+  probe: BunCompatibilityProbe,
+  providerEnvironment: NodeJS.ProcessEnv,
+): NodeJS.ProcessEnv {
+  return probe.environmentScope === 'test'
+    ? withoutProviderEnvironment(providerEnvironment)
+    : { ...providerEnvironment };
+}
+
 export function createBunCompatibilityInvocation(
   probe: BunCompatibilityProbe,
   environment: NodeJS.ProcessEnv,
@@ -232,15 +248,11 @@ export function createBunCompatibilityInvocation(
 ): BunCompatibilityInvocation {
   const probeEnvironment = { ...environment };
   if (probe.runtime === 'node') {
-    delete probeEnvironment.BUN_BE_BUN;
-    const nodeExecutable = resolveCanonicalNodeExecutable(probeEnvironment);
-    probeEnvironment.PATH = executableFirstPath(nodeExecutable, probeEnvironment.PATH);
-    probeEnvironment.npm_node_execpath = nodeExecutable;
-    return {
-      program: nodeExecutable,
-      args: ['node_modules/nx/dist/bin/nx.js', ...probe.nxArgs],
-      environment: probeEnvironment,
-    };
+    return createCanonicalNodeInvocation(
+      ['node_modules/nx/dist/bin/nx.js', ...probe.nxArgs],
+      probeEnvironment,
+      bunExecutable,
+    );
   }
 
   return {
@@ -284,51 +296,167 @@ export function readPinnedBunVersion(workspaceRoot: string): string {
 export function createNodeBackedPnpmInvocation(
   args: readonly string[],
   environment: NodeJS.ProcessEnv = process.env,
+  bunExecutable = activeBunExecutable(),
+  platform: NodeJS.Platform = process.platform,
 ): NodeBackedPnpmInvocation {
-  const pnpmExecutable = executableOnPath('pnpm', environment);
-  const nodeExecutable = resolveCanonicalNodeExecutable(environment, pnpmExecutable);
-  return { command: nodeExecutable, args: [pnpmExecutable, ...args] };
+  const packageManagerPath = environment.npm_execpath?.trim();
+  const pnpmExecutable = packageManagerPath ? undefined : executableOnPath('pnpm', environment, platform);
+  const nodeExecutable = resolveCanonicalNodeExecutable(environment, pnpmExecutable, bunExecutable, platform);
+  const invocation = packageManagerInvocation([...args], { env: environment, nodeExecutable, platform });
+  return {
+    command: invocation.command === 'pnpm' ? (pnpmExecutable ?? executableOnPath('pnpm', environment, platform)) : invocation.command,
+    args: invocation.args,
+    environment: canonicalNodeEnvironment(environment, nodeExecutable, platform),
+  };
+}
+
+export function createCanonicalNodeInvocation(
+  args: readonly string[],
+  environment: NodeJS.ProcessEnv,
+  bunExecutable = activeBunExecutable(),
+  platform: NodeJS.Platform = process.platform,
+): BunCompatibilityInvocation {
+  const nodeExecutable = resolveCanonicalNodeExecutable(environment, undefined, bunExecutable, platform);
+  return {
+    program: nodeExecutable,
+    args: [...args],
+    environment: canonicalNodeEnvironment(environment, nodeExecutable, platform),
+  };
 }
 
 export function resolveCanonicalNodeExecutable(
   environment: NodeJS.ProcessEnv = process.env,
-  pnpmExecutable = executableOnPath('pnpm', environment),
+  pnpmExecutable?: string,
+  bunExecutable = activeBunExecutable(),
+  platform: NodeJS.Platform = process.platform,
 ): string {
-  const siblingNode = join(dirname(pnpmExecutable), 'node');
-  return existsSync(siblingNode) ? siblingNode : executableOnPath('node', environment);
+  const configuredNode = environment.npm_node_execpath?.trim();
+  const candidates = [
+    ...(configuredNode ? [resolve(configuredNode)] : []),
+    ...(pnpmExecutable
+      ? executablePathCandidates(join(dirname(pnpmExecutable), 'node'), environment, platform)
+      : []),
+    ...executablesOnPath('node', environment, platform),
+  ];
+  const canonicalNode = [...new Set(candidates)].find(
+    (candidate) => isCanonicalNodeExecutable(candidate, environment, bunExecutable),
+  );
+  if (!canonicalNode) {
+    throw new Error('Canonical Node is required on PATH for Node-only tools and deployment dependency installation.');
+  }
+  return canonicalNode;
 }
 
-function executableFirstPath(executable: string, currentPath: string | undefined): string {
+function canonicalNodeEnvironment(
+  environment: NodeJS.ProcessEnv,
+  nodeExecutable: string,
+  platform: NodeJS.Platform,
+): NodeJS.ProcessEnv {
+  const nodeEnvironment = { ...environment };
+  delete nodeEnvironment.BUN_BE_BUN;
+  nodeEnvironment.PATH = executableFirstPath(nodeExecutable, nodeEnvironment.PATH, platform);
+  nodeEnvironment.npm_node_execpath = nodeExecutable;
+  return nodeEnvironment;
+}
+
+function executableFirstPath(
+  executable: string,
+  currentPath: string | undefined,
+  platform: NodeJS.Platform,
+): string {
+  const pathDelimiter = platform === 'win32' ? ';' : delimiter;
   const executableDirectory = dirname(executable);
   const remainingDirectories = (currentPath ?? '')
-    .split(delimiter)
+    .split(pathDelimiter)
     .filter(Boolean)
     .filter((directory) => resolve(directory) !== resolve(executableDirectory));
-  return [executableDirectory, ...remainingDirectories].join(delimiter);
+  return [executableDirectory, ...remainingDirectories].join(pathDelimiter);
 }
 
-function executableOnPath(name: string, environment: NodeJS.ProcessEnv): string {
-  const executable = environment.PATH?.split(delimiter)
-    .filter(Boolean)
-    .map((directory) => resolve(directory, name))
-    .find((candidate) => existsSync(candidate));
+function executableOnPath(name: string, environment: NodeJS.ProcessEnv, platform: NodeJS.Platform): string {
+  const executable = executablesOnPath(name, environment, platform)[0];
   if (!executable) throw new Error(`${name} is required on PATH for deployment dependency installation.`);
   return executable;
 }
 
+function executablesOnPath(
+  name: string,
+  environment: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform,
+): string[] {
+  const pathDelimiter = platform === 'win32' ? ';' : delimiter;
+  return (environment.PATH ?? '')
+    .split(pathDelimiter)
+    .filter(Boolean)
+    .flatMap((directory) => executablePathCandidates(resolve(directory, name), environment, platform))
+    .filter((candidate) => existsSync(candidate));
+}
+
+function executablePathCandidates(
+  candidate: string,
+  environment: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform,
+): string[] {
+  if (platform !== 'win32') return [candidate];
+  const extensions = (environment.PATHEXT ?? '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean);
+  const normalizedCandidate = candidate.toLowerCase();
+  return extensions.some((extension) => normalizedCandidate.endsWith(extension.toLowerCase()))
+    ? [candidate]
+    : extensions.map((extension) => `${candidate}${extension}`);
+}
+
+function sameExecutable(left: string, right: string): boolean {
+  try {
+    return realpathSync(left) === realpathSync(right);
+  } catch {
+    return resolve(left) === resolve(right);
+  }
+}
+
+function isCanonicalNodeExecutable(
+  candidate: string,
+  environment: NodeJS.ProcessEnv,
+  bunExecutable: string | undefined,
+): boolean {
+  if (!existsSync(candidate) || (bunExecutable && sameExecutable(candidate, bunExecutable))) return false;
+  const probeEnvironment = { ...environment };
+  delete probeEnvironment.BUN_BE_BUN;
+  const result = spawnSync(
+    candidate,
+    ['--eval', "process.stdout.write(`${process.release.name}:${typeof Bun}`)"],
+    {
+      encoding: 'utf8',
+      env: probeEnvironment,
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 5_000,
+    },
+  );
+  return result.status === 0 && result.stdout === 'node:undefined';
+}
+
+function activeBunExecutable(): string | undefined {
+  return detectJavaScriptRuntime().name === 'bun' ? process.execPath : undefined;
+}
+
 function compatibilityEnvironment(): NodeJS.ProcessEnv {
   const environment = isolatedRuntimeEnvironment({
-    ...process.env,
+    ...withoutProviderEnvironment(process.env),
     CI: process.env.CI ?? 'true',
-    DATABASE_URL: process.env.DATABASE_URL ?? 'postgresql://compat:compat@127.0.0.1:1/compat',
-    MONGODB_DATABASE: process.env.MONGODB_DATABASE ?? 'compat',
-    MONGODB_URI: process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:1/compat',
+    DATABASE_URL: 'postgresql://compat:compat@127.0.0.1:1/compat',
+    MONGODB_DATABASE: 'compat',
+    MONGODB_URI: 'mongodb://127.0.0.1:1/compat',
     NX_DAEMON: 'false',
     VITE_API_BASE_URL_MODE: 'same-origin',
   });
   delete environment.NO_COLOR;
   delete environment.FORCE_COLOR;
   return environment;
+}
+
+function withoutProviderEnvironment(environment: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return Object.fromEntries(
+    Object.entries(environment).filter(([name]) => !PROVIDER_ENVIRONMENT_NAME.test(name)),
+  );
 }
 
 export function assertProviderIsolation(closure: SelectedClosureManifest): void {
@@ -356,8 +484,7 @@ async function buildCanonicalDeploymentArtifacts(
   environment: NodeJS.ProcessEnv,
 ): Promise<void> {
   process.stdout.write('\n==> Canonical pnpm/Node deployment artifacts\n');
-  await runBoundedCommand(
-    resolveCanonicalNodeExecutable(environment),
+  const invocation = createCanonicalNodeInvocation(
     [
       join(workspaceRoot, 'node_modules/nx/dist/bin/nx.js'),
       'run-many',
@@ -366,9 +493,14 @@ async function buildCanonicalDeploymentArtifacts(
       `--projects=${projects.join(',')}`,
       '--skip-nx-cache',
     ],
-    'Canonical deployment build',
-    { cwd: workspaceRoot, env: environment, stdio: 'inherit', timeoutMs: DEPLOYMENT_BUILD_TIMEOUT_MS },
+    environment,
   );
+  await runBoundedCommand(invocation.program, invocation.args, 'Canonical deployment build', {
+    cwd: workspaceRoot,
+    env: invocation.environment,
+    stdio: 'inherit',
+    timeoutMs: DEPLOYMENT_BUILD_TIMEOUT_MS,
+  });
 }
 
 interface InfrastructureHandle {
@@ -397,26 +529,18 @@ async function startSelectedInfrastructure(
   const compose = ['compose', '--project-name', projectName, '-f', 'docker/docker-compose.yml'];
   const databaseName = 'nest_react_boilerplate';
   const selectedEnvironment = isolatedRuntimeEnvironment({
-    ...environment,
+    ...withoutProviderEnvironment(environment),
     COMPOSE_PROJECT_NAME: projectName,
     COMPOSE_PROFILES: closure.provider,
     NRB_CLOSURE_CONTEXT: join(workspaceRoot, '.nrb/closure'),
     DATABASE_ENGINE: closure.provider,
     AUTH_PERSISTENCE: closure.provider,
   });
-  for (const key of [
-    'DATABASE_URL',
-    'CONTAINER_DATABASE_URL',
-    'POSTGRES_PORT',
-    'MONGODB_URI',
-    'MONGODB_DATABASE',
-    'MONGODB_REPLICA_SET',
-    'MONGODB_PORT',
-  ]) {
-    delete selectedEnvironment[key];
-  }
   if (closure.provider === 'postgres') {
     Object.assign(selectedEnvironment, {
+      POSTGRES_USER: 'postgres',
+      POSTGRES_PASSWORD: 'postgres',
+      POSTGRES_DB: databaseName,
       POSTGRES_PORT: String(databasePort),
       DATABASE_URL: `postgres://postgres:postgres@127.0.0.1:${databasePort}/${databaseName}`,
       CONTAINER_DATABASE_URL: `postgres://postgres:postgres@postgres:5432/${databaseName}`,
@@ -516,7 +640,7 @@ async function installDeploymentArtifact(
   const invocation = createNodeBackedPnpmInvocation(plan.args, environment);
   await runBoundedCommand(invocation.command, invocation.args, `${artifact.project} dependency install`, {
     cwd: plan.cwd,
-    env: isolatedRuntimeEnvironment(environment),
+    env: isolatedRuntimeEnvironment(invocation.environment),
     stdio: 'inherit',
     timeoutMs: DEPLOYMENT_INSTALL_TIMEOUT_MS,
   });

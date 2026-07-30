@@ -5,6 +5,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import { buildSelectedClosure, createLiveProjectGraph } from './closure.js';
 import { renderClosureWorkspace } from './closure-materializer.js';
@@ -45,6 +46,7 @@ describe('selected OTel closure lock and install isolation', () => {
         },
       ];
       const workspaceRoot = new URL('../../../../', import.meta.url);
+      const workspaceRootPath = fileURLToPath(workspaceRoot);
       const rootPackage = JSON.parse(readFileSync(new URL('package.json', workspaceRoot), 'utf8')) as {
         engines?: Record<string, string>;
         packageManager?: string;
@@ -62,7 +64,10 @@ describe('selected OTel closure lock and install isolation', () => {
                 private: true,
                 packageManager: rootPackage.packageManager,
                 engines: rootPackage.engines,
-                dependencies: telemetryPackages(testCase.closure.productExternalPackages ?? {}),
+                dependencies: localTelemetryPackages(
+                  telemetryPackages(testCase.closure.productExternalPackages ?? {}),
+                  workspaceRootPath,
+                ),
               },
               null,
               2,
@@ -111,6 +116,19 @@ function telemetryPackages(packages: Readonly<Record<string, string>>): Record<s
     Object.entries(packages).filter(
       ([packageName]) => packageName === '@fastify/otel' || packageName.startsWith('@opentelemetry/'),
     ),
+  );
+}
+
+function localTelemetryPackages(
+  packages: Readonly<Record<string, string>>,
+  workspaceRoot: string,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.keys(packages).map((packageName) => {
+      const packagePath = join(workspaceRoot, 'node_modules', ...packageName.split('/'));
+      assert.equal(existsSync(packagePath), true, `root install is missing ${packageName}`);
+      return [packageName, `link:${packagePath.replaceAll('\\', '/')}`];
+    }),
   );
 }
 

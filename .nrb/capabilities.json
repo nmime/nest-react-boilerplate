@@ -5,7 +5,9 @@
     {
       "id": "authz",
       "activation": "source-library",
-      "projects": ["@app/common-authz"],
+      "projects": [
+        "@app/common-authz"
+      ],
       "dockerServices": [],
       "environmentVariables": [],
       "generatedFiles": [],
@@ -17,7 +19,9 @@
     {
       "id": "design-tokens",
       "activation": "source-library",
-      "projects": ["@app/common-design-tokens"],
+      "projects": [
+        "@app/common-design-tokens"
+      ],
       "dockerServices": [],
       "environmentVariables": [],
       "generatedFiles": [],
@@ -29,7 +33,10 @@
     {
       "id": "feature-flags",
       "activation": "nest-module",
-      "projects": ["@app/backend-postgres-main-feature-flags", "@app/common-feature-flags"],
+      "projects": [
+        "@app/backend-postgres-main-feature-flags",
+        "@app/common-feature-flags"
+      ],
       "dockerServices": [],
       "environmentVariables": [],
       "generatedFiles": [
@@ -68,7 +75,10 @@
         "@app/frontend-i18n-shared"
       ],
       "dockerServices": [],
-      "environmentVariables": ["APP_FALLBACK_LOCALE", "APP_LOCALE"],
+      "environmentVariables": [
+        "APP_FALLBACK_LOCALE",
+        "APP_LOCALE"
+      ],
       "generatedFiles": [],
       "backendWiring": [],
       "telemetryWiring": null,
@@ -84,7 +94,10 @@
         "@app/backend-postgres-main-notification",
         "@app/common-notifications"
       ],
-      "dockerServices": ["notification-consumer", "notification-scheduler"],
+      "dockerServices": [
+        "notification-consumer",
+        "notification-scheduler"
+      ],
       "environmentVariables": [
         "MAILPACE_SERVER_TOKEN",
         "NOTIFICATION_APNS_BUNDLE_ID",
@@ -120,7 +133,12 @@
       ],
       "backendWiring": [
         {
-          "hosts": ["user-app-api", "auth-app-api", "discord-app-api", "telegram-bot-api"],
+          "hosts": [
+            "user-app-api",
+            "auth-app-api",
+            "discord-app-api",
+            "telegram-bot-api"
+          ],
           "moduleExpression": "NotificationMainModule.forRoot({ enableScheduler: false, exposeHttp: false })",
           "imports": [
             {
@@ -130,7 +148,9 @@
           ]
         },
         {
-          "hosts": ["notification-scheduler"],
+          "hosts": [
+            "notification-scheduler"
+          ],
           "moduleExpression": "NotificationMainModule.forRoot({ enableScheduler: true, exposeHttp: false })",
           "imports": [
             {
@@ -140,7 +160,9 @@
           ]
         },
         {
-          "hosts": ["notification-consumer"],
+          "hosts": [
+            "notification-consumer"
+          ],
           "moduleExpression": "NotificationMainModule.forRoot({ enableConsumer: true, exposeHttp: false })",
           "imports": [
             {
@@ -167,9 +189,17 @@
     {
       "id": "postgres",
       "activation": "infrastructure",
-      "projects": ["@app/backend-postgres-main", "@app/backend-postgres-main-auth"],
-      "dockerServices": ["migrate", "postgres"],
-      "environmentVariables": ["DATABASE_URL"],
+      "projects": [
+        "@app/backend-postgres-main",
+        "@app/backend-postgres-main-auth"
+      ],
+      "dockerServices": [
+        "migrate",
+        "postgres"
+      ],
+      "environmentVariables": [
+        "DATABASE_URL"
+      ],
       "generatedFiles": [
         "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
@@ -209,8 +239,12 @@
     {
       "id": "s3",
       "activation": "nest-module",
-      "projects": ["@app/backend-common-s3"],
-      "dockerServices": ["minio"],
+      "projects": [
+        "@app/backend-common-s3"
+      ],
+      "dockerServices": [
+        "minio"
+      ],
       "environmentVariables": [
         "S3_ACCESS_KEY",
         "S3_BUCKET",

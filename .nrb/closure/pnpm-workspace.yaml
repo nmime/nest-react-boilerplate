@@ -4,6 +4,7 @@ packages:
 shamefullyHoist: true
 
 overrides:
+  '@fastify/static': '10.1.2'
   'better-call': '1.3.7'
   'better-auth': '1.6.23'
   'drizzle-orm': '0.45.2'
@@ -20,7 +21,8 @@ overrides:
   '@nestjs/platform-express': '11.1.28'
   '@nestjs/testing': '11.1.28'
   'lodash': '4.18.1'
-  'brace-expansion': '5.0.8'
+  'brace-expansion@<2.0.0': '5.0.8'
+  'brace-expansion@>=2.0.0 <3.0.0': '5.0.8'
   'picomatch@<3.0.0': '2.3.2'
   'picomatch@>=4.0.0 <5.0.0': '4.0.4'
   'path-to-regexp@>=8.0.0 <9.0.0': '8.4.2'
@@ -32,7 +34,8 @@ overrides:
   'svgo@>=3.0.0 <4.0.0': '3.3.4'
   'js-yaml@<4.0.0': '3.15.0'
   'js-yaml@>=4.0.0 <5.0.0': '4.3.0'
-  'js-yaml@>=5.0.0 <6.0.0': '5.2.2'
+  'js-yaml@>=5.0.0 <5.2.2': '5.2.2'
+  'brace-expansion@>=4.0.0 <6.0.0': '5.0.8'
   'yaml': '2.9.0'
   'ajv@>=7.0.0 <9.0.0': '8.20.0'
   'ws': '8.21.0'
@@ -54,16 +57,33 @@ overrides:
   # patched adapter while the SDK range catches up.
   '@hono/node-server': '2.0.10'
 
+# Nest 11.1.28 still declares @fastify/static ^8 || ^9 even though its Fastify
+# 5 runtime and @nestjs/swagger support the patched 10.x plugin. Keep this
+# exception scoped to that exact parent/peer edge and remove it when Nest widens
+# the published peer range.
 peerDependencyRules:
   allowedVersions:
-    # Nest's Fastify adapter declares this optional peer for its static adapter,
-    # which the APIs do not use. Swagger and the site support the patched 10.x API.
-    '@fastify/static': '10.1.2'
+    '@nestjs/platform-fastify>@fastify/static': '10.1.2'
+    # The published 10.5.4 manifest accepts any optional esbuild version. pnpm's
+    # vulnerable-range override rewrites that wildcard to 0.25.0 in the lock
+    # snapshot, so record the workspace's tested Vite/esbuild edge explicitly.
+    '@storybook/csf-plugin>esbuild': '0.28.1'
 
 # react-native-worklets 0.10.0 imports these Babel packages from its compiled
 # plugin without declaring them. Keep the fix scoped to that exact release so
 # pnpm's isolated linker produces a reproducible mobile export.
 packageExtensions:
+  # Stryker's TS config preprocessor dynamically imports TypeScript without
+  # declaring it. Keep the compiler visible under pnpm's strict linker.
+  '@stryker-mutator/core@9.6.1':
+    dependencies:
+      typescript: '6.0.3'
+  # Nest's file-type dependency reaches debug through this tokenizer. Declare
+  # the optional color peer here so root and backend workspace installs share
+  # one NestJS singleton graph instead of resolving peer-context duplicates.
+  '@tokenizer/inflate@0.4.1':
+    dependencies:
+      supports-color: '10.2.2'
   'react-native-worklets@0.10.0':
     dependencies:
       '@babel/generator': '7.29.7'
@@ -88,7 +108,7 @@ auditConfig:
 # 10080 currently rejects ~208 recently-published entries in this lockfile.
 minimumReleaseAge: 1440
 
-# Keep dependency reconciliation explicit. pnpm 11.11 otherwise attempts an
+# Keep dependency reconciliation explicit. The pnpm resolver otherwise attempts an
 # implicit install before every script, which makes local and CI runs mutate
 # node_modules instead of failing with an actionable install instruction.
 verifyDepsBeforeRun: false
@@ -188,6 +208,7 @@ minimumReleaseAgeExclude:
   - grammy@1.44.0
 
 allowBuilds:
+  '@fission-ai/openspec': false
   '@nestjs/core': true
   '@parcel/watcher': true
   '@prisma/client': true

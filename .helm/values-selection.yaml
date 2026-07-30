@@ -27,12 +27,6 @@ database:
   engine: postgres
 migrations:
   enabled: true
-monitoring:
-  enabled: false
-  otel:
-    enabled: false
-  otelCollector:
-    enabled: false
 apps:
   adminApp:
     enabled: true

@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { isBuiltin } from "node:module";
 import { extname } from "node:path";
 import { dirname, join, relative, resolve } from "node:path";
@@ -1997,9 +1997,20 @@ function walk(root: string): string[] {
 
   for (const entry of readdirSync(root)) {
     const path = join(root, entry);
-    const stat = statSync(path);
+    // lstat, not stat: after `nrb closure install` the per-app node_modules are symlinks into
+    // .nrb/closure, whose pnpm links point back at the workspace. Following them recursed until
+    // the stack overflowed. Matches the walkers in commands/project/check-library-configs.ts.
+    const stat = lstatSync(path);
+
+    if (stat.isSymbolicLink()) {
+      continue;
+    }
 
     if (stat.isDirectory()) {
+      if (entry === "node_modules" || entry === "dist") {
+        continue;
+      }
+
       files.push(...walk(path));
     } else if (stat.isFile()) {
       files.push(path);

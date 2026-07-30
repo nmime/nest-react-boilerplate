@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
-  "graphDigest": "6ee0aa67e00e8e7a9334be75b1fa81af5d8064c493b7c37ba043c70da3000b59",
+  "graphDigest": "177e7b37caf4cf70eaa0e4402108a8a96227c8ee99c3c603e813bb1c253aa038",
   "provider": "postgres",
   "roots": [
     "admin-app",
@@ -17,12 +17,14 @@
   ],
   "projects": [
     "@app/backend-common-bootstrap",
+    "@app/backend-common-component-test",
     "@app/backend-common-exception",
     "@app/backend-common-health",
     "@app/backend-common-i18n",
     "@app/backend-common-logger",
     "@app/backend-common-nats",
     "@app/backend-common-network",
+    "@app/backend-common-otel",
     "@app/backend-common-redis",
     "@app/backend-common-request-context",
     "@app/backend-common-response",
@@ -58,7 +60,14 @@
     "@app/frontend-feature-admin-i18n",
     "@app/frontend-feature-admin-shared",
     "@app/frontend-feature-landing-i18n",
+    "@app/frontend-feature-shared-preferences",
+    "@app/frontend-feature-user-auth",
     "@app/frontend-feature-user-i18n",
+    "@app/frontend-feature-user-logout",
+    "@app/frontend-feature-user-preferences",
+    "@app/frontend-feature-user-profile",
+    "@app/frontend-feature-user-social-auth",
+    "@app/frontend-feature-user-tma-auth",
     "@app/frontend-i18n-shared",
     "@app/frontend-runtime",
     "@app/frontend-ui-native",
@@ -83,7 +92,9 @@
     "user-app-api"
   ],
   "targets": {
-    "android": ["mobile-app"],
+    "android": [
+      "mobile-app"
+    ],
     "build": [
       "admin-app",
       "admin-app-api",
@@ -96,8 +107,19 @@
       "user-app",
       "user-app-api"
     ],
-    "build-deps": ["admin-app", "landing-app", "user-app"],
-    "dev": ["admin-app", "landing-app", "user-app"],
+    "build-deps": [
+      "admin-app",
+      "landing-app",
+      "user-app"
+    ],
+    "component-test": [
+      "@app/backend-postgres-main-notification"
+    ],
+    "dev": [
+      "admin-app",
+      "landing-app",
+      "user-app"
+    ],
     "e2e": [
       "admin-app",
       "admin-app-api",
@@ -108,16 +130,25 @@
       "user-app",
       "user-app-api"
     ],
-    "export": ["mobile-app"],
-    "ios": ["mobile-app"],
+    "export": [
+      "mobile-app"
+    ],
+    "export-android": [
+      "mobile-app"
+    ],
+    "ios": [
+      "mobile-app"
+    ],
     "lint": [
       "@app/backend-common-bootstrap",
+      "@app/backend-common-component-test",
       "@app/backend-common-exception",
       "@app/backend-common-health",
       "@app/backend-common-i18n",
       "@app/backend-common-logger",
       "@app/backend-common-nats",
       "@app/backend-common-network",
+      "@app/backend-common-otel",
       "@app/backend-common-redis",
       "@app/backend-common-request-context",
       "@app/backend-common-response",
@@ -153,7 +184,14 @@
       "@app/frontend-feature-admin-i18n",
       "@app/frontend-feature-admin-shared",
       "@app/frontend-feature-landing-i18n",
+      "@app/frontend-feature-shared-preferences",
+      "@app/frontend-feature-user-auth",
       "@app/frontend-feature-user-i18n",
+      "@app/frontend-feature-user-logout",
+      "@app/frontend-feature-user-preferences",
+      "@app/frontend-feature-user-profile",
+      "@app/frontend-feature-user-social-auth",
+      "@app/frontend-feature-user-tma-auth",
       "@app/frontend-i18n-shared",
       "@app/frontend-runtime",
       "@app/frontend-ui-native",
@@ -169,7 +207,12 @@
       "user-app",
       "user-app-api"
     ],
-    "preview": ["admin-app", "landing-app", "site-app", "user-app"],
+    "preview": [
+      "admin-app",
+      "landing-app",
+      "site-app",
+      "user-app"
+    ],
     "serve": [
       "admin-app",
       "admin-app-api",
@@ -182,16 +225,24 @@
       "user-app",
       "user-app-api"
     ],
-    "serve-static": ["admin-app", "landing-app", "user-app"],
-    "start": ["site-app"],
+    "serve-static": [
+      "admin-app",
+      "landing-app",
+      "user-app"
+    ],
+    "start": [
+      "site-app"
+    ],
     "test": [
       "@app/backend-common-bootstrap",
+      "@app/backend-common-component-test",
       "@app/backend-common-exception",
       "@app/backend-common-health",
       "@app/backend-common-i18n",
       "@app/backend-common-logger",
       "@app/backend-common-nats",
       "@app/backend-common-network",
+      "@app/backend-common-otel",
       "@app/backend-common-redis",
       "@app/backend-common-request-context",
       "@app/backend-common-response",
@@ -222,6 +273,13 @@
       "@app/frontend-api-client",
       "@app/frontend-api-support",
       "@app/frontend-feature-admin-shared",
+      "@app/frontend-feature-shared-preferences",
+      "@app/frontend-feature-user-auth",
+      "@app/frontend-feature-user-logout",
+      "@app/frontend-feature-user-preferences",
+      "@app/frontend-feature-user-profile",
+      "@app/frontend-feature-user-social-auth",
+      "@app/frontend-feature-user-tma-auth",
       "@app/frontend-runtime",
       "@app/frontend-ui-native",
       "@app/frontend-ui-web",
@@ -238,12 +296,14 @@
     ],
     "typecheck": [
       "@app/backend-common-bootstrap",
+      "@app/backend-common-component-test",
       "@app/backend-common-exception",
       "@app/backend-common-health",
       "@app/backend-common-i18n",
       "@app/backend-common-logger",
       "@app/backend-common-nats",
       "@app/backend-common-network",
+      "@app/backend-common-otel",
       "@app/backend-common-redis",
       "@app/backend-common-request-context",
       "@app/backend-common-response",
@@ -279,7 +339,14 @@
       "@app/frontend-feature-admin-i18n",
       "@app/frontend-feature-admin-shared",
       "@app/frontend-feature-landing-i18n",
+      "@app/frontend-feature-shared-preferences",
+      "@app/frontend-feature-user-auth",
       "@app/frontend-feature-user-i18n",
+      "@app/frontend-feature-user-logout",
+      "@app/frontend-feature-user-preferences",
+      "@app/frontend-feature-user-profile",
+      "@app/frontend-feature-user-social-auth",
+      "@app/frontend-feature-user-tma-auth",
       "@app/frontend-i18n-shared",
       "@app/frontend-runtime",
       "@app/frontend-ui-native",
@@ -295,8 +362,14 @@
       "user-app",
       "user-app-api"
     ],
-    "watch-deps": ["admin-app", "landing-app", "user-app"],
-    "web": ["mobile-app"]
+    "watch-deps": [
+      "admin-app",
+      "landing-app",
+      "user-app"
+    ],
+    "web": [
+      "mobile-app"
+    ]
   },
   "productExternalPackages": {
     "@astrojs/check": "0.9.9",
@@ -307,9 +380,8 @@
     "@aws-sdk/client-s3": "3.1092.0",
     "@babel/core": "7.29.7",
     "@casl/ability": "7.0.1",
-    "@expo/log-box": "57.0.1",
-    "@expo/metro-runtime": "57.0.6",
     "@fastify/cookie": "11.1.2",
+    "@fastify/otel": "0.20.1",
     "@fastify/session": "11.1.2",
     "@fastify/static": "10.1.2",
     "@mikro-orm/core": "7.1.7",
@@ -329,8 +401,19 @@
     "@nestjs/schedule": "6.1.3",
     "@nestjs/swagger": "11.4.6",
     "@nestjs/testing": "11.1.28",
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.220.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.220.0",
     "@opentelemetry/instrumentation": "0.220.0",
+    "@opentelemetry/instrumentation-http": "0.220.0",
+    "@opentelemetry/instrumentation-nestjs-core": "0.66.0",
     "@opentelemetry/instrumentation-pg": "0.72.0",
+    "@opentelemetry/instrumentation-redis": "0.68.0",
+    "@opentelemetry/instrumentation-runtime-node": "0.33.0",
+    "@opentelemetry/resources": "2.9.0",
+    "@opentelemetry/sdk-metrics": "2.9.0",
+    "@opentelemetry/sdk-node": "0.220.0",
+    "@opentelemetry/semantic-conventions": "1.43.0",
     "@radix-ui/react-alert-dialog": "1.1.20",
     "@radix-ui/react-checkbox": "1.3.8",
     "@radix-ui/react-dialog": "1.1.20",
@@ -340,14 +423,17 @@
     "@radix-ui/react-slot": "1.3.0",
     "@radix-ui/react-switch": "1.3.4",
     "@radix-ui/react-tabs": "1.1.18",
-    "@storybook/addon-vitest": "10.5.3",
-    "@storybook/react-vite": "10.5.3",
+    "@storybook/addon-vitest": "10.5.4",
+    "@storybook/react-vite": "10.5.4",
     "@tailwindcss/vite": "4.3.3",
     "@tanstack/react-query": "5.101.4",
+    "@tanstack/react-router": "1.170.18",
+    "@testcontainers/postgresql": "12.0.4",
     "@testing-library/react": "16.3.2",
     "@tma.js/init-data-node": "2.0.8",
     "@tma.js/sdk-react": "3.0.23",
     "@types/babel__core": "7.20.5",
+    "@types/istanbul-lib-coverage": "2.0.6",
     "@types/pg": "8.20.0",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
@@ -366,12 +452,11 @@
     "date-fns": "4.4.0",
     "eta": "4.6.0",
     "expo": "57.0.7",
-    "expo-constants": "57.0.6",
-    "expo-linking": "57.0.3",
     "expo-router": "57.0.7",
     "fastify": "5.10.0",
     "happy-dom": "20.10.6",
     "helmet": "8.3.0",
+    "istanbul-lib-coverage": "3.2.2",
     "joi": "18.2.3",
     "jose": "6.2.3",
     "light-my-request": "6.6.0",
@@ -388,15 +473,11 @@
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
     "react-native-gesture-handler": "2.32.0",
-    "react-native-reanimated": "4.5.0",
     "react-native-safe-area-context": "5.7.0",
-    "react-native-screens": "4.25.2",
-    "react-native-web": "0.21.2",
-    "react-native-worklets": "0.10.0",
     "redis": "6.1.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
-    "storybook": "10.5.3",
+    "storybook": "10.5.4",
     "string-format": "2.0.0",
     "tailwind-merge": "3.6.0",
     "tamagui": "2.5.0",
@@ -406,7 +487,6 @@
     "vike": "0.4.260",
     "vike-react": "0.6.25",
     "vite": "8.1.5",
-    "vite-plugin-istanbul": "9.0.1",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.10",
     "zod": "4.4.3"
@@ -420,22 +500,21 @@
     "@nx/react": "23.1.0",
     "@nx/vite": "23.1.0",
     "@playwright/test": "1.61.1",
+    "@stryker-mutator/core": "9.6.1",
     "@swc-node/register": "1.12.1",
     "@swc/core": "1.15.46",
     "@swc/helpers": "0.5.23",
-    "@testcontainers/postgresql": "12.0.4",
-    "@types/istanbul-lib-coverage": "2.0.6",
     "@types/istanbul-lib-report": "3.0.3",
     "@types/istanbul-reports": "3.0.4",
     "@types/node": "24.13.3",
     "@typescript-eslint/eslint-plugin": "8.65.0",
     "@typescript-eslint/parser": "8.65.0",
+    "ajv": "8.20.0",
     "axe-core": "4.12.1",
     "eslint": "10.7.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-sonarjs": "4.2.0",
     "fast-check": "4.9.0",
-    "istanbul-lib-coverage": "3.2.2",
     "istanbul-lib-report": "3.0.1",
     "istanbul-reports": "3.2.0",
     "jiti": "2.7.0",
@@ -445,7 +524,8 @@
     "sharp": "0.35.3",
     "tsconfig-paths": "4.2.0",
     "typescript-eslint": "8.65.0",
-    "typescript-transform-paths": "4.0.0"
+    "typescript-transform-paths": "4.0.0",
+    "yaml": "2.9.0"
   },
   "services": [
     "admin-app",
@@ -478,10 +558,14 @@
   "product": {
     "ciMode": "product",
     "frontendApiMode": "same-origin",
-    "mobileTargets": ["web"]
+    "mobileTargets": [
+      "web"
+    ]
   },
   "deployment": {
-    "targets": ["docker"],
+    "targets": [
+      "docker"
+    ],
     "publicTopology": "single-domain",
     "kubernetesDelivery": "direct",
     "infrastructure": {

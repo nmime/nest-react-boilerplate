@@ -12,14 +12,26 @@
     "user-app",
     "user-app-api"
   ],
-  "capabilities": ["authz", "design-tokens", "feature-flags", "i18n", "notifications", "postgres", "s3"],
+  "capabilities": [
+    "authz",
+    "design-tokens",
+    "feature-flags",
+    "i18n",
+    "notifications",
+    "postgres",
+    "s3"
+  ],
   "product": {
     "ciMode": "product",
     "frontendApiMode": "same-origin",
-    "mobileTargets": ["web"]
+    "mobileTargets": [
+      "web"
+    ]
   },
   "deployment": {
-    "targets": ["docker"],
+    "targets": [
+      "docker"
+    ],
     "publicTopology": "single-domain",
     "kubernetesDelivery": "direct",
     "infrastructure": {

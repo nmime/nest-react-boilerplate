@@ -524,6 +524,6 @@ echo "==> kubeconform"
 "${KUBECONFORM}" -strict -ignore-missing-schemas "${TMP_DIR}/mongodb-generated-backup.yaml"
 
 echo "==> helm render assertions (node --test)"
-node --test "${ROOT_DIR}/scripts/helm-template.spec.mjs"
+HELM_TEST_REFERENCE_VALUES="${POSTGRES_REFERENCE_VALUES}" node --test "${ROOT_DIR}/scripts/helm-template.spec.mjs"
 
 echo "Helm validation passed. Rendered manifests are in ${TMP_DIR} until script exit."

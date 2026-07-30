@@ -1,10 +1,11 @@
 // @requirements REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import {
   assertRecentBackup,
   buildLiveValidationPlan,
@@ -36,6 +37,24 @@ function helmAvailable() {
 }
 
 const HELM = helmAvailable();
+let generatedReferenceDirectory;
+let referenceValues = process.env.HELM_TEST_REFERENCE_VALUES
+  ? resolve(root, process.env.HELM_TEST_REFERENCE_VALUES)
+  : selectionValues;
+
+if (HELM && !process.env.HELM_TEST_REFERENCE_VALUES) {
+  generatedReferenceDirectory = mkdtempSync(resolve(tmpdir(), 'nrb-helm-template-'));
+  execFileSync(
+    process.execPath,
+    [resolve(root, 'scripts/validate-helm-selection.mjs'), '--write-all-reference-dir', generatedReferenceDirectory],
+    { stdio: 'pipe' },
+  );
+  referenceValues = resolve(generatedReferenceDirectory, 'postgres-all-reference.yaml');
+}
+
+after(() => {
+  if (generatedReferenceDirectory) rmSync(generatedReferenceDirectory, { force: true, recursive: true });
+});
 
 test('live Kubernetes preflight plans only read or use server-side dry-run operations', () => {
   const options = parseLiveValidationOptions([
@@ -87,7 +106,7 @@ test('live Kubernetes preflight requires rollback history and a recent successfu
 function render(releaseName, extraArgs = []) {
   return execFileSync(
     'helm',
-    ['template', releaseName, chart, '--namespace', 'nrb', '-f', prodValues, '-f', selectionValues, ...extraArgs],
+    ['template', releaseName, chart, '--namespace', 'nrb', '-f', prodValues, '-f', referenceValues, ...extraArgs],
     {
       encoding: 'utf8',
       maxBuffer: 32 * 1024 * 1024,
@@ -106,7 +125,7 @@ function renderDefault(releaseName, extraArgs = []) {
       '--namespace',
       'nrb',
       '-f',
-      selectionValues,
+      referenceValues,
       '--set',
       'secrets.create=true',
       '--set-string',

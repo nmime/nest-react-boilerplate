@@ -12,7 +12,13 @@
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
-import { cloneStyleBaseName, findAdjacentOwner, validateName, generateNames } from '../names.ts';
+import {
+  cloneStyleBaseName,
+  findAdjacentOwner,
+  generatedRequirementId,
+  validateName,
+  generateNames,
+} from '../names.ts';
 
 // ---------------------------------------------------------------------------
 
@@ -127,8 +133,8 @@ function dots(dir: string): string {
 function createCucumberApp(tree: Tree, names: ReturnType<typeof generateNames>, dir: string, tags: string[]): void {
   const projectName = names.kebab;
   const idStem = names.kebab.replace(/-e2e$/u, '').toUpperCase();
-  const requirementId = `REQ-${idStem}-001`;
-  const scenarioId = `SCN-${idStem}-01`;
+  const requirementId = generatedRequirementId(names.kebab.replace(/-e2e$/u, ''));
+  const scenarioId = `SCN-${idStem}-SCAFFOLD-01`;
   const d = dots(dir);
 
   tree.write(
@@ -557,7 +563,8 @@ export const ${names.pascal}HealthServiceProvider: Provider = {
   // src/app.module.spec.ts — import from vitest, not globals
   tree.write(
     `${srcRoot}/${names.kebab}.module.spec.ts`,
-    `import { describe, it, expect } from "vitest";
+    `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, it, expect } from "vitest";
 import { ${names.pascal}Module } from "./${names.kebab}.module";
 
 describe("${names.pascal}Module", () => {
@@ -974,7 +981,8 @@ export function App() {
   // src/app.spec.tsx
   tree.write(
     `${srcRoot}/app.spec.tsx`,
-    `import { describe, it, expect } from "vitest";
+    `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, it, expect } from "vitest";
 import { App } from "./app";
 
 describe("App", () => {
@@ -1109,7 +1117,8 @@ function writeRunCommandProject(
   );
   tree.write(
     `${dir}/scaffold.test.mjs`,
-    `import assert from "node:assert/strict";
+    `// @requirements ${generatedRequirementId(name)}
+import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 

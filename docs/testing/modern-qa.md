@@ -11,15 +11,15 @@ This repository treats QA as local-first. GitHub and GitLab CI apply the documen
 | Specification trace        | OpenSpec validity, requirement project ownership, complete executable-test markers, stable IDs, and selected evidence mappings | `pnpm run spec:validate` | Blocking | Writes exact-SHA project/test/feature/requirement/evidence totals under `test-results/spec-evidence`; see [Specification assurance](../specification-assurance.md). |
 | Cucumber acceptance        | Stakeholder-readable executable examples                                                      | `pnpm exec nx run acceptance-e2e:acceptance` | Blocking/selected                 | Complements Vitest and Playwright; does not replace either suite. |
 | Requirement evidence       | Risk-proportional impacted commands and exact-SHA dossier                                      | `pnpm run spec:verify -- --lane pr --base origin/main --head HEAD` | Blocking by lane | PR/main are impacted; nightly/runtime can select every requirement. |
-| Unit tests                 | Pure functions, services, components, and isolated modules                         | `pnpm run test`                   | Blocking                          | Nx project `test` targets.                                                                                                                                                                                                                                                                                                  |
-| Coverage gates             | Enforce test coverage expectations                                                 | `pnpm run test:coverage`          | Blocking/manual                   | Runs Vitest targets with V8 coverage and still executes Cucumber `test` targets for scenario/report evidence without forwarding the Vitest-only flag.                                                                                                                                                                        |
+| Unit tests                 | Pure functions, services, components, and isolated modules                         | `pnpm run test`                   | Blocking                          | Runs every Nx project `test` target with resource-aware Nx and per-target Vitest/Node pools capped at two workers each. Set `NX_PARALLEL` and `VITEST_MAX_WORKERS` to explicit positive integers for controlled runner overrides.                                                                                                      |
+| Coverage gates             | Enforce test coverage expectations                                                 | `pnpm run test:coverage`          | Blocking/manual                   | Uses the same bounded aggregate and forwards the unchanged Vitest coverage flag. Cucumber still executes its `test` target for scenario/report evidence without receiving the Vitest-only flag. Every Nx failure is propagated.                                                                                               |
 | Integration tests          | Multiple modules without the full system                                           | `pnpm run test`                   | Blocking                          | Kept inside project test targets.                                                                                                                                                                                                                                                                                           |
 | DB component tests         | Real PostgreSQL/Testcontainers module coverage                                     | `pnpm run test:component`         | Blocking when Docker is available | Requires Docker/Testcontainers.                                                                                                                                                                                                                                                                                             |
 | Migration safety           | Migration presence, apply/rollback/seed drift checks                               | `pnpm run db:migrations:check`    | Blocking                          | Runtime migration helpers are implemented as TS commands under `packages/tooling/src/commands/db`.                                                                                                                                                                                                                                                       |
 | Backend API e2e            | Nest HTTP/API behavior with real request paths                                     | `pnpm run test:e2e`               | Blocking/manual                   | Runs Nx e2e targets for backend and frontend apps.                                                                                                                                                                                                                                                                          |
 | Frontend component/UI      | jsdom/RTL/Vitest UI behavior                                                       | `pnpm run test`                   | Blocking                          | Covered by frontend project test targets.                                                                                                                                                                                                                                                                                   |
 | Browser e2e                | Real-browser app flows                                                             | `pnpm run test:e2e`               | Blocking/manual                   | Project-level browser tests.                                                                                                                                                                                                                                                                                                |
-| Cross-browser/mobile e2e   | Chromium, Firefox, WebKit, mobile Chrome, mobile Safari                            | `pnpm run test:e2e:matrix`        | Manual/nightly                    | Uses `playwright.extended.config.ts`; set `PLAYWRIGHT_BASE_URL` to test an existing stack or omit it to let the fullstack setup manage Docker. Set `PLAYWRIGHT_INCLUDE_QUARANTINED=1` to include `@quarantine` specs. Use `-- --dry-run` to print the command.                                                              |
+| Cross-browser/mobile e2e   | Chromium, 320px Chromium, Firefox, WebKit, mobile Chrome, mobile Safari             | `pnpm run test:e2e:matrix`        | Manual/nightly                    | Uses `playwright.extended.config.ts`; set `PLAYWRIGHT_BASE_URL` to test an existing stack and the command derives every app/API/site URL from the corresponding `*_PORT`, or omit it to let the fullstack setup manage Docker. External stacks must include `site-app`. Set `PLAYWRIGHT_INCLUDE_QUARANTINED=1` to include `@quarantine` specs. Use `-- --dry-run` to print the command. |
 | Fullstack e2e              | Docker Compose, browser, DB, APIs, nginx/proxy checks                              | `pnpm run test:fullstack`         | Blocking/manual                   | Requires Docker and Playwright browsers.                                                                                                                                                                                                                                                                                    |
 | Docker smoke               | Stack boots and probes critical endpoints                                          | `pnpm run test:docker-smoke`      | Blocking/manual                   | Requires Docker.                                                                                                                                                                                                                                                                                                            |
 | Storybook interaction      | Shared web components plus deterministic web app screen compositions               | `pnpm run test:storybook`         | Blocking/manual                   | Uses the shared UI config and runs component plus `Applications/*` stories in Chromium. Keep routing, auth, API integration, and complete page flows in app e2e. Build first with `pnpm run storybook:build`. |
@@ -115,7 +115,7 @@ flowchart LR
   install --> qa[pnpm run test:world-class]
   qa --> runtime{Runtime available?}
   runtime -- Docker/Compose running --> gates[Run reliability, migration rollback, observability, load/security/a11y/perf gates]
-  runtime -- Missing locally --> partial[Local partial evidence with explicit skips]
+  runtime -- Optional target missing locally --> partial[Local partial evidence with explicit skips]
   runtime -- Missing in CI without allow flag --> fail[Fail closed]
   gates --> artifacts[Playwright reports, QA logs, coverage, runtime artifacts]
   static --> decision{Release confidence}
@@ -127,9 +127,12 @@ flowchart LR
 ```
 
 Use this flow with the command matrix above: local developers may record partial
-runtime evidence when Docker, browsers, or optional scanners are unavailable,
-but CI and release candidates should fail closed unless a documented allow flag
-is set for a non-production dry run.
+runtime evidence when optional Docker, browser, or scanner targets are
+unavailable, but CI and release candidates should fail closed unless a
+documented allow flag is set for a non-production dry run. Real-user journey,
+observability, and concurrency gates are never reachability substitutes: each
+requires its corresponding `QA_*_COMMAND` as a JSON argv array and fails when
+that behavior command is absent or unsuccessful.
 
 ## Preset bundles
 
@@ -138,9 +141,27 @@ is set for a non-production dry run.
 - Storybook interaction plus visual browser/mobile matrix: `pnpm run quality:visual`
 - Security suite only: `pnpm run test:security`
 
-`pnpm run check` runs mostly local, deterministic gates: formatting, migration/config drift, OpenAPI/client freshness, OpenAPI lint, consumer contracts, OpenAPI fuzz case generation, property invariants, the runtime world-class gate (`test:world-class`), lint, typecheck, and unit tests. Every step except the world-class gate is deterministic and needs no runtime; `test:world-class` reports `partial` locally when the required runtime is absent (see below).
+`pnpm run check` runs mostly local, deterministic gates: formatting,
+migration/config drift, OpenAPI/client freshness, OpenAPI lint, consumer
+contracts, OpenAPI fuzz case generation, property invariants, the runtime
+world-class gate (`test:world-class`), lint, typecheck, and unit tests. Every
+step except the world-class gate is deterministic and needs no runtime;
+optional missing runtime targets report `partial`, while missing authoritative
+journey, observability, or concurrency commands fail.
 
-`pnpm run quality:presets` validates all preset entry points. Runtime-backed world-class gates keep local developer runs flexible and report `partial` when a required runtime target is absent. In CI, a missing required world-class runtime target fails the command unless the runner explicitly sets `WORLD_CLASS_ALLOW_CI_SKIPS=1`, which records an intentional partial run instead of reporting success.
+`pnpm run quality:presets` validates all preset entry points. Optional
+runtime-backed world-class gates keep local developer runs flexible and report
+`partial` when a target is absent. In CI, a missing selected optional target
+fails unless the runner explicitly sets `WORLD_CLASS_ALLOW_CI_SKIPS=1`. The
+real-user journey, observability, and concurrency gates always require an
+authoritative command and ignore that skip allowance. Configure commands as
+JSON argv arrays, for example
+`QA_OBSERVABILITY_COMMAND='["pnpm","run","test:otel"]'`; shell expressions are
+not supported. `WORLD_CLASS_COMMAND_TIMEOUT_MS` defaults to 30 minutes and is
+bounded at two hours. Reliability URL concurrency is capped at 32 through
+`QA_RELIABILITY_CONCURRENCY`. A focused `--gate <name>` run reports all other
+gates as `notSelected`; those omissions do not fail or make the selected gate
+partial.
 
 ## Contracts as generated artifacts
 

@@ -135,7 +135,7 @@ x-backend-healthcheck: &backend-healthcheck
   test:
     [
       'CMD-SHELL',
-      'node -e "fetch(''http://127.0.0.1:80/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+      'su-exec 1000:1000 node -e "fetch(''http://127.0.0.1:80/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
     ]
   interval: 10s
   timeout: 5s
@@ -152,6 +152,10 @@ x-frontend-healthcheck: &frontend-healthcheck
 x-backend-service: &backend-service
   restart: unless-stopped
   logging: *default-logging
+  # The image defaults to UID 1000. Compose configures the container as root so
+  # the entrypoint can read root-owned secret mounts. The entrypoint drops before
+  # the app command, and the healthcheck drops before running Node.
+  user: '0:0'
   networks: [app, database]
   secrets: [session_secret, better_auth_secret, redis_password, notification_payload_encryption_key]
   environment: *backend-env
@@ -171,13 +175,14 @@ x-frontend-service: &frontend-service
   # Browser-safe runtime flags rendered into /runtime-config.js at container
   # start, so toggling a feature never requires rebuilding the SPA image. Never
   # place secrets here — the generated file is served to every browser.
-  environment:
+  environment: &frontend-runtime-env
     TELEGRAM_AUTH_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
     DISCORD_AUTH_ENABLED: ${DISCORD_AUTH_ENABLED:-false}
 
 x-notification-scheduler-service: &notification-scheduler-service
   restart: unless-stopped
   logging: *default-logging
+  user: '0:0'
   networks: [app, database]
   secrets:
     [
@@ -235,6 +240,7 @@ services:
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     logging: *default-logging
     restart: 'no'
+    user: '0:0'
     networks: [app, database]
     environment: *backend-env
     command: *migrate-command
@@ -334,6 +340,7 @@ services:
   notification-consumer:
     restart: unless-stopped
     logging: *default-logging
+    user: '0:0'
     networks: [app, database]
     profiles: [notification-consumer]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/notification-consumer:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
@@ -375,6 +382,10 @@ services:
   landing-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/landing-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    environment:
+      <<: *frontend-runtime-env
+      LANDING_USER_APP_URL: ${LANDING_USER_APP_URL:-}
+      LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}
     depends_on:
       auth-app-api:
         condition: service_healthy

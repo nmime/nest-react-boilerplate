@@ -10,6 +10,9 @@
  * E2E: full backend + frontend app generation on in-memory tree
  */
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 async function createTree() {
@@ -285,6 +288,7 @@ describe('application generator', () => {
       await applicationGenerator(tree, { name: 'my-api', kind: 'backend', skipFormat: true });
 
       const specContent = tree.read('apps/backend/my/my-api/src/my-api.module.spec.ts', 'utf8')!;
+      assert.match(specContent, /^\/\/ @requirements REQ-MY-API-SCAFFOLD-001$/mu);
       assert.ok(specContent.includes('from "vitest"'), 'spec must import from vitest, not use globals');
       assert.ok(specContent.includes('describe'), 'must import describe');
       assert.ok(specContent.includes('it'), 'must import it');
@@ -403,8 +407,8 @@ describe('application generator', () => {
       assert.ok(tree.exists(`${root}/src/support/world.ts`));
       assert.ok(tree.exists(`${root}/src/steps/acceptance.steps.ts`));
       const feature = tree.read(`${root}/features/acceptance.feature`, 'utf8')!;
-      assert.match(feature, /@REQ-PAYMENTS-ACCEPTANCE-001/u);
-      assert.match(feature, /@SCN-PAYMENTS-ACCEPTANCE-01/u);
+      assert.match(feature, /@REQ-PAYMENTS-ACCEPTANCE-SCAFFOLD-001/u);
+      assert.match(feature, /@SCN-PAYMENTS-ACCEPTANCE-SCAFFOLD-01/u);
     });
 
     it('rejects unsupported renderers and HTTP ports', async () => {
@@ -517,6 +521,10 @@ describe('application generator', () => {
       assert.ok(tree.exists('apps/frontend/my-dashboard/src/main.tsx'));
       assert.ok(tree.exists('apps/frontend/my-dashboard/src/app.tsx'));
       assert.ok(tree.exists('apps/frontend/my-dashboard/src/app.spec.tsx'));
+      assert.match(
+        tree.read('apps/frontend/my-dashboard/src/app.spec.tsx', 'utf8')!,
+        /^\/\/ @requirements REQ-MY-DASHBOARD-SCAFFOLD-001$/mu,
+      );
     });
 
     it('creates vite config', async () => {
@@ -604,6 +612,43 @@ describe('application generator', () => {
 
       const tsconfig = JSON.parse(tree.read('apps/frontend/my-dashboard/tsconfig.json', 'utf8')!);
       assert.equal(tsconfig.compilerOptions.jsx, 'react-jsx');
+    });
+  });
+
+  describe('scaffold verification budgets', () => {
+    it('uses finite per-target budgets scaled to renderer resource cost', async () => {
+      const { scaffoldTargetTimeoutMs } = await import('./scaffold-verification.js');
+      const nodeBudget = scaffoldTargetTimeoutMs('node', 'build');
+      const browserBudget = scaffoldTargetTimeoutMs('browser', 'build');
+      const ssrBudget = scaffoldTargetTimeoutMs('ssr', 'build');
+      const nativeBudget = scaffoldTargetTimeoutMs('native', 'build');
+
+      assert.equal(nodeBudget, browserBudget);
+      assert.ok(browserBudget < ssrBudget);
+      assert.ok(ssrBudget < nativeBudget);
+      assert.ok(scaffoldTargetTimeoutMs('node', 'test') < nodeBudget);
+      assert.ok(scaffoldTargetTimeoutMs('ssr', 'typecheck') < ssrBudget);
+    });
+
+    it('locks one workspace and refuses to remove existing owner roots', async () => {
+      const temporaryRoot = mkdtempSync(join(tmpdir(), 'nrb-scaffold-policy-'));
+      const workspaceRoot = join(temporaryRoot, 'workspace');
+      mkdirSync(workspaceRoot);
+      const { acquireScaffoldVerificationLock, assertScaffoldRootsAvailable } =
+        await import('./scaffold-verification.js');
+      const release = acquireScaffoldVerificationLock(workspaceRoot, temporaryRoot);
+
+      try {
+        assert.throws(() => acquireScaffoldVerificationLock(workspaceRoot, temporaryRoot), /already running/u);
+        mkdirSync(join(workspaceRoot, 'apps/frontend/nrb-canary-vite'), { recursive: true });
+        assert.throws(
+          () => assertScaffoldRootsAvailable(workspaceRoot, ['apps/frontend/nrb-canary-vite']),
+          /refuses to remove existing owner roots/u,
+        );
+      } finally {
+        release();
+        rmSync(temporaryRoot, { force: true, recursive: true });
+      }
     });
   });
 });

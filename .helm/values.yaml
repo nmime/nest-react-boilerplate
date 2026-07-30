@@ -534,9 +534,11 @@ backups:
 
 # Browser-safe runtime flags injected into the SPA containers at start and
 # rendered into /runtime-config.js. Because these are runtime (not Vite
-# build-time) values, one immutable image serves every environment. Never put
-# secrets here — the file is public. Keys are passed through verbatim as env
-# vars; see docker/frontend-runtime-config.sh for the supported set.
+# build-time) values, one immutable image serves every environment. The landing
+# app's user/admin destinations are derived separately from ingress.hosts as
+# same-origin paths or HTTPS URLs. Never put secrets here - the file is public.
+# Keys are passed through verbatim as env vars; see
+# docker/frontend-runtime-config.sh for the supported set.
 frontendRuntimeConfig: {}
 # frontendRuntimeConfig:
 #   TELEGRAM_AUTH_ENABLED: 'true'
@@ -544,6 +546,12 @@ frontendRuntimeConfig: {}
 
 networkPolicy:
   enabled: false
+  otelCollector:
+    # Namespace labels use Kubernetes' immutable namespace-name label. Adjust
+    # these when the selected Tempo/Prometheus owners use different namespaces.
+    exporterNamespace: observability
+    exporterPorts: [4317]
+    prometheusNamespace: monitoring
   # Allow egress to external HTTPS endpoints (transactional email, push/FCM/APNs,
   # Discord/Telegram, hosted OTLP). A default-deny egress policy that only permits
   # in-cluster namespaceSelectors silently blocks all off-cluster traffic, so this
@@ -576,6 +584,10 @@ coroot:
   prometheusUrl: 'http://vmcluster-vmsingle.monitoring.svc.cluster.local:8429'
   service:
     type: ClusterIP
+  rbac:
+    # Coroot does not need Secret payloads for workload discovery. Enable only
+    # after a product-specific review of the additional cluster-wide exposure.
+    readSecrets: false
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { cpu: 500m, memory: 512Mi }

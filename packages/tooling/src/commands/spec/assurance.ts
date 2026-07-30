@@ -467,7 +467,7 @@ export function calculateImpact(
   base: string,
   head: string,
 ): ImpactReport {
-  const result = run('git', ['diff', '--name-only', '--diff-filter=ACMR', base, head], {
+  const result = run('git', ['diff', '--name-only', '--diff-filter=ACMRD', base, head], {
     cwd: model.workspaceRoot,
   });
   if (result.status !== 0) {
@@ -480,14 +480,20 @@ export function calculateImpact(
     .split(/\r?\n/u)
     .map((file) => file.trim().replaceAll('\\', '/'))
     .filter(Boolean);
-  const globalChange = changedFiles.some((file) =>
-    [
-      'openspec/config.yaml',
-      'openspec/schemas/',
-      'packages/tooling/src/commands/spec/',
-      'packages/tooling/config/spec-evidence.schema.json',
-    ].some((prefix) => file === prefix || file.startsWith(prefix)),
-  );
+  return calculateImpactFromChangedFiles(model, base, head, changedFiles);
+}
+
+export function calculateImpactFromChangedFiles(
+  model: AssuranceModel,
+  base: string,
+  head: string,
+  files: Iterable<string>,
+): ImpactReport {
+  const changedFiles = [...files]
+    .map((file) => file.trim().replaceAll('\\', '/'))
+    .filter(Boolean);
+  const projectRoots = [...model.projects.values()].map(({ root }) => root.replace(/\/+$/u, ''));
+  const globalChange = changedFiles.some((file) => isRepositoryGlobalChange(file, projectRoots));
   const requirementIds = new Set<string>();
 
   for (const requirement of model.requirements.values()) {
@@ -520,6 +526,27 @@ export function calculateImpact(
     targets: executables.targets,
     scripts: executables.scripts,
   };
+}
+
+function isRepositoryGlobalChange(file: string, projectRoots: readonly string[]): boolean {
+  if (file.startsWith('openspec/specs/')) {
+    return false;
+  }
+  if (
+    [
+      'packages/tooling/src/',
+      'packages/tooling/config/',
+      'packages/tooling/scripts/',
+      'packages/tooling/AGENTS.md',
+      'packages/tooling/README.md',
+      'packages/tooling/package.json',
+      'packages/tooling/project.json',
+      'packages/tooling/tsconfig.json',
+    ].some((prefix) => file === prefix || file.startsWith(prefix))
+  ) {
+    return true;
+  }
+  return !projectRoots.some((root) => file === root || file.startsWith(`${root}/`));
 }
 
 export function verifyRequirements(options: {

@@ -38,7 +38,7 @@ TS-first command implementations live under `packages/tooling/src/commands` grou
   applies or distributes it, and each downstream product must explicitly own
   any later licence, dependency, source, integration, and test decision.
 - `testing/` Storybook, browser e2e coverage, and visual regression helpers.
-- `qa/` local QA presets for OpenAPI lint/fuzz, consumer contracts, accessibility, browser matrix, performance, security SAST/secret scanning/DAST, mutation, and property checks.
+- `qa/` local QA presets for resource-aware aggregate tests, OpenAPI lint/fuzz, consumer contracts, accessibility, browser matrix, performance, security SAST/secret scanning/DAST, mutation, and property checks.
 - `spec/` OpenSpec validation, complete trace generation, revision impact
   calculation, executable-test marker enforcement, requirement-level project
   ownership, lane-aware evidence execution, and dossier rendering.
@@ -48,6 +48,11 @@ Do not add root-level `tools/` wrappers. New local commands should be routed thr
 `repo-tooling tooling static-check` is the safe static validation entrypoint for operational TypeScript tooling. It checks help-only CLI imports, command module presence, TypeScript typechecking, package-script references, generator regression tests, and stale architecture/version denylist terms, including retired Postgres shared-library path spellings, without executing deploy, Docker, destructive, or runtime-heavy scripts. `repo-tooling db migrations rollback-check` is intentionally separate: it is the real Testcontainers/PostgreSQL rollback check and requires a Docker-capable environment.
 
 All QA presets are designed to be useful locally without depending on GitHub Actions. Expensive presets support `--dry-run` and environment variables documented in `docs/testing/modern-qa.md` so CI can choose a different cadence later.
+
+World-class executable command overrides are shell-free JSON argv arrays. The
+CLI reuses the active pnpm/Corepack module on every platform and applies a
+bounded timeout. Journey, observability, and concurrency evidence requires an
+explicit behavior command; HTTP-only probes remain canary/reliability evidence.
 
 ## CI/security/deployment guardrails
 

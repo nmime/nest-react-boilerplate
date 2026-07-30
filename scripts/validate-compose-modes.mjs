@@ -45,8 +45,12 @@ for (const [variable, path] of [
   );
 }
 assert.ok(
-  secretEntrypoint.includes('exec su-exec node "$@"'),
+  secretEntrypoint.includes('exec su-exec 1000:1000 "$@"'),
   'The production entrypoint must drop privileges before running application commands.',
+);
+assert.ok(
+  secretEntrypoint.includes('if has_declared_docker_secret; then'),
+  'A non-root process must fail closed only for declared Docker secrets.',
 );
 assert.ok(bundled.includes('\n  postgres:\n'), 'Bundled-db overlay must define PostgreSQL.');
 assert.ok(bundled.includes('postgres-data:'), 'Bundled-db overlay must persist PostgreSQL data.');
@@ -82,7 +86,6 @@ for (const service of databaseConsumers) {
   assert.ok(bundled.includes(`  ${service}:`), `Bundled-db overlay must wire ${service}.`);
   assert.ok(external.includes(`  ${service}:`), `External-db overlay must wire ${service}.`);
 }
-
 const dockerAvailable = spawnSync('docker', ['compose', 'version'], { cwd: rootDir, stdio: 'ignore' }).status === 0;
 if (!dockerAvailable) {
   if (process.env.REQUIRE_DOCKER_COMPOSE === 'true') {
@@ -157,7 +160,7 @@ const externalTelegramModel = render({
 const allOptionalModel = render({
   database: 'bundled-db',
   domains: 'per-app-domains',
-  profiles: ['telegram', 'discord'],
+  profiles: ['telegram', 'discord', 'notification-consumer', 'notification-scheduler'],
   tls: 'automatic',
 });
 
@@ -202,6 +205,31 @@ assert.ok(!externalModel.secrets.postgres_password, 'External-db render must not
 assert.ok(!bundledModel.services.edge, 'External-proxy mode must not start a Compose-owned edge.');
 assert.ok(!externalModel.services.edge, 'External-proxy mode must not start a Compose-owned edge.');
 
+for (const service of [
+  'migrate',
+  'admin-app-api',
+  'user-app-api',
+  'auth-app-api',
+  'discord-app-api',
+  'telegram-bot-api',
+  'notification-scheduler',
+  'notification-consumer',
+]) {
+  assert.equal(
+    allOptionalModel.services[service].user,
+    '0:0',
+    `${service} must elevate only the secret-loading entrypoint before it drops privileges.`,
+  );
+}
+
+for (const service of ['admin-app-api', 'user-app-api', 'auth-app-api', 'discord-app-api', 'telegram-bot-api']) {
+  assert.match(
+    allOptionalModel.services[service].healthcheck.test.join(' '),
+    /su-exec 1000:1000 node/u,
+    `${service} healthcheck must run Node as numeric UID/GID 1000.`,
+  );
+}
+
 for (const service of databaseConsumers) {
   const bundledService = bundledModel.services[service];
   const externalService = externalModel.services[service];
@@ -244,6 +272,8 @@ assert.equal(singleEdge.environment.PUBLIC_DOMAIN, 'example.com');
 assert.equal(singleEdge.environment.PRIMARY_APP_UPSTREAM, 'landing-app:8080');
 assert.equal(singleDomainModel.services['auth-app-api'].environment.CORS_ORIGINS, 'https://example.com');
 assert.equal(singleDomainModel.services['auth-app-api'].environment.AUTH_ALLOWED_RETURN_URLS, 'https://example.com');
+assert.equal(singleDomainModel.services['landing-app'].environment.LANDING_USER_APP_URL, '/app');
+assert.equal(singleDomainModel.services['landing-app'].environment.LANDING_ADMIN_APP_URL, '/admin');
 assert.deepEqual(
   singleEdge.ports.map(({ host_ip: hostIp, protocol, published, target }) => ({ hostIp, protocol, published, target })),
   [
@@ -257,6 +287,19 @@ const perAppEdge = perAppDomainModel.services.edge;
 assert.equal(perAppEdge.command[3], '/etc/caddy/Caddyfile.per-app-domains');
 assert.equal(perAppEdge.environment.LANDING_APP_DOMAIN, 'example.com');
 assert.equal(perAppEdge.environment.AUTH_APP_API_DOMAIN, 'auth-app-api.example.com');
+assert.equal(
+  perAppDomainModel.services['landing-app'].environment.LANDING_USER_APP_URL,
+  'https://user-app.example.com',
+);
+assert.equal(
+  perAppDomainModel.services['landing-app'].environment.LANDING_ADMIN_APP_URL,
+  'https://admin-app.example.com',
+);
+assert.equal(
+  Object.hasOwn(perAppDomainModel.services['user-app'].environment, 'LANDING_USER_APP_URL'),
+  false,
+  'landing application destinations must not be injected into unrelated frontends',
+);
 assert.equal(perAppEdge.read_only, true);
 assert.ok(networkNames(perAppEdge).includes('app'));
 assert.ok(perAppDomainModel.volumes['caddy-data']);

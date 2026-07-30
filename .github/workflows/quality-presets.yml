@@ -61,11 +61,19 @@ jobs:
       EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
       TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
       VITE_TELEGRAM_AUTH_ENABLED: 'true'
-      # Five browser/device projects share the same runtime client address.
+      # Six browser/device projects share the same runtime client address.
       RATE_LIMIT_MAX: '1000'
-      COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app
+      COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app,site-app
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
       PLAYWRIGHT_AUTO_INSTALL: '1'
+      POSTGRES_PORT: '5432'
+      ADMIN_APP_API_PORT: '3001'
+      USER_APP_API_PORT: '3002'
+      AUTH_APP_API_PORT: '3003'
+      ADMIN_APP_PORT: '8081'
+      USER_APP_PORT: '8082'
+      LANDING_APP_PORT: '8083'
+      SITE_APP_PORT: '8084'
       A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
@@ -74,6 +82,9 @@ jobs:
       QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
       QA_CHAOS_URLS: http://127.0.0.1:3002/health
       QA_CHAOS_SERVICE: user-app-api
+      QA_USER_JOURNEY_COMMAND: '["pnpm","run","test:e2e:matrix","--","--project","chromium"]'
+      QA_CONCURRENCY_COMMAND: '["pnpm","exec","nx","run","@app/backend-postgres-main-notification:component-test","--","src/repositories/notification-concurrency.component-spec.ts","--maxWorkers=1"]'
+      QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
       POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.6-alpine
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0

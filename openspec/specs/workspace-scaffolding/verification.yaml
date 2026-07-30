@@ -81,6 +81,7 @@ requirements:
       alternativeEvidence:
         - static
         - vitest
+        - component
     evidence:
       - kind: static
         file: packages/tooling/src/generators/feature/generator.ts
@@ -94,6 +95,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: component
+        file: packages/tooling/src/generators/application/generated.integration.ts
+        script: scaffold:verify
+        lanes:
+          - main
+          - nightly
   - id: REQ-SCAFFOLD-INIT-004
     projects:
       - '@repo/tooling'
@@ -168,6 +175,24 @@ requirements:
           - main
       - kind: vitest
         file: packages/tooling/src/commands/testing/frontend-browser-e2e-coverage.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/test-orchestration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/world-class-gates.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/browser-matrix.test.ts
         target: '@repo/tooling:test'
         lanes:
           - pr

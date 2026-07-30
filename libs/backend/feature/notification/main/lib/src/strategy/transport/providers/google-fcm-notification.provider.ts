@@ -20,6 +20,14 @@ export class GoogleFcmNotificationProvider extends NotificationProviderStrategy 
     super();
   }
 
+  override readiness() {
+    const { projectId, clientEmail, privateKey, tokenUri } = this.config.googleFcm;
+    return {
+      provider: this.provider,
+      configured: Boolean(projectId && clientEmail && privateKey && tokenUri),
+    };
+  }
+
   async send(input: NotificationProviderSendInput): Promise<NotificationProviderSendResult> {
     if (input.message.kind !== 'push') {
       return unsupportedPush();
@@ -31,28 +39,37 @@ export class GoogleFcmNotificationProvider extends NotificationProviderStrategy 
     if (!input.address.trim() || input.address.length > 4096) {
       return invalidPush('FCM device token is invalid.');
     }
+    const body = JSON.stringify({
+      message: {
+        token: input.address,
+        notification: {
+          title: input.message.subject,
+          body: input.message.text,
+          ...(input.message.image ? { image: input.message.image } : {}),
+        },
+        data: {
+          notification_delivery_id: input.deliveryId,
+          ...(input.message.actions ? { actions: JSON.stringify(input.message.actions) } : {}),
+        },
+        android: { priority: input.extra?.disableNotification ? 'normal' : 'high' },
+      },
+    });
+    let token: string;
     try {
-      const token = await this.accessToken(config);
+      token = await this.accessToken(config, input.signal);
+    } catch (error) {
+      return this.networkFailure(error);
+    }
+
+    await this.beginDispatch(input);
+    try {
       const response = await fetch(
         `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/messages:send`,
         {
           method: 'POST',
+          signal: input.signal,
           headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-          body: JSON.stringify({
-            message: {
-              token: input.address,
-              notification: {
-                title: input.message.subject,
-                body: input.message.text,
-                ...(input.message.image ? { image: input.message.image } : {}),
-              },
-              data: {
-                notification_delivery_id: input.deliveryId,
-                ...(input.message.actions ? { actions: JSON.stringify(input.message.actions) } : {}),
-              },
-              android: { priority: input.extra?.disableNotification ? 'normal' : 'high' },
-            },
-          }),
+          body,
         },
       );
       if (response.ok) {
@@ -91,16 +108,20 @@ export class GoogleFcmNotificationProvider extends NotificationProviderStrategy 
         errorMessage: error.message,
       };
     } catch (error) {
-      this.logger.warn(`FCM notification request failed: ${safeNetworkError(error)}`);
-      return {
-        status: NotificationStatus.Pending,
-        errorReason: NotificationErrorReason.NetworkError,
-        errorMessage: safeNetworkError(error),
-      };
+      return this.networkFailure(error);
     }
   }
 
-  private async accessToken(config: NotificationConfigService['googleFcm']): Promise<string> {
+  private networkFailure(error: unknown): NotificationProviderSendResult {
+    this.logger.warn(`FCM notification request failed: ${safeNetworkError(error)}`);
+    return {
+      status: NotificationStatus.Pending,
+      errorReason: NotificationErrorReason.NetworkError,
+      errorMessage: safeNetworkError(error),
+    };
+  }
+
+  private async accessToken(config: NotificationConfigService['googleFcm'], signal?: AbortSignal): Promise<string> {
     if (this.cachedToken && this.cachedToken.expiresAt > Date.now() + 60_000) {
       return this.cachedToken.value;
     }
@@ -114,6 +135,7 @@ export class GoogleFcmNotificationProvider extends NotificationProviderStrategy 
       .sign(key);
     const response = await fetch(config.tokenUri, {
       method: 'POST',
+      signal,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',

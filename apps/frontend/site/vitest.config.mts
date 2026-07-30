@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config';
 import { workspaceTsconfigAliases } from '../../../config/vite/workspace-tsconfig-aliases.mjs';
+// nx-ignore-next-line
+import { fullCoverage } from '../../../packages/tooling/src/testing/vitest-coverage.mts';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
@@ -15,5 +17,6 @@ export default defineConfig({
     environment: 'happy-dom',
     include: ['pages/**/*.spec.ts', 'pages/**/*.spec.tsx'],
     passWithNoTests: false,
+    coverage: fullCoverage('coverage/apps/frontend/site', ['pages/**/*.{ts,tsx}'], ['pages/+config.ts']),
   },
 });

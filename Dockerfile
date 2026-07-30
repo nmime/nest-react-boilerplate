@@ -55,6 +55,7 @@ COPY i18n ./i18n
 COPY tsconfig.base.json ./tsconfig.base.json
 COPY docker/migrator-run.mjs ./docker/migrator-run.mjs
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
+USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 CMD ["node", "docker/migrator-run.mjs"]
 
@@ -127,6 +128,7 @@ COPY --from=builder /workspace/dist ./dist
 COPY --from=builder /workspace/i18n ./i18n
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
+USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]

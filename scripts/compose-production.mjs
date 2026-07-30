@@ -297,10 +297,20 @@ export function buildComposeInvocation(argv, processEnvironment = process.env) {
   const extraTrustedOrigins = splitList(effectiveEnvironment.BETTER_AUTH_EXTRA_TRUSTED_ORIGINS);
   const authOrigin =
     publicDomainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.AUTH_APP_API_DOMAIN}`;
+  const landingAppRuntimeDefaults =
+    publicDomainMode === 'single-domain'
+      ? { LANDING_ADMIN_APP_URL: '/admin', LANDING_USER_APP_URL: '/app' }
+      : publicDomainMode === 'per-app-domains'
+        ? {
+            LANDING_ADMIN_APP_URL: `https://${domains.ADMIN_APP_DOMAIN}`,
+            LANDING_USER_APP_URL: `https://${domains.USER_APP_DOMAIN}`,
+          }
+        : {};
   const runtimeDefaults =
     domainMode === 'external-proxy' && !publicDomainMode
       ? {}
       : {
+          ...landingAppRuntimeDefaults,
           AUTH_ALLOWED_RETURN_URLS: unique(exposedOrigins).join(','),
           AUTH_OAUTH_REDIRECT_URI: `${authOrigin}/oauth/callback`,
           BETTER_AUTH_TRUSTED_ORIGINS: unique([...exposedOrigins, ...extraTrustedOrigins]).join(','),

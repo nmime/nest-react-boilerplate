@@ -63,6 +63,14 @@ spec:
             - name: {{ $flag }}
               value: {{ $value | quote }}
             {{- end }}
+            {{- if and (eq (kebabcase $name) "landing-app") $root.Values.ingress.enabled $root.Values.apps.userApp.enabled }}
+            - name: LANDING_USER_APP_URL
+              value: {{ include "boilerplate.landingAppDestination" (dict "root" $root "service" "user-app" "fallback" "/app") | quote }}
+            {{- end }}
+            {{- if and (eq (kebabcase $name) "landing-app") $root.Values.ingress.enabled $root.Values.apps.adminApp.enabled }}
+            - name: LANDING_ADMIN_APP_URL
+              value: {{ include "boilerplate.landingAppDestination" (dict "root" $root "service" "admin-app" "fallback" "/admin") | quote }}
+            {{- end }}
             {{- end }}
           {{- end }}
           {{- if or (eq $app.kind "backend") (eq $app.kind "background") }}

@@ -114,13 +114,6 @@ export interface NotificationSnapshotCollectionContext {
   segments: NotificationSegmentRecord[];
 }
 
-export interface NotificationBroadcastMaterializationContext {
-  broadcast: NotificationBroadcastRecord;
-  snapshotId: string;
-  template: NotificationTemplateAdminRecord;
-  members: Array<NotificationAudienceMember & { id: string }>;
-}
-
 export interface NotificationSegmentListFilters {
   tenantId: string;
   includeArchived?: boolean;
@@ -180,8 +173,7 @@ export abstract class NotificationBroadcastPersistence {
   abstract claimSnapshot(now: Date): Promise<NotificationSnapshotCollectionContext | null>;
   abstract completeSnapshot(snapshotId: string, members: NotificationAudienceMember[]): Promise<void>;
   abstract failSnapshot(snapshotId: string, message: string): Promise<void>;
-  abstract claimBroadcastMaterialization(limit: number): Promise<NotificationBroadcastMaterializationContext | null>;
-  abstract materializeBroadcastMembers(context: NotificationBroadcastMaterializationContext): Promise<number>;
+  abstract materializeNextBroadcastChunk(limit: number): Promise<number>;
   abstract activateDueBroadcasts(now: Date): Promise<number>;
   abstract refreshBroadcastStatistics(): Promise<number>;
 }

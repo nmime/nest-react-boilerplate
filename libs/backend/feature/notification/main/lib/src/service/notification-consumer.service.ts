@@ -47,10 +47,7 @@ export class NotificationConsumerService implements OnApplicationBootstrap, OnAp
     if (await this.processSnapshot()) {
       handled += 1;
     }
-    const materialization = await this.persistence.claimBroadcastMaterialization(this.materializationChunkSize);
-    if (materialization) {
-      handled += await this.persistence.materializeBroadcastMembers(materialization);
-    }
+    handled += await this.persistence.materializeNextBroadcastChunk(this.materializationChunkSize);
     return handled;
   }
 

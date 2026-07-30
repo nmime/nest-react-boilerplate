@@ -13,6 +13,8 @@ import {
   NotificationTemplateEngine,
 } from '@app/common-notifications';
 import {
+  EmptyNotificationDeliveryClaimId,
+  EmptyNotificationDeliveryTimestamp,
   NotificationDeliveryEntity,
   NotificationEntity,
   NotificationTemplateEntity,
@@ -137,14 +139,21 @@ describe('PostgresNotificationPersistence', () => {
     const transaction = createTransactionEntityManager();
     transaction.findOne.mockResolvedValue(delivery);
 
-    await createPersistence(transaction).saveDeliveryResults([
-      {
-        id: delivery.id,
-        createdAt: delivery.createdAt,
-        status: NotificationStatus.Pending,
-        error: { reason: NotificationErrorReason.RateLimit },
-      },
-    ]);
+    const claimOwnershipId = '75f25517-d0ae-4a25-87e7-e8936a3a9e43';
+    delivery.claimToken = claimOwnershipId;
+    delivery.attempts = 1;
+    delivery.dispatchStartedAt = new Date('2026-07-16T09:59:30.000Z');
+    await createPersistence(transaction).saveClaimedDeliveryResults(
+      [
+        {
+          id: delivery.id,
+          createdAt: delivery.createdAt,
+          status: NotificationStatus.Pending,
+          error: { reason: NotificationErrorReason.RateLimit },
+        },
+      ],
+      claimOwnershipId,
+    );
 
     expect(delivery).toMatchObject({
       attempts: 1,
@@ -154,6 +163,138 @@ describe('PostgresNotificationPersistence', () => {
       sendAfter: new Date('2026-07-16T10:00:30.000Z'),
     });
     expect(transaction.flush).toHaveBeenCalledOnce();
+    expect(transaction.findOne).toHaveBeenCalledWith(
+      NotificationDeliveryEntity,
+      expect.objectContaining({
+        status: NotificationStatus.Pending,
+        claimToken: claimOwnershipId,
+      }),
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+  });
+
+  it('records and releases a failed attempt completed before provider dispatch', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-16T10:00:00.000Z'));
+    const claimOwnershipId = '75f25517-d0ae-4a25-87e7-e8936a3a9e43';
+    const delivery = buildPendingDelivery('42', '75f25517-d0ae-4a25-87e7-e8936a3a9e43');
+    delivery.claimToken = claimOwnershipId;
+    delivery.claimedAt = new Date('2026-07-16T09:59:30.000Z');
+    const transaction = createTransactionEntityManager();
+    transaction.findOne.mockResolvedValue(delivery);
+
+    await createPersistence(transaction).saveClaimedDeliveryResults(
+      [
+        {
+          id: delivery.id,
+          createdAt: delivery.createdAt,
+          status: NotificationStatus.Error,
+          error: { reason: NotificationErrorReason.NotFoundMessage },
+        },
+      ],
+      claimOwnershipId,
+    );
+
+    expect(delivery).toMatchObject({
+      attempts: 1,
+      status: NotificationStatus.Error,
+      claimToken: EmptyNotificationDeliveryClaimId,
+      claimedAt: new Date(0),
+      dispatchStartedAt: EmptyNotificationDeliveryTimestamp,
+    });
+  });
+
+  it('does not overwrite a delivery whose claim is stale or whose state changed concurrently', async () => {
+    const transaction = createTransactionEntityManager();
+    transaction.findOne.mockResolvedValue(null);
+    const claimOwnershipId = '75f25517-d0ae-4a25-87e7-e8936a3a9e43';
+
+    await createPersistence(transaction).saveClaimedDeliveryResults(
+      [
+        {
+          id: '42',
+          createdAt: new Date('2026-07-16T09:00:00.000Z'),
+          status: NotificationStatus.Sent,
+        },
+      ],
+      claimOwnershipId,
+    );
+
+    expect(transaction.findOne).toHaveBeenCalledWith(
+      NotificationDeliveryEntity,
+      expect.objectContaining({ status: NotificationStatus.Pending, claimToken: claimOwnershipId }),
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+    expect(transaction.flush).toHaveBeenCalledOnce();
+  });
+
+  it('renews only pending rows still owned by the opaque claim token', async () => {
+    const nativeUpdate = vi.fn().mockResolvedValueOnce(2).mockResolvedValueOnce(0);
+    const persistence = new PostgresNotificationPersistence(
+      { nativeUpdate } as unknown as EntityManager,
+      notificationPayloadCrypto(),
+    );
+    const now = new Date('2026-07-16T10:00:00.000Z');
+
+    await expect(persistence.renewDeliveryClaim('claim-a', now)).resolves.toBe(true);
+    await expect(persistence.renewDeliveryClaim('stale-claim', now)).resolves.toBe(false);
+    expect(nativeUpdate).toHaveBeenNthCalledWith(
+      1,
+      NotificationDeliveryEntity,
+      { claimToken: 'claim-a', status: NotificationStatus.Pending },
+      { claimedAt: now },
+    );
+  });
+
+  it('durably marks dispatch start under the current claim before provider I/O', async () => {
+    const delivery = buildPendingDelivery('42', '75f25517-d0ae-4a25-87e7-e8936a3a9e43');
+    const claimOwnershipId = '75f25517-d0ae-4a25-87e7-e8936a3a9e43';
+    delivery.claimToken = claimOwnershipId;
+    const transaction = createTransactionEntityManager();
+    transaction.findOne.mockResolvedValue(delivery);
+    const now = new Date('2026-07-16T10:00:00.000Z');
+
+    await expect(
+      createPersistence(transaction).beginClaimedDeliveryAttempts(
+        [{ id: delivery.id, createdAt: delivery.createdAt }],
+        delivery.claimToken,
+        now,
+      ),
+    ).resolves.toEqual([{ id: delivery.id, createdAt: delivery.createdAt }]);
+
+    expect(delivery).toMatchObject({ attempts: 1, dispatchStartedAt: now, updatedAt: now });
+    expect(transaction.findOne).toHaveBeenCalledWith(
+      NotificationDeliveryEntity,
+      expect.objectContaining({
+        id: delivery.id,
+        claimToken: delivery.claimToken,
+        dispatchStartedAt: EmptyNotificationDeliveryTimestamp,
+      }),
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+  });
+
+  it('includes quarantined unknown provider outcomes in delivery health errors', async () => {
+    const count = vi.fn().mockResolvedValue(2);
+    const persistence = new PostgresNotificationPersistence(
+      { count } as unknown as EntityManager,
+      notificationPayloadCrypto(),
+    );
+    const fromDate = new Date('2026-07-16T09:00:00.000Z');
+
+    await expect(persistence.countRecentDeliveryErrors({ fromDate, limit: 10 })).resolves.toBe(2);
+    expect(count).toHaveBeenCalledWith(
+      NotificationDeliveryEntity,
+      expect.objectContaining({
+        $or: expect.arrayContaining([
+          expect.objectContaining({ status: NotificationStatus.Error }),
+          expect.objectContaining({
+            status: NotificationStatus.Pending,
+            dispatchStartedAt: { $ne: EmptyNotificationDeliveryTimestamp },
+          }),
+        ]),
+      }),
+    );
   });
 
   it('persists an explicit provider and encrypts sensitive template values', async () => {
@@ -221,7 +362,7 @@ describe('PostgresNotificationPersistence', () => {
     });
     const now = new Date('2026-07-16T10:00:00.000Z');
 
-    const pending = await createReadPersistence(find).findPendingDeliveries({
+    const claim = await createReadPersistence(find).claimPendingDeliveries({
       targetType: NotificationTargetType.TelegramChat,
       count: 10,
       now,
@@ -234,6 +375,7 @@ describe('PostgresNotificationPersistence', () => {
         targetType: NotificationTargetType.TelegramChat,
         status: NotificationStatus.Pending,
         sendAfter: { $lte: now },
+        dispatchStartedAt: EmptyNotificationDeliveryTimestamp,
       }),
       expect.objectContaining({ limit: 10, orderBy: { priority: 'DESC', id: 'ASC' } }),
     );
@@ -244,9 +386,9 @@ describe('PostgresNotificationPersistence', () => {
       { id: { $in: [notification.id] } },
       { populate: ['template'] },
     );
-    expect(pending).toHaveLength(2);
-    expect(pending.map((item) => item.delivery.id)).toEqual(['1', '2']);
-    expect(Object.keys(pending[0]?.notification.template.channels ?? {})).toEqual([
+    expect(claim?.deliveries).toHaveLength(2);
+    expect(claim?.deliveries.map((item) => item.delivery.id)).toEqual(['1', '2']);
+    expect(Object.keys(claim?.deliveries[0]?.notification.template.channels ?? {})).toEqual([
       NotificationChannel.Bot,
       NotificationChannel.InApp,
     ]);
@@ -285,27 +427,27 @@ describe('PostgresNotificationPersistence', () => {
       return Promise.resolve([]);
     });
 
-    const pending = await createReadPersistence(find).findPendingDeliveries({
+    const claim = await createReadPersistence(find).claimPendingDeliveries({
       targetType: NotificationTargetType.TelegramChat,
       count: 10,
       now: new Date('2026-07-16T10:00:00.000Z'),
     });
 
-    expect(pending).toHaveLength(1);
-    expect(pending[0]?.delivery.id).toBe('1');
+    expect(claim?.deliveries).toHaveLength(1);
+    expect(claim?.deliveries[0]?.delivery.id).toBe('1');
   });
 
   it('returns early and skips follow-up queries when no deliveries are pending', async () => {
     const find = vi.fn();
     find.mockResolvedValue([]);
 
-    const pending = await createReadPersistence(find).findPendingDeliveries({
+    const claim = await createReadPersistence(find).claimPendingDeliveries({
       targetType: NotificationTargetType.TelegramChat,
       count: 10,
       now: new Date('2026-07-16T10:00:00.000Z'),
     });
 
-    expect(pending).toEqual([]);
+    expect(claim).toBeNull();
     expect(find).toHaveBeenCalledOnce();
   });
 
@@ -355,7 +497,7 @@ describe('PostgresNotificationPersistence', () => {
       notificationPayloadCrypto(),
     );
 
-    const pending = await persistence.findPendingDeliveries({
+    const claim = await persistence.claimPendingDeliveries({
       targetType: NotificationTargetType.TelegramChat,
       count: 10,
       now,
@@ -373,8 +515,10 @@ describe('PostgresNotificationPersistence', () => {
     // The claim stamps claimedAt = now and persists it before returning, so a crash
     // between claim and save cannot re-send until the lease elapses.
     expect(delivery.claimedAt).toEqual(now);
+    expect(delivery.claimToken).toBe(claim?.claimToken);
+    expect(claim?.leaseExpiresAt).toEqual(new Date(now.getTime() + DeliveryClaimLeaseSeconds * 1000));
     expect(flush).toHaveBeenCalled();
-    expect(pending).toHaveLength(1);
+    expect(claim?.deliveries).toHaveLength(1);
   });
 });
 

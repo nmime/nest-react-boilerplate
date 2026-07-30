@@ -364,7 +364,7 @@ describe('auth-app-api e2e', () => {
       headers: { 'content-type': 'application/json' },
       payload: JSON.stringify({ email: 'e2e@example.com', password }),
     });
-    expect(login.statusCode).toBe(201);
+    expect(login.statusCode).toBe(200);
     expect(login.json<AuthSessionResponse>().data.user.email).toBe('e2e@example.com');
 
     const bearerOnlyLogout = await app.inject({

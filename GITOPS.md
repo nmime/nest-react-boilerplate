@@ -35,7 +35,7 @@ flowchart LR
   tag --> plan[Release workflow derives affected images from Nx and migration paths]
   plan --> images[Build, scan, sign, and publish only selected immutable images]
   images --> promote[Run Promote GitOps release with the full 40-character Git SHA]
-  promote --> verify[Resolve selected full-SHA images to immutable digests and render Helm]
+  promote --> verify[Verify digest, signature, scan, SBOM, provenance, and render Helm]
   verify --> pr[Open a promotion pull request updating values-production.yaml]
   pr --> reconcile[Merge after CI; Argo CD or Flux reconciles]
 ```
@@ -43,19 +43,24 @@ flowchart LR
 The promotion workflow is manual by design. It:
 
 1. accepts only a full 40-character commit SHA already contained in `main`;
-2. resolves only images published for that SHA and verifies their immutable
-   digests in GHCR;
+2. resolves only images published for that SHA and verifies the immutable
+   digest, keyless release-workflow signature, signed SPDX SBOM, SLSA
+   provenance, and passing Trivy scan attestation;
 3. updates those Helm image references to the exact `sha-<40-character-sha>`
    tag plus digest, leaving unaffected workloads on their previously promoted
    digest;
 4. requires the first promotion to provide every release-owned image, so no
    template placeholder can reach a cluster;
 5. renders the chart and validates both GitOps controller manifests;
-6. pushes a topic branch and opens a pull request.
+6. pushes `release/gitops-sha-<full-sha>` with the repository owner identity and
+   opens a pull request.
 
 It never commits directly to `main`, never shortens the image tag, and never
 creates a CI/deploy commit loop. Configure `GH_DEPLOY_TOKEN` with repository
 contents, pull-request, and package read access before using the workflow.
+Promotion fails when an image merely exists in the registry without all signed
+evidence or when the signing certificate does not name the exact repository,
+release workflow, and requested source SHA.
 
 The release planner uses Nx's affected graph for application images and a
 separate migration-path rule for the migration image. A full build remains the

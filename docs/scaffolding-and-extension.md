@@ -226,9 +226,13 @@ pnpm exec nx run customer-portal:typecheck
 The generator creates the source root, Nx project configuration, applicable
 package manifest, tests or executable examples, and nearest
 `README.md`/`AGENTS.md`. Cucumber projects include isolated typed World state,
-stable generated requirement/scenario tags, and `test`/`acceptance` targets;
-replace their example IDs with product-owned OpenSpec requirements. It never requires copying
-or moving another app.
+stable generated requirement/scenario tags, and `test`/`acceptance` targets.
+Every generated executable test starts with a deterministic
+`REQ-<OWNER>-SCAFFOLD-001` bootstrap marker. Before committing the new owner,
+define that ID as durable product behavior or replace it with an existing
+requirement, then map the exact generated Nx project in its version 3 sidecar.
+The generator does not invent product semantics, copy another app, or move an
+existing owner.
 
 ### Application completion checklist
 
@@ -308,15 +312,25 @@ and a reversible migration, wires the Nest module, and creates an FSD
 `src/pages/<feature>` boundary. It deliberately does not hand-author generated
 OpenAPI/client output or invent product routing and fields.
 
+Feature generation currently requires a `bootstrapNestApi` HTTP owner and a
+Vite web application with an `src/pages` FSD boundary. Consumer, scheduler,
+Astro, Vike, and Expo owners are rejected before writes. The generated
+`<feature>Migrations` list is also registered in the production `db:migrate`
+runner during the same generation plan. If that runner no longer exposes its
+supported import and unique `migrationsList` array contract, generation fails
+before creating any feature files or aliases.
+
 Before completion:
 
 1. Replace generic fields with product invariants and add indexes/constraints.
-2. Review auth, RBAC, validation, repository failure, and concurrency behavior.
-3. Build the owning API, then run `pnpm api:openapi`, `pnpm api:contracts`, and
+2. Define or replace the generated `REQ-<FEATURE>-SCAFFOLD-001` marker and map
+   all three generated Nx projects in OpenSpec.
+3. Review auth, RBAC, validation, repository failure, and concurrency behavior.
+4. Build the owning API, then run `pnpm api:openapi`, `pnpm api:contracts`, and
    `pnpm api:clients`.
-4. Register the page route and consume the generated client through a
+5. Register the page route and consume the generated client through a
    frontend-owned wrapper.
-5. Cover auth/RBAC, loading, empty, error, validation, and success paths.
+6. Cover auth/RBAC, loading, empty, error, validation, and success paths.
 
 ## Generator maintenance
 
@@ -339,6 +353,12 @@ pnpm run api:clients:check
 pnpm run check:fast
 git diff --check
 ```
+
+`scaffold:verify` serializes live-workspace canaries with a temporary
+workspace-specific lock. It fails rather than deleting an existing canary-named
+owner and cleans source roots only when the current invocation created them. Its
+in-memory feature canary applies consecutive migration registrations to the
+actual production runner contract.
 
 Broaden to component, Docker, and fullstack e2e whenever public runtime wiring
 or cross-app behavior changes.

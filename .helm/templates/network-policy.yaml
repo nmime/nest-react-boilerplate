@@ -1,4 +1,27 @@
 {{- if .Values.networkPolicy.enabled }}
+{{- $otelCollectorPolicyEnabled := and .Values.monitoring.enabled .Values.monitoring.otelCollector.enabled }}
+{{- if $otelCollectorPolicyEnabled }}
+{{- $namespacePattern := "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" }}
+{{- $exporterNamespace := toString .Values.networkPolicy.otelCollector.exporterNamespace }}
+{{- if or (gt (len $exporterNamespace) 63) (not (regexMatch $namespacePattern $exporterNamespace)) }}
+{{- fail "networkPolicy.otelCollector.exporterNamespace must be a valid Kubernetes namespace name" }}
+{{- end }}
+{{- $exporterPorts := .Values.networkPolicy.otelCollector.exporterPorts }}
+{{- if empty $exporterPorts }}
+{{- fail "networkPolicy.otelCollector.exporterPorts must contain at least one TCP port" }}
+{{- end }}
+{{- range $port := $exporterPorts }}
+{{- if or (lt (int $port) 1) (gt (int $port) 65535) }}
+{{- fail "networkPolicy.otelCollector.exporterPorts entries must be between 1 and 65535" }}
+{{- end }}
+{{- end }}
+{{- if .Values.monitoring.serviceMonitor.enabled }}
+{{- $prometheusNamespace := toString .Values.networkPolicy.otelCollector.prometheusNamespace }}
+{{- if or (gt (len $prometheusNamespace) 63) (not (regexMatch $namespacePattern $prometheusNamespace)) }}
+{{- fail "networkPolicy.otelCollector.prometheusNamespace must be a valid Kubernetes namespace name" }}
+{{- end }}
+{{- end }}
+{{- end }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -10,6 +33,13 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "boilerplate.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
+    # NetworkPolicy rules are additive. Keep the collector out of this broad
+    # application policy so its exporter egress remains restricted below.
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: NotIn
+        values:
+          - otel-collector
   policyTypes:
     - Ingress
     - Egress
@@ -44,6 +74,17 @@ spec:
       ports:
         - port: http
           protocol: TCP
+    {{- if and .Values.monitoring.enabled .Values.monitoring.otel.enabled .Values.monitoring.otelCollector.enabled (not .Values.monitoring.otel.endpoint) }}
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "boilerplate.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/component: otel-collector
+      ports:
+        - port: 4318
+          protocol: TCP
+    {{- end }}
     {{- if .Values.networkPolicy.externalEgress.enabled }}
     - to:
         - ipBlock:
@@ -126,5 +167,61 @@ spec:
         {{- end }}
     {{- end }}
 {{- end }}
+{{- end }}
+{{- if $otelCollectorPolicyEnabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-otel-collector
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: otel-collector
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "boilerplate.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: otel-collector
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "boilerplate.name" . }}
+              app.kubernetes.io/instance: {{ .Release.Name }}
+      ports:
+        - port: 4317
+          protocol: TCP
+        - port: 4318
+          protocol: TCP
+    {{- if .Values.monitoring.serviceMonitor.enabled }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.otelCollector.prometheusNamespace }}
+      ports:
+        - port: 9464
+          protocol: TCP
+    {{- end }}
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.otelCollector.exporterNamespace }}
+      ports:
+        {{- range .Values.networkPolicy.otelCollector.exporterPorts }}
+        - port: {{ . }}
+          protocol: TCP
+        {{- end }}
 {{- end }}
 {{- end }}

@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => {
     middleware,
     nestCreate: vi.fn(() => Promise.resolve(app)),
     setupSwagger: vi.fn(),
+    shutdownOpenTelemetry: vi.fn(() => Promise.resolve()),
     getPortEnvVarName: vi.fn((appName: string) => {
       const segments = appName
         .trim()
@@ -53,6 +54,7 @@ vi.mock('@app/backend-common-logger', () => ({
 
 vi.mock('@app/backend-common-otel', () => ({
   initOpenTelemetry: mocks.initOpenTelemetry,
+  shutdownOpenTelemetry: mocks.shutdownOpenTelemetry,
 }));
 
 vi.mock('@app/backend-common-swagger', () => ({
@@ -118,7 +120,7 @@ describe('bootstrap', () => {
       serviceVersion: '1.2.3',
       environment: 'test',
     });
-    expect(mocks.nestCreate).toHaveBeenCalledWith(TestModule, {
+    expect(mocks.nestCreate).toHaveBeenCalledWith(expect.objectContaining({ imports: [TestModule] }), {
       logger: mocks.logger,
       rawBody: true,
     });
@@ -160,5 +162,6 @@ describe('bootstrap', () => {
     await expect(bootstrap({ name: 'broken-api', module: TestModule, port: 70_000 })).rejects.toThrow(
       'Invalid port for broken-api: 70000',
     );
+    expect(mocks.shutdownOpenTelemetry).toHaveBeenCalledOnce();
   });
 });

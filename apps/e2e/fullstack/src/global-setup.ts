@@ -1,4 +1,12 @@
-import { buildStackImages, composeArgs, run, upStack, urls, waitForText } from './compose';
+import {
+  buildStackImages,
+  composeArgs,
+  configureLandingDestinations,
+  run,
+  upStack,
+  urls,
+  waitForText,
+} from './compose';
 
 export default async function globalSetup(): Promise<void> {
   await run('docker', [...composeArgs, 'down', '--volumes', '--remove-orphans']);
@@ -6,6 +14,7 @@ export default async function globalSetup(): Promise<void> {
     await buildStackImages();
   }
   await upStack();
+  await configureLandingDestinations();
   await Promise.all([
     waitForText('auth api', `${urls.authApi}/health`, 'auth-app-api'),
     waitForText('user api', `${urls.userApi}/health`, 'user-app-api'),
@@ -13,5 +22,6 @@ export default async function globalSetup(): Promise<void> {
     waitForText('user app', `${urls.userApp}/`, 'User App'),
     waitForText('admin app', `${urls.adminApp}/`, 'Admin App'),
     waitForText('landing app', `${urls.landingApp}/`, 'Nest React Boilerplate'),
+    waitForText('site app', `${urls.siteApp}/ready`, 'site-app'),
   ]);
 }

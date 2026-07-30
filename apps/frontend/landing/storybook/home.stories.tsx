@@ -42,6 +42,7 @@ export const Default: Story = {
     await expect(canvas.getByRole('heading', { name: 'A focused foundation for your next product.' })).toBeVisible();
     await expect(canvas.getByRole('link', { name: 'Preview user app' })).toHaveAttribute('href', '/app');
     await expect(canvas.getByRole('link', { name: 'Preview admin app' })).toHaveAttribute('href', '/admin');
+    await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth);
     document.documentElement.setAttribute('data-visual-ready', 'true');
   },
 };

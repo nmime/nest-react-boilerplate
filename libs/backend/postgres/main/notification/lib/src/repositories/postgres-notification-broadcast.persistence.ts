@@ -9,7 +9,6 @@ import {
   type CreateNotificationBroadcastInput,
   type CreateNotificationSegmentInput,
   type CreateNotificationSegmentUploadInput,
-  type NotificationBroadcastMaterializationContext,
   type NotificationBroadcastTransitionInput,
   type NotificationSegmentListFilters,
   type NotificationSnapshotCollectionContext,
@@ -683,58 +682,24 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     });
   }
 
-  async claimBroadcastMaterialization(limit: number): Promise<NotificationBroadcastMaterializationContext | null> {
-    const broadcast = await this.entityManager.findOne(
-      NotificationBroadcastEntity,
-      { status: NotificationBroadcastStatus.Sending, materializedAt: null },
-      { orderBy: { updatedAt: 'ASC' } },
-    );
-    if (!broadcast) {
-      return null;
-    }
-    const snapshot = await this.entityManager.findOne(NotificationAudienceSnapshotEntity, {
-      broadcastId: broadcast.id,
-      status: NotificationAudienceSnapshotStatus.Completed,
-    });
-    if (!snapshot) {
-      return null;
-    }
-    const members = await this.entityManager.find(
-      NotificationAudienceSnapshotMemberEntity,
-      { snapshotId: snapshot.id, materializedAt: null },
-      { limit, orderBy: { id: 'ASC' } },
-    );
-    if (members.length === 0) {
-      broadcast.materializedAt = new Date();
-      broadcast.updatedAt = broadcast.materializedAt;
-      await this.entityManager.flush();
-      return null;
-    }
-    const version = await this.entityManager.findOne(NotificationTemplateVersionEntity, {
-      id: broadcast.templateVersionId,
-    });
-    if (!version) {
-      throw new Error('notification_template_version_missing');
-    }
-    const template = await this.entityManager.findOne(NotificationTemplateEntity, { id: version.templateId });
-    if (!template) {
-      throw new Error('notification_template_missing');
-    }
-    return {
-      broadcast: await this.mapBroadcast(this.entityManager, broadcast),
-      snapshotId: snapshot.id,
-      template: await this.mapTemplate(this.entityManager, template),
-      members: members.map((member) => ({ id: member.id, ...mapAudienceMember(member) })),
-    };
-  }
-
-  async materializeBroadcastMembers(context: NotificationBroadcastMaterializationContext): Promise<number> {
+  async materializeNextBroadcastChunk(limit: number): Promise<number> {
     return this.entityManager.transactional(async (em) => {
-      const broadcast = await em.findOne(NotificationBroadcastEntity, {
-        id: context.broadcast.id,
-        status: NotificationBroadcastStatus.Sending,
-      });
+      const broadcast = await em.findOne(
+        NotificationBroadcastEntity,
+        { status: NotificationBroadcastStatus.Sending, materializedAt: null },
+        {
+          orderBy: { updatedAt: 'ASC' },
+          lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE,
+        },
+      );
       if (!broadcast) {
+        return 0;
+      }
+      const snapshot = await em.findOne(NotificationAudienceSnapshotEntity, {
+        broadcastId: broadcast.id,
+        status: NotificationAudienceSnapshotStatus.Completed,
+      });
+      if (!snapshot) {
         return 0;
       }
       const version = await em.findOne(NotificationTemplateVersionEntity, { id: broadcast.templateVersionId });
@@ -746,22 +711,21 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
         throw new Error('notification_template_missing');
       }
       const now = new Date();
-      const memberIds = context.members.map((item) => item.id);
-      const members =
-        memberIds.length === 0
-          ? []
-          : await em.find(NotificationAudienceSnapshotMemberEntity, {
-              id: { $in: memberIds },
-              snapshotId: context.snapshotId,
-              materializedAt: null,
-            });
-      const existingNotifications =
-        members.length === 0
-          ? []
-          : await em.find(NotificationEntity, {
-              broadcastId: broadcast.id,
-              $or: members.map((member) => ({ targetType: member.targetType, targetId: member.targetId })),
-            });
+      const members = await em.find(
+        NotificationAudienceSnapshotMemberEntity,
+        { snapshotId: snapshot.id, materializedAt: null },
+        { limit, orderBy: { id: 'ASC' }, lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE },
+      );
+      if (members.length === 0) {
+        broadcast.materializedAt = now;
+        broadcast.updatedAt = now;
+        await em.flush();
+        return 0;
+      }
+      const existingNotifications = await em.find(NotificationEntity, {
+        broadcastId: broadcast.id,
+        $or: members.map((member) => ({ targetType: member.targetType, targetId: member.targetId })),
+      });
       const existingTargets = new Set(
         existingNotifications.map((notification) => `${notification.targetType}:${notification.targetId}`),
       );

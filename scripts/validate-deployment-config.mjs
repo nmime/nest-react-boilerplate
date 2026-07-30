@@ -145,6 +145,7 @@ assertNginxHardening(nginxSpa, 'standalone SPA');
 has(dockerfile, 'USER 101', 'frontend runtime user 101');
 has(dockerfile, 'EXPOSE 8080', 'frontend exposes unprivileged port 8080');
 const migratorStage = section(dockerfile, 'FROM workspace AS migrator', 'FROM workspace AS builder');
+has(migratorStage, 'USER 1000:1000', 'migrator image defaults to the numeric non-root node user');
 has(
   migratorStage,
   'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
@@ -211,6 +212,7 @@ has(
   "backend-deps installs against the app's generated dist package.json",
 );
 const backendStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS backend', 'FROM nginxinc/nginx-unprivileged');
+has(backendStage, 'USER 1000:1000', 'backend image defaults to the numeric non-root node user');
 has(
   backendStage,
   'COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/node_modules ./node_modules',
@@ -399,11 +401,18 @@ for (const [service, variable, port, profile] of [
   has(serviceBlock, 'host_ip: 127.0.0.1', `${service} production binds published ports to loopback`);
 }
 has(prodCompose, 'http://127.0.0.1:80/ready', 'prod backend healthcheck targets readiness-aware /ready endpoint');
+has(prodCompose, 'su-exec 1000:1000 node -e', 'prod backend healthcheck drops to numeric UID/GID 1000');
 assert.ok(
   !prodCompose.includes('http://127.0.0.1:80/health'),
   'Production Compose backend healthcheck must use readiness-aware /ready rather than liveness-only /health.',
 );
 has(prodCompose, 'http://127.0.0.1:8080/nginx-health', 'prod frontend healthcheck targets container port 8080');
+has(prodCompose, 'LANDING_USER_APP_URL: ${LANDING_USER_APP_URL:-}', 'landing receives a runtime user-app destination');
+has(
+  prodCompose,
+  'LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}',
+  'landing receives a runtime admin-app destination',
+);
 has(
   prodBuildCompose,
   'NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}',
@@ -436,6 +445,11 @@ has(
   'production Compose passes the auth return URL allowlist to backend containers',
 );
 const prodBackendService = section(prodCompose, 'x-backend-service:', '\nx-frontend-service:');
+has(
+  prodBackendService,
+  "user: '0:0'",
+  'production Compose elevates only the secret-loading backend entrypoint before it drops privileges',
+);
 has(prodBackendService, 'redis:', 'production backend services depend on Redis');
 has(prodBackendService, 'condition: service_healthy', 'production backend services wait for healthy dependencies');
 const prodRedisService = section(prodCompose, '  redis:', '\n\n  migrate:');
@@ -684,8 +698,40 @@ if (validateHelmStatic) {
     '.Values.migrations.securityContext',
     'Helm migration job renders container security context',
   );
+  const corootTemplate = read('.helm/templates/coroot.yaml');
+  const networkPolicyTemplate = read('.helm/templates/network-policy.yaml');
+  const valuesSchema = read('.helm/values.schema.json');
+  const liveKubernetesValidator = read('scripts/validate-kubernetes-live.mjs');
+  has(corootTemplate, 'if .Values.coroot.rbac.readSecrets', 'Coroot Secret access is an explicit opt-in');
+  has(helmValues, 'readSecrets: false', 'Coroot Secret access defaults off');
+  for (const expected of [
+    'app.kubernetes.io/component: otel-collector',
+    'operator: NotIn',
+    'port: 4318',
+    '.Values.networkPolicy.otelCollector.prometheusNamespace',
+    '.Values.networkPolicy.otelCollector.exporterNamespace',
+  ]) {
+    has(networkPolicyTemplate, expected, `Helm OTEL NetworkPolicy ${expected}`);
+  }
+  has(deploymentTemplate, 'LANDING_USER_APP_URL', 'Helm landing deployment derives the user-app destination');
+  has(deploymentTemplate, 'LANDING_ADMIN_APP_URL', 'Helm landing deployment derives the admin-app destination');
+  has(valuesSchema, '"minItems": 1', 'Helm schema requires at least one OTEL exporter port');
+  has(valuesSchema, '"maximum": 65535', 'Helm schema bounds OTEL exporter ports');
+  has(valuesSchema, '"pattern": "^[a-z0-9]', 'Helm schema validates OTEL namespace selectors');
+  for (const expected of [
+    "'--dry-run=server'",
+    "'--validate=strict'",
+    "'--force-conflicts'",
+    "'--no-hooks'",
+    "'rollout'",
+    "'history'",
+    'lastSuccessfulTime',
+  ]) {
+    has(liveKubernetesValidator, expected, `Kubernetes no-deploy validation ${expected}`);
+  }
 
   const productionValues = read('.helm/values-production.yaml');
+  has(productionValues, 'readSecrets: false', 'production Coroot Secret access remains disabled');
   const releaseWorkflow = read('.github/workflows/release-images.yml');
   const releaseImagePlan = read('scripts/release-image-plan.mjs');
   has(

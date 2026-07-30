@@ -24,7 +24,7 @@ Use the canonical runbooks:
 ```mermaid
 flowchart LR
   commit[Reviewed Git SHA] --> release[Release images workflow]
-  release --> verify[SBOM, scan, signature, full-SHA tags and digests]
+  release --> verify[Signed SBOM, passing scan, SLSA provenance, signature, and digest]
   verify --> runtime{Selected runtime}
   runtime --> compose[Compose database + domain + TLS topology]
   runtime --> helm[Direct Helm]
@@ -101,7 +101,11 @@ kubectl apply -k deploy/flux
 
 Run the manual **Promote GitOps release** workflow with the exact source SHA
 after release images exist. It verifies every release-owned image declared by
-the promotion workflow and opens a promotion PR.
+the promotion workflow. A registry manifest is not sufficient: each selected
+digest must have a valid keyless signature from the exact release workflow and
+source SHA plus signed SPDX SBOM, SLSA provenance, and passing Trivy policy
+attestations. The workflow opens `release/gitops-sha-<full-sha>` and creates a
+promotion PR.
 Only a reviewed merge changes the desired production version.
 
 ## Backup, verification, and rollback
@@ -115,3 +119,8 @@ selected mode. Direct Helm uses `helm history` and `helm rollback`. GitOps
 reverts or supersedes the promotion commit and lets the controller reconcile.
 Database restoration is required only when the schema is incompatible with the
 previous application; otherwise prefer a corrective forward migration.
+
+For an existing Kubernetes release, run the explicit-context, no-mutation live
+preflight from the direct Kubernetes runbook. It uses strict server-side dry-run
+for candidate admission and rollback, checks current rollout and release
+history, and requires a recent successful backup before release approval.

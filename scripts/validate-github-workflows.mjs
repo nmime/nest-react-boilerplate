@@ -164,6 +164,11 @@ for (const required of [
   '--lane "$lane"',
   '--base "$base"',
   '--head HEAD',
+  'test "$(git rev-parse HEAD)" = "$CI_COMMIT_SHA"',
+  'git fetch --no-tags origin "$CI_DEFAULT_BRANCH"',
+  'git rev-parse FETCH_HEAD',
+  'Refusing stale release',
+  '$CI_PIPELINE_SOURCE == "push"',
 ]) {
   assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing provider-isolated release contract: ${required}`);
 }

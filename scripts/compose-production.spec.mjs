@@ -1,12 +1,95 @@
 // @requirements REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import {
   buildComposeInvocation,
   derivePublicDomains,
   parseEnvFile,
   validateBaseDomain,
 } from './compose-production.mjs';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const dockerAvailable = spawnSync('docker', ['info'], { cwd: root, stdio: 'ignore' }).status === 0;
+
+test('frontend runtime config emits only same-origin or HTTPS landing destinations', (context) => {
+  const temporaryDirectory = mkdtempSync(join(tmpdir(), 'nrb-frontend-runtime-config-'));
+  context.after(() => rmSync(temporaryDirectory, { force: true, recursive: true }));
+  const target = join(temporaryDirectory, 'runtime-config.js');
+  const script = resolve(root, 'docker/frontend-runtime-config.sh');
+  const render = (environment) => {
+    writeFileSync(target, '');
+    const result = spawnSync('sh', [script], {
+      cwd: root,
+      encoding: 'utf8',
+      env: {
+        PATH: process.env.PATH,
+        FRONTEND_RUNTIME_CONFIG_PATH: target,
+        ...environment,
+      },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return readFileSync(target, 'utf8');
+  };
+
+  const valid = render({
+    LANDING_ADMIN_APP_URL: 'https://admin.product.example',
+    LANDING_USER_APP_URL: '/app',
+  });
+  assert.match(valid, /"userAppUrl": "\/app"/u);
+  assert.match(valid, /"adminAppUrl": "https:\/\/admin\.product\.example"/u);
+
+  const invalid = render({
+    LANDING_ADMIN_APP_URL: 'https://user@admin.product.example',
+    LANDING_USER_APP_URL: 'http://user.product.example',
+  });
+  assert.doesNotMatch(invalid, /userAppUrl|adminAppUrl/u);
+});
+
+test(
+  'secret entrypoint ignores Kubernetes service-account mounts but rejects declared Docker secrets',
+  { skip: !dockerAvailable },
+  (context) => {
+    const temporaryDirectory = mkdtempSync(join(tmpdir(), 'nrb-secret-entrypoint-'));
+    context.after(() => rmSync(temporaryDirectory, { force: true, recursive: true }));
+    const mountedFile = join(temporaryDirectory, 'mounted-secret');
+    writeFileSync(mountedFile, 'not-a-real-secret', { mode: 0o600 });
+    const entrypoint = resolve(root, 'docker/secret-entrypoint.sh');
+    const run = (target) =>
+      spawnSync(
+        'docker',
+        [
+          'run',
+          '--rm',
+          '--user',
+          '1000:1000',
+          '--volume',
+          `${entrypoint}:/entrypoint:ro`,
+          '--volume',
+          `${mountedFile}:${target}:ro`,
+          '--entrypoint',
+          '/bin/sh',
+          'node:24.18.0-alpine',
+          '/entrypoint',
+          'sh',
+          '-ec',
+          'test "$(id -u):$(id -g)" = "1000:1000"',
+        ],
+        { cwd: root, encoding: 'utf8', timeout: 120_000 },
+      );
+
+    const kubernetesMount = run('/var/run/secrets/kubernetes.io/serviceaccount/token');
+    assert.equal(kubernetesMount.status, 0, kubernetesMount.stderr);
+
+    const dockerSecretMount = run('/run/secrets/session_secret');
+    assert.notEqual(dockerSecretMount.status, 0);
+    assert.match(dockerSecretMount.stderr, /must start as root/u);
+  },
+);
 
 test('parses ordinary and quoted environment values without exposing comments', () => {
   assert.deepEqual(parseEnvFile('A=one\nB="two words"\n# SECRET=no\nC=\'three\'\n'), {
@@ -56,6 +139,8 @@ test('builds the per-app automatic HTTPS topology from the production example', 
   assert.equal(invocation.env.AUTH_APP_API_DOMAIN, 'auth-app-api.example.com');
   assert.equal(invocation.env.PRIMARY_APP_UPSTREAM, 'landing-app:8080');
   assert.equal(invocation.env.BETTER_AUTH_URL, 'https://user-app.example.com');
+  assert.equal(invocation.env.LANDING_USER_APP_URL, 'https://user-app.example.com');
+  assert.equal(invocation.env.LANDING_ADMIN_APP_URL, 'https://admin-app.example.com');
   assert.equal(
     invocation.env.AUTH_ALLOWED_RETURN_URLS,
     'https://example.com,https://site-app.example.com,https://user-app.example.com,https://admin-app.example.com,https://mobile-app.example.com',
@@ -80,6 +165,8 @@ test('builds one-host and external-proxy variants without incompatible overlays'
   assert.equal(single.env.CORS_ORIGINS, 'https://example.com');
   assert.equal(single.env.BETTER_AUTH_URL, 'https://example.com');
   assert.equal(single.env.AUTH_ALLOWED_RETURN_URLS, 'https://example.com');
+  assert.equal(single.env.LANDING_USER_APP_URL, '/app');
+  assert.equal(single.env.LANDING_ADMIN_APP_URL, '/admin');
 
   const siteApex = buildComposeInvocation(
     ['config', '--env-file=.env.production.example', '--domains=single-domain', '--tls=automatic'],
@@ -151,6 +238,8 @@ test('derives external host-proxy runtime URLs from its declared public topology
   );
   assert.equal(perApp.publicDomainMode, 'per-app-domains');
   assert.equal(perApp.env.BETTER_AUTH_URL, 'https://user-app.example.com');
+  assert.equal(perApp.env.LANDING_USER_APP_URL, 'https://user-app.example.com');
+  assert.equal(perApp.env.LANDING_ADMIN_APP_URL, 'https://admin-app.example.com');
   assert.match(perApp.env.CORS_ORIGINS, /https:\/\/admin-app\.example\.com/u);
 
   assert.throws(

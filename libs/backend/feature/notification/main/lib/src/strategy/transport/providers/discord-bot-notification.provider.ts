@@ -18,6 +18,10 @@ export class DiscordBotNotificationProvider extends NotificationProviderStrategy
     super();
   }
 
+  override readiness() {
+    return { provider: this.provider, configured: Boolean(this.config.discordBotToken) };
+  }
+
   async send(input: NotificationProviderSendInput): Promise<NotificationProviderSendResult> {
     if (input.message.kind !== 'bot') {
       return {
@@ -35,44 +39,62 @@ export class DiscordBotNotificationProvider extends NotificationProviderStrategy
       };
     }
 
+    if (input.message.text.length === 0 || input.message.text.length > 2000) {
+      return invalidMessage('Discord message content must contain 1 to 2000 characters.');
+    }
+    const payload = discordMessagePayload(input.message, input.extra?.disableNotification ?? false);
+    if ('error' in payload && typeof payload.error === 'string') {
+      return invalidMessage(payload.error);
+    }
+
+    let channelResponse: Response;
     try {
-      if (input.message.text.length === 0 || input.message.text.length > 2000) {
-        return invalidMessage('Discord message content must contain 1 to 2000 characters.');
-      }
-      const payload = discordMessagePayload(input.message, input.extra?.disableNotification ?? false);
-      if ('error' in payload && typeof payload.error === 'string') {
-        return invalidMessage(payload.error);
-      }
-      const channelResponse = await this.request(token, '/users/@me/channels', { recipient_id: input.address });
-      if (!channelResponse.ok) {
-        return this.mapError(channelResponse, await discordError(channelResponse));
-      }
-      const channel = (await channelResponse.json()) as { id?: string };
-      if (!channel.id) {
-        return {
-          status: NotificationStatus.Error,
-          errorReason: NotificationErrorReason.UnknownError,
-          errorMessage: 'Discord did not return a DM channel id.',
-        };
-      }
-      const messageResponse = await this.request(token, `/channels/${channel.id}/messages`, payload);
+      channelResponse = await this.request(token, '/users/@me/channels', { recipient_id: input.address }, input.signal);
+    } catch (error) {
+      return this.networkFailure(error);
+    }
+    if (!channelResponse.ok) {
+      return this.mapError(channelResponse, await discordError(channelResponse));
+    }
+    let channel: { id?: string };
+    try {
+      channel = (await channelResponse.json()) as { id?: string };
+    } catch (error) {
+      return this.networkFailure(error);
+    }
+    if (!channel.id) {
+      return {
+        status: NotificationStatus.Error,
+        errorReason: NotificationErrorReason.UnknownError,
+        errorMessage: 'Discord did not return a DM channel id.',
+      };
+    }
+
+    await this.beginDispatch(input);
+    try {
+      const messageResponse = await this.request(token, `/channels/${channel.id}/messages`, payload, input.signal);
       if (messageResponse.ok) {
         return { status: NotificationStatus.Sent };
       }
       return this.mapError(messageResponse, await discordError(messageResponse));
     } catch (error) {
-      this.logger.warn(`Discord notification request failed: ${toSafeErrorMessage(error)}`);
-      return {
-        status: NotificationStatus.Pending,
-        errorReason: NotificationErrorReason.NetworkError,
-        errorMessage: toSafeErrorMessage(error),
-      };
+      return this.networkFailure(error);
     }
   }
 
-  private request(token: string, path: string, body: Record<string, unknown>): Promise<Response> {
+  private networkFailure(error: unknown): NotificationProviderSendResult {
+    this.logger.warn(`Discord notification request failed: ${toSafeErrorMessage(error)}`);
+    return {
+      status: NotificationStatus.Pending,
+      errorReason: NotificationErrorReason.NetworkError,
+      errorMessage: toSafeErrorMessage(error),
+    };
+  }
+
+  private request(token: string, path: string, body: Record<string, unknown>, signal?: AbortSignal): Promise<Response> {
     return fetch(`${discordApiBase}${path}`, {
       method: 'POST',
+      signal,
       headers: { authorization: `Bot ${token}`, 'content-type': 'application/json' },
       body: JSON.stringify(body),
     });

@@ -39,9 +39,12 @@ See [GITOPS.md](../GITOPS.md) for both controller setups.
 `release.config.mjs` selects exactly one semantic-release provider. GitHub
 Actions sets `RELEASE_PROVIDER=github` and uses the repository `GITHUB_TOKEN`.
 GitLab CI sets `RELEASE_PROVIDER=gitlab` and runs the release job on the default
-branch only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a protected CI/CD
-variable. GitLab uses `CI_REPOSITORY_URL` so release tags target the GitLab
-clone instead of this template's GitHub repository metadata.
+branch push pipeline only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a
+protected CI/CD variable. Immediately before semantic-release, the job fetches
+the remote default branch and refuses to publish unless it still equals
+`CI_COMMIT_SHA`, preventing a delayed successful pipeline from releasing after
+the branch advances. GitLab uses `CI_REPOSITORY_URL` so release tags target the
+GitLab clone instead of this template's GitHub repository metadata.
 
 Both providers use the latest `vMAJOR.MINOR.PATCH` tag as the Semantic
 Versioning baseline. `fix`, `perf`, and `revert` commits increment patch;

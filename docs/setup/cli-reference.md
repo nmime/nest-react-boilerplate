@@ -155,6 +155,14 @@ workspace links; then verify that `pnpm install --frozen-lockfile` is clean. A
 library generator uses the owning shared runtime manifest and does not add a
 package manifest by default. Never hand-edit the lockfile.
 
+Vertical feature generation accepts only a `bootstrapNestApi` HTTP API owner and
+a Vite web frontend with an `src/pages` FSD boundary. It registers the generated
+migration list with the production `db:migrate` runner and fails before writes
+when either owner runtime or the runner registration contract is incompatible.
+Generated executable tests carry a `REQ-<OWNER>-SCAFFOLD-001` bootstrap marker;
+define or replace it and map the generated Nx projects in OpenSpec before
+downstream `spec:validate`.
+
 An application generator creates source/Nx/test/README/AGENTS contracts only.
 Before calling a deployable complete, follow the selection, environment,
 Compose, Docker/Helm, DNS/TLS, observability, contract, and e2e registration
@@ -249,21 +257,27 @@ Existing features must be modified in place; regeneration is rejected.
 
 ## QA commands
 
-| Command                 | Description                                     |
-| ----------------------- | ----------------------------------------------- |
-| `qa:mutation`           | Run Stryker mutation testing or dry-run report. |
-| `qa:consumer-contracts` | Validate consumer contracts.                    |
-| `qa:openapi-lint`       | Lint OpenAPI contracts.                         |
-| `qa:openapi-fuzz`       | Generate OpenAPI fuzz cases.                    |
-| `qa:accessibility`      | Run accessibility checks.                       |
-| `qa:cross-browser-e2e`  | Run cross-browser e2e matrix.                   |
-| `qa:performance`        | Run performance checks.                         |
-| `qa:property`           | Run property-based checks.                      |
-| `qa:secret-scan`        | Run secret scanning checks.                     |
-| `qa:security-sast`      | Run SAST checks.                                |
-| `qa:security-dast`      | Run DAST checks.                                |
-| `qa:security-suite`     | Run the security suite.                         |
-| `qa:world-class-gates`  | Run world-class quality gates.                  |
+| Command                 | Description                                          |
+| ----------------------- | ---------------------------------------------------- |
+| `qa:mutation`           | Run Stryker mutation testing or dry-run report.      |
+| `qa:test-aggregate`     | Run resource-aware aggregate unit or coverage tests. |
+| `qa:consumer-contracts` | Validate consumer contracts.                         |
+| `qa:openapi-lint`       | Lint OpenAPI contracts.                              |
+| `qa:openapi-fuzz`       | Generate OpenAPI fuzz cases.                         |
+| `qa:accessibility`      | Run accessibility checks.                            |
+| `qa:cross-browser-e2e`  | Run cross-browser e2e matrix.                        |
+| `qa:performance`        | Run performance checks.                              |
+| `qa:property`           | Run property-based checks.                           |
+| `qa:secret-scan`        | Run secret scanning checks.                          |
+| `qa:security-sast`      | Run SAST checks.                                     |
+| `qa:security-dast`      | Run DAST checks.                                     |
+| `qa:security-suite`     | Run the security suite.                              |
+| `qa:world-class-gates`  | Run world-class quality gates.                       |
+
+World-class command overrides use JSON argv arrays rather than shell strings.
+The real-user journey, observability, and concurrency gates require an
+authoritative command and fail closed when it is missing. URL-only checks are
+limited to canary, load, chaos recovery, and reliability evidence.
 
 ## Testing commands
 

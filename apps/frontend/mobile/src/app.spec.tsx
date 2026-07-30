@@ -1,6 +1,7 @@
 // @requirements REQ-FRONTEND-NATIVE-006
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import Layout from './app/_layout';
 
 vi.mock('react-native-gesture-handler', () => ({}));
 
@@ -33,8 +34,7 @@ describe('mobile app layout', () => {
     vi.resetModules();
   });
 
-  it('renders the root layout structure', async () => {
-    const Layout = (await import('./app/_layout')).default;
+  it('renders the root layout structure', () => {
     const view = render(<Layout />);
 
     expect(view.container).toBeTruthy();

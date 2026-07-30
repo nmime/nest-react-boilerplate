@@ -10,6 +10,7 @@ import { runSetupFromContext } from './commands/project/setup';
 import { runDoctorFromContext } from './commands/project/doctor';
 import { runAddFromContext } from './commands/project/add';
 import { runMutation } from './commands/qa/mutation';
+import { runTestOrchestration } from './commands/qa/test-orchestration';
 import { runBranchCleanup } from './commands/git/branch-cleanup';
 import { runGitConventions } from './commands/git/conventions';
 import { runWebpCommand } from './commands/images/webp';
@@ -107,6 +108,9 @@ register('doctor', 'Shorthand for project:doctor — workspace health checks.', 
 register('add', 'Add an app, library, or feature to the workspace.', runAddFromContext, true);
 register('qa:mutation', 'Run Stryker mutation testing or write its dry-run report.', ({ argv, workspaceRoot }) =>
   runMutation({ argv, workspaceRoot }),
+);
+register('qa:test-aggregate', 'Run resource-aware aggregate unit or coverage tests.', ({ argv, workspaceRoot }) =>
+  runTestOrchestration({ argv, workspaceRoot }),
 );
 register(
   'spec:validate',

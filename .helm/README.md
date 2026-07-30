@@ -40,8 +40,21 @@ routes.
 - Enable ingress/TLS only after DNS and cert-manager/ingress are ready.
 - Keep the unique frontend/API host, TLS, and browser CORS mapping in
   `docs/frontend-deployment-topology.md`; the deployment validator enforces it.
+- The landing deployment derives its user/admin destinations from `ingress.hosts`.
+  Separate hosts become credential-free HTTPS URLs; a shared landing host must
+  give each app a non-root path and becomes a same-origin path. If an app has no
+  public ingress entry, the landing app keeps its local `/app` or `/admin`
+  fallback. No deployment hostname is baked into the frontend image.
 - Tune resources, HPA (with 300s scale-down stabilization), PDBs (`maxUnavailable: 1`), imagePullSecrets, and optional pod/container
   security contexts per environment.
+- Backend and migrator images default to numeric UID/GID 1000 so
+  `runAsNonRoot` works without image-user ambiguity. Production Compose alone
+  configures backend containers as root so the entrypoint can read root-owned
+  Docker secret mounts. The entrypoint drops before the app command, and backend
+  healthchecks drop before running Node, both to numeric UID/GID 1000.
+  The entrypoint checks only declared Docker secret filenames, so Kubernetes
+  service-account projections under `/var/run/secrets` do not trigger the
+  Compose-only guard. Kubernetes uses `envFrom` and never needs elevation.
 
 ## Render locally
 
@@ -90,6 +103,19 @@ production only after the platform dependencies exist:
   `.helm/dashboards/nest-react-boilerplate.json`.
 - `backups.enabled` renders the PostgreSQL backup CronJob. Configure object-store
   and encryption/upload hooks before enabling it in production.
+- `networkPolicy.otelCollector` selects the Tempo exporter and Prometheus scrape
+  namespaces. The chart permits only the selected OTLP HTTP app-to-collector,
+  collector exporter, and collector scrape paths when NetworkPolicy is enabled.
+  The collector is explicitly excluded from the broader application policy;
+  Kubernetes unions every policy selecting a pod, so this exclusion is required
+  for the exporter allowlist to remain effective.
+  Namespace selectors must be Kubernetes namespace names and exporter ports must
+  contain at least one unique integer from 1 through 65535. The chart schema and
+  template both reject empty or malformed values rather than rendering an
+  unrestricted egress port rule.
+- `coroot.rbac.readSecrets` is false by default, including production. Coroot
+  workload discovery does not require Secret payloads; enabling cluster-wide
+  Secret `get`/`list` is an explicit product security exception.
 
 See `docs/operations/observability-dr.md` for the RPO/RTO policy, backup hook
 contract, restore steps, and incident runbook.

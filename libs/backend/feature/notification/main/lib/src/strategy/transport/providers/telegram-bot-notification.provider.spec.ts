@@ -10,12 +10,19 @@ describe(TelegramBotNotificationProvider.name, () => {
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     vi.stubGlobal('fetch', fetch);
     const provider = new TelegramBotNotificationProvider({ botToken: 'token' } as never);
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
 
     await expect(
-      provider.send({ address: '123', deliveryId: 'delivery-1', message: { kind: 'bot', text: 'Hello' } }),
+      provider.send({
+        address: '123',
+        deliveryId: 'delivery-1',
+        markDispatchStarted,
+        message: { kind: 'bot', text: 'Hello' },
+      }),
     ).resolves.toEqual({
       status: NotificationStatus.Sent,
     });
+    expect(markDispatchStarted).toHaveBeenCalledOnce();
     expect(fetch).toHaveBeenCalledWith(
       'https://api.telegram.org/bottoken/sendMessage',
       expect.objectContaining({ method: 'POST' }),
@@ -24,22 +31,31 @@ describe(TelegramBotNotificationProvider.name, () => {
 
   it('fails closed when the Telegram provider is not configured', async () => {
     const provider = new TelegramBotNotificationProvider({ botToken: '' } as never);
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
     await expect(
-      provider.send({ address: '123', deliveryId: 'delivery-1', message: { kind: 'bot', text: 'Hello' } }),
+      provider.send({
+        address: '123',
+        deliveryId: 'delivery-1',
+        markDispatchStarted,
+        message: { kind: 'bot', text: 'Hello' },
+      }),
     ).resolves.toMatchObject({
       status: NotificationStatus.Error,
       errorReason: NotificationErrorReason.ProviderConfiguration,
     });
+    expect(markDispatchStarted).not.toHaveBeenCalled();
   });
 
   it('maps rich Telegram message options without leaking provider-specific shapes into templates', async () => {
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     vi.stubGlobal('fetch', fetch);
     const provider = new TelegramBotNotificationProvider({ botToken: 'token' } as never);
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
 
     await provider.send({
       address: '123',
       deliveryId: 'delivery-2',
+      markDispatchStarted,
       message: {
         kind: 'bot',
         text: '<b>Hello</b>',
@@ -75,10 +91,12 @@ describe(TelegramBotNotificationProvider.name, () => {
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     vi.stubGlobal('fetch', fetch);
     const provider = new TelegramBotNotificationProvider({ botToken: 'token' } as never);
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
 
     await provider.send({
       address: '123',
       deliveryId: 'delivery-3',
+      markDispatchStarted,
       message: { kind: 'bot', image: 'https://example.com/image.png', text: '<b>Caption</b>' },
       extra: { disableWebPagePreview: true, linkPreviewUrl: 'https://example.com/preview' },
     });
@@ -96,11 +114,13 @@ describe(TelegramBotNotificationProvider.name, () => {
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
     const provider = new TelegramBotNotificationProvider({ botToken: 'token' } as never);
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
 
     await expect(
       provider.send({
         address: '123',
         deliveryId: 'delivery-4',
+        markDispatchStarted,
         message: { kind: 'bot', text: 'Hello', buttons: [[{ text: 'Broken' }]] },
       }),
     ).resolves.toMatchObject({
@@ -108,5 +128,6 @@ describe(TelegramBotNotificationProvider.name, () => {
       errorReason: NotificationErrorReason.InvalidMessage,
     });
     expect(fetch).not.toHaveBeenCalled();
+    expect(markDispatchStarted).not.toHaveBeenCalled();
   });
 });

@@ -8,7 +8,7 @@ import {
   GoogleFcmNotificationProvider,
   AppleApnsNotificationProvider,
 } from './providers';
-import type { NotificationProviderStrategy } from './notification-provider.strategy';
+import type { NotificationProviderReadiness, NotificationProviderStrategy } from './notification-provider.strategy';
 
 @Injectable()
 export class NotificationProviderResolver {
@@ -34,5 +34,16 @@ export class NotificationProviderResolver {
 
   resolve(provider: NotificationDeliveryProvider): NotificationProviderStrategy | undefined {
     return this.providers.get(provider);
+  }
+
+  supportsIdempotentRetry(provider: NotificationDeliveryProvider): boolean {
+    return this.resolve(provider)?.idempotentRetries === true;
+  }
+
+  readiness(): NotificationProviderReadiness[] {
+    return Object.values(NotificationDeliveryProvider).map((provider) => {
+      const strategy = this.resolve(provider);
+      return strategy?.readiness() ?? { provider, configured: false };
+    });
   }
 }

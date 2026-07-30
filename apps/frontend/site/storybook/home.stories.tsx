@@ -46,6 +46,7 @@ export const Default: Story = {
     ).toBeVisible();
     await expect(canvas.getByRole('link', { name: 'Open account' })).toHaveAttribute('href', '/app');
     await expect(canvas.getByRole('link', { name: 'View public landing' })).toHaveAttribute('href', '/');
+    await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth);
     document.documentElement.setAttribute('data-visual-ready', 'true');
   },
 };

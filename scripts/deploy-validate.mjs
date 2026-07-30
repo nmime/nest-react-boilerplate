@@ -70,6 +70,11 @@ const validateHelm = () => {
 
   run('Helm/static deployment config', process.execPath, ['scripts/validate-deployment-config.mjs', '--mode=helm']);
   run('Helm rate-limit static config', process.execPath, ['scripts/validate-helm-rate-limit-config.mjs']);
+  run('Kubernetes no-deploy live preflight plan', process.execPath, [
+    'scripts/validate-kubernetes-live.mjs',
+    '--context=validation-only',
+    '--plan',
+  ]);
 
   if (commandExists('helm')) {
     run('Helm render validation', 'bash', ['scripts/validate-helm.sh']);

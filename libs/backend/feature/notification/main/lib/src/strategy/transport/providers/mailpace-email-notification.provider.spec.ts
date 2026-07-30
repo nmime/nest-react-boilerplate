@@ -12,10 +12,12 @@ describe(MailPaceEmailNotificationProvider.name, () => {
     const provider = new MailPaceEmailNotificationProvider({
       mailPace: { from: 'Example <no-reply@example.com>', serverToken: 'token' },
     } as never);
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
     await expect(
       provider.send({
         address: 'user@example.com',
         deliveryId: 'delivery-1',
+        markDispatchStarted,
         message: {
           attachments: [
             { cid: 'logo', contentType: 'image/png', filename: 'logo.png', inline: true, source: 'aGVsbG8=' },
@@ -27,6 +29,7 @@ describe(MailPaceEmailNotificationProvider.name, () => {
         },
       }),
     ).resolves.toEqual({ status: NotificationStatus.Sent });
+    expect(markDispatchStarted).toHaveBeenCalledOnce();
     const request = fetch.mock.calls[0]?.[1] as RequestInit;
     expect(request.headers).toMatchObject({ 'idempotency-key': 'notification-delivery-1' });
     expect(JSON.parse(typeof request.body === 'string' ? request.body : '')).toMatchObject({
@@ -41,10 +44,12 @@ describe(MailPaceEmailNotificationProvider.name, () => {
     const provider = new MailPaceEmailNotificationProvider({
       mailPace: { from: 'Example <no-reply@example.com>', serverToken: 'token' },
     } as never);
+    const markDispatchStarted = vi.fn().mockResolvedValue(undefined);
     await expect(
       provider.send({
         address: 'user@example.com',
         deliveryId: 'delivery-2',
+        markDispatchStarted,
         message: {
           attachments: [{ cid: 'remote', source: 'https://example.com/file.pdf' }],
           kind: 'email',
@@ -57,5 +62,6 @@ describe(MailPaceEmailNotificationProvider.name, () => {
       errorReason: NotificationErrorReason.InvalidMessage,
     });
     expect(fetch).not.toHaveBeenCalled();
+    expect(markDispatchStarted).not.toHaveBeenCalled();
   });
 });

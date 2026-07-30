@@ -10,6 +10,7 @@ export const stackServices = [
   'admin-app',
   'user-app',
   'landing-app',
+  'site-app',
 ];
 
 const host = process.env.FULLSTACK_HOST ?? '127.0.0.1';
@@ -28,9 +29,71 @@ const ports = {
   adminApp: pickPort('ADMIN_APP_PORT', 81),
   userApp: pickPort('USER_APP_PORT', 82),
   landingApp: pickPort('LANDING_APP_PORT', 83),
+  siteApp: pickPort('SITE_APP_PORT', 84),
 };
 const url = (port: string, path = '') => `http://${host}:${port}${path}`;
-const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp].map((port) => url(port)).join(',');
+const normalizeConfiguredUrl = (name: string, value: string): string => {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(`${name} must be an absolute HTTP(S) URL.`);
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(`${name} must be an absolute HTTP(S) URL.`);
+  }
+
+  return parsed.toString().replace(/\/$/u, '');
+};
+const configuredUrl = (names: string[], fallback: string): string => {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) {
+      return normalizeConfiguredUrl(name, value);
+    }
+  }
+
+  return fallback;
+};
+const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp, ports.siteApp]
+  .map((port) => url(port))
+  .join(',');
+
+export const urls = {
+  adminApi: configuredUrl(['FULLSTACK_ADMIN_API_URL', 'ADMIN_APP_API_URL'], url(ports.adminApi)),
+  userApi: configuredUrl(['FULLSTACK_USER_API_URL', 'USER_APP_API_URL'], url(ports.userApi)),
+  authApi: configuredUrl(['FULLSTACK_AUTH_API_URL', 'AUTH_APP_API_URL'], url(ports.authApi)),
+  adminApp: configuredUrl(['FULLSTACK_ADMIN_APP_URL', 'ADMIN_APP_URL'], url(ports.adminApp)),
+  userApp: configuredUrl(
+    ['FULLSTACK_USER_APP_URL', 'USER_APP_URL', 'FULLSTACK_BASE_URL', 'PLAYWRIGHT_BASE_URL'],
+    url(ports.userApp),
+  ),
+  landingApp: configuredUrl(['FULLSTACK_LANDING_APP_URL', 'LANDING_APP_URL'], url(ports.landingApp)),
+  siteApp: configuredUrl(['FULLSTACK_SITE_APP_URL', 'SITE_APP_URL'], url(ports.siteApp)),
+};
+
+const externalUrlGroups = [
+  ['FULLSTACK_ADMIN_API_URL', 'ADMIN_APP_API_URL'],
+  ['FULLSTACK_USER_API_URL', 'USER_APP_API_URL'],
+  ['FULLSTACK_AUTH_API_URL', 'AUTH_APP_API_URL'],
+  ['FULLSTACK_ADMIN_APP_URL', 'ADMIN_APP_URL'],
+  ['FULLSTACK_USER_APP_URL', 'USER_APP_URL', 'FULLSTACK_BASE_URL', 'PLAYWRIGHT_BASE_URL'],
+  ['FULLSTACK_LANDING_APP_URL', 'LANDING_APP_URL'],
+  ['FULLSTACK_SITE_APP_URL', 'SITE_APP_URL'],
+] as const;
+
+export function assertExternalStackUrlsConfigured(): void {
+  const missing = externalUrlGroups
+    .filter((names) => !names.some((name) => process.env[name]?.trim()))
+    .map((names) => names[0]);
+  if (missing.length > 0) {
+    throw new Error(`External Playwright mode requires explicit per-service URLs: ${missing.join(', ')}`);
+  }
+}
+
+export function hasExternalStackUrlConfiguration(): boolean {
+  return externalUrlGroups.some((names) => names.some((name) => process.env[name]?.trim()));
+}
 
 const writeStdoutLine = (message: string): void => {
   process.stdout.write(`${message}\n`);
@@ -52,6 +115,7 @@ export const composeEnv = {
   ADMIN_APP_PORT: ports.adminApp,
   USER_APP_PORT: ports.userApp,
   LANDING_APP_PORT: ports.landingApp,
+  SITE_APP_PORT: ports.siteApp,
   // Cap parallel targets rather than serializing the full stack. Docker shares
   // the dependency layers across this one invocation, so two builders is a
   // useful default without exhausting a typical CI runner.
@@ -63,16 +127,16 @@ export const composeEnv = {
   NX_DAEMON: 'false',
   NX_PARALLEL: process.env.NX_PARALLEL ?? '1',
   CORS_ORIGINS: process.env.CORS_ORIGINS ?? frontendOrigins,
-  USER_APP_URL: process.env.USER_APP_URL ?? url(ports.userApp),
-  FULLSTACK_BASE_URL: process.env.FULLSTACK_BASE_URL ?? url(ports.userApp),
+  USER_APP_URL: process.env.USER_APP_URL ?? urls.userApp,
+  FULLSTACK_BASE_URL: process.env.FULLSTACK_BASE_URL ?? urls.userApp,
   SESSION_SECRET: process.env.SESSION_SECRET ?? 'fullstack-e2e-session-secret-change-me',
   // The isolated full-stack lane intentionally starts no Redis service. Keep
   // rate limiting enabled, but explicitly permit the test-only in-memory store.
   RATE_LIMIT_STORE: process.env.RATE_LIMIT_STORE ?? 'memory',
   RATE_LIMIT_IN_MEMORY_ALLOWED: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED ?? 'true',
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'fullstack-e2e-better-auth-secret-change-me',
-  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? url(ports.userApp),
-  BETTER_AUTH_TRUSTED_ORIGINS: process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? url(ports.userApp),
+  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? urls.userApp,
+  BETTER_AUTH_TRUSTED_ORIGINS: process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? urls.userApp,
   AUTH_TELEGRAM_ENABLED: process.env.AUTH_TELEGRAM_ENABLED ?? 'true',
   EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: process.env.EXTERNAL_AUTH_AUTO_PROVISION_ENABLED ?? 'true',
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN ?? '123456789:test-bot-token',
@@ -80,15 +144,6 @@ export const composeEnv = {
   VITE_TELEGRAM_AUTH_ENABLED: process.env.VITE_TELEGRAM_AUTH_ENABLED ?? 'true',
   ADMIN_BOOTSTRAP_EMAILS: process.env.ADMIN_BOOTSTRAP_EMAILS ?? 'admin@example.com',
   ADMIN_BOOTSTRAP_ENABLED: process.env.ADMIN_BOOTSTRAP_ENABLED ?? 'true',
-};
-
-export const urls = {
-  adminApi: url(ports.adminApi),
-  userApi: url(ports.userApi),
-  authApi: url(ports.authApi),
-  adminApp: url(ports.adminApp),
-  userApp: url(ports.userApp),
-  landingApp: url(ports.landingApp),
 };
 
 const stackUpArgs = [...composeArgs, 'up', '--no-build', '-d', ...stackServices];
@@ -119,6 +174,26 @@ export async function upStack(): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 5_000));
     await run('docker', stackUpArgs);
   }
+}
+
+export async function configureLandingDestinations(): Promise<void> {
+  const runtimeConfig = `window.__APP_RUNTIME_CONFIG__ = ${JSON.stringify({
+    adminAppUrl: urls.adminApp,
+    userAppUrl: urls.userApp,
+  })};`;
+  await run('docker', [
+    ...composeArgs,
+    'exec',
+    '-T',
+    '--user',
+    '0',
+    'landing-app',
+    'sh',
+    '-c',
+    'printf "%s\\n" "$1" > /usr/share/nginx/html/runtime-config.js',
+    'sh',
+    runtimeConfig,
+  ]);
 }
 
 export async function buildStackImages(): Promise<void> {

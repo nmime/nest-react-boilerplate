@@ -38,6 +38,10 @@ export interface NotificationProviderSendInput {
   extra?: NotificationExtra | null;
   /** Stable queue id used by providers that support idempotency keys. */
   deliveryId: string;
+  /** Scheduler-owned deadline signal. Providers must pass it to external I/O. */
+  signal?: AbortSignal;
+  /** Persist the attempt immediately before the provider can accept the message. */
+  markDispatchStarted: () => Promise<void>;
 }
 
 export interface NotificationProviderSendResult {
@@ -47,12 +51,28 @@ export interface NotificationProviderSendResult {
   retryAfterSeconds?: number;
 }
 
+export interface NotificationProviderReadiness {
+  provider: NotificationDeliveryProvider;
+  configured: boolean;
+}
+
 /**
  * A transport owns one external provider. Channel rendering and target lookup
  * happen before this boundary; implementations must never switch providers.
  */
 export abstract class NotificationProviderStrategy {
   abstract readonly provider: NotificationDeliveryProvider;
+  readonly idempotentRetries: boolean = false;
+
+  readiness(): NotificationProviderReadiness {
+    return { provider: this.provider, configured: false };
+  }
+
+  protected async beginDispatch(input: NotificationProviderSendInput): Promise<void> {
+    input.signal?.throwIfAborted();
+    await input.markDispatchStarted();
+    input.signal?.throwIfAborted();
+  }
 
   abstract send(input: NotificationProviderSendInput): Promise<NotificationProviderSendResult>;
 }

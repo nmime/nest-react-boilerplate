@@ -9,7 +9,7 @@
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
-import { findAdjacentOwner, validateName, generateNames } from '../names.ts';
+import { findAdjacentOwner, generatedRequirementId, validateName, generateNames } from '../names.ts';
 
 // ---------------------------------------------------------------------------
 
@@ -266,7 +266,8 @@ function createNodeLib(
   // src/index.spec.ts
   tree.write(
     `${srcRoot}/index.spec.ts`,
-    `import { describe, it, expect } from "vitest";
+    `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, it, expect } from "vitest";
 import { ${names.camel}Version } from "./index";
 
 describe("${names.pascal}Library", () => {
@@ -498,7 +499,8 @@ export function ${names.pascal}Component({ children }: ${names.pascal}ComponentP
     );
     tree.write(
       `${srcRoot}/index.spec.tsx`,
-      `import { describe, expect, it } from "vitest";
+      `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, expect, it } from "vitest";
 import { ${names.pascal}Component } from "./${names.kebab}.component";
 
 describe("${names.pascal}Component", () => {
@@ -512,7 +514,8 @@ describe("${names.pascal}Component", () => {
     tree.write(`${srcRoot}/index.ts`, `export const ${names.camel}LibraryId = "${projectName}" as const;\n`);
     tree.write(
       `${srcRoot}/index.spec.ts`,
-      `import { describe, expect, it } from "vitest";
+      `// @requirements ${generatedRequirementId(names.kebab)}
+import { describe, expect, it } from "vitest";
 import { ${names.camel}LibraryId } from "./index";
 
 describe("${names.pascal} library boundary", () => {

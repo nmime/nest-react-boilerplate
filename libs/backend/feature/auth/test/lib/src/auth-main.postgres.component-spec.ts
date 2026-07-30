@@ -187,7 +187,7 @@ describeIfDocker('AuthMainModule postgres component', () => {
     await supertest(httpServer).post('/auth/register').send({ email, password }).expect(201);
     await supertest(httpServer).post('/auth/register').send({ email, password }).expect(409);
 
-    const login = await supertest(httpServer).post('/auth/login').send({ email, password }).expect(201);
+    const login = await supertest(httpServer).post('/auth/login').send({ email, password }).expect(200);
 
     const body = login.body as AuthSessionResponse;
     expect(body.data.user.email).toBe(email);

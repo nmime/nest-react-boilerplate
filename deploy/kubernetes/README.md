@@ -30,6 +30,60 @@ Review the rendered image tags, Secret reference, namespace, ingress hosts,
 resource requests/limits, probes, migration Job, NetworkPolicies, and optional
 CRD-backed monitoring resources before release.
 
+For an existing release, add live API schema, admission, rollout, rollback, and
+backup evidence without changing cluster state:
+
+```bash
+node scripts/validate-kubernetes-live.mjs \
+  --context production-preflight \
+  --namespace nest-react-boilerplate \
+  --release nest-react-boilerplate \
+  --backup-cronjob nest-react-boilerplate-postgres-backup
+```
+
+The command requires an explicit kubeconfig context and persists no cluster
+changes. It performs read queries, local rendering, `--dry-run=server`, and
+`--no-hooks` rollback simulation. It:
+
+- submits the candidate render through strict server-side apply validation so
+  installed CRD schemas and dry-run-safe admission policies evaluate it; the
+  dry-run uses `--force-conflicts` so fields owned by Helm, Argo CD, or Flux do
+  not produce false failures and no ownership is persisted;
+- checks current Deployment rollout status and requires at least one usable
+  previous Helm revision;
+- runs Helm upgrade and rollback simulations against the server without
+  persisting resources or executing migration hooks;
+- requires the selected backup CronJob to be active with a successful run no
+  older than 90 minutes, then submits its Job template through server dry-run.
+
+Use `--backup-cronjob` for a platform-owned backup job and
+`--max-backup-age-minutes` to match the approved RPO. A first install cannot
+prove current rollout or rollback history; use the static Helm/kubeconform gate,
+then run this live preflight before the next promotion. The command intentionally
+fails rather than treating missing history or backup evidence as success.
+
+### Live preflight authorization
+
+`production-preflight` is a non-persisting context, not a read-only identity.
+Kubernetes authorization does not grant lesser verbs for server dry-run, so the
+identity must be allowed to perform the simulated mutations. For the checked-in
+production values it needs:
+
+- `get`, `list`, and `watch` for Deployments, `get` for the selected CronJob,
+  and `get`/`list` for Helm release Secrets in the release namespace;
+- `create`, `patch`, `update`, and `delete` for ConfigMaps, Services,
+  ServiceAccounts, Deployments, Jobs, Ingresses, NetworkPolicies,
+  HorizontalPodAutoscalers, PodDisruptionBudgets, PrometheusRules, and
+  ServiceMonitors rendered in the release and `coroot` namespaces;
+- the same simulated mutation verbs for the chart-owned `coroot` Namespace,
+  ClusterRole, and ClusterRoleBinding at cluster scope;
+- `create` for the backup preflight Job in the release namespace.
+
+Product overlays that render additional resource kinds need the corresponding
+verbs. Admission webhooks used by the cluster must declare dry-run-safe side
+effects. Confirm the dedicated identity before use with `kubectl auth can-i`;
+do not reuse a broad deployment credential merely to make this preflight pass.
+
 ## Install or upgrade
 
 ```bash

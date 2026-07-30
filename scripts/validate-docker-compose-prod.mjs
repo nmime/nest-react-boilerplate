@@ -7,6 +7,7 @@ const has = (text, needle, label = needle) =>
   assert.ok(text.includes(needle), `Missing expected Docker Compose production config: ${label}`);
 
 const prodCompose = read('docker/docker-compose.prod.yml');
+const dockerfile = read('Dockerfile');
 const prodBuildCompose = read('docker/docker-compose.prod.build.yml');
 const bundledDbCompose = read('docker/docker-compose.prod.bundled-db.yml');
 const externalDbCompose = read('docker/docker-compose.prod.external-db.yml');
@@ -84,6 +85,31 @@ for (const expected of [
   'load_secret REDIS_PASSWORD /run/secrets/redis_password',
 ]) {
   has(secretEntrypoint, expected, `secret entrypoint ${expected}`);
+}
+const declaredSecretGuard = secretEntrypoint.slice(
+  secretEntrypoint.indexOf('has_declared_docker_secret()'),
+  secretEntrypoint.indexOf('\n}\n', secretEntrypoint.indexOf('has_declared_docker_secret()')),
+);
+for (const match of secretEntrypoint.matchAll(/^\s*load_secret\s+\S+\s+(\/run\/secrets\/\S+)$/gmu)) {
+  has(declaredSecretGuard, match[1], `declared Docker secret guard ${match[1]}`);
+}
+has(secretEntrypoint, 'if has_declared_docker_secret; then', 'declared non-root Docker secret mounts fail closed');
+has(secretEntrypoint, 'exec su-exec 1000:1000 "$@"', 'entrypoint drops to numeric UID/GID 1000');
+has(prodCompose, 'su-exec 1000:1000 node -e', 'backend healthchecks run Node as numeric UID/GID 1000');
+assert.equal(
+  (dockerfile.match(/USER 1000:1000/gu) ?? []).length,
+  2,
+  'backend and migrator images must default to the numeric non-root node user',
+);
+for (const serviceBlock of [
+  'x-backend-service: &backend-service',
+  'x-notification-scheduler-service: &notification-scheduler-service',
+]) {
+  const start = prodCompose.indexOf(serviceBlock);
+  assert.ok(start >= 0, `missing ${serviceBlock}`);
+  const end = prodCompose.indexOf('\n\nx-', start + serviceBlock.length);
+  const block = prodCompose.slice(start, end >= 0 ? end : undefined);
+  has(block, "user: '0:0'", `${serviceBlock} starts the secret entrypoint as root`);
 }
 assert.ok(!/AUTH_JWT_/u.test(productionEnvExample), 'production env example must not configure JWT authentication');
 assert.ok(

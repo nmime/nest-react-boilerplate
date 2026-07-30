@@ -11,7 +11,7 @@
       "cache": false,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "EXPO_NO_TELEMETRY=1 node_modules/.bin/expo start --port 4300"
+        "command": "EXPO_NO_TELEMETRY=1 expo start --port 4300"
       },
       "inputs": [
         "default",
@@ -25,7 +25,7 @@
       "cache": false,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "EXPO_NO_TELEMETRY=1 node_modules/.bin/expo run:android"
+        "command": "EXPO_NO_TELEMETRY=1 expo run:android"
       },
       "inputs": [
         "default",
@@ -39,7 +39,7 @@
       "cache": false,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "EXPO_NO_TELEMETRY=1 node_modules/.bin/expo run:ios"
+        "command": "EXPO_NO_TELEMETRY=1 expo run:ios"
       },
       "inputs": [
         "default",
@@ -53,7 +53,7 @@
       "cache": false,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "EXPO_NO_TELEMETRY=1 node_modules/.bin/expo start --web --port 4300"
+        "command": "EXPO_NO_TELEMETRY=1 expo start --web --port 4300"
       },
       "inputs": [
         "default",
@@ -67,7 +67,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "EXPO_NO_TELEMETRY=1 node_modules/.bin/expo export --platform web --output-dir ../../../dist/apps/frontend/mobile"
+        "command": "node scripts/export-expo.mjs --platform web"
       },
       "inputs": [
         "production",
@@ -77,12 +77,27 @@
       ],
       "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile"]
     },
+    "export-android": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/mobile",
+        "command": "node scripts/export-expo.mjs --platform android"
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": ["@expo/metro-runtime", "expo", "react-native"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile-android"]
+    },
     "build": {
       "executor": "nx:run-commands",
       "cache": true,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "node ../../../node_modules/typescript/bin/tsc --noEmit --project tsconfig.app.json"
+        "command": "tsc --noEmit --project tsconfig.app.json"
       },
       "inputs": [
         "production",
@@ -97,7 +112,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "node ../../../node_modules/typescript/bin/tsc --noEmit --project tsconfig.app.json"
+        "command": "tsc --noEmit --project tsconfig.app.json"
       },
       "inputs": [
         "default",
@@ -126,13 +141,12 @@
     "e2e": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": ["export"],
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "node scripts/smoke-expo-export.mjs"
+        "command": "node scripts/export-expo.mjs --platform all"
       },
       "inputs": ["production"],
-      "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile"]
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile", "{workspaceRoot}/dist/apps/frontend/mobile-android"]
     }
   }
 }

@@ -21,22 +21,22 @@ selection in `.nrb/workspace.json`, and it can be rerun to add or remove apps.
 
 ## Backend applications
 
-| ID                       | Nx project root                                    | Runtime                            | Class     | Template hostname              | Required selection                                                    |
-| ------------------------ | -------------------------------------------------- | ---------------------------------- | --------- | ------------------------------ | --------------------------------------------------------------------- |
-| `admin-app-api`          | `apps/backend/admin/admin-app-api`                 | NestJS + Fastify API               | Reference | `admin-app-api.example.com`    | `postgres` capability, `authz` capability, `notifications` capability |
-| `user-app-api`           | `apps/backend/user/user-app-api`                   | NestJS + Fastify API               | Reference | `user-app-api.example.com`     | `postgres` capability                                                 |
-| `auth-app-api`           | `apps/backend/auth/auth-app-api`                   | NestJS + Fastify API               | Reference | `auth-app-api.example.com`     | `postgres` capability                                                 |
-| `discord-app-api`        | `apps/backend/discord/discord-app-api`             | NestJS + Fastify integration API   | Optional  | `discord-app-api.example.com`  | `discord-bot` capability, `postgres` capability                       |
-| `telegram-bot-api`       | `apps/backend/telegram/telegram-bot-api`           | NestJS + Fastify bot API           | Optional  | `telegram-bot-api.example.com` | `telegram-bot` capability, `postgres` capability                      |
-| `notification-scheduler` | `apps/backend/notification/notification-scheduler` | NestJS scheduled-job process       | Optional  | Not deployable                 | `postgres` capability                                                 |
-| `notification-consumer`  | `apps/backend/notification/notification-consumer`  | NestJS background consumer process | Optional  | Not deployable                 | `postgres` capability, `s3` capability                                |
+| ID                       | Nx project root                                    | Runtime                            | Class     | Template hostname              | Required selection                                                                                             |
+| ------------------------ | -------------------------------------------------- | ---------------------------------- | --------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `admin-app-api`          | `apps/backend/admin/admin-app-api`                 | NestJS + Fastify API               | Reference | `admin-app-api.example.com`    | `authz` capability, `feature-flags` capability, `notifications` capability, `postgres` or `mongodb` capability |
+| `user-app-api`           | `apps/backend/user/user-app-api`                   | NestJS + Fastify API               | Reference | `user-app-api.example.com`     | `postgres` or `mongodb` capability                                                                             |
+| `auth-app-api`           | `apps/backend/auth/auth-app-api`                   | NestJS + Fastify API               | Reference | `auth-app-api.example.com`     | `postgres` or `mongodb` capability                                                                             |
+| `discord-app-api`        | `apps/backend/discord/discord-app-api`             | NestJS + Fastify integration API   | Optional  | `discord-app-api.example.com`  | `discord-bot` capability, `postgres` or `mongodb` capability                                                   |
+| `telegram-bot-api`       | `apps/backend/telegram/telegram-bot-api`           | NestJS + Fastify bot API           | Optional  | `telegram-bot-api.example.com` | `telegram-bot` capability, `postgres` or `mongodb` capability                                                  |
+| `notification-scheduler` | `apps/backend/notification/notification-scheduler` | NestJS scheduled-job process       | Optional  | Not deployable                 | `notifications` capability, `postgres` or `mongodb` capability                                                 |
+| `notification-consumer`  | `apps/backend/notification/notification-consumer`  | NestJS background consumer process | Optional  | Not deployable                 | `notifications` capability, `s3` capability, `postgres` or `mongodb` capability                                |
 
 ## End-to-end projects
 
-| ID               | Nx project root       | Runtime                                     | Class     | Template hostname | Required selection                                                                      |
-| ---------------- | --------------------- | ------------------------------------------- | --------- | ----------------- | --------------------------------------------------------------------------------------- |
-| `fullstack-e2e`  | `apps/e2e/fullstack`  | Playwright full-stack tests                 | Reference | Not deployable    | `admin-app`, `admin-app-api`, `auth-app-api`, `landing-app`, `user-app`, `user-app-api` |
-| `acceptance-e2e` | `apps/e2e/acceptance` | Cucumber.js domain and API acceptance tests | Reference | Not deployable    | None                                                                                    |
+| ID               | Nx project root       | Runtime                                     | Class     | Template hostname | Required selection                                                                                  |
+| ---------------- | --------------------- | ------------------------------------------- | --------- | ----------------- | --------------------------------------------------------------------------------------------------- |
+| `fullstack-e2e`  | `apps/e2e/fullstack`  | Playwright full-stack tests                 | Reference | Not deployable    | `admin-app`, `admin-app-api`, `auth-app-api`, `landing-app`, `site-app`, `user-app`, `user-app-api` |
+| `acceptance-e2e` | `apps/e2e/acceptance` | Cucumber.js domain and API acceptance tests | Reference | Not deployable    | None                                                                                                |
 
 ## Domain ownership
 
@@ -58,6 +58,7 @@ owned by its `project.json`, while public TypeScript aliases are owned by
 | -------------------- | ------------------------------------------------------ |
 | Backend common       | `libs/backend/common/<name>/lib`                       |
 | Backend feature      | `libs/backend/feature/<scope>/<layer>/lib`             |
+| Backend MongoDB      | `libs/backend/mongodb/main/<scope>/lib`                |
 | Backend PostgreSQL   | `libs/backend/postgres/main/<scope>/lib`               |
 | Frontend shared      | `libs/frontend/<name>/lib`                             |
 | Frontend scoped      | `libs/frontend/<scope>/<name>/lib`                     |

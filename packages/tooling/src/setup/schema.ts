@@ -46,6 +46,7 @@ export const capabilityIds = [
   'design-tokens',
   'authz',
   'postgres',
+  'mongodb',
   'redis',
   's3',
   'static-data',
@@ -56,6 +57,38 @@ export const capabilityIds = [
   'discord-bot',
 ] as const;
 export type CapabilityId = (typeof capabilityIds)[number];
+
+export const ciModeIds = ['product', 'maintainer'] as const;
+export type CiMode = (typeof ciModeIds)[number];
+export const frontendApiModeIds = ['same-origin', 'split-origin'] as const;
+export type FrontendApiMode = (typeof frontendApiModeIds)[number];
+export const mobileTargetIds = ['web', 'android', 'ios'] as const;
+export type MobileTarget = (typeof mobileTargetIds)[number];
+export const deploymentTargetIds = ['docker', 'single-server', 'kubernetes'] as const;
+export type DeploymentTarget = (typeof deploymentTargetIds)[number];
+export const publicTopologyIds = ['single-domain', 'per-app-domains', 'external-proxy'] as const;
+export type PublicTopology = (typeof publicTopologyIds)[number];
+export const kubernetesDeliveryIds = ['direct', 'argocd', 'flux'] as const;
+export type KubernetesDelivery = (typeof kubernetesDeliveryIds)[number];
+export const infrastructureOwnershipIds = ['bundled', 'external'] as const;
+export type InfrastructureOwnership = (typeof infrastructureOwnershipIds)[number];
+
+export const defaultProductConfig = {
+  ciMode: 'product',
+  frontendApiMode: 'same-origin',
+  mobileTargets: ['web'],
+} as const;
+
+export const defaultDeploymentConfig = {
+  targets: ['docker'],
+  publicTopology: 'single-domain',
+  kubernetesDelivery: 'direct',
+  infrastructure: {
+    redis: 'bundled',
+    nats: 'bundled',
+    s3: 'bundled',
+  },
+} as const;
 
 /** Supported preset names — deterministic, expandable to apps + capabilities. */
 export const presetIds = ['minimal', 'web', 'fullstack', 'enterprise', 'bots'] as const;
@@ -84,6 +117,37 @@ export const NrbConfigSchema = z
     preset: z.enum(presetIds).optional(),
     apps: z.array(z.enum(appIds)).default([]),
     capabilities: z.array(z.enum(capabilityIds)).default([]),
+    product: z
+      .object({
+        ciMode: z.enum(ciModeIds).default(defaultProductConfig.ciMode),
+        frontendApiMode: z.enum(frontendApiModeIds).default(defaultProductConfig.frontendApiMode),
+        mobileTargets: z.array(z.enum(mobileTargetIds)).default([...defaultProductConfig.mobileTargets]),
+      })
+      .strict()
+      .default({ ...defaultProductConfig, mobileTargets: [...defaultProductConfig.mobileTargets] }),
+    deployment: z
+      .object({
+        targets: z
+          .array(z.enum(deploymentTargetIds))
+          .min(1)
+          .default([...defaultDeploymentConfig.targets]),
+        publicTopology: z.enum(publicTopologyIds).default(defaultDeploymentConfig.publicTopology),
+        kubernetesDelivery: z.enum(kubernetesDeliveryIds).default(defaultDeploymentConfig.kubernetesDelivery),
+        infrastructure: z
+          .object({
+            redis: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.redis),
+            nats: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.nats),
+            s3: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.s3),
+          })
+          .strict()
+          .default({ ...defaultDeploymentConfig.infrastructure }),
+      })
+      .strict()
+      .default({
+        ...defaultDeploymentConfig,
+        targets: [...defaultDeploymentConfig.targets],
+        infrastructure: { ...defaultDeploymentConfig.infrastructure },
+      }),
     options: z
       .object({
         /** When true, prune files that are no longer needed after config change. */

@@ -229,6 +229,7 @@ requirements:
       - '@app/backend-feature-auth-main'
       - '@app/backend-feature-auth-shared'
       - '@app/backend-feature-auth-test'
+      - '@app/backend-mongodb-main-auth'
       - '@app/backend-postgres-main-auth'
     risk: critical
     profiles:

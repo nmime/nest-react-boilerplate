@@ -6,7 +6,13 @@
  * selection. `replace` starts from an empty selection, while explicit removal
  * refuses to break dependency closure.
  */
-import { appCatalog, capabilityCatalog, expandDependencies } from './catalog.js';
+import {
+  appCatalog,
+  capabilityCatalog,
+  durableDatabaseProviderIds,
+  expandDependencies,
+  validateSelection,
+} from './catalog.js';
 import { expandPreset } from './presets.js';
 import {
   parseNrbConfig,
@@ -97,7 +103,22 @@ export function updateSelection(existing: NrbConfig | null, update: SelectionUpd
   }
 
   const resolved = expandDependencies([...apps], [...capabilities]);
+  const providerWasUpdated = [...additions.capabilities, ...removals.capabilities].some((capability) =>
+    durableDatabaseProviderIds.includes(capability as (typeof durableDatabaseProviderIds)[number]),
+  );
+  const requiresDatabase =
+    resolved.apps.some((app) => appCatalog[app].requiresDurableDatabase) ||
+    resolved.capabilities.some((capability) => capabilityCatalog[capability].requiresDurableDatabase);
+  if (
+    requiresDatabase &&
+    !providerWasUpdated &&
+    !durableDatabaseProviderIds.some((provider) => resolved.capabilities.includes(provider))
+  ) {
+    resolved.capabilities.push('postgres');
+    resolved.capabilities.sort();
+  }
   assertRemovalsAreAllowed(removals, resolved);
+  assertSelectionIsValid(resolved);
 
   const customized =
     additions.apps.length > 0 ||
@@ -124,6 +145,13 @@ export function updateSelection(existing: NrbConfig | null, update: SelectionUpd
     capabilities: resolved.capabilities,
     options,
   });
+}
+
+function assertSelectionIsValid(selection: ResolvedSelection): void {
+  const issues = validateSelection(selection.apps, selection.capabilities);
+  if (issues.length > 0) {
+    throw new Error(`Invalid setup selection: ${issues.map((issue) => issue.message).join('; ')}`);
+  }
 }
 
 function parseSelectionLists(

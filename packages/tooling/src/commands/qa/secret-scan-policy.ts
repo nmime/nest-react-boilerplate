@@ -19,3 +19,7 @@ export function isAllowedSecretScanValue(value: string, relativePath = "") {
   if (relativePath.endsWith(generatedToastRulePathSuffix) && generatedToastVariantPattern.test(value)) return true;
   return false;
 }
+
+export function isSecretScanIgnoredPath(relativePath: string) {
+  return relativePath === ".claude/worktrees" || relativePath.startsWith(".claude/worktrees/");
+}

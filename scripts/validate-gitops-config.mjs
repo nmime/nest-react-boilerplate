@@ -21,7 +21,7 @@ const fluxRelease = read('deploy/flux/release.yaml');
 const fluxKustomization = read('deploy/flux/kustomization.yaml');
 const releaseWorkflow = read('.github/workflows/release-images.yml');
 const promotionWorkflow = read('.github/workflows/deploy.yml');
-const tagUpdater = read('scripts/update-deploy-tags.mjs');
+const tagUpdater = read('scripts/update-deploy-tags.py');
 const releaseImagePlan = read('scripts/release-image-plan.mjs');
 
 for (const expected of [
@@ -30,6 +30,7 @@ for (const expected of [
   'namespace: argocd',
   'path: .helm',
   'targetRevision: main',
+  'values-selection.yaml',
   'CreateNamespace=true',
   'prune: true',
   'selfHeal: true',
@@ -55,6 +56,7 @@ for (const expected of [
   'kind: GitRepository',
   'values.yaml',
   'values-production.yaml',
+  'values-selection.yaml',
   'createNamespace: true',
   'strategy: rollback',
 ]) {
@@ -77,27 +79,104 @@ assert.ok(!/github\.com\/example\//u.test(argoRepo), 'GitOps repository must not
 
 has(releaseWorkflow, 'sha-${GITHUB_SHA}', 'release images use the full GitHub SHA');
 has(releaseWorkflow, 'image-plan', 'release workflow builds only selected images');
+has(releaseWorkflow, '[[ "$GITHUB_REF" == refs/tags/* ]]', 'tag releases build a promotable complete selected set');
+has(releaseWorkflow, 'pnpm nrb closure install', 'release workflow validates and installs the selected closure');
+has(
+  releaseWorkflow,
+  'pnpm run deploy:validate:helm',
+  'release workflow validates Helm through fresh selected deployment ownership',
+);
 has(releaseWorkflow, 'node-version-file: .nvmrc', 'release image planner uses the repository Node version');
-has(releaseWorkflow, 'workspace-cache', 'release workflow primes shared Docker dependency cache');
-has(releaseWorkflow, 'scope=release-workspace', 'release workflow shares dependency cache across image targets');
-has(releaseWorkflow, 'cache-to: type=gha,mode=max,scope=release-', 'release workflow exports BuildKit cache');
+has(releaseWorkflow, 'generate-bake-file.mjs --only', 'release workflow generates a selected Bake plan');
+has(releaseWorkflow, 'docker buildx bake -f docker-bake.json', 'release workflow builds only through Bake');
+assert.ok(
+  !releaseWorkflow.includes('docker/build-push-action') && !releaseWorkflow.includes('target: workspace'),
+  'Product release must not prime a direct Docker target without the selected nrb-closure context.',
+);
+has(releaseWorkflow, 'cache-to=type=gha,mode=max,scope=release-', 'release workflow exports BuildKit cache');
+for (const expected of [
+  'cosign sign --yes "$ref"',
+  'cosign attest --yes --type spdxjson',
+  'cosign attest --yes --type slsaprovenance1',
+  'cosign attest --yes --type "$SCAN_PREDICATE_TYPE"',
+  'result: "pass"',
+  'severities: ["CRITICAL", "HIGH"]',
+]) {
+  has(releaseWorkflow, expected, `release workflow signed evidence ${expected}`);
+}
 assert.ok(
   !releaseWorkflow.includes('types: [published]'),
   'release image workflow must not duplicate tag builds on release publication',
 );
 has(promotionWorkflow, '^[0-9a-f]{40}$', 'promotion accepts only a full 40-character SHA');
 has(promotionWorkflow, 'docker manifest inspect --verbose', 'promotion verifies candidate image digests');
+for (const expected of [
+  'cosign verify \\',
+  'cosign verify-attestation --type slsaprovenance1',
+  'cosign verify-attestation --type spdxjson',
+  'cosign verify-attestation --type "$SCAN_PREDICATE_TYPE"',
+  '--certificate-github-workflow-repository "$certificate_repository"',
+  '--certificate-github-workflow-sha "$RELEASE_SHA"',
+  '.predicate.result == "pass"',
+  '.predicate.buildDefinition.resolvedDependencies[]?; .digest.gitCommit == $sha',
+  'release/gitops-sha-$SHA',
+  'git config user.name "nmime"',
+  'git config user.email "66474195+nmime@users.noreply.github.com"',
+  'chore(deploy): promote',
+]) {
+  has(promotionWorkflow, expected, `promotion verification ${expected}`);
+}
+assert.ok(
+  !promotionWorkflow.includes('gitops/sha-') && !promotionWorkflow.includes('github-actions[bot]'),
+  'promotion must use a policy-compliant branch and repository identity',
+);
 has(promotionWorkflow, 'release-image-plan.mjs --names', 'promotion uses the canonical release-image inventory');
-has(promotionWorkflow, 'retaining the currently promoted', 'promotion leaves unaffected workload digests untouched');
+has(promotionWorkflow, 'pnpm nrb closure check', 'promotion validates the candidate selected closure');
+has(promotionWorkflow, '--print-required', 'promotion intersects fresh closure and enabled deployment ownership');
+has(promotionWorkflow, '--selected-image', 'promotion passes fresh closure ownership to the tag updater');
+has(
+  promotionWorkflow,
+  'cmp -s /tmp/nrb-helm-values.yaml .helm/values-selection.yaml',
+  'promotion rejects stale deployment ownership on main',
+);
+has(
+  promotionWorkflow,
+  '--selection-values-file /tmp/nrb-helm-values.yaml',
+  'promotion uses the matching setup-generated Helm ownership overlay',
+);
+has(
+  promotionWorkflow,
+  'Missing immutable candidate digests for selected and enabled images',
+  'promotion rejects missing required candidate digests',
+);
+assert.ok(
+  !releaseWorkflow.includes('--all-reference') && !promotionWorkflow.includes('--all-reference'),
+  'Product release and promotion workflows must not use all-reference image planning.',
+);
 has(promotionWorkflow, 'gh pr create', 'promotion opens a pull request');
 assert.ok(!promotionWorkflow.includes('workflow_run:'), 'promotion must not create a self-triggering main-commit loop');
 assert.ok(!promotionWorkflow.includes('HEAD:main'), 'promotion must never push directly to main');
-has(tagUpdater, '/^[0-9a-fA-F]{40}$/u', 'tag updater requires the release workflow full SHA');
-has(tagUpdater, '/^sha256:[0-9a-fA-F]{64}$/u', 'tag updater requires immutable image digests');
+has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', args.sha)", 'tag updater requires the release workflow full SHA');
+has(tagUpdater, "re.fullmatch(r'sha256:[0-9a-fA-F]{64}', digest)", 'tag updater requires immutable image digests');
 has(
   tagUpdater,
-  'the first promotion must supply every release image digest',
-  'tag updater protects initial promotion completeness',
+  "default='.helm/values-selection.yaml'",
+  'tag updater defaults to the tracked setup-generated Helm ownership overlay',
+);
+has(
+  tagUpdater,
+  'selected & enabled_deployment_images',
+  'tag updater derives selected and enabled deployment ownership',
+);
+has(
+  tagUpdater,
+  'missing immutable digests for selected and enabled images',
+  'tag updater rejects incomplete promotions',
+);
+has(
+  tagUpdater,
+  'image digests are outside selected and enabled deployment ownership',
+  'tag updater rejects unselected or disabled digest updates',
 );
 has(releaseImagePlan, 'selectReleaseImages', 'release inventory has testable affected-image selection');
 

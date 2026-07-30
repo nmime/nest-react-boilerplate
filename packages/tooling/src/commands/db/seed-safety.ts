@@ -10,6 +10,7 @@ export interface SeedSafetyArgs {
 export interface SeedSafetyOptions {
   env?: NodeJS.ProcessEnv;
   assertLocalDevelopmentDatabase?: (connectionString: string) => void;
+  isLocalDevelopmentDatabase?: (connectionString: string, env: NodeJS.ProcessEnv) => boolean;
 }
 
 function isTruthy(value: unknown): boolean {
@@ -29,11 +30,13 @@ export function isLocalDevelopmentDatabase(
   // host/name heuristic remains the secondary check for local/dev/test runs.
   if (env.NODE_ENV === "production") return false;
   const url = new URL(connectionString);
-  const host = url.hostname.toLowerCase();
-  const database = url.pathname.replace(/^\//u, "");
+  const hosts = [url.host].map((host) =>
+    host.startsWith("[") ? host.slice(1, host.indexOf("]")).toLowerCase() : host.replace(/:\d+$/u, "").toLowerCase(),
+  );
+  const database = decodeURIComponent(url.pathname.replace(/^\//u, ""));
   const localHosts = new Set(["localhost", "127.0.0.1", "::1", "postgres"]);
   const looksLikeDevDb = /(^|_)(dev|test|boilerplate)($|_)/u.test(database);
-  return localHosts.has(host) && looksLikeDevDb;
+  return hosts.every((host) => localHosts.has(host)) && looksLikeDevDb;
 }
 
 export function resolvePassword(
@@ -51,9 +54,13 @@ export function resolvePassword(
 export function assertSeedSafety(
   args: SeedSafetyArgs,
   connectionString: string,
-  { env = process.env, assertLocalDevelopmentDatabase }: SeedSafetyOptions = {},
+  {
+    env = process.env,
+    assertLocalDevelopmentDatabase,
+    isLocalDevelopmentDatabase: inspectLocalDatabase = isLocalDevelopmentDatabase,
+  }: SeedSafetyOptions = {},
 ): void {
-  const localDevelopmentDatabase = isLocalDevelopmentDatabase(connectionString, env);
+  const localDevelopmentDatabase = inspectLocalDatabase(connectionString, env);
   const productionRuntime = env.NODE_ENV === "production";
   const defaultSeedCredentials =
     args.email.toLowerCase() === DefaultAdminEmail &&

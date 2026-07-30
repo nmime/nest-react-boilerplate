@@ -2,7 +2,8 @@
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
 import { AdminAuditLogEntity, DefaultAuthTenantId, TransactionalOutboxEventEntity } from '../entities';
-import { AdminAuditLogRepository, AdminAuditLogTransactionError } from './admin-audit-log.repository';
+import { AdminAuditLogTransactionError } from '@app/backend-feature-auth-shared';
+import { AdminAuditLogRepository } from './admin-audit-log.repository';
 
 function createEntityManagerMock() {
   const persist = vi.fn(() => undefined);

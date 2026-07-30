@@ -5,7 +5,7 @@ import type {
   AuthProviderTokenKind,
   ExternalAuthProvider,
   ExternalAuthProviderChannel,
-} from '@app/backend-postgres-main-auth';
+} from '@app/backend-feature-auth-shared';
 
 export interface SocialAuthStoreError {
   code: 'repository_error';

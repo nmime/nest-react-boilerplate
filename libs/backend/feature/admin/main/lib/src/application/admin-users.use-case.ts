@@ -1,15 +1,15 @@
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import type {
-  AdminAuditLogRepository,
-  AdminUserMutationRepository,
+  AuthenticatedPrincipal,
+  AdminAuditLogRepositoryPort,
+  AdminUserMutationRepositoryPort,
   AdminUserMutationResult,
-  AuthPermissionEntity,
-  AuthRoleEntity,
-  AuthRoleRepository,
-  AuthUserRepository,
-  AdminAuditLogEntity,
-  AuthUserEntity,
-} from '@app/backend-postgres-main-auth';
+  AuthPermissionRecord,
+  AuthRoleRecord,
+  AuthRoleRepositoryPort,
+  AuthUserRepositoryPort,
+  AdminAuditLogRecord,
+  AuthUserPersistenceRecord,
+} from '@app/backend-feature-auth-shared';
 import { AdminApplicationError } from './admin-errors';
 import {
   normalizeAdminPage,
@@ -26,10 +26,10 @@ import { requireAllowedPolicy, resolveTenantId, unwrapRepositoryResult, unwrapSe
 
 export class AdminUsersUseCase {
   constructor(
-    private readonly users: AuthUserRepository,
-    private readonly auditLogs: AdminAuditLogRepository,
-    private readonly adminUserMutations: AdminUserMutationRepository,
-    private readonly roles: AuthRoleRepository,
+    private readonly users: AuthUserRepositoryPort,
+    private readonly auditLogs: AdminAuditLogRepositoryPort,
+    private readonly adminUserMutations: AdminUserMutationRepositoryPort,
+    private readonly roles: AuthRoleRepositoryPort,
   ) {}
 
   async listUsers(principal: AuthenticatedPrincipal, query: AdminUserQuery): Promise<AdminUserListPayload> {
@@ -47,7 +47,7 @@ export class AdminUsersUseCase {
     const [items, total] = await Promise.all([this.users.listUsers(filter), this.users.countUsers(filter)]);
 
     return {
-      items: unwrapRepositoryResult<AuthUserEntity[]>(items).map(toAdminUserView),
+      items: unwrapRepositoryResult<AuthUserPersistenceRecord[]>(items).map(toAdminUserView),
       total: unwrapRepositoryResult<number>(total),
       limit,
       offset,
@@ -56,7 +56,7 @@ export class AdminUsersUseCase {
 
   async getUser(principal: AuthenticatedPrincipal, id: string): Promise<AdminUserView> {
     const user = await this.users.findById(id, resolveTenantId(principal));
-    const entity = unwrapRepositoryResult<AuthUserEntity | null>(user);
+    const entity = unwrapRepositoryResult<AuthUserPersistenceRecord | null>(user);
     if (!entity) {
       throw new AdminApplicationError('not_found', 'Admin user was not found.');
     }
@@ -139,7 +139,7 @@ export class AdminUsersUseCase {
       disabledUsers: unwrapRepositoryResult<number>(disabledUsers),
       invitedUsers: unwrapRepositoryResult<number>(invitedUsers),
       recentAuditEvents: unwrapRepositoryResult<number>(auditCount),
-      recentAudit: unwrapRepositoryResult<AdminAuditLogEntity[]>(audit).map(toAdminAuditLogView),
+      recentAudit: unwrapRepositoryResult<AdminAuditLogRecord[]>(audit).map(toAdminAuditLogView),
     };
   }
 
@@ -147,7 +147,7 @@ export class AdminUsersUseCase {
     if (roleKeys.length === 0) {
       return;
     }
-    const found = unwrapRepositoryResult<AuthRoleEntity[]>(await this.roles.findByKeys(roleKeys, tenantId));
+    const found = unwrapRepositoryResult<AuthRoleRecord[]>(await this.roles.findByKeys(roleKeys, tenantId));
     const foundKeys = new Set(found.map((role) => role.key));
     const unknown = roleKeys.filter((key) => !foundKeys.has(key));
     if (unknown.length > 0) {
@@ -162,7 +162,7 @@ export class AdminUsersUseCase {
     if (permissionKeys.length === 0) {
       return;
     }
-    const found = unwrapRepositoryResult<AuthPermissionEntity[]>(
+    const found = unwrapRepositoryResult<AuthPermissionRecord[]>(
       await this.roles.findPermissionsByKeys(permissionKeys),
     );
     const foundKeys = new Set(found.map((permission) => permission.key));

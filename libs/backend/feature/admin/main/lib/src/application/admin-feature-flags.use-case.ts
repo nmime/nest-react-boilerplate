@@ -1,10 +1,49 @@
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import type { FeatureFlagValue } from '@app/common-feature-flags';
-import { AdminAuditLogRepository } from '@app/backend-postgres-main-auth';
-import { FeatureFlagRepository, type FeatureFlagEntity } from '@app/backend-postgres-main-feature-flags';
+import type { AdminAuditLogRepositoryPort, AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import type { FeatureFlagContext, FeatureFlagValue } from '@app/common-feature-flags';
+import type { ResultAsync } from 'neverthrow';
 import { AdminApplicationError } from './admin-errors';
 import { resolveTenantId, unwrapRepositoryResult } from './util';
 import type { AdminRequestContext } from '../domain';
+
+export interface AdminFeatureFlagRecord {
+  createdAt: Date;
+  description: string;
+  enabled: boolean;
+  id: string;
+  key: string;
+  tenantId: string;
+  updatedAt: Date;
+  value: FeatureFlagValue;
+}
+
+export interface AdminFeatureFlagRepositoryError {
+  code: 'repository_error';
+  message: string;
+}
+
+export interface AdminFeatureFlagUpsertInput {
+  description?: string | null;
+  enabled?: boolean;
+  key: string;
+  tenantId?: string;
+  value: FeatureFlagValue;
+}
+
+export interface AdminFeatureFlagRepository {
+  findByKey(
+    key: string,
+    tenantId?: string,
+    transactionContext?: unknown,
+  ): ResultAsync<AdminFeatureFlagRecord | null, AdminFeatureFlagRepositoryError>;
+  list(
+    context?: FeatureFlagContext,
+    transactionContext?: unknown,
+  ): ResultAsync<AdminFeatureFlagRecord[], AdminFeatureFlagRepositoryError>;
+  upsert(
+    input: AdminFeatureFlagUpsertInput,
+    transactionContext?: unknown,
+  ): ResultAsync<AdminFeatureFlagRecord, AdminFeatureFlagRepositoryError>;
+}
 
 export interface AdminFeatureFlagView {
   createdAt: string;
@@ -26,7 +65,7 @@ const isFeatureFlagValue = (value: unknown): value is FeatureFlagValue =>
   typeof value === 'boolean' || typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value));
 const featureFlagKeyPattern = /^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9]*)*$/u;
 
-const toView = (entity: FeatureFlagEntity): AdminFeatureFlagView => ({
+const toView = (entity: AdminFeatureFlagRecord): AdminFeatureFlagView => ({
   createdAt: entity.createdAt.toISOString(),
   description: entity.description,
   enabled: entity.enabled,
@@ -38,13 +77,13 @@ const toView = (entity: FeatureFlagEntity): AdminFeatureFlagView => ({
 
 export class AdminFeatureFlagsUseCase {
   constructor(
-    private readonly featureFlags: FeatureFlagRepository,
-    private readonly auditLogs: AdminAuditLogRepository,
+    private readonly featureFlags: AdminFeatureFlagRepository,
+    private readonly auditLogs: AdminAuditLogRepositoryPort,
   ) {}
 
   async list(principal: AuthenticatedPrincipal): Promise<{ items: AdminFeatureFlagView[] }> {
     const tenantId = resolveTenantId(principal);
-    const flags = unwrapRepositoryResult<FeatureFlagEntity[]>(await this.featureFlags.list({ tenantId }));
+    const flags = unwrapRepositoryResult<AdminFeatureFlagRecord[]>(await this.featureFlags.list({ tenantId }));
     return { items: flags.map(toView) };
   }
 
@@ -68,11 +107,11 @@ export class AdminFeatureFlagsUseCase {
 
     const result = await this.auditLogs.recordTransactionally({
       operation: async (entityManager) => {
-        const beforeEntity = unwrapRepositoryResult<FeatureFlagEntity | null>(
+        const beforeEntity = unwrapRepositoryResult<AdminFeatureFlagRecord | null>(
           await this.featureFlags.findByKey(key, tenantId, entityManager),
         );
         const before = beforeEntity ? toView(beforeEntity) : undefined;
-        const afterEntity = unwrapRepositoryResult<FeatureFlagEntity>(
+        const afterEntity = unwrapRepositoryResult<AdminFeatureFlagRecord>(
           await this.featureFlags.upsert(
             {
               tenantId,

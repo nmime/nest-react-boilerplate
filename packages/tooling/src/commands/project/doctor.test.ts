@@ -1,12 +1,16 @@
 // @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { plan } from "../../setup/planner.ts";
+import { parseNrbConfig, schemaVersion } from "../../setup/schema.ts";
 import { buildState, hashString } from "../../setup/state.ts";
 import {
   checkBunVersion,
+  checkCapabilityActivation,
+  checkComposeSelection,
   checkJavaScriptRuntime,
   checkNodeVersion,
   checkNrbState,
@@ -57,6 +61,99 @@ describe("project doctor runtime policy", () => {
       assert.match(drifted.message, /workspace\.json/u);
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("accepts provider-free Compose selections and rejects mixed database providers", () => {
+    const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-doctor-compose-"));
+    const stateDirectory = join(workspaceRoot, ".nrb");
+    const dockerDirectory = join(workspaceRoot, "docker");
+    mkdirSync(stateDirectory);
+    mkdirSync(dockerDirectory);
+
+    try {
+      writeFileSync(
+        join(workspaceRoot, "nrb.config.json"),
+        JSON.stringify({
+          schemaVersion: "1.0.0",
+          apps: ["landing-app"],
+          capabilities: [],
+          options: { prune: false, force: false, dryRun: false, nonInteractive: true },
+        }),
+      );
+      writeFileSync(
+        join(stateDirectory, "closure.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          configHash: "a".repeat(64),
+          graphDigest: "b".repeat(64),
+          provider: null,
+          roots: ["landing-app"],
+          projects: ["landing-app"],
+          targets: { build: ["landing-app"] },
+          productExternalPackages: {},
+          toolingExternalPackages: {},
+          services: ["landing-app"],
+          releaseImages: ["landing-app"],
+        }),
+      );
+      writeFileSync(
+        join(dockerDirectory, "docker-compose.yml"),
+        "services:\n  landing-app:\n    image: scratch\n    profiles: [landing-app]\n",
+      );
+      writeFileSync(
+        join(stateDirectory, "capabilities.env"),
+        "NRB_APPS=landing-app\nNRB_CAPABILITIES=\nCOMPOSE_PROFILES=landing-app\nDATABASE_ENGINE=\nAUTH_PERSISTENCE=\n",
+      );
+      const neither = checkComposeSelection(workspaceRoot);
+      assert.notEqual(neither.status, "fail");
+      assert.match(neither.message, /provider-free/u);
+
+      writeFileSync(
+        join(stateDirectory, "capabilities.env"),
+        "NRB_APPS=landing-app\nNRB_CAPABILITIES=mongodb,postgres\nCOMPOSE_PROFILES=mongodb,postgres\nDATABASE_ENGINE=mongodb\nAUTH_PERSISTENCE=mongodb\n",
+      );
+      const both = checkComposeSelection(workspaceRoot);
+      assert.equal(both.status, "fail");
+      assert.match(both.message, /NRB_CAPABILITIES is stale/u);
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("detects opposite-provider drift in generated backend composition", () => {
+    for (const provider of ["postgres", "mongodb"] as const) {
+      const workspaceRoot = mkdtempSync(join(tmpdir(), `nrb-doctor-${provider}-`));
+      try {
+        const config = parseNrbConfig({
+          schemaVersion,
+          apps: ["user-app-api"],
+          capabilities: [provider],
+        });
+        for (const operation of plan(config).operations) {
+          if (operation.kind !== "create_file" && operation.kind !== "update_file") continue;
+          const path = join(workspaceRoot, operation.path);
+          mkdirSync(dirname(path), { recursive: true });
+          writeFileSync(path, operation.content);
+        }
+
+        assert.equal(checkCapabilityActivation(workspaceRoot).status, "pass");
+
+        const generatedPath = join(
+          workspaceRoot,
+          "apps/backend/user/user-app-api/src/capabilities.generated.ts",
+        );
+        const selectedName = provider === "postgres" ? "PostgresMainModule" : "MongoMainModule";
+        const oppositeName = provider === "postgres" ? "MongoMainModule" : "PostgresMainModule";
+        const generated = readFileSync(generatedPath, "utf8");
+        writeFileSync(generatedPath, generated.replace(selectedName, oppositeName));
+
+        const drifted = checkCapabilityActivation(workspaceRoot);
+        assert.equal(drifted.status, "fail");
+        assert.match(drifted.message, /user-app-api\/src\/capabilities\.generated\.ts/u);
+      } finally {
+        rmSync(workspaceRoot, { recursive: true, force: true });
+      }
     }
   });
 });

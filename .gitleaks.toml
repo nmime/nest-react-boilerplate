@@ -28,6 +28,16 @@ regexes = [
 ]
 
 [[rules.allowlists]]
+description = "Bun runtime documentation integration names"
+condition = "AND"
+paths = [
+  '''^docs/bun-runtime-research\.md$''',
+]
+regexes = [
+  '''Discord/Telegram''',
+]
+
+[[rules.allowlists]]
 description = "Authentication test secret placeholder"
 condition = "AND"
 paths = [
@@ -47,6 +57,7 @@ paths = [
   '''^apps/backend/discord/discord-app-api/src/discord-app-api\.module\.spec\.ts$''',
   '''^libs/backend/feature/discord/bot/lib/src/service/discord-command-registration\.service\.spec\.ts$''',
   '''^libs/backend/feature/discord/bot/lib/src/service/discord-config\.spec\.ts$''',
+  '''^packages/tooling/src/commands/tooling/bun-compat\.ts$''',
 ]
 regexes = [
   '''123456789012345678''',

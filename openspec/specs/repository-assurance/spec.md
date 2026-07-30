@@ -62,6 +62,9 @@ requirements, evidence lane, commands, outcomes, and execution time.
 
 - Reports from another commit are stale and cannot authorize a release.
 - PR, main, nightly, and runtime evidence remain distinct.
+- Repository-global source, configuration, workflow, and policy changes select
+  the complete requirement inventory when no narrower project scope is safe.
+- Added, modified, renamed, and deleted files participate in impact selection.
 
 **Failure behavior:**
 

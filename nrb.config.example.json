@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "apps": ["landing-app", "user-app"],
-  "capabilities": ["otel", "swagger"],
+  "capabilities": ["otel", "postgres", "swagger"],
   "options": {
     "prune": false,
     "force": false,

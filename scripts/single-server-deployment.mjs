@@ -20,13 +20,9 @@ export const frontendDistDirectories = {
 };
 const publicModes = new Set(['single-domain', 'per-app-domains']);
 export const runtimeModes = new Set(['compose', 'native']);
-/**
- * Every profile the Compose wrapper supports. Only `discord` and `telegram` publish
- * an HTTP surface, so the notification workers are accepted and then ignored by the
- * edge — rejecting them here made the notification profiles unusable on a host that
- * `serverctl validate` explicitly supports.
- */
 const profiles = new Set(['discord', 'notification-consumer', 'notification-scheduler', 'telegram']);
+const databaseEngines = new Set(['postgres', 'mongodb']);
+const databaseModes = new Set(['bundled-db', 'external-db', 'native']);
 const appPorts = {
   ADMIN_APP_API_PORT: 3001,
   USER_APP_API_PORT: 3002,
@@ -135,6 +131,11 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv, fronte
   const productionPath = resolve(rootDir, productionEnv);
   const server = readEnvironment(serverPath, 'Server environment');
   const production = readEnvironment(productionPath, 'Production environment');
+
+  const databaseEngine = production.DATABASE_ENGINE?.trim().toLowerCase() || 'postgres';
+  if (!databaseEngines.has(databaseEngine)) fail('DATABASE_ENGINE must be postgres or mongodb.');
+  const databaseMode = required(production, 'COMPOSE_DATABASE_MODE', 'the production environment');
+  if (!databaseModes.has(databaseMode)) fail('COMPOSE_DATABASE_MODE must be bundled-db, external-db, or native.');
 
   if (production.COMPOSE_DOMAIN_MODE !== 'external-proxy') {
     fail('COMPOSE_DOMAIN_MODE must be external-proxy for the host Nginx deployment.');
@@ -282,6 +283,8 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv, fronte
     certificateMode,
     certificateName,
     clientMaxBodySize,
+    databaseEngine,
+    databaseMode,
     domain,
     domains,
     enabledProfiles,
@@ -664,13 +667,19 @@ function main() {
     }
     const configuration = loadSingleServerConfiguration(options);
     if (options.command === 'validate') {
+      if (configuration.databaseEngine === 'mongodb' && configuration.databaseMode === 'bundled-db') {
+        console.error(
+          'WARNING: bundled MongoDB is a single-node replica set for transactions and is not highly available.',
+        );
+      }
       // Name what is served from disk: "static" degrades to a proxy for an SSR
       // primary, and an operator must be able to see that from the output.
       const served = Object.keys(frontendDistDirectories)
         .filter((appId) => staticDirectoryFor(configuration, appId))
         .join(',');
       console.log(
-        `single-server configuration valid: runtime=${configuration.runtimeMode}, domains=${configuration.publicMode}, ` +
+        `single-server configuration valid: runtime=${configuration.runtimeMode}, ` +
+          `database=${configuration.databaseEngine}/${configuration.databaseMode}, domains=${configuration.publicMode}, ` +
           `certificate=${configuration.certificateMode}, hosts=${configuration.publicHosts.length}, ` +
           `frontends=${configuration.frontendMode}${served ? ` (from disk: ${served})` : ''}`,
       );

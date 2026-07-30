@@ -24,15 +24,15 @@ See [architecture docs](../architecture.md) for module boundaries and [API conve
     "uptime": 12345.67,
     "timestamp": "2025-01-01T00:00:00.000Z",
     "dependencies": [
-      { "name": "postgres", "status": "ok", "required": true, "detail": "..." }
+      { "name": "database", "status": "ok", "required": true, "detail": "..." }
     ],
     "checks": [
       {
-        "name": "postgres",
+        "name": "database",
         "status": "ok",
         "required": true,
         "durationMs": 2,
-        "details": { "message": "select 1 succeeded" }
+        "details": { "reachable": true }
       }
     ]
   }
@@ -60,7 +60,9 @@ When any required indicator fails, `/ready` returns **HTTP 503** with the failur
 
 1. **Check which indicator failed** — inspect the `checks` array for `status: "error"` with `required: true`.
 2. **Common indicators and fixes:**
-   - `postgres` — database connection refused or authentication failed. Check `DATABASE_URL`, network, and Postgres logs. See [dependency readiness triage](dependency-triage.md).
+   - `database` — the selected PostgreSQL or MongoDB provider is unreachable. Check `DATABASE_URL`, or `MONGODB_URI`/`MONGODB_DATABASE`, network, and provider logs. See [dependency readiness triage](dependency-triage.md).
+   - `database-transactions` — MongoDB is reachable but its topology is not transaction-capable. Standalone, session-less, non-primary, replica-set-mismatched, and unsupported wire-version deployments fail this required check.
+   - `database-migrations` — optional PostgreSQL migration-drift detail. MongoDB startup and the migration job verify its native ledger, validators, and indexes separately.
    - `redis` — Redis connection refused. Check `REDIS_URL` or `REDIS_HOSTS`. See [dependency readiness triage](dependency-triage.md).
    - `nats` — NATS connection refused. Check `NATS_SERVERS`. See [dependency readiness triage](dependency-triage.md).
 3. **Verify from inside the container** (if accessible):

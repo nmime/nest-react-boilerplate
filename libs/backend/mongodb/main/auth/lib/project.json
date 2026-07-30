@@ -1,0 +1,38 @@
+{
+  "name": "@app/backend-mongodb-main-auth",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/mongodb/main/auth/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:data-access", "scope:auth"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/mongodb/main/auth/lib",
+        "main": "libs/backend/mongodb/main/auth/lib/src/index.ts",
+        "tsConfig": "libs/backend/mongodb/main/auth/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/backend/mongodb/main/auth/lib",
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
+      },
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/mongodb/main/auth/lib"]
+    },
+    "component-test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/backend/mongodb/main/auth/lib",
+        "command": "NODE_ENV=test vitest run --config vitest.component.config.mts"
+      },
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/mongodb/main/auth/lib-component"]
+    }
+  }
+}

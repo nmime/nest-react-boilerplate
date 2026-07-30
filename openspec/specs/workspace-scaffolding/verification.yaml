@@ -44,6 +44,7 @@ requirements:
   - id: REQ-SCAFFOLD-SELECTION-002
     projects:
       - '@repo/tooling'
+      - fullstack-e2e
     risk: high
     profiles:
       - tooling
@@ -67,6 +68,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: vitest
+        file: apps/e2e/fullstack/tests/compose.test.ts
+        target: fullstack-e2e:test
+        lanes:
+          - pr
+          - main
   - id: REQ-SCAFFOLD-GENERATORS-003
     projects:
       - '@repo/tooling'
@@ -81,6 +88,7 @@ requirements:
       alternativeEvidence:
         - static
         - vitest
+        - component
     evidence:
       - kind: static
         file: packages/tooling/src/generators/feature/generator.ts
@@ -94,6 +102,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: component
+        file: packages/tooling/src/generators/application/generated.integration.ts
+        script: scaffold:verify
+        lanes:
+          - main
+          - nightly
   - id: REQ-SCAFFOLD-INIT-004
     projects:
       - '@repo/tooling'
@@ -168,6 +182,24 @@ requirements:
           - main
       - kind: vitest
         file: packages/tooling/src/commands/testing/frontend-browser-e2e-coverage.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/test-orchestration.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/world-class-gates.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/browser-matrix.test.ts
         target: '@repo/tooling:test'
         lanes:
           - pr

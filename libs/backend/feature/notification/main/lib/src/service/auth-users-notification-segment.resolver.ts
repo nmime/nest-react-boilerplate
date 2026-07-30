@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { supportedLocales, type Locale } from '@app/backend-common-i18n';
+import { AuthUserRepositoryInjectToken, type AuthUserRepositoryPort } from '@app/backend-feature-auth-shared';
 import {
   NotificationSegmentResolver,
   type NotificationSegmentResolveInput,
   type NotificationSegmentResolvePage,
   type NotificationSegmentResolvePageInput,
 } from '@app/backend-feature-notification-shared';
-import { AuthUserRepository } from '@app/backend-postgres-main-auth';
 import { NotificationTargetType, type NotificationData } from '@app/common-notifications';
 
 @Injectable()
@@ -28,7 +28,7 @@ export class AuthUsersNotificationSegmentResolver extends NotificationSegmentRes
     },
   } as const;
 
-  constructor(private readonly users: AuthUserRepository) {
+  constructor(@Inject(AuthUserRepositoryInjectToken) private readonly users: AuthUserRepositoryPort) {
     super();
   }
 

@@ -1,13 +1,14 @@
 import { createHmac } from 'node:crypto';
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { normalizeLocale, parseAcceptLanguage } from '@app/backend-common-i18n';
 import { requestContext } from '@app/backend-common-request-context';
 import { resolveTenantId, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
 import {
-  AuthLoginEventRepository,
+  AuthLoginEventRepositoryInjectToken,
+  type AuthLoginEventRepositoryPort,
   type AuthLoginEventType,
   type AuthLoginOutcome,
-} from '@app/backend-postgres-main-auth';
+} from '@app/backend-feature-auth-shared';
 import { GeoIpResolverService } from './geo-ip-resolver.service';
 
 export interface AuthLoginAnalyticsRecordInput {
@@ -31,7 +32,7 @@ export class AuthLoginAnalyticsService {
 
   constructor(
     private readonly geoIp: GeoIpResolverService,
-    @Optional() private readonly events?: AuthLoginEventRepository,
+    @Optional() @Inject(AuthLoginEventRepositoryInjectToken) private readonly events?: AuthLoginEventRepositoryPort,
   ) {}
 
   /** Analytics is security evidence, but an analytics outage must never mint a

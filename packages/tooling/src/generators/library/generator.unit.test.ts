@@ -111,6 +111,10 @@ describe('library generator', () => {
 
       const index = tree.read('libs/backend/common/shared-utils/lib/src/index.ts', 'utf8')!;
       assert.ok(index.includes('sharedUtilsVersion'));
+      assert.match(
+        tree.read('libs/backend/common/shared-utils/lib/src/index.spec.ts', 'utf8')!,
+        /^\/\/ @requirements REQ-SHARED-UTILS-SCAFFOLD-001$/mu,
+      );
     });
 
     it('creates vitest config', async () => {
@@ -200,6 +204,10 @@ describe('library generator', () => {
       assert.ok(tree.exists('libs/frontend/ui-components/lib/src/ui-components.component.tsx'));
       const component = tree.read('libs/frontend/ui-components/lib/src/ui-components.component.tsx', 'utf8')!;
       assert.ok(component.includes('UiComponentsComponent'));
+      assert.match(
+        tree.read('libs/frontend/ui-components/lib/src/index.spec.tsx', 'utf8')!,
+        /^\/\/ @requirements REQ-UI-COMPONENTS-SCAFFOLD-001$/mu,
+      );
     });
 
     it('creates source files with index barrel', async () => {
@@ -323,6 +331,85 @@ describe('library generator', () => {
       assert.deepEqual(tsconfig.compilerOptions.paths['@app/frontend-feature-billing-shared'], [
         'libs/frontend/feature/billing/shared/lib/src/index.ts',
       ]);
+    });
+
+    it('creates MongoDB data-access ownership and keeps PostgreSQL as the compatibility default', async () => {
+      const mongoTree = await createTree();
+      const { libraryGenerator } = await import('./generator.js');
+      await libraryGenerator(mongoTree, {
+        name: 'ledger-store',
+        kind: 'backend',
+        type: 'data-access',
+        scope: 'ledger',
+        database: 'mongodb',
+        skipFormat: true,
+      });
+      assert.ok(mongoTree.exists('libs/backend/mongodb/main/ledger/lib/project.json'));
+      const mongoTsconfig = JSON.parse(mongoTree.read('tsconfig.base.json', 'utf8')!);
+      assert.deepEqual(mongoTsconfig.compilerOptions.paths['@app/backend-mongodb-main-ledger'], [
+        'libs/backend/mongodb/main/ledger/lib/src/index.ts',
+      ]);
+
+      const postgresTree = await createTree();
+      await libraryGenerator(postgresTree, {
+        name: 'ledger-store',
+        kind: 'backend',
+        type: 'data-access',
+        scope: 'ledger',
+        skipFormat: true,
+      });
+      assert.ok(postgresTree.exists('libs/backend/postgres/main/ledger/lib/project.json'));
+    });
+
+    it('derives setup database selection and rejects mismatches and provider collisions', async () => {
+      const { libraryGenerator } = await import('./generator.js');
+      const selectedTree = await createTree();
+      selectedTree.write('.nrb/workspace.json', JSON.stringify({ capabilities: ['mongodb'] }));
+      await libraryGenerator(selectedTree, {
+        name: 'ledger-store',
+        kind: 'backend',
+        type: 'data-access',
+        scope: 'ledger',
+        skipFormat: true,
+      });
+      assert.ok(selectedTree.exists('libs/backend/mongodb/main/ledger/lib/project.json'));
+
+      const mismatchTree = await createTree();
+      mismatchTree.write('.nrb/workspace.json', JSON.stringify({ capabilities: ['mongodb'] }));
+      await assert.rejects(
+        () =>
+          libraryGenerator(mismatchTree, {
+            name: 'ledger-store',
+            kind: 'backend',
+            type: 'data-access',
+            scope: 'ledger',
+            database: 'postgres',
+            skipFormat: true,
+          }),
+        /Database provider mismatch/,
+      );
+
+      const collisionTree = await createTree();
+      collisionTree.write(
+        'libs/backend/postgres/main/ledger/lib/project.json',
+        JSON.stringify({
+          name: '@app/backend-postgres-main-ledger',
+          root: 'libs/backend/postgres/main/ledger/lib',
+          projectType: 'library',
+        }),
+      );
+      await assert.rejects(
+        () =>
+          libraryGenerator(collisionTree, {
+            name: 'ledger-store',
+            kind: 'backend',
+            type: 'data-access',
+            scope: 'ledger',
+            database: 'mongodb',
+            skipFormat: true,
+          }),
+        /Database provider collision/,
+      );
     });
 
     it('rejects platform-incompatible library roles', async () => {

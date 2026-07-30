@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { sessionCookieSecuritySchemes } from './swagger.const';
 
 export type SwaggerAuthScheme = 'session-cookie';
@@ -44,10 +44,13 @@ export function resolveSwaggerOptions(
   };
 }
 
-export function setupSwagger(app: INestApplication, options: SetupSwaggerOptions): void {
+export function createSwaggerDocument(
+  app: INestApplication,
+  options: SetupSwaggerOptions,
+): { document: OpenAPIObject; path: string } | undefined {
   const resolved = resolveSwaggerOptions(options);
   if (!resolved.enabled) {
-    return;
+    return undefined;
   }
 
   const builder = new DocumentBuilder().setTitle(resolved.title).setVersion(resolved.version);
@@ -64,7 +67,14 @@ export function setupSwagger(app: INestApplication, options: SetupSwaggerOptions
 
   const config = builder.build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup(resolved.path, app, document, {
-    jsonDocumentUrl: `${resolved.path}/openapi.json`,
-  });
+  return { document, path: resolved.path };
+}
+
+export function setupSwagger(app: INestApplication, options: SetupSwaggerOptions): void {
+  const generated = createSwaggerDocument(app, options);
+  if (generated) {
+    SwaggerModule.setup(generated.path, app, generated.document, {
+      jsonDocumentUrl: `${generated.path}/openapi.json`,
+    });
+  }
 }

@@ -1,6 +1,9 @@
 // @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { describe as nodeDescribe, it as nodeIt } from "node:test";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { parseAddArgs, runAddCommand } from "./add.js";
 import type { CommandContext } from "../../cli.js";
 import { createNxGeneratorRunner } from "./nx-generator-runner.js";
@@ -56,6 +59,11 @@ describe("parseAddArgs", () => {
     assert.equal(args.force, true);
   });
 
+  it("parses an explicit database provider", () => {
+    assert.equal(parseAddArgs(["feature", "x", "--database", "mongodb"]).database, "mongodb");
+    assert.equal(parseAddArgs(["feature", "x", "--database=postgres"]).database, "postgres");
+  });
+
   it("parses an explicit application port", () => {
     assert.equal(parseAddArgs(["app", "portal", "--port", "4210"]).port, 4210);
     assert.equal(parseAddArgs(["app", "portal", "--port=4211"]).port, 4211);
@@ -88,6 +96,16 @@ function makeMockRunner(result: NxGeneratorResult): NxGeneratorFn {
 
 function makeContext(argv: string[]): CommandContext {
   return { argv, packageRoot: "/tmp", workspaceRoot: "/tmp" };
+}
+
+function makeSelectedContext(argv: string[], capabilities: string[]): { context: CommandContext; cleanup: () => void } {
+  const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-add-"));
+  mkdirSync(join(workspaceRoot, ".nrb"));
+  writeFileSync(join(workspaceRoot, ".nrb", "workspace.json"), JSON.stringify({ capabilities }));
+  return {
+    context: { argv, packageRoot: join(workspaceRoot, "packages/tooling"), workspaceRoot },
+    cleanup: () => rmSync(workspaceRoot, { recursive: true, force: true }),
+  };
 }
 
 function featureArgs(name: string, ...extra: string[]): string[] {
@@ -187,7 +205,7 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    const status = await runAddCommand(makeContext(featureArgs("billing")), runner);
+    const status = await runAddCommand(makeContext(featureArgs("billing", "--database=postgres")), runner);
     assert.equal(status, 0);
     assert.equal(capturedCg, "@repo/tooling:feature");
   });
@@ -199,8 +217,98 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    await runAddCommand(makeContext(featureArgs("billing", "--dry-run")), runner);
+    await runAddCommand(makeContext(featureArgs("billing", "--database=postgres", "--dry-run")), runner);
     assert.ok(capturedArgs?.includes("--dryRun=true"));
+  });
+
+  it("requires an explicit database provider before setup exists", async () => {
+    let called = false;
+    const runner: NxGeneratorFn = () => {
+      called = true;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    assert.equal(await runAddCommand(makeContext(featureArgs("billing")), runner), 1);
+    assert.equal(called, false);
+  });
+
+  it("derives MongoDB from setup and accepts only a consistent explicit provider", async () => {
+    let capturedArgs: string[] = [];
+    let calls = 0;
+    const runner: NxGeneratorFn = (args) => {
+      calls += 1;
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+    const selected = makeSelectedContext(featureArgs("billing"), ["mongodb"]);
+    try {
+      assert.equal(await runAddCommand(selected.context, runner), 0);
+      assert.ok(capturedArgs.includes("--database=mongodb"));
+      selected.context.argv = featureArgs("billing", "--database=postgres");
+      assert.equal(await runAddCommand(selected.context, runner), 1);
+      assert.equal(calls, 1);
+      selected.context.argv = featureArgs("billing", "--database=mongodb");
+      assert.equal(await runAddCommand(selected.context, runner), 0);
+    } finally {
+      selected.cleanup();
+    }
+  });
+
+  it("rejects missing or colliding setup database selections", async () => {
+    let called = false;
+    const runner: NxGeneratorFn = () => {
+      called = true;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+    for (const capabilities of [[], ["postgres", "mongodb"]]) {
+      const selected = makeSelectedContext(featureArgs("billing"), capabilities);
+      try {
+        assert.equal(await runAddCommand(selected.context, runner), 1);
+      } finally {
+        selected.cleanup();
+      }
+    }
+    assert.equal(called, false);
+  });
+
+  it("passes MongoDB to backend data-access library dry-runs and rejects unrelated use", async () => {
+    let capturedArgs: string[] = [];
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+    const description = "Owns native ledger persistence for backend domain consumers.";
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "lib",
+          "ledger-store",
+          "--kind=backend",
+          "--type=data-access",
+          `--description=${description}`,
+          "--database=mongodb",
+          "--dry-run",
+        ]),
+        runner,
+      ),
+      0,
+    );
+    assert.ok(capturedArgs.includes("--database=mongodb"));
+    assert.ok(capturedArgs.includes("--dryRun=true"));
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "lib",
+          "money",
+          "--kind=common",
+          "--type=util",
+          `--description=${description}`,
+          "--database=mongodb",
+        ]),
+        runner,
+      ),
+      1,
+    );
   });
 
   it("refuses --force instead of regenerating an existing feature", async () => {
@@ -221,7 +329,10 @@ describe("runAddCommand", () => {
       return { success: true, stdout: "", stderr: "", exitCode: 0 };
     };
 
-    await runAddCommand(makeContext(featureArgs("billing", "--api-app", "auth-app-api")), runner);
+    await runAddCommand(
+      makeContext(featureArgs("billing", "--api-app", "auth-app-api", "--database=postgres")),
+      runner,
+    );
     assert.ok(capturedArgs?.includes("--apiApp=auth-app-api"));
   });
 
@@ -234,7 +345,7 @@ describe("runAddCommand", () => {
     }) as typeof process.stdout.write;
     try {
       await runAddCommand(
-        makeContext(featureArgs("billing", "--dry-run")),
+        makeContext(featureArgs("billing", "--database=postgres", "--dry-run")),
         makeMockRunner({
           success: true,
           stdout: "CREATE libs/backend/feature/billing/main/lib/project.json\n",
@@ -436,7 +547,7 @@ describe("runAddCommand", () => {
     assert.ok(capturedArgs.includes("--port=4210"));
 
     await runAddCommand(
-      makeContext(featureArgs("billing", "--frontend-app=admin-app")),
+      makeContext(featureArgs("billing", "--frontend-app=admin-app", "--database=postgres")),
       runner,
     );
     assert.ok(capturedArgs.includes("--frontendApp=admin-app"));

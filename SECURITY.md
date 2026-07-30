@@ -40,7 +40,7 @@ protected branches, or merge blocking.
 
 ## Secured components
 
-- First-party sessions: PostgreSQL-backed opaque IDs, HttpOnly cookies, rotation on authentication, and fail-closed account/RBAC reloads
+- First-party sessions: opaque IDs persisted by the selected PostgreSQL or replica-set MongoDB provider, HttpOnly cookies, rotation on authentication, and fail-closed account/RBAC reloads
 - OAuth2/OIDC providers: state hash verification, PKCE where supported, signed-token validation, and isolated provider cookies/credentials
 - RBAC: seeded role/permission catalog
 - Network policies, PDB, HPA, rate limiting in production Helm values

@@ -6,9 +6,6 @@ import {
   NotificationRecipientResolver,
   NotificationService,
 } from '@app/backend-feature-notification-shared';
-import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
-import { NotificationPostgresModule } from '@app/backend-postgres-main-notification';
-import { PostgresMainModule, type PostgresMikroOrmOverrides } from '@app/backend-postgres-main';
 import { NotificationConfigService, NotificationHealthConfigService } from './config';
 import { NotificationController } from './controller';
 import { MessagesModule } from './messages';
@@ -22,6 +19,7 @@ import {
   NotificationDeliverySchedulerService,
   NotificationDeliveryPartitionService,
   NotificationHealthService,
+  NotificationProviderReadinessService,
   NotificationRecipientResolverService,
   NotificationStrategyResolverService,
   NotificationSegmentResolverRegistry,
@@ -41,7 +39,6 @@ import {
 export interface NotificationMainModuleOptions {
   /** Modules that provide selected transport implementations to the scheduler. */
   imports?: NonNullable<ModuleMetadata['imports']>;
-  postgres?: PostgresMikroOrmOverrides;
   /** Register delivery and partition jobs in a scheduler process. */
   enableScheduler?: boolean;
   /** Register CSV, snapshot, and broadcast materialization work in a consumer process. */
@@ -55,6 +52,7 @@ export interface NotificationMainModuleOptions {
 @Global()
 @Module({})
 export class NotificationMainModule {
+  // Dynamic composition intentionally keeps all process-role and persistence combinations in one public entrypoint.
   static forRoot(options: NotificationMainModuleOptions = {}): DynamicModule {
     if (
       process.env['NODE_ENV'] === 'test' &&
@@ -70,16 +68,13 @@ export class NotificationMainModule {
     const enableConsumer = options.enableConsumer ?? false;
     const enableAdmin = options.enableAdmin ?? false;
     const exposeHttp = options.exposeHttp ?? false;
-
     return {
       module: NotificationMainModule,
       imports: [
         ...(options.imports ?? []),
         ConfigModule,
-        PostgresMainModule.forRoot(options.postgres),
-        NotificationPostgresModule,
-        ...(enableScheduler ? [AuthPostgresModule, MessagesModule] : []),
-        ...(enableConsumer || enableAdmin ? [AuthPostgresModule, S3Module.forRoot()] : []),
+        ...(enableScheduler ? [MessagesModule] : []),
+        ...(enableConsumer || enableAdmin ? [S3Module.forRoot()] : []),
       ],
       controllers: exposeHttp ? [NotificationController] : [],
       providers: [
@@ -105,6 +100,7 @@ export class NotificationMainModule {
               GoogleFcmNotificationProvider,
               AppleApnsNotificationProvider,
               NotificationProviderResolver,
+              NotificationProviderReadinessService,
             ]
           : []),
         ...(enableConsumer || enableAdmin
@@ -125,7 +121,13 @@ export class NotificationMainModule {
       exports: [
         NotificationService,
         NotificationHealthService,
-        ...(enableScheduler ? [NotificationDeliverySchedulerService, NotificationBroadcastSchedulerService] : []),
+        ...(enableScheduler
+          ? [
+              NotificationDeliverySchedulerService,
+              NotificationBroadcastSchedulerService,
+              NotificationProviderReadinessService,
+            ]
+          : []),
         ...(enableConsumer ? [NotificationConsumerService] : []),
         ...(enableAdmin ? [NotificationAdminServiceInjectToken] : []),
       ],

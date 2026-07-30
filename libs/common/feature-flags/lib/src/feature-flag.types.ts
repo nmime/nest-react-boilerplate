@@ -20,5 +20,6 @@ export interface FeatureFlagProvider {
 }
 
 export const FeatureFlagProviderToken = ['app.feature-flags', 'provider'].join('.');
+export const FeatureFlagRepositoryToken = ['app.feature-flags', 'repository'].join('.');
 
 export const DefaultFeatureFlagTenantId = '00000000-0000-0000-0000-000000000000';

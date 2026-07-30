@@ -3,7 +3,10 @@ import type { SpawnSyncOptions, StdioOptions } from "node:child_process";
 import type { Stats } from "node:fs";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
-import { commandExists as commandExistsInPath } from "../../runtime/process.ts";
+import {
+  commandExists as commandExistsInPath,
+  packageManagerInvocation as resolvePackageManagerInvocation,
+} from "../../runtime/process.ts";
 import { consumerContracts, openApiContracts } from "../api/contracts-manifest.ts";
 
 /** Any value produced by JSON.parse; used where a shape is intentionally open. */
@@ -140,6 +143,7 @@ export interface RunOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
   stdio?: StdioOptions;
+  timeoutMs?: number;
 }
 
 export interface RunResult {
@@ -148,6 +152,8 @@ export interface RunResult {
   stdout: string;
   stderr: string;
   error?: string;
+  signal?: NodeJS.Signals;
+  timedOut?: boolean;
 }
 
 export interface CollectFilesOptions {
@@ -211,6 +217,7 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     encoding: "utf8",
     shell: false,
     stdio: options.stdio ?? "pipe",
+    timeout: options.timeoutMs,
   };
   const result = spawnSync(command, args, spawnOptions);
   return {
@@ -219,7 +226,13 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     stdout: typeof result.stdout === "string" ? result.stdout : "",
     stderr: typeof result.stderr === "string" ? result.stderr : "",
     error: result.error?.message,
+    signal: result.signal ?? undefined,
+    timedOut: (result.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT",
   };
+}
+
+export function packageManagerInvocation(args: string[]): { command: string; args: string[] } {
+  return resolvePackageManagerInvocation(args);
 }
 
 export function defaultIgnore(rel: string): boolean {

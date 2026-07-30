@@ -1,4 +1,5 @@
 {{- if and .Values.monitoring.enabled .Values.monitoring.prometheusRule.enabled }}
+{{- $databaseEngine := include "boilerplate.databaseEngine" . }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -42,21 +43,21 @@ spec:
     - name: {{ include "boilerplate.fullname" . }}.dr
       rules:
         - alert: NestReactBoilerplateBackupCronJobMissed
-          expr: time() - kube_cronjob_status_last_schedule_time{namespace="{{ .Release.Namespace }}",cronjob="{{ include "boilerplate.fullname" . }}-postgres-backup"} > 7200
+          expr: time() - kube_cronjob_status_last_schedule_time{namespace="{{ .Release.Namespace }}",cronjob="{{ include "boilerplate.fullname" . }}-{{ $databaseEngine }}-backup"} > 7200
           for: 15m
           labels:
             severity: page
             service: {{ include "boilerplate.fullname" . | quote }}
           annotations:
-            summary: "PostgreSQL backup schedule is stale"
+            summary: "Database backup schedule is stale"
             description: "No successful backup schedule has been observed within the last 2 hours; RPO may be violated."
         - alert: NestReactBoilerplateBackupJobFailed
-          expr: kube_job_failed{namespace="{{ .Release.Namespace }}",job_name=~"{{ include "boilerplate.fullname" . }}-postgres-backup.*"} > 0
+          expr: kube_job_failed{namespace="{{ .Release.Namespace }}",job_name=~"{{ include "boilerplate.fullname" . }}-{{ $databaseEngine }}-backup.*"} > 0
           for: 5m
           labels:
             severity: page
             service: {{ include "boilerplate.fullname" . | quote }}
           annotations:
-            summary: "PostgreSQL backup job failed"
+            summary: "Database backup job failed"
             description: "A backup job failed. Check job logs, object-store credentials, and encryption hooks."
 {{- end }}

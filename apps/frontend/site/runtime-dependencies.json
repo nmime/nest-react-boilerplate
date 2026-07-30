@@ -1,0 +1,12 @@
+[
+  "@fastify/static",
+  "@tanstack/react-query",
+  "fastify",
+  "mobx",
+  "mobx-react-lite",
+  "mobx-tanstack-query",
+  "react",
+  "react-dom",
+  "vike",
+  "vike-react"
+]

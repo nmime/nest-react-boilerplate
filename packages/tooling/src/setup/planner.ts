@@ -20,7 +20,15 @@ import { createFile, sortOperations, deleteFile, updateFile } from './operations
 import type { SetupState } from './state.js';
 import { configHash, hashString, buildState, diffState, emptyState } from './state.js';
 import { expandDependencies, validateSelection } from './catalog.js';
-import { appCatalog, backendCapabilityModuleCatalog, capabilityCatalog, type BackendModuleWiring } from './catalog.js';
+import {
+  appCatalog,
+  backendCapabilityModuleCatalog,
+  capabilityCatalog,
+  durableDatabaseProviderIds,
+  type BackendModuleWiring,
+  type CapabilityEntry,
+  type DurableDatabaseProviderId,
+} from './catalog.js';
 import { expandPreset } from './presets.js';
 
 // ---------------------------------------------------------------------------
@@ -43,8 +51,19 @@ export interface PlanResult {
 export interface PlanSummary {
   apps: string[];
   capabilities: string[];
+  product: NrbConfig['product'];
+  deployment: NrbConfig['deployment'];
   preset?: string;
   configHash: string;
+}
+
+const generatedModulePrintWidth = 120;
+
+function renderModuleList(name: 'imports' | 'exports', values: string[]): string[] {
+  const inline = `  ${name}: [${values.join(', ')}],`;
+  return inline.length <= generatedModulePrintWidth
+    ? [inline]
+    : [`  ${name}: [`, ...values.map((value) => `    ${value},`), '  ],'];
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +123,22 @@ export function generateSummaryMd(summary: PlanSummary): { path: string; content
   }
   lines.push('');
 
+  lines.push('## Product');
+  lines.push('');
+  lines.push(`- CI mode: ${summary.product.ciMode}`);
+  lines.push(`- Frontend API mode: ${summary.product.frontendApiMode}`);
+  lines.push(`- Mobile targets: ${summary.product.mobileTargets.join(', ') || '(none)'}`);
+  lines.push('');
+
+  lines.push('## Deployment');
+  lines.push('');
+  lines.push(`- Targets: ${summary.deployment.targets.join(', ')}`);
+  lines.push(`- Public topology: ${summary.deployment.publicTopology}`);
+  lines.push(`- Kubernetes delivery: ${summary.deployment.kubernetesDelivery}`);
+  lines.push(`- Redis ownership: ${summary.deployment.infrastructure.redis}`);
+  lines.push(`- NATS ownership: ${summary.deployment.infrastructure.nats}`);
+  lines.push(`- S3 ownership: ${summary.deployment.infrastructure.s3}`);
+
   // Always end with trailing newline
   const content = lines.join('\n') + '\n';
 
@@ -125,16 +160,23 @@ export function generateWorkspaceManifest(summary: PlanSummary): { path: string;
     preset: summary.preset ?? null,
     apps: [...summary.apps].sort(),
     capabilities: [...summary.capabilities].sort(),
+    product: summary.product,
+    deployment: summary.deployment,
     byPlatform,
   };
   return { path: '.nrb/workspace.json', content: `${JSON.stringify(manifest, null, 2)}\n` };
 }
 
 export function generateCapabilitiesManifest(summary: PlanSummary): { path: string; content: string } {
+  const provider = resolveDatabaseProvider(summary.capabilities);
+  const providerTelemetryInstrumentation = provider
+    ? capabilityCatalog[provider].providerTelemetryInstrumentation
+    : undefined;
   const capabilities = summary.capabilities.map((id) => {
     const entry = capabilityCatalog[id as CapabilityId];
+    const backendWiring = resolveCapabilityBackendWiring(entry, provider);
     const generatedFiles = new Set<string>();
-    for (const wiring of entry.backendWiring) {
+    for (const wiring of backendWiring) {
       const hosts = wiring.hosts === 'selected-backend' ? summary.apps : wiring.hosts;
       for (const host of hosts) {
         const generatedModule = backendCapabilityModuleCatalog[host as AppId];
@@ -143,14 +185,23 @@ export function generateCapabilitiesManifest(summary: PlanSummary): { path: stri
         }
       }
     }
+    if (entry.telemetryWiring) {
+      const hosts = entry.telemetryWiring.hosts === 'selected-backend' ? summary.apps : entry.telemetryWiring.hosts;
+      for (const host of hosts) {
+        const generatedModule = backendCapabilityModuleCatalog[host as AppId];
+        if (summary.apps.includes(host) && generatedModule) {
+          generatedFiles.add(generatedModule.bootstrapPath);
+        }
+      }
+    }
     return {
       id: entry.id,
       activation: entry.activation,
-      projects: [...entry.ownedProjects].sort(),
+      projects: [...entry.ownedProjects, ...(provider ? (entry.providerOwnedProjects?.[provider] ?? []) : [])].sort(),
       dockerServices: [...entry.dockerServices].sort(),
       environmentVariables: [...entry.environmentVariables].sort(),
       generatedFiles: [...generatedFiles].sort(),
-      backendWiring: entry.backendWiring.map((wiring) => ({
+      backendWiring: backendWiring.map((wiring) => ({
         hosts: wiring.hosts,
         moduleExpression: wiring.moduleExpression,
         imports: [
@@ -158,6 +209,19 @@ export function generateCapabilitiesManifest(summary: PlanSummary): { path: stri
           ...(wiring.additionalImports ?? []),
         ],
       })),
+      telemetryWiring: entry.telemetryWiring
+        ? {
+            hosts: entry.telemetryWiring.hosts,
+            imports: [
+              entry.telemetryWiring.initializer,
+              entry.telemetryWiring.instrumentationFactory,
+              ...(providerTelemetryInstrumentation ? [providerTelemetryInstrumentation] : []),
+            ],
+          }
+        : null,
+      providerTelemetryInstrumentation: entry.providerTelemetryInstrumentation ?? null,
+      deploymentOwnership:
+        id === 'redis' || id === 'nats' || id === 's3' ? summary.deployment.infrastructure[id] : null,
     };
   });
   return {
@@ -173,11 +237,27 @@ export function generateComposeEnvironment(summary: PlanSummary): { path: string
       profiles.add(capabilityId);
     }
   }
+  const databaseProvider = resolveDatabaseProvider(summary.capabilities) ?? '';
   const lines = [
     '# Generated by `pnpm nrb setup`. Consumed by `pnpm run docker:selected` and Doctor.',
     `NRB_APPS=${summary.apps.join(',')}`,
     `NRB_CAPABILITIES=${summary.capabilities.join(',')}`,
     `COMPOSE_PROFILES=${[...profiles].sort().join(',')}`,
+    `DATABASE_ENGINE=${databaseProvider}`,
+    `AUTH_PERSISTENCE=${databaseProvider}`,
+    ...(databaseProvider === 'mongodb'
+      ? [
+          'MONGODB_URI=mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true',
+          'MONGODB_DATABASE=nest_react_boilerplate',
+          'MONGODB_REPLICA_SET=rs0',
+        ]
+      : []),
+    ...(databaseProvider === 'postgres'
+      ? [
+          'DATABASE_URL=postgres://postgres:postgres@localhost:5432/nest_react_boilerplate',
+          'CONTAINER_DATABASE_URL=postgres://postgres:postgres@postgres:5432/nest_react_boilerplate',
+        ]
+      : []),
     `OTEL_ENABLED=${summary.capabilities.includes('otel') ? 'true' : 'false'}`,
     `OPENAPI_ENABLED=${summary.capabilities.includes('swagger') ? 'true' : 'false'}`,
     `AUTH_TELEGRAM_ENABLED=${summary.capabilities.includes('telegram-bot') ? 'true' : 'false'}`,
@@ -206,24 +286,127 @@ export function generateBackendCapabilityModule(appId: AppId, summary: PlanSumma
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([path, names]) => `import { ${[...names].sort().join(', ')} } from '${path}';`);
   const moduleExpressions = [...new Set(wiring.map((item) => item.moduleExpression))].sort();
+  const exportedModules = [...new Set(wiring.map((item) => item.importName))].sort();
+  const moduleMetadata =
+    moduleExpressions.length === 0
+      ? ['@Module({ imports: [], exports: [] })']
+      : [
+          '@Module({',
+          ...renderModuleList('imports', moduleExpressions),
+          ...renderModuleList('exports', exportedModules),
+          '})',
+        ];
   const content = [
     '// Generated by `pnpm nrb setup`. Do not edit by hand.',
-    "import { Module } from '@nestjs/common';",
+    "import { Global, Module } from '@nestjs/common';",
     ...importLines,
     '',
-    `@Module({ imports: [${moduleExpressions.join(', ')}] })`,
+    '@Global()',
+    ...moduleMetadata,
     `export class ${moduleEntry.className} {}`,
     '',
   ].join('\n');
   return { path: moduleEntry.path, content };
 }
 
+export function generateBackendCapabilityBootstrap(
+  appId: AppId,
+  summary: PlanSummary,
+): { path: string; content: string } {
+  const moduleEntry = backendCapabilityModuleCatalog[appId];
+  if (!moduleEntry) {
+    throw new Error(`No generated capability bootstrap is registered for ${appId}`);
+  }
+
+  const telemetry = summary.apps.includes(appId)
+    ? resolveBackendTelemetryWiring(appId, summary.capabilities)
+    : undefined;
+  const imports = new Map<string, Set<string>>();
+  if (telemetry) {
+    for (const telemetryImport of [
+      telemetry.initializer,
+      telemetry.instrumentationFactory,
+      telemetry.providerInstrumentation,
+    ]) {
+      if (!telemetryImport) {
+        continue;
+      }
+      const names = imports.get(telemetryImport.importPath) ?? new Set<string>();
+      names.add(telemetryImport.importName);
+      imports.set(telemetryImport.importPath, names);
+    }
+  }
+  const importLines = [...imports.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([path, names]) => `import { ${[...names].sort().join(', ')} } from '${path}';`);
+  const content = [
+    '// Generated by `pnpm nrb setup`. Do not edit by hand.',
+    ...importLines,
+    ...(importLines.length > 0 ? [''] : []),
+    'export function initializeCapabilities(serviceName: string): void {',
+    '  if (serviceName.length === 0) {',
+    "    throw new Error('Capability initialization requires a service name.');",
+    '  }',
+    ...(telemetry
+      ? [
+          `  ${telemetry.initializer.importName}({`,
+          '    serviceName,',
+          '    serviceVersion: process.env.OTEL_SERVICE_VERSION ?? process.env.npm_package_version,',
+          '    environment: process.env.NODE_ENV,',
+          `    instrumentations: ${telemetry.instrumentationFactory.importName}(${
+            telemetry.providerInstrumentation ? `${telemetry.providerInstrumentation.importName}()` : ''
+          }),`,
+          '  });',
+        ]
+      : []),
+    '}',
+    '',
+  ].join('\n');
+  return { path: moduleEntry.bootstrapPath, content };
+}
+
+function resolveBackendTelemetryWiring(appId: AppId, capabilities: string[]) {
+  const entry = capabilities
+    .map((capabilityId) => capabilityCatalog[capabilityId as CapabilityId])
+    .find((capability) => {
+      const hosts = capability.telemetryWiring?.hosts;
+      return hosts === 'selected-backend' || hosts?.includes(appId);
+    });
+  if (!entry?.telemetryWiring) {
+    return undefined;
+  }
+  const provider = resolveDatabaseProvider(capabilities);
+  return {
+    ...entry.telemetryWiring,
+    providerInstrumentation: provider ? capabilityCatalog[provider].providerTelemetryInstrumentation : undefined,
+  };
+}
+
 function resolveBackendWiring(appId: AppId, capabilities: string[]): BackendModuleWiring[] {
+  const provider = resolveDatabaseProvider(capabilities);
+  if (appCatalog[appId].requiresDurableDatabase && !provider) {
+    throw new Error(`${appId} requires exactly one durable database provider.`);
+  }
   return capabilities.flatMap((capabilityId) =>
-    capabilityCatalog[capabilityId as CapabilityId].backendWiring.filter(
+    resolveCapabilityBackendWiring(capabilityCatalog[capabilityId as CapabilityId], provider).filter(
       (wiring) => wiring.hosts === 'selected-backend' || wiring.hosts.includes(appId),
     ),
   );
+}
+
+function resolveDatabaseProvider(capabilities: readonly string[]): DurableDatabaseProviderId | undefined {
+  const providers = durableDatabaseProviderIds.filter((provider) => capabilities.includes(provider));
+  if (providers.length > 1) {
+    throw new Error(`Multiple durable database providers selected: ${providers.join(', ')}`);
+  }
+  return providers[0];
+}
+
+function resolveCapabilityBackendWiring(
+  entry: Readonly<CapabilityEntry>,
+  provider: DurableDatabaseProviderId | undefined,
+): BackendModuleWiring[] {
+  return [...entry.backendWiring, ...(provider ? (entry.providerBackendWiring?.[provider] ?? []) : [])];
 }
 
 // ---------------------------------------------------------------------------
@@ -300,13 +483,23 @@ export function plan(config: NrbConfig, currentState: SetupState = emptyState): 
 
   // Generate deterministic file contents — depends only on config
   const configFile = generateConfigFile(config);
-  const summary = { apps: [...apps].sort(), capabilities: [...capabilities].sort(), preset, configHash: cfgHash };
+  const summary = {
+    apps: [...apps].sort(),
+    capabilities: [...capabilities].sort(),
+    product: config.product,
+    deployment: config.deployment,
+    preset,
+    configHash: cfgHash,
+  };
   const summaryFile = generateSummaryMd(summary);
   const workspaceFile = generateWorkspaceManifest(summary);
   const capabilitiesFile = generateCapabilitiesManifest(summary);
   const composeEnvironmentFile = generateComposeEnvironment(summary);
   const backendCapabilityModules = Object.keys(backendCapabilityModuleCatalog).map((appId) =>
     generateBackendCapabilityModule(appId as AppId, summary),
+  );
+  const backendCapabilityBootstraps = Object.keys(backendCapabilityModuleCatalog).map((appId) =>
+    generateBackendCapabilityBootstrap(appId as AppId, summary),
   );
 
   const desiredContent = new Map([
@@ -316,6 +509,7 @@ export function plan(config: NrbConfig, currentState: SetupState = emptyState): 
     [capabilitiesFile.path, capabilitiesFile.content],
     [composeEnvironmentFile.path, composeEnvironmentFile.content],
     ...backendCapabilityModules.map((file) => [file.path, file.content] as const),
+    ...backendCapabilityBootstraps.map((file) => [file.path, file.content] as const),
   ]);
 
   // Build desired files map with stable hashes
@@ -344,7 +538,9 @@ export function plan(config: NrbConfig, currentState: SetupState = emptyState): 
     if (content === undefined) {
       throw new Error(`Missing planned content for ${p}`);
     }
-    const isCommittedGeneratedModule = Object.values(backendCapabilityModuleCatalog).some((entry) => entry?.path === p);
+    const isCommittedGeneratedModule = Object.values(backendCapabilityModuleCatalog).some(
+      (entry) => entry?.path === p || entry?.bootstrapPath === p,
+    );
     operations.push(
       isCommittedGeneratedModule ? updateFile(p, content, 'Configure ' + p) : createFile(p, content, 'Create ' + p),
     );

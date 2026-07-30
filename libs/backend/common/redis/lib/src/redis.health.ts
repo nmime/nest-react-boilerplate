@@ -1,17 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import type { HealthIndicatorResult } from '@app/backend-common-health';
 import { InjectRedis } from './decorator';
 import type { RedisClientLike } from './type';
+
+const defaultHealthTimeoutMs = 1_000;
 
 @Injectable()
 export class RedisHealthIndicator {
   readonly name = 'redis';
 
-  constructor(@InjectRedis() private readonly redis: RedisClientLike) {}
+  constructor(
+    @InjectRedis() private readonly redis: RedisClientLike,
+    @Optional() private readonly timeoutMs = defaultHealthTimeoutMs,
+  ) {}
 
   async check(): Promise<HealthIndicatorResult> {
     try {
-      await this.redis.ping();
+      await withTimeout(this.redis.ping(), this.timeoutMs);
       return { name: this.name, status: 'ok' };
     } catch (error) {
       return {
@@ -20,6 +25,23 @@ export class RedisHealthIndicator {
         details: safeErrorDetails(error),
       };
     }
+  }
+}
+
+async function withTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeout!: NodeJS.Timeout;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_resolve, reject) => {
+        timeout = setTimeout(() => {
+          reject(new Error('Redis health check timed out.'));
+        }, timeoutMs);
+        timeout.unref();
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

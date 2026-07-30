@@ -1,0 +1,53 @@
+# Production Redis capability overlay. Load only when Redis is selected in the
+# setup closure.
+x-redis-backend-env: &redis-backend-env
+  RATE_LIMIT_STORE: redis
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+
+services:
+  redis:
+    image: redis:7.4.3-alpine
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: '${DOCKER_LOG_MAX_SIZE:-10m}'
+        max-file: '${DOCKER_LOG_MAX_FILES:-5}'
+    command:
+      - sh
+      - -ec
+      - |
+        umask 077
+        printf 'appendonly yes\nrequirepass %s\n' "$$(cat /run/secrets/redis_password)" >/tmp/redis.conf
+        exec redis-server /tmp/redis.conf
+    secrets: [redis_password]
+    volumes:
+      - redis-data:/data
+    networks: [database]
+    healthcheck:
+      test: ['CMD-SHELL', 'REDISCLI_AUTH="$$(cat /run/secrets/redis_password)" redis-cli ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  admin-app-api: &redis-backend
+    environment: *redis-backend-env
+    secrets: [redis_password]
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  user-app-api: *redis-backend
+  auth-app-api: *redis-backend
+  discord-app-api: *redis-backend
+  telegram-bot-api: *redis-backend
+  notification-scheduler: *redis-backend
+  notification-consumer: *redis-backend
+
+volumes:
+  redis-data:
+
+secrets:
+  redis_password:
+    file: ${REDIS_PASSWORD_FILE:-./secrets/redis_password.txt}

@@ -5,11 +5,26 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import test from 'node:test';
+import {
+  assertRecentBackup,
+  buildLiveValidationPlan,
+  parseLiveValidationOptions,
+  selectPreviousRevision,
+} from './validate-kubernetes-live.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
 const chart = resolve(root, '.helm');
+const selectionValues = resolve(chart, 'values-selection.yaml');
 const prodValues = resolve(chart, 'values-production.yaml');
+const otelEnabledArgs = [
+  '--set',
+  'monitoring.enabled=true',
+  '--set',
+  'monitoring.otel.enabled=true',
+  '--set',
+  'monitoring.otelCollector.enabled=true',
+];
 
 function helmAvailable() {
   try {
@@ -22,12 +37,62 @@ function helmAvailable() {
 
 const HELM = helmAvailable();
 
+test('live Kubernetes preflight plans only read or use server-side dry-run operations', () => {
+  const options = parseLiveValidationOptions([
+    '--context=production-preflight',
+    '--namespace=nrb',
+    '--release=nrb',
+    '--backup-cronjob=platform-postgres-backup',
+  ]);
+  const plan = buildLiveValidationPlan(options, '/tmp/candidate.yaml', 7);
+  const byId = Object.fromEntries(plan.map((step) => [step.id, step]));
+
+  assert.ok(byId['helm-server-dry-run'].args.includes('--dry-run=server'));
+  assert.ok(byId['helm-server-dry-run'].args.includes('--hide-secret'));
+  assert.ok(byId['admission-dry-run'].args.includes('--dry-run=server'));
+  assert.ok(byId['admission-dry-run'].args.includes('--validate=strict'));
+  assert.ok(byId['admission-dry-run'].args.includes('--force-conflicts'));
+  assert.ok(byId['rollback-server-dry-run'].args.includes('--dry-run=server'));
+  assert.ok(byId['rollback-server-dry-run'].args.includes('--no-hooks'));
+  assert.ok(byId['backup-admission-dry-run'].args.includes('--dry-run=server'));
+  assert.equal(byId['backup-freshness'].args.includes('secret'), false);
+  assert.throws(() => parseLiveValidationOptions(['--plan']), /--context is required/);
+});
+
+test('live Kubernetes preflight requires rollback history and a recent successful backup', () => {
+  assert.equal(
+    selectPreviousRevision([
+      { revision: 5, status: 'superseded' },
+      { revision: 6, status: 'failed' },
+      { revision: 7, status: 'deployed' },
+    ]),
+    5,
+  );
+  assert.throws(() => selectPreviousRevision([{ revision: 1, status: 'deployed' }]), /at least two Helm revisions/);
+
+  const now = Date.parse('2026-07-29T12:00:00Z');
+  assert.equal(
+    assertRecentBackup({ spec: { suspend: false }, status: { lastSuccessfulTime: '2026-07-29T11:30:00Z' } }, 60, now),
+    30,
+  );
+  assert.throws(
+    () =>
+      assertRecentBackup({ spec: { suspend: false }, status: { lastSuccessfulTime: '2026-07-29T10:00:00Z' } }, 60, now),
+    /maximum is 60/,
+  );
+  assert.throws(() => assertRecentBackup({ spec: { suspend: true }, status: {} }, 60, now), /suspended/);
+});
+
 /** Render the chart to multi-doc YAML text. */
 function render(releaseName, extraArgs = []) {
-  return execFileSync('helm', ['template', releaseName, chart, '--namespace', 'nrb', '-f', prodValues, ...extraArgs], {
-    encoding: 'utf8',
-    maxBuffer: 32 * 1024 * 1024,
-  });
+  return execFileSync(
+    'helm',
+    ['template', releaseName, chart, '--namespace', 'nrb', '-f', prodValues, '-f', selectionValues, ...extraArgs],
+    {
+      encoding: 'utf8',
+      maxBuffer: 32 * 1024 * 1024,
+    },
+  );
 }
 
 /** Render with default values (+ synthetic in-chart secret), like validate-helm.sh. */
@@ -40,6 +105,8 @@ function renderDefault(releaseName, extraArgs = []) {
       chart,
       '--namespace',
       'nrb',
+      '-f',
+      selectionValues,
       '--set',
       'secrets.create=true',
       '--set-string',
@@ -106,6 +173,90 @@ test('production NetworkPolicy allows external HTTPS egress via ipBlock', { skip
   assert.match(netpols, /except:/, 'external egress must exclude private ranges via except');
 });
 
+test('production NetworkPolicy permits the selected in-cluster OTEL paths', { skip: !HELM }, () => {
+  const out = render('nrbtest', otelEnabledArgs);
+  const defaultPolicy = docFor(out, 'NetworkPolicy', 'nrbtest-default-deny');
+  const collectorPolicy = docFor(out, 'NetworkPolicy', 'nrbtest-otel-collector');
+
+  assert.match(defaultPolicy, /app\.kubernetes\.io\/component: otel-collector[\s\S]*port: 4318/);
+  assert.match(
+    defaultPolicy,
+    /matchExpressions:[\s\S]*key: app\.kubernetes\.io\/component[\s\S]*operator: NotIn[\s\S]*- otel-collector/u,
+    'the broad application policy must not select the collector because NetworkPolicy egress is additive',
+  );
+  assert.match(collectorPolicy, /port: 4317[\s\S]*port: 4318/, 'collector must accept OTLP gRPC and HTTP');
+  assert.match(
+    collectorPolicy,
+    /port: 53[\s\S]*protocol: UDP[\s\S]*port: 53[\s\S]*protocol: TCP/u,
+    'collector must resolve the configured exporter hostname through cluster DNS',
+  );
+  assert.doesNotMatch(collectorPolicy, /ipBlock:/u, 'collector egress must contain only its exporter allowlist');
+  assert.match(
+    collectorPolicy,
+    /kubernetes\.io\/metadata\.name: monitoring[\s\S]*port: 9464/,
+    'the selected Prometheus namespace must be able to scrape collector metrics',
+  );
+  assert.match(
+    collectorPolicy,
+    /kubernetes\.io\/metadata\.name: observability[\s\S]*port: 4317/,
+    'collector egress must reach the selected Tempo namespace and port',
+  );
+});
+
+test('OTEL NetworkPolicy values reject empty ports and invalid namespace selectors', { skip: !HELM }, () => {
+  assert.throws(() =>
+    render('nrbtest', [...otelEnabledArgs, '--set-json', 'networkPolicy.otelCollector.exporterPorts=[]']),
+  );
+  assert.throws(() =>
+    render('nrbtest', [
+      ...otelEnabledArgs,
+      '--set-string',
+      'networkPolicy.otelCollector.exporterNamespace=Invalid_Name',
+    ]),
+  );
+  assert.throws(() =>
+    render('nrbtest', [
+      ...otelEnabledArgs,
+      '--set-string',
+      'networkPolicy.otelCollector.prometheusNamespace=monitoring.example',
+    ]),
+  );
+
+  assert.throws(
+    () =>
+      render('nrbtest', [
+        ...otelEnabledArgs,
+        '--skip-schema-validation',
+        '--set-json',
+        'networkPolicy.otelCollector.exporterPorts=[]',
+      ]),
+    /must contain at least one TCP port/u,
+  );
+  assert.throws(
+    () =>
+      render('nrbtest', [
+        ...otelEnabledArgs,
+        '--skip-schema-validation',
+        '--set-string',
+        'networkPolicy.otelCollector.exporterNamespace=Invalid_Name',
+      ]),
+    /must be a valid Kubernetes namespace name/u,
+  );
+});
+
+test('Coroot Secret RBAC is disabled by default and requires explicit opt-in', { skip: !HELM }, () => {
+  const defaultRole = docFor(render('nrbtest'), 'ClusterRole', 'nrbtest-coroot');
+  assert.ok(defaultRole, 'production Coroot must render its discovery ClusterRole');
+  assert.doesNotMatch(defaultRole, /resources:\s*\["secrets"\]/, 'default discovery must not expose Secret payloads');
+
+  const optedInRole = docFor(
+    render('nrbtest', ['--set', 'coroot.rbac.readSecrets=true']),
+    'ClusterRole',
+    'nrbtest-coroot',
+  );
+  assert.match(optedInRole, /resources:\s*\["secrets"\][\s\S]*verbs:\s*\["get", "list"\]/);
+});
+
 test('Helm SRE dashboard uses the emitted OTel HTTP metric name', () => {
   const helmDash = readFileSync(resolve(chart, 'dashboards/nest-react-boilerplate.json'), 'utf8');
   assert.match(
@@ -141,6 +292,51 @@ test('frontend runtime flags are injected as env on SPA deployments only', { ski
 test('frontend runtime flags are absent when unconfigured', { skip: !HELM }, () => {
   const out = render('nrbtest');
   assert.doesNotMatch(out, /name: TELEGRAM_AUTH_ENABLED/, 'no flags must render when frontendRuntimeConfig is empty');
+});
+
+test(
+  'landing runtime destinations are derived from split ingress hosts without a baked-in domain',
+  { skip: !HELM },
+  () => {
+    const out = render('nrbtest', [
+      '--set-string',
+      'ingress.hosts[2].host=accounts.product.test',
+      '--set-string',
+      'ingress.hosts[4].host=control.product.test',
+    ]);
+    const landingApp = docFor(out, 'Deployment', 'nrbtest-landing-app');
+    const userApp = docFor(out, 'Deployment', 'nrbtest-user-app');
+
+    assert.match(landingApp, /name: LANDING_USER_APP_URL\s+value: "https:\/\/accounts\.product\.test"/u);
+    assert.match(landingApp, /name: LANDING_ADMIN_APP_URL\s+value: "https:\/\/control\.product\.test"/u);
+    assert.doesNotMatch(landingApp, /https:\/\/user-app\.example\.com/u);
+    assert.doesNotMatch(userApp, /LANDING_(?:USER|ADMIN)_APP_URL/u);
+  },
+);
+
+test('landing runtime destinations become validated same-origin paths for a shared Helm host', { skip: !HELM }, () => {
+  const hosts = [
+    { host: 'product.test', paths: ['/'], service: 'landing-app' },
+    { host: 'product.test', paths: ['/account'], service: 'user-app' },
+    { host: 'product.test', paths: ['/control'], service: 'admin-app' },
+  ];
+  const out = render('nrbtest', ['--set-json', `ingress.hosts=${JSON.stringify(hosts)}`]);
+  const landingApp = docFor(out, 'Deployment', 'nrbtest-landing-app');
+
+  assert.match(landingApp, /name: LANDING_USER_APP_URL\s+value: "\/account"/u);
+  assert.match(landingApp, /name: LANDING_ADMIN_APP_URL\s+value: "\/control"/u);
+  assert.throws(
+    () =>
+      render('nrbtest', [
+        '--set-json',
+        `ingress.hosts=${JSON.stringify([
+          hosts[0],
+          { host: 'product.test', paths: ['/'], service: 'user-app' },
+          hosts[2],
+        ])}`,
+      ]),
+    /must use a non-root ingress path/u,
+  );
 });
 
 test('backup CronJob fails closed when enabled without a durable destination', { skip: !HELM }, () => {

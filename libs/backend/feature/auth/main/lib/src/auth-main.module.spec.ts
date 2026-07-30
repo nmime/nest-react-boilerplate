@@ -19,9 +19,10 @@ import {
 } from './infrastructure/auth-user-store';
 
 describe('AuthMainModule', () => {
-  it('creates memory and Postgres dynamic modules', () => {
+  it('creates memory and durable modules without importing a database provider', () => {
     const memoryModule = AuthMainModule.forRoot(AuthPersistenceMode.Memory);
     const postgresModule = AuthMainModule.forRoot(AuthPersistenceMode.Postgres);
+    const mongoModule = AuthMainModule.forRoot(AuthPersistenceMode.MongoDB);
 
     expect(memoryModule.controllers).toEqual([AuthController, BetterAuthApiController, ProblemPresentationsController]);
     expect(memoryModule.providers).toContain(AuthService);
@@ -43,10 +44,15 @@ describe('AuthMainModule', () => {
       provide: AuthTokenStoreInjectToken,
       useClass: PostgresAuthTokenStore,
     });
-    expect(postgresModule.imports).toHaveLength(3);
+    expect(postgresModule.imports).toHaveLength(1);
+    expect(mongoModule.providers).toContainEqual({
+      provide: AuthUserStoreInjectToken,
+      useClass: PostgresAuthUserStore,
+    });
+    expect(mongoModule.imports).toHaveLength(1);
   });
 
-  it('defaults to memory under Vitest unless Postgres is requested', () => {
+  it('uses environment selection only for neutral feature stores', () => {
     const previousVitest = process.env.VITEST;
     const previousPersistence = process.env.AUTH_PERSISTENCE;
     process.env.VITEST = 'true';
@@ -54,7 +60,9 @@ describe('AuthMainModule', () => {
 
     expect(AuthMainModule.forRoot().imports).toHaveLength(1);
     process.env.AUTH_PERSISTENCE = 'postgres';
-    expect(AuthMainModule.forRoot().imports).toHaveLength(3);
+    expect(AuthMainModule.forRoot().imports).toHaveLength(1);
+    process.env.AUTH_PERSISTENCE = 'mongodb';
+    expect(AuthMainModule.forRoot().imports).toHaveLength(1);
 
     if (previousVitest === undefined) {
       delete process.env.VITEST;

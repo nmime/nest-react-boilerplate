@@ -37,9 +37,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   helm-validation:
-    name: Helm render validation
+    name: Helm render validation (${{ matrix.selection }})
     runs-on: ubuntu-22.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - selection: provider-free
+            setup_args: --replace --app landing-app --non-interactive
+          - selection: postgres
+            setup_args: --replace --app auth-app-api --capability postgres --non-interactive
+          - selection: mongodb
+            setup_args: --replace --app auth-app-api --capability mongodb --non-interactive
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -63,12 +73,13 @@ jobs:
       - name: Validate GitHub workflow hardening
         run: node scripts/validate-github-workflows.mjs
 
-      - name: Validate deployment, Docker, and Helm config
-        run: pnpm run deploy:validate
+      - name: Materialize selected Helm deployment ownership
+        run: pnpm nrb setup ${{ matrix.setup_args }}
+
+      - name: Validate selected Helm deployment
+        run: pnpm run deploy:validate:helm
         env:
           REQUIRE_HELM: 'true'
-          REQUIRE_DOCKER_COMPOSE: 'true'
-          REQUIRE_KUBECTL: 'true'
 
   fast-check:
     name: Fast PR gate (ci:pr)
@@ -272,10 +283,46 @@ jobs:
           if-no-files-found: ignore
 
   bun-compat:
-    name: Bun compatibility contract
+    name: Bun compatibility contract (${{ matrix.closure }})
     runs-on: ubuntu-22.04
     needs: fast-check
-    timeout-minutes: 30
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - closure: provider-free
+            setup_args: --replace --app landing-app --non-interactive
+          - closure: standalone-site
+            setup_args: --replace --app site-app --non-interactive
+          - closure: standalone-user-frontend
+            setup_args: --replace --app user-app --capability postgres --non-interactive
+          - closure: standalone-admin-frontend
+            setup_args: --replace --app admin-app --capability postgres --non-interactive
+          - closure: standalone-mobile
+            setup_args: --replace --app mobile-app --capability postgres --non-interactive
+          - closure: standalone-user-api
+            setup_args: --replace --app user-app-api --capability postgres --non-interactive
+          - closure: standalone-admin-api
+            setup_args: --replace --app admin-app-api --capability postgres --non-interactive
+          - closure: standalone-discord-api
+            setup_args: --replace --app discord-app-api --capability postgres --non-interactive
+          - closure: standalone-telegram-api
+            setup_args: --replace --app telegram-bot-api --capability postgres --non-interactive
+          - closure: preset-minimal
+            setup_args: --preset minimal --non-interactive
+          - closure: preset-web
+            setup_args: --preset web --non-interactive
+          - closure: preset-fullstack
+            setup_args: --preset fullstack --non-interactive
+          - closure: preset-enterprise
+            setup_args: --preset enterprise --non-interactive
+          - closure: preset-bots
+            setup_args: --preset bots --non-interactive
+          - closure: mongodb-core
+            setup_args: --replace --app auth-app-api --app user-app-api --capability mongodb --non-interactive
+          - closure: mongodb-bots
+            setup_args: --replace --app auth-app-api --app user-app-api --app discord-app-api --app telegram-bot-api --capability mongodb --non-interactive
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -293,13 +340,18 @@ jobs:
         with:
           bun-version-file: ${{ env.BUN_VERSION_FILE }}
 
-      - name: Install canonical dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install explicit bootstrap/tooling dependencies
+        run: pnpm run tooling:install
+
+      - name: Materialize selected runtime closure
+        run: |
+          pnpm nrb setup ${{ matrix.setup_args }}
+          pnpm nrb closure install
 
       - name: Restore Nx computation cache
         uses: ./.github/actions/nx-cache
         with:
-          scope: bun
+          scope: bun-${{ matrix.closure }}
 
       - name: Run Bun compatibility contract
         run: pnpm run bun:check
@@ -353,9 +405,9 @@ jobs:
             pnpm exec nx affected -t lint typecheck build \
               --base="origin/$BASE_REF" --head=HEAD
           else
-            pnpm run lint
-            pnpm run typecheck
-            pnpm run build
+            pnpm run lint:all
+            pnpm run typecheck:all
+            pnpm run build:all
           fi
 
       - name: Enforce coverage thresholds
@@ -367,11 +419,11 @@ jobs:
             pnpm exec nx affected -t test \
               --base="origin/$BASE_REF" --head=HEAD -- --coverage
           else
-            pnpm run test:coverage
+            pnpm run test:coverage:all
           fi
 
       - name: Component tests (Testcontainers)
-        run: pnpm exec nx run-many -t component-test
+        run: pnpm exec nx run @app/backend-feature-auth-test:component-test
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -413,7 +465,7 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: E2E coverage
-        run: pnpm run test:e2e:coverage
+        run: pnpm run test:e2e:coverage:all
 
       - name: Upload e2e artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -425,6 +477,46 @@ jobs:
             playwright-report/**
             test-results/**
           if-no-files-found: ignore
+
+  mongodb-validation:
+    name: MongoDB migrations, transactions, and adapters
+    runs-on: ubuntu-22.04
+    needs: fast-check
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: ${{ env.NODE_VERSION_FILE }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Nx computation cache
+        uses: ./.github/actions/nx-cache
+        with:
+          scope: mongodb
+
+      - name: Verify MongoDB migration ledger
+        run: node --test --import jiti/register packages/tooling/src/commands/db/mongo-migrate.component.test.ts
+
+      - name: Verify MongoDB transaction and adapter semantics
+        run: >-
+          pnpm exec nx run-many -t component-test
+          --projects=@app/backend-mongodb-main,@app/backend-mongodb-main-auth,@app/backend-mongodb-main-feature-flags,@app/backend-mongodb-main-notification
+          --parallel=1
+
+      - name: Verify auth, feature-flag, and notification provider wiring
+        run: >-
+          pnpm exec nx run-many -t test
+          --projects=@app/backend-feature-auth-main,@app/backend-feature-admin-main,@app/backend-feature-notification-main
 
   visual-regression:
     name: Storybook interaction and visual regression
@@ -499,7 +591,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Materialize explicit provider reference build contexts
+        run: |
+          pnpm nrb closure materialize --all-reference --provider postgres
+          pnpm nrb closure materialize --all-reference --provider mongodb
+
       - name: Docker smoke
+        env:
+          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
         run: pnpm run test:docker-smoke
 
       - name: Production Compose database modes
@@ -547,6 +646,8 @@ jobs:
     needs: docker-smoke
     timeout-minutes: 90
     env:
+      DATABASE_ENGINE: postgres
+      AUTH_PERSISTENCE: postgres
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
       ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
@@ -556,9 +657,9 @@ jobs:
       EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
       TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
       VITE_TELEGRAM_AUTH_ENABLED: 'true'
-      # Five browser/device projects share the same runtime client address.
+      # Six browser/device projects share the same runtime client address.
       RATE_LIMIT_MAX: '1000'
-      COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app
+      COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app,site-app
       PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
       PLAYWRIGHT_AUTO_INSTALL: '1'
       POSTGRES_PORT: '5432'
@@ -568,6 +669,7 @@ jobs:
       ADMIN_APP_PORT: '8081'
       USER_APP_PORT: '8082'
       LANDING_APP_PORT: '8083'
+      SITE_APP_PORT: '8084'
       A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
       PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
@@ -576,7 +678,10 @@ jobs:
       QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
       QA_CHAOS_URLS: http://127.0.0.1:3002/health
       QA_CHAOS_SERVICE: user-app-api
-      QA_MIGRATION_ROLLBACK_COMMAND: pnpm run db:migrations:rollback-check
+      QA_USER_JOURNEY_COMMAND: '["pnpm","run","test:e2e:matrix","--","--project","chromium"]'
+      QA_CONCURRENCY_COMMAND: '["pnpm","exec","nx","run","@app/backend-postgres-main-notification:component-test","--","src/repositories/notification-concurrency.component-spec.ts","--maxWorkers=1"]'
+      QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
+      QA_MIGRATION_ROLLBACK_COMMAND: '["pnpm","run","db:migrations:rollback-check"]'
       POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.6-alpine
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -600,6 +705,9 @@ jobs:
       - name: Install PostgreSQL client tools
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
+      - name: Materialize explicit PostgreSQL reference build context
+        run: pnpm nrb closure materialize --all-reference --provider postgres
+
       - name: Start local runtime stack
         run: |
           for attempt in 1 2 3; do
@@ -617,6 +725,7 @@ jobs:
           done
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
 
       - name: Run runtime-backed QA/ops gates
         run: pnpm run test:world-class
@@ -626,6 +735,7 @@ jobs:
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
 
       - name: Upload ops gate artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -638,10 +748,18 @@ jobs:
           if-no-files-found: ignore
 
   fullstack-e2e:
-    name: Fullstack Playwright e2e
+    name: Fullstack Playwright e2e (${{ matrix.database }})
     runs-on: ubuntu-22.04
     needs: docker-smoke
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: postgres
+            setup_args: --replace --app fullstack-e2e --capability postgres --non-interactive
+          - database: mongodb
+            setup_args: --replace --app fullstack-e2e --capability mongodb --non-interactive
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -656,8 +774,13 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install explicit bootstrap/tooling dependencies
+        run: pnpm run tooling:install
+
+      - name: Materialize clean selected fullstack closure
+        run: |
+          pnpm nrb setup ${{ matrix.setup_args }}
+          pnpm nrb closure install
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
@@ -669,7 +792,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: fullstack-e2e-artifacts
+          name: fullstack-e2e-${{ matrix.database }}-artifacts
           path: |
             coverage/e2e/fullstack/**
             apps/e2e/fullstack/coverage/e2e/fullstack/**
@@ -689,6 +812,7 @@ jobs:
       - non-runtime-validation
       - bun-compat
       - quality
+      - mongodb-validation
       - e2e
       - visual-regression
       - docker-smoke
@@ -714,6 +838,7 @@ jobs:
             echo "| Non-runtime validation gates | ${{ needs.non-runtime-validation.result }} |"
             echo "| Bun compatibility contract | ${{ needs.bun-compat.result }} |"
             echo "| Nx quality gates | ${{ needs.quality.result }} |"
+            echo "| MongoDB migrations, transactions, and adapters | ${{ needs.mongodb-validation.result }} |"
             echo "| Static/browser e2e coverage | ${{ needs.e2e.result }} |"
             echo "| Storybook interaction and visual regression | ${{ needs.visual-regression.result }} |"
             echo "| Docker smoke stack | ${{ needs.docker-smoke.result }} |"
@@ -739,6 +864,7 @@ jobs:
             ${{ needs.non-runtime-validation.result }}
             ${{ needs.bun-compat.result }}
             ${{ needs.quality.result }}
+            ${{ needs.mongodb-validation.result }}
             ${{ needs.e2e.result }}
             ${{ needs.visual-regression.result }}
             ${{ needs.docker-smoke.result }}

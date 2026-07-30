@@ -18,14 +18,33 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { CommandContext } from "../../cli.js";
-import { parseNrbConfig, schemaVersion, type NrbConfig, type PresetId } from "../../setup/schema.js";
+import {
+  parseNrbConfig,
+  schemaVersion,
+  type AppId,
+  type CapabilityId,
+  type CiMode,
+  type DeploymentTarget,
+  type FrontendApiMode,
+  type InfrastructureOwnership,
+  type KubernetesDelivery,
+  type MobileTarget,
+  type NrbConfig,
+  type PresetId,
+  type PublicTopology,
+} from "../../setup/schema.js";
 import { plan } from "../../setup/planner.js";
-import { apply, type ApplyOptions } from "../../setup/apply.js";
+import { apply, backupFiles, rollback, type ApplyOptions } from "../../setup/apply.js";
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
 import { emptyState, migrateState, type SetupState } from "../../setup/state.js";
 import { runPrompts, buildConfig, formatConfigSummary, formatPlanSummary } from "../../setup/prompts.js";
 import { appCatalog, capabilityCatalog } from "../../setup/catalog.js";
 import { materializeSelection, updateSelection } from "../../setup/selection.js";
+import { buildSelectedClosure, createLiveProjectGraph } from "../../setup/closure.js";
+import {
+  synchronizeClosureArtifacts,
+  type ClosureSyncResult,
+} from "../../setup/closure-materializer.js";
 
 // ---------------------------------------------------------------------------
 // Argument parser
@@ -46,6 +65,28 @@ export interface SetupArgs {
   capabilities: string[];
   removeApps: string[];
   removeCapabilities: string[];
+  ciMode?: CiMode;
+  frontendApiMode?: FrontendApiMode;
+  mobileTargets: MobileTarget[];
+  deploymentTargets: DeploymentTarget[];
+  publicTopology?: PublicTopology;
+  kubernetesDelivery?: KubernetesDelivery;
+  redisOwnership?: InfrastructureOwnership;
+  natsOwnership?: InfrastructureOwnership;
+  s3Ownership?: InfrastructureOwnership;
+}
+
+export interface SetupCommandDependencies {
+  synchronizeClosure?: (
+    workspaceRoot: string,
+    selection: {
+      apps: string[];
+      capabilities: string[];
+      configHash: string;
+      product: NrbConfig['product'];
+      deployment: NrbConfig['deployment'];
+    },
+  ) => Promise<ClosureSyncResult>;
 }
 
 export function parseArgs(argv: string[]): SetupArgs {
@@ -62,6 +103,8 @@ export function parseArgs(argv: string[]): SetupArgs {
     capabilities: [],
     removeApps: [],
     removeCapabilities: [],
+    mobileTargets: [],
+    deploymentTargets: [],
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -157,6 +200,66 @@ export function parseArgs(argv: string[]): SetupArgs {
       continue;
     }
 
+    if (arg === "--ci-mode") {
+      result.ciMode = requireOptionValue(argv, ++i, "--ci-mode") as CiMode;
+      continue;
+    }
+    if (arg.startsWith("--ci-mode=")) {
+      result.ciMode = requireInlineValue(arg, "--ci-mode") as CiMode;
+      continue;
+    }
+    if (arg === "--frontend-api-mode") {
+      result.frontendApiMode = requireOptionValue(argv, ++i, "--frontend-api-mode") as FrontendApiMode;
+      continue;
+    }
+    if (arg.startsWith("--frontend-api-mode=")) {
+      result.frontendApiMode = requireInlineValue(arg, "--frontend-api-mode") as FrontendApiMode;
+      continue;
+    }
+    if (arg === "--mobile-target") {
+      result.mobileTargets.push(requireOptionValue(argv, ++i, "--mobile-target") as MobileTarget);
+      continue;
+    }
+    if (arg.startsWith("--mobile-target=")) {
+      result.mobileTargets.push(requireInlineValue(arg, "--mobile-target") as MobileTarget);
+      continue;
+    }
+    if (arg === "--deployment-target") {
+      result.deploymentTargets.push(requireOptionValue(argv, ++i, "--deployment-target") as DeploymentTarget);
+      continue;
+    }
+    if (arg.startsWith("--deployment-target=")) {
+      result.deploymentTargets.push(requireInlineValue(arg, "--deployment-target") as DeploymentTarget);
+      continue;
+    }
+    for (const [option, key] of [
+      ["--public-topology", "publicTopology"],
+      ["--kubernetes-delivery", "kubernetesDelivery"],
+      ["--redis-ownership", "redisOwnership"],
+      ["--nats-ownership", "natsOwnership"],
+      ["--s3-ownership", "s3Ownership"],
+    ] as const) {
+      if (arg === option) {
+        result[key] = requireOptionValue(argv, ++i, option) as never;
+        continue;
+      }
+      if (arg.startsWith(`${option}=`)) {
+        result[key] = requireInlineValue(arg, option) as never;
+        continue;
+      }
+    }
+    if (
+      [
+        "--public-topology",
+        "--kubernetes-delivery",
+        "--redis-ownership",
+        "--nats-ownership",
+        "--s3-ownership",
+      ].some((option) => arg === option || arg.startsWith(`${option}=`))
+    ) {
+      continue;
+    }
+
     throw new Error(`Unknown option: ${arg}`);
   }
 
@@ -221,7 +324,10 @@ function saveState(workspaceRoot: string, state: SetupState): void {
 // Main handler
 // ---------------------------------------------------------------------------
 
-export async function runSetupCommand(context: CommandContext): Promise<number> {
+export async function runSetupCommand(
+  context: CommandContext,
+  dependencies: SetupCommandDependencies = {},
+): Promise<number> {
   let args: SetupArgs;
   try {
     args = parseArgs(context.argv);
@@ -253,10 +359,15 @@ export async function runSetupCommand(context: CommandContext): Promise<number> 
     return reportConfigurationError(err, args.json);
   }
 
-  return executeSetup(context, args, config);
+  return executeSetup(context, args, config, dependencies);
 }
 
-async function executeSetup(context: CommandContext, args: SetupArgs, config: NrbConfig): Promise<number> {
+async function executeSetup(
+  context: CommandContext,
+  args: SetupArgs,
+  config: NrbConfig,
+  dependencies: SetupCommandDependencies,
+): Promise<number> {
   const { workspaceRoot } = context;
 
   const currentState = loadState(workspaceRoot);
@@ -285,14 +396,10 @@ async function executeSetup(context: CommandContext, args: SetupArgs, config: Nr
     return 0;
   }
 
-  // Show summary
-  if (planResult.operations.length === 0) {
-    process.stdout.write("✓ Workspace is already up to date.\n");
-    return 0;
+  if (planResult.operations.length > 0) {
+    process.stdout.write(formatConfigSummary(config, planResult.summary) + "\n\n");
+    process.stdout.write(formatPlanSummary(planResult.operations, planResult.configHash) + "\n\n");
   }
-
-  process.stdout.write(formatConfigSummary(config, planResult.summary) + "\n\n");
-  process.stdout.write(formatPlanSummary(planResult.operations, planResult.configHash) + "\n\n");
 
   // Dry run — show plan and exit
   if (config.options.dryRun || args.dryRun) {
@@ -307,6 +414,7 @@ async function executeSetup(context: CommandContext, args: SetupArgs, config: Nr
     dryRun: false,
     stateFiles: currentState.files,
   };
+  const backups = planResult.operations.length > 0 ? await backupFiles(planResult.operations, fs) : [];
 
   const result = await apply(planResult.operations, fs, applyOptions);
 
@@ -318,11 +426,56 @@ async function executeSetup(context: CommandContext, args: SetupArgs, config: Nr
     return 1;
   }
 
+  let closureResult: ClosureSyncResult;
+  try {
+    closureResult = await (dependencies.synchronizeClosure ?? synchronizeLiveClosure)(workspaceRoot, {
+      apps: planResult.summary.apps,
+      capabilities: planResult.summary.capabilities,
+      configHash: planResult.configHash,
+      product: config.product,
+      deployment: config.deployment,
+    });
+  } catch (err: unknown) {
+    if (backups.length > 0) await rollback(backups, fs);
+    process.stderr.write(`Closure generation failed: ${errorMessage(err)}\n`);
+    return 1;
+  }
+
   // Save state
   saveState(workspaceRoot, planResult.expectedState);
 
-  process.stdout.write(`✓ Setup complete: ${result.applied} operations applied, ${result.skipped} skipped.\n`);
+  if (result.applied === 0 && !closureResult.changed) {
+    process.stdout.write("✓ Workspace and selected closure are already up to date.\n");
+  } else {
+    process.stdout.write(
+      `✓ Setup complete: ${result.applied} operations applied, selected closure ${closureResult.changed ? "updated" : "verified"}.\n`,
+    );
+  }
+  if (closureResult.invalidatedLock) {
+    process.stdout.write("Selected dependency lock was invalidated; run `pnpm nrb closure install` explicitly.\n");
+  }
   return 0;
+}
+
+async function synchronizeLiveClosure(
+  workspaceRoot: string,
+  selection: {
+    apps: string[];
+    capabilities: string[];
+    configHash: string;
+    product: NrbConfig['product'];
+    deployment: NrbConfig['deployment'];
+  },
+): Promise<ClosureSyncResult> {
+  const graph = await createLiveProjectGraph();
+  const closure = buildSelectedClosure(graph, {
+    apps: selection.apps as AppId[],
+    capabilities: selection.capabilities as CapabilityId[],
+    configHash: selection.configHash,
+    product: selection.product,
+    deployment: selection.deployment,
+  });
+  return synchronizeClosureArtifacts(workspaceRoot, closure);
 }
 
 /** Build a config from exact or additive CLI selection input. */
@@ -334,9 +487,10 @@ export function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): Nrb
     args.removeApps.length > 0 ||
     args.removeCapabilities.length > 0 ||
     args.replace;
+  const hasOperationalUpdate = hasOperationalArgs(args);
 
   if (args.config) {
-    if (hasSelectionUpdate) {
+    if (hasSelectionUpdate || hasOperationalUpdate) {
       throw new Error("--config is an exact configuration source and cannot be combined with selection flags.");
     }
     const resolvedPath = args.config.startsWith("/") ? args.config : resolve(workspaceRoot, args.config);
@@ -348,7 +502,7 @@ export function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): Nrb
     if (!existing && (args.removeApps.length > 0 || args.removeCapabilities.length > 0)) {
       throw new Error("Cannot remove selections before setup has created nrb.config.json.");
     }
-    return updateSelection(existing, {
+    return applyOperationalArgs(updateSelection(existing, {
       preset: args.preset,
       addApps: args.apps,
       addCapabilities: args.capabilities,
@@ -361,11 +515,11 @@ export function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): Nrb
         dryRun: args.dryRun,
         nonInteractive: args.nonInteractive,
       },
-    });
+    }), args);
   }
 
   if (existing) {
-    return parseNrbConfig({
+    return applyOperationalArgs(parseNrbConfig({
       ...existing,
       options: {
         ...existing.options,
@@ -374,10 +528,48 @@ export function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): Nrb
         dryRun: args.dryRun || existing.options.dryRun,
         nonInteractive: args.nonInteractive,
       },
-    });
+    }), args);
   }
 
   throw new Error("No applications selected. Run `pnpm nrb setup` interactively or pass --preset, --app, or --config.");
+}
+
+function hasOperationalArgs(args: SetupArgs): boolean {
+  return (
+    args.ciMode !== undefined ||
+    args.frontendApiMode !== undefined ||
+    args.mobileTargets.length > 0 ||
+    args.deploymentTargets.length > 0 ||
+    args.publicTopology !== undefined ||
+    args.kubernetesDelivery !== undefined ||
+    args.redisOwnership !== undefined ||
+    args.natsOwnership !== undefined ||
+    args.s3Ownership !== undefined
+  );
+}
+
+function applyOperationalArgs(config: NrbConfig, args: SetupArgs): NrbConfig {
+  return parseNrbConfig({
+    ...config,
+    product: {
+      ...config.product,
+      ...(args.ciMode ? { ciMode: args.ciMode } : {}),
+      ...(args.frontendApiMode ? { frontendApiMode: args.frontendApiMode } : {}),
+      ...(args.mobileTargets.length > 0 ? { mobileTargets: [...new Set(args.mobileTargets)] } : {}),
+    },
+    deployment: {
+      ...config.deployment,
+      ...(args.deploymentTargets.length > 0 ? { targets: [...new Set(args.deploymentTargets)] } : {}),
+      ...(args.publicTopology ? { publicTopology: args.publicTopology } : {}),
+      ...(args.kubernetesDelivery ? { kubernetesDelivery: args.kubernetesDelivery } : {}),
+      infrastructure: {
+        ...config.deployment.infrastructure,
+        ...(args.redisOwnership ? { redis: args.redisOwnership } : {}),
+        ...(args.natsOwnership ? { nats: args.natsOwnership } : {}),
+        ...(args.s3Ownership ? { s3: args.s3Ownership } : {}),
+      },
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -387,6 +579,7 @@ export function buildConfigFromArgs(args: SetupArgs, workspaceRoot: string): Nrb
 export async function runSetupCommandInteractive(
   context: CommandContext,
   promptRunner: typeof runPrompts = runPrompts,
+  dependencies: SetupCommandDependencies = {},
 ): Promise<number> {
   let args: SetupArgs;
   try {
@@ -411,7 +604,7 @@ export async function runSetupCommandInteractive(
         nonInteractive: false,
       },
     });
-    return executeSetup(context, args, parseNrbConfig(config));
+    return executeSetup(context, args, parseNrbConfig(config), dependencies);
   } catch (err: unknown) {
     return reportConfigurationError(err, args.json);
   }
@@ -435,6 +628,7 @@ export async function runSetupFromContext(context: CommandContext): Promise<numb
     args.removeApps.length > 0 ||
     args.removeCapabilities.length > 0 ||
     args.replace ||
+    hasOperationalArgs(args) ||
     args.list;
 
   if (!args.nonInteractive && !hasDirectSelection) {
@@ -456,6 +650,7 @@ function assertListOnly(args: SetupArgs): void {
     args.removeApps.length > 0 ||
     args.removeCapabilities.length > 0 ||
     args.replace ||
+    hasOperationalArgs(args) ||
     args.prune ||
     args.force ||
     args.dryRun;
@@ -480,9 +675,13 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
     label: capability.label,
     selected: selectedCapabilities.has(capability.id),
   }));
+  const product = existing?.product ?? null;
+  const deployment = existing?.deployment ?? null;
 
   if (json) {
-    process.stdout.write(`${JSON.stringify({ configured: existing !== null, applications, capabilities }, null, 2)}\n`);
+    process.stdout.write(
+      `${JSON.stringify({ configured: existing !== null, applications, capabilities, product, deployment }, null, 2)}\n`,
+    );
     return;
   }
 
@@ -521,6 +720,19 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
   for (const capability of capabilities) {
     process.stdout.write(`  ${capability.selected ? "[x]" : "[ ]"} ${capability.id} — ${capability.label}\n`);
   }
+  if (product && deployment) {
+    process.stdout.write(`\nproduct:\n`);
+    process.stdout.write(`  ci-mode: ${product.ciMode}\n`);
+    process.stdout.write(`  frontend-api-mode: ${product.frontendApiMode}\n`);
+    process.stdout.write(`  mobile-targets: ${product.mobileTargets.join(", ") || "(none)"}\n`);
+    process.stdout.write(`\ndeployment:\n`);
+    process.stdout.write(`  targets: ${deployment.targets.join(", ")}\n`);
+    process.stdout.write(`  public-topology: ${deployment.publicTopology}\n`);
+    process.stdout.write(`  kubernetes-delivery: ${deployment.kubernetesDelivery}\n`);
+    process.stdout.write(
+      `  infrastructure: redis=${deployment.infrastructure.redis}, nats=${deployment.infrastructure.nats}, s3=${deployment.infrastructure.s3}\n`,
+    );
+  }
   process.stdout.write(
     "\nRerun `pnpm nrb setup` to edit interactively, or use `--app <id>` / `--remove-app <id>` for scripted updates.\n",
   );
@@ -547,6 +759,15 @@ Options:
   --remove-app <id>          Remove an application when no selected app requires it
   --remove-capability <id>   Remove a capability when no selection requires it
   --replace                  Replace the current selection with explicit --app/--capability values
+  --ci-mode <mode>           Product-selected or maintainer-wide CI (product, maintainer)
+  --frontend-api-mode <mode> Frontend API routing (same-origin, split-origin)
+  --mobile-target <target>   Mobile output to own (web, android, ios; repeatable)
+  --deployment-target <id>   Deployment target (docker, single-server, kubernetes; repeatable)
+  --public-topology <mode>   Public routing (single-domain, per-app-domains, external-proxy)
+  --kubernetes-delivery <id> Kubernetes delivery (direct, argocd, flux)
+  --redis-ownership <mode>   Redis ownership (bundled, external)
+  --nats-ownership <mode>    NATS ownership (bundled, external)
+  --s3-ownership <mode>      S3 ownership (bundled, external)
   --list                     List available applications and current selection
   --dry-run                  Show the plan without applying changes
   --prune                    Remove files no longer needed by the configuration

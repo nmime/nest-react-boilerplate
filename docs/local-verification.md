@@ -7,7 +7,7 @@ GitHub-hosted Actions may be unavailable for this repository/account. When that 
 Run the full gate from a clean `main` checkout with Node.js `>=24 <25` and pnpm `11.15.1`:
 
 ```bash
-pnpm install --frozen-lockfile
+pnpm run tooling:install
 pnpm run onboarding:verify
 pnpm exec playwright install --with-deps chromium
 pnpm run format:check
@@ -16,11 +16,11 @@ pnpm run docs:check
 pnpm run check
 node scripts/validate-deployment-config.mjs
 node scripts/validate-helm-rate-limit-config.mjs
-pnpm exec nx run-many -t lint --all
-pnpm exec nx run-many -t typecheck --all
+pnpm run lint:all
+pnpm run typecheck:all
 pnpm exec nx run-many -t build --all
-pnpm run test:coverage
-pnpm run test:e2e:coverage
+pnpm run test:coverage:all
+pnpm run test:e2e:coverage:all
 pnpm run storybook:build
 pnpm run test:storybook
 pnpm run test:visual
@@ -45,16 +45,26 @@ without adding deployed-service prerequisites to that job.
 ## Current CI/local parity gates
 
 The supported alternative-runtime lane is reproducible locally with the exact
-Bun version in `.bun-version`:
+Bun version in `.bun-version`. It requires a current setup-selected closure and
+selected pnpm lock:
 
 ```bash
+pnpm nrb setup --replace --app site-app --non-interactive
+pnpm nrb closure install
 pnpm run bun:check
 ```
 
-This runs the Nx graph, representative Vite/Vike/Nest builds, selected unit and
-API end-to-end tests, and live Vike/Nest HTTP smokes under Bun. Expo/Metro
-export is still part of the contract, but runs as an explicit Node child because
-that upstream toolchain is not supported under forced Bun. The canonical Node
+This runs only targets and runtime artifacts available in the selected closure.
+It rebuilds canonical deployment artifacts through Node/pnpm, installs their
+production dependencies in isolated temporary directories, and runs every
+selected Vike or backend runtime under Node and Bun. Every API and bot process
+must pass startup, liveness, readiness, runtime-identity, and lifecycle probes;
+notification consumers and schedulers use headless process probes. CI covers
+every preset, standalone user/admin/Discord/Telegram selections, provider-free
+static output, and MongoDB core/bot custom selections. Provider-backed local
+selections require Docker Compose and fail rather than using memory persistence.
+Expo/Metro export is part of the selected contract but runs as an explicit Node
+child because that upstream toolchain is not supported under forced Bun. The canonical Node
 coverage and pnpm lockfile gates remain separate and mandatory.
 
 For documentation-only ops/QA/deployment changes, the focused parity slice is:
@@ -122,7 +132,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 
 ## Tooling and migration rollback checks
 
-`pnpm run tooling:static-check` is the deterministic static gate for repo operational tooling. It runs `node --check` over `packages/tooling/bin/**/*.mjs` and `packages/tooling/src/commands/**/*.ts`, performs safe CLI import-smoke checks for help-only commands, and verifies root/package tooling script path references. It does not execute destructive, deploy, Docker, or runtime-heavy scripts. The root `check:fast` and `check` aggregates include it before broader lint/typecheck/test gates.
+`pnpm run tooling:static-check` is the deterministic static gate for repo operational tooling. It runs `node --check` over `packages/tooling/bin/**/*.mjs` and `packages/tooling/src/commands/**/*.ts`, performs safe CLI import-smoke checks for help-only commands, and verifies root/package tooling script path references. Local `.claude/worktrees/**` storage is excluded from repository inventories. Historical working specs under `docs/superpowers/**` are archival only for the current architecture/version denylist; applicable safety and structure rules still scan them. The command does not execute destructive, deploy, Docker, or runtime-heavy scripts. The root `check:fast` and `check` aggregates include it before broader lint/typecheck/test gates.
 
 `pnpm run db:migrations:rollback-check` is the real rollback validation command. It starts disposable PostgreSQL through Testcontainers, runs auth migrations up/down/up, and requires Docker/Testcontainers. Keep it out of non-runtime PR jobs that cannot provide Docker, but run it from Docker-capable ops/scheduled CI or by configuring `QA_MIGRATION_ROLLBACK_COMMAND=pnpm run db:migrations:rollback-check` for the runtime ops gate. A synthetic world-class fallback must not be treated as real rollback evidence.
 
@@ -132,6 +142,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 - `pnpm run check`: full aggregate for formatting, tooling static validation, migrations, contracts, QA presets, lint, typecheck, and unit tests.
 - CI `Non-runtime validation gates`: focused PR/push job that runs `onboarding:verify`, `db:migrations:check`, `lib:configs:check`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, and `test:property` after `ci:pr` and lockfile installation.
 - `pnpm run tooling:static-check`: deterministic static syntax/import/reference validation for repo tooling scripts without running destructive or runtime-heavy commands.
+- `pnpm run bun:check`: selected-closure Node/Bun deployment-artifact parity; durable provider selections require Docker Compose.
 - `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation.
 - `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.
 - `node scripts/validate-helm-rate-limit-config.mjs`: focused Helm values and ConfigMap assertions for Redis-backed API rate limiting.

@@ -1,17 +1,21 @@
 # Source-build overlay for an operator who explicitly needs to build from this
 # checkout. Normal production deployments use immutable registry images and do
 # not load this file.
+x-nrb-build: &nrb-build
+  context: ..
+  dockerfile: Dockerfile
+  additional_contexts:
+    nrb-closure: ${NRB_CLOSURE_CONTEXT:?run pnpm nrb closure install before Docker source builds}
+
 services:
   migrate:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: migrator
 
   admin-app-api:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: admin-app-api
@@ -19,8 +23,7 @@ services:
 
   user-app-api:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: user-app-api
@@ -28,8 +31,7 @@ services:
 
   auth-app-api:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: auth-app-api
@@ -37,8 +39,7 @@ services:
 
   discord-app-api:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: discord-app-api
@@ -46,8 +47,7 @@ services:
 
   telegram-bot-api:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: telegram-bot-api
@@ -55,8 +55,7 @@ services:
 
   notification-scheduler:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: notification-scheduler
@@ -64,8 +63,7 @@ services:
 
   notification-consumer:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: notification-consumer
@@ -73,8 +71,7 @@ services:
 
   admin-app:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: frontend
       args:
         NX_PROJECT: admin-app
@@ -88,8 +85,7 @@ services:
 
   user-app:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: frontend
       args:
         NX_PROJECT: user-app
@@ -103,8 +99,7 @@ services:
 
   landing-app:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: frontend
       args:
         NX_PROJECT: landing-app
@@ -117,16 +112,14 @@ services:
 
   site-app:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: site-runtime
       args:
         NX_PROJECT: site-app
 
   mobile-app:
     build:
-      context: ..
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: frontend
       args:
         NX_PROJECT: mobile-app

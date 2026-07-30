@@ -14,7 +14,7 @@ services:
       - caddy
       - run
       - --config
-      - /etc/caddy/Caddyfile.${COMPOSE_DOMAIN_MODE:?set COMPOSE_DOMAIN_MODE to single-domain or per-app-domains}
+      - ${EDGE_CADDYFILE:?derived by scripts/compose-production.mjs}
       - --adapter
       - caddyfile
     environment:
@@ -48,6 +48,7 @@ services:
     networks: [app]
     volumes:
       - ./caddy:/etc/caddy:ro
+      - ${NRB_EDGE_CADDYFILE:-./caddy/Caddyfile.per-app-domains}:/nrb/Caddyfile.selected:ro
       - caddy-data:/data
       - caddy-config:/config
     healthcheck:

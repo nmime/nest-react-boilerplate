@@ -15,6 +15,9 @@ describe('AuthAppApiModule', () => {
   it('wires the app, feature controllers, and shared health service', async () => {
     let moduleRef: TestingModule | undefined;
     process.env.AUTH_PERSISTENCE = 'memory';
+    process.env.DATABASE_URL ??= 'postgresql://test:test@127.0.0.1:1/test';
+    process.env.MONGODB_DATABASE ??= 'test';
+    process.env.MONGODB_URI ??= 'mongodb://127.0.0.1:1/test';
 
     try {
       moduleRef = await Test.createTestingModule({

@@ -2,6 +2,9 @@
 
 This repository ships an OpenTelemetry SDK wrapper in `libs/backend/common/otel/lib`.
 The SDK uses `@opentelemetry/api` for tracing and `@opentelemetry/sdk-node` for the full pipeline.
+It deliberately uses direct instrumentation packages instead of
+`@opentelemetry/auto-instrumentations-node`, whose dependency graph includes
+both durable database stacks and unrelated integrations.
 
 ## Environment variables
 
@@ -32,8 +35,24 @@ If no endpoint is configured and `OTEL_ENABLED` is not explicitly set, the SDK f
 
 ## What is exported
 
-- **Traces:** HTTP server spans (http/fastify), PostgreSQL query spans (via `@opentelemetry/instrumentation-pg`), Redis spans, and NestJS-core spans. Use the `withSpan` helper to add custom instrumentation.
+- **Traces:** HTTP/Fastify server spans, NestJS-core spans, Redis spans, and
+  exactly one selected durable-provider integration. PostgreSQL composition
+  adds `@opentelemetry/instrumentation-pg`; MongoDB composition adds
+  `@opentelemetry/instrumentation-mongodb`. Provider-free composition adds
+  neither. NATS behavior is unchanged: product code may add explicit spans with
+  `withSpan`, but no unsupported NATS auto-instrumentation package is loaded.
 - **Metrics:** Node.js runtime metrics and custom counters/histograms. Exported via `OTLPMetricExporter`.
+
+`pnpm nrb setup` writes each backend app's pre-import telemetry initializer into
+`capabilities.bootstrap.generated.ts`; Nest module composition remains in
+`capabilities.generated.ts`. A process entrypoint statically imports only the
+bootstrap initializer, registers common and selected-provider instrumentation,
+and then dynamically imports the common Nest bootstrap and app module. The
+provider factory comes from the narrow `@app/backend-postgres-main-otel` or
+`@app/backend-mongodb-main-otel` entrypoint, neither of which evaluates a
+database module or driver. Switching providers therefore changes the static Nx,
+lockfile, and installed dependency graph without loading the opposite provider
+or registering instrumentation after its driver.
 
 Both signals use the OTLP protocol. Endpoint resolution appends `/v1/traces` or `/v1/metrics` to the base endpoint if signal-specific endpoints are not set.
 

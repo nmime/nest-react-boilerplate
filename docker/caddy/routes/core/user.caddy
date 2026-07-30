@@ -1,0 +1,10 @@
+@user_api {
+	path /profile /profile/*
+	not {
+		method GET HEAD
+		header Accept *text/html*
+	}
+}
+handle @user_api {
+	reverse_proxy user-app-api:80
+}

@@ -1,5 +1,5 @@
 # Dependencies
-node_modules/
+node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -90,6 +90,7 @@ storybook-static
 # AI working artifacts (plans, specs) — local only
 
 .nx/
+.nrb/reference/
 
 # Local database backups
 backups/

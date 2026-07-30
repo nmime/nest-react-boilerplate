@@ -1,8 +1,15 @@
 # Every service is profile-gated. `pnpm nrb setup` generates the selected
-# COMPOSE_PROFILES for `pnpm run docker:selected`. For a staging-like local
-# stack, copy `.env.staging.example`, narrow its explicit COMPOSE_PROFILES, and
-# run `docker compose --env-file ../.env.staging -f docker-compose.yml up -d`
-# from this directory.
+# COMPOSE_PROFILES and `pnpm run docker:selected` validates and supplies the
+# normalized nrb-closure build context. Use that wrapper instead of invoking
+# this file directly so the default source context can never supply closure
+# metadata.
+
+x-nrb-build: &nrb-build
+  context: ..
+  network: ${DOCKER_BUILD_NETWORK:-default}
+  dockerfile: Dockerfile
+  additional_contexts:
+    nrb-closure: ${NRB_CLOSURE_CONTEXT:?run pnpm nrb closure install before Docker source builds}
 
 x-backend-env: &backend-env
   NODE_ENV: ${NODE_ENV:-development}
@@ -10,8 +17,12 @@ x-backend-env: &backend-env
   PORT: 80
   GRACEFUL_SHUTDOWN: ${GRACEFUL_SHUTDOWN:-true}
   CORS_ORIGINS: ${CORS_ORIGINS:-}
-  DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nest_react_boilerplate}
-  AUTH_PERSISTENCE: postgres
+  DATABASE_ENGINE: ${DATABASE_ENGINE:-}
+  AUTH_PERSISTENCE: ${AUTH_PERSISTENCE:-}
+  DATABASE_URL: ${CONTAINER_DATABASE_URL:-}
+  MONGODB_URI: ${MONGODB_URI:-}
+  MONGODB_DATABASE: ${MONGODB_DATABASE:-}
+  MONGODB_REPLICA_SET: ${MONGODB_REPLICA_SET:-}
   SESSION_SECRET: ${SESSION_SECRET:-local-session-secret-change-me-32-chars}
   AUTH_GEOIP_DATABASE_PATH: ${AUTH_GEOIP_DATABASE_PATH:-}
   AUTH_LOGIN_NETWORK_RETENTION_DAYS: ${AUTH_LOGIN_NETWORK_RETENTION_DAYS:-30}
@@ -179,12 +190,52 @@ services:
       timeout: 5s
       retries: 20
 
+  mongodb:
+    profiles: [mongodb]
+    image: mongo:8.0.28-noble
+    restart: unless-stopped
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '${MONGODB_PORT:-27017}:27017'
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      default:
+        aliases: [mongodb.localhost]
+    healthcheck:
+      test: ['CMD-SHELL', 'mongosh --quiet --host localhost --eval "quit(db.hello().isWritablePrimary ? 0 : 1)"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  mongodb-init:
+    profiles: [mongodb]
+    image: mongo:8.0.28-noble
+    restart: 'no'
+    depends_on:
+      mongodb:
+        condition: service_started
+    volumes:
+      - ./mongodb:/opt/mongodb:ro
+    entrypoint:
+      - bash
+      - -c
+      - |
+        /opt/mongodb/prepare-replica-set.sh
+        mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval '
+          const config = rs.conf();
+          if (config.members[0].host !== "mongodb.localhost:27017") {
+            config.members[0].host = "mongodb.localhost:27017";
+            rs.reconfig(config);
+          }
+        '
+        until mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)'; do sleep 2; done
+
   migrate:
     profiles: [postgres]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: migrator
     restart: 'no'
     depends_on:
@@ -192,23 +243,29 @@ services:
         condition: service_healthy
     environment: *backend-env
 
+  mongodb-migrate:
+    profiles: [mongodb]
+    build:
+      <<: *nrb-build
+      target: migrator
+    restart: 'no'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mongodb-init:
+        condition: service_completed_successfully
+    environment: *backend-env
+
   admin-app-api:
     profiles: [admin-app-api]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: admin-app-api
         BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
     restart: unless-stopped
     environment: *backend-env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     ports:
       - target: 80
         published: '${ADMIN_APP_API_PORT:-3001}'
@@ -218,20 +275,13 @@ services:
   user-app-api:
     profiles: [user-app-api]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: user-app-api
         BUILD_OUTPUT: dist/apps/backend/user/user-app-api
     restart: unless-stopped
     environment: *backend-env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     ports:
       - target: 80
         published: '${USER_APP_API_PORT:-3002}'
@@ -241,20 +291,13 @@ services:
   auth-app-api:
     profiles: [auth-app-api]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: auth-app-api
         BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
     restart: unless-stopped
     environment: *backend-env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     ports:
       - target: 80
         published: '${AUTH_APP_API_PORT:-3003}'
@@ -264,9 +307,7 @@ services:
   discord-app-api:
     profiles: [discord-app-api]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: discord-app-api
@@ -283,11 +324,6 @@ services:
       DISCORD_INTERACTIONS_ENDPOINT: ${DISCORD_INTERACTIONS_ENDPOINT:-}
       DISCORD_DEFAULT_TENANT_ID: ${DISCORD_DEFAULT_TENANT_ID:-}
       DISCORD_WEB_APP_BASE_URL: ${DISCORD_WEB_APP_BASE_URL:-http://localhost:4201}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     ports:
       - target: 80
         published: '${DISCORD_APP_API_PORT:-3007}'
@@ -297,9 +333,7 @@ services:
   telegram-bot-api:
     profiles: [telegram-bot-api]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: telegram-bot-api
@@ -316,11 +350,6 @@ services:
       TELEGRAM_BOT_SESSION_TTL_SECONDS: ${TELEGRAM_BOT_SESSION_TTL_SECONDS:-1209600}
       TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS: ${TELEGRAM_BOT_RATE_LIMIT_WINDOW_MS:-1000}
       TELEGRAM_BOT_RATE_LIMIT: ${TELEGRAM_BOT_RATE_LIMIT:-3}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     ports:
       - target: 80
         published: '${TELEGRAM_BOT_API_PORT:-3013}'
@@ -330,45 +359,29 @@ services:
   notification-scheduler:
     profiles: [notification-scheduler]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: notification-scheduler
         BUILD_OUTPUT: dist/apps/backend/notification/notification-scheduler
     restart: unless-stopped
     environment: *backend-env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
   notification-consumer:
     profiles: [notification-consumer]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: backend
       args:
         NX_PROJECT: notification-consumer
         BUILD_OUTPUT: dist/apps/backend/notification/notification-consumer
     restart: unless-stopped
     environment: *backend-env
-    depends_on:
-      postgres:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
   admin-app:
     profiles: [admin-app]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: frontend
       args:
         NX_PROJECT: admin-app
@@ -390,9 +403,7 @@ services:
   user-app:
     profiles: [user-app]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: frontend
       args:
         NX_PROJECT: user-app
@@ -414,9 +425,7 @@ services:
   landing-app:
     profiles: [landing-app]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: frontend
       args:
         NX_PROJECT: landing-app
@@ -432,9 +441,7 @@ services:
   site-app:
     profiles: [site-app]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: site-runtime
       args:
         NX_PROJECT: site-app
@@ -457,9 +464,7 @@ services:
   mobile-app:
     profiles: [mobile-app]
     build:
-      context: ..
-      network: ${DOCKER_BUILD_NETWORK:-default}
-      dockerfile: Dockerfile
+      <<: *nrb-build
       target: frontend
       args:
         NX_PROJECT: mobile-app
@@ -480,5 +485,6 @@ services:
 
 volumes:
   postgres-data:
+  mongodb-data:
   redis-data:
   minio-data:

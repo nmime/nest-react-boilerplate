@@ -5,6 +5,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { TelegramWebhookController } from './telegram-webhook.controller';
 import { createTelegramBot, type TelegramBotConfig, type TelegramBotInstance } from '@app/backend-feature-telegram-bot';
+import { TelegramUpdateReplayProtection } from './telegram-update-replay-protection';
 
 const botInfo = {
   id: 42,
@@ -19,6 +20,13 @@ const botInfo = {
 } as const;
 
 const testValue = <T>(value: unknown): T => value as T;
+
+const replayProtection = () =>
+  testValue<TelegramUpdateReplayProtection>({
+    reserve: vi.fn(() => Promise.resolve({ key: 'telegram:1', ownerValue: 'processing:owner' })),
+    complete: vi.fn(() => Promise.resolve()),
+    release: vi.fn(() => Promise.resolve()),
+  });
 
 function instance() {
   const init = vi.fn(() => Promise.resolve(undefined));
@@ -157,7 +165,7 @@ function telegramResult(method: string): Record<string, unknown> {
 describe('TelegramWebhookController', () => {
   it('rejects missing Telegram webhook secret headers', async () => {
     const { telegram, handleUpdate } = instance();
-    const controller = new TelegramWebhookController(telegram);
+    const controller = new TelegramWebhookController(telegram, replayProtection());
 
     await expect(controller.handleWebhook(undefined, { update_id: 1 })).rejects.toBeInstanceOf(ForbiddenException);
     expect(handleUpdate).not.toHaveBeenCalled();
@@ -165,7 +173,7 @@ describe('TelegramWebhookController', () => {
 
   it('rejects invalid Telegram webhook secret headers', async () => {
     const { telegram, handleUpdate } = instance();
-    const controller = new TelegramWebhookController(telegram);
+    const controller = new TelegramWebhookController(telegram, replayProtection());
 
     await expect(controller.handleWebhook('wrong', { update_id: 1 })).rejects.toBeInstanceOf(ForbiddenException);
     expect(handleUpdate).not.toHaveBeenCalled();
@@ -175,7 +183,7 @@ describe('TelegramWebhookController', () => {
     const { telegram } = instance();
     telegram.config.mode = 'polling';
 
-    expect(() => new TelegramWebhookController(telegram)).toThrow(
+    expect(() => new TelegramWebhookController(telegram, replayProtection())).toThrow(
       'Telegram webhook runtime cannot start when TELEGRAM_BOT_MODE=polling.',
     );
   });
@@ -184,14 +192,14 @@ describe('TelegramWebhookController', () => {
     const { telegram } = instance();
     telegram.config.webhookUrl = undefined;
 
-    expect(() => new TelegramWebhookController(telegram)).toThrow(
+    expect(() => new TelegramWebhookController(telegram, replayProtection())).toThrow(
       'Telegram webhook runtime requires a valid HTTPS TELEGRAM_BOT_WEBHOOK_URL ending in /telegram/webhook.',
     );
   });
 
   it('accepts valid Telegram webhook secret headers', async () => {
     const { telegram, init, handleUpdate, setWebhook } = instance();
-    const controller = new TelegramWebhookController(telegram);
+    const controller = new TelegramWebhookController(telegram, replayProtection());
 
     await expect(controller.handleWebhook('secret', { update_id: 1 })).resolves.toEqual({
       ok: true,
@@ -206,7 +214,7 @@ describe('TelegramWebhookController', () => {
 
   it('forwards raw update objects without reshaping them', async () => {
     const { telegram, handleUpdate } = instance();
-    const controller = new TelegramWebhookController(telegram);
+    const controller = new TelegramWebhookController(telegram, replayProtection());
     const update = {
       update_id: 2,
       message: {
@@ -225,7 +233,7 @@ describe('TelegramWebhookController', () => {
   it('initializes the grammY bot before forwarding valid webhook updates', async () => {
     const { calls, fetchMock } = apiMock();
     const telegram = createTelegramBot(config(), { fetch: fetchMock });
-    const controller = new TelegramWebhookController(telegram);
+    const controller = new TelegramWebhookController(telegram, replayProtection());
 
     await expect(controller.handleWebhook('secret', messageUpdate())).resolves.toEqual({ ok: true });
 
@@ -235,7 +243,7 @@ describe('TelegramWebhookController', () => {
 
   it('initializes the bot once on application bootstrap so webhook traffic is not delayed', async () => {
     const { telegram, init, handleUpdate, setWebhook } = instance();
-    const controller = new TelegramWebhookController(telegram);
+    const controller = new TelegramWebhookController(telegram, replayProtection());
 
     await controller.onApplicationBootstrap();
     await expect(controller.handleWebhook('secret', { update_id: 1 })).resolves.toEqual({ ok: true });
@@ -243,5 +251,53 @@ describe('TelegramWebhookController', () => {
     expect(init).toHaveBeenCalledTimes(1);
     expect(setWebhook).toHaveBeenCalledTimes(1);
     expect(handleUpdate).toHaveBeenCalledWith({ update_id: 1 });
+  });
+
+  it('does not dispatch a replayed update', async () => {
+    const { telegram, handleUpdate } = instance();
+    const replay = testValue<TelegramUpdateReplayProtection>({
+      reserve: vi.fn().mockRejectedValue(new Error('replayed')),
+    });
+    const controller = new TelegramWebhookController(telegram, replay);
+
+    await expect(controller.handleWebhook('secret', { update_id: 1 })).rejects.toThrow('replayed');
+    expect(handleUpdate).not.toHaveBeenCalled();
+  });
+
+  it('acknowledges a completed duplicate without dispatching it again', async () => {
+    const { telegram, handleUpdate } = instance();
+    const replay = testValue<TelegramUpdateReplayProtection>({
+      reserve: vi.fn().mockResolvedValue(null),
+    });
+    const controller = new TelegramWebhookController(telegram, replay);
+
+    await expect(controller.handleWebhook('secret', { update_id: 1 })).resolves.toEqual({ ok: true });
+    expect(handleUpdate).not.toHaveBeenCalled();
+  });
+
+  it('releases its reservation when update handling fails transiently', async () => {
+    const { telegram, handleUpdate } = instance();
+    handleUpdate.mockRejectedValueOnce(new Error('transient handler failure'));
+    const replay = replayProtection();
+    const controller = new TelegramWebhookController(telegram, replay);
+
+    await expect(controller.handleWebhook('secret', { update_id: 1 })).rejects.toThrow('transient handler failure');
+    expect(replay.release).toHaveBeenCalledWith({ key: 'telegram:1', ownerValue: 'processing:owner' });
+    expect(replay.complete).not.toHaveBeenCalled();
+  });
+
+  it('does not release a handled update when completion storage fails', async () => {
+    const { telegram, handleUpdate } = instance();
+    const completionError = new Error('completion unavailable');
+    const replay = testValue<TelegramUpdateReplayProtection>({
+      reserve: vi.fn().mockResolvedValue({ key: 'telegram:1', ownerValue: 'processing:owner' }),
+      complete: vi.fn().mockRejectedValue(completionError),
+      release: vi.fn(),
+    });
+    const controller = new TelegramWebhookController(telegram, replay);
+
+    await expect(controller.handleWebhook('secret', { update_id: 1 })).rejects.toBe(completionError);
+    expect(handleUpdate).toHaveBeenCalledOnce();
+    expect(replay.release).not.toHaveBeenCalled();
   });
 });

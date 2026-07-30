@@ -106,10 +106,10 @@ Avoid placing business rules in shared libraries merely to make imports convenie
 ## Current adoption status
 
 - Auth main has domain, application, infrastructure, and HTTP-interface folders;
-  its PostgreSQL implementation remains in the feature-owned data-access
-  project.
+  its PostgreSQL and MongoDB implementations remain in mutually exclusive
+  feature-owned data-access projects.
 - Admin main separates domain, application, and HTTP interfaces, while its
-  persistence implementations live in the auth PostgreSQL project.
+  persistence implementations live in the selected auth data-access project.
 - User main keeps thin HTTP composition while reusable user domain/application
   contracts live in user shared.
 - Backend common libraries use `boundary:backend-kernel`,

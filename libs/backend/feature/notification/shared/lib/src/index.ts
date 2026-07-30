@@ -5,5 +5,6 @@ export * from './notification-segment-resolver';
 export * from './notification-admin.inject-token';
 export * from './notification-errors';
 export * from './notification-recipient-resolver';
+export * from './notification-delivery-partition';
 export * from './types';
 export * from './dto';

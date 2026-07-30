@@ -6,6 +6,7 @@
       "scope:audit-log",
       "scope:auth",
       "scope:feature-flags",
+      "scope:mongodb",
       "scope:notification",
       "scope:postgres",
       "scope:shared"
@@ -17,6 +18,7 @@
       "scope:auth",
       "scope:admin",
       "scope:feature-flags",
+      "scope:mongodb",
       "scope:notification",
       "scope:postgres",
       "scope:shared"
@@ -39,7 +41,7 @@
   },
   {
     "sourceTag": "scope:feature-flags",
-    "onlyDependOnLibsWithTags": ["scope:feature-flags", "scope:postgres", "scope:shared"]
+    "onlyDependOnLibsWithTags": ["scope:feature-flags", "scope:mongodb", "scope:postgres", "scope:shared"]
   },
   {
     "sourceTag": "scope:postgres",
@@ -54,6 +56,7 @@
       "scope:telegram",
       "scope:auth",
       "scope:feature-flags",
+      "scope:mongodb",
       "scope:postgres",
       "scope:shared"
     ]
@@ -65,6 +68,7 @@
       "scope:admin",
       "scope:auth",
       "scope:feature-flags",
+      "scope:mongodb",
       "scope:postgres",
       "scope:shared"
     ]
@@ -76,6 +80,7 @@
       "scope:notification",
       "scope:auth",
       "scope:feature-flags",
+      "scope:mongodb",
       "scope:postgres",
       "scope:bots",
       "scope:shared"

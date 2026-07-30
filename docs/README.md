@@ -55,7 +55,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 
 ## Database and persistence
 
-- [Database Migrations](database-migrations.md) — MikroORM standards, naming, and review checklist.
+- [Database Migrations](database-migrations.md) — PostgreSQL/MikroORM and native MongoDB migration, consistency, and non-parity contracts.
 - [Dependency Management](dependency-management.md) — supply chain, versions, and update policy.
 
 ## Testing and quality

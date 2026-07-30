@@ -155,6 +155,18 @@ export class InMemoryRedisClient implements RedisClientLike {
     return true;
   }
 
+  async replaceIfValue(key: string, expectedValue: string, replacementValue: string, ttlMs: number): Promise<boolean> {
+    if ((await this.get(key)) !== expectedValue) {
+      return false;
+    }
+
+    this.values.set(key, {
+      value: replacementValue,
+      expiresAt: Date.now() + ttlMs,
+    });
+    return true;
+  }
+
   async extendIfValue(key: string, expectedValue: string, ttlMs: number): Promise<boolean> {
     if ((await this.get(key)) !== expectedValue) {
       return false;

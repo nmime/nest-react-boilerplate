@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../../../dist/out-tsc/libs/backend/mongodb/main/auth",
+    "types": ["node"],
+    "declaration": true
+  },
+  "exclude": ["src/**/*.spec.ts", "src/**/*.component-spec.ts"],
+  "include": ["src/**/*.ts"]
+}

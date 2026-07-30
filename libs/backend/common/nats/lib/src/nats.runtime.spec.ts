@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import type { NatsConnection, QueuedIterator } from '@nats-io/nats-core';
+import { GenericContainer, Wait, type StartedTestContainer } from 'testcontainers';
 import {
   NatsHealthIndicator,
   NatsInjectToken,
@@ -15,20 +16,13 @@ import {
   NatsServicesService,
   closeNatsConnection,
 } from './index';
-import {
-  hasDockerRuntime,
-  startNatsContainer,
-  stopNatsContainer,
-  type StartedServiceContainer,
-} from '@app/backend-common-component-test';
-
-interface StartedNatsRuntimeContainer extends StartedServiceContainer {
+interface StartedNatsRuntimeContainer {
+  container: StartedTestContainer;
   server: string;
 }
 
-const dockerAvailable = hasDockerRuntime();
 const actualDockerRuntimeAvailable = hasActualDockerRuntime();
-const runRuntimeSmoke = dockerAvailable && actualDockerRuntimeAvailable;
+const runRuntimeSmoke = actualDockerRuntimeAvailable;
 
 if (!runRuntimeSmoke) {
   describe('NATS runtime smoke', () => {
@@ -211,6 +205,24 @@ if (!runRuntimeSmoke) {
       }
     });
   });
+}
+
+async function startNatsContainer(options: { jetStream?: boolean } = {}): Promise<StartedNatsRuntimeContainer> {
+  const clientPort = 4222;
+  const monitoringPort = 8222;
+  const container = await new GenericContainer('nats:2.10-alpine')
+    .withExposedPorts(clientPort, monitoringPort)
+    .withCommand(options.jetStream ? ['-js', '-m', `${monitoringPort}`] : ['-m', `${monitoringPort}`])
+    .withWaitStrategy(Wait.forLogMessage(/Server is ready/))
+    .start();
+  return {
+    container,
+    server: `nats://${container.getHost()}:${container.getMappedPort(clientPort)}`,
+  };
+}
+
+async function stopNatsContainer(started: StartedNatsRuntimeContainer | undefined): Promise<void> {
+  await started?.container.stop();
 }
 
 async function collectQueuedIterator<T>(iterator: QueuedIterator<T> | undefined): Promise<T[]> {

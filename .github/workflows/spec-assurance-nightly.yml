@@ -15,15 +15,20 @@ concurrency:
 env:
   CI: 'true'
   NX_DAEMON: 'false'
+  NX_PARALLEL: '2'
+  VITEST_MAX_WORKERS: '1'
+  WORLD_CLASS_COMMAND_TIMEOUT_MS: '1800000'
   NODE_VERSION_FILE: .nvmrc
   PNPM_VERSION: 11.15.1
   DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
   ADMIN_BOOTSTRAP_ENABLED: 'true'
   ADMIN_BOOTSTRAP_EMAILS: admin@example.com
   AUTH_TELEGRAM_ENABLED: 'true'
+  EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
   TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
   VITE_TELEGRAM_AUTH_ENABLED: 'true'
-  COMPOSE_PROFILES: postgres,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app
+  RATE_LIMIT_MAX: '1000'
+  COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app,site-app
   PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
   PLAYWRIGHT_AUTO_INSTALL: '1'
   POSTGRES_PORT: '5432'
@@ -33,15 +38,20 @@ env:
   ADMIN_APP_PORT: '8081'
   USER_APP_PORT: '8082'
   LANDING_APP_PORT: '8083'
+  SITE_APP_PORT: '8084'
   A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
   PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
   PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
   SECURITY_DAST_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
   QA_LOAD_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
   QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+  QA_USER_JOURNEY_COMMAND: '["pnpm","run","test:e2e:matrix","--","--project","chromium"]'
+  QA_CONCURRENCY_COMMAND: '["pnpm","exec","nx","run","@app/backend-postgres-main-notification:component-test","--","src/repositories/notification-concurrency.component-spec.ts","--maxWorkers=1"]'
+  QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
+  QA_RELIABILITY_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+  QA_RELIABILITY_CONCURRENCY: '4'
   QA_CHAOS_URLS: http://127.0.0.1:3002/health
   QA_CHAOS_SERVICE: user-app-api
-  QA_MIGRATION_ROLLBACK_COMMAND: pnpm run db:migrations:rollback-check
   POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.6-alpine
 
 jobs:

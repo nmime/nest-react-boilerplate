@@ -1,6 +1,4 @@
-import { DynamicModule, Module } from '@nestjs/common';
-import { PostgresMainModule, type PostgresMikroOrmOverrides } from '@app/backend-postgres-main';
-import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
+import { DynamicModule, Module, type Provider } from '@nestjs/common';
 import { AuthController, PersistentSessionAccessGuard, ProblemPresentationsController } from './interfaces/http';
 import { BetterAuthApiController } from './application/better-auth-api.controller';
 import { BetterAuthModule } from './application/better-auth.module';
@@ -33,18 +31,19 @@ import {
 
 export enum AuthPersistenceMode {
   Postgres = 'postgres',
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- public mode name follows MongoDB branding
+  MongoDB = 'mongodb',
   Memory = 'memory',
 }
 
 export interface AuthMainModuleOptions {
   mode?: AuthPersistenceMode;
-  postgres?: PostgresMikroOrmOverrides;
 }
 
 function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
   if (process.env.NODE_ENV === 'production' && mode === AuthPersistenceMode.Memory) {
     throw new Error(
-      'AUTH_PERSISTENCE=memory is not allowed in production. Configure AUTH_PERSISTENCE=postgres with DATABASE_URL-backed storage.',
+      'AUTH_PERSISTENCE=memory is not allowed in production. Configure AUTH_PERSISTENCE=postgres or mongodb.',
     );
   }
 }
@@ -52,25 +51,45 @@ function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
 function resolvePersistenceMode(): AuthPersistenceMode {
   if (
     process.env.AUTH_PERSISTENCE === AuthPersistenceMode.Memory ||
-    (process.env.VITEST && process.env.AUTH_PERSISTENCE !== AuthPersistenceMode.Postgres)
+    (process.env.VITEST && !process.env.AUTH_PERSISTENCE)
   ) {
     return AuthPersistenceMode.Memory;
   }
 
-  return AuthPersistenceMode.Postgres;
+  return process.env.AUTH_PERSISTENCE === AuthPersistenceMode.MongoDB
+    ? AuthPersistenceMode.MongoDB
+    : AuthPersistenceMode.Postgres;
 }
 
 function normalizeOptions(
   optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
 ): Required<AuthMainModuleOptions> {
   if (typeof optionsOrMode === 'string') {
-    return { mode: optionsOrMode, postgres: {} };
+    return { mode: optionsOrMode };
   }
 
   return {
     mode: optionsOrMode.mode ?? resolvePersistenceMode(),
-    postgres: optionsOrMode.postgres ?? {},
   };
+}
+
+function persistenceProviders(mode: AuthPersistenceMode): Provider[] {
+  if (mode === AuthPersistenceMode.Memory) {
+    return [
+      { provide: ProblemPresentationReaderProvider, useClass: InMemoryProblemPresentationReader },
+      { provide: AuthRoleStoreInjectToken, useClass: InMemoryAuthRoleStore },
+      { provide: AuthUserStoreInjectToken, useClass: InMemoryAuthUserStore },
+      { provide: AuthTokenStoreInjectToken, useClass: InMemoryAuthTokenStore },
+      { provide: SocialAuthStoreInjectToken, useClass: InMemorySocialAuthStore },
+    ];
+  }
+  return [
+    { provide: ProblemPresentationReaderProvider, useClass: PostgresProblemPresentationReader },
+    { provide: AuthRoleStoreInjectToken, useClass: PostgresAuthRoleStore },
+    { provide: AuthUserStoreInjectToken, useClass: PostgresAuthUserStore },
+    { provide: AuthTokenStoreInjectToken, useClass: PostgresAuthTokenStore },
+    { provide: SocialAuthStoreInjectToken, useClass: PostgresSocialAuthStore },
+  ];
 }
 
 @Module({})
@@ -78,13 +97,9 @@ export class AuthMainModule {
   static forRoot(optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {}): DynamicModule {
     const options = normalizeOptions(optionsOrMode);
     assertSafePersistenceMode(options.mode);
-    const useMemory = options.mode === AuthPersistenceMode.Memory;
     return {
       module: AuthMainModule,
-      imports: [
-        BetterAuthModule.forRoot(),
-        ...(useMemory ? [] : [PostgresMainModule.forRoot(options.postgres), AuthPostgresModule]),
-      ],
+      imports: [BetterAuthModule.forRoot()],
       controllers: [AuthController, BetterAuthApiController, ProblemPresentationsController],
       providers: [
         AuthService,
@@ -95,51 +110,7 @@ export class AuthMainModule {
         BetterAuthTelegramSessionService,
         PersistentSessionAccessGuard,
         EffectivePermissionService,
-        useMemory
-          ? {
-              provide: ProblemPresentationReaderProvider,
-              useClass: InMemoryProblemPresentationReader,
-            }
-          : {
-              provide: ProblemPresentationReaderProvider,
-              useClass: PostgresProblemPresentationReader,
-            },
-        useMemory
-          ? {
-              provide: AuthRoleStoreInjectToken,
-              useClass: InMemoryAuthRoleStore,
-            }
-          : {
-              provide: AuthRoleStoreInjectToken,
-              useClass: PostgresAuthRoleStore,
-            },
-        useMemory
-          ? {
-              provide: AuthUserStoreInjectToken,
-              useClass: InMemoryAuthUserStore,
-            }
-          : {
-              provide: AuthUserStoreInjectToken,
-              useClass: PostgresAuthUserStore,
-            },
-        useMemory
-          ? {
-              provide: AuthTokenStoreInjectToken,
-              useClass: InMemoryAuthTokenStore,
-            }
-          : {
-              provide: AuthTokenStoreInjectToken,
-              useClass: PostgresAuthTokenStore,
-            },
-        useMemory
-          ? {
-              provide: SocialAuthStoreInjectToken,
-              useClass: InMemorySocialAuthStore,
-            }
-          : {
-              provide: SocialAuthStoreInjectToken,
-              useClass: PostgresSocialAuthStore,
-            },
+        ...persistenceProviders(options.mode),
       ],
       exports: [
         AuthService,

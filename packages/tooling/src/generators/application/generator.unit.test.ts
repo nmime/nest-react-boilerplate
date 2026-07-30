@@ -10,6 +10,9 @@
  * E2E: full backend + frontend app generation on in-memory tree
  */
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 async function createTree() {
@@ -129,7 +132,15 @@ describe('application generator', () => {
       const main = tree.read('apps/backend/billing/billing-api/src/main.ts', 'utf8')!;
       const module = tree.read('apps/backend/billing/billing-api/src/billing-api.module.ts', 'utf8')!;
       assert.match(main, /process\.env\.PORT \?\? 3210/);
+      assert.match(main, /initializeCapabilities\("billing-api"\)/);
+      assert.match(main, /import\("\.\/billing-api\.module"\)/);
+      assert.match(main, /import\("\.\/bootstrap\.runtime"\)/);
+      assert.doesNotMatch(main, /^import .*billing-api\.module/m);
       assert.match(module, /BaseHealthController/);
+      assert.match(module, /BillingApiCapabilitiesModule/);
+      assert.ok(tree.exists('apps/backend/billing/billing-api/src/capabilities.generated.ts'));
+      assert.ok(tree.exists('apps/backend/billing/billing-api/src/capabilities.bootstrap.generated.ts'));
+      assert.ok(tree.exists('apps/backend/billing/billing-api/src/bootstrap.runtime.ts'));
       assert.ok(tree.exists('apps/backend/billing/billing-api/src/health.config.ts'));
       const agentPolicy = tree.read('apps/backend/billing/billing-api/AGENTS.md', 'utf8')!;
       assert.match(agentPolicy, /libs\/backend/);
@@ -156,7 +167,13 @@ describe('application generator', () => {
       const main = tree.read('apps/backend/billing/billing-consumer/src/main.ts', 'utf8')!;
       assert.match(main, /createApplicationContext/);
       assert.match(main, /enableShutdownHooks/);
+      assert.match(main, /initializeCapabilities\("billing-consumer"\)/);
+      assert.match(main, /import\("\.\/billing-consumer\.module"\)/);
+      assert.match(main, /import\("\.\/bootstrap\.runtime"\)/);
+      assert.doesNotMatch(main, /^import .*billing-consumer\.module/m);
       assert.equal(main.includes('bootstrapNestApi'), false);
+      assert.match(main, /Application context successfully started/);
+      assert.equal(tree.exists('apps/backend/billing/billing-consumer/package.json'), false);
     });
 
     it('creates a scheduler with process-level ScheduleModule ownership', async () => {
@@ -172,6 +189,7 @@ describe('application generator', () => {
 
       const module = tree.read('apps/backend/billing/billing-scheduler/src/billing-scheduler.module.ts', 'utf8')!;
       assert.match(module, /ScheduleModule\.forRoot\(\)/);
+      assert.match(module, /BillingSchedulerCapabilitiesModule/);
     });
 
     it('rejects an HTTP port for consumer and scheduler processes', async () => {
@@ -223,15 +241,15 @@ describe('application generator', () => {
       assert.equal(projectJson.targets.build.executor, '@nx/js:tsc');
     });
 
-    it('creates package.json', async () => {
+    it('keeps application identity in project.json without creating a package boundary', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');
 
       await applicationGenerator(tree, { name: 'my-api', kind: 'backend', skipFormat: true });
 
-      const pkg = JSON.parse(tree.read('apps/backend/my/my-api/package.json', 'utf8')!);
-      assert.equal(pkg.name, '@app/my-api');
-      assert.ok(pkg.dependencies.tslib);
+      assert.equal(tree.exists('apps/backend/my/my-api/package.json'), false);
+      const project = JSON.parse(tree.read('apps/backend/my/my-api/project.json', 'utf8')!);
+      assert.equal(project.name, 'my-api');
     });
 
     it('creates tsconfig files', async () => {
@@ -254,17 +272,16 @@ describe('application generator', () => {
       assert.ok(tree.exists('apps/backend/my/my-api/src/main.ts'));
       assert.ok(tree.exists('apps/backend/my/my-api/src/my-api.module.ts'));
       assert.ok(tree.exists('apps/backend/my/my-api/src/my-api.module.spec.ts'));
+      assert.ok(tree.exists('apps/backend/my/my-api/src/bootstrap.runtime.ts'));
 
       const mainContent = tree.read('apps/backend/my/my-api/src/main.ts', 'utf8')!;
       assert.ok(mainContent.includes('MyApiModule'));
+      assert.ok(mainContent.includes('void bootstrap()'), 'main.ts must explicitly launch the async bootstrap');
       assert.ok(
-        mainContent.includes('void bootstrapNestApi'),
-        'main.ts must use void bootstrapNestApi() like existing backend apps',
+        mainContent.includes('./bootstrap.runtime'),
+        'main.ts must dynamically import the local Nest bootstrap bridge',
       );
-      assert.ok(
-        mainContent.includes('@app/backend-common-bootstrap'),
-        'main.ts must import from @app/backend-common-bootstrap',
-      );
+      assert.ok(mainContent.includes('await bootstrapModule.bootstrapNestApi'));
     });
 
     it('main.ts has no unhandled-floating-promise lint errors', async () => {
@@ -274,8 +291,8 @@ describe('application generator', () => {
       await applicationGenerator(tree, { name: 'my-api', kind: 'backend', skipFormat: true });
 
       const mainContent = tree.read('apps/backend/my/my-api/src/main.ts', 'utf8')!;
-      // Must use void keyword for bootstrapNestApi call
-      assert.ok(/\bvoid\s+bootstrapNestApi/.test(mainContent), "bootstrapNestApi call must be void'd");
+      assert.ok(/\bvoid\s+bootstrap\(\)/.test(mainContent), "async bootstrap call must be void'd");
+      assert.ok(/await\s+bootstrapModule\.bootstrapNestApi/.test(mainContent), 'Nest bootstrap must be awaited');
     });
 
     it('spec file imports vitest explicitly', async () => {
@@ -285,6 +302,7 @@ describe('application generator', () => {
       await applicationGenerator(tree, { name: 'my-api', kind: 'backend', skipFormat: true });
 
       const specContent = tree.read('apps/backend/my/my-api/src/my-api.module.spec.ts', 'utf8')!;
+      assert.match(specContent, /^\/\/ @requirements REQ-MY-API-SCAFFOLD-001$/mu);
       assert.ok(specContent.includes('from "vitest"'), 'spec must import from vitest, not use globals');
       assert.ok(specContent.includes('describe'), 'must import describe');
       assert.ok(specContent.includes('it'), 'must import it');
@@ -300,19 +318,6 @@ describe('application generator', () => {
       const eslintContent = tree.read('apps/backend/my/my-api/eslint.config.cjs', 'utf8')!;
       assert.ok(eslintContent.includes('ignores:'), 'eslint must have ignores array');
       assert.ok(eslintContent.includes('tsconfig.*?.json'), 'eslint must have tsconfig.*?.json project');
-    });
-
-    it('package.json has no unused Nest dependencies', async () => {
-      const tree = await createTree();
-      const { applicationGenerator } = await import('./generator.js');
-
-      await applicationGenerator(tree, { name: 'my-api', kind: 'backend', skipFormat: true });
-
-      const pkg = JSON.parse(tree.read('apps/backend/my/my-api/package.json', 'utf8')!);
-      assert.ok(!pkg.dependencies['@nestjs/common'], 'should not list @nestjs/common in deps (comes via workspace)');
-      assert.ok(!pkg.dependencies['@nestjs/platform-express'], 'should not list @nestjs/platform-express');
-      assert.ok(!pkg.dependencies['reflect-metadata'], 'should not list reflect-metadata');
-      assert.ok(!pkg.dependencies['rxjs'], 'should not list rxjs');
     });
 
     it('creates vitest config', async () => {
@@ -399,12 +404,14 @@ describe('application generator', () => {
       assert.match(projectJson.targets.test.options.commands[0].command, /@cucumber\/cucumber/u);
       assert.match(projectJson.targets.acceptance.options.command, /@cucumber\/cucumber/u);
       assert.ok(tree.exists(`${root}/cucumber.config.ts`));
-      assert.equal(JSON.parse(tree.read(`${root}/package.json`, 'utf8') ?? '{}').type, 'module');
+      const packageJson = JSON.parse(tree.read(`${root}/package.json`, 'utf8') ?? '{}');
+      assert.equal(packageJson.name, undefined);
+      assert.equal(packageJson.type, 'module');
       assert.ok(tree.exists(`${root}/src/support/world.ts`));
       assert.ok(tree.exists(`${root}/src/steps/acceptance.steps.ts`));
       const feature = tree.read(`${root}/features/acceptance.feature`, 'utf8')!;
-      assert.match(feature, /@REQ-PAYMENTS-ACCEPTANCE-001/u);
-      assert.match(feature, /@SCN-PAYMENTS-ACCEPTANCE-01/u);
+      assert.match(feature, /@REQ-PAYMENTS-ACCEPTANCE-SCAFFOLD-001/u);
+      assert.match(feature, /@SCN-PAYMENTS-ACCEPTANCE-SCAFFOLD-01/u);
     });
 
     it('rejects unsupported renderers and HTTP ports', async () => {
@@ -450,17 +457,21 @@ describe('application generator', () => {
 
       assert.ok(tree.exists('apps/frontend/docs/src/pages/index.astro'));
       const docsPackage = JSON.parse(tree.read('apps/frontend/docs/package.json', 'utf8')!);
-      assert.equal(docsPackage.devDependencies['@astrojs/check'], '0.9.9');
-      assert.equal(docsPackage.devDependencies.typescript, '6.0.3');
+      assert.equal(docsPackage.name, undefined);
+      assert.equal(docsPackage.scripts, undefined);
+      assert.equal(docsPackage.devDependencies.astro, '7.1.3');
       assert.ok(tree.exists('apps/frontend/store/pages/index/+Page.tsx'));
       assert.ok(tree.exists('apps/frontend/store/store.vite.config.mts'));
       assert.equal(tree.exists('apps/frontend/store/vite.config.mts'), false);
       assert.ok(tree.exists('apps/frontend/native/app/_layout.tsx'));
+      assert.equal(tree.read('apps/frontend/native/index.js', 'utf8'), 'require("expo-router/entry");\n');
       assert.ok(tree.exists('apps/frontend/native/babel.config.js'));
       assert.match(tree.read('apps/frontend/native/metro.config.js', 'utf8')!, /workspace-tsconfig-aliases/);
       const nativePackage = JSON.parse(tree.read('apps/frontend/native/package.json', 'utf8')!);
-      assert.equal(nativePackage.main, 'expo-router/entry');
-      assert.equal(nativePackage.devDependencies['@babel/core'], '7.29.7');
+      assert.equal(nativePackage.name, undefined);
+      assert.equal(nativePackage.main, undefined);
+      assert.equal(nativePackage.scripts, undefined);
+      assert.equal(nativePackage.dependencies['expo-router'], '57.0.7');
       assert.doesNotMatch(tree.read('apps/frontend/native/AGENTS.md', 'utf8')!, /- Runtime:/);
     });
 
@@ -486,15 +497,15 @@ describe('application generator', () => {
       assert.ok(projectJson.tags.includes('fsd:layer:app'));
     });
 
-    it('creates package.json', async () => {
+    it('keeps application identity in project.json without creating a package boundary', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');
 
       await applicationGenerator(tree, { name: 'my-dashboard', kind: 'frontend', skipFormat: true });
 
-      const pkg = JSON.parse(tree.read('apps/frontend/my-dashboard/package.json', 'utf8')!);
-      assert.equal(pkg.name, '@app/my-dashboard');
-      assert.ok(pkg.dependencies.react);
+      assert.equal(tree.exists('apps/frontend/my-dashboard/package.json'), false);
+      const project = JSON.parse(tree.read('apps/frontend/my-dashboard/project.json', 'utf8')!);
+      assert.equal(project.name, 'my-dashboard');
     });
 
     it('creates index.html', async () => {
@@ -517,6 +528,10 @@ describe('application generator', () => {
       assert.ok(tree.exists('apps/frontend/my-dashboard/src/main.tsx'));
       assert.ok(tree.exists('apps/frontend/my-dashboard/src/app.tsx'));
       assert.ok(tree.exists('apps/frontend/my-dashboard/src/app.spec.tsx'));
+      assert.match(
+        tree.read('apps/frontend/my-dashboard/src/app.spec.tsx', 'utf8')!,
+        /^\/\/ @requirements REQ-MY-DASHBOARD-SCAFFOLD-001$/mu,
+      );
     });
 
     it('creates vite config', async () => {
@@ -604,6 +619,42 @@ describe('application generator', () => {
 
       const tsconfig = JSON.parse(tree.read('apps/frontend/my-dashboard/tsconfig.json', 'utf8')!);
       assert.equal(tsconfig.compilerOptions.jsx, 'react-jsx');
+    });
+  });
+
+  describe('scaffold verification budgets', () => {
+    it('uses finite per-target budgets scaled to renderer resource cost', async () => {
+      const { scaffoldTargetTimeoutMs } = await import('./scaffold-verification.js');
+      const nodeBudget = scaffoldTargetTimeoutMs('node', 'build');
+      const browserBudget = scaffoldTargetTimeoutMs('browser', 'build');
+      const ssrBudget = scaffoldTargetTimeoutMs('ssr', 'build');
+      const nativeBudget = scaffoldTargetTimeoutMs('native', 'build');
+
+      assert.equal(nodeBudget, browserBudget);
+      assert.ok(browserBudget < ssrBudget);
+      assert.ok(ssrBudget < nativeBudget);
+      assert.ok(scaffoldTargetTimeoutMs('node', 'test') < nodeBudget);
+      assert.ok(scaffoldTargetTimeoutMs('ssr', 'typecheck') < ssrBudget);
+    });
+
+    it('locks one workspace and refuses to remove existing owner roots', async () => {
+      const temporaryRoot = mkdtempSync(join(tmpdir(), 'nrb-scaffold-policy-'));
+      const workspaceRoot = join(temporaryRoot, 'workspace');
+      mkdirSync(workspaceRoot);
+      const { acquireScaffoldVerificationLock, assertScaffoldRootsAvailable } =
+        await import('./scaffold-verification.js');
+      const release = acquireScaffoldVerificationLock(workspaceRoot, temporaryRoot);
+
+      try {
+        assert.throws(() => acquireScaffoldVerificationLock(workspaceRoot, temporaryRoot), /already running/u);
+        mkdirSync(join(workspaceRoot, 'apps/frontend/nrb-canary-vite'), { recursive: true });
+        assert.throws(() => {
+          assertScaffoldRootsAvailable(workspaceRoot, ['apps/frontend/nrb-canary-vite']);
+        }, /refuses to remove existing owner roots/u);
+      } finally {
+        release();
+        rmSync(temporaryRoot, { force: true, recursive: true });
+      }
     });
   });
 });

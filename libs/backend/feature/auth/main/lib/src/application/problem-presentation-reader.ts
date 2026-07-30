@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { ProblemPresentationOverride } from '@app/common-problem-details';
-import { ProblemPresentationRepository } from '@app/backend-postgres-main-auth';
+import {
+  ProblemPresentationRepositoryInjectToken,
+  type ProblemPresentationRepositoryPort,
+} from '@app/backend-feature-auth-shared';
 
 export const ProblemPresentationReaderProvider = 'PROBLEM_PRESENTATION_READER';
 
@@ -18,8 +21,8 @@ export class InMemoryProblemPresentationReader implements ProblemPresentationRea
 @Injectable()
 export class PostgresProblemPresentationReader implements ProblemPresentationReader {
   constructor(
-    @Inject(ProblemPresentationRepository)
-    private readonly presentations: ProblemPresentationRepository,
+    @Inject(ProblemPresentationRepositoryInjectToken)
+    private readonly presentations: ProblemPresentationRepositoryPort,
   ) {}
 
   async list(tenantId: string): Promise<readonly ProblemPresentationOverride[]> {
@@ -37,5 +40,12 @@ export class PostgresProblemPresentationReader implements ProblemPresentationRea
       severity: item.severity,
       updatedAt: item.updatedAt.toISOString(),
     }));
+  }
+}
+
+@Injectable()
+export class MongoProblemPresentationReader extends PostgresProblemPresentationReader {
+  constructor(@Inject(ProblemPresentationRepositoryInjectToken) presentations: ProblemPresentationRepositoryPort) {
+    super(presentations);
   }
 }

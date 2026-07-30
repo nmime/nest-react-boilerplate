@@ -9,82 +9,37 @@ import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createJiti } from 'jiti';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pnpmVersion = '11.15.1';
+const jiti = createJiti(import.meta.url);
+const { appCatalog } = await jiti.import('../packages/tooling/src/setup/catalog.ts');
+const { materializeAllReferenceClosure, validateCurrentClosure } = await jiti.import(
+  '../packages/tooling/src/setup/closure-workspace.ts',
+);
+const { checkClosureArtifacts, validateProductClosureBuildContext } = await jiti.import(
+  '../packages/tooling/src/setup/closure-materializer.ts',
+);
 
 const image = (name, target, buildArgs, project) => ({ name, target, buildArgs, ...(project ? { project } : {}) });
 
 export const releaseImages = [
   image('migrator', 'migrator', `PNPM_VERSION=${pnpmVersion}`),
-  image(
-    'admin-app-api',
-    'backend',
-    `NX_PROJECT=admin-app-api\nBUILD_OUTPUT=dist/apps/backend/admin/admin-app-api\nPNPM_VERSION=${pnpmVersion}`,
-    'admin-app-api',
-  ),
-  image(
-    'user-app-api',
-    'backend',
-    `NX_PROJECT=user-app-api\nBUILD_OUTPUT=dist/apps/backend/user/user-app-api\nPNPM_VERSION=${pnpmVersion}`,
-    'user-app-api',
-  ),
-  image(
-    'auth-app-api',
-    'backend',
-    `NX_PROJECT=auth-app-api\nBUILD_OUTPUT=dist/apps/backend/auth/auth-app-api\nPNPM_VERSION=${pnpmVersion}`,
-    'auth-app-api',
-  ),
-  image(
-    'discord-app-api',
-    'backend',
-    `NX_PROJECT=discord-app-api\nBUILD_OUTPUT=dist/apps/backend/discord/discord-app-api\nPNPM_VERSION=${pnpmVersion}`,
-    'discord-app-api',
-  ),
-  image(
-    'telegram-bot-api',
-    'backend',
-    `NX_PROJECT=telegram-bot-api\nBUILD_OUTPUT=dist/apps/backend/telegram/telegram-bot-api\nPNPM_VERSION=${pnpmVersion}`,
-    'telegram-bot-api',
-  ),
-  image(
-    'notification-scheduler',
-    'backend',
-    `NX_PROJECT=notification-scheduler\nBUILD_OUTPUT=dist/apps/backend/notification/notification-scheduler\nPNPM_VERSION=${pnpmVersion}`,
-    'notification-scheduler',
-  ),
-  image(
-    'notification-consumer',
-    'backend',
-    `NX_PROJECT=notification-consumer\nBUILD_OUTPUT=dist/apps/backend/notification/notification-consumer\nPNPM_VERSION=${pnpmVersion}`,
-    'notification-consumer',
-  ),
-  image(
-    'admin-app',
-    'frontend',
-    `NX_PROJECT=admin-app\nFRONTEND_OUTPUT=dist/apps/frontend/admin\nVITE_API_BASE_URL_MODE=same-origin\nPNPM_VERSION=${pnpmVersion}`,
-    'admin-app',
-  ),
-  image(
-    'user-app',
-    'frontend',
-    `NX_PROJECT=user-app\nFRONTEND_OUTPUT=dist/apps/frontend/app\nVITE_API_BASE_URL_MODE=same-origin\nPNPM_VERSION=${pnpmVersion}`,
-    'user-app',
-  ),
-  image(
-    'landing-app',
-    'frontend',
-    `NX_PROJECT=landing-app\nFRONTEND_OUTPUT=dist/apps/frontend/landing\nVITE_API_BASE_URL_MODE=same-origin\nPNPM_VERSION=${pnpmVersion}`,
-    'landing-app',
-  ),
-  image('site-app', 'site-runtime', `NX_PROJECT=site-app\nPNPM_VERSION=${pnpmVersion}`, 'site-app'),
-  image(
-    'mobile-app',
-    'frontend',
-    `NX_PROJECT=mobile-app\nNX_TARGET=export\nFRONTEND_OUTPUT=dist/apps/frontend/mobile\nVITE_API_BASE_URL_MODE=same-origin\nPNPM_VERSION=${pnpmVersion}`,
-    'mobile-app',
-  ),
+  ...Object.values(appCatalog).flatMap((app) => {
+    if (!app.releaseImage) return [];
+    const buildArgs = [
+      `NX_PROJECT=${app.id}`,
+      ...(app.releaseImage.nxTarget ? [`NX_TARGET=${app.releaseImage.nxTarget}`] : []),
+      ...(app.releaseImage.buildOutput ? [`BUILD_OUTPUT=${app.releaseImage.buildOutput}`] : []),
+      ...(app.releaseImage.frontendOutput ? [`FRONTEND_OUTPUT=${app.releaseImage.frontendOutput}`] : []),
+      ...(app.releaseImage.frontendOutput ? ['VITE_API_BASE_URL_MODE=same-origin'] : []),
+      `PNPM_VERSION=${pnpmVersion}`,
+    ].join('\n');
+    return [image(app.id, app.releaseImage.target, buildArgs, app.id)];
+  }),
 ];
+const releaseImageNames = new Set(releaseImages.map(({ name }) => name));
 
 const globalImageInputs = [
   '.dockerignore',
@@ -99,7 +54,7 @@ const globalImageInputs = [
   'tsconfig.lint.json',
 ];
 const globalImagePrefixes = ['config/', 'docker/', 'i18n/', 'packages/'];
-const migrationPrefixes = ['libs/backend/postgres/', 'packages/tooling/src/commands/db/'];
+const migrationPrefixes = ['libs/backend/postgres/', 'libs/backend/mongodb/', 'packages/tooling/src/commands/db/'];
 
 const changedImageInputsRequireFullRelease = (changedFiles) =>
   changedFiles.some(
@@ -111,14 +66,49 @@ const migrationsChanged = (changedFiles) =>
     (path) => migrationPrefixes.some((prefix) => path.startsWith(prefix)) || path.includes('/migrations/'),
   );
 
-export function selectReleaseImages({ affectedProjects = [], changedFiles = [], forceFull = false } = {}) {
+export function selectReleaseImages({
+  selectedReleaseImages,
+  affectedProjects = [],
+  changedFiles = [],
+  forceFull = false,
+}) {
+  if (!Array.isArray(selectedReleaseImages)) {
+    throw new Error('Selected closure releaseImages are required for release planning.');
+  }
+  const unknown = selectedReleaseImages.filter((name) => !releaseImageNames.has(name));
+  if (unknown.length > 0) throw new Error(`Selected closure references unknown release images: ${unknown.join(', ')}`);
+  const selected = new Set(selectedReleaseImages);
+  const eligible = releaseImages.filter(({ name }) => selected.has(name));
   const all = forceFull || changedImageInputsRequireFullRelease(changedFiles);
-  if (all) return [...releaseImages];
+  if (all) return eligible;
   const affected = new Set(affectedProjects);
   const includeMigration = migrationsChanged(changedFiles);
-  return releaseImages.filter((candidate) =>
+  return eligible.filter((candidate) =>
     candidate.name === 'migrator' ? includeMigration : affected.has(candidate.project),
   );
+}
+
+export async function loadSelectedReleaseClosure(workspaceRoot = rootDir, dependencies = {}) {
+  const actual = await validateCurrentClosure(workspaceRoot, {
+    ...(dependencies.readActual ? { readActual: dependencies.readActual } : {}),
+    ...(dependencies.buildExpected ? { buildExpected: dependencies.buildExpected } : {}),
+  });
+  const checked = (dependencies.checkArtifacts ?? checkClosureArtifacts)(workspaceRoot, actual);
+  if (!checked.valid) throw new Error(`${checked.problems.join('; ')}; rerun \`pnpm nrb setup\`.`);
+  if (checked.lockStatus === 'stale') {
+    throw new Error('.nrb/closure/pnpm-lock.yaml is stale; run `pnpm nrb closure install`.');
+  }
+  validateProductClosureBuildContext(workspaceRoot, actual);
+  const unknown = actual.releaseImages.filter((name) => !releaseImageNames.has(name));
+  if (unknown.length > 0) throw new Error(`Selected closure references unknown release images: ${unknown.join(', ')}`);
+  return actual;
+}
+
+export async function loadAllReferenceReleaseClosure(provider, workspaceRoot = rootDir) {
+  if (provider !== 'postgres' && provider !== 'mongodb') {
+    throw new Error('All-reference release closure provider must be postgres or mongodb.');
+  }
+  return materializeAllReferenceClosure(workspaceRoot, provider);
 }
 
 const git = (args, { allowFailure = false } = {}) => {
@@ -162,7 +152,15 @@ const initializedProductionValuesRequireFullRelease = () => {
 };
 
 const parseArguments = (argv) => {
-  const options = { forceFull: false, githubOutput: undefined, head: 'HEAD', base: undefined, namesOnly: false };
+  const options = {
+    forceFull: false,
+    allReference: false,
+    provider: undefined,
+    githubOutput: undefined,
+    head: 'HEAD',
+    base: undefined,
+    namesOnly: false,
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     const value = (flag) => {
@@ -191,6 +189,18 @@ const parseArguments = (argv) => {
       options.forceFull = true;
       continue;
     }
+    if (argument === '--all-reference') {
+      options.allReference = true;
+      continue;
+    }
+    const provider = value('--provider');
+    if (provider !== undefined) {
+      if (provider !== 'postgres' && provider !== 'mongodb') {
+        throw new Error('--provider must be postgres or mongodb.');
+      }
+      options.provider = provider;
+      continue;
+    }
     if (argument === '--names') {
       options.namesOnly = true;
       continue;
@@ -204,8 +214,8 @@ const writeOutputs = (outputPath, values) => {
   for (const [key, value] of Object.entries(values)) appendFileSync(outputPath, `${key}=${value}\n`);
 };
 
-export function buildReleasePlan({ affectedProjects, changedFiles, forceFull }) {
-  const selected = selectReleaseImages({ affectedProjects, changedFiles, forceFull });
+export function buildReleasePlan({ selectedReleaseImages, affectedProjects, changedFiles, forceFull }) {
+  const selected = selectReleaseImages({ selectedReleaseImages, affectedProjects, changedFiles, forceFull });
   return {
     hasImages: selected.length > 0,
     matrix: { include: selected.map(({ project: _project, ...candidate }) => candidate) },
@@ -213,10 +223,19 @@ export function buildReleasePlan({ affectedProjects, changedFiles, forceFull }) 
   };
 }
 
-const main = () => {
+const main = async () => {
   const options = parseArguments(process.argv.slice(2));
+  if (options.allReference && !options.provider) {
+    throw new Error('--all-reference requires --provider <postgres|mongodb>.');
+  }
+  if (!options.allReference && options.provider) {
+    throw new Error('--provider is valid only with --all-reference.');
+  }
+  const selectedReleaseImages = options.allReference
+    ? (await loadAllReferenceReleaseClosure(options.provider)).releaseImages
+    : (await loadSelectedReleaseClosure()).releaseImages;
   if (options.namesOnly) {
-    console.log(releaseImages.map(({ name }) => name).join('\n'));
+    console.log(selectedReleaseImages.join('\n'));
     return;
   }
   if (options.base && !/^[0-9a-fA-F]{40}$/u.test(options.base)) {
@@ -232,7 +251,7 @@ const main = () => {
   const globalImageInputChanged = changedImageInputsRequireFullRelease(changedFiles);
   const forceFull = options.forceFull || !base || productionValuesRequireFullRelease || globalImageInputChanged;
   const affectedProjects = forceFull ? [] : affectedProjectsBetween(base, head);
-  const plan = buildReleasePlan({ affectedProjects, changedFiles, forceFull });
+  const plan = buildReleasePlan({ selectedReleaseImages, affectedProjects, changedFiles, forceFull });
   const reason = forceFull
     ? !base
       ? 'no-previous-release-baseline'
@@ -257,7 +276,7 @@ const main = () => {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   try {
-    main();
+    await main();
   } catch (error) {
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;

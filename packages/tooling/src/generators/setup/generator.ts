@@ -24,6 +24,15 @@ export interface SetupGeneratorOptions {
   prune?: boolean;
   force?: boolean;
   dryRun?: boolean;
+  ciMode?: NrbConfig['product']['ciMode'];
+  frontendApiMode?: NrbConfig['product']['frontendApiMode'];
+  mobileTargets?: NrbConfig['product']['mobileTargets'];
+  deploymentTargets?: NrbConfig['deployment']['targets'];
+  publicTopology?: NrbConfig['deployment']['publicTopology'];
+  kubernetesDelivery?: NrbConfig['deployment']['kubernetesDelivery'];
+  redisOwnership?: NrbConfig['deployment']['infrastructure']['redis'];
+  natsOwnership?: NrbConfig['deployment']['infrastructure']['nats'];
+  s3Ownership?: NrbConfig['deployment']['infrastructure']['s3'];
 }
 
 // ---------------------------------------------------------------------------
@@ -45,7 +54,7 @@ export async function setupGenerator(tree: Tree, options: SetupGeneratorOptions)
     throw new Error('Cannot remove selections before setup has created nrb.config.json.');
   }
 
-  const config = hasSelection
+  const selectedConfig = hasSelection
     ? updateSelection(existing, {
         preset: options.preset,
         addApps: options.apps,
@@ -69,6 +78,27 @@ export async function setupGenerator(tree: Tree, options: SetupGeneratorOptions)
           nonInteractive: true,
         },
       });
+  const config = parseNrbConfig({
+    ...selectedConfig,
+    product: {
+      ...selectedConfig.product,
+      ...(options.ciMode ? { ciMode: options.ciMode } : {}),
+      ...(options.frontendApiMode ? { frontendApiMode: options.frontendApiMode } : {}),
+      ...(options.mobileTargets ? { mobileTargets: options.mobileTargets } : {}),
+    },
+    deployment: {
+      ...selectedConfig.deployment,
+      ...(options.deploymentTargets ? { targets: options.deploymentTargets } : {}),
+      ...(options.publicTopology ? { publicTopology: options.publicTopology } : {}),
+      ...(options.kubernetesDelivery ? { kubernetesDelivery: options.kubernetesDelivery } : {}),
+      infrastructure: {
+        ...selectedConfig.deployment.infrastructure,
+        ...(options.redisOwnership ? { redis: options.redisOwnership } : {}),
+        ...(options.natsOwnership ? { nats: options.natsOwnership } : {}),
+        ...(options.s3Ownership ? { s3: options.s3Ownership } : {}),
+      },
+    },
+  });
 
   // Validate and resolve the config (preset expansion, dependency resolution)
   const { apps, capabilities } = resolveConfig(config);

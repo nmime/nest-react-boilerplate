@@ -34,11 +34,11 @@
 
 This repository is more than a framework starter. It is an executable platform contract for teams that want frontend, backend, mobile, API, data, testing, and delivery decisions to agree from the first commit.
 
-|                                                                                                                                         |                                                                                                                                        |
-| --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **🧩 Explicit product selection**<br />Choose applications with `pnpm nrb setup`; the repo never invents a default deployable.          | **⚡ Multi-renderer frontend**<br />React + Vite SPAs, Astro islands, Vike SSR, Expo/React Native, Tamagui, and Storybook.             |
-| **🛡️ Production NestJS backend**<br />Fastify, PostgreSQL + MikroORM, Redis, NATS, request CLS, health probes, and graceful operations. | **📜 Contract-first APIs**<br />OpenAPI producers, generated TypeScript clients, typed React Query helpers, and RFC 9457 errors.       |
-| **🧪 Quality as code**<br />ESLint, Prettier, Vitest, Playwright, component tests, coverage gates, contract checks, and security scans. | **🚀 Multiple delivery paths**<br />Docker Compose, multi-stage images, Kubernetes/Helm, GitHub Actions, and single-server operations. |
+|                                                                                                                                                    |                                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **🧩 Explicit product selection**<br />Choose applications with `pnpm nrb setup`; the repo never invents a default deployable.                     | **⚡ Multi-renderer frontend**<br />React + Vite SPAs, Astro islands, Vike SSR, Expo/React Native, Tamagui, and Storybook.             |
+| **🛡️ Production NestJS backend**<br />Fastify, selectable PostgreSQL or MongoDB, Redis, NATS, request CLS, health probes, and graceful operations. | **📜 Contract-first APIs**<br />OpenAPI producers, generated TypeScript clients, typed React Query helpers, and RFC 9457 errors.       |
+| **🧪 Quality as code**<br />ESLint, Prettier, Vitest, Playwright, component tests, coverage gates, contract checks, and security scans.            | **🚀 Multiple delivery paths**<br />Docker Compose, multi-stage images, Kubernetes/Helm, GitHub Actions, and single-server operations. |
 
 ### Design principles
 
@@ -77,12 +77,12 @@ pnpm exec nx show projects
 
 ### Prerequisites
 
-| Requirement | Supported version or role                     |
-| ----------- | --------------------------------------------- |
-| Node.js     | `>=24 <25` — pinned by `.nvmrc`               |
-| pnpm        | `11.15.1` through Corepack                    |
-| Docker      | Local PostgreSQL and broader Compose profiles |
-| Bun         | `1.3.14` — supported alternative runtime      |
+| Requirement | Supported version or role                                                     |
+| ----------- | ----------------------------------------------------------------------------- |
+| Node.js     | `>=24 <25` — pinned by `.nvmrc`                                               |
+| pnpm        | `11.15.1` through Corepack                                                    |
+| Docker      | Local PostgreSQL or one-node MongoDB replica set and broader Compose profiles |
+| Bun         | `1.3.14` — supported alternative runtime                                      |
 
 ### Start the selected stack
 
@@ -99,6 +99,11 @@ pnpm run dev:db
 pnpm run db:migrate
 pnpm run dev
 ```
+
+`pnpm run dev:db` reads the `.nrb` setup selection and starts only the selected
+provider: PostgreSQL, or MongoDB plus its replica-set initializer. It rejects
+missing or conflicting provider selections before the same provider-aware
+`pnpm run db:migrate` command.
 
 `pnpm run dev` starts only the applications recorded by setup. It refuses to silently fall back to every application. Use `pnpm run dev:all` only when you intentionally want every serve target.
 
@@ -128,7 +133,7 @@ flowchart LR
     Auth["Auth API"]
   end
 
-  Data[("PostgreSQL · Redis · NATS")]
+  Data[("PostgreSQL or MongoDB · Redis · NATS")]
   Delivery["Tests · Docker · Helm · CI"]
 
   Web --> Frontend
@@ -168,7 +173,7 @@ flowchart LR
 | 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.15.1, Node.js 24, and Bun 1.3.14 runtime support                          |
 | 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
 | 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
-| 🩷 **Data**      | PostgreSQL, MikroORM, explicit migrations, Redis, NATS, S3/MinIO adapters                            |
+| 🩷 **Data**      | PostgreSQL + MikroORM or native MongoDB, explicit migrations, Redis, NATS, S3/MinIO adapters         |
 | 🟨 **Contracts** | OpenAPI, generated clients, RFC 9457 Problem Details, typed public extensions                        |
 | 🟧 **Delivery**  | Docker Compose, Dockerfiles, Kubernetes/Helm, GitHub Actions, release and operations runbooks        |
 
@@ -176,17 +181,18 @@ Explore the full boundary model in [Architecture](docs/architecture.md) and the 
 
 ## Integrations
 
-| Integration    | Status             | What is included                                                                       |
-| -------------- | ------------------ | -------------------------------------------------------------------------------------- |
-| PostgreSQL     | 🟢 Wired           | MikroORM configuration, feature-owned entities, and committed migrations               |
-| Redis          | 🟢 Wired           | Session and rate-limit infrastructure with single, sentinel, and cluster modes         |
-| NATS           | 🟢 Wired           | Messaging backbone for workers and event-driven features                               |
-| Telegram       | 🟢 Wired           | Better Auth OIDC, signed TMA sessions, webhook/polling bot runtime, and Open App menus |
-| Discord        | 🟢 Wired           | Slash commands, interactions endpoint, and OAuth 2.0 social authentication             |
-| S3 / MinIO     | 🟢 Wired           | AWS SDK v3 adapter, injectable test adapter, and local MinIO profile                   |
-| PostHog        | 🟢 Wired           | Disabled-by-default analytics provider with an explicit API-key contract               |
-| OpenTelemetry  | 🟢 Wired on Node   | OTLP traces and metrics with a Prometheus-exporting collector path                     |
-| Email provider | 🟡 Extension point | Better Auth lifecycle ownership is ready; the product chooses its vendor               |
+| Integration    | Status             | What is included                                                                          |
+| -------------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| PostgreSQL     | 🟢 Wired           | Default preset provider with MikroORM entities and committed migrations                   |
+| MongoDB        | 🟢 Wired           | Mutually exclusive native-driver alternative with replica-set transactions and migrations |
+| Redis          | 🟢 Wired           | Session and rate-limit infrastructure with single, sentinel, and cluster modes            |
+| NATS           | 🟢 Wired           | Messaging backbone for workers and event-driven features                                  |
+| Telegram       | 🟢 Wired           | Better Auth OIDC, signed TMA sessions, webhook/polling bot runtime, and Open App menus    |
+| Discord        | 🟢 Wired           | Slash commands, interactions endpoint, and OAuth 2.0 social authentication                |
+| S3 / MinIO     | 🟢 Wired           | AWS SDK v3 adapter, injectable test adapter, and local MinIO profile                      |
+| PostHog        | 🟢 Wired           | Disabled-by-default analytics provider with an explicit API-key contract                  |
+| OpenTelemetry  | 🟢 Wired on Node   | OTLP traces and metrics with a Prometheus-exporting collector path                        |
+| Email provider | 🟡 Extension point | Better Auth lifecycle ownership is ready; the product chooses its vendor                  |
 
 **Wired** means runtime code exists and is exercised by tests. **Extension point** means the repository provides ownership without pretending a vendor integration is bundled.
 
@@ -231,7 +237,7 @@ apps/
 
 libs/
 ├── frontend/                 # UI, runtime, API support, clients, and frontend features
-├── backend/                  # Bootstrap, health, features, and PostgreSQL infrastructure
+├── backend/                  # Bootstrap, health, features, and PostgreSQL/MongoDB infrastructure
 └── common/                   # Cross-runtime contracts, i18n, notifications, and problem details
 
 packages/tooling/             # NRB setup, generators, checks, and repository automation

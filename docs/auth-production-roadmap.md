@@ -7,12 +7,13 @@ launch.
 
 ## Implemented foundation
 
-- Password registration/login establishes a PostgreSQL-backed application
+- Password registration/login establishes a durable database-backed application
   session identified only by a secure HttpOnly cookie. Authentication rotates
   the opaque session id, logout destroys it server-side, and protected requests
-  reload active-account and effective RBAC state from PostgreSQL.
+  reload active-account and effective RBAC state from the selected PostgreSQL or
+  MongoDB provider.
 - Email-verification and password-reset token issuance/consumption primitives
-  have in-memory and PostgreSQL stores, expiry indexes, and cleanup jobs.
+  have in-memory, PostgreSQL, and MongoDB stores, expiry indexes, and cleanup jobs.
 - Better Auth provides the provider-verification boundary, trusted-origin
   policy, and disabled-by-default Telegram OIDC integration. Its provider
   cookie cannot authorize first-party APIs; verified identities are projected
@@ -45,8 +46,8 @@ storage or framework hooks exist:
 
 Do not expose password authentication publicly until email delivery, abuse
 controls, monitoring, and recovery flows are configured and tested. Production
-must use `AUTH_PERSISTENCE=postgres`; the in-memory adapters are for tests and
-development only.
+must use `AUTH_PERSISTENCE=postgres` or `mongodb`, matching
+`DATABASE_ENGINE`; the in-memory adapters are for tests and development only.
 
 ## Admin CASL + RBAC authorization
 

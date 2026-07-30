@@ -115,8 +115,11 @@ against project ownership. It does not claim that every assertion is
 high-signal evidence; selected evidence remains explicit in the sidecar.
 
 `pnpm run spec:impact -- --base <rev> --head <rev>` maps changed specs,
-evidence files, and project roots to requirements. Changes to assurance
-infrastructure conservatively select every requirement.
+evidence files, and project roots to requirements. Repository-global source,
+configuration, workflow, and policy changes, including repository tooling
+source, conservatively select every requirement; files inside ordinary Nx
+project roots retain focused selection. Added, modified, renamed, and deleted
+paths all participate in impact selection.
 
 `pnpm run spec:verify` deduplicates the selected commands, executes one evidence
 lane, and writes JSON plus Markdown under `test-results/spec-evidence/`. Every

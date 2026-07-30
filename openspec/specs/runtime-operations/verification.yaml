@@ -28,7 +28,7 @@ requirements:
           - main
       - kind: operations
         file: packages/tooling/src/commands/qa/world-class-gates.ts
-        script: test:observability
+        script: test:canary
         lanes:
           - nightly
   - id: REQ-RUNTIME-RECOVERY-002
@@ -142,7 +142,7 @@ requirements:
           - pr
           - main
       - kind: operations
-        file: packages/tooling/src/commands/qa/world-class-gates.ts
+        file: libs/backend/common/otel/lib/src/otel.runtime.spec.ts
         script: test:observability
         lanes:
           - nightly
@@ -204,10 +204,13 @@ requirements:
           - main
   - id: REQ-RUNTIME-DATABASE-008
     projects:
+      - '@app/backend-mongodb-main'
+      - '@app/backend-mongodb-main-feature-flags'
       - '@app/backend-postgres-main'
       - '@app/backend-postgres-main-auth'
       - '@app/backend-postgres-main-feature-flags'
       - '@app/backend-postgres-main-notification'
+      - '@repo/tooling'
     risk: critical
     profiles:
       - persistence

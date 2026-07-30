@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { relative } from "node:path";
-import { collectFiles, commandExists, parseArgs, run, textFileFilter, workspaceRoot, writeJson } from "./runtime-utils.ts";
-import { isAllowedSecretScanValue, secretValueEntropy } from "./secret-scan-policy.ts";
+import { collectFiles, commandExists, defaultIgnore, parseArgs, run, textFileFilter, workspaceRoot, writeJson } from "./runtime-utils.ts";
+import { isAllowedSecretScanValue, isSecretScanIgnoredPath, secretValueEntropy } from "./secret-scan-policy.ts";
 
 const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
@@ -35,7 +35,10 @@ if (engine === "gitleaks" && !dryRun) {
 // path produced no findings (e.g. gitleaks/Docker unavailable and not failing).
 // Do not double-run it when gitleaks already reported findings.
 if (engine !== "gitleaks" || findings.length === 0) {
-  for (const file of collectFiles(workspaceRoot, { include: textFileFilter })) {
+  for (const file of collectFiles(workspaceRoot, {
+    include: textFileFilter,
+    ignore: (relativePath) => defaultIgnore(relativePath) || isSecretScanIgnoredPath(relativePath),
+  })) {
     const rel = relative(workspaceRoot, file).replaceAll("\\", "/");
     const text = readFileSync(file, "utf8");
     for (const pattern of patterns) for (const match of text.matchAll(pattern.regex)) {

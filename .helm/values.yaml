@@ -3,6 +3,12 @@ fullnameOverride: ''
 
 imagePullSecrets: []
 
+# Setup generates .helm/values-selection.yaml with this explicit selection. The chart
+# intentionally has no all-application fallback.
+deployment:
+  selectedApps: []
+  provider: ''
+
 secrets:
   # Production should create this Secret outside the chart, for example with
   # External Secrets Operator, Vault, or the ansible-k8s-full-setup platform
@@ -14,6 +20,9 @@ secrets:
   authLoginAnalyticsIpHashSecret: ''
   betterAuthSecret: ''
   databaseUrl: ''
+  mongodbUri: ''
+  mongodbMigrationUri: ''
+  mongodbBackupRestoreUri: ''
   telegramBotToken: ''
   telegramOidcClientSecret: ''
   notificationPayloadEncryptionKey: ''
@@ -77,6 +86,18 @@ config:
   notificationApnsBundleId: ''
   notificationApnsSandbox: 'false'
 
+database:
+  # This application chart references an externally managed database. It does
+  # not provision PostgreSQL or MongoDB stateful workloads.
+  engine: ''
+  ownership: external-db
+  mongodb:
+    database: nest_react_boilerplate
+    replicaSet: ''
+    minPoolSize: '2'
+    maxPoolSize: '10'
+    serverSelectionTimeoutMs: '10000'
+
 postgresql:
   host: postgresql
   port: '5432'
@@ -86,7 +107,10 @@ postgresql:
   sslRejectUnauthorized: 'true'
 
 migrations:
-  enabled: true
+  enabled: false
+  # MongoDB migrations must use a Secret separate from runtime application
+  # credentials. It must contain MONGODB_MIGRATION_URI.
+  mongodbExistingSecret: ''
   image:
     repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
     # Prefer immutable tags (sha-<git-sha>) or digest (sha256:...) for releases.
@@ -121,8 +145,9 @@ frontendNginx:
 # frontendNginx.healthPath when nginxConfig=true.
 apps:
   authAppApi:
+    appId: auth-app-api
     kind: backend
-    enabled: true
+    enabled: false
     replicas: 2
     port: 80
     servicePort: 80
@@ -139,8 +164,9 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   userAppApi:
+    appId: user-app-api
     kind: backend
-    enabled: true
+    enabled: false
     replicas: 2
     port: 80
     servicePort: 80
@@ -157,8 +183,9 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   adminAppApi:
+    appId: admin-app-api
     kind: backend
-    enabled: true
+    enabled: false
     replicas: 2
     port: 80
     servicePort: 80
@@ -175,6 +202,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   discordAppApi:
+    appId: discord-app-api
     kind: backend
     enabled: false
     replicas: 1
@@ -193,6 +221,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   telegramBotApi:
+    appId: telegram-bot-api
     kind: backend
     enabled: false
     replicas: 1
@@ -211,6 +240,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   notificationScheduler:
+    appId: notification-scheduler
     kind: background
     enabled: false
     replicas: 1
@@ -225,6 +255,7 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   notificationConsumer:
+    appId: notification-consumer
     kind: background
     enabled: false
     replicas: 1
@@ -242,8 +273,9 @@ apps:
   # In production, use telegramBotApi (webhook mode). Run the worker locally with:
   #   pnpm exec nx run telegram-bot-worker:start
   landingApp:
+    appId: landing-app
     kind: frontend
-    enabled: true
+    enabled: false
     replicas: 2
     port: 8080
     servicePort: 80
@@ -261,8 +293,9 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   siteApp:
+    appId: site-app
     kind: frontend
-    enabled: true
+    enabled: false
     replicas: 2
     port: 80
     servicePort: 80
@@ -279,8 +312,9 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   mobileApp:
+    appId: mobile-app
     kind: frontend
-    enabled: true
+    enabled: false
     replicas: 2
     port: 8080
     servicePort: 80
@@ -298,8 +332,9 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   userApp:
+    appId: user-app
     kind: frontend
-    enabled: true
+    enabled: false
     replicas: 2
     port: 8080
     servicePort: 80
@@ -317,8 +352,9 @@ apps:
     podSecurityContext: {}
     securityContext: {}
   adminApp:
+    appId: admin-app
     kind: frontend
-    enabled: true
+    enabled: false
     replicas: 2
     port: 8080
     servicePort: 80
@@ -500,6 +536,14 @@ backups:
     repository: postgres
     tag: '17.6-alpine'
     pullPolicy: IfNotPresent
+  mongodbImage:
+    repository: mongo
+    tag: '8.0.12-noble'
+    pullPolicy: IfNotPresent
+  mongodb:
+    # Must contain a deployment-wide MONGODB_BACKUP_RESTORE_URI with
+    # authSource=admin and no database path.
+    existingSecret: ''
   destination:
     path: /backups
     pvc:
@@ -509,7 +553,7 @@ backups:
       enabled: false
       existingSecret: ''
       bucket: ''
-      prefix: nest-react-boilerplate/postgres
+      prefix: ''
   encryption:
     enabled: false
     # Provide a command such as: age -r "$AGE_RECIPIENT" -o "$BACKUP_FILE.age" "$BACKUP_FILE" && shred -u "$BACKUP_FILE" && BACKUP_FILE="$BACKUP_FILE.age"
@@ -527,6 +571,10 @@ backups:
     limits: { cpu: 1000m, memory: 1Gi }
   podSecurityContext:
     runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
     seccompProfile: { type: RuntimeDefault }
   securityContext:
     allowPrivilegeEscalation: false
@@ -534,9 +582,11 @@ backups:
 
 # Browser-safe runtime flags injected into the SPA containers at start and
 # rendered into /runtime-config.js. Because these are runtime (not Vite
-# build-time) values, one immutable image serves every environment. Never put
-# secrets here — the file is public. Keys are passed through verbatim as env
-# vars; see docker/frontend-runtime-config.sh for the supported set.
+# build-time) values, one immutable image serves every environment. The landing
+# app's user/admin destinations are derived separately from ingress.hosts as
+# same-origin paths or HTTPS URLs. Never put secrets here - the file is public.
+# Keys are passed through verbatim as env vars; see
+# docker/frontend-runtime-config.sh for the supported set.
 frontendRuntimeConfig: {}
 # frontendRuntimeConfig:
 #   TELEGRAM_AUTH_ENABLED: 'true'
@@ -544,6 +594,12 @@ frontendRuntimeConfig: {}
 
 networkPolicy:
   enabled: false
+  otelCollector:
+    # Namespace labels use Kubernetes' immutable namespace-name label. Adjust
+    # these when the selected Tempo/Prometheus owners use different namespaces.
+    exporterNamespace: observability
+    exporterPorts: [4317]
+    prometheusNamespace: monitoring
   # Allow egress to external HTTPS endpoints (transactional email, push/FCM/APNs,
   # Discord/Telegram, hosted OTLP). A default-deny egress policy that only permits
   # in-cluster namespaceSelectors silently blocks all off-cluster traffic, so this
@@ -576,6 +632,10 @@ coroot:
   prometheusUrl: 'http://vmcluster-vmsingle.monitoring.svc.cluster.local:8429'
   service:
     type: ClusterIP
+  rbac:
+    # Coroot does not need Secret payloads for workload discovery. Enable only
+    # after a product-specific review of the additional cluster-wide exposure.
+    readSecrets: false
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { cpu: 500m, memory: 512Mi }

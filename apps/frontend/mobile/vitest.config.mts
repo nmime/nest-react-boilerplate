@@ -16,7 +16,7 @@ export default defineConfig({
   },
   test: {
     environment: 'happy-dom',
-    include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
+    include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx', 'scripts/**/*.spec.mjs'],
     passWithNoTests: false,
     coverage: fullCoverage(
       'coverage/apps/frontend/mobile',

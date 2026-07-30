@@ -1,7 +1,7 @@
-import type { AdminAuditLogEntity } from '@app/backend-postgres-main-auth';
+import type { AdminAuditLogRecord } from '@app/backend-feature-auth-shared';
 import type { AdminAuditLogView } from '../../domain';
 
-export const toAdminAuditLogView = (entity: AdminAuditLogEntity): AdminAuditLogView => ({
+export const toAdminAuditLogView = (entity: AdminAuditLogRecord): AdminAuditLogView => ({
   id: entity.id,
   tenantId: entity.tenantId,
   ...(entity.actorUserId ? { actorUserId: entity.actorUserId } : {}),

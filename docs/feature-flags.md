@@ -1,6 +1,16 @@
 # Feature flags
 
-`@app/common-feature-flags` provides the repository-level feature flag contract. It is intentionally small so apps can start with environment flags and later swap in LaunchDarkly, ConfigCat, Unleash, or the included PostgreSQL-backed provider without changing feature code. The keys below are illustrative examples, not a catalogue of shipped product features.
+`@app/common-feature-flags` provides the repository-level feature flag contract.
+It is intentionally small so apps can start with environment flags and later
+use the selected PostgreSQL or MongoDB adapter, or swap in LaunchDarkly,
+ConfigCat, or Unleash without changing feature code. The MongoDB adapter owns a
+strict validator plus tenant/key and enabled-query indexes. The keys below are
+illustrative examples, not a catalogue of shipped product features.
+
+The current setup catalog still generates `FeatureFlagsPostgresModule` wiring
+for the `feature-flags` capability. Until that source entry becomes
+provider-aware, do not combine setup-selected `feature-flags` with MongoDB even
+though the MongoDB adapter and provider-selecting admin composition exist.
 
 ## API
 

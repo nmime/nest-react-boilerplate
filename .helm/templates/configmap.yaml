@@ -1,4 +1,5 @@
 {{- $otelEnabled := and .Values.monitoring.enabled .Values.monitoring.otel.enabled }}
+{{- $databaseEngine := include "boilerplate.databaseEngine" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -24,6 +25,10 @@ data:
   RATE_LIMIT_WINDOW_MS: {{ .Values.config.rateLimitWindowMs | quote }}
   RATE_LIMIT_MAX: {{ .Values.config.rateLimitMax | quote }}
   REDIS_KEY_PREFIX: {{ .Values.config.redisKeyPrefix | quote }}
+  {{- if $databaseEngine }}
+  DATABASE_ENGINE: {{ $databaseEngine | quote }}
+  AUTH_PERSISTENCE: {{ $databaseEngine | quote }}
+  {{- end }}
   AUTH_TELEGRAM_ENABLED: {{ .Values.config.authTelegramEnabled | quote }}
   TELEGRAM_TMA_MAX_AGE_SECONDS: {{ .Values.config.telegramTmaMaxAgeSeconds | quote }}
   TELEGRAM_OIDC_ENABLED: {{ .Values.config.telegramOidcEnabled | quote }}
@@ -64,6 +69,7 @@ data:
   {{ if .Values.config.redisDb }}
   REDIS_DB: {{ .Values.config.redisDb | quote }}
   {{ end }}
+  {{- if eq $databaseEngine "postgres" }}
   POSTGRES_HOST: {{ .Values.postgresql.host | quote }}
   POSTGRES_PORT: {{ .Values.postgresql.port | quote }}
   POSTGRES_DB: {{ .Values.postgresql.database | quote }}
@@ -71,6 +77,13 @@ data:
   POSTGRES_SSL: {{ .Values.postgresql.ssl | quote }}
   POSTGRES_SSL_REJECT_UNAUTHORIZED: {{ .Values.postgresql.sslRejectUnauthorized | quote }}
   POSTGRES_SYNCHRONIZE: 'false'
+  {{- else if eq $databaseEngine "mongodb" }}
+  MONGODB_DATABASE: {{ required "database.mongodb.database is required for MongoDB" .Values.database.mongodb.database | quote }}
+  MONGODB_REPLICA_SET: {{ required "database.mongodb.replicaSet is required for MongoDB" .Values.database.mongodb.replicaSet | quote }}
+  MONGODB_MIN_POOL_SIZE: {{ .Values.database.mongodb.minPoolSize | quote }}
+  MONGODB_MAX_POOL_SIZE: {{ .Values.database.mongodb.maxPoolSize | quote }}
+  MONGODB_SERVER_SELECTION_TIMEOUT_MS: {{ .Values.database.mongodb.serverSelectionTimeoutMs | quote }}
+  {{- end }}
   OTEL_ENABLED: {{ ternary "true" "false" $otelEnabled | quote }}
   OTEL_SERVICE_NAME: {{ include "boilerplate.fullname" . | quote }}
   {{ if .Values.monitoring.otel.serviceVersion }}
@@ -180,19 +193,27 @@ data:
       }
 
       location ^~ /auth/docs {
+        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "auth-app-api")) "true" }}
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-app-api:{{ default .Values.apps.authAppApi.port .Values.apps.authAppApi.servicePort }};
+        {{- else }}
+        return 404;
+        {{- end }}
       }
 
       location ^~ /api/auth/ {
+        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "auth-app-api")) "true" }}
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-app-api:{{ default .Values.apps.authAppApi.port .Values.apps.authAppApi.servicePort }};
+        {{- else }}
+        return 404;
+        {{- end }}
       }
 
       location ^~ /auth/ {
@@ -200,11 +221,15 @@ data:
           return 418;
         }
 
+        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "auth-app-api")) "true" }}
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-app-api:{{ default .Values.apps.authAppApi.port .Values.apps.authAppApi.servicePort }};
+        {{- else }}
+        return 404;
+        {{- end }}
       }
 
       location ^~ /profile/ {
@@ -212,19 +237,27 @@ data:
           return 418;
         }
 
+        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "user-app-api")) "true" }}
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_pass http://{{ include "boilerplate.fullname" . }}-user-app-api:{{ default .Values.apps.userAppApi.port .Values.apps.userAppApi.servicePort }};
+        {{- else }}
+        return 404;
+        {{- end }}
       }
 
       location ^~ /admin/docs {
+        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "admin-app-api")) "true" }}
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_pass http://{{ include "boilerplate.fullname" . }}-admin-app-api:{{ default .Values.apps.adminAppApi.port .Values.apps.adminAppApi.servicePort }};
+        {{- else }}
+        return 404;
+        {{- end }}
       }
 
       location ^~ /admin/ {
@@ -232,11 +265,15 @@ data:
           return 418;
         }
 
+        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "admin-app-api")) "true" }}
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_pass http://{{ include "boilerplate.fullname" . }}-admin-app-api:{{ default .Values.apps.adminAppApi.port .Values.apps.adminAppApi.servicePort }};
+        {{- else }}
+        return 404;
+        {{- end }}
       }
 
       location / {

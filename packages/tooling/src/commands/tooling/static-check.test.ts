@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { supportedLocales } from "@app/common-i18n-runtime";
 import {
+  checkBunPackageManagerParity,
   checkCommandImportSmoke,
   checkTranslationKeyDrift,
   checkExportedAllCapsConstantConventions,
@@ -19,6 +20,7 @@ import {
   checkLocalBarrelExportConventions,
   checkThinLocaleCatalogs,
   checkPackageProjectReferences,
+  checkProviderScopedRuntimeImports,
   checkStaleReferences,
   checkStaleSlashStyleAliasImports,
   checkTrackedSocialAuthSecrets,
@@ -26,6 +28,79 @@ import {
   isWorkspaceMetadataFileName,
   thinLocaleCatalogFileNames,
 } from "./static-check.ts";
+
+describe("static-check Bun and pnpm dependency parity", () => {
+  it("accepts Bun runtime execution over pnpm-owned dependency state", () => {
+    const workspaceRoot = createWorkspace();
+    try {
+      writeText(
+        workspaceRoot,
+        "package.json",
+        JSON.stringify({ packageManager: "pnpm@11.11.0", scripts: { check: "bun run --bun ./check.ts" } }),
+      );
+      writeText(workspaceRoot, "pnpm-workspace.yaml", "packages: []\n");
+      assert.deepEqual(checkBunPackageManagerParity(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("rejects Bun package-manager state, commands, and duplicate workspaces", () => {
+    const workspaceRoot = createWorkspace();
+    try {
+      writeText(
+        workspaceRoot,
+        "package.json",
+        JSON.stringify({ scripts: { install: "bun install" }, workspaces: ["apps/*"] }),
+      );
+      writeText(workspaceRoot, "bun.lock", "{}\n");
+      const failures = checkBunPackageManagerParity(workspaceRoot);
+      assert.equal(failures.length, 3);
+      assert.ok(failures.every((failure) => failure.command === "bun pnpm dependency parity"));
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+describe("static-check provider-scoped runtime boundary", () => {
+  it("rejects provider imports from neutral runtime source", () => {
+    const workspaceRoot = createWorkspace();
+    try {
+      writeText(
+        workspaceRoot,
+        "libs/backend/feature/auth/main/lib/src/module.ts",
+        "import { MongoMainModule } from '@app/backend-mongodb-main';\n",
+      );
+      const failures = checkProviderScopedRuntimeImports(workspaceRoot);
+      assert.equal(failures.length, 1);
+      assert.equal(failures[0]?.command, "provider-scoped runtime import boundary");
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("allows generated composition but rejects test imports that pollute the Nx package closure", () => {
+    const workspaceRoot = createWorkspace();
+    try {
+      writeText(
+        workspaceRoot,
+        "apps/backend/auth/src/capabilities.generated.ts",
+        "import { MongoMainModule } from '@app/backend-mongodb-main';\n",
+      );
+      writeText(
+        workspaceRoot,
+        "libs/backend/feature/auth/main/lib/src/module.spec.ts",
+        "import { PostgresMainModule } from '@app/backend-postgres-main';\n",
+      );
+      const failures = checkProviderScopedRuntimeImports(workspaceRoot);
+      assert.equal(failures.length, 1);
+      assert.match(failures[0]?.file ?? "", /module\.spec\.ts$/u);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
 
 describe("static-check frontend UI ownership guard", () => {
   it("rejects app-local and registry-default components/ui trees", () => {
@@ -339,7 +414,7 @@ describe("static-check social auth package guard", () => {
     try {
       writeText(
         workspaceRoot,
-        "apps/frontend/app/package.json",
+        "libs/frontend/package.json",
         JSON.stringify({
           dependencies: {
             "@telegram-apps/sdk-react": "latest",
@@ -788,6 +863,54 @@ describe("static-check workspace metadata guard", () => {
     }
   });
 
+  it("rejects application package manifests because Nx owns deployable identity", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "tsconfig.base.json",
+        JSON.stringify({ compilerOptions: { paths: {} } }),
+      );
+      writeText(
+        workspaceRoot,
+        "packages/tooling/package.json",
+        JSON.stringify({ name: "@repo/tooling" }),
+      );
+      writeText(
+        workspaceRoot,
+        "apps/frontend/example/package.json",
+        JSON.stringify({ name: "example-app", dependencies: { react: "1.0.0" } }),
+      );
+
+      const failures = checkWorkspaceMetadata(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.match(failures[0].stderr, /project\.json owns application identity/);
+      assert.match(failures[0].stderr, /apps\/frontend\/example\/package\.json/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("accepts a dependency-only application renderer boundary", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(workspaceRoot, "tsconfig.base.json", JSON.stringify({ compilerOptions: { paths: {} } }));
+      writeText(workspaceRoot, "packages/tooling/package.json", JSON.stringify({ name: "@repo/tooling" }));
+      writeText(
+        workspaceRoot,
+        "apps/frontend/docs/package.json",
+        JSON.stringify({ private: true, devDependencies: { astro: "1.0.0" } }),
+      );
+
+      assert.deepEqual(checkWorkspaceMetadata(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
   it("rejects package manifests inside nested libraries", () => {
     const workspaceRoot = createWorkspace();
 
@@ -843,6 +966,86 @@ describe("static-check stale admin API name guard", () => {
       assert.equal(failures[0].command, "stale architecture/version denylist");
       assert.equal(failures[0].file, "docs/stale-admin-api.md:1");
       assert.match(failures[0].stderr, /duplicated admin API project name/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+describe("static-check repository scan boundaries", () => {
+  it("scans canonical task files and docs while excluding local nested worktrees", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      const retiredNode = ["Node", "22"].join(" ");
+      writeText(
+        workspaceRoot,
+        "packages/tooling/src/commands/db/provider-command.ts",
+        `// ${retiredNode}\nexport const provider = 'postgres';\n`,
+      );
+      writeText(workspaceRoot, "docs/architecture.md", `${retiredNode}\n`);
+      writeText(
+        workspaceRoot,
+        ".claude/worktrees/topic/packages/tooling/src/commands/tooling/static-check.test.ts",
+        `export const AUTH_USER_STORE = Symbol("AUTH_USER_STORE");\n// ${retiredNode}\n`,
+      );
+      writeText(
+        workspaceRoot,
+        ".claude/worktrees/topic/libs/example/project.json",
+        JSON.stringify({ name: "admin-app-api", tags: ["type:one", "type:two"] }),
+      );
+      writeText(
+        workspaceRoot,
+        "package.json",
+        JSON.stringify({ scripts: { "test:e2e": "nx run admin-app-api:e2e" } }),
+      );
+      writeText(
+        workspaceRoot,
+        "tsconfig.base.json",
+        JSON.stringify({ compilerOptions: { paths: {} } }),
+      );
+      writeText(
+        workspaceRoot,
+        "packages/tooling/package.json",
+        JSON.stringify({ name: "@repo/tooling" }),
+      );
+
+      const staleFailures = checkStaleReferences(workspaceRoot);
+      assert.deepEqual(
+        staleFailures.map((failure) => failure.file),
+        [
+          "docs/architecture.md:1",
+          "packages/tooling/src/commands/db/provider-command.ts:1",
+        ],
+      );
+      assert.deepEqual(checkExportedSymbolTokenConventions(workspaceRoot), []);
+      assert.deepEqual(checkWorkspaceMetadata(workspaceRoot), []);
+      const projectReferenceFailures = checkPackageProjectReferences(workspaceRoot);
+      assert.equal(projectReferenceFailures.length, 1);
+      assert.match(projectReferenceFailures[0]?.stderr ?? "", /admin-app-api/u);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("excludes archival specs only from the architecture and version denylist", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      const retiredNode = ["Node", "22"].join(" ");
+      writeText(
+        workspaceRoot,
+        "docs/superpowers/specs/historical-design.md",
+        `${retiredNode}\nHistorical path: libs/backend/example/lib/src/lib/record.ts\n`,
+      );
+
+      assert.deepEqual(checkStaleReferences(workspaceRoot), []);
+      const structuralFailures = checkDuplicatedLibrarySourceLibPaths(workspaceRoot);
+      assert.equal(structuralFailures.length, 1);
+      assert.equal(
+        structuralFailures[0]?.file,
+        "docs/superpowers/specs/historical-design.md:2",
+      );
     } finally {
       removeWorkspace(workspaceRoot);
     }

@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
-  AuthLoginEventRepository,
+  AuthLoginEventRepositoryInjectToken,
+  type AuthLoginEventRepositoryPort,
   type AuthLoginAnalyticsSummary,
-  type AuthLoginEventEntity,
+  type AuthLoginEventRecord,
   type AuthLoginEventListInput,
-} from '@app/backend-postgres-main-auth';
+} from '@app/backend-feature-auth-shared';
 import type {
   AuthLoginAnalyticsEventDto,
   AuthLoginAnalyticsListPayloadDto,
@@ -21,7 +22,7 @@ export class AuthLoginAnalyticsAdminPersistenceError extends Error {
 
 @Injectable()
 export class AuthLoginAnalyticsAdminService {
-  constructor(private readonly events: AuthLoginEventRepository) {}
+  constructor(@Inject(AuthLoginEventRepositoryInjectToken) private readonly events: AuthLoginEventRepositoryPort) {}
 
   async list(tenantId: string, query: AuthLoginAnalyticsQueryDto): Promise<AuthLoginAnalyticsListPayloadDto> {
     const filter = toFilter(tenantId, query);
@@ -63,7 +64,7 @@ const toFilter = (tenantId: string, query: AuthLoginAnalyticsQueryDto): AuthLogi
   offset: query.offset ?? 0,
 });
 
-const toView = (event: AuthLoginEventEntity): AuthLoginAnalyticsEventDto => ({
+const toView = (event: AuthLoginEventRecord): AuthLoginAnalyticsEventDto => ({
   id: event.id,
   tenantId: event.tenantId,
   ...(event.userId ? { userId: event.userId } : {}),

@@ -1,9 +1,17 @@
-import { bootstrapNestApi, resolveDefaultDevelopmentCorsOrigins } from '@app/backend-common-bootstrap';
-import { AdminAppApiModule } from './admin-app-api.module';
+import { initializeCapabilities } from './capabilities.bootstrap.generated';
 
-void bootstrapNestApi(AdminAppApiModule, {
-  appName: 'admin-app-api',
-  corsOrigins: resolveDefaultDevelopmentCorsOrigins(),
-  openApi: { authSchemes: ['session-cookie'] },
-  port: 3001,
-});
+async function bootstrap(): Promise<void> {
+  initializeCapabilities('admin-app-api');
+  const [bootstrapModule, appModule] = await Promise.all([
+    import('./bootstrap.runtime'),
+    import('./admin-app-api.module'),
+  ]);
+  await bootstrapModule.bootstrapNestApi(appModule.AdminAppApiModule, {
+    appName: 'admin-app-api',
+    corsOrigins: bootstrapModule.resolveDefaultDevelopmentCorsOrigins(),
+    openApi: { authSchemes: ['session-cookie'] },
+    port: 3001,
+  });
+}
+
+void bootstrap();

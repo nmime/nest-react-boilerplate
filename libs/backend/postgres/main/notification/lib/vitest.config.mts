@@ -13,6 +13,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.spec.ts'],
+    exclude: ['src/**/*.component-spec.ts'],
     globals: false,
     coverage: fullCoverage('coverage/libs/backend/postgres/main/notification/lib', ['src/**/*.ts'], [], {
       branches: -347,

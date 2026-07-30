@@ -1,7 +1,7 @@
 // @requirements REQ-AUTH-ACCESS-001
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
-import { AuthLoginEventEntity, type AuthLoginEventRepository } from '@app/backend-postgres-main-auth';
+import type { AuthLoginEventRecord, AuthLoginEventRepositoryPort } from '@app/backend-feature-auth-shared';
 import { AuthLoginAnalyticsService } from './auth-login-analytics.service';
 import type { GeoIpResolverService } from './geo-ip-resolver.service';
 
@@ -16,16 +16,35 @@ describe('AuthLoginAnalyticsService', () => {
     process.env.SESSION_SECRET = 'unit-test-session-secret';
     process.env.AUTH_LOGIN_NETWORK_RETENTION_DAYS = '7';
     process.env.AUTH_LOGIN_EVENT_RETENTION_DAYS = '90';
-    const entity = new AuthLoginEventEntity({
+    const entity = {
+      id: 'event-id',
+      tenantId: '00000000-0000-0000-0000-000000000000',
+      userId: null,
+      identifierHash: null,
+      sessionId: null,
       eventType: 'login',
       outcome: 'success',
       provider: 'telegram',
       channel: 'telegram_tma',
-    });
+      failureCode: null,
+      ipAddress: null,
+      ipHash: null,
+      countryCode: null,
+      region: null,
+      city: null,
+      timezone: null,
+      timezoneSource: null,
+      language: null,
+      languageSource: null,
+      userAgent: null,
+      requestId: null,
+      occurredAt: new Date(),
+      networkAnonymizedAt: null,
+    } satisfies AuthLoginEventRecord;
     const repository = {
       record: vi.fn(() => okAsync(entity)),
       applyRetention: vi.fn(() => Promise.resolve({ anonymized: 0, deleted: 0 })),
-    } as unknown as AuthLoginEventRepository;
+    } as unknown as AuthLoginEventRepositoryPort;
     const geoIp = {
       resolve: vi.fn(() => Promise.resolve({ countryCode: 'UZ', city: 'Tashkent', timezone: 'Asia/Tashkent' })),
     } as unknown as GeoIpResolverService;
@@ -74,7 +93,7 @@ describe('AuthLoginAnalyticsService', () => {
     const repository = {
       record: vi.fn(() => errAsync({ code: 'repository_error' as const, message: 'offline' })),
       applyRetention: vi.fn(),
-    } as unknown as AuthLoginEventRepository;
+    } as unknown as AuthLoginEventRepositoryPort;
     const geoIp = {
       resolve: vi.fn(() => Promise.resolve({ timezone: 'Asia/Tashkent' })),
     } as unknown as GeoIpResolverService;

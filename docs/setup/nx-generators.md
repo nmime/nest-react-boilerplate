@@ -8,29 +8,33 @@ application generators are not the canonical scaffold path.
 ## Canonical commands
 
 ```bash
-pnpm nrb add app <name> --kind <frontend|backend> --renderer <renderer> --dry-run
+pnpm nrb add app <name> --kind <frontend|backend|e2e> --renderer <renderer> --dry-run
 pnpm nrb add lib <name> --kind <frontend|backend|common> --type <type> --scope <scope> --description "<concrete responsibility>" --dry-run
 pnpm nrb add feature <name> --api-app <api> --frontend-app <frontend> --dry-run
 ```
 
 Run without `--dry-run` only after inspecting every planned path. Application
-generation creates a package manifest, so run `pnpm install` afterward and prove
-`pnpm install --frozen-lockfile`. Generated libraries use their owning shared
-runtime manifest unless a maintainer explicitly introduces a package boundary.
+and library generation use Nx `project.json` ownership without creating package
+identity manifests. Astro and Expo receive dependency-only manifests because
+their toolchains require nearest-package dependency metadata. If generated source
+needs a missing external dependency, add it to
+the owning backend/frontend platform manifest, run `pnpm install`, and prove
+`pnpm install --frozen-lockfile`.
 
 ## Application generator
 
 `@repo/tooling:application` supports:
 
-| Kind     | Renderer    | Generated contract                                         |
-| -------- | ----------- | ---------------------------------------------------------- |
-| frontend | `vite`      | React/Vite app, Vitest, browser e2e coverage target        |
-| frontend | `astro`     | Astro standalone Node output and renderer smoke test       |
-| frontend | `vike`      | Vike React SSR app and production build contract           |
-| frontend | `expo`      | Expo Router/React Native app and web export contract       |
-| backend  | `nest-api`  | NestJS/Fastify API with standard health endpoints          |
-| backend  | `consumer`  | NestJS application-context event/queue consumer            |
-| backend  | `scheduler` | NestJS application-context scheduler with `ScheduleModule` |
+| Kind     | Renderer    | Generated contract                                              |
+| -------- | ----------- | --------------------------------------------------------------- |
+| frontend | `vite`      | React/Vite app, Vitest, browser e2e coverage target             |
+| frontend | `astro`     | Astro output, smoke test, and dependency-only renderer manifest |
+| frontend | `vike`      | Vike React SSR app and production build contract                |
+| frontend | `expo`      | Expo Router/React Native app and web export contract            |
+| backend  | `nest-api`  | NestJS/Fastify API with standard health endpoints               |
+| backend  | `consumer`  | NestJS application-context event/queue consumer                 |
+| backend  | `scheduler` | NestJS application-context scheduler with `ScheduleModule`      |
+| e2e      | `cucumber`  | Cucumber.js acceptance app with isolated typed World state      |
 
 Frontend roots are `apps/frontend/<name>`. Backend roots are
 `apps/backend/<first-name-segment>/<name>`. Every generated root includes a
@@ -55,6 +59,9 @@ Use `pnpm nrb setup --list` to inspect the current and available selections.
 `@repo/tooling:library` supports backend, frontend, and common runtimes plus
 semantic roles `common`, `util`, `ui`, `sdk`, `feature-main`,
 `feature-admin`, `feature-shared`, `data-access`, `test-util`, and `asset`.
+Backend `data-access` libraries accept `--database postgres|mongodb`; the
+generator otherwise derives exactly one selected provider from
+`.nrb/workspace.json` and rejects mismatches.
 
 `feature-admin` is backend-only and generates the privileged domain boundary at
 `libs/backend/feature/<scope>/admin/lib`; API applications compose it while the
@@ -73,13 +80,27 @@ main/shared/data-access libraries form one vertical product slice.
 | -------------------------------------------- | --------------------------------------- |
 | `libs/backend/feature/<name>/shared/lib/**`  | DTOs and permissions                    |
 | `libs/backend/feature/<name>/main/lib/**`    | Nest module, controller, service, tests |
-| `libs/backend/postgres/main/<name>/lib/**`   | MikroORM entity, repository, migration  |
+| `libs/backend/<provider>/main/<name>/lib/**` | Provider-owned persistence              |
 | `apps/frontend/<target>/src/pages/<name>/**` | FSD page public boundary                |
 | `docs/features/<name>/scaffold.md`           | Product completion checklist            |
 
-It also creates the three stable backend aliases and wires the feature module
-into the selected API. It does not hand-edit generated OpenAPI/client output or
-invent product fields and routing.
+Pass `--database postgres|mongodb`, or let the generator derive the workspace's
+single durable provider. PostgreSQL creates a MikroORM entity, repository, and
+reversible migration. MongoDB creates a strict collection validator,
+deterministic indexes, a transactional native-driver repository, and
+replica-set component coverage. It also creates the three stable backend aliases
+and wires the feature module into the selected API. The owners must be a
+`bootstrapNestApi` HTTP application
+and a Vite web application with an `src/pages` FSD boundary; incompatible
+consumer, scheduler, Astro, Vike, and Expo combinations fail before writes. The
+generator exports the feature migration list and atomically registers it with
+the production `db:migrate` runner, refusing generation when that explicit
+runner contract cannot be updated safely. It does not hand-edit generated
+OpenAPI/client output or invent product fields and routing.
+
+Generated executable tests use the deterministic bootstrap marker
+`REQ-<OWNER>-SCAFFOLD-001`. Define or replace it in OpenSpec and map the exact
+generated Nx project before running `pnpm spec:validate` downstream.
 
 ## Nx inference
 
@@ -106,9 +127,15 @@ pnpm run check:fast
 git diff --check
 ```
 
-`scaffold:verify` generates all six application renderer/process variants plus
+`scaffold:verify` generates all eight application renderer/process variants plus
 backend, frontend, and common libraries in the live workspace. It builds, tests,
-and typechecks all nine projects through Nx, then removes the canary roots.
+and typechecks all eleven projects through Nx with finite per-project/target
+budgets scaled for Node, browser, SSR, and native work. It isolates Nx workspace
+data, holds a workspace-specific process lock, and refuses to touch an existing
+canary owner root. It removes source roots only after the current invocation
+created them. The same harness applies two features to the source-backed
+production migration runner in memory to prove repeatable registration without
+mutating product owners.
 Generator unit and setup e2e tests cover name/path rules, schema validation,
 dependency expansion, conflicts, rollback, and idempotency.
 

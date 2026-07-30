@@ -27,6 +27,8 @@
           "auth-app-api",
           "discord-app-api",
           "telegram-bot-api",
+          "notification-consumer",
+          "notification-scheduler",
           "fullstack-e2e"
         ]
       },
@@ -47,8 +49,10 @@
           "design-tokens",
           "authz",
           "postgres",
+          "mongodb",
           "redis",
           "s3",
+          "static-data",
           "nats",
           "otel",
           "swagger",
@@ -75,6 +79,8 @@
           "auth-app-api",
           "discord-app-api",
           "telegram-bot-api",
+          "notification-consumer",
+          "notification-scheduler",
           "fullstack-e2e"
         ]
       },
@@ -94,8 +100,10 @@
           "design-tokens",
           "authz",
           "postgres",
+          "mongodb",
           "redis",
           "s3",
+          "static-data",
           "nats",
           "otel",
           "swagger",
@@ -111,6 +119,24 @@
       "description": "Replace the current selection instead of adding to it",
       "default": false
     },
+    "ciMode": { "type": "string", "enum": ["product", "maintainer"] },
+    "frontendApiMode": { "type": "string", "enum": ["same-origin", "split-origin"] },
+    "mobileTargets": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["web", "android", "ios"] }
+    },
+    "deploymentTargets": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["docker", "single-server", "kubernetes"] }
+    },
+    "publicTopology": {
+      "type": "string",
+      "enum": ["single-domain", "per-app-domains", "external-proxy"]
+    },
+    "kubernetesDelivery": { "type": "string", "enum": ["direct", "argocd", "flux"] },
+    "redisOwnership": { "type": "string", "enum": ["bundled", "external"] },
+    "natsOwnership": { "type": "string", "enum": ["bundled", "external"] },
+    "s3Ownership": { "type": "string", "enum": ["bundled", "external"] },
     "prune": {
       "type": "boolean",
       "description": "Remove files no longer needed after config change",

@@ -10,6 +10,8 @@ import {
   NotificationTargetType,
 } from '@app/common-notifications';
 
+export const UnclaimedNotificationBroadcastClaimId = '00000000-0000-0000-0000-000000000000';
+
 export class NotificationBroadcastEntity {
   id: string = randomUUID();
   tenantId!: string;
@@ -29,6 +31,8 @@ export class NotificationBroadcastEntity {
   pendingCount = 0;
   cancelledCount = 0;
   materializedAt: Date | null = null;
+  materializationClaimedAt: Date = new Date(0);
+  materializationClaimToken: string = UnclaimedNotificationBroadcastClaimId;
   createdBy!: string;
   approvedBy: string | null = null;
   createdAt: Date = new Date();
@@ -61,6 +65,16 @@ export const NotificationBroadcastEntitySchema = new EntitySchema<NotificationBr
     pendingCount: { type: 'integer', fieldName: 'pending_count', default: 0 },
     cancelledCount: { type: 'integer', fieldName: 'cancelled_count', default: 0 },
     materializedAt: { type: 'timestamptz', fieldName: 'materialized_at', nullable: true, default: null },
+    materializationClaimedAt: {
+      type: 'timestamptz',
+      fieldName: 'materialization_claimed_at',
+      defaultRaw: "'1970-01-01 00:00:00+00'",
+    },
+    materializationClaimToken: {
+      type: 'uuid',
+      fieldName: 'materialization_claim_token',
+      default: UnclaimedNotificationBroadcastClaimId,
+    },
     createdBy: { type: 'varchar', fieldName: 'created_by', length: 160 },
     approvedBy: { type: 'varchar', fieldName: 'approved_by', length: 160, nullable: true, default: null },
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
@@ -110,6 +124,7 @@ export class NotificationAudienceSnapshotEntity {
   invalidCount = 0;
   error: NotificationError | null = null;
   claimedAt: Date = new Date(0);
+  claimToken: string = UnclaimedNotificationBroadcastClaimId;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 
@@ -133,6 +148,7 @@ export const NotificationAudienceSnapshotEntitySchema = new EntitySchema<Notific
     invalidCount: { type: 'integer', fieldName: 'invalid_count', default: 0 },
     error: { type: 'json', nullable: true, defaultRaw: 'NULL' },
     claimedAt: { type: 'timestamptz', fieldName: 'claimed_at', defaultRaw: "'1970-01-01 00:00:00+00'" },
+    claimToken: { type: 'uuid', fieldName: 'claim_token', default: UnclaimedNotificationBroadcastClaimId },
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },

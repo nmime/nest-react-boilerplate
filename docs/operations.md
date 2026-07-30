@@ -9,10 +9,12 @@ Use split examples as starting points:
 - `.env.production.example` for production secret managers, Docker secret files,
   runtime environment injection, or Kubernetes Secret manifests.
 
-Production must provide `DATABASE_URL`, `SESSION_SECRET`, CORS origins, OAuth
-values when enabled, and frontend API URLs. Keep `POSTGRES_SYNCHRONIZE=false`;
-use migrations instead. Never commit `.env.production`, Docker secret files,
-Kubernetes Secret values, or PM2 runtime secrets.
+Production must select `DATABASE_ENGINE=postgres|mongodb` and provide the
+matching `DATABASE_URL` or `MONGODB_URI`, plus `SESSION_SECRET`, CORS origins,
+OAuth values when enabled, and frontend API URLs. Keep
+`POSTGRES_SYNCHRONIZE=false`; both providers use explicit migrations. Never
+commit `.env.production`, Docker secret files, Kubernetes Secret values, or PM2
+runtime secrets.
 
 ## Health, readiness, and logging
 
@@ -57,7 +59,11 @@ pnpm db:restore -- --input backups/pre-release.dump --yes
 
 `db:reset`, `db:seed`, and `db:restore` refuse non-local/dev-looking databases
 unless `--force` is supplied. Backup and restore commands redact connection
-strings in logs.
+strings in logs. Every command dispatches from `DATABASE_ENGINE` and durable
+`AUTH_PERSISTENCE`; conflicting selectors fail. PostgreSQL uses dumps and
+MikroORM migrations. MongoDB uses gzip archives and the verified native
+`mongo_migrations` ledger, and requires an explicit replica-set URI for database
+operations.
 
 ## Deployment runbooks
 
@@ -94,5 +100,7 @@ Rollback summary:
 - GitOps: revert the promotion commit, image digest, or verified full-SHA tag and let
   the selected Argo CD or Flux controller reconcile.
 
-For every mode, take a database backup before migrations and decide whether the
-schema change is backward compatible before restoring or rolling forward.
+For every mode, take and test a selected-provider backup before migrations and
+decide whether the change is backward compatible before restoring or rolling
+forward. MongoDB collection/index/validator DDL is not transactional and has no
+down-migration equivalent, so roll forward is the normal recovery path.

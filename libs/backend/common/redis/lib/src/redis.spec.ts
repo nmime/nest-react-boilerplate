@@ -253,6 +253,26 @@ describe('RedisHealthIndicator', () => {
       details: { message: 'redis://[redacted]@redis:6379 down' },
     });
   });
+
+  it('bounds a Redis health check whose client keeps reconnecting', async () => {
+    vi.useFakeTimers();
+    try {
+      const redis = Object.assign(new InMemoryRedisClient(), {
+        ping: vi.fn(() => new Promise<string>(() => undefined)),
+      });
+      const check = new RedisHealthIndicator(redis, 100).check();
+
+      await vi.advanceTimersByTimeAsync(101);
+
+      await expect(check).resolves.toMatchObject({
+        name: 'redis',
+        status: 'error',
+        details: { message: 'Redis health check timed out.' },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 function credentialUrl(protocol: string, username: string, password: string, hostAndPath: string): string {

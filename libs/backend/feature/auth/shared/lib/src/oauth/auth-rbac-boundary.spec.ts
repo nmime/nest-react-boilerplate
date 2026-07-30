@@ -21,7 +21,7 @@ function collectTypescriptFiles(directory: string): string[] {
 
 describe('auth shared RBAC boundary', () => {
   it('does not import admin shared from auth shared source', () => {
-    const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+    const sourceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
     const offenders = collectTypescriptFiles(sourceRoot)
       .filter((filePath) => readFileSync(filePath, 'utf8').includes(forbiddenAdminSharedImport))
       .map((filePath) => relative(process.cwd(), filePath));

@@ -61,6 +61,9 @@ export const fullCoverage = (
     '**/postcss.config.*',
     '**/main.ts',
     '**/main.tsx',
+    // Setup-generated/source-derived bootstrap shims contain no product logic.
+    '**/capabilities.bootstrap.generated.ts',
+    '**/bootstrap.runtime.ts',
     '**/generated/**',
     '**/migrations/**',
     '**/node_modules/**',

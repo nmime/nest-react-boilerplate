@@ -201,6 +201,7 @@ assert.deepEqual(
     'landing-app',
     'notification-consumer',
     'notification-scheduler',
+    'site-app',
     'user-app',
     'user-app-api',
   ],

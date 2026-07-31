@@ -160,19 +160,30 @@ function runNxTarget(target: ScaffoldVerificationTarget, project: string, resour
   nxWorkspaceDataDirectory ??= mkdtempSync(join(tmpdir(), 'nrb-scaffold-nx-'));
   const childEnvironment: NodeJS.ProcessEnv = {
     ...process.env,
-    NODE_ENV: 'production',
+    // Only a build belongs in production mode. React's production bundle omits `act`, which
+    // Testing Library's render() calls, so forcing NODE_ENV=production on the test target made
+    // any rendering spec fail with "React.act is not a function" — and it verified the generated
+    // app under a runtime configuration its tests never actually use.
+    NODE_ENV: target === 'build' ? 'production' : 'test',
     NX_DAEMON: 'false',
     NX_ISOLATE_PLUGINS: 'false',
     NX_WORKSPACE_DATA_DIRECTORY: nxWorkspaceDataDirectory,
   };
   delete childEnvironment.NODE_TEST_CONTEXT;
 
+  // A generated backend app re-exports the shared bootstrap through src/bootstrap.runtime.ts, so
+  // its @nx/js:tsc build resolves @app/backend-common-bootstrap from that library's build output —
+  // exactly as the hand-maintained APIs do. Excluding task dependencies leaves that output absent
+  // and the build fails with TS2307, which makes the assertion untestable rather than strict. Keep
+  // the exclusion for test/typecheck, which run against source and need no upstream artifacts.
+  const dependencyArguments = target === 'build' ? [] : ['--excludeTaskDependencies'];
+
   execFileSync(
     join(workspaceRoot, 'node_modules/.bin/nx'),
     [
       'run',
       `${project}:${target}`,
-      '--excludeTaskDependencies',
+      ...dependencyArguments,
       '--parallel=1',
       '--skip-nx-cache',
       '--output-style=static',

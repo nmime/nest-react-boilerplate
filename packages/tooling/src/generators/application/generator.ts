@@ -796,6 +796,10 @@ function createViteFrontendApp(
           allowJs: false,
           esModuleInterop: false,
           allowSyntheticDefaultImports: true,
+          // tsconfig.spec.json typechecks vitest.config.mts, which imports the shared coverage
+          // contract from a .mts path. Mirrors apps/frontend/landing/tsconfig.json; both typecheck
+          // targets run with --noEmit and the build goes through vite, so nothing emits from tsc.
+          allowImportingTsExtensions: true,
           types: ['vite/client'],
           lib: ['es2022', 'dom'],
         },
@@ -1217,7 +1221,19 @@ export default defineConfig({
 });
 `,
   );
-  tree.write(`${dir}/tsconfig.json`, `${JSON.stringify({ extends: 'astro/tsconfigs/strict' }, null, 2)}\n`);
+  tree.write(
+    `${dir}/tsconfig.json`,
+    `${JSON.stringify(
+      {
+        extends: 'astro/tsconfigs/strict',
+        // `astro check` has no include narrowing, so it also sees vitest.config.mts, which imports
+        // the shared coverage contract from a .mts path. Astro checks without emitting.
+        compilerOptions: { allowImportingTsExtensions: true },
+      },
+      null,
+      2,
+    )}\n`,
+  );
   tree.write(
     `${dir}/src/pages/index.astro`,
     `---
@@ -1305,6 +1321,9 @@ export default defineConfig({
       jsx: 'react-jsx',
       module: 'esnext',
       moduleResolution: 'bundler',
+      // A Vike page renders React in a browser, and its spec asserts against rendered DOM
+      // nodes, so the dom lib is required — matching the vite renderer's tsconfig.
+      lib: ['es2022', 'dom'],
       types: ['vite/client'],
     },
     include: ['pages/**/*.ts', 'pages/**/*.tsx', configFile],

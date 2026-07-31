@@ -507,9 +507,14 @@ const assertDirectComposeBuildContext = (workflowName, job) => {
   const materialize = 'pnpm nrb closure materialize --all-reference --provider postgres';
   const build = 'docker compose -f docker/docker-compose.yml up -d --build';
   const context = 'NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres';
+  const jobEnvironment = job.slice(0, job.indexOf('    steps:'));
   assert.ok(job.includes(build), `${workflowName} runtime job must retain its direct Compose build.`);
   assert.ok(job.includes(materialize), `${workflowName} direct Compose build must materialize a closure context.`);
   assert.ok(job.includes(context), `${workflowName} direct Compose build must pass NRB_CLOSURE_CONTEXT.`);
+  assert.ok(
+    jobEnvironment.includes(context),
+    `${workflowName} runtime job must keep NRB_CLOSURE_CONTEXT available to post-build Compose commands.`,
+  );
   assert.ok(
     job.indexOf(materialize) < job.indexOf(build),
     `${workflowName} must materialize its closure context before direct Compose --build.`,
@@ -539,6 +544,16 @@ for (const [workflowName, workflowText] of [
     workflowText.includes("SITE_APP_PORT: '4203'"),
     `${workflowName} runtime stack must avoid the runner-reserved 8084 port`,
   );
+  for (const expected of [
+    "FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true'",
+    'LANDING_ADMIN_APP_URL: http://127.0.0.1:8081',
+    'LANDING_USER_APP_URL: http://127.0.0.1:8082',
+  ]) {
+    assert.ok(
+      workflowText.includes(expected),
+      `${workflowName} runtime stack missing landing destination: ${expected}`,
+    );
+  }
 }
 assert.ok(
   developmentCompose.includes(

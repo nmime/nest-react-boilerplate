@@ -484,6 +484,10 @@ test('admin API accepts only its cookie session and ignores browser URL tokens',
 
   await gotoWithRetry(page, `${urls.adminApp}/admin`);
   await expect(page.getByRole('heading', { level: 1, name: 'Admin dashboard' })).toBeVisible();
+  const openNavigation = page.getByRole('button', { name: 'Open navigation' });
+  if (await openNavigation.isVisible()) {
+    await openNavigation.click();
+  }
   await page.getByRole('button', { name: 'Users' }).click();
   await page.getByRole('link', { name: 'Roles' }).click();
   await expect(page).toHaveURL(`${urls.adminApp}/admin/roles`);

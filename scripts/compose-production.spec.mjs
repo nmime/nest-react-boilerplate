@@ -87,6 +87,17 @@ test('reports fixed execution diagnostics for Docker launch and exit failures', 
   );
 });
 
+test('stages bundled MongoDB bootstrap secrets for its non-root entrypoint', () => {
+  const entrypoint = readFileSync(resolve(root, 'docker/mongodb/start-authenticated-replica-set.sh'), 'utf8');
+
+  assert.ok(
+    entrypoint.includes(
+      'install -o mongodb -g mongodb -m 0400 /run/secrets/mongodb_root_password /tmp/mongodb-root-password',
+    ),
+  );
+  assert.ok(entrypoint.includes('export MONGO_INITDB_ROOT_PASSWORD_FILE=/tmp/mongodb-root-password'));
+});
+
 test('frontend runtime config emits only same-origin or HTTPS landing destinations', (context) => {
   const temporaryDirectory = mkdtempSync(join(tmpdir(), 'nrb-frontend-runtime-config-'));
   context.after(() => rmSync(temporaryDirectory, { force: true, recursive: true }));

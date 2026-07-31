@@ -348,6 +348,19 @@ function collectProductExternalPackages(
     }
   }
 
+  // Vitest resolves its DOM environment by name from a config string (`environment: 'happy-dom'`),
+  // so there is no import for the edge-walk to find. These reached a wide closure only because
+  // libs/frontend's layer manifest declares them; a single-app frontend selection reaches neither
+  // that manifest nor an app-level one, and vitest then fails to start its worker at all.
+  if (projects.some((project) => graph.nodes[project]?.data.tags?.includes('platform:frontend'))) {
+    for (const packageName of ['happy-dom', 'jsdom']) {
+      const external = findExternalNode(graph, packageName);
+      if (external) {
+        addExternalPackage(selected, external, forbidden);
+      }
+    }
+  }
+
   for (const packageName of [...selected.keys()]) {
     const typesPackage = findExternalNode(graph, definitelyTypedPackageName(packageName));
     if (typesPackage) {

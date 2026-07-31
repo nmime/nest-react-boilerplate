@@ -134,11 +134,13 @@ describe('selected closure live Nx graph', () => {
       ['mobile-app', 'apps/frontend/mobile', true],
     ] as const;
     const selectedByApp = new Map<string, Set<string>>();
+    const externalByApp = new Map<string, Set<string>>();
 
     for (const [appId, appRoot, hasRendererDependencyBoundary] of apps) {
       const closure = buildSelectedClosure(graph, { apps: [appId], capabilities: [], configHash });
       const selectedDependencies = new Set(Object.keys(closure.productExternalPackages ?? {}));
       selectedByApp.set(appId, selectedDependencies);
+      externalByApp.set(appId, new Set(Object.keys(closure.externalPackages)));
       assert.deepEqual(
         [...selectedDependencies].filter(
           (dependency) => !dependencyOwners.has(dependency) && !dependency.startsWith('@types/'),
@@ -161,7 +163,7 @@ describe('selected closure live Nx graph', () => {
     assert.equal(selectedByApp.get('landing-app')?.has('astro'), true);
     assert.equal(selectedByApp.get('site-app')?.has('vike'), true);
     assert.equal(selectedByApp.get('mobile-app')?.has('expo'), true);
-    assert.equal(selectedByApp.get('mobile-app')?.has('react-native-web'), true);
+    assert.equal(externalByApp.get('mobile-app')?.has('react-native-web'), true);
   });
 });
 

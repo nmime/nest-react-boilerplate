@@ -157,27 +157,6 @@ describe('selected closure', () => {
     assert.equal(selected.productExternalPackages?.['@types/string-format'], '1.0.0');
   });
 
-  it('includes renderer command packages only for their selected application', () => {
-    const fixture = graph({
-      projects: { 'landing-app': ['build'], 'mobile-app': ['build', 'export'] },
-      externalPackages: ['react-native-web'],
-    });
-
-    const mobile = buildSelectedClosure(fixture, {
-      apps: ['mobile-app'],
-      capabilities: [],
-      configHash: digest,
-    });
-    const landing = buildSelectedClosure(fixture, {
-      apps: ['landing-app'],
-      capabilities: [],
-      configHash: digest,
-    });
-
-    assert.equal(mobile.productExternalPackages?.['react-native-web'], '1.0.0');
-    assert.equal(landing.productExternalPackages?.['react-native-web'], undefined);
-  });
-
   it('does not expose non-Compose e2e roots as services', () => {
     const fixture = graph({ projects: { 'fullstack-e2e': ['test', 'e2e'] } });
     const selected = buildSelectedClosure(fixture, {

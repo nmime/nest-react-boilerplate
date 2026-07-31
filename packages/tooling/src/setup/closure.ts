@@ -63,9 +63,6 @@ const closureToolchainPackages = [
   'vite-plugin-istanbul',
   'zod',
 ] as const;
-const rendererPackagesByProject: Readonly<Record<string, readonly string[]>> = {
-  'mobile-app': ['react-native-web'],
-};
 
 export interface SelectedClosureManifest {
   schemaVersion: 1;
@@ -334,13 +331,6 @@ function collectProductExternalPackages(
       const external = graph.externalNodes?.[dependency.target];
       if (!external) {
         continue;
-      }
-      addExternalPackage(selected, external, forbidden);
-    }
-    for (const packageName of rendererPackagesByProject[project] ?? []) {
-      const external = findExternalNode(graph, packageName);
-      if (!external) {
-        throw new Error(`Nx graph does not expose required renderer package "${packageName}" for ${project}.`);
       }
       addExternalPackage(selected, external, forbidden);
     }

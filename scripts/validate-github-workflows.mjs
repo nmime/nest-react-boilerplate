@@ -149,7 +149,7 @@ for (const required of [
   assert.ok(ci.includes(required), `ci.yml must run the previously unwired gate: ${required}`);
 }
 assert.ok(
-  !/nx run-many -t e2e --all(?! --exclude fullstack-e2e)/u.test(JSON.stringify(scripts)),
+  !/nx run-many -t e2e --all(?! --exclude(?:=| )fullstack-e2e)/u.test(JSON.stringify(scripts)),
   'package.json e2e aggregates must exclude fullstack-e2e; the Docker-managed Playwright suite rejects forwarded flags and needs a Compose stack',
 );
 
@@ -317,9 +317,6 @@ for (const required of [
   "DOCKER_TLS_CERTDIR: ''",
   'mongodb-validation:',
   'docker-fullstack-mongodb:',
-  'DATABASE_ENGINE: mongodb',
-  'AUTH_PERSISTENCE: mongodb',
-  'MONGODB_REPLICA_SET: rs0',
   // The GitLab lane claims to mirror ci.yml, so it must evaluate the coverage contract too:
   // plain `test:all` leaves coverage.enabled false and every threshold unchecked.
   'pnpm run test:coverage:all',

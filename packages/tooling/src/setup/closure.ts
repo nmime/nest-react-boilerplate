@@ -143,7 +143,7 @@ export function buildSelectedClosure(graph: ProjectGraphLike, input: ClosureInpu
   ]);
   const projects = traverseProjects(graph, seedProjects, selectedApps, forbiddenProjects);
   const productExternalPackages = collectProductExternalPackages(graph, projects, provider);
-  const toolingExternalPackages = collectToolingExternalPackages(graph, provider);
+  const toolingExternalPackages = collectToolingExternalPackages(graph, projects, provider);
   for (const packageName of Object.keys(productExternalPackages)) {
     delete toolingExternalPackages[packageName];
   }
@@ -382,8 +382,39 @@ function definitelyTypedPackageName(packageName: string): string {
   return `@types/${packageName}`;
 }
 
+/**
+ * Collect the packages a selected target declares through `inputs.externalDependencies`.
+ *
+ * That declaration is the only trace of a package the target genuinely invokes but no source file
+ * imports, so the edge-walk in collectProductExternalPackages cannot see it. Two live cases:
+ * config/vite/create-frontend-vite-config.mjs imports vite-plugin-istanbul but sits at the
+ * workspace root, so no project owns the edge; and Expo resolves react-native-web itself, which
+ * appears in the repo only as an alias *value*. Reading the declaration is generic — it needs no
+ * package list and picks up future cases automatically.
+ */
+function collectDeclaredTargetPackages(graph: ProjectGraphLike, projects: readonly string[]): string[] {
+  const declared = new Set<string>();
+
+  for (const project of projects) {
+    const targets = graph.nodes[project]?.data.targets ?? {};
+    for (const configuration of Object.values(targets)) {
+      const inputs = (configuration as { inputs?: unknown[] } | undefined)?.inputs ?? [];
+      for (const input of inputs) {
+        const externalDependencies = (input as { externalDependencies?: unknown } | null)?.externalDependencies;
+        if (!Array.isArray(externalDependencies)) continue;
+        for (const packageName of externalDependencies) {
+          if (typeof packageName === 'string' && packageName !== '') declared.add(packageName);
+        }
+      }
+    }
+  }
+
+  return [...declared].sort((left, right) => left.localeCompare(right));
+}
+
 function collectToolingExternalPackages(
   graph: ProjectGraphLike,
+  projects: readonly string[],
   provider: DurableDatabaseProviderId | undefined,
 ): Record<string, string> {
   const selected = new Map<string, string>();
@@ -407,6 +438,16 @@ function collectToolingExternalPackages(
       throw new Error(`Nx graph does not expose required closure toolchain package "${packageName}".`);
     }
     addExternalPackage(selected, external, forbidden);
+  }
+
+  // Skip rather than throw on an unresolvable or forbidden name: a declaration can legitimately
+  // reference a package the opposite database provider owns, matching the @repo/tooling loop above.
+  for (const packageName of collectDeclaredTargetPackages(graph, projects)) {
+    if (forbidden.has(packageName)) continue;
+    const external = findExternalNode(graph, packageName);
+    if (external) {
+      addExternalPackage(selected, external, forbidden);
+    }
   }
 
   return Object.fromEntries([...selected.entries()].sort(([left], [right]) => left.localeCompare(right)));

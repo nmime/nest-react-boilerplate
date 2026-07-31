@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
-  "graphDigest": "dfe7897c981ca741f7382798fe77161591cada8ddc51d700b90d8a1ff2426289",
+  "graphDigest": "ecec9c0cfb467d440534b0ae85fa4d9f2a93d1efaed18f191f856cc409ab63d6",
   "provider": "postgres",
   "roots": [
     "admin-app",
@@ -494,6 +494,7 @@
   },
   "toolingExternalPackages": {
     "@eslint/js": "10.0.1",
+    "@expo/metro-runtime": "57.0.6",
     "@nx/devkit": "23.1.0",
     "@nx/eslint": "23.1.0",
     "@nx/eslint-plugin": "23.1.0",
@@ -521,10 +522,13 @@
     "jiti": "2.7.0",
     "jsonc-eslint-parser": "3.1.0",
     "nx": "23.1.0",
+    "react-native-web": "0.21.2",
     "sharp": "0.35.3",
+    "supertest": "7.2.2",
     "tsconfig-paths": "4.2.0",
     "typescript-eslint": "8.65.0",
     "typescript-transform-paths": "4.0.0",
+    "vite-plugin-istanbul": "9.0.1",
     "yaml": "2.9.0"
   },
   "services": [

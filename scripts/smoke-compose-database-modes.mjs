@@ -173,6 +173,7 @@ const waitFor = async (label, check) => {
 };
 
 let exitCode = 0;
+let bundledMongoStarted = false;
 try {
   console.log('building production PostgreSQL migrator from its provider reference context');
   compose(bundledProject, bundledFiles, ['build', 'migrate']);
@@ -223,7 +224,26 @@ try {
   console.log('building production MongoDB migrator from its provider reference context');
   compose(bundledMongoProject, bundledMongoFiles, ['build', 'migrate']);
   console.log('smoke: bundled transaction-capable MongoDB topology');
-  compose(bundledMongoProject, bundledMongoFiles, ['up', '--no-build', '-d', 'mongodb', 'mongodb-init']);
+  bundledMongoStarted = true;
+  // Let MongoDB consume its full health retry budget before Compose evaluates mongodb-init.
+  compose(bundledMongoProject, bundledMongoFiles, ['up', '--no-build', '-d', 'mongodb']);
+  await waitFor('bundled MongoDB startup', () => {
+    const containerId = compose(bundledMongoProject, bundledMongoFiles, ['ps', '--all', '--quiet', 'mongodb'], {
+      capture: true,
+    });
+    if (!containerId) return 'container missing';
+    const state = run(
+      [
+        'inspect',
+        '--format',
+        '{{.State.Status}}:{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}:{{.State.ExitCode}}',
+        containerId,
+      ],
+      { capture: true },
+    );
+    return state === 'running:healthy:0' ? 'ready' : state;
+  });
+  compose(bundledMongoProject, bundledMongoFiles, ['up', '--no-build', '-d', 'mongodb-init']);
   await waitFor('bundled MongoDB preparation', () => {
     const containerId = compose(bundledMongoProject, bundledMongoFiles, ['ps', '--all', '--quiet', 'mongodb-init'], {
       capture: true,
@@ -287,6 +307,29 @@ try {
 } catch (error) {
   exitCode = 1;
   console.error(error instanceof Error ? error.message : String(error));
+  if (bundledMongoStarted) {
+    console.error('bundled MongoDB service logs:');
+    spawnSync(
+      'docker',
+      [
+        'compose',
+        '--project-name',
+        bundledMongoProject,
+        ...bundledMongoFiles,
+        'logs',
+        '--no-color',
+        '--tail',
+        '200',
+        'mongodb',
+        'mongodb-init',
+      ],
+      {
+        cwd: rootDir,
+        env: { ...commonEnv, NRB_CLOSURE_CONTEXT: mongodbClosureContext },
+        stdio: 'inherit',
+      },
+    );
+  }
 } finally {
   // Disconnect the independently owned database before Compose removes its
   // application network; otherwise Docker correctly reports the network busy.

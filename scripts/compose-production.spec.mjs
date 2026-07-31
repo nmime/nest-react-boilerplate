@@ -98,7 +98,7 @@ test('stages bundled MongoDB bootstrap secrets for its non-root entrypoint', () 
   assert.ok(entrypoint.includes('export MONGO_INITDB_ROOT_PASSWORD_FILE=/tmp/mongodb-root-password'));
 });
 
-test('frontend runtime config emits only same-origin or HTTPS landing destinations', (context) => {
+test('frontend runtime config emits only same-origin, HTTPS, or loopback HTTP landing destinations', (context) => {
   const temporaryDirectory = mkdtempSync(join(tmpdir(), 'nrb-frontend-runtime-config-'));
   context.after(() => rmSync(temporaryDirectory, { force: true, recursive: true }));
   const target = join(temporaryDirectory, 'runtime-config.js');
@@ -124,6 +124,20 @@ test('frontend runtime config emits only same-origin or HTTPS landing destinatio
   });
   assert.match(valid, /"userAppUrl": "\/app"/u);
   assert.match(valid, /"adminAppUrl": "https:\/\/admin\.product\.example"/u);
+
+  const local = render({
+    FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true',
+    LANDING_ADMIN_APP_URL: 'http://localhost:4200',
+    LANDING_USER_APP_URL: 'http://127.0.0.1:4201',
+  });
+  assert.match(local, /"userAppUrl": "http:\/\/127\.0\.0\.1:4201"/u);
+  assert.match(local, /"adminAppUrl": "http:\/\/localhost:4200"/u);
+
+  const disallowedLocal = render({
+    LANDING_ADMIN_APP_URL: 'http://localhost:4200',
+    LANDING_USER_APP_URL: 'http://127.0.0.1:4201',
+  });
+  assert.doesNotMatch(disallowedLocal, /userAppUrl|adminAppUrl/u);
 
   const invalid = render({
     LANDING_ADMIN_APP_URL: 'https://user@admin.product.example',

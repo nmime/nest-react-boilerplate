@@ -1,6 +1,7 @@
 // @requirements REQ-FRONTEND-SHELL-004
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { apiRuntimeEvents } from '@app/frontend-api-support';
 import App from './app';
 
 const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
@@ -263,6 +264,60 @@ describe('User app shell', () => {
     expect(await screen.findByText('Account essentials')).toBeTruthy();
     expect(back).not.toHaveBeenCalled();
     back.mockRestore();
+  });
+
+  it('hydrates an authenticated session when settings is loaded directly', async () => {
+    window.history.pushState({}, '', '/settings');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+        if (pathname === '/auth/me') {
+          return Promise.resolve(
+            jsonResponse({
+              data: {
+                principal: { email: 'settings@example.com', subject: 'settings-subject' },
+                user: { locale: 'en', theme: 'system' },
+              },
+            }),
+          );
+        }
+        if (pathname === '/auth/provider-identities') {
+          return Promise.resolve(jsonResponse({ data: { items: [] } }));
+        }
+        return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+      }),
+    );
+
+    render(<App />);
+
+    expect(await screen.findByRole('button', { name: 'Sign out' })).toBeTruthy();
+    expect(screen.queryByText('Sign in or register to continue.')).toBeNull();
+  });
+
+  it('keeps direct settings navigation silent but reports auth when a guest opens profile', async () => {
+    window.history.pushState({}, '', '/settings');
+    apiRuntimeEvents.reset();
+    const events: string[] = [];
+    const unsubscribe = apiRuntimeEvents.subscribe((event) => events.push(event.type));
+    const fetchMock = vi.fn(() => Promise.resolve(jsonResponse({}, false, 401)));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<App />);
+
+    await screen.findByText('Preferences');
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(window.location.pathname).toBe('/settings');
+    expect(events).not.toContain('auth-required');
+    expect(apiRuntimeEvents.getState().authRequired).toBe(false);
+
+    fireEvent.click(screen.getAllByRole('link', { name: 'Profile' })[0]!);
+
+    await waitFor(() => expect(events).toContain('auth-required'));
+    expect(window.location.pathname).toBe('/auth');
+    expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/profile');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    unsubscribe();
   });
 
   it('renders every preserved user route without scaffold diagnostics', async () => {

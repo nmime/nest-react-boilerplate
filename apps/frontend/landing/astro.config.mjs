@@ -12,6 +12,12 @@ export default defineConfig({
   outDir: '../../../dist/apps/frontend/landing',
   output: 'static',
   site: process.env.PUBLIC_SITE_URL ?? 'http://localhost:4202',
+  markdown: {
+    syntaxHighlight: 'prism',
+  },
+  security: {
+    csp: true,
+  },
   server: {
     host: 'localhost',
     port: 4202,

@@ -41,7 +41,8 @@ is_valid_hostname() {
   done
 }
 
-# App destinations may be same-origin paths or credential-free HTTPS URLs.
+# App destinations may be same-origin paths, credential-free HTTPS URLs, or
+# exact loopback HTTP URLs for the local multi-port development stack.
 # Restrict the character set so values can be emitted as JSON strings without
 # an escaping tool in the minimal nginx image.
 is_valid_public_url() {
@@ -52,11 +53,20 @@ is_valid_public_url() {
         //* | *[!A-Za-z0-9._~/%-]*) return 1 ;;
       esac
       ;;
-    https://*)
+    https://* | http://*)
       case "${value}" in
         *[!A-Za-z0-9._~:/%-]*) return 1 ;;
       esac
-      remainder="${value#https://}"
+      case "${value}" in
+        https://*)
+          protocol=https
+          remainder="${value#https://}"
+          ;;
+        *)
+          protocol=http
+          remainder="${value#http://}"
+          ;;
+      esac
       authority="${remainder%%/*}"
       [ -n "${authority}" ] || return 1
       case "${authority}" in
@@ -71,6 +81,12 @@ is_valid_public_url() {
         *) host="${authority}" ;;
       esac
       is_valid_hostname "${host}" || return 1
+      if [ "${protocol}" = http ]; then
+        if [ "${host}" != localhost ] && [ "${host}" != 127.0.0.1 ]; then
+          return 1
+        fi
+        [ "${FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP:-false}" = true ] || return 1
+      fi
       ;;
     *) return 1 ;;
   esac

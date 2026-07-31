@@ -181,13 +181,22 @@ contract from each enabled `ingress.hosts` service entry: a separate host become
 an HTTPS URL and a service sharing the landing host must use a non-root path.
 Neither deployment path bakes an environment hostname into the image.
 
-The startup generator and landing consumer both accept only same-origin paths or
-credential-free HTTPS URLs without query strings or fragments. Invalid or absent
+The startup generator and landing consumer accept same-origin paths or
+credential-free HTTPS URLs without query strings or fragments. Exact
+`localhost` and `127.0.0.1` HTTP origins are also accepted for the local
+multi-port fullstack lane when its managed Compose environment explicitly opts
+in; the browser consumer also requires the landing page itself to use a loopback
+HTTP origin. Arbitrary cleartext origins remain rejected. Invalid or absent
 values are omitted and the landing app keeps its local `/app` and `/admin`
-fallback. `/runtime-config.js` remains same-origin under the existing CSP and is
-served `no-store` (an exact-match nginx location that outranks the year-long
-immutable rule for hashed assets). The file is public - **never put secrets in
-it**.
+fallback. `/runtime-config.js` remains same-origin and is served
+`no-store` (an exact-match nginx location that outranks the year-long immutable
+rule for hashed assets). The file is public - **never put secrets in it**.
+
+Astro emits a hash-based meta CSP for the landing island's inline hydration
+bootstrap. Docker and static-host Nginx admit inline scripts only for the landing
+artifact containing that generated hash policy; browsers enforce both policies
+together, so scripts without an Astro-generated hash remain blocked. Other
+frontend images retain the strict outer `script-src 'self'` policy.
 
 ## Validation commands
 

@@ -1,9 +1,12 @@
-import { useI18n } from '@app/frontend-runtime';
+import { useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
+import { useAuthSessionProbe } from '../../../features/auth';
 import { LogoutButton } from '../../../features/logout';
 import { ProviderIdentitiesPanel, SocialAuthProvider, useSocialAuth } from '../../../features/social-auth';
 import { LanguageSwitcher, ThemeSwitcher, UiCard, UiSection } from '../../../shared/ui';
 
 interface SettingsPageProps {
+  applyUserLocale: (locale: Locale) => void;
+  applyUserTheme: (theme: UiTheme) => void;
   navigate: (to: string, options?: { replace?: boolean }) => void;
 }
 
@@ -12,8 +15,14 @@ const linkRoute: Record<SocialAuthProvider, string> = {
   [SocialAuthProvider.Telegram]: '/link/telegram',
 };
 
-export function SettingsPage({ navigate }: Readonly<SettingsPageProps>) {
-  const { t } = useI18n();
+export function SettingsPage({ applyUserLocale, applyUserTheme, navigate }: Readonly<SettingsPageProps>) {
+  const { locale, t } = useI18n();
+  useAuthSessionProbe({
+    applyUserLocale,
+    applyUserTheme,
+    locale,
+    redirectOnUnauthenticated: false,
+  });
   const socialAuth = useSocialAuth({ navigate });
 
   return (

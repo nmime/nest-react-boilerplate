@@ -69,6 +69,16 @@ const fixture = ({
   };
 };
 
+const astroIndexWithHashedCsp =
+  '<meta http-equiv="content-security-policy" content="script-src \'self\' \'sha256-YWJjZA==\';">';
+const renderStaticNginx = (configuration) =>
+  renderNginx(configuration, 'https', {
+    readStaticFile: (path) => {
+      assert.match(path, /\/landing\/index\.html$/u);
+      return astroIndexWithHashedCsp;
+    },
+  });
+
 test('accepts all database engine and ownership combinations independently', (context) => {
   for (const databaseEngine of ['postgres', 'mongodb']) {
     for (const databaseMode of ['bundled-db', 'external-db']) {
@@ -256,7 +266,7 @@ test('rejects invalid Certbot identity and DNS propagation settings', (context) 
 test('static frontend mode serves built SPAs from disk with history fallback', () => {
   const { configuration, cleanup } = fixture({ frontendMode: 'static' });
   try {
-    const nginx = renderNginx(configuration, 'https');
+    const nginx = renderStaticNginx(configuration);
     // Each SPA is served from its own dist directory, not proxied to a process.
     for (const directory of ['landing', 'app', 'admin', 'mobile']) {
       assert.ok(
@@ -279,6 +289,21 @@ test('static frontend mode serves built SPAs from disk with history fallback', (
       assert.ok(indexBlock.slice(0, 700).includes(header), `index.html must keep ${header}`);
     }
     assert.match(indexBlock.slice(0, 900), /Content-Security-Policy/u, 'served HTML must carry a CSP');
+    const landingServer = nginx.slice(
+      nginx.indexOf('server_name product.example;'),
+      nginx.indexOf('server_name site-app.product.example;'),
+    );
+    assert.match(
+      landingServer,
+      /script-src 'self' 'unsafe-inline'/u,
+      'Astro hydration must be admitted by the outer landing policy',
+    );
+    const userServer = nginx.slice(
+      nginx.indexOf('server_name user-app.product.example;'),
+      nginx.indexOf('server_name admin-app.product.example;'),
+    );
+    assert.match(userServer, /script-src 'self';/u, 'non-Astro SPAs must retain the strict outer script policy');
+    assert.doesNotMatch(userServer, /script-src 'self' 'unsafe-inline'/u);
     const assetBlock = nginx.slice(nginx.indexOf('location ^~ /assets/ {'));
     assert.ok(assetBlock.slice(0, 600).includes('X-Content-Type-Options'), 'assets must keep nosniff');
     // Swagger UI is proxied on the same vhost and would break under the SPA CSP.
@@ -312,7 +337,7 @@ test('proxy frontend mode remains the default and never serves from disk', () =>
 test('static frontend mode never leaves an SPA route pointing at a process that does not exist', () => {
   const { configuration, cleanup } = fixture({ frontendMode: 'static', profiles: 'telegram' });
   try {
-    const nginx = renderNginx(configuration, 'https');
+    const nginx = renderStaticNginx(configuration);
     // /auth, /profile and /admin share the `/` handler, so they must be served from
     // disk too — proxying them would reach an SPA process static mode never starts.
     assert.doesNotMatch(nginx, /proxy_pass http:\/\/127\.0\.0\.1:4(100|101|102|104);/u);
@@ -336,7 +361,7 @@ test('static frontend mode never leaves an SPA route pointing at a process that 
 test('static frontend mode supports the single-domain layout from the primary bundle', () => {
   const { configuration, cleanup } = fixture({ frontendMode: 'static', publicMode: 'single-domain' });
   try {
-    const nginx = renderNginx(configuration, 'https');
+    const nginx = renderStaticNginx(configuration);
     assert.deepEqual(configuration.publicHosts, ['product.example']);
     assert.ok(nginx.includes('root /srv/nrb/dist/apps/frontend/landing;'), 'the primary bundle is served from disk');
     // Single-domain keeps its extra same-origin auth routes and the API fallbacks.
@@ -348,6 +373,27 @@ test('static frontend mode supports the single-domain layout from the primary bu
     for (const directory of ['app', 'admin', 'mobile']) {
       assert.ok(!nginx.includes(`/srv/nrb/dist/apps/frontend/${directory};`), `${directory} must not be served here`);
     }
+  } finally {
+    cleanup();
+  }
+});
+
+test('static landing CSP relaxation requires the built Astro hash policy', () => {
+  const { configuration, cleanup } = fixture({ frontendMode: 'static', publicMode: 'single-domain' });
+  try {
+    assert.throws(
+      () => renderNginx(configuration, 'https', { readStaticFile: () => '<html><body></body></html>' }),
+      /Astro script-src hash policy/u,
+    );
+    assert.throws(
+      () =>
+        renderNginx(configuration, 'https', {
+          readStaticFile: () => {
+            throw new Error('missing');
+          },
+        }),
+      /missing or unreadable/u,
+    );
   } finally {
     cleanup();
   }

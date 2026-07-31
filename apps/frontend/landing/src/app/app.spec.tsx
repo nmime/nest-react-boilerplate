@@ -63,6 +63,38 @@ describe('Landing app', () => {
     });
   });
 
+  it('allows explicit loopback HTTP destinations for the local multi-port stack', async () => {
+    vi.stubGlobal('location', new URL('http://localhost:4202/'));
+    vi.stubGlobal('__APP_RUNTIME_CONFIG__', {
+      adminAppUrl: 'http://localhost:4200/',
+      userAppUrl: 'http://127.0.0.1:4201/',
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Preview user app' }).getAttribute('href')).toBe('http://127.0.0.1:4201');
+      expect(screen.getByRole('link', { name: 'Preview admin app' }).getAttribute('href')).toBe(
+        'http://localhost:4200',
+      );
+    });
+  });
+
+  it('rejects loopback HTTP destinations outside a loopback landing origin', async () => {
+    vi.stubGlobal('location', new URL('https://landing.example.test/'));
+    vi.stubGlobal('__APP_RUNTIME_CONFIG__', {
+      adminAppUrl: 'http://localhost:4200/',
+      userAppUrl: 'http://127.0.0.1:4201/',
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Preview user app' }).getAttribute('href')).toBe('/app');
+      expect(screen.getByRole('link', { name: 'Preview admin app' }).getAttribute('href')).toBe('/admin');
+    });
+  });
+
   it('rejects unsafe runtime-configured application destinations', async () => {
     vi.stubGlobal('__APP_RUNTIME_CONFIG__', {
       adminAppUrl: 'http://admin.example.test',

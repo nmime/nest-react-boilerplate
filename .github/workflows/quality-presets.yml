@@ -57,6 +57,7 @@ jobs:
       DATABASE_ENGINE: postgres
       AUTH_PERSISTENCE: postgres
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+      CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
       ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
       AUTH_TELEGRAM_ENABLED: 'true'

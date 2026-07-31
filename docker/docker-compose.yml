@@ -428,6 +428,10 @@ services:
         FRONTEND_OUTPUT: dist/apps/frontend/landing
         VITE_API_BASE_URL_MODE: same-origin
     restart: unless-stopped
+    environment:
+      FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: ${FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP:-false}
+      LANDING_USER_APP_URL: ${LANDING_USER_APP_URL:-}
+      LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}
     ports:
       - target: 8080
         published: '${LANDING_APP_PORT:-4202}'

@@ -149,6 +149,23 @@ has(
 );
 const nginxFullstack = read('docker/nginx-fullstack.conf');
 const nginxSpa = read('docker/nginx-spa.conf');
+const landingAstroConfig = read('apps/frontend/landing/astro.config.mjs');
+has(landingAstroConfig, 'csp: true', 'Astro landing emits a hash-based hydration CSP');
+has(
+  dockerfile,
+  'if [ "${NX_PROJECT}" = landing-app ]',
+  'frontend image scopes its CSP relaxation to the Astro landing project',
+);
+has(
+  dockerfile,
+  'grep -Eq \'http-equiv="content-security-policy"[^>]+sha256-\' /usr/share/nginx/html/index.html',
+  'frontend image requires an Astro-generated hash CSP before relaxing its outer policy',
+);
+has(
+  dockerfile,
+  `sed -i "s/script-src 'self';/script-src 'self' 'unsafe-inline';/g"`,
+  'frontend image admits Astro hydration only behind the generated hash policy',
+);
 const ciWorkflow = read('.github/workflows/ci.yml');
 const runtimeOpsJob = section(ciWorkflow, '  ops-gates:', '  fullstack-e2e:');
 for (const expected of [
@@ -156,6 +173,7 @@ for (const expected of [
   "TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'",
   "VITE_TELEGRAM_AUTH_ENABLED: 'true'",
   "NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='",
+  'CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate',
   "SITE_APP_PORT: '4203'",
   'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app',
 ]) {
@@ -373,6 +391,22 @@ has(
 );
 has(devBackendEnv, 'REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}', 'dev Compose passes the Redis service URL');
 has(devBackendEnv, 'NATS_SERVERS: ${NATS_SERVERS:-nats://nats:4222}', 'dev Compose passes the NATS service URL');
+const devLandingService = section(devCompose, '  landing-app:', '\n\n  site-app:');
+has(
+  devLandingService,
+  'FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: ${FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP:-false}',
+  'dev landing requires an explicit opt-in before emitting loopback HTTP destinations',
+);
+has(
+  devLandingService,
+  'LANDING_USER_APP_URL: ${LANDING_USER_APP_URL:-}',
+  'dev landing receives the selected user-app destination',
+);
+has(
+  devLandingService,
+  'LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}',
+  'dev landing receives the selected admin-app destination',
+);
 has(
   devBackendEnv,
   'OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}',

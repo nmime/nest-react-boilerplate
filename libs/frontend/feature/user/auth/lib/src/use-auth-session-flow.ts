@@ -11,8 +11,9 @@ import {
   profileQueryKey,
   type ProfileState,
 } from '@app/frontend-feature-user-profile';
-import { authMeQueryKey, createAuthSession, fetchAuthMe } from './auth-api';
+import { authMeQueryKey, createAuthSession } from './auth-api';
 import { AuthMode } from './auth-model';
+import { useAuthSessionProbe } from './use-auth-session-probe';
 
 export interface AuthSessionFlowMessages {
   authenticationFailed: string;
@@ -50,37 +51,11 @@ export function useAuthSessionFlow({
   const authClient = useAuthApiClient();
   const userClient = useUserApiClient();
   const safeReturnUrl = returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : null;
-
-  const authMeQuery = useQuery({
-    queryFn: () => fetchAuthMe(authClient.api, authClient.requestOptions),
-    queryKey: [...authMeQueryKey(), locale],
-    retry: false,
-    staleTime: 15_000,
+  const { authLocale, authMeQuery } = useAuthSessionProbe({
+    applyUserLocale,
+    applyUserTheme,
+    locale,
   });
-  const authLocale = getPayloadLocale(authMeQuery.data);
-  const authTheme = getPayloadTheme(authMeQuery.data);
-
-  useEffect(() => {
-    if (authMeQuery.isLoading) {
-      return;
-    }
-    if (authMeQuery.data) {
-      authStore.markAuthenticated();
-    } else {
-      authStore.clearSession();
-    }
-  }, [authMeQuery.data, authMeQuery.isLoading, authStore]);
-
-  useEffect(() => {
-    if (authLocale) {
-      applyUserLocale(authLocale);
-    }
-  }, [applyUserLocale, authLocale]);
-  useEffect(() => {
-    if (authTheme) {
-      applyUserTheme(authTheme);
-    }
-  }, [applyUserTheme, authTheme]);
 
   const profileQuery = useQuery({
     enabled: Boolean(authMeQuery.data) && !authMeQuery.isLoading && (!authLocale || authLocale === locale),

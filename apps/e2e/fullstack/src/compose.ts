@@ -157,6 +157,9 @@ export const composeEnv = {
   NX_DAEMON: 'false',
   NX_PARALLEL: process.env.NX_PARALLEL ?? '1',
   CORS_ORIGINS: process.env.CORS_ORIGINS ?? frontendOrigins,
+  FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true',
+  LANDING_ADMIN_APP_URL: urls.adminApp,
+  LANDING_USER_APP_URL: urls.userApp,
   USER_APP_URL: urls.userApp,
   FULLSTACK_BASE_URL: urls.userApp,
   SESSION_SECRET: process.env.SESSION_SECRET ?? 'fullstack-e2e-session-secret-change-me',
@@ -224,26 +227,6 @@ export async function upStack(): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 5_000));
     await startStack();
   }
-}
-
-export async function configureLandingDestinations(): Promise<void> {
-  const runtimeConfig = `window.__APP_RUNTIME_CONFIG__ = ${JSON.stringify({
-    adminAppUrl: urls.adminApp,
-    userAppUrl: urls.userApp,
-  })};`;
-  await run('docker', [
-    ...composeArgs,
-    'exec',
-    '-T',
-    '--user',
-    '0',
-    'landing-app',
-    'sh',
-    '-c',
-    'printf "%s\\n" "$1" > /usr/share/nginx/html/runtime-config.js',
-    'sh',
-    runtimeConfig,
-  ]);
 }
 
 export async function buildStackImages(): Promise<void> {

@@ -1038,6 +1038,10 @@ a {
   white-space: nowrap;
 }
 
+.xr-button:focus-visible {
+  box-shadow: var(--xr-focus-ring);
+}
+
 .xr-button[data-size='sm'] {
   height: 2rem;
   min-height: 2rem;
@@ -1840,6 +1844,11 @@ a {
   .xr-toolbar__actions,
   .xr-actions {
     justify-content: flex-start;
+  }
+
+  .xr-header__primary-controls {
+    width: 100%;
+    flex-wrap: wrap;
   }
 
   .xr-toolbar__search-form {

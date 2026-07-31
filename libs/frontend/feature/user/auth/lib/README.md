@@ -4,8 +4,8 @@
 
 Platform-neutral auth-session domain logic shared by the web `app` and native
 `mobile` frontends: auth form/request types + `AuthMode`, the `createAuthSession`
-/ `fetchAuthMe` data-access helpers, and the `useAuthSessionFlow` hook that owns
-the login/register + profile-resolution flow.
+and `fetchAuthMe` data-access helpers, the reusable `useAuthSessionProbe`, and the
+`useAuthSessionFlow` hook that owns the login/register + profile-resolution flow.
 
 Depends only on `@app/frontend-api-client`, `@app/frontend-api-support`,
 `@app/frontend-runtime`, `@app/frontend-feature-user-profile`, and

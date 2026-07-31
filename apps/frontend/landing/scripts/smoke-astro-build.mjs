@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-SSR-007
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
@@ -57,6 +58,7 @@ if (!existsSync(problemRegistryPath) || !statSync(problemRegistryPath).isFile())
 }
 
 const searchable = readBuiltTextFiles(distRoot).join('\n');
+const indexHtml = readFileSync(indexPath, 'utf8');
 
 if (!searchable.includes(expectedCopy)) {
   throw new Error(`[${appName}] expected landing copy not found in Astro build.`);
@@ -64,6 +66,10 @@ if (!searchable.includes(expectedCopy)) {
 
 if (!containsExactUrl(searchable, 'https://example.com/problems#client-data-validation')) {
   throw new Error(`[${appName}] RFC 9457 problem registry is missing from the Astro build.`);
+}
+
+if (!/<meta[^>]+http-equiv="content-security-policy"[^>]+sha256-/u.test(indexHtml)) {
+  throw new Error(`[${appName}] Astro build is missing its hash-based hydration CSP.`);
 }
 
 console.log(

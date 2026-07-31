@@ -85,7 +85,9 @@ void describe('fullstack selected closure', () => {
     process.env.MONGODB_DATABASE = 'fullstack_test';
     delete process.env.DOCKER_MONGODB_URI;
     try {
-      const { composeEnv, databaseProvider, stackServices } = await import(`../src/compose.ts?fixture=${Date.now()}`);
+      const { composeEnv, databaseProvider, stackServices, urls } = await import(
+        `../src/compose.ts?fixture=${Date.now()}`
+      );
       assert.equal(databaseProvider, 'mongodb');
       assert.deepEqual(stackServices, ['auth-app-api', 'mongodb', 'mongodb-init', 'mongodb-migrate', 'user-app']);
       assert.equal(composeEnv.COMPOSE_PROFILES, 'auth-app-api,mongodb,user-app');
@@ -95,6 +97,9 @@ void describe('fullstack selected closure', () => {
         'mongodb://mongodb.localhost:47123/fullstack_test?replicaSet=rs0&retryWrites=true',
       );
       assert.equal(composeEnv.MONGODB_DATABASE, 'fullstack_test');
+      assert.equal(composeEnv.FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP, 'true');
+      assert.equal(composeEnv.LANDING_ADMIN_APP_URL, urls.adminApp);
+      assert.equal(composeEnv.LANDING_USER_APP_URL, urls.userApp);
       assert.equal(Buffer.from(composeEnv.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY, 'base64').byteLength, 32);
       assert.doesNotMatch(composeEnv.COMPOSE_PROFILES ?? '', /(^|,)postgres(,|$)/u);
     } finally {

@@ -519,11 +519,16 @@ const opsGatesJob = ci.slice(ci.indexOf('  ops-gates:'), ci.indexOf('  fullstack
 const qualityPresetsJob = qualityPresets.slice(qualityPresets.indexOf('  presets:'));
 assertDirectComposeBuildContext('ci.yml ops-gates', opsGatesJob);
 assertDirectComposeBuildContext('quality-presets.yml presets', qualityPresetsJob);
+assertDirectComposeBuildContext('spec-assurance-nightly.yml assurance', nightlyAssurance);
 for (const [workflowName, workflowText] of [
   ['ci.yml', opsGatesJob],
   ['quality-presets.yml', qualityPresetsJob],
   ['spec-assurance-nightly.yml', nightlyAssurance],
 ]) {
+  assert.ok(
+    workflowText.includes('CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate'),
+    `${workflowName} runtime stack must pass the PostgreSQL service URL through CONTAINER_DATABASE_URL`,
+  );
   const notificationKey = /NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:\s*['"]([^'"]+)['"]/u.exec(workflowText)?.[1];
   assert.equal(
     Buffer.from(notificationKey ?? '', 'base64').byteLength,

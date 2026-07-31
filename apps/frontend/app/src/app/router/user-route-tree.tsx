@@ -69,8 +69,9 @@ const profileRoute = createRoute({
 });
 
 function SettingsRouteComponent() {
+  const { applyUserLocale, applyUserTheme } = useUserRuntime();
   const navigate = useUserNavigate();
-  return <SettingsPage navigate={navigate} />;
+  return <SettingsPage applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} navigate={navigate} />;
 }
 
 const settingsRoute = createRoute({

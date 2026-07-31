@@ -661,6 +661,7 @@ jobs:
       DATABASE_ENGINE: postgres
       AUTH_PERSISTENCE: postgres
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+      CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
       ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
       # The cross-browser matrix includes the real Telegram TMA auth journey.
@@ -738,7 +739,6 @@ jobs:
             sleep "$((attempt * 15))"
           done
         env:
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
           NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
 
       - name: Run runtime-backed QA/ops gates
@@ -748,7 +748,6 @@ jobs:
         if: always()
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
         env:
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
           NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
 
       - name: Upload ops gate artifacts

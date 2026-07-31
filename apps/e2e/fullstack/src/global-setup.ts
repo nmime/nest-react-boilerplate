@@ -1,7 +1,6 @@
 import {
   buildStackImages,
   composeArgs,
-  configureLandingDestinations,
   fullstackSelection,
   run,
   stackIncludes,
@@ -21,9 +20,6 @@ export default async function globalSetup(): Promise<void> {
     await buildStackImages();
   }
   await upStack();
-  if (stackIncludes('landing-app')) {
-    await configureLandingDestinations();
-  }
   const readinessChecks = [
     ['auth-app-api', () => waitForText('auth api', `${urls.authApi}/health`, 'auth-app-api')],
     ['user-app-api', () => waitForText('user api', `${urls.userApi}/health`, 'user-app-api')],

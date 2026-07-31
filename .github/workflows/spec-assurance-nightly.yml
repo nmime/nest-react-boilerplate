@@ -21,6 +21,7 @@ env:
   NODE_VERSION_FILE: .nvmrc
   PNPM_VERSION: 11.15.1
   DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+  CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
   ADMIN_BOOTSTRAP_ENABLED: 'true'
   ADMIN_BOOTSTRAP_EMAILS: admin@example.com
   AUTH_TELEGRAM_ENABLED: 'true'
@@ -85,10 +86,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
+      - name: Materialize explicit PostgreSQL reference build context
+        run: pnpm nrb closure materialize --all-reference --provider postgres
+
       - name: Start local runtime stack
         run: docker compose -f docker/docker-compose.yml up -d --build
         env:
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
 
       - name: Execute all nightly requirement evidence
         run: pnpm run spec:verify -- --all --lane nightly --report test-results/spec-evidence/nightly.json
@@ -97,7 +101,7 @@ jobs:
         if: always()
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
         env:
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
 
       - name: Upload nightly assurance dossier
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

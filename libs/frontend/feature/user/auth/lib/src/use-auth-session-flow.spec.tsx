@@ -29,6 +29,7 @@ vi.mock('@app/frontend-runtime', async (importOriginal) => {
 });
 
 const { useAuthSessionFlow } = await import('./use-auth-session-flow');
+const { useAuthSessionProbe } = await import('./use-auth-session-probe');
 const { AuthMode } = await import('./auth-model');
 
 const ok = (data: unknown) => ({ data: { data }, response: new Response(null) });
@@ -110,6 +111,28 @@ describe('useAuthSessionFlow', () => {
     });
     expect(clearSession).toHaveBeenCalled();
     expect(profileControllerMe).not.toHaveBeenCalled();
+  });
+
+  it('can probe a guest session without using the redirecting runtime fetch', async () => {
+    authApiMock.authControllerMe.mockResolvedValue(fail());
+
+    renderHook(
+      () =>
+        useAuthSessionProbe({
+          applyUserLocale: vi.fn(),
+          applyUserTheme: vi.fn(),
+          locale: 'en',
+          redirectOnUnauthenticated: false,
+        }),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => {
+      expect(clearSession).toHaveBeenCalled();
+    });
+    expect(authApiMock.authControllerMe).toHaveBeenCalledWith(
+      expect.objectContaining({ fetchImpl: expect.any(Function) }),
+    );
   });
 
   it('applies a diverging server locale and skips the profile query until locales match', async () => {

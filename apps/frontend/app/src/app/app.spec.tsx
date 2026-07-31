@@ -306,14 +306,18 @@ describe('User app shell', () => {
     render(<App />);
 
     await screen.findByText('Preferences');
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
     expect(window.location.pathname).toBe('/settings');
     expect(events).not.toContain('auth-required');
     expect(apiRuntimeEvents.getState().authRequired).toBe(false);
 
     fireEvent.click(screen.getAllByRole('link', { name: 'Profile' })[0]!);
 
-    await waitFor(() => expect(events).toContain('auth-required'));
+    await waitFor(() => {
+      expect(events).toContain('auth-required');
+    });
     expect(window.location.pathname).toBe('/auth');
     expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/profile');
     expect(fetchMock).toHaveBeenCalledTimes(2);

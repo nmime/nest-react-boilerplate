@@ -50,9 +50,18 @@ const frontendOrigins = [
 ]
   .map((port) => url(port))
   .join(",");
+const postgresUser = process.env.POSTGRES_USER || "postgres";
+const postgresPassword = process.env.POSTGRES_PASSWORD || "postgres";
+const postgresDatabase = process.env.POSTGRES_DB || "nest_react_boilerplate";
+const containerDatabaseUrl =
+  `postgres://${encodeURIComponent(postgresUser)}:${encodeURIComponent(postgresPassword)}` +
+  `@postgres:5432/${encodeURIComponent(postgresDatabase)}`;
 const env = {
   ...process.env,
   HOST: process.env.DOCKER_BACKEND_HOST ?? "0.0.0.0",
+  DATABASE_ENGINE: "postgres",
+  AUTH_PERSISTENCE: "postgres",
+  CONTAINER_DATABASE_URL: containerDatabaseUrl,
   COMPOSE_PROJECT_NAME:
     process.env.COMPOSE_PROJECT_NAME ?? `nrbsmoke${process.pid}`,
   POSTGRES_PORT: ports.postgres,

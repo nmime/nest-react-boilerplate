@@ -227,7 +227,6 @@ export async function materializeAllReferenceClosure(
 
 function generateReferenceLock(contextRoot: string): void {
   const invocation = referenceLockInvocation();
-  // eslint-disable-next-line sonarjs/no-os-command-from-path -- reference contexts must use the repository's Corepack-selected pnpm.
   const result = spawnSync(invocation.command, invocation.args, {
     cwd: contextRoot,
     encoding: 'utf8',

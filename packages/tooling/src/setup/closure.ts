@@ -405,9 +405,13 @@ function collectDeclaredTargetPackages(graph: ProjectGraphLike, projects: readon
       const inputs = (configuration as { inputs?: unknown[] } | undefined)?.inputs ?? [];
       for (const input of inputs) {
         const externalDependencies = (input as { externalDependencies?: unknown } | null)?.externalDependencies;
-        if (!Array.isArray(externalDependencies)) continue;
+        if (!Array.isArray(externalDependencies)) {
+          continue;
+        }
         for (const packageName of externalDependencies) {
-          if (typeof packageName === 'string' && packageName !== '') declared.add(packageName);
+          if (typeof packageName === 'string' && packageName !== '') {
+            declared.add(packageName);
+          }
         }
       }
     }
@@ -447,7 +451,9 @@ function collectToolingExternalPackages(
   // Skip rather than throw on an unresolvable or forbidden name: a declaration can legitimately
   // reference a package the opposite database provider owns, matching the @repo/tooling loop above.
   for (const packageName of collectDeclaredTargetPackages(graph, projects)) {
-    if (forbidden.has(packageName)) continue;
+    if (forbidden.has(packageName)) {
+      continue;
+    }
     const external = findExternalNode(graph, packageName);
     if (external) {
       addExternalPackage(selected, external, forbidden);

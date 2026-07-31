@@ -166,7 +166,7 @@ export const composeEnv = {
   RATE_LIMIT_IN_MEMORY_ALLOWED: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED ?? 'true',
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'fullstack-e2e-better-auth-secret-change-me',
   NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:
-    process.env.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY ?? 'fullstack-e2e-notification-key-change-me',
+    process.env.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY ?? Buffer.alloc(32, 7).toString('base64'),
   BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? urls.userApp,
   BETTER_AUTH_TRUSTED_ORIGINS: process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? urls.userApp,
   AUTH_TELEGRAM_ENABLED: process.env.AUTH_TELEGRAM_ENABLED ?? 'true',

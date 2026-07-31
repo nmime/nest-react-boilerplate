@@ -519,6 +519,22 @@ const opsGatesJob = ci.slice(ci.indexOf('  ops-gates:'), ci.indexOf('  fullstack
 const qualityPresetsJob = qualityPresets.slice(qualityPresets.indexOf('  presets:'));
 assertDirectComposeBuildContext('ci.yml ops-gates', opsGatesJob);
 assertDirectComposeBuildContext('quality-presets.yml presets', qualityPresetsJob);
+for (const [workflowName, workflowText] of [
+  ['ci.yml', opsGatesJob],
+  ['quality-presets.yml', qualityPresetsJob],
+  ['spec-assurance-nightly.yml', nightlyAssurance],
+]) {
+  const notificationKey = /NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:\s*['"]([^'"]+)['"]/u.exec(workflowText)?.[1];
+  assert.equal(
+    Buffer.from(notificationKey ?? '', 'base64').byteLength,
+    32,
+    `${workflowName} runtime stack must use a 32-byte notification payload encryption fixture`,
+  );
+  assert.ok(
+    workflowText.includes("SITE_APP_PORT: '4203'"),
+    `${workflowName} runtime stack must avoid the runner-reserved 8084 port`,
+  );
+}
 assert.ok(
   developmentCompose.includes(
     'nrb-closure: ${NRB_CLOSURE_CONTEXT:?run pnpm nrb closure install before Docker source builds}',

@@ -155,6 +155,8 @@ for (const expected of [
   "AUTH_TELEGRAM_ENABLED: 'true'",
   "TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'",
   "VITE_TELEGRAM_AUTH_ENABLED: 'true'",
+  "NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='",
+  "SITE_APP_PORT: '4203'",
   'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app',
 ]) {
   has(runtimeOpsJob, expected, `runtime QA Telegram TMA fixture ${expected}`);

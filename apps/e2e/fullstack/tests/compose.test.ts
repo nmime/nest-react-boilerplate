@@ -95,6 +95,7 @@ void describe('fullstack selected closure', () => {
         'mongodb://mongodb.localhost:47123/fullstack_test?replicaSet=rs0&retryWrites=true',
       );
       assert.equal(composeEnv.MONGODB_DATABASE, 'fullstack_test');
+      assert.equal(Buffer.from(composeEnv.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY, 'base64').byteLength, 32);
       assert.doesNotMatch(composeEnv.COMPOSE_PROFILES ?? '', /(^|,)postgres(,|$)/u);
     } finally {
       restoreEnv('NRB_WORKSPACE_ROOT', originalRoot);

@@ -192,6 +192,8 @@ from validated source and render deterministic, secret-safe runtime topology.
 
 - Validation does not deploy.
 - Bundled and external database modes remain explicit.
+- Generated build outputs do not re-enter Nx source-project discovery before
+  deployment artifacts are staged.
 
 **Failure behavior:**
 

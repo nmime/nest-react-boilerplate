@@ -57,12 +57,18 @@ const yamlMapEntry = (text, key, indent = 2) => {
 };
 
 const dockerfile = read('Dockerfile');
+const nxignore = read('.nxignore');
 const migratorRun = read('docker/migrator-run.mjs');
 const deploymentProvider = read('packages/tooling/src/commands/db/deployment-provider.ts');
 const rootPackageJson = JSON.parse(read('package.json'));
 const pinnedPnpm = rootPackageJson.packageManager?.split('@')[1];
 assert.ok(pinnedPnpm, 'package.json packageManager must pin a pnpm version');
 has(dockerfile, `ARG PNPM_VERSION=${pinnedPnpm}`, `Dockerfile pnpm version must match packageManager (${pinnedPnpm})`);
+has(dockerfile, 'COPY .npmrc .nxignore nx.json', 'Docker source builds copy the Nx output ignore policy');
+assert.ok(
+  nxignore.split(/\r?\n/u).some((line) => line.trim() === 'dist/'),
+  'Nx must ignore generated dist project metadata during multi-stage Docker builds.',
+);
 for (const input of [
   'package.json',
   'pnpm-workspace.yaml',

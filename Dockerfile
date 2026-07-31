@@ -24,7 +24,7 @@ COPY --from=nrb-closure . ./.nrb/closure
 COPY --from=nrb-closure closure.json ./.nrb/closure.json
 COPY --from=nrb-closure nrb.config.json ./nrb.config.json
 COPY --from=nrb-closure workspace.json ./.nrb/workspace.json
-COPY .npmrc nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
+COPY .npmrc .nxignore nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
 RUN pnpm fetch --frozen-lockfile
 RUN pnpm install --frozen-lockfile --offline \
   && chown -R node:node /workspace

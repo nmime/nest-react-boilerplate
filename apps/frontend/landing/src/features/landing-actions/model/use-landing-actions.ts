@@ -35,10 +35,9 @@ const getSafeAppHref = (
     }
 
     const url = new URL(configuredValue);
-    const currentLocation = typeof globalThis.location === 'object' ? globalThis.location : undefined;
     const isLoopbackPage =
-      currentLocation?.protocol === 'http:' &&
-      (currentLocation.hostname === '127.0.0.1' || currentLocation.hostname === 'localhost');
+      globalThis.location.protocol === 'http:' &&
+      (globalThis.location.hostname === '127.0.0.1' || globalThis.location.hostname === 'localhost');
     const isLoopbackHttp =
       isLoopbackPage && url.protocol === 'http:' && (url.hostname === '127.0.0.1' || url.hostname === 'localhost');
     if (

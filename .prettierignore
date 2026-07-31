@@ -16,6 +16,7 @@ packages/tooling/baselines/**
 # digest over them. Reformatting these invalidates that digest, so `nrb doctor` reports the
 # closure as stale and `nrb closure install` then refuses to run.
 .nrb/**
+nrb.config.json
 
 # Same ownership rule: `nrb doctor` byte-compares these against what setup would emit and
 # reports any difference as capability drift, so a formatter must not rewrite them.

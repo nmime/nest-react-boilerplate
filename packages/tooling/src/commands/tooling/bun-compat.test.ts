@@ -1,7 +1,7 @@
 // @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { createServer as createHttpServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, isAbsolute, join } from 'node:path';
@@ -15,6 +15,7 @@ import {
   assertProviderIsolation,
   assertRuntimeIdentity,
   childHasExited,
+  createApiRuntimeEnvironment,
   createBunCompatibilityInvocation,
   createBunCompatibilityProbeEnvironment,
   createBunCompatibilityProbes,
@@ -24,6 +25,7 @@ import {
   createHeadlessRuntimeEnvironment,
   createLocalMongoUri,
   createNodeBackedPnpmInvocation,
+  createTelegramApiMockSource,
   isNodeOnlyTestProject,
   readPinnedBunVersion,
   resolveBunRuntimeSelection,
@@ -111,6 +113,51 @@ describe('Bun compatibility contract', () => {
       assert.deepEqual(selection.http, [project]);
       assert.deepEqual(createBunRuntimeExecutionProbes(selection), [{ project, kind: 'http' }]);
     }
+  });
+
+  it('keeps API runtime probes offline from optional NATS and the public Telegram API', () => {
+    const environment = createApiRuntimeEnvironment(
+      'telegram-bot-api',
+      {
+        AUTH_PERSISTENCE: 'postgres',
+        DATABASE_URL: 'postgres://compat',
+        NATS_SERVERS: 'nats://ambient',
+      },
+      3013,
+    );
+    assert.equal(environment.NATS_SERVERS, undefined);
+    assert.equal(environment.TELEGRAM_BOT_API_PORT, '3013');
+
+    const root = mkdtempSync(join(tmpdir(), 'nrb-telegram-runtime-mock-'));
+    temporaryRoots.push(root);
+    const runtimeEntry = join(root, 'runtime.cjs');
+    const mockEntry = join(root, 'mock.cjs');
+    const grammyRoot = join(root, 'node_modules', 'grammy');
+    const nodeFetchRoot = join(grammyRoot, 'node_modules', 'node-fetch');
+    mkdirSync(grammyRoot, { recursive: true });
+    writeFileSync(join(grammyRoot, 'index.js'), 'module.exports = {};\n');
+    mkdirSync(nodeFetchRoot, { recursive: true });
+    writeFileSync(join(nodeFetchRoot, 'index.js'), 'module.exports.default = globalThis.fetch;\n');
+    writeFileSync(
+      runtimeEntry,
+      `const { createRequire } = require('node:module');
+const grammyRequire = createRequire(require.resolve('grammy'));
+Promise.all([
+  grammyRequire('node-fetch').default('https://api.telegram.org/bot123:test/getMe').then((response) => response.json()),
+  grammyRequire('node-fetch').default('https://api.telegram.org/bot123:test/setWebhook').then((response) => response.json()),
+]).then((results) => process.stdout.write(JSON.stringify(results)));
+`,
+    );
+    writeFileSync(mockEntry, createTelegramApiMockSource(runtimeEntry));
+    const result = spawnSync(process.execPath, [mockEntry], {
+      encoding: 'utf8',
+      env: { ...process.env, TELEGRAM_BOT_TOKEN: '123:test' },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), [
+      { ok: true, result: { id: 42, is_bot: true, first_name: 'Runtime Compatibility Bot', username: 'runtime_compat_bot', can_join_groups: false, can_read_all_group_messages: false, supports_inline_queries: false } },
+      { ok: true, result: true },
+    ]);
   });
 
   it('fails closed when a selected backend runtime has no durable provider', () => {

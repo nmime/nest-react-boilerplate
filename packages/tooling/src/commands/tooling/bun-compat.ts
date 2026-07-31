@@ -1,6 +1,6 @@
 // Evidence for: REQ-SCAFFOLD-TOOLING-005
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { delimiter, dirname, join, resolve } from 'node:path';
@@ -751,52 +751,12 @@ async function runApiRuntimeSmoke(
   const port = await reserveAvailablePort();
   const baseUrl = `http://127.0.0.1:${port}`;
   const readyUrl = `${baseUrl}/ready`;
-  const smokeCredential = ['runtime', 'compat', 'only', '9d6aQ3w7K2m8V5x1R4t0'].join('-');
-  const provider = environment.AUTH_PERSISTENCE;
-  if (provider !== 'postgres' && provider !== 'mongodb') {
-    throw new Error(`${artifact.project} runtime probe requires an explicit PostgreSQL or MongoDB provider.`);
-  }
-  const portEnvironmentName = `${artifact.project.replaceAll(/[^a-z0-9]/giu, '_').toUpperCase()}_PORT`;
   await runHttpRuntime({
     name: artifact.project,
     executable: runtime.executable,
-    entry: artifact.entry,
+    entry: stageApiRuntimeEntry(artifact),
     cwd: artifact.artifactRoot,
-    environment: isolatedRuntimeEnvironment({
-      ...environment,
-      PORT: String(port),
-      [portEnvironmentName]: String(port),
-      GRACEFUL_SHUTDOWN: 'true',
-      SESSION_SECRET: smokeCredential,
-      AUTH_PERSISTENCE: provider,
-      DATABASE_ENGINE: provider,
-      BETTER_AUTH_SECRET: smokeCredential,
-      BETTER_AUTH_URL: baseUrl,
-      BETTER_AUTH_TRUSTED_ORIGINS: baseUrl,
-      AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED: 'false',
-      AUTH_TELEGRAM_ENABLED: 'false',
-      DISCORD_CLIENT_ID: 'runtime-compat-discord-client',
-      DISCORD_CLIENT_SECRET: smokeCredential,
-      DISCORD_REDIRECT_URI: `${baseUrl}/auth/discord/callback`,
-      DISCORD_APPLICATION_ID: '123456789012345678',
-      DISCORD_BOT_TOKEN: '',
-      DISCORD_PUBLIC_KEY: 'a'.repeat(64),
-      DISCORD_CUSTOM_ID_SECRET: smokeCredential,
-      DISCORD_COMMAND_REGISTRATION_ENABLED: 'false',
-      TELEGRAM_BOT_TOKEN: '123:runtime-compat-token',
-      TELEGRAM_BOT_MODE: 'webhook',
-      TELEGRAM_BOT_MENU_BUTTON_ENABLED: 'false',
-      TELEGRAM_BOT_WEBHOOK_SECRET: smokeCredential,
-      TELEGRAM_BOT_WEBHOOK_URL: 'https://telegram-bot-api.example.test/telegram/webhook',
-      TELEGRAM_OIDC_ENABLED: 'false',
-      NODE_ENV: 'production',
-      OPENAPI_ENABLED: 'true',
-      OTEL_ENABLED: 'false',
-      OTEL_SDK_DISABLED: 'true',
-      RATE_LIMIT_STORE: 'memory',
-      RATE_LIMIT_IN_MEMORY_ALLOWED: 'true',
-      NATS_SERVERS: '',
-    }),
+    environment: createApiRuntimeEnvironment(artifact.project, environment, port),
     urls: [`${baseUrl}/live`, readyUrl],
     validate: async (signal) => {
       const response = await fetch(readyUrl, { signal });
@@ -807,6 +767,102 @@ async function runApiRuntimeSmoke(
       assertRuntimeIdentity(runtimeCheck?.details?.runtime, runtime.name, artifact.project);
     },
   });
+}
+
+export function createApiRuntimeEnvironment(
+  project: string,
+  environment: NodeJS.ProcessEnv,
+  port: number,
+): NodeJS.ProcessEnv {
+  const provider = environment.AUTH_PERSISTENCE;
+  if (provider !== 'postgres' && provider !== 'mongodb') {
+    throw new Error(`${project} runtime probe requires an explicit PostgreSQL or MongoDB provider.`);
+  }
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const smokeCredential = ['runtime', 'compat', 'only', '9d6aQ3w7K2m8V5x1R4t0'].join('-');
+  const portEnvironmentName = `${project.replaceAll(/[^a-z0-9]/giu, '_').toUpperCase()}_PORT`;
+  const runtimeEnvironment = isolatedRuntimeEnvironment({
+    ...environment,
+    PORT: String(port),
+    [portEnvironmentName]: String(port),
+    GRACEFUL_SHUTDOWN: 'true',
+    SESSION_SECRET: smokeCredential,
+    AUTH_PERSISTENCE: provider,
+    DATABASE_ENGINE: provider,
+    BETTER_AUTH_SECRET: smokeCredential,
+    BETTER_AUTH_URL: baseUrl,
+    BETTER_AUTH_TRUSTED_ORIGINS: baseUrl,
+    AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED: 'false',
+    AUTH_TELEGRAM_ENABLED: 'false',
+    DISCORD_CLIENT_ID: 'runtime-compat-discord-client',
+    DISCORD_CLIENT_SECRET: smokeCredential,
+    DISCORD_REDIRECT_URI: `${baseUrl}/auth/discord/callback`,
+    DISCORD_APPLICATION_ID: '123456789012345678',
+    DISCORD_BOT_TOKEN: '',
+    DISCORD_PUBLIC_KEY: 'a'.repeat(64),
+    DISCORD_CUSTOM_ID_SECRET: smokeCredential,
+    DISCORD_COMMAND_REGISTRATION_ENABLED: 'false',
+    TELEGRAM_BOT_TOKEN: '123:runtime-compat-token',
+    TELEGRAM_BOT_MODE: 'webhook',
+    TELEGRAM_BOT_MENU_BUTTON_ENABLED: 'false',
+    TELEGRAM_BOT_WEBHOOK_SECRET: smokeCredential,
+    TELEGRAM_BOT_WEBHOOK_URL: 'https://telegram-bot-api.example.test/telegram/webhook',
+    TELEGRAM_OIDC_ENABLED: 'false',
+    NODE_ENV: 'production',
+    OPENAPI_ENABLED: 'true',
+    OTEL_ENABLED: 'false',
+    OTEL_SDK_DISABLED: 'true',
+    RATE_LIMIT_STORE: 'memory',
+    RATE_LIMIT_IN_MEMORY_ALLOWED: 'true',
+  });
+  delete runtimeEnvironment.NATS_SERVERS;
+  return runtimeEnvironment;
+}
+
+function stageApiRuntimeEntry(artifact: StagedDeploymentArtifact): string {
+  if (artifact.project !== 'telegram-bot-api') return artifact.entry;
+  const entry = join(artifact.artifactRoot, 'telegram-api-runtime-mock.cjs');
+  writeFileSync(entry, createTelegramApiMockSource(artifact.entry));
+  return entry;
+}
+
+export function createTelegramApiMockSource(runtimeEntry: string): string {
+  return `'use strict';
+const { createRequire } = require('node:module');
+const runtimeRequire = createRequire(${JSON.stringify(runtimeEntry)});
+const grammyRequire = createRequire(runtimeRequire.resolve('grammy'));
+const nodeFetch = grammyRequire('node-fetch');
+const createTelegramFetch = (originalFetch) => async (input, init) => {
+  const requestUrl = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const pathPrefix = token ? \`/bot\${token}/\` : '';
+  if (requestUrl.origin !== 'https://api.telegram.org' || !pathPrefix || !requestUrl.pathname.startsWith(pathPrefix)) {
+    return originalFetch(input, init);
+  }
+  const method = requestUrl.pathname.slice(pathPrefix.length);
+  const result = method === 'getMe'
+    ? {
+        id: 42,
+        is_bot: true,
+        first_name: 'Runtime Compatibility Bot',
+        username: 'runtime_compat_bot',
+        can_join_groups: false,
+        can_read_all_group_messages: false,
+        supports_inline_queries: false,
+      }
+    : method === 'setWebhook'
+      ? true
+      : undefined;
+  if (result === undefined) throw new Error(\`Unexpected Telegram Bot API method during runtime compatibility: \${method}\`);
+  return new Response(JSON.stringify({ ok: true, result }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+};
+globalThis.fetch = createTelegramFetch(globalThis.fetch);
+nodeFetch.default = createTelegramFetch(nodeFetch.default);
+require(${JSON.stringify(runtimeEntry)});
+`;
 }
 
 async function runHeadlessRuntimeSmoke(

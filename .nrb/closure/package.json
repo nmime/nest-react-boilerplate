@@ -95,6 +95,7 @@
     "istanbul-lib-coverage": "3.2.2",
     "joi": "18.2.3",
     "jose": "6.2.3",
+    "jsdom": "29.1.1",
     "light-my-request": "6.6.0",
     "lucide-react": "1.25.0",
     "maxmind": "5.0.6",
@@ -154,7 +155,6 @@
     "istanbul-lib-report": "3.0.1",
     "istanbul-reports": "3.2.0",
     "jiti": "2.7.0",
-    "jsdom": "29.1.1",
     "jsonc-eslint-parser": "3.1.0",
     "nx": "23.1.0",
     "sharp": "0.35.3",
@@ -165,6 +165,6 @@
   },
   "nrb": {
     "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
-    "graphDigest": "177e7b37caf4cf70eaa0e4402108a8a96227c8ee99c3c603e813bb1c253aa038"
+    "graphDigest": "dfe7897c981ca741f7382798fe77161591cada8ddc51d700b90d8a1ff2426289"
   }
 }

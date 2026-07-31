@@ -50,13 +50,34 @@ export async function buildConfiguredClosure(
   graph?: ProjectGraphLike,
 ): Promise<SelectedClosureManifest> {
   const selection = readConfiguredSelection(workspaceRoot);
-  return buildSelectedClosure(graph ?? (await createLiveProjectGraph()), {
+  const liveGraph = graph ?? (await createLiveProjectGraph());
+  return buildSelectedClosure(configuredClosureGraph(workspaceRoot, liveGraph), {
     apps: selection.apps,
     capabilities: selection.capabilities,
     configHash: selection.configHash,
     product: selection.product,
     deployment: selection.deployment,
   });
+}
+
+export function configuredClosureGraph(workspaceRoot: string, graph: ProjectGraphLike): ProjectGraphLike {
+  const provider = configuredReferenceProvider(workspaceRoot);
+  return provider ? referenceProviderGraph(graph, provider) : graph;
+}
+
+export function configuredReferenceProvider(workspaceRoot: string): DurableDatabaseProviderId | undefined {
+  const workspacePath = join(workspaceRoot, '.nrb', 'workspace.json');
+  if (!existsSync(workspacePath)) {
+    return undefined;
+  }
+  const workspace = JSON.parse(readFileSync(workspacePath, 'utf8')) as { mode?: unknown; provider?: unknown };
+  if (workspace.mode !== 'all-reference') {
+    return undefined;
+  }
+  if (workspace.provider !== 'postgres' && workspace.provider !== 'mongodb') {
+    throw new Error('All-reference workspace must select postgres or mongodb.');
+  }
+  return workspace.provider;
 }
 
 export function readConfiguredClosure(workspaceRoot: string): SelectedClosureManifest {

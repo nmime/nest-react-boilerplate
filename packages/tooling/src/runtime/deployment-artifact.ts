@@ -19,7 +19,11 @@ import {
   type SelectedClosureManifest,
 } from '../setup/closure.js';
 import { readClosureLockStatus, validateProductClosureBuildContext } from '../setup/closure-materializer.js';
-import { buildConfiguredClosure, readConfiguredClosure } from '../setup/closure-workspace.js';
+import {
+  buildConfiguredClosure,
+  configuredReferenceProvider,
+  readConfiguredClosure,
+} from '../setup/closure-workspace.js';
 
 interface TargetLike {
   options?: Record<string, unknown>;
@@ -63,11 +67,31 @@ export async function loadCurrentSelectedClosure(
 
   const graph = (await createLiveProjectGraph()) as DeploymentGraphLike;
   const expected = await buildConfiguredClosure(workspaceRoot, graph);
-  if (JSON.stringify(closure) !== JSON.stringify(expected)) {
+  if (!matchesConfiguredClosure(closure, expected, configuredReferenceProvider(workspaceRoot) !== undefined)) {
     throw new Error('.nrb/closure.json does not match the selected live Nx graph; rerun `pnpm nrb setup`.');
   }
 
   return { closure, graph };
+}
+
+export function matchesConfiguredClosure(
+  actual: SelectedClosureManifest,
+  expected: SelectedClosureManifest,
+  allReference: boolean,
+): boolean {
+  if (!allReference) {
+    return JSON.stringify(actual) === JSON.stringify(expected);
+  }
+  // The narrowed reference install can reclassify the same locked packages between
+  // product and tooling graph edges, so its host-generated package digest stays authoritative.
+  return (
+    JSON.stringify({
+      ...actual,
+      graphDigest: expected.graphDigest,
+      productExternalPackages: expected.productExternalPackages,
+      toolingExternalPackages: expected.toolingExternalPackages,
+    }) === JSON.stringify(expected)
+  );
 }
 
 export function validateSelectedBuildProjects(closure: SelectedClosureManifest, value: string): string[] {

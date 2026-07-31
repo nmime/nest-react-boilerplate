@@ -130,6 +130,8 @@ const commonEnv = {
   POSTGRES_USER: databaseUser,
   POSTGRES_PASSWORD: databasePassword,
   POSTGRES_DB: databaseName,
+  // The disposable external PostgreSQL container does not expose a TLS endpoint.
+  POSTGRES_SSL: 'false',
   OTEL_ENABLED: 'false',
   COMPOSE_PARALLEL_LIMIT: '1',
   COMPOSE_BAKE: 'false',

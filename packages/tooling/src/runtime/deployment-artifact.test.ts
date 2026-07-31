@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-SELECTION-002
+// @requirements REQ-SCAFFOLD-SELECTION-002 REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
 import { lstatSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,6 +11,7 @@ import {
   deploymentInstallPlan,
   isolatedRuntimeEnvironment,
   linkSelectedSourceDependencies,
+  matchesConfiguredClosure,
   selectedProjectClosure,
   selectedProjectOutputPaths,
   stageDeploymentArtifact,
@@ -144,6 +145,20 @@ function writeBackendOutputs(root: string, provider: 'postgres' | 'mongodb' = 'p
 }
 
 void describe('deployment artifact closure', () => {
+  void it('keeps product graph validation exact while accepting locked all-reference package classification', () => {
+    const actual = closure('mongodb');
+    const expected = {
+      ...actual,
+      graphDigest: 'c'.repeat(64),
+      productExternalPackages: { jsdom: '29.1.1' },
+      toolingExternalPackages: { 'react-native-web': '0.21.2' },
+    };
+
+    assert.equal(matchesConfiguredClosure(actual, expected, false), false);
+    assert.equal(matchesConfiguredClosure(actual, expected, true), true);
+    assert.equal(matchesConfiguredClosure(actual, { ...expected, roots: ['user-app-api'] }, true), false);
+  });
+
   void it('validates exact selected build roots and rejects closure escapes', () => {
     const selected = closure();
     assert.deepEqual(validateSelectedBuildProjects(selected, 'auth-app-api'), ['auth-app-api']);

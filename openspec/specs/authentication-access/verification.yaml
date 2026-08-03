@@ -326,6 +326,7 @@ requirements:
   - id: REQ-AUTH-TENANT-ISOLATION-010
     projects:
       - '@app/backend-common-tenant-context'
+      - '@app/backend-common-tenant-policy'
       - '@app/backend-postgres-main'
       - '@app/backend-postgres-main-auth'
     risk: critical
@@ -352,6 +353,12 @@ requirements:
         file: libs/backend/postgres/main/shared/lib/src/tenant-transaction.component-spec.ts
         target: '@app/backend-postgres-main:component-test'
         lanes:
+          - main
+      - kind: vitest
+        file: libs/backend/common/tenant-policy/lib/src/tenant-policy.spec.ts
+        target: '@app/backend-common-tenant-policy:test'
+        lanes:
+          - pr
           - main
       - kind: vitest
         file: libs/backend/postgres/main/shared/lib/src/tenant-transaction.spec.ts

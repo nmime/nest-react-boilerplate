@@ -4,7 +4,7 @@ import {
   tenantAppRoleUpSql,
   tenantRowLevelSecurityDownSql,
   tenantRowLevelSecurityUpSql,
-} from '@app/backend-postgres-main';
+} from '@app/backend-common-tenant-policy';
 
 /**
  * Installs fail-closed tenant row-level security on the notification-owned

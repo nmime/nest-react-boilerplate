@@ -6,7 +6,7 @@ import {
   tenantRegistryRowLevelSecurityUpSql,
   tenantRowLevelSecurityDownSql,
   tenantRowLevelSecurityUpSql,
-} from '@app/backend-postgres-main';
+} from '@app/backend-common-tenant-policy';
 
 /**
  * Turns tenant isolation for the auth-owned tables from an application

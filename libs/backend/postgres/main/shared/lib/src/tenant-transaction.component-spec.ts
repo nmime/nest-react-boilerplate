@@ -10,13 +10,8 @@ import {
   startPostgresContainer,
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
-import {
-  TenantAppRole,
-  tenantAppRoleUpSql,
-  tenantRowLevelSecurityUpSql,
-  withSystemContext,
-  withTenantTransaction,
-} from './tenant-transaction';
+import { TenantAppRole, tenantAppRoleUpSql, tenantRowLevelSecurityUpSql } from '@app/backend-common-tenant-policy';
+import { withSystemContext, withTenantTransaction } from './tenant-transaction';
 
 /**
  * Proves tenant isolation is enforced by Postgres, not by application

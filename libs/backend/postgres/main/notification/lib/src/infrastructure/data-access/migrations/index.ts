@@ -5,6 +5,7 @@ import { Migration20260721120000NotificationProvidersAndSensitivePayload } from 
 import { Migration20260721160000AdminNotificationBroadcasts } from './Migration20260721160000AdminNotificationBroadcasts';
 import { Migration20260726180000NotificationClaimTokens } from './Migration20260726180000NotificationClaimTokens';
 import { Migration20260729190000NotificationDeliveryClaimOwnership as NotificationDeliveryClaimOwnershipMigration } from './Migration20260729190000NotificationDeliveryClaimOwnership';
+import { Migration20260803121000NotificationTenantRowLevelSecurity } from './Migration20260803121000NotificationTenantRowLevelSecurity';
 
 export class Migration20260729190000NotificationDeliveryClaimOwnership extends NotificationDeliveryClaimOwnershipMigration {
   override down(): void {
@@ -20,6 +21,7 @@ export const notificationMigrations = [
   Migration20260721160000AdminNotificationBroadcasts,
   Migration20260726180000NotificationClaimTokens,
   Migration20260729190000NotificationDeliveryClaimOwnership,
+  Migration20260803121000NotificationTenantRowLevelSecurity,
 ] as const;
 
 export const notificationMigrationOptions: MigrationsOptions = {
@@ -36,3 +38,4 @@ export * from './Migration20260720130000AddNotificationDeliveryClaim';
 export * from './Migration20260721120000NotificationProvidersAndSensitivePayload';
 export * from './Migration20260721160000AdminNotificationBroadcasts';
 export * from './Migration20260726180000NotificationClaimTokens';
+export * from './Migration20260803121000NotificationTenantRowLevelSecurity';

@@ -31,6 +31,21 @@
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/backend/postgres/main/shared/lib"]
+    },
+    "component-test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/backend/postgres/main/shared/lib",
+        "command": "NODE_ENV=test vitest run --config vitest.component.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest", "testcontainers", "@testcontainers/postgresql"]
+        }
+      ]
     }
   }
 }

@@ -99,7 +99,8 @@
       "@app/common-problem-details": ["libs/common/problem-details/lib/src/index.ts"],
       "@app/backend-feature-notification-admin": ["libs/backend/feature/notification/admin/lib/src/index.ts"],
       "@app/backend-feature-audit-log-admin": ["libs/backend/feature/audit-log/admin/lib/src/index.ts"],
-      "@app/backend-feature-auth-admin": ["libs/backend/feature/auth/admin/lib/src/index.ts"]
+      "@app/backend-feature-auth-admin": ["libs/backend/feature/auth/admin/lib/src/index.ts"],
+      "@app/backend-common-tenant-context": ["libs/backend/common/tenant-context/lib/src/index.ts"]
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

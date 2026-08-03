@@ -206,3 +206,33 @@ client state as authority.
 
 - **WHEN** the backend rejects an expired session
 - **THEN** the UI clears protected state and offers a safe sign-in path
+
+### Requirement: [REQ-AUTH-TENANT-ISOLATION-010] Tenant isolation is enforced by the database
+
+Tenant-scoped data SHALL be isolated by PostgreSQL row-level security, not by
+application convention alone. A query that omits its tenant predicate MUST
+return no cross-tenant rows. Requests that resolve no tenant MUST be refused
+rather than silently scoped to nothing.
+
+**Evidence profile:** domain, persistence, security
+
+**Invariants:**
+
+- Every table carrying `tenant_id` has a force-enabled isolation policy.
+- The runtime role cannot bypass row-level security.
+- Cross-tenant work happens only through an explicit system context.
+
+**Failure behavior:**
+
+- A write attributed to another tenant is rejected by the database.
+- A tenant-scoped request without a resolved tenant fails loudly.
+
+#### Scenario: Query omitting the tenant predicate
+
+- **WHEN** a statement selects from a tenant-scoped table under one tenant's scope
+- **THEN** rows belonging to any other tenant are not returned
+
+#### Scenario: Request without a resolved tenant
+
+- **WHEN** a tenant-scoped route resolves no tenant and declares no exemption
+- **THEN** the request is refused instead of running unscoped

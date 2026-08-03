@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
-  "graphDigest": "894f5d5bae6da19e3588d478df2e34e89984ccc7ccd1528e5b936d511fc4664e",
+  "graphDigest": "fb043ae62e58b4b662e2113953a113e66751eba3476f5c627def25fa1568ecf2",
   "provider": "postgres",
   "roots": [
     "admin-app",
@@ -113,6 +113,7 @@
       "user-app"
     ],
     "component-test": [
+      "@app/backend-postgres-main",
       "@app/backend-postgres-main-notification"
     ],
     "dev": [

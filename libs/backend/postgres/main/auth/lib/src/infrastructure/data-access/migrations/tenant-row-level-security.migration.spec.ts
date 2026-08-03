@@ -1,5 +1,5 @@
 // @requirements REQ-AUTH-TENANT-ISOLATION-010
-import { TenantAppRole, TenantContextGuc, TenantScopedTablesByDomain } from '@app/backend-postgres-main';
+import { TenantAppRole, TenantContextGuc, TenantScopedTablesByDomain } from '@app/backend-common-tenant-policy';
 import { describe, expect, it } from 'vitest';
 import { Migration20260803120000TenantRowLevelSecurity } from './Migration20260803120000TenantRowLevelSecurity';
 import { authMigrations } from './index';

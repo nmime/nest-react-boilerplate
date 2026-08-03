@@ -111,7 +111,7 @@ export function MiniAppProvider({
   children,
   headerColor = defaultColors.header,
 }: Readonly<MiniAppProviderProps>) {
-  const isTelegram = useMemo(detectTelegram, []);
+  const isTelegram = useMemo(() => detectTelegram(), []);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {

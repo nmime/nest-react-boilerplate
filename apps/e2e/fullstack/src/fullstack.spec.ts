@@ -50,6 +50,13 @@ interface AdminAuditResponse {
 
 const authPassword = 'fullstack-secret';
 
+/**
+ * Basepath the admin client router rewrites its location to after hydration.
+ * Declared here rather than imported so this deployment-facing suite asserts the
+ * served URL contract instead of re-reading the app's own constant.
+ */
+const adminBasepath = '/admin';
+
 const successfulAuthStatuses = [200, 201];
 
 const healthyStatuses = ['ok', 'degraded'];
@@ -136,24 +143,47 @@ async function expectPageQuality(page: Page, label: string): Promise<void> {
   expect(horizontalOverflow, `${label} should not overflow the viewport horizontally`).toBeLessThanOrEqual(1);
 }
 
-async function focusWithKeyboard(page: Page, target: Locator, label: string): Promise<void> {
+async function expectVisibleFocusIndicator(target: Locator, label: string): Promise<void> {
+  await expect(target, `${label} should remain visible when keyboard-focused`).toBeVisible();
+  const focusPresentation = await target.evaluate((element) => ({
+    boxShadow: getComputedStyle(element).boxShadow,
+    focusVisible: element.matches(':focus-visible'),
+  }));
+  expect(focusPresentation.focusVisible, `${label} should match :focus-visible`).toBe(true);
+  expect(focusPresentation.boxShadow, `${label} should render a visible focus indicator`).not.toBe('none');
+}
+
+/**
+ * Asserts the target is keyboard-focusable and renders a visible focus indicator.
+ *
+ * WebKit omits links from the sequential Tab order unless macOS "Full Keyboard
+ * Access" is enabled, and Playwright exposes no way to turn that on. So the Tab
+ * traversal is meaningful only on Chromium and Firefox; on WebKit the element is
+ * focused directly and the focus *presentation* — the part that is actually a
+ * product concern — is still asserted. Skipping the whole check there would have
+ * lost that coverage, and asserting Tab traversal there can never pass: this is
+ * why the cross-browser matrix failed on webkit and mobile-safari every run,
+ * unnoticed because the blocking lane only runs `--project chromium` and the full
+ * matrix lives in a nightly that had been red for a month.
+ */
+async function focusWithKeyboard(page: Page, target: Locator, label: string, browserName: string): Promise<void> {
   await page.evaluate(() => {
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
   });
 
+  if (browserName === 'webkit') {
+    await target.focus();
+    await expectVisibleFocusIndicator(target, label);
+    return;
+  }
+
   /* eslint-disable no-await-in-loop -- keyboard focus order and its presentation must be inspected sequentially */
   for (let index = 0; index < 30; index += 1) {
     await page.keyboard.press('Tab');
     if (await target.evaluate((element) => element === document.activeElement)) {
-      await expect(target, `${label} should remain visible when keyboard-focused`).toBeVisible();
-      const focusPresentation = await target.evaluate((element) => ({
-        boxShadow: getComputedStyle(element).boxShadow,
-        focusVisible: element.matches(':focus-visible'),
-      }));
-      expect(focusPresentation.focusVisible, `${label} should match :focus-visible`).toBe(true);
-      expect(focusPresentation.boxShadow, `${label} should render a visible focus indicator`).not.toBe('none');
+      await expectVisibleFocusIndicator(target, label);
       return;
     }
   }
@@ -228,7 +258,7 @@ test('API and SSR readiness endpoints identify the Docker services', async () =>
   await expect(siteReady.json()).resolves.toEqual({ runtime: 'node', service: 'site-app', status: 'ok' });
 });
 
-test('landing journey exposes public destinations at the 320px viewport floor', async ({ page }) => {
+test('landing journey exposes public destinations at the 320px viewport floor', async ({ browserName, page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
   await gotoWithRetry(page, urls.landingApp);
   await expect(
@@ -244,7 +274,7 @@ test('landing journey exposes public destinations at the 320px viewport floor', 
 
   const userAppLink = page.getByRole('link', { name: 'Preview user app' });
   await expect(userAppLink).toHaveAttribute('href', urls.userApp);
-  await focusWithKeyboard(page, userAppLink, 'landing user-app link');
+  await focusWithKeyboard(page, userAppLink, 'landing user-app link', browserName);
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`${urls.userApp}/`);
   await expect(page.getByRole('heading', { level: 1, name: 'A clear place to manage your account.' })).toBeVisible();
@@ -252,10 +282,14 @@ test('landing journey exposes public destinations at the 320px viewport floor', 
   await gotoWithRetry(page, urls.landingApp);
   const adminAppLink = page.getByRole('link', { name: 'Preview admin app' });
   await expect(adminAppLink).toHaveAttribute('href', urls.adminApp);
-  await focusWithKeyboard(page, adminAppLink, 'landing admin-app link');
+  await focusWithKeyboard(page, adminAppLink, 'landing admin-app link', browserName);
   await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(`${urls.adminApp}/`);
+  // The admin client router rewrites the location to include its `/admin`
+  // basepath once hydrated. Asserting the pre-hydration URL raced that rewrite:
+  // it happened to pass on a desktop viewport and failed on chromium-320. Wait
+  // for the app to render, then assert the settled location.
   await expect(page.getByRole('heading', { name: 'Authentication required' })).toBeVisible();
+  await expect(page).toHaveURL(`${urls.adminApp}${adminBasepath}/`);
 });
 
 test('site sends meaningful SSR HTML and hydrates client-side navigation without replacing the document', async ({

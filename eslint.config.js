@@ -2,6 +2,8 @@ const nx = require('@nx/eslint-plugin');
 const typescriptEslintParser = require('@typescript-eslint/parser');
 const typescriptEslintPlugin = require('@typescript-eslint/eslint-plugin');
 const sonarjsEslintPlugin = require('eslint-plugin-sonarjs');
+const reactHooksEslintPlugin = require('eslint-plugin-react-hooks');
+const jsxA11yEslintPlugin = require('eslint-plugin-jsx-a11y');
 const eslintConfigPrettier = require('eslint-config-prettier');
 const nxScopeConstraints = require('./packages/tooling/config/nx-scope-constraints.json');
 
@@ -375,6 +377,33 @@ module.exports = [
       ...typescriptEslintPlugin.configs.recommended.rules,
     },
   },
+  {
+    // Hook correctness. Every project config spreads this base and ESLint
+    // resolves it per linted file, so patterns must stay directory-agnostic —
+    // a `libs/frontend/**` prefix silently matches nothing. `.ts` is included
+    // because most shared hooks (use-auth-session-flow, use-logout, ...) are
+    // plain modules; the rules are inert on backend sources, which never call
+    // a bare `useX()`.
+    files: ['**/*.ts', '**/*.tsx'],
+    plugins: {
+      'react-hooks': reactHooksEslintPlugin,
+    },
+    rules: {
+      ...reactHooksEslintPlugin.configs['recommended-latest'].rules,
+    },
+  },
+  {
+    // Accessibility. `.tsx` is an exact proxy for "renders JSX" in this
+    // workspace — no backend or tooling source carries the extension — so
+    // scoping here keeps DOM-only rules off Nest code without a path prefix.
+    files: ['**/*.tsx'],
+    plugins: {
+      'jsx-a11y': jsxA11yEslintPlugin,
+    },
+    rules: {
+      ...jsxA11yEslintPlugin.flatConfigs.recommended.rules,
+    },
+  },
 
   {
     files: ['**/*.json'],
@@ -385,6 +414,10 @@ module.exports = [
   {
     files: ['**/*.spec.ts', '**/*.test.ts', '**/*.spec.tsx', '**/*.test.tsx'],
     rules: {
+      // Probe components exist to publish what a hook returned to the enclosing
+      // test, which means assigning to module scope during render. Every other
+      // hook rule stays on for specs.
+      'react-hooks/globals': 'off',
       'sonarjs/no-duplicate-string': 'off',
       'sonarjs/no-hardcoded-passwords': 'off',
       'sonarjs/no-trivial-assertions': 'off',

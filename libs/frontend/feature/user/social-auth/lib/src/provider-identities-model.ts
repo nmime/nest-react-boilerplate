@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAuthApiClient, type AuthApiClient } from '@app/frontend-api-client';
 import {
@@ -14,8 +14,9 @@ import { fetchProviderIdentities, providerIdentitiesQueryKey, unlinkProviderIden
 type ProviderIdentitiesData = Awaited<ReturnType<typeof fetchProviderIdentities>>;
 
 export interface ProviderIdentitiesModelOptions {
+  /** API client used by both operations. Replaced through {@link ProviderIdentitiesModel.setAuthClient}. */
+  authClient: AuthApiClient;
   authStore: Pick<AuthShellStore, 'isAuthenticated'>;
-  getAuthClient: () => AuthApiClient;
   queryClient: QueryClient;
 }
 
@@ -30,16 +31,19 @@ export class ProviderIdentitiesModel {
   readonly identitiesQuery: MobxQuery<ProviderIdentitiesData>;
   readonly unlinkMutation: MobxMutation<unknown, string>;
 
-  constructor({ authStore, getAuthClient, queryClient }: ProviderIdentitiesModelOptions) {
+  private authClient: AuthApiClient;
+
+  constructor({ authClient, authStore, queryClient }: ProviderIdentitiesModelOptions) {
+    this.authClient = authClient;
     this.identitiesQuery = createMobxQuery<ProviderIdentitiesData>({
       options: () => ({ enabled: authStore.isAuthenticated }),
       queryClient,
-      queryFn: () => fetchProviderIdentities(getAuthClient()),
+      queryFn: () => fetchProviderIdentities(this.authClient),
       queryKey: providerIdentitiesQueryKey(),
       retry: false,
     });
     this.unlinkMutation = createMobxMutation<unknown, string>({
-      mutationFn: (identityId) => unlinkProviderIdentity(getAuthClient(), identityId),
+      mutationFn: (identityId) => unlinkProviderIdentity(this.authClient, identityId),
       onSuccess: () =>
         queryClient.invalidateQueries({
           queryKey: providerIdentitiesQueryKey(),
@@ -47,6 +51,15 @@ export class ProviderIdentitiesModel {
       queryClient,
       retry: false,
     });
+  }
+
+  /**
+   * Points the model at a freshly built API client. The model outlives the
+   * client registry, which is rebuilt whenever the runtime base URLs, headers,
+   * or fetch implementation change.
+   */
+  setAuthClient(authClient: AuthApiClient): void {
+    this.authClient = authClient;
   }
 
   unlink(identityId: string): void {
@@ -70,17 +83,20 @@ export function useProviderIdentitiesModel(): ProviderIdentitiesModel {
   const queryClient = useQueryClient();
   const authClient = useAuthApiClient();
   const authStore = useAuthShellStore();
-  const authClientRef = useRef(authClient);
-  authClientRef.current = authClient;
-
   const [model] = useState(
     () =>
       new ProviderIdentitiesModel({
+        authClient,
         authStore,
-        getAuthClient: () => authClientRef.current,
         queryClient,
       }),
   );
+
+  // The model is created once but the client registry is rebuilt whenever the
+  // runtime config changes, so hand the model each new client as it arrives.
+  useEffect(() => {
+    model.setAuthClient(authClient);
+  }, [authClient, model]);
 
   useEffect(() => {
     return () => {

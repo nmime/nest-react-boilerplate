@@ -72,6 +72,10 @@ export const DisabledLink: Story = {
 };
 
 export const VariantAndSizeScale: Story = {
+  // This story renders its own scale grid instead of a single argument-driven
+  // button, but `Story` still requires `args` because `children` is required on
+  // UiButton. Declare them so the story stays type-checked.
+  args: { children: 'Default action' },
   render: () => (
     <div style={{ display: 'grid', gap: '1rem' }}>
       <div style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>

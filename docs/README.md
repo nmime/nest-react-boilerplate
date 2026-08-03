@@ -100,6 +100,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Security Baseline](../SECURITY.md) — reporting expectations and baseline controls.
 - [Auth Production Gap Register](auth-production-roadmap.md)
 - [Auth Tenant Hardening](auth-tenant-hardening.md)
+- [Multi-tenancy Capability](multi-tenancy-capability.md)
 - [Auth Login Analytics](auth-login-analytics.md)
 - [Social Auth and Bots](social-auth-bots.md)
 - [Social Auth Live Test Guide](social-auth-live-test-guide.md)

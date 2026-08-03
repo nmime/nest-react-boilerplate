@@ -79,6 +79,25 @@ describe('LogoutModel', () => {
     model.destroy();
   });
 
+  it('sends the re-bound request after setLogout replaces it', async () => {
+    const { logoutRequest, model, order } = setup(() => Promise.resolve({ ok: true }));
+    const rebound = vi.fn(async () => {
+      order.push('rebound-logout');
+      return { ok: true };
+    });
+
+    // The API client registry is rebuilt whenever the runtime config changes, so
+    // the model must send the current request rather than the one it was built with.
+    model.setLogout(rebound);
+    await model.signOut();
+
+    expect(rebound).toHaveBeenCalledTimes(1);
+    expect(logoutRequest).not.toHaveBeenCalled();
+    expect(order[0]).toBe('rebound-logout');
+
+    model.destroy();
+  });
+
   it('clears the session and navigates even when the logout request fails', async () => {
     const { clearSession, invalidateSpy, model, onSignedOut, order } = setup(() =>
       Promise.reject(new Error('network down')),

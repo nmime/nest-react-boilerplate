@@ -58,8 +58,11 @@ export const AuditPage = ({
     retry: false,
     staleTime: 60_000,
   });
-  const availableActions = metadata.data?.actions ?? [];
-  const availableResources = metadata.data?.resources ?? [];
+  // Memoised because `?? []` produces a fresh array on every render while the
+  // query is still loading, which would rebuild `params` each time and refire
+  // the dependent audit query.
+  const availableActions = useMemo(() => metadata.data?.actions ?? [], [metadata.data]);
+  const availableResources = useMemo(() => metadata.data?.resources ?? [], [metadata.data]);
   const params = useMemo<adminApi.AdminAuditListQuery>(
     () => ({
       limit: pageSize,

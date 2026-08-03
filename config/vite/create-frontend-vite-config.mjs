@@ -75,6 +75,34 @@ export function createFrontendViteConfig({ appName, port }) {
         commonjsOptions: {
           transformMixedEsModules: true,
         },
+        rollupOptions: {
+          output: {
+            // Without this every app shipped one ~1.1 MB entry chunk, so any
+            // application change invalidated the whole download and the
+            // framework was re-fetched on every deploy. Split the long-lived
+            // vendor groups out by resolved module path so they cache
+            // independently of app code. Grouped rather than one-chunk-per-
+            // package to avoid a long request waterfall on first load.
+            manualChunks: (id) => {
+              if (!id.includes('node_modules')) {
+                return undefined;
+              }
+              if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/u.test(id)) {
+                return 'vendor-react';
+              }
+              if (id.includes('@tanstack')) {
+                return 'vendor-router-query';
+              }
+              if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+                return 'vendor-ui';
+              }
+              if (id.includes('mobx')) {
+                return 'vendor-state';
+              }
+              return 'vendor';
+            },
+          },
+        },
       },
     };
   });

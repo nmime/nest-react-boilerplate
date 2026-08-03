@@ -25,7 +25,7 @@ const HealthCard = ({
     ready: t('admin.health.ready'),
   }[state];
   return (
-    <UiCard className="admin-health-card" title={label}>
+    <UiCard className="admin-health-card" headingLevel={2} title={label}>
       <UiStatusTag label={stateLabel} tone={statusTone[state]} />
     </UiCard>
   );
@@ -34,7 +34,7 @@ const HealthCard = ({
 const AccessSummaryCard = ({ access }: Readonly<{ access: AdminAccess }>) => {
   const { t } = useI18n();
   return (
-    <UiCard className="admin-access-card" title={t('admin.dashboard.card.access.title')}>
+    <UiCard className="admin-access-card" headingLevel={2} title={t('admin.dashboard.card.access.title')}>
       <p>
         {t('admin.dashboard.accessSummary', {
           roles: access.roles.join(', ') || t('admin.dashboard.access.none'),
@@ -62,10 +62,14 @@ const DashboardStaticPage = ({ access }: Readonly<{ access: AdminAccess }>) => {
       title={t('admin.dashboard.title')}
     >
       <div className="admin-dashboard-hero">
-        <UiCard className="admin-dashboard-hero__card" title={t('admin.dashboard.card.visibility.title')}>
+        <UiCard
+          className="admin-dashboard-hero__card"
+          headingLevel={2}
+          title={t('admin.dashboard.card.visibility.title')}
+        >
           {t('admin.dashboard.card.visibility.description')}
         </UiCard>
-        <UiCard className="admin-dashboard-hero__card" title={t('admin.dashboard.card.rbac.title')}>
+        <UiCard className="admin-dashboard-hero__card" headingLevel={2} title={t('admin.dashboard.card.rbac.title')}>
           {t('admin.dashboard.card.rbac.description')}
         </UiCard>
       </div>

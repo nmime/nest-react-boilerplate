@@ -1,0 +1,34 @@
+{
+  "//": "Byte budgets for built frontend apps, enforced by `pnpm run test:bundle-budget`. Set from measured output plus a small headroom, and ratcheted downward as splitting improves — never raised to make a regression pass. `maxChunkBytes` is the load-bearing one: it is what keeps an app from collapsing back into a single monolithic entry chunk.",
+  "default": {
+    "maxChunkBytes": 400000,
+    "maxJavaScriptBytes": 1400000,
+    "maxCssBytes": 120000
+  },
+  "projects": {
+    "user-app": {
+      "//": "Vendor groups are split out (react/router/ui/state), which cut the entry chunk from 1151021B to 534498B. The remaining entry is app code; route-level lazy loading is the next reduction and belongs with the admin/user page extraction into feature libs. Target: 400000.",
+      "maxChunkBytes": 560000,
+      "maxJavaScriptBytes": 1250000,
+      "maxCssBytes": 90000
+    },
+    "admin-app": {
+      "//": "Same vendor split (1.1MB entry -> 624877B). The entry stays large until the 13-page `renderAdminRoute` matrix gains lazy boundaries, which is part of extracting those pages into feature libs. Target: 400000.",
+      "maxChunkBytes": 650000,
+      "maxJavaScriptBytes": 1250000,
+      "maxCssBytes": 100000
+    },
+    "landing-app": {
+      "//": "Astro islands: already well split, so this budget is deliberately tight.",
+      "maxChunkBytes": 300000,
+      "maxJavaScriptBytes": 600000,
+      "maxCssBytes": 80000
+    },
+    "site-app": {
+      "maxChunkBytes": 340000,
+      "maxJavaScriptBytes": 600000,
+      "maxCssBytes": 20000
+    },
+    "//mobile-app": "Deliberately absent. mobile-app carries type:frontend-app, but its build target is `tsc --noEmit` with no declared outputs; the Expo web bundle comes from the separate `export` target. The gate measures declared build outputs, so it reports mobile-app as not measurable instead of demanding a directory a build never emits. Give the export bundle its own budget only alongside a gate step that actually runs `export`."
+  }
+}

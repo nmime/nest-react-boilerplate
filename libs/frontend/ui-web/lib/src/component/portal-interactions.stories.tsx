@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
+import { radixModalLayerA11y } from '../../.storybook/a11y-exceptions';
 import { UiButton } from './button';
 import { UiDialog } from './dialog';
 import { UiDropdownMenu } from './dropdown-menu';
@@ -32,8 +33,18 @@ const PortalInteractionHarness = () => {
       <p aria-live="polite">Selected status: {status}</p>
       <UiDropdownMenu
         items={[
-          { label: 'Archive', onSelect: () => setLastAction('Archive') },
-          { label: 'Suspend', onSelect: () => setLastAction('Suspend') },
+          {
+            label: 'Archive',
+            onSelect: () => {
+              setLastAction('Archive');
+            },
+          },
+          {
+            label: 'Suspend',
+            onSelect: () => {
+              setLastAction('Suspend');
+            },
+          },
         ]}
         trigger={<UiButton variant="secondary">Actions</UiButton>}
       />
@@ -84,6 +95,7 @@ export const DialogSelectAndMenu: Story = {
 };
 
 export const SelectOpened: Story = {
+  parameters: radixModalLayerA11y,
   render: () => (
     <UiSelect
       aria-label="Visual status"

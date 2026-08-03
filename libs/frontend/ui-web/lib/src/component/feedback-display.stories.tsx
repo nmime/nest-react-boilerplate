@@ -67,6 +67,27 @@ type Story = StoryObj<typeof meta>;
 
 export const CompleteSet: Story = {};
 
+/**
+ * Every tone/variant pairing of the badge. `tone` and `variant` are independent
+ * public unions, so all fifteen combinations are reachable — but only
+ * `soft`/`info` was ever rendered in a story, which left the axe gate blind to
+ * the `solid` variant. That is the one place a raw tone becomes a text
+ * background, and where white-on-`warning` measured 4.14:1.
+ */
+export const BadgeToneAndVariantMatrix: Story = {
+  render: () => (
+    <section aria-label="Badge tone and variant matrix" style={frameStyle}>
+      {(['soft', 'outline', 'solid'] as const).map((variant) => (
+        <div key={variant} style={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {(['neutral', 'info', 'success', 'warning', 'destructive'] as const).map((tone) => (
+            <UiBadge key={tone} label={`${variant} ${tone}`} tone={tone} variant={variant} />
+          ))}
+        </div>
+      ))}
+    </section>
+  ),
+};
+
 export const EmptyAndErrorStates: Story = {
   render: () => (
     <section aria-label="Empty and error states" style={frameStyle}>

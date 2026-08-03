@@ -4,5 +4,12 @@
     "outDir": "../../../../dist/out-tsc/libs/frontend/ui-web-spec",
     "types": ["vitest/globals", "vite/client"]
   },
-  "include": ["src/**/*.spec.ts", "src/**/*.spec.tsx", ".storybook/**/*.ts", ".storybook/**/*.tsx"]
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.stories.ts",
+    "src/**/*.stories.tsx",
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx"
+  ]
 }

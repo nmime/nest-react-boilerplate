@@ -151,6 +151,8 @@
     "axe-core": "4.12.1",
     "eslint": "10.7.0",
     "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-sonarjs": "4.2.0",
     "fast-check": "4.9.0",
     "istanbul-lib-report": "3.0.1",
@@ -169,6 +171,6 @@
   },
   "nrb": {
     "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
-    "graphDigest": "ecec9c0cfb467d440534b0ae85fa4d9f2a93d1efaed18f191f856cc409ab63d6"
+    "graphDigest": "894f5d5bae6da19e3588d478df2e34e89984ccc7ccd1528e5b936d511fc4664e"
   }
 }

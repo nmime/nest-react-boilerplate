@@ -422,6 +422,21 @@ jobs:
             pnpm run build:all
           fi
 
+      # Runs after the build step above so the measured output is the one this
+      # commit produces. The performance gate only ever measured TTFB and the
+      # HTML document, so a 1.1 MB single-chunk SPA bundle passed it unnoticed.
+      # PRs build only affected projects, and an app that was not rebuilt cannot
+      # have changed its bundle, so those are skipped with a log line.
+      - name: Enforce frontend bundle budgets
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            pnpm run test:bundle-budget -- --skip-missing
+          else
+            pnpm run test:bundle-budget
+          fi
+
       - name: Enforce coverage thresholds
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -728,23 +743,16 @@ jobs:
         run: pnpm nrb closure materialize --all-reference --provider postgres
 
       - name: Start local runtime stack
-        run: |
-          for attempt in 1 2 3; do
-            if docker compose -f docker/docker-compose.yml up -d --build; then
-              exit 0
-            fi
-
-            if [ "$attempt" -eq 3 ]; then
-              echo "Runtime stack failed to start after $attempt attempts" >&2
-              exit 1
-            fi
-
-            echo "::warning::Runtime stack build attempt $attempt failed; retrying after a transient backoff"
-            sleep "$((attempt * 15))"
-          done
+        uses: ./.github/actions/runtime-stack
 
       - name: Run runtime-backed QA/ops gates
         run: pnpm run test:world-class
+
+      # A11Y_URLS is already set for this job and the stack is already up, so the
+      # axe scan belongs in the blocking lane. It previously ran only inside
+      # `quality:presets`, which had not completed a scheduled run since 2026-07-02.
+      - name: Accessibility gate
+        run: pnpm run test:a11y
 
       - name: Stop local runtime stack
         if: always()

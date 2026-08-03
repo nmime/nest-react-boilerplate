@@ -52,7 +52,7 @@
   --xr-space-5: 1.25rem;
   --xr-space-6: 1.5rem;
   --xr-border: hsl(214 32% 91%);
-  --xr-muted: hsl(215 16% 47%);
+  --xr-muted: hsl(215 16% 45%);
   --xr-text: hsl(222 47% 11%);
   --xr-surface: hsl(0 0% 100%);
   --xr-color-background: hsl(210 40% 98%);
@@ -61,14 +61,25 @@
   --xr-color-surface-strong: hsl(0 0% 100%);
   --xr-color-border: hsl(214 32% 91%);
   --xr-color-text: hsl(222 47% 11%);
-  --xr-color-muted: hsl(215 16% 47%);
+  /*
+   * Light-theme lightness values are the highest that still clear the WCAG AA
+   * 4.5:1 text threshold, verified by the axe gate in `test:storybook`:
+   *   muted       45% -> 4.61 as text on the muted/table surfaces (47% gave 4.29)
+   *   info        52% -> 5.01 through the status-tag tone mix and 4.73 with white
+   *               text on the raw tone (60% gave 4.04 / 3.64)
+   *   warning     42% -> 4.52 through the status-tag tone mix (45% gave 4.08).
+   *               The raw tone fits no text colour, so `.xr-badge--solid`
+   *               deepens it locally; see that rule.
+   *   destructive 50% -> 4.52 with white text and as text on white (60% gave 3.78)
+   */
+  --xr-color-muted: hsl(215 16% 45%);
   --xr-color-primary: hsl(221 83% 53%);
   --xr-color-primary-strong: hsl(224 76% 48%);
   --xr-color-primary-contrast: hsl(0 0% 100%);
-  --xr-color-info: hsl(217 91% 60%);
+  --xr-color-info: hsl(217 91% 52%);
   --xr-color-success: hsl(142 72% 29%);
-  --xr-color-warning: hsl(24 95% 45%);
-  --xr-color-destructive: hsl(0 84% 60%);
+  --xr-color-warning: hsl(24 95% 42%);
+  --xr-color-destructive: hsl(0 84% 50%);
   --xr-color-destructive-contrast: hsl(0 0% 100%);
   --xr-control-background: hsl(210 40% 96%);
   --xr-input-background: hsl(0 0% 100%);
@@ -337,8 +348,10 @@ a {
   height: 2rem;
   place-items: center;
   border-radius: 0.625rem;
-  background: var(--xr-color-info);
-  color: white;
+  /* The brand mark is brand-coloured, and it must use the theme's own contrast
+   * token: hardcoded white failed AA against the dark theme's light accent. */
+  background: var(--xr-color-primary);
+  color: var(--xr-color-primary-contrast);
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -1520,8 +1533,17 @@ a {
 }
 
 .xr-badge--solid {
-  border-color: var(--xr-tone, var(--xr-color-primary-strong));
-  background: var(--xr-tone, var(--xr-color-primary-strong));
+  /*
+   * The only place a raw tone becomes a text background. White on the raw
+   * `warning` tone measures 4.14:1 and dark text on it 4.32:1 — it fits neither,
+   * so the tone is deepened here rather than lightened or darkened globally
+   * (the soft variant below needs `warning` at its current lightness). A 90/10
+   * mix with black clears 4.5:1 against white for every tone, worst case
+   * `warning` at 4.95:1, while leaving the hue recognisable.
+   */
+  --xr-tone-solid: color-mix(in srgb, var(--xr-tone, var(--xr-color-primary-strong)) 90%, black);
+  border-color: var(--xr-tone-solid);
+  background: var(--xr-tone-solid);
   color: var(--xr-color-primary-contrast);
 }
 

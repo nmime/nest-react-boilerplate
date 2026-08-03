@@ -10,6 +10,10 @@ Provider migrations create equivalent tenant records. PostgreSQL uses:
 - `auth_tenant_memberships` for user membership and tenant roles.
 - `auth_tenant_invitations` with hashed invitation tokens and expiry.
 
+A design for turning this scaffolding into a selectable, database-enforced
+capability — including why application-level scoping alone is not isolation —
+lives in [multi-tenancy-capability.md](multi-tenancy-capability.md).
+
 These tables are currently persistence scaffolding, not a complete tenant
 management workflow. The template's current runtime behavior uses tenant IDs on
 `auth_users`, auth principals, request guards, token stores, and rate-limit keys;

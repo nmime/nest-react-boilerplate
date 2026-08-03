@@ -37,7 +37,12 @@ const preview: Preview = {
       <LandmarkGuard isAppComposition={context.parameters['appComposition'] === true} Story={Story} />
     ),
   ],
-  parameters: { layout: 'centered' },
+  parameters: {
+    // `error` makes an axe violation fail `test:storybook` rather than only
+    // annotating the Storybook UI.
+    a11y: { test: 'error' },
+    layout: 'centered',
+  },
 };
 
 export default preview;

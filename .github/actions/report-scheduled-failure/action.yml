@@ -1,0 +1,91 @@
+name: Report scheduled failure
+description: Open, reopen, or update the deduplicated failure issue for a scheduled workflow, including its consecutive-failure streak.
+
+# A scheduled workflow has no pull request to turn red, so the gates it uniquely
+# owns rot invisibly. Deduplicating by title alone was not enough: quality-presets
+# failed 32 nights in a row and produced one quiet issue with a growing comment
+# thread, where nothing distinguished "broke last night" from "dead for a month".
+# Report the streak, reopen a closed issue that is still failing, and label the
+# issue once the rot passes the escalation threshold.
+
+inputs:
+  title:
+    description: Stable issue title used for deduplication.
+    required: true
+  workflow-file:
+    description: Workflow filename used to compute the consecutive-failure streak.
+    required: true
+  run-url:
+    description: URL of the failing run.
+    required: true
+  escalate-after:
+    description: Consecutive failures after which the issue is labelled as rotting.
+    required: false
+    default: '3'
+  label:
+    description: Label applied once the escalation threshold is reached.
+    required: false
+    default: 'stale-gate'
+
+runs:
+  using: composite
+  steps:
+    - name: Open or update the failure issue
+      shell: bash
+      env:
+        ISSUE_TITLE: ${{ inputs.title }}
+        WORKFLOW_FILE: ${{ inputs.workflow-file }}
+        RUN_URL: ${{ inputs.run-url }}
+        ESCALATE_AFTER: ${{ inputs.escalate-after }}
+        ESCALATION_LABEL: ${{ inputs.label }}
+      run: |
+        set -uo pipefail
+
+        # Consecutive failures = how many runs precede the most recent success.
+        streak="$(gh run list --workflow "$WORKFLOW_FILE" --limit 50 --json conclusion \
+          --jq '[.[] | .conclusion] | (index("success") // length)' 2>/dev/null || echo 1)"
+        [ -n "$streak" ] || streak=1
+
+        body="The scheduled \`${WORKFLOW_FILE%.yml}\` workflow failed."
+        body="${body}"$'\n\n'"- Run: ${RUN_URL}"
+        body="${body}"$'\n'"- Consecutive failing runs: ${streak}"
+        if [ "$streak" -ge "$ESCALATE_AFTER" ]; then
+          body="${body}"$'\n\n'"**This lane has failed ${streak} runs in a row. Every gate it uniquely owns is currently unenforced.**"
+        fi
+
+        number="$(gh issue list --state open --search "$ISSUE_TITLE in:title" --json number --jq '.[0].number // empty')"
+
+        if [ -z "$number" ]; then
+          # Reopen rather than stack duplicates: an issue closed while the lane is
+          # still failing must come back, or the rot goes quiet again.
+          number="$(gh issue list --state closed --search "$ISSUE_TITLE in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$number" ]; then
+            gh issue reopen "$number" || true
+          fi
+        fi
+
+        if [ -n "$number" ]; then
+          gh issue comment "$number" --body "$body"
+        else
+          # `gh issue create` has no --json/--jq: passing them is a flag-parse
+          # error that aborts before the API call, so the issue would never be
+          # created at all. It prints the new issue's URL, whose last path
+          # segment is the number.
+          issue_url="$(gh issue create --title "$ISSUE_TITLE" --body "$body")" || issue_url=''
+          if [ -z "$issue_url" ]; then
+            echo "::error::Failed to create the failure issue for $ISSUE_TITLE"
+            exit 1
+          fi
+          number="${issue_url##*/}"
+          case "$number" in
+            ''|*[!0-9]*)
+              echo "::warning::Could not parse an issue number from: $issue_url"
+              number=''
+              ;;
+          esac
+        fi
+
+        if [ -n "$number" ] && [ "$streak" -ge "$ESCALATE_AFTER" ]; then
+          gh label create "$ESCALATION_LABEL" --description 'A scheduled quality lane has been failing for multiple consecutive runs' --color B60205 2>/dev/null || true
+          gh issue edit "$number" --add-label "$ESCALATION_LABEL" || true
+        fi

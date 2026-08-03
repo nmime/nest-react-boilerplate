@@ -31,16 +31,19 @@ export const designColors = {
     // HSL primitives); mirrored here as the canonical hex so native/mobile can
     // reuse the same status colors instead of hard-coding their own.
     primaryStrong: '#1d4ed8',
-    info: '#3b82f6',
+    // These mirror the web `--xr-color-*` primitives, which were darkened to
+    // clear the WCAG AA 4.5:1 text threshold. Keep them in step: `#3b82f6`,
+    // `#e05d06`, `#64748b`, and `#ef4444` all measured below 4.5:1.
+    info: '#156bf4',
     success: '#15803d',
-    warning: '#e05d06',
+    warning: '#d15705',
     secondary: '#f1f5f9',
     secondaryForeground: '#0f172a',
     muted: '#f1f5f9',
-    mutedForeground: '#64748b',
+    mutedForeground: '#607085',
     accent: '#dbeafe',
     accentForeground: '#0f172a',
-    destructive: '#ef4444',
+    destructive: '#eb1414',
     destructiveForeground: '#ffffff',
     border: '#e2e8f0',
     input: '#e2e8f0',

@@ -2,6 +2,10 @@ export default {
   packageManager: "pnpm",
   testRunner: "command",
   commandRunner: {
+    // `tooling qa mutation --project <p>` sets STRYKER_TEST_COMMAND to that
+    // project's own test target. The workspace-wide fallback only applies to an
+    // explicit `--all` run, because the command runner re-executes it once per
+    // mutant with no coverage analysis to narrow the set.
     command:
       process.env.STRYKER_TEST_COMMAND ??
       "pnpm exec nx run-many -t test --skip-nx-cache",

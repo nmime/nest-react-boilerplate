@@ -572,11 +572,6 @@ export const UiAdminConsole = observer(function UiAdminConsole({
           data-open="true"
           data-theme={uiStore?.resolvedTheme ?? 'light'}
           data-theme-preference={uiStore?.theme ?? 'system'}
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              closeNavigation();
-            }
-          }}
         >
           <button
             aria-label={closeNavigationLabel}

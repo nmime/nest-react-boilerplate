@@ -2,7 +2,9 @@ const baseConfig = require('../../../../eslint.config.js');
 
 module.exports = [
   {
-    ignores: ['tsconfig.spec.json', 'src/**/*.stories.ts', 'src/**/*.stories.tsx'],
+    // Stories are linted: they are the input to the Storybook interaction and
+    // axe gates, so a broken story silently weakens both.
+    ignores: ['tsconfig.spec.json'],
   },
   ...baseConfig,
 ];

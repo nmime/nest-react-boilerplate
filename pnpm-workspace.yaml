@@ -76,6 +76,10 @@ peerDependencyRules:
     # vulnerable-range override rewrites that wildcard to 0.25.0 in the lock
     # snapshot, so record the workspace's tested Vite/esbuild edge explicitly.
     '@storybook/csf-plugin>esbuild': '0.28.1'
+    # jsx-a11y 6.10.2 still caps its peer range at ESLint 9. The plugin only uses
+    # the stable rule/flat-config surface, and the repo lints clean on ESLint 10,
+    # so pin the tested edge instead of holding the workspace back a major.
+    'eslint-plugin-jsx-a11y>eslint': '10.7.0'
 
 # react-native-worklets 0.10.0 imports these Babel packages from its compiled
 # plugin without declaring them. Keep the fix scoped to that exact release so

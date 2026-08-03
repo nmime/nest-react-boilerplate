@@ -1,5 +1,8 @@
 # Dependencies
-node_modules/
+# No trailing slash: `pnpm nrb closure install` replaces the root and per-app
+# node_modules with symlinks into .nrb/closure, and a `node_modules/` pattern
+# matches only directories — so `git add -A` staged those symlinks.
+node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -79,6 +82,7 @@ cucumber-report/
 playwright-report/
 test-results/
 playwright/.cache/
+.stryker-tmp/
 
 *storybook.log
 storybook-static

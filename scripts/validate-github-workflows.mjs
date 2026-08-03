@@ -164,7 +164,27 @@ for (const [name, text] of [
 ]) {
   assert.ok(text.includes('if: failure()'), `${name} must surface failures from its scheduled run`);
   assert.ok(text.includes('issues: write'), `${name} must be able to open its failure issue`);
-  assert.ok(text.includes('gh issue create'), `${name} failure reporter must open an issue when none is open`);
+  assert.ok(
+    text.includes('uses: ./.github/actions/report-scheduled-failure'),
+    `${name} must report failures through the shared scheduled-failure reporter`,
+  );
+  assert.ok(
+    /workflow-file: \S+\.yml/u.test(text),
+    `${name} failure reporter needs its workflow filename to compute the failure streak`,
+  );
+}
+
+// The reporter itself owns the behaviour the per-workflow contracts used to
+// assert inline.
+const scheduledFailureAction = readFileSync(
+  new URL('../.github/actions/report-scheduled-failure/action.yml', import.meta.url),
+  'utf8',
+);
+for (const required of ['gh issue create', 'gh issue comment', 'gh issue reopen', 'Consecutive failing runs']) {
+  assert.ok(
+    scheduledFailureAction.includes(required),
+    `scheduled-failure reporter missing required contract: ${required}`,
+  );
 }
 
 for (const required of [
@@ -180,7 +200,7 @@ for (const required of [
 for (const required of [
   "cron: '21 1 * * *'",
   'pnpm run spec:verify -- --all --lane nightly',
-  'docker compose -f docker/docker-compose.yml up -d --build',
+  'uses: ./.github/actions/runtime-stack',
   'nightly-specification-assurance',
 ]) {
   assert.ok(nightlyAssurance.includes(required), `nightly assurance workflow missing required contract: ${required}`);
@@ -503,12 +523,46 @@ assert.ok(
   'Helm CI matrix must not invoke generic deployment validation without a selected closure.',
 );
 
+// Every runtime lane starts the stack through one composite action. Keeping the
+// start sequence in a single place is the fix for quality-presets and
+// spec-assurance-nightly having drifted away from ci.yml's retry and then
+// failing on every scheduled run for a month.
+const runtimeStackAction = readFileSync(
+  new URL('../.github/actions/runtime-stack/action.yml', import.meta.url),
+  'utf8',
+);
+for (const required of [
+  'docker compose -f "$COMPOSE_FILE_PATH" up -d --build',
+  'assert_ready',
+  'dump_diagnostics',
+  'docker logs --tail',
+]) {
+  assert.ok(runtimeStackAction.includes(required), `runtime-stack action missing required contract: ${required}`);
+}
+// Checked against executable lines only: the action documents why `--wait` is
+// wrong, and that explanation must not trip its own guard.
+const runtimeStackCommands = runtimeStackAction
+  .split('\n')
+  .filter((line) => !/^\s*#/u.test(line))
+  .join('\n');
+assert.ok(
+  !/docker compose[^\n]*--wait/u.test(runtimeStackCommands),
+  'runtime-stack action must not use `up --wait`: it treats the one-shot migrate service exiting 0 as a failed wait.',
+);
+
 const assertDirectComposeBuildContext = (workflowName, job) => {
   const materialize = 'pnpm nrb closure materialize --all-reference --provider postgres';
-  const build = 'docker compose -f docker/docker-compose.yml up -d --build';
+  const startStack = 'uses: ./.github/actions/runtime-stack';
   const context = 'NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres';
   const jobEnvironment = job.slice(0, job.indexOf('    steps:'));
-  assert.ok(job.includes(build), `${workflowName} runtime job must retain its direct Compose build.`);
+  assert.ok(
+    job.includes(startStack),
+    `${workflowName} runtime job must start the stack through the shared runtime-stack action.`,
+  );
+  assert.ok(
+    !job.includes('docker compose -f docker/docker-compose.yml up'),
+    `${workflowName} must not start the stack inline; the shared action owns retries and diagnostics.`,
+  );
   assert.ok(job.includes(materialize), `${workflowName} direct Compose build must materialize a closure context.`);
   assert.ok(job.includes(context), `${workflowName} direct Compose build must pass NRB_CLOSURE_CONTEXT.`);
   assert.ok(
@@ -516,8 +570,8 @@ const assertDirectComposeBuildContext = (workflowName, job) => {
     `${workflowName} runtime job must keep NRB_CLOSURE_CONTEXT available to post-build Compose commands.`,
   );
   assert.ok(
-    job.indexOf(materialize) < job.indexOf(build),
-    `${workflowName} must materialize its closure context before direct Compose --build.`,
+    job.indexOf(materialize) < job.indexOf(startStack),
+    `${workflowName} must materialize its closure context before starting the stack.`,
   );
 };
 const opsGatesJob = ci.slice(ci.indexOf('  ops-gates:'), ci.indexOf('  fullstack-e2e:'));

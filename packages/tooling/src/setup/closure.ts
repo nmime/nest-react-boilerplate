@@ -51,6 +51,11 @@ const closureToolchainPackages = [
   '@vitejs/plugin-react',
   'eslint',
   'eslint-config-prettier',
+  // The root eslint config `require`s these at module load, and Nx reads that
+  // config while inferring the project graph, so a pruned closure that omits
+  // them fails `link-source-dependencies` inside the Docker workspace stage.
+  'eslint-plugin-jsx-a11y',
+  'eslint-plugin-react-hooks',
   'eslint-plugin-sonarjs',
   'happy-dom',
   'jiti',

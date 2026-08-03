@@ -21,15 +21,30 @@ export const CardHeader = ({ className, ...props }: Readonly<CardHeaderProps>) =
   <div className={cn('xr-card__header grid gap-1.5', className)} data-slot="card-header" {...props} />
 );
 
-export type CardTitleProps = HTMLAttributes<HTMLHeadingElement>;
+export interface CardTitleProps extends HTMLAttributes<HTMLHeadingElement> {
+  /**
+   * Mirrors {@link UiSection}'s `headingLevel`. Defaults to 3, which is correct
+   * under the default `h2` section: defaulting to 2 instead flattened the
+   * outline into sibling `h2`s, and on the auth callback pages — which pass the
+   * same translation key to both the section and the card — produced two
+   * identical `h2`s. Pass 2 for a card whose section renders an `h1`.
+   */
+  headingLevel?: 2 | 3;
+}
 
-export const CardTitle = ({ className, ...props }: Readonly<CardTitleProps>) => (
-  <h3
-    className={cn('xr-card__title m-0 text-base font-semibold text-foreground', className)}
-    data-slot="card-title"
-    {...props}
-  />
-);
+export const CardTitle = ({ children, className, headingLevel = 3, ...props }: Readonly<CardTitleProps>) => {
+  const Heading = headingLevel === 2 ? 'h2' : 'h3';
+
+  return (
+    <Heading
+      className={cn('xr-card__title m-0 text-base font-semibold text-foreground', className)}
+      data-slot="card-title"
+      {...props}
+    >
+      {children}
+    </Heading>
+  );
+};
 
 export type CardDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
 
@@ -51,11 +66,13 @@ export const CardFooter = ({ className, ...props }: Readonly<CardFooterProps>) =
 
 export interface UiCardProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
+  /** Forwarded to {@link CardTitle}; see its `headingLevel` for the default. */
+  headingLevel?: 2 | 3;
   title?: string;
   titleId?: string;
 }
 
-export const UiCard = ({ children, className, title, titleId, ...props }: Readonly<UiCardProps>) => {
+export const UiCard = ({ children, className, headingLevel, title, titleId, ...props }: Readonly<UiCardProps>) => {
   const generatedTitleId = useId();
   const headingId = title ? (titleId ?? generatedTitleId) : undefined;
   const { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy, ...articleProps } = props;
@@ -71,7 +88,11 @@ export const UiCard = ({ children, className, title, titleId, ...props }: Readon
       )}
       data-slot="card"
     >
-      {title ? <CardTitle id={headingId}>{title}</CardTitle> : null}
+      {title ? (
+        <CardTitle headingLevel={headingLevel} id={headingId}>
+          {title}
+        </CardTitle>
+      ) : null}
       <CardContent>{children}</CardContent>
     </article>
   );

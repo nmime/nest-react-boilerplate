@@ -34,10 +34,15 @@ export const Alert = ({ children, className, role, tone, ...props }: Readonly<Ui
 
 export const UiAlert = Alert;
 
-export type AlertTitleProps = HTMLAttributes<HTMLHeadingElement>;
+export type AlertTitleProps = HTMLAttributes<HTMLDivElement>;
 
-export const AlertTitle = ({ className, ...props }: Readonly<AlertTitleProps>) => (
-  <h5 className={cn('mb-1 font-semibold leading-none tracking-tight', className)} data-slot="alert-title" {...props} />
+// Deliberately not a heading. An alert can appear at any depth, so emitting an
+// `<h5>` injected an out-of-order heading into every host page's outline. The
+// surrounding `role="alert"` already carries the semantics.
+export const AlertTitle = ({ children, className, ...props }: Readonly<AlertTitleProps>) => (
+  <div className={cn('mb-1 font-semibold leading-none tracking-tight', className)} data-slot="alert-title" {...props}>
+    {children}
+  </div>
 );
 
 export type AlertDescriptionProps = HTMLAttributes<HTMLDivElement>;

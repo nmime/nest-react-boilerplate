@@ -16,8 +16,8 @@ const readProviderError = (): string | null => {
 export function AuthTelegramCallbackPage({ navigate }: Readonly<AuthTelegramCallbackPageProps>) {
   const { t } = useI18n();
   const socialAuth = useSocialAuth({ navigate });
-  const providerError = useMemo(readProviderError, []);
-  const pendingState = useMemo(readTelegramOidcState, []);
+  const providerError = useMemo(() => readProviderError(), []);
+  const pendingState = useMemo(() => readTelegramOidcState(), []);
   const callbackStarted = useRef(false);
 
   useEffect(() => {

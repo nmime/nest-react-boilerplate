@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
+import { radixModalLayerA11y } from '../../.storybook/a11y-exceptions';
 import { UiDataTable, type UiDataTableColumn } from './admin-table';
 import { UiButton } from './button';
 import { UiCheckbox, UiSwitch } from './choice-controls';
@@ -174,6 +175,7 @@ export const ResourceError: Story = {
 };
 
 export const DropdownOpened: Story = {
+  parameters: radixModalLayerA11y,
   render: () => (
     <StoryFrame title="Opened dropdown menu">
       <UiDropdownMenu

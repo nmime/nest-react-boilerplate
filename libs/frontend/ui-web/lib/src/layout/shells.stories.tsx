@@ -104,7 +104,10 @@ const ShellShowcase = () => (
 const meta = {
   title: 'Layouts/Application shells',
   component: ShellShowcase,
-  parameters: { layout: 'fullscreen' },
+  // These stories render whole shells, which own their `<main>`. Without this
+  // the preview decorator wraps them in a second one, so axe reports a
+  // duplicate and non-top-level main landmark.
+  parameters: { appComposition: true, layout: 'fullscreen' },
 } satisfies Meta<typeof ShellShowcase>;
 
 export default meta;

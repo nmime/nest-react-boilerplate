@@ -540,7 +540,8 @@ test('keeps the complete repository disposition inventory synchronized', () => {
   assert.deepEqual(model.errors, []);
   const expectedInventory = {
     projects: 94,
-    behaviorTests: 511,
+    // 512 after adding the frontend bundle-budget behaviour tests.
+    behaviorTests: 512,
     features: 5,
     scenarios: 8,
     requirements: 58,

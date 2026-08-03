@@ -31,7 +31,7 @@ const readDiscordCallbackQuery = (): DiscordCallbackQueryState => {
 export function AuthDiscordCallbackPage({ navigate }: Readonly<AuthDiscordCallbackPageProps>) {
   const { t } = useI18n();
   const socialAuth = useSocialAuth({ navigate });
-  const query = useMemo(readDiscordCallbackQuery, []);
+  const query = useMemo(() => readDiscordCallbackQuery(), []);
   const hasRequiredQuery = isValidDiscordCallbackQueryState(query);
 
   useEffect(() => {

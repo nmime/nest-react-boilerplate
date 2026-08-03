@@ -9,6 +9,7 @@ import { runGenerateVerticalSliceFromContext } from './commands/project/generate
 import { runSetupFromContext } from './commands/project/setup';
 import { runDoctorFromContext } from './commands/project/doctor';
 import { runAddFromContext } from './commands/project/add';
+import { runBundleBudget } from './commands/qa/bundle-budget';
 import { runMutation } from './commands/qa/mutation';
 import { runTestOrchestration } from './commands/qa/test-orchestration';
 import { runBranchCleanup } from './commands/git/branch-cleanup';
@@ -115,6 +116,11 @@ register(
 );
 register('qa:mutation', 'Run Stryker mutation testing or write its dry-run report.', ({ argv, workspaceRoot }) =>
   runMutation({ argv, workspaceRoot }),
+);
+register(
+  'qa:bundle-budget',
+  'Enforce per-app JavaScript, CSS, and single-chunk byte budgets on built frontends.',
+  ({ argv, workspaceRoot }) => runBundleBudget({ argv, workspaceRoot }),
 );
 register('qa:test-aggregate', 'Run resource-aware aggregate unit or coverage tests.', ({ argv, workspaceRoot }) =>
   runTestOrchestration({ argv, workspaceRoot }),

@@ -126,7 +126,9 @@ export const ProblemPresentationsPage = ({
     queryFn: () => throwOnOpenApiErrorData(adminApi.adminProblemPresentationsControllerList(requestOptions)),
     retry: false,
   });
-  const overrides = presentations.data?.items ?? [];
+  // Memoised because `?? []` produces a fresh array on every render while the
+  // query is loading, which would re-run the configure effect below each time.
+  const overrides = useMemo(() => presentations.data?.items ?? [], [presentations.data]);
   useEffect(() => {
     if (presentations.data) {
       configureProblemPresentationOverrides(overrides);

@@ -25,15 +25,26 @@ export class LogoutModel {
   readonly mutation: MobxMutation;
   private readonly authStore: Pick<AuthShellStore, 'clearSession'>;
   private readonly queryClient: QueryClient;
+  private logout: () => Promise<unknown>;
 
   constructor({ authStore, logout, queryClient }: LogoutModelOptions) {
     this.authStore = authStore;
     this.queryClient = queryClient;
+    this.logout = logout;
     this.mutation = createMobxMutation({
-      mutationFn: () => logout(),
+      mutationFn: () => this.logout(),
       queryClient,
       retry: false,
     });
+  }
+
+  /**
+   * Replaces the logout request. The model is created once per mount but the
+   * API client registry is rebuilt whenever the runtime base URLs, headers, or
+   * fetch implementation change, so the request has to be re-bound.
+   */
+  setLogout(logout: () => Promise<unknown>): void {
+    this.logout = logout;
   }
 
   get isPending(): boolean {

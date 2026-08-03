@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthApiClient } from '@app/frontend-api-client';
 import { useAuthShellStore } from '@app/frontend-runtime';
@@ -24,17 +24,21 @@ export function useLogout({ navigate, redirectTo = '/auth' }: UseLogoutInput = {
   const queryClient = useQueryClient();
   const authClient = useAuthApiClient();
   const authStore = useAuthShellStore();
-  const authClientRef = useRef(authClient);
-  authClientRef.current = authClient;
-
+  const logout = useCallback(() => requestLogout(authClient), [authClient]);
   const [model] = useState(
     () =>
       new LogoutModel({
         authStore,
-        logout: () => requestLogout(authClientRef.current),
+        logout,
         queryClient,
       }),
   );
+
+  // The model is created once but the client registry is rebuilt whenever the
+  // runtime config changes, so re-bind the request as each new client arrives.
+  useEffect(() => {
+    model.setLogout(logout);
+  }, [logout, model]);
 
   useEffect(() => {
     return () => {

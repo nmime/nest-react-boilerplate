@@ -13,7 +13,11 @@ const config: StorybookConfig = {
     '../../../../../apps/frontend/landing/storybook/**/*.stories.{ts,tsx}',
     '../../../../../apps/frontend/site/storybook/**/*.stories.{ts,tsx}',
   ],
-  addons: ['@storybook/addon-vitest'],
+  // addon-a11y runs axe against every story through addon-vitest, which turns
+  // `test:storybook` into a per-component accessibility gate. Before this, the
+  // only axe coverage in the repo scanned three running app URLs in the
+  // nightly-only preset lane, so component regressions were never caught.
+  addons: ['@storybook/addon-a11y', '@storybook/addon-vitest'],
   viteFinal: (viteConfig) =>
     mergeConfig(viteConfig, {
       plugins: [

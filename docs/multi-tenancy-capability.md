@@ -4,9 +4,44 @@ Design for a setup-selectable multi-tenancy capability, derived from reviewing t
 production monorepos built on this template's lineage: `social-agents` (backend
 row-level-security enforcement) and `opwerf` (tenant switching in the frontend).
 
-Status: **design only.** Nothing in this document is implemented yet. It exists so
-the work can be executed as a normal spec → plan → implement cycle rather than
-improvised.
+Status: **stages 1 and 2 are implemented and verified; stages 3–6 are not.** See
+[Progress](#progress) for exactly what exists.
+
+## Progress
+
+| Stage                                                         | State                                                                  |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 1. Ambient tenant scope + fail-closed interceptor             | **Done** — `@app/backend-common-tenant-context`                        |
+| 2. PostgreSQL roles, RLS policies, isolation proof            | **Done** — `@app/backend-postgres-main` + auth/notification migrations |
+| 3. MongoDB repository-level guard                             | Not started                                                            |
+| 4. Tenant lifecycle workflows (CRUD, membership, invitations) | Not started                                                            |
+| 5. Frontend tenant provider and switcher                      | Not started                                                            |
+| 6. `--capability tenancy` setup wiring                        | Not started                                                            |
+
+What stages 1–2 give you: a tenant-scoped query that omits its predicate returns
+no cross-tenant rows, because PostgreSQL refuses them — not because the
+application remembered. A request that resolves no tenant is refused rather than
+silently scoped to nothing. Proven by
+`libs/backend/postgres/main/shared/lib/src/tenant-transaction.component-spec.ts`
+against a real database, including a test that deliberately reproduces the
+connection-pinning leak to show the seam is load-bearing.
+
+What they do not give you: MongoDB deployments get no equivalent enforcement yet
+(stage 3), and there is still no tenant management UI or API (stages 4–5), nor a
+setup flag to select the capability (stage 6). `AUTH_PERSISTENCE=mongodb`
+therefore remains application-enforced only.
+
+Two known rough edges, both deliberate:
+
+- `normalizeTenantId` and the default-tenant constant exist in both this lib and
+  `@app/backend-feature-auth-shared`. Inverting that (auth importing from here)
+  pulled this lib into the tooling test runner's module graph, where
+  `@app/backend-*` aliases do not resolve. A test reads the auth source and
+  asserts the constants match, so they cannot drift.
+- The notification child tables (`notification_deliveries`,
+  `notification_segment_members`, and similar) carry no `tenant_id` and are
+  reachable only through a policied parent. That is the existing schema's choice,
+  not something this work changed.
 
 ## Where the template stands today
 
@@ -66,15 +101,26 @@ because `libs/frontend/feature/*` already has the shape for it.
 
 ### Backend
 
-1. **New lib `@app/backend-common-tenant-context`** (`type:common`,
-   `platform:backend`), holding the transaction seam, the connection hook, the
-   interceptor, and the exemption decorators. It depends only on
-   `@app/backend-common-request-context`, so it introduces no cycle.
-2. **Migrations per provider.** Postgres: create the restricted app role and the
-   system role, enable `ROW LEVEL SECURITY` + `FORCE ROW LEVEL SECURITY` on every
-   tenant-scoped table, and add one policy per table reading
-   `current_setting('app.current_tenant', true)`. Index-name budget still applies
-   (63 characters).
+1. **`@app/backend-common-tenant-context`** (`type:common`, `platform:backend`) —
+   **implemented.** Holds the ambient scope (`withAmbientTenant`,
+   `requireAmbientTenantId`), the fail-closed `TenantContextInterceptor`, and
+   `@TenantScopeExempt`. It depends only on
+   `@app/backend-common-request-context`.
+
+   Note the divergence from `social-agents`: the transaction seam does **not**
+   live here. `checkProviderScopedRuntimeImports` forbids `libs/backend/common/**`
+   from importing `@mikro-orm/*` at all, so the ORM-facing half belongs to the
+   provider.
+
+2. **`@app/backend-postgres-main` + per-domain migrations** — **implemented.**
+   `withTenantTransaction` / `withSystemContext` plus the shared policy SQL, and
+   migrations in the auth and notification sets.
+
+   The policies are installed **per migration set, not centrally**: the sets run
+   independently, so a single cross-domain migration fails with
+   `relation "notification_broadcasts" does not exist`. `auth_tenants` gets a
+   policy keyed on its own `id`, since its primary key _is_ the tenant.
+
 3. **MongoDB has no RLS.** Enforcement there must be a repository-layer guard —
    a base repository that injects the ambient tenant filter and throws when the
    ambient tenant is missing. This asymmetry needs stating in the docs rather

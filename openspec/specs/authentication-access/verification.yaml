@@ -323,3 +323,57 @@ requirements:
         target: fullstack-e2e:e2e
         lanes:
           - runtime
+  - id: REQ-AUTH-TENANT-ISOLATION-010
+    projects:
+      - '@app/backend-common-tenant-context'
+      - '@app/backend-postgres-main'
+      - '@app/backend-postgres-main-auth'
+    risk: critical
+    profiles:
+      - domain
+      - persistence
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Isolation is a database guarantee; proving it needs a real PostgreSQL with policies installed, not a scripted user journey.
+      alternativeEvidence:
+        - component
+        - security
+        - vitest
+    evidence:
+      # The same real-PostgreSQL run is both the persistence proof and the
+      # security proof: it shows cross-tenant reads and writes are denied.
+      - kind: component
+        file: libs/backend/postgres/main/shared/lib/src/tenant-transaction.component-spec.ts
+        target: '@app/backend-postgres-main:component-test'
+        lanes:
+          - main
+      - kind: security
+        file: libs/backend/postgres/main/shared/lib/src/tenant-transaction.component-spec.ts
+        target: '@app/backend-postgres-main:component-test'
+        lanes:
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/shared/lib/src/tenant-transaction.spec.ts
+        target: '@app/backend-postgres-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/common/tenant-context/lib/src/tenant-scope.spec.ts
+        target: '@app/backend-common-tenant-context:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/common/tenant-context/lib/src/tenant-context.interceptor.spec.ts
+        target: '@app/backend-common-tenant-context:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/tenant-row-level-security.migration.spec.ts
+        target: '@app/backend-postgres-main-auth:test'
+        lanes:
+          - pr
+          - main

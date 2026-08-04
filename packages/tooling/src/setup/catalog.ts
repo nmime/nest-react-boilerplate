@@ -310,6 +310,23 @@ export interface CapabilityEntry {
   environmentVariables: string[];
   backendWiring: BackendModuleWiring[];
   providerBackendWiring?: Partial<Record<DurableDatabaseProviderId, BackendModuleWiring[]>>;
+  /**
+   * Migration classes that exist only while this capability is selected.
+   *
+   * Everything else a capability owns is inert when deselected — an unimported
+   * module changes nothing. A migration is not: it is DDL that runs against the
+   * customer's database whether or not the feature is wired, which is how the
+   * tenant row-level-security policies came to ship enabled for single-tenant
+   * projects that had no way to satisfy them. Listing them here keeps them out
+   * of the base migration set until the capability is chosen.
+   */
+  providerMigrations?: Partial<Record<DurableDatabaseProviderId, CapabilityMigration[]>>;
+}
+
+/** One capability-owned migration class, addressed the way the registry imports it. */
+export interface CapabilityMigration {
+  importName: string;
+  importPath: string;
 }
 
 export type DurableDatabaseProviderId = 'postgres' | 'mongodb';
@@ -790,6 +807,52 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     dockerServices: ['discord-app-api'],
     environmentVariables: ['DISCORD_BOT_TOKEN', 'DISCORD_APPLICATION_ID', 'DISCORD_PUBLIC_KEY'],
     backendWiring: [],
+  },
+  tenancy: {
+    id: 'tenancy',
+    label: 'Multi-tenancy (PostgreSQL row-level security)',
+    activation: 'nest-module',
+    requiresCapabilities: [],
+    requiresApps: [],
+    // PostgreSQL only, and deliberately a hard conflict rather than a silent
+    // downgrade: MongoDB has no row-level security, so the equivalent guard is a
+    // repository-layer filter that does not exist yet. Selecting tenancy on
+    // MongoDB would promise an isolation guarantee nothing enforces.
+    conflictsWith: ['mongodb'],
+    requiresDurableDatabase: true,
+    ownedProjects: ['@app/backend-common-tenant-context'],
+    providerOwnedProjects: {
+      postgres: ['@app/backend-common-tenant-policy'],
+    },
+    dockerServices: [],
+    // No environment variables on purpose. The role names are compile-time
+    // constants: migration DDL is recorded in the ledger, so a name read from
+    // the environment would let two deployments of the same migration grant
+    // policies to different roles.
+    environmentVariables: [],
+    backendWiring: [],
+    providerBackendWiring: {
+      postgres: [
+        {
+          hosts: 'selected-backend',
+          importName: 'TenantContextModule',
+          importPath: '@app/backend-common-tenant-context',
+          moduleExpression: 'TenantContextModule.forRoot()',
+        },
+      ],
+    },
+    providerMigrations: {
+      postgres: [
+        {
+          importName: 'Migration20260803120000TenantRowLevelSecurity',
+          importPath: '@app/backend-postgres-main-auth',
+        },
+        {
+          importName: 'Migration20260803121000NotificationTenantRowLevelSecurity',
+          importPath: '@app/backend-postgres-main-notification',
+        },
+      ],
+    },
   },
 } as const;
 

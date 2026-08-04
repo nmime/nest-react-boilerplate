@@ -55,6 +55,7 @@ export const capabilityIds = [
   'swagger',
   'telegram-bot',
   'discord-bot',
+  'tenancy',
 ] as const;
 export type CapabilityId = (typeof capabilityIds)[number];
 

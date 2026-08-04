@@ -540,9 +540,9 @@ test('keeps the complete repository disposition inventory synchronized', () => {
   assert.deepEqual(model.errors, []);
   const expectedInventory = {
     projects: 96,
-    // 518 after adding the tenant-context, tenant-policy, and row-level-security
-    // behaviour tests.
-    behaviorTests: 518,
+    // 519 after adding the tenant-context, tenant-policy, row-level-security and
+    // TenantContextModule behaviour tests.
+    behaviorTests: 519,
     features: 5,
     scenarios: 8,
     requirements: 59,

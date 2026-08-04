@@ -4,32 +4,64 @@ Design for a setup-selectable multi-tenancy capability, derived from reviewing t
 production monorepos built on this template's lineage: `social-agents` (backend
 row-level-security enforcement) and `opwerf` (tenant switching in the frontend).
 
-Status: **stages 1 and 2 are implemented and verified; stages 3–6 are not.** See
-[Progress](#progress) for exactly what exists.
+Status: **the database half is built and proven; the application half is not
+wired, so tenancy is not usable yet.** It is an opt-in capability, and a project
+that does not select it is completely unaffected. See [Progress](#progress).
 
 ## Progress
 
-| Stage                                                         | State                                                                  |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| 1. Ambient tenant scope + fail-closed interceptor             | **Done** — `@app/backend-common-tenant-context`                        |
-| 2. PostgreSQL roles, RLS policies, isolation proof            | **Done** — `@app/backend-postgres-main` + auth/notification migrations |
-| 3. MongoDB repository-level guard                             | Not started                                                            |
-| 4. Tenant lifecycle workflows (CRUD, membership, invitations) | Not started                                                            |
-| 5. Frontend tenant provider and switcher                      | Not started                                                            |
-| 6. `--capability tenancy` setup wiring                        | Not started                                                            |
+| Stage                                                         | State                                                                               |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 1. Ambient tenant scope + fail-closed interceptor             | **Partial** — lib and `TenantContextModule` exist; no repository consumes the scope |
+| 2. PostgreSQL roles, RLS policies, isolation proof            | **Done** — proven against a non-superuser PostgreSQL                                |
+| 3. MongoDB repository-level guard                             | Not started — tenancy therefore conflicts with `mongodb`                            |
+| 4. Tenant lifecycle workflows (CRUD, membership, invitations) | Not started                                                                         |
+| 5. Frontend tenant provider and switcher                      | Not started                                                                         |
+| 6. `--capability tenancy` setup wiring                        | **Done** — catalog entry, gated migrations, closure and Helm selection              |
 
-What stages 1–2 give you: a tenant-scoped query that omits its predicate returns
-no cross-tenant rows, because PostgreSQL refuses them — not because the
-application remembered. A request that resolves no tenant is refused rather than
-silently scoped to nothing. Proven by
-`libs/backend/postgres/main/shared/lib/src/tenant-transaction.component-spec.ts`
-against a real database, including a test that deliberately reproduces the
-connection-pinning leak to show the seam is load-bearing.
+### What is true today
 
-What they do not give you: MongoDB deployments get no equivalent enforcement yet
-(stage 3), and there is still no tenant management UI or API (stages 4–5), nor a
-setup flag to select the capability (stage 6). `AUTH_PERSISTENCE=mongodb`
-therefore remains application-enforced only.
+The DDL is correct and it is proven where it matters. `tenant-transaction.component-spec.ts`
+runs against a real PostgreSQL **as a non-superuser table owner**, which is the
+shape of every managed deployment — a suite that connects as the container
+superuser proves nothing, because a superuser bypasses row-level security even
+under `FORCE`. It grants itself nothing: every privilege the seam needs has to
+come out of `tenantAppRoleUpSql()`, i.e. out of the migration.
+
+Selecting the capability is what installs any of it. With tenancy deselected,
+`capabilityMigrations` is empty and no policy, role or grant reaches the
+database.
+
+### What is NOT true yet
+
+**No repository routes through `withTenantTransaction`.** The helpers, the
+interceptor and the policies all exist, and nothing in the request path calls
+them. So on a project that selects tenancy today, the policies are installed and
+the runtime never assumes `nrb_app` — which, on a non-superuser role, means
+every query returns zero rows. Stage 1 is deliberately marked Partial for this
+reason. Do not select `--capability tenancy` for a real product until the
+repository routing lands.
+
+### Two things this design got wrong first, both worth knowing
+
+- **`BYPASSRLS` is not available to us.** Only a role that already holds it may
+  create another one, so a migration running as an ordinary managed-Postgres
+  owner cannot mint the system role the original design assumed. Cross-tenant
+  work instead runs as `nrb_system`, whose policy on every policied table is
+  `using (true)`. No superuser is needed anywhere.
+- **Role membership must be granted `WITH INHERIT FALSE`.** A policy targeted
+  `TO <role>` applies to every _member_ of that role, not only to a session that
+  assumed it. Granting membership the default way hands the application's own
+  connection the system role's `using (true)` policy permanently, and it reads
+  every tenant without ever calling `SET ROLE`. The component test asserts this
+  directly.
+
+Row-level security here is a tenant-isolation control, not a sandbox against SQL
+injection: both roles are granted to the same connecting user, so a session that
+has assumed `nrb_app` can assume `nrb_system`.
+
+MongoDB deployments get no equivalent enforcement (stage 3), and there is no
+tenant management UI or API (stages 4–5).
 
 Two known rough edges, both deliberate:
 

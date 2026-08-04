@@ -26,6 +26,7 @@ import {
   generateBackendCapabilityBootstrap,
   generateBackendCapabilityModule,
   generateCapabilitiesManifest,
+  generateCapabilityMigrationRegistry,
   generateComposeEnvironment,
   resolveConfig,
   type PlanSummary,
@@ -268,6 +269,7 @@ export function checkCapabilityActivation(workspaceRoot: string): DoctorCheck {
     const expected = [
       generateCapabilitiesManifest(summary),
       generateComposeEnvironment(summary),
+      generateCapabilityMigrationRegistry(summary),
       ...Object.keys(backendCapabilityModuleCatalog).map((appId) =>
         generateBackendCapabilityModule(appId as (typeof resolved.apps)[number], summary),
       ),

@@ -159,6 +159,7 @@ describe('schema — constants', () => {
       'swagger',
       'telegram-bot',
       'discord-bot',
+      'tenancy',
     ] as const;
     assert.deepEqual([...capabilityIds].sort(), [...expected].sort());
   });

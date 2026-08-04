@@ -128,6 +128,10 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
       'authz',
       'telegram-bot',
       'discord-bot',
+      // PostgreSQL-only, and this preset is PostgreSQL. The other four presets
+      // deliberately stay single-tenant: tenancy installs FORCE ROW LEVEL
+      // SECURITY, which a project that never sets a tenant cannot satisfy.
+      'tenancy',
     ],
   },
 

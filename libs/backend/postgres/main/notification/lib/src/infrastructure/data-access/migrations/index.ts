@@ -21,8 +21,14 @@ export const notificationMigrations = [
   Migration20260721160000AdminNotificationBroadcasts,
   Migration20260726180000NotificationClaimTokens,
   Migration20260729190000NotificationDeliveryClaimOwnership,
-  Migration20260803121000NotificationTenantRowLevelSecurity,
 ] as const;
+
+/**
+ * Notification migrations that exist only while the `tenancy` capability is
+ * selected. See `authTenancyMigrations` for why this DDL is not shipped by
+ * default.
+ */
+export const notificationTenancyMigrations = [Migration20260803121000NotificationTenantRowLevelSecurity] as const;
 
 export const notificationMigrationOptions: MigrationsOptions = {
   tableName: 'mikro_orm_migrations',

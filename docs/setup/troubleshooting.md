@@ -119,6 +119,27 @@ pnpm run test:docker-smoke
 2. Verify `.env` has correct database credentials.
 3. Check that PostgreSQL image can pull: `docker pull postgres:17.6-alpine`.
 
+### Testcontainers suites fail without a Docker daemon
+
+```text
+FAIL src/nats.runtime.spec.ts > NATS runtime smoke
+Error: Could not find a working container runtime strategy
+```
+
+**Cause**: Runtime smoke suites such as
+`libs/backend/common/nats/lib/src/nats.runtime.spec.ts` start real service
+containers through Testcontainers. With `CI=true` they fail closed when no
+daemon is reachable: a missing daemon there is an infrastructure fault, not a
+reason to skip the smoke.
+
+**Fix**:
+
+1. Preferred: run the suite on a host with a running Docker daemon and the
+   Compose plugin (`docker info`).
+2. On a Dockerless runner, set `SKIP_TESTCONTAINERS=true` to downgrade the
+   Docker-backed smoke suites to reported skips instead of hard failures. The
+   same variable covers the shared `hasDockerRuntime()` component-test guard.
+
 ## Nx build issues
 
 ### `nx build` fails with module resolution errors

@@ -1,5 +1,18 @@
-# GitLab CI — mirrors .github/workflows/ci.yml
-# Variables: NODE_VERSION_FILE, PNPM_VERSION, CI, NX_DAEMON
+# GitLab CI — the PRIMARY pipeline for this template.
+#
+# GitHub Actions runs a documented subset (see docs/ci-lanes.md); this file is
+# where the full gate matrix lives. Keep that direction in mind when adding a
+# gate: it belongs here first.
+#
+# Three things this file gets deliberately right, each of which was wrong before:
+#
+#   1. `workflow:` — without it GitLab creates BOTH a branch pipeline and a merge
+#      request pipeline for every push, doubling spend for no extra signal.
+#   2. `interruptible: true` by default — a superseded pipeline is cancelled
+#      rather than run to completion.
+#   3. Caching — this file previously had none at all. `grep cache` matched only
+#      `apk add --no-cache`, so every job re-downloaded the pnpm store and every
+#      Nx task ran cold on every pipeline.
 
 stages:
   - security
@@ -10,11 +23,69 @@ stages:
   - reports
   - release
 
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+    - if: $CI_PIPELINE_SOURCE == 'web'
+    - when: never
+
+default:
+  interruptible: true
+
 variables:
   CI: 'true'
   NX_DAEMON: 'false'
   PNPM_VERSION: '11.15.1'
   NODE_VERSION_FILE: .nvmrc
+  # Matches .github/workflows/ci.yml so a cache entry means the same thing on
+  # both providers.
+  NX_CACHE_DIRECTORY: .nx/cache
+  PNPM_STORE_DIR: .pnpm-store
+  # Full history: `nx affected` and the spec-evidence lane both diff against a
+  # base commit, and GitLab's default depth of 20 silently breaks them.
+  GIT_DEPTH: '0'
+
+# Shared Node setup: pnpm store cache, Nx local cache, and the self-hosted
+# remote cache when its variables are configured.
+#
+# The remote cache is env-only by design — docs/ci-cache.md forbids a token in
+# nx.json, source, or image build args. Nx 23 resolves it from
+# NX_SELF_HOSTED_REMOTE_CACHE_SERVER; note that a plain S3/MinIO bucket URL does
+# NOT work, because Nx speaks GET/PUT on <base>/v1/cache/<hash>. When the
+# variables are unset (forks, or before the cache server exists) Nx falls back to
+# the local cache silently, which is intended.
+#
+# Write access is restricted to the default branch: an MR pipeline that could
+# write cache entries main later reads is a supply-chain write primitive.
+.node:
+  image: node:24.18.0-alpine
+  variables:
+    NX_SELF_HOSTED_REMOTE_CACHE_SERVER: $NX_REMOTE_CACHE_URL
+    NX_SELF_HOSTED_REMOTE_CACHE_ACCESS_TOKEN: $NX_REMOTE_CACHE_TOKEN_READ
+  before_script:
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm config set store-dir $PNPM_STORE_DIR
+    - |
+      if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ] && [ -n "$NX_REMOTE_CACHE_TOKEN_WRITE" ]; then
+        export NX_SELF_HOSTED_REMOTE_CACHE_ACCESS_TOKEN="$NX_REMOTE_CACHE_TOKEN_WRITE"
+      fi
+    - pnpm install --frozen-lockfile --prefer-offline
+  cache:
+    - key:
+        files:
+          - pnpm-lock.yaml
+      paths:
+        - .pnpm-store
+      policy: pull-push
+    # Per-job local cache, which is only a fallback: cross-job and cross-provider
+    # reuse comes from the remote cache above.
+    - key: nx-$CI_JOB_NAME
+      paths:
+        - .nx/cache
+      policy: pull-push
 
 # Include GitLab SAST/Dependency Scanning
 include:
@@ -65,13 +136,12 @@ helm-validation:
     DOCKER_TLS_CERTDIR: ''
   timeout: 10m
 
+# Cheap, fail-fast gates only. Everything expensive lives in `full-check`, which
+# this job gates. Previously both jobs ran lint, typecheck and the whole test
+# suite over all 75+ projects — the same work twice per pipeline, with no cache.
 fast-check:
+  extends: .node
   stage: test
-  image: node:24.18.0-alpine
-  before_script:
-    - corepack enable pnpm
-    - corepack prepare pnpm@$PNPM_VERSION --activate
-    - pnpm install --frozen-lockfile
   script:
     - |
       if [ -n "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-}" ]; then
@@ -80,12 +150,13 @@ fast-check:
       else
         pnpm run git:conventions -- --branch "$CI_COMMIT_BRANCH" --range "$CI_COMMIT_BEFORE_SHA..HEAD"
       fi
+    # These four had no GitLab equivalent at all and are cheap, so they belong in
+    # the fail-fast job rather than being GitHub-only.
+    - pnpm run tooling:static-check
+    - pnpm run docs:check
     - pnpm run spec:validate
-    - pnpm exec nx run-many -t lint --all
-    - pnpm exec nx run-many -t typecheck --all
-    - pnpm format:check
-    - pnpm run test:all
-  timeout: 30m
+    - pnpm run format:check
+  timeout: 15m
 
 spec-evidence:
   stage: test
@@ -124,20 +195,20 @@ spec-evidence:
   timeout: 45m
 
 full-check:
+  extends: .node
   stage: test
-  image: node:24.18.0-alpine
+  needs:
+    - fast-check
   services:
     - postgres:17.6-alpine
   variables:
+    NX_SELF_HOSTED_REMOTE_CACHE_SERVER: $NX_REMOTE_CACHE_URL
+    NX_SELF_HOSTED_REMOTE_CACHE_ACCESS_TOKEN: $NX_REMOTE_CACHE_TOKEN_READ
     POSTGRES_DB: app_test
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
     DATABASE_URL: 'postgresql://postgres:postgres@postgres:5432/app_test'
     TEST_DB_URL: 'postgresql://postgres:postgres@postgres:5432/app_test'
-  before_script:
-    - corepack enable pnpm
-    - corepack prepare pnpm@$PNPM_VERSION --activate
-    - pnpm install --frozen-lockfile
   script:
     - pnpm run db:migrations:check
     - pnpm run lib:configs:check
@@ -147,9 +218,18 @@ full-check:
     - pnpm run api:contracts:consumer
     - pnpm run api:openapi:fuzz
     - pnpm run test:property
-    - pnpm run lint:all
-    - pnpm run typecheck:all
-    - pnpm run test:coverage:all
+    # Affected on a merge request, everything on the default branch. The base is
+    # GitLab's own diff-base SHA, which is why GIT_DEPTH must be 0.
+    - |
+      if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]; then
+        pnpm exec nx affected -t lint typecheck build --base="$CI_MERGE_REQUEST_DIFF_BASE_SHA" --head=HEAD
+        pnpm exec nx affected -t test --base="$CI_MERGE_REQUEST_DIFF_BASE_SHA" --head=HEAD -- --coverage
+      else
+        pnpm run lint:all
+        pnpm run typecheck:all
+        pnpm run build:all
+        pnpm run test:coverage:all
+      fi
   timeout: 60m
 
 mongodb-validation:

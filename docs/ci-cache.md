@@ -43,6 +43,52 @@ To enable **Nx Cloud** (no `nx.json` secret required):
    GitHub Actions cache service, so adding the line is a safe no-op until you
    provision the backend.
 
-For a **self-hosted S3/MinIO** cache, install the Nx self-hosted cache plugin and
-supply the bucket credentials through the standard `AWS_*` job-level env from CI
-secrets — again, never committed to `nx.json`.
+### Self-hosted cache, shared by GitLab and GitHub
+
+Nx is pinned at 23.1.0, and two things that older guides recommend do not work
+here. `@nx/s3-cache` declares `peerDependencies: { "nx": ">= 18 < 23" }`, so it
+cannot be installed against this version without dragging a second `@nx/devkit`
+major into the closure. Custom task runners are worse than unsupported: they are
+silently ignored. `getTasksRunnerPath()` in `nx/dist/src/tasks-runner/run-command.js`
+only ever resolves `nx-cloud` or the built-in runner, so a
+`tasksRunnerOptions.default.runner` pointing at an S3 runner is accepted by the
+schema, produces a green build, and caches nothing. Verify by observing a remote
+cache hit, never by "it didn't error".
+
+The supported path is the HTTP cache, configured entirely by environment:
+
+| Variable                                   | Meaning                                                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `NX_SELF_HOSTED_REMOTE_CACHE_SERVER`       | Base URL. Nx calls `GET`/`PUT` on `<base>/v1/cache/<hash>` with `application/octet-stream`. |
+| `NX_SELF_HOSTED_REMOTE_CACHE_ACCESS_TOKEN` | Bearer token.                                                                               |
+
+**A bucket URL will not work.** MinIO and S3 do not implement that protocol; a
+raw bucket endpoint 404s or 403s on every retrieve and store, and Nx degrades to
+local-only _without failing the build_. Run a small cache server in front of the
+bucket.
+
+In this repository the GitLab side is already wired: `.gitlab-ci.yml`'s `.node`
+template reads `NX_REMOTE_CACHE_URL`, `NX_REMOTE_CACHE_TOKEN_READ` and
+`NX_REMOTE_CACHE_TOKEN_WRITE` from protected, masked CI variables. Writes are
+restricted to the default branch — an MR pipeline that can write entries `main`
+later reads is a supply-chain write primitive, not a cache.
+
+Two correctness prerequisites, both of which are now satisfied and both of which
+must stay satisfied:
+
+- **Task inputs must be honest.** A shared cache turns a local-only
+  under-invalidation bug into a cross-machine false green. The worst case here
+  was `@app/backend-common-tenant-policy:test`, the guard asserting that every
+  tenant-scoped table has a row-level-security policy: it scans entity sources
+  across `libs/backend/postgres/main` and did not declare them as inputs, so a
+  new table could be added and the guard replayed green from cache. Its
+  `project.json` now declares
+  `{workspaceRoot}/libs/backend/postgres/main/**/*.entity.ts`.
+- **Platform must be in the hash.** GitHub runs `ubuntu-22.04` (glibc), GitLab
+  runs `node:24.18.0-alpine` (musl). `nx.json`'s `sharedGlobals` therefore
+  includes a runtime input of node version, platform and arch, so the two
+  providers cannot replay each other's binary-bearing outputs.
+
+Fork pull requests receive no secrets, so these variables are empty there and Nx
+falls back to the local cache. That is intended; a fork's slower run is not a
+cache regression.

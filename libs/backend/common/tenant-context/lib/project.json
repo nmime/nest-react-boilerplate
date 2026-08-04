@@ -3,18 +3,11 @@
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/common/tenant-context/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:backend",
-    "type:common",
-    "scope:shared",
-    "boundary:backend-kernel"
-  ],
+  "tags": ["platform:backend", "type:common", "scope:shared", "boundary:backend-kernel"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/backend/common/tenant-context/lib",
         "main": "libs/backend/common/tenant-context/lib/src/index.ts",
@@ -26,11 +19,7 @@
         "production",
         "^production",
         {
-          "externalDependencies": [
-            "@nestjs/common",
-            "@nestjs/core",
-            "rxjs"
-          ]
+          "externalDependencies": ["@nestjs/common", "@nestjs/core", "rxjs"]
         }
       ]
     },
@@ -45,14 +34,10 @@
         "default",
         "^production",
         {
-          "externalDependencies": [
-            "vitest"
-          ]
+          "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": [
-        "{workspaceRoot}/coverage/libs/backend/common/tenant-context/lib"
-      ]
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/common/tenant-context/lib"]
     }
   }
 }

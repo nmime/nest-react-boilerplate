@@ -1,6 +1,6 @@
 // @requirements REQ-AUTH-TENANT-ISOLATION-010
 import { describe, expect, it } from 'vitest';
-import { TenantAppRole, TenantContextGuc } from '@app/backend-common-tenant-policy';
+import { TenantAppRole, TenantContextGuc, TenantSystemRole } from '@app/backend-common-tenant-policy';
 import { withSystemContext, withTenantTransaction } from './tenant-transaction';
 
 /** Records what a scoped transaction executes, and on which connection context. */
@@ -89,11 +89,33 @@ describe('withTenantTransaction', () => {
 });
 
 describe('withSystemContext', () => {
-  it('opens a transaction without setting any tenant scope', async () => {
+  it('assumes the system role on the pinned connection', async () => {
+    // The mechanism is a role whose policy is `using (true)`, not a BYPASSRLS
+    // connection: only a role that already holds BYPASSRLS may create one, so a
+    // migration running as an ordinary managed-Postgres owner cannot mint it.
     const { em, statements } = recordingEntityManager();
 
     await expect(withSystemContext(em, () => 'system')).resolves.toBe('system');
-    // No role switch and no GUC: the BYPASSRLS connection is the mechanism.
-    expect(statements).toEqual([]);
+
+    expect(statements.map((entry) => entry.sql)).toEqual([`set local role "${TenantSystemRole}"`]);
+    expect(statements[0]?.context).toEqual({ id: 'pinned-connection' });
+  });
+
+  it('sets no tenant GUC, so system work is not scoped to one tenant', async () => {
+    const { em, statements } = recordingEntityManager();
+
+    await withSystemContext(em, () => undefined);
+
+    expect(statements.some((entry) => entry.sql.includes(TenantContextGuc))).toBe(false);
+  });
+
+  it('propagates a failure from the work', async () => {
+    const { em } = recordingEntityManager();
+
+    await expect(
+      withSystemContext(em, () => {
+        throw new Error('system work failed');
+      }),
+    ).rejects.toThrow('system work failed');
   });
 });

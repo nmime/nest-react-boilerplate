@@ -6,7 +6,8 @@
     ".nrb/summary.md": "33b92a573c27e944c9dcc5c64d79c1b1e53bf4d0cbe72d38f0395b09dd23a891",
     ".nrb/workspace.json": "7c8dd8240160fe01b6ac69a26d006f3e92860b3d49ed8b109693f62013601468",
     ".nrb/capabilities.json": "86b7581317025c7b1726deedec89f940b8cfeb8d626d54529b3b6c5a45a51021",
-    ".nrb/capabilities.env": "4082b1fe7893e6d4e97a31cb084143cb2ec209357697141e954cefd1e6fe942b",
+    ".nrb/capabilities.env": "b7b9f3bd4261922a8af7667f49abdd23b9f9fa6dbdc3ce8b9035986973240a8c",
+    "packages/tooling/src/commands/db/capability-migrations.generated.ts": "41f98d0a77a0e8681b651431e53408d1914faaf48eb57e1885648ecb8cef74fe",
     "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "aaafd912b35e080fb6713e9db11e721b698d801269afc5cc9e7e79ae06cc44b6",
     "apps/backend/user/user-app-api/src/capabilities.generated.ts": "8f3e8729c0c651ba1380918ffd00f5a0a7f2c7ce2c5b394cd0e75a0859761d01",
     "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "2ca0c384b7ca094b81cf9df71b92d5d58a529c8eda21f15ab8e6e61984b96a2d",
@@ -22,5 +23,5 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
   },
-  "digest": "d1cedb02b08add758f00a7c0f0cb10735f5fd0e90d77a8b68a449db48c7735bf"
+  "digest": "6d0a69d14739ba008d751efe2e124ac947a6a2e451938123f327d441dfb0e516"
 }

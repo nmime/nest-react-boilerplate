@@ -339,7 +339,11 @@ describe('feature generator', () => {
         migrationRunner,
         /const \{ supportCasesMigrations \} = require\("@app\/backend-postgres-main-support-cases"\);/u,
       );
-      assert.match(migrationRunner, /\.\.\.notificationMigrations, \.\.\.supportCasesMigrations/u);
+      // A scaffolded feature appends to the end of the list, which now sits
+      // after the capability-owned registry. Both orders are correct today —
+      // capability migrations only policy tables the base sets create — but the
+      // assertion pins the actual shape so a reorder is a deliberate decision.
+      assert.match(migrationRunner, /\.\.\.capabilityMigrations, \.\.\.supportCasesMigrations/u);
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/AGENTS.md'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/shared/lib/README.md'));
       assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/AGENTS.md'));

@@ -56,8 +56,23 @@ export const authMigrations = [
   Migration20260722091000DropLegacyAuthUserAccessCache,
   Migration20260722092000CreateCanonicalSessions,
   Migration20260722100000GrantFeatureFlagPermissions,
-  Migration20260803120000TenantRowLevelSecurity,
 ] as const;
+
+/**
+ * Auth migrations that exist only while the `tenancy` capability is selected.
+ *
+ * Kept out of {@link authMigrations} deliberately. Row-level security is not
+ * inert when unused: it installs `FORCE ROW LEVEL SECURITY` on every
+ * tenant-scoped table, and on any deployment whose database role is not a
+ * superuser — every managed Postgres, and the repository's own staging sample —
+ * a runtime that never sets `app.current_tenant` then reads zero rows and
+ * cannot insert at all. A single-tenant project must never receive this DDL.
+ *
+ * `pnpm nrb setup --capability tenancy` regenerates
+ * `packages/tooling/src/commands/db/capability-migrations.generated.ts`, which
+ * is what actually appends these to the migrator's list.
+ */
+export const authTenancyMigrations = [Migration20260803120000TenantRowLevelSecurity] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
   tableName: AuthMigrationsTableName,

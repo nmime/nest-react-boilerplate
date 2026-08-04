@@ -7,7 +7,7 @@ import {
 } from '@app/backend-common-tenant-policy';
 import { describe, expect, it } from 'vitest';
 import { Migration20260803120000TenantRowLevelSecurity } from './Migration20260803120000TenantRowLevelSecurity';
-import { authMigrations } from './index';
+import { authMigrations, authTenancyMigrations } from './index';
 
 function collectSql(migration: { addSql(sql: string): void }, run: () => void): string {
   const statements: string[] = [];
@@ -34,8 +34,12 @@ const downSql = (): string => {
 };
 
 describe('tenant row-level-security migration', () => {
-  it('is registered in the auth migration set', () => {
-    expect(authMigrations.map((entry) => entry.name)).toContain('Migration20260803120000TenantRowLevelSecurity');
+  it('is owned by the tenancy capability, not the base auth set', () => {
+    // The base set must not carry it. Row-level security is DDL that runs
+    // against every project's database, and a single-tenant project has no
+    // runtime able to satisfy the policies — it would read zero rows.
+    expect(authMigrations.map((entry) => entry.name)).not.toContain('Migration20260803120000TenantRowLevelSecurity');
+    expect(authTenancyMigrations.map((entry) => entry.name)).toContain('Migration20260803120000TenantRowLevelSecurity');
   });
 
   it('creates the restricted role without bypass rights', () => {

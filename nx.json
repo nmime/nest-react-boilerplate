@@ -8,11 +8,13 @@
       "default",
       "!{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
-      "!{projectRoot}/**/*.component-spec.[jt]s",
+      "!{projectRoot}/**/*.component-spec.[jt]s?(x)",
       "!{projectRoot}/**/*.stories.@(ts|tsx|mdx)",
+      "!{projectRoot}/**/*.md",
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/vitest.config.mts",
       "!{projectRoot}/vitest.config.[jt]s",
+      "!{projectRoot}/vitest.*.config.[cm]ts",
       "!{projectRoot}/playwright.config.[jt]s",
       "!{projectRoot}/playwright.config.[cm]ts",
       "!{projectRoot}/src/test-setup.[jt]s",
@@ -23,7 +25,11 @@
       "{workspaceRoot}/tsconfig.lint.json",
       "{workspaceRoot}/eslint.config.js",
       "{workspaceRoot}/package.json",
-      "{workspaceRoot}/pnpm-lock.yaml"
+      "{workspaceRoot}/pnpm-lock.yaml",
+      "{workspaceRoot}/pnpm-workspace.yaml",
+      "{workspaceRoot}/.npmrc",
+      "{workspaceRoot}/.nvmrc",
+      { "runtime": "node -p \"process.version+'-'+process.platform+'-'+process.arch\"" }
     ]
   },
   "plugins": [

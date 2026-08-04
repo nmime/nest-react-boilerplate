@@ -27,7 +27,19 @@
         "cwd": ".",
         "command": "node packages/tooling/scripts/run-tests.mjs"
       },
-      "inputs": ["default"]
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest", "typescript"]
+        },
+        "{workspaceRoot}/.github/workflows/**/*",
+        "{workspaceRoot}/.gitlab-ci.yml",
+        "{workspaceRoot}/{apps,libs}/**/project.json",
+        "{workspaceRoot}/openspec/**/*",
+        "{workspaceRoot}/docs/**/*.md",
+        "{workspaceRoot}/nx.json"
+      ]
     },
     "static-check": {
       "executor": "nx:run-commands",
@@ -41,7 +53,13 @@
         "^production",
         {
           "externalDependencies": ["typescript"]
-        }
+        },
+        "{workspaceRoot}/.github/workflows/**/*",
+        "{workspaceRoot}/.gitlab-ci.yml",
+        "{workspaceRoot}/{apps,libs}/**/project.json",
+        "{workspaceRoot}/openspec/**/*",
+        "{workspaceRoot}/docs/**/*.md",
+        "{workspaceRoot}/nx.json"
       ]
     },
     "check": {

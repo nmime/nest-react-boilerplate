@@ -41,6 +41,13 @@ if (!dist || !appName || !contains || !coverageDir) {
   );
 }
 
+/**
+ * How long to wait for the marker text to appear after navigation. Generous
+ * because a loaded CI runner hydrates slowly, and a slow pass beats a flaky
+ * failure in a blocking lane.
+ */
+const pageTextTimeoutMs = Number(process.env["FRONTEND_E2E_PAGE_TEXT_TIMEOUT_MS"] ?? "20000");
+
 const workspaceRoot = realpathSync(process.cwd());
 const distRoot = path.resolve(workspaceRoot, "dist");
 const root = realpathSync(
@@ -90,9 +97,25 @@ try {
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
   await page.goto(baseUrl, { waitUntil: "networkidle" });
-  const bodyText = await page.locator("body").innerText();
-  if (!bodyText.includes(contains)) {
-    throw new Error(`Expected ${appName} page text to contain: ${contains}`);
+  // `networkidle` can settle before React hydrates and its session probe
+  // resolves, so the marker text has to be POLLED. Reading `innerText` once made
+  // this blocking gate flaky: the admin app intermittently failed on
+  // `Expected admin-app page text to contain: Access denied` while passing
+  // locally and on the very next run.
+  try {
+    await page.waitForFunction(
+      (expected: string) => document.body.innerText.includes(expected),
+      contains,
+      { timeout: pageTextTimeoutMs },
+    );
+  } catch {
+    // The previous error named only the expectation, which left a CI failure with
+    // no way to tell "still loading" from "rendered something else".
+    const bodyText = await page.locator("body").innerText();
+    throw new Error(
+      `Expected ${appName} page text to contain: ${contains}\n` +
+        `Waited ${pageTextTimeoutMs}ms. Rendered body text was:\n${bodyText.slice(0, 800)}`,
+    );
   }
 
   const coverage = await page.evaluate(() => globalThis.__coverage__);

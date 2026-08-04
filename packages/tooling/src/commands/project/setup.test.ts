@@ -308,7 +308,18 @@ describe("setup — repeatable command selection", () => {
       const selected = JSON.parse(afterAdd) as { apps: string[] };
       assert.deepEqual(selected.apps, ["auth-app-api", "landing-app", "user-app", "user-app-api"]);
 
-      assert.deepEqual(readdirSync(workspaceRoot).sort(), [".nrb", "apps", "nrb.config.json"]);
+      // `packages` joined this list when capability-owned migrations arrived:
+      // the registry the migrator imports lives beside the migrator config, at
+      // packages/tooling/src/commands/db/capability-migrations.generated.ts.
+      // The invariant this assertion protects is unchanged — setup writes only
+      // generated files in canonical locations, never an invented tree — and the
+      // three assertions below still pin that.
+      assert.deepEqual(readdirSync(workspaceRoot).sort(), [".nrb", "apps", "nrb.config.json", "packages"]);
+      assert.equal(
+        existsSync(join(workspaceRoot, "packages/tooling/src/commands/db/capability-migrations.generated.ts")),
+        true,
+        "setup must generate the capability migration registry beside the migrator config",
+      );
       assert.equal(
         existsSync(join(workspaceRoot, "apps/backend/user/user-app-api/src/capabilities.generated.ts")),
         true,

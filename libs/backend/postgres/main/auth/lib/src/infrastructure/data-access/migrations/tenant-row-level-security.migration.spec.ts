@@ -1,5 +1,10 @@
 // @requirements REQ-AUTH-TENANT-ISOLATION-010
-import { TenantAppRole, TenantContextGuc, TenantScopedTablesByDomain } from '@app/backend-common-tenant-policy';
+import {
+  TenantAppRole,
+  TenantContextGuc,
+  TenantScopedTablesByDomain,
+  TenantSystemRole,
+} from '@app/backend-common-tenant-policy';
 import { describe, expect, it } from 'vitest';
 import { Migration20260803120000TenantRowLevelSecurity } from './Migration20260803120000TenantRowLevelSecurity';
 import { authMigrations } from './index';
@@ -51,10 +56,27 @@ describe('tenant row-level-security migration', () => {
     expect(sql).toContain(`alter table "${table}" force row level security;`);
     expect(sql).toContain(`grant select, insert, update, delete on "${table}" to "${TenantAppRole}";`);
     expect(sql).toContain(
-      `create policy "${table}_tenant_isolation" on "${table}" ` +
+      `create policy "${table}_tenant_isolation" on "${table}" to "${TenantAppRole}" ` +
         `using ("tenant_id" = nullif(current_setting('${TenantContextGuc}', true), '')::uuid) ` +
         `with check ("tenant_id" = nullif(current_setting('${TenantContextGuc}', true), '')::uuid);`,
     );
+    // Targeted at the role, never left untargeted: an untargeted policy also
+    // binds the table owner, so the migrator's own data backfills would match
+    // zero rows.
+    expect(sql).toContain(
+      `create policy "${table}_tenant_system" on "${table}" to "${TenantSystemRole}" using (true) with check (true);`,
+    );
+  });
+
+  it('grants membership without inheritance, so the connecting role reads nothing by default', () => {
+    // A policy targeted `TO <role>` binds every MEMBER of that role. Without
+    // `inherit false` the application's own connection picks up the system
+    // role's `using (true)` policy and sees every tenant with no SET ROLE.
+    const sql = upSql();
+
+    for (const role of [TenantAppRole, TenantSystemRole]) {
+      expect(sql).toContain(`execute format('grant %I to %I with inherit false, set true', '${role}', current_user)`);
+    }
   });
 
   it('writes a fail-closed predicate rather than a permissive fallback', () => {
@@ -62,7 +84,8 @@ describe('tenant row-level-security migration', () => {
 
     // `nullif(..., '')::uuid` is NULL with no tenant set, and `tenant_id = NULL`
     // matches nothing. A `coalesce` to a real id, or an `or ... is null` escape,
-    // would turn the absence of a tenant into full visibility.
+    // would turn the absence of a tenant into full visibility. The auth domain
+    // has no shared tier, so the escape must not appear here at all.
     expect(sql).not.toMatch(/coalesce\s*\(\s*current_setting/iu);
     expect(sql).not.toMatch(/or\s+"tenant_id"\s+is\s+null/iu);
   });

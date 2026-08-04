@@ -1,5 +1,5 @@
 import type { EntityManager } from '@mikro-orm/postgresql';
-import { TenantAppRole, TenantContextGuc } from '@app/backend-common-tenant-policy';
+import { TenantAppRole, TenantContextGuc, TenantSystemRole } from '@app/backend-common-tenant-policy';
 
 /**
  * The ORM-facing half of tenant isolation. The DDL and the table registry live in
@@ -7,7 +7,26 @@ import { TenantAppRole, TenantContextGuc } from '@app/backend-common-tenant-poli
  * pruned migrator image can install policies without pulling this barrel's Nest
  * module graph (and `@fastify/cookie`) along with it.
  */
-export { TenantAppRole, TenantContextGuc };
+export { TenantAppRole, TenantContextGuc, TenantSystemRole };
+
+/**
+ * `SET LOCAL ROLE` on the transaction's pinned connection.
+ *
+ * The role name is a controlled constant, never user input, so interpolating it
+ * is safe — `SET LOCAL ROLE` rejects a bind parameter.
+ */
+async function setLocalOnTransaction(tx: EntityManager, sql: string, params: unknown[] = []): Promise<void> {
+  // `getTransactionContext()` is loosely typed upstream; keep it opaque so
+  // passing it through stays type-safe here. Passing it at all is the whole
+  // point: without it MikroORM borrows an arbitrary pooled connection and the
+  // `SET LOCAL` evaporates.
+  const transactionContext: unknown = tx.getTransactionContext();
+  await tx.getConnection().execute(sql, params, 'run', transactionContext);
+}
+
+async function assumeRole(tx: EntityManager, role: string): Promise<void> {
+  await setLocalOnTransaction(tx, `set local role "${role}"`);
+}
 
 /**
  * Runs `work` in a transaction whose whole lifetime has the tenant GUC and the
@@ -28,17 +47,10 @@ export async function withTenantTransaction<T>(
   work: (scoped: EntityManager) => Promise<T> | T,
 ): Promise<T> {
   return em.transactional(async (tx) => {
-    const connection = tx.getConnection();
-    // `getTransactionContext()` is loosely typed upstream; keep it opaque so
-    // passing it through stays type-safe here.
-    const transactionContext: unknown = tx.getTransactionContext();
-
-    // The role name is a controlled constant, never user input, so interpolating
-    // it is safe — `SET LOCAL ROLE` rejects a bind parameter.
-    await connection.execute(`set local role "${TenantAppRole}"`, [], 'run', transactionContext);
+    await assumeRole(tx, TenantAppRole);
     // The tenant id IS bound; MikroORM inlines it as an escaped literal because
     // `SET` does not accept parameters, which keeps it injection-safe.
-    await connection.execute(`set local ${TenantContextGuc} = ?`, [tenantId], 'run', transactionContext);
+    await setLocalOnTransaction(tx, `set local ${TenantContextGuc} = ?`, [tenantId]);
 
     return work(tx);
   });
@@ -46,17 +58,26 @@ export async function withTenantTransaction<T>(
 
 /**
  * Runs `work` for operations that legitimately span tenants — accepting an
- * invitation by token, listing a user's tenants, billing rollups.
+ * invitation by token, listing a user's tenants, login by email, billing
+ * rollups, and the migrator's own data backfills.
  *
- * `systemEm` must be the EntityManager of a `BYPASSRLS` connection. A magic GUC
- * value cannot serve this purpose: once policies are fail-closed against
- * `current_setting('app.current_tenant', true)`, no value yields rows across
- * tenants, so a cross-tenant read would silently return empty rather than fail.
- * The transaction here is only for atomicity and connection pinning.
+ * The mechanism is {@link TenantSystemRole}, whose policy on every policied
+ * table is `using (true)`. A `BYPASSRLS` connection would be the textbook
+ * answer and is not available to us: only a role that already holds `BYPASSRLS`
+ * may create another one, so a migration running as an ordinary managed-Postgres
+ * owner cannot mint it. A magic GUC value cannot serve either — once policies
+ * are fail-closed against `current_setting(..., true)`, no value yields rows
+ * across tenants, so a cross-tenant read would silently return empty.
+ *
+ * This runs on the SAME EntityManager as tenant work; no second data source is
+ * needed. The transaction bounds the role switch and pins the connection.
  */
 export async function withSystemContext<T>(
   systemEm: EntityManager,
   work: (system: EntityManager) => Promise<T> | T,
 ): Promise<T> {
-  return systemEm.transactional(work);
+  return systemEm.transactional(async (tx) => {
+    await assumeRole(tx, TenantSystemRole);
+    return work(tx);
+  });
 }

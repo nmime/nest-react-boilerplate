@@ -1,9 +1,11 @@
 import { Migration } from '@mikro-orm/migrations';
 import {
   TenantScopedTablesByDomain,
+  TenantSharedTierTablesByDomain,
   tenantAppRoleUpSql,
   tenantRowLevelSecurityDownSql,
   tenantRowLevelSecurityUpSql,
+  tenantSharedTierRowLevelSecurityUpSql,
 } from '@app/backend-common-tenant-policy';
 
 /**
@@ -14,6 +16,12 @@ import {
  * run independently — these tables do not exist while the auth set is running.
  * Creating the restricted role is idempotent, so emitting it from both is safe
  * whichever set runs first.
+ *
+ * `notification_templates` takes the shared-tier policy rather than the strict
+ * one. Its own CHECK constraint requires `tenant_id is null` for every
+ * `source = 'code'` row, so under the strict predicate — NULL, not false — every
+ * built-in template is invisible to every tenant and a fresh one cannot be
+ * inserted at all.
  */
 export class Migration20260803121000NotificationTenantRowLevelSecurity extends Migration {
   override up(): void {
@@ -26,10 +34,16 @@ export class Migration20260803121000NotificationTenantRowLevelSecurity extends M
         this.addSql(statement);
       }
     }
+
+    for (const table of TenantSharedTierTablesByDomain.notification) {
+      for (const statement of tenantSharedTierRowLevelSecurityUpSql(table)) {
+        this.addSql(statement);
+      }
+    }
   }
 
   override down(): void {
-    for (const table of TenantScopedTablesByDomain.notification) {
+    for (const table of [...TenantScopedTablesByDomain.notification, ...TenantSharedTierTablesByDomain.notification]) {
       for (const statement of tenantRowLevelSecurityDownSql(table)) {
         this.addSql(statement);
       }

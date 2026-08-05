@@ -831,16 +831,22 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     // policies to different roles.
     environmentVariables: [],
     backendWiring: [],
-    providerBackendWiring: {
-      postgres: [
-        {
-          hosts: 'selected-backend',
-          importName: 'TenantContextModule',
-          importPath: '@app/backend-common-tenant-context',
-          moduleExpression: 'TenantContextModule.forRoot()',
-        },
-      ],
-    },
+    // No runtime wiring yet, deliberately.
+    //
+    // `TenantContextModule.forRoot()` registers a FAIL-CLOSED interceptor: a
+    // tenant-scoped request that resolves no tenant is refused. That is correct
+    // only once every scoped route can actually resolve one, and no repository
+    // routes through `withTenantTransaction` yet. Registering it now turned
+    // `GET /api/auth/get-session` into a 500 in the enterprise preset's e2e
+    // suite — the interceptor working exactly as designed, against an
+    // application that cannot yet satisfy it.
+    //
+    // So the capability currently ships the DATABASE half: the policies, the
+    // roles, and the migrations, all opt-in. The module exists and is tested;
+    // it gets wired here in the same change that routes the repositories,
+    // because the two are only correct together. See
+    // docs/multi-tenancy-capability.md, stage 1.
+    providerBackendWiring: {},
     // Deep relative paths, never the package barrel. `@app/backend-postgres-main-auth`
     // re-exports auth-postgres.module.ts, so importing the barrel pulls
     // @app/backend-feature-auth-shared → rbac.guard.ts → @nestjs/core into the

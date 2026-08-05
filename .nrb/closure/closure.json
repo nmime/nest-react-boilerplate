@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
-  "graphDigest": "3eca9d45c005ca4c7ab1bb0c99a9f3d9a6bf8baec66326da5dc9db01e7831d0e",
+  "graphDigest": "198f7f1f6d725d0de1980f4e4023af687e793efc101778ba91ac6a5289e9e4dc",
   "provider": "postgres",
   "roots": [
     "admin-app",

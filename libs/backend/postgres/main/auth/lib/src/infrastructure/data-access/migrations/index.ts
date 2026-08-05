@@ -25,7 +25,7 @@ import { Migration20260722090000DropLegacyRefreshTokens } from './Migration20260
 import { Migration20260722091000DropLegacyAuthUserAccessCache } from './Migration20260722091000DropLegacyAuthUserAccessCache';
 import { Migration20260722092000CreateCanonicalSessions } from './Migration20260722092000CreateCanonicalSessions';
 import { Migration20260722100000GrantFeatureFlagPermissions } from './Migration20260722100000GrantFeatureFlagPermissions';
-import { Migration20260803120000TenantRowLevelSecurity } from './Migration20260803120000TenantRowLevelSecurity';
+import { Migration20260804120000RemoveTenantRowLevelSecurity } from './Migration20260804120000RemoveTenantRowLevelSecurity';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
 
@@ -56,23 +56,8 @@ export const authMigrations = [
   Migration20260722091000DropLegacyAuthUserAccessCache,
   Migration20260722092000CreateCanonicalSessions,
   Migration20260722100000GrantFeatureFlagPermissions,
+  Migration20260804120000RemoveTenantRowLevelSecurity,
 ] as const;
-
-/**
- * Auth migrations that exist only while the `tenancy` capability is selected.
- *
- * Kept out of {@link authMigrations} deliberately. Row-level security is not
- * inert when unused: it installs `FORCE ROW LEVEL SECURITY` on every
- * tenant-scoped table, and on any deployment whose database role is not a
- * superuser — every managed Postgres, and the repository's own staging sample —
- * a runtime that never sets `app.current_tenant` then reads zero rows and
- * cannot insert at all. A single-tenant project must never receive this DDL.
- *
- * `pnpm nrb setup --capability tenancy` regenerates
- * `packages/tooling/src/commands/db/capability-migrations.generated.ts`, which
- * is what actually appends these to the migrator's list.
- */
-export const authTenancyMigrations = [Migration20260803120000TenantRowLevelSecurity] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
   tableName: AuthMigrationsTableName,
@@ -109,4 +94,4 @@ export * from './Migration20260722090000DropLegacyRefreshTokens';
 export * from './Migration20260722091000DropLegacyAuthUserAccessCache';
 export * from './Migration20260722092000CreateCanonicalSessions';
 export * from './Migration20260722100000GrantFeatureFlagPermissions';
-export * from './Migration20260803120000TenantRowLevelSecurity';
+export * from './Migration20260804120000RemoveTenantRowLevelSecurity';

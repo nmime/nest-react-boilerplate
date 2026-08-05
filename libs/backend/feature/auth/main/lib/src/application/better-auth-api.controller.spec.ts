@@ -231,6 +231,40 @@ describe('BetterAuthApiController', () => {
       expect(mockRes.headers['set-cookie'][0]).toContain('session=abc123');
     });
 
+    it('forwards Better-Auth error status, body, and cookies on 4xx responses', async () => {
+      const errorResponse = new Response(
+        JSON.stringify({ message: 'Invalid email or password', code: 'INVALID_CREDENTIALS' }),
+        {
+          status: 401,
+          headers: { 'content-type': 'application/json' },
+        },
+      );
+      errorResponse.headers.append('set-cookie', 'better-auth.session_token=; Max-Age=0; Path=/; HttpOnly');
+      mockHandler.mockResolvedValue(errorResponse);
+
+      const req = {
+        method: 'POST',
+        url: '/api/auth/sign-in/email',
+        headers: { 'content-type': 'application/json' },
+        body: { email: 'a@b.c', password: 'wrong' },
+      } as any;
+
+      await controller.handle(req, mockRes);
+
+      expect(mockRes.statusCode).toBe(401);
+      expect(mockRes.getBody()).toEqual({ message: 'Invalid email or password', code: 'INVALID_CREDENTIALS' });
+      expect(mockRes.headers['set-cookie']?.[0]).toContain('better-auth.session_token=; Max-Age=0');
+    });
+
+    it('forwards non-JSON Better-Auth error bodies as text', async () => {
+      mockHandler.mockResolvedValue(new Response('bad gateway upstream', { status: 502 }));
+
+      await controller.handle({ method: 'GET', url: '/api/auth/get-session', headers: {} } as any, mockRes);
+
+      expect(mockRes.statusCode).toBe(502);
+      expect(mockRes.getBody()).toBe('bad gateway upstream');
+    });
+
     it('does not forward transport or stale representation headers', async () => {
       mockHandler.mockResolvedValue(
         new Response(JSON.stringify({ operationId: 'signOut', success: true, context: {} }), {
@@ -321,7 +355,7 @@ describe('BetterAuthApiController', () => {
       expect(callArgs?.body).toBeNull();
     });
 
-    it('routes upstream client errors through the global problem filter', async () => {
+    it('forwards upstream client-error status and body instead of an empty rejection', async () => {
       mockHandler.mockResolvedValue(
         new Response(
           JSON.stringify({
@@ -342,8 +376,9 @@ describe('BetterAuthApiController', () => {
         body: { payload: 'bad' },
       } as any;
 
-      await expect(controller.handle(req, mockRes)).rejects.toMatchObject({ status: 400 });
-      expect(mockRes.getBody()).toBeUndefined();
+      await controller.handle(req, mockRes);
+      expect(mockRes.statusCode).toBe(400);
+      expect(mockRes.getBody()).toEqual({ message: 'validation failed', code: 'VALIDATION_ERROR' });
     });
 
     it('converts unexpected handler errors to a safe typed 500', async () => {

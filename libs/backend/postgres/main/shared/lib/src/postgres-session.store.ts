@@ -1,4 +1,5 @@
 import type { FastifySessionObject as Session } from '@fastify/session';
+import { Logger } from '@nestjs/common';
 import { Pool, type PoolClient } from 'pg';
 import {
   completeSessionGet,
@@ -12,6 +13,7 @@ import {
 } from '@app/backend-common-bootstrap';
 
 export class PostgresSessionStore implements BackendSessionStore {
+  private static readonly log = new Logger(PostgresSessionStore.name);
   private initialized: Promise<void> | undefined;
   private sweepTimer: NodeJS.Timeout | undefined;
   private readonly pool: Pool;
@@ -58,7 +60,17 @@ export class PostgresSessionStore implements BackendSessionStore {
     if (this.sweepTimer || this.sweepIntervalMs <= 0) {
       return;
     }
-    this.sweepTimer = setInterval(() => void this.deleteExpiredSessions(), this.sweepIntervalMs);
+    // The sweep is best-effort housekeeping. Swallow rejections explicitly: an
+    // unhandled rejection here would crash the process under Node's default
+    // `--unhandled-rejections=throw`, and this store backs every HTTP API.
+    this.sweepTimer = setInterval(() => {
+      void this.deleteExpiredSessions().catch((error: unknown) => {
+        PostgresSessionStore.log.error(
+          'Expired session sweep failed; will retry on the next interval.',
+          error instanceof Error ? error.stack : error,
+        );
+      });
+    }, this.sweepIntervalMs);
     this.sweepTimer.unref();
   }
 

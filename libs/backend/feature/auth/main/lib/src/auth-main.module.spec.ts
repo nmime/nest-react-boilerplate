@@ -45,6 +45,11 @@ describe('AuthMainModule', () => {
       useClass: PostgresAuthTokenStore,
     });
     expect(postgresModule.imports).toHaveLength(1);
+    // Durable stores are provider-agnostic adapters over the repository ports:
+    // the mongodb mode wires the same stores as postgres, and the capability
+    // module (`AuthMongoPersistenceModule`) supplies the repositories. A
+    // mongodb env in a Postgres-only workspace is refused at bootstrap by
+    // `assertDurableDatabaseEnvironment`, not here.
     expect(mongoModule.providers).toContainEqual({
       provide: AuthUserStoreInjectToken,
       useClass: PostgresAuthUserStore,

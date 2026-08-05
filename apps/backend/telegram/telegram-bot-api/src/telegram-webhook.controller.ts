@@ -59,7 +59,14 @@ export class TelegramWebhookController implements OnApplicationBootstrap {
   }
 
   private async ensureBotInitialized(): Promise<void> {
-    this.botInitPromise ??= this.initializeBot();
+    // Reset the cached promise on rejection: if the one-time init (bot.init +
+    // setWebhook) fails transiently, a permanently cached rejection would make
+    // every subsequent webhook update 500 until the process restarts. Clearing
+    // it lets the next update retry initialization.
+    this.botInitPromise ??= this.initializeBot().catch((error: unknown) => {
+      this.botInitPromise = null;
+      throw error;
+    });
     await this.botInitPromise;
   }
 

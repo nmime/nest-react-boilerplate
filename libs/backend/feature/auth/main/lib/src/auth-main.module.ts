@@ -83,6 +83,15 @@ function persistenceProviders(mode: AuthPersistenceMode): Provider[] {
       { provide: SocialAuthStoreInjectToken, useClass: InMemorySocialAuthStore },
     ];
   }
+
+  // Durable stores are provider-agnostic adapters: they talk to the repository
+  // ports supplied via inject tokens, and the capability module decides which
+  // implementation provides them (`AuthPostgresModule` for Postgres,
+  // `AuthMongoPersistenceModule` for MongoDB), so the Postgres and MongoDB
+  // modes intentionally share the same adapter set. The bootstrap additionally
+  // refuses to start when `AUTH_PERSISTENCE` does not match the compiled
+  // durable database provider, so selecting `mongodb` in a Postgres-only
+  // workspace fails loudly rather than silently wiring the wrong stores.
   return [
     { provide: ProblemPresentationReaderProvider, useClass: PostgresProblemPresentationReader },
     { provide: AuthRoleStoreInjectToken, useClass: PostgresAuthRoleStore },

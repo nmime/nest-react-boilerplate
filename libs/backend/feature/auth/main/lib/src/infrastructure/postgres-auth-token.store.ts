@@ -50,10 +50,3 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
       .mapErr(mapTokenStoreError);
   }
 }
-
-@Injectable()
-export class MongoAuthTokenStore extends PostgresAuthTokenStore {
-  constructor(@Inject(AuthTokenRepositoryInjectToken) repository: AuthTokenRepositoryPort) {
-    super(repository);
-  }
-}

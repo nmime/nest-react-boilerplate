@@ -1,4 +1,9 @@
-import { Body, Controller, Post, Put } from '@nestjs/common';
+import { Body, Controller, Post, Put, UseGuards } from '@nestjs/common';
+import { RbacGuard, RequirePermissions, SessionAuthGuard } from '@app/backend-feature-auth-shared';
+import {
+  AdminNotificationBroadcastsSendPermission,
+  AdminNotificationTemplatesWritePermission,
+} from '@app/common-authz';
 import {
   CreateNotificationBatchRequestDto,
   CreateNotificationRequestDto,
@@ -8,10 +13,12 @@ import {
 import type { NotificationTemplateRecord } from '@app/common-notifications';
 
 @Controller('api/v1/notifications')
+@UseGuards(new SessionAuthGuard(), new RbacGuard())
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
   @Put('templates')
+  @RequirePermissions(AdminNotificationTemplatesWritePermission)
   upsertTemplate(@Body() body: UpsertNotificationTemplateRequestDto): Promise<NotificationTemplateRecord> {
     return this.notificationService.upsertTemplate({
       code: body.code,
@@ -21,6 +28,7 @@ export class NotificationController {
   }
 
   @Post()
+  @RequirePermissions(AdminNotificationBroadcastsSendPermission)
   async createTemplateNotification(
     @Body() body: CreateNotificationRequestDto,
   ): Promise<{ id: string; templateCode: string }> {
@@ -41,6 +49,7 @@ export class NotificationController {
   }
 
   @Post('batch')
+  @RequirePermissions(AdminNotificationBroadcastsSendPermission)
   async createTemplateNotificationsBatch(@Body() body: CreateNotificationBatchRequestDto): Promise<{ ids: string[] }> {
     const notifications = await this.notificationService.createTemplateNotificationsBatch({
       targetType: body.targetType,

@@ -6,8 +6,9 @@ import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import type { ProjectGraphLike, SelectedClosureManifest } from './closure.js';
-import { appCatalog, capabilityCatalog, type DurableDatabaseProviderId } from './catalog.js';
+import { type DurableDatabaseProviderId } from './catalog.js';
 import {
+  allReferenceConfig,
   configuredClosureGraph,
   materializeAllReferenceClosure,
   referenceLockInvocation,
@@ -15,7 +16,7 @@ import {
   validateCurrentClosure,
 } from './closure-workspace.js';
 import { configHash } from './state.js';
-import { parseNrbConfig, schemaVersion } from './schema.js';
+import { parseNrbConfig } from './schema.js';
 import { defaultOperationalFields } from './test-fixtures.js';
 
 function closure(overrides: Partial<SelectedClosureManifest> = {}): SelectedClosureManifest {
@@ -167,17 +168,10 @@ describe('all-reference closure context', () => {
 });
 
 function referenceFixture(provider: DurableDatabaseProviderId): SelectedClosureManifest {
-  const apps = Object.keys(appCatalog).sort() as Array<keyof typeof appCatalog>;
-  const capabilities = Object.keys(capabilityCatalog)
-    .filter((capability) => capability !== (provider === 'postgres' ? 'mongodb' : 'postgres'))
-    .sort() as Array<keyof typeof capabilityCatalog>;
-  const config = parseNrbConfig({
-    schemaVersion,
-    apps,
-    capabilities,
-    product: { ciMode: 'maintainer', frontendApiMode: 'same-origin', mobileTargets: ['web'] },
-    options: { prune: false, force: false, dryRun: false, nonInteractive: true },
-  });
+  // Built from the production selection rather than a restatement of it. This
+  // helper used to duplicate the capability filter and silently disagreed with
+  // it as soon as `tenancy` declared `conflictsWith: ['mongodb']`.
+  const { apps, config } = allReferenceConfig(provider);
   return closure({
     provider,
     configHash: configHash(config),

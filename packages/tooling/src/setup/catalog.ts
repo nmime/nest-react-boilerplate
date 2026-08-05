@@ -841,15 +841,25 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
         },
       ],
     },
+    // Deep relative paths, never the package barrel. `@app/backend-postgres-main-auth`
+    // re-exports auth-postgres.module.ts, so importing the barrel pulls
+    // @app/backend-feature-auth-shared → rbac.guard.ts → @nestjs/core into the
+    // pruned migrator image, which has no web framework by design — the exact
+    // failure commit 7da7d30b fixed by moving the policy DDL into a leaf lib.
+    // The migration modules themselves import only @mikro-orm/migrations and the
+    // dependency-free @app/backend-common-tenant-policy. Matches the shape of
+    // generated-mongo-migrations.ts, which is relative for the same reason.
     providerMigrations: {
       postgres: [
         {
           importName: 'Migration20260803120000TenantRowLevelSecurity',
-          importPath: '@app/backend-postgres-main-auth',
+          importPath:
+            '../../../../../libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/Migration20260803120000TenantRowLevelSecurity.ts',
         },
         {
           importName: 'Migration20260803121000NotificationTenantRowLevelSecurity',
-          importPath: '@app/backend-postgres-main-notification',
+          importPath:
+            '../../../../../libs/backend/postgres/main/notification/lib/src/infrastructure/data-access/migrations/Migration20260803121000NotificationTenantRowLevelSecurity.ts',
         },
       ],
     },

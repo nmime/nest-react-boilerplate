@@ -31,7 +31,8 @@ initializer. New instructions and automation should use `pnpm nrb init`.
 
 The `pnpm nrb setup` engine is the primary way to configure which applications and capabilities your project uses. It is schema-validated, idempotent, and safe to re-run.
 
-There is no default frontend or API application. Interactive setup starts from
+The upstream template commits a reference selection; a fresh product starts by
+replacing it. Interactive setup without a tracked selection starts from
 an empty custom selection and asks which frontend, backend, E2E, and capability
 entries the product needs. Profiles remain optional exact shortcuts.
 
@@ -77,7 +78,7 @@ marks the E2E project as non-deployable.
 4. Review `CODEOWNERS`, issue templates, Dependabot, CodeQL, and branch protection.
 5. Configure production auth lifecycle decisions before launch: session lifetime/renewal/revocation, password reset, email verification, rate limits, and audit events.
 6. Export OpenAPI and generate typed client scaffolding if the frontend will consume generated API types.
-7. Run migrations, seed only local/test environments, configure backups, then deploy through the Kubernetes/Ansible flow in `docs/production-deploy.md`.
+7. Run migrations, seed only local/test environments, configure backups, then deploy through one of the documented production paths (Compose, direct Helm, or Argo CD/Flux GitOps) in `docs/production-deploy.md`.
 
 ## Placeholder audit expectations
 

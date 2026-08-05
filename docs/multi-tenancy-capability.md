@@ -10,14 +10,14 @@ that does not select it is completely unaffected. See [Progress](#progress).
 
 ## Progress
 
-| Stage                                                         | State                                                                               |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| 1. Ambient tenant scope + fail-closed interceptor             | **Partial** — lib and `TenantContextModule` exist; no repository consumes the scope |
-| 2. PostgreSQL roles, RLS policies, isolation proof            | **Done** — proven against a non-superuser PostgreSQL                                |
-| 3. MongoDB repository-level guard                             | Not started — tenancy therefore conflicts with `mongodb`                            |
-| 4. Tenant lifecycle workflows (CRUD, membership, invitations) | Not started                                                                         |
-| 5. Frontend tenant provider and switcher                      | Not started                                                                         |
-| 6. `--capability tenancy` setup wiring                        | **Done** — catalog entry, gated migrations, closure and Helm selection              |
+| Stage                                                         | State                                                                                      |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1. Ambient tenant scope + fail-closed interceptor             | **Partial** — lib and `TenantContextModule` exist but are NOT registered by the capability |
+| 2. PostgreSQL roles, RLS policies, isolation proof            | **Done** — proven against a non-superuser PostgreSQL                                       |
+| 3. MongoDB repository-level guard                             | Not started — tenancy therefore conflicts with `mongodb`                                   |
+| 4. Tenant lifecycle workflows (CRUD, membership, invitations) | Not started                                                                                |
+| 5. Frontend tenant provider and switcher                      | Not started                                                                                |
+| 6. `--capability tenancy` setup wiring                        | **Done** — catalog entry, gated migrations, closure and Helm selection                     |
 
 ### What is true today
 
@@ -41,6 +41,15 @@ the runtime never assumes `nrb_app` — which, on a non-superuser role, means
 every query returns zero rows. Stage 1 is deliberately marked Partial for this
 reason. Do not select `--capability tenancy` for a real product until the
 repository routing lands.
+
+**The capability therefore does not register `TenantContextModule`.** That was
+tried and reverted within this work: the module registers a fail-closed
+interceptor, so wiring it into an application whose routes cannot resolve a
+tenant turns working endpoints into 500s — the enterprise preset's e2e suite
+caught `GET /api/auth/get-session` returning 500 instead of 200. The interceptor
+was behaving exactly as designed; the application simply could not satisfy it
+yet. Registration belongs in the same change as the repository routing, because
+neither half is correct alone.
 
 ### Two things this design got wrong first, both worth knowing
 

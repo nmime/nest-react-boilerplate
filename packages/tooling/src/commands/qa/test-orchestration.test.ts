@@ -10,12 +10,13 @@ import {
 
 describe('aggregate test orchestration', () => {
   it('bounds default parallelism by CPU, memory, and the deterministic worker cap', () => {
-    assert.equal(resolveTestParallelism({ cpuCount: 8, memoryBytes: 32 * 1024 ** 3 }), 2);
+    assert.equal(resolveTestParallelism({ cpuCount: 8, memoryBytes: 32 * 1024 ** 3 }), 8);
+    assert.equal(resolveTestParallelism({ cpuCount: 16, memoryBytes: 32 * 1024 ** 3 }), 8);
     assert.equal(resolveTestParallelism({ cpuCount: 1, memoryBytes: 32 * 1024 ** 3 }), 1);
     assert.equal(resolveTestParallelism({ cpuCount: 8, memoryBytes: 1024 ** 3 }), 1);
     assert.equal(
       resolveTestWorkerLimit({ cpuCount: 8, memoryBytes: 32 * 1024 ** 3, nxParallel: 2 }),
-      2,
+      4,
     );
     assert.equal(
       resolveTestWorkerLimit({ cpuCount: 2, memoryBytes: 32 * 1024 ** 3, nxParallel: 2 }),
@@ -53,17 +54,17 @@ describe('aggregate test orchestration', () => {
           'test',
           '--all',
           '--exclude=@app/backend-common-nats',
-          '--parallel=2',
+          '--parallel=8',
           '--nxBail=false',
           '--excludeTaskDependencies',
           '--outputStyle=static',
           '--',
-          '--maxWorkers=2',
+          '--maxWorkers=1',
           '--coverage',
         ],
         options: {
           cwd: '/workspace',
-          env: { NODE_TEST_CONCURRENCY: '2', NX_DAEMON: 'false' },
+          env: { NODE_TEST_CONCURRENCY: '1', NX_DAEMON: 'false' },
           stdio: 'inherit',
         },
       },
@@ -81,7 +82,7 @@ describe('aggregate test orchestration', () => {
         ],
         options: {
           cwd: '/workspace',
-          env: { NODE_TEST_CONCURRENCY: '2', NX_DAEMON: 'false' },
+          env: { NODE_TEST_CONCURRENCY: '1', NX_DAEMON: 'false' },
           stdio: 'inherit',
         },
       },

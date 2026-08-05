@@ -24,6 +24,10 @@ function createEntityManagerMock() {
     findOne,
     getConnection: () => ({ execute }),
   } as unknown as EntityManager;
+  // Background-safe reads run inside `transactional`; delegate straight back to
+  // this mock so call assertions keep seeing the same EntityManager surface.
+  (entityManager as { transactional?: unknown }).transactional = (work: (em: EntityManager) => Promise<unknown>) =>
+    work(entityManager);
 
   return { create, persist, flush, findOne, execute, entityManager };
 }

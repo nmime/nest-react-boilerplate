@@ -101,7 +101,11 @@ describe(PostgresNotificationBroadcastPersistence.name, () => {
     const now = new Date('2026-07-20T12:00:00.000Z');
     const nativeUpdate = vi.fn().mockResolvedValueOnce(1).mockResolvedValueOnce(0);
     const persistence = new PostgresNotificationBroadcastPersistence(
-      { nativeUpdate } as unknown as EntityManager,
+      {
+        nativeUpdate,
+        transactional: async (callback: (em: { nativeUpdate: typeof nativeUpdate }) => Promise<unknown>) =>
+          callback({ nativeUpdate }),
+      } as unknown as EntityManager,
       payloadCrypto(),
     );
 

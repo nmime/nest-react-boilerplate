@@ -60,8 +60,13 @@ export class ExternalIdentityRepository {
     userId: string,
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<ExternalIdentityEntity[], SocialAuthRepositoryError> {
+    // Background callers (e.g. the notification delivery scheduler) have no
+    // MikroORM request context, so the read runs in its own transaction instead
+    // of on the global EntityManager.
     return ResultAsync.fromPromise(
-      this.entityManager.find(ExternalIdentityEntity, { tenantId, userId }, { orderBy: { linkedAt: 'ASC' } }),
+      this.entityManager.transactional((em) =>
+        em.find(ExternalIdentityEntity, { tenantId, userId }, { orderBy: { linkedAt: 'ASC' } }),
+      ),
       mapSocialAuthError,
     );
   }

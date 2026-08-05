@@ -54,8 +54,9 @@ describe('PostgresNotificationPersistence', () => {
     });
     expect(Object.keys(template.channels)).toEqual([NotificationChannel.Bot, NotificationChannel.InApp]);
     // Template identity and immutable version/channel rows are persisted in one transaction.
-    expect(transaction.persist).toHaveBeenCalledTimes(2);
-    expect(transaction.flush).toHaveBeenCalledOnce();
+    expect(transaction.persist).toHaveBeenCalledTimes(3);
+    // Parent rows flush before their FK children (template -> version -> channels).
+    expect(transaction.flush).toHaveBeenCalledTimes(3);
   });
 
   it('creates a new immutable version when code-owned channel content changes', async () => {
@@ -256,7 +257,11 @@ describe('PostgresNotificationPersistence', () => {
   it('renews only pending rows still owned by the opaque claim token', async () => {
     const nativeUpdate = vi.fn().mockResolvedValueOnce(2).mockResolvedValueOnce(0);
     const persistence = new PostgresNotificationPersistence(
-      { nativeUpdate } as unknown as EntityManager,
+      {
+        nativeUpdate,
+        transactional: async (callback: (em: { nativeUpdate: typeof nativeUpdate }) => Promise<unknown>) =>
+          callback({ nativeUpdate }),
+      } as unknown as EntityManager,
       notificationPayloadCrypto(),
     );
     const now = new Date('2026-07-16T10:00:00.000Z');
@@ -302,7 +307,10 @@ describe('PostgresNotificationPersistence', () => {
   it('includes quarantined unknown provider outcomes in delivery health errors', async () => {
     const count = vi.fn().mockResolvedValue(2);
     const persistence = new PostgresNotificationPersistence(
-      { count } as unknown as EntityManager,
+      {
+        count,
+        transactional: async (callback: (em: { count: typeof count }) => Promise<unknown>) => callback({ count }),
+      } as unknown as EntityManager,
       notificationPayloadCrypto(),
     );
     const fromDate = new Date('2026-07-16T09:00:00.000Z');
@@ -454,6 +462,7 @@ describe('PostgresNotificationPersistence', () => {
         status: concurrentStatus,
       });
       const transaction = {
+        find: vi.fn().mockResolvedValue([staleCandidate]),
         findOne: vi.fn().mockResolvedValue(concurrentStatus === NotificationBroadcastStatus.Paused ? current : null),
         count: vi.fn().mockResolvedValue(0),
         flush: vi.fn().mockResolvedValue(undefined),

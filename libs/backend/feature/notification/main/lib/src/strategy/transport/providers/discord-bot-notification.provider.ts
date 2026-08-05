@@ -7,8 +7,6 @@ import {
   NotificationProviderStrategy,
 } from '../notification-provider.strategy';
 
-const discordApiBase = 'https://discord.com/api/v10';
-
 @Injectable()
 export class DiscordBotNotificationProvider extends NotificationProviderStrategy {
   readonly provider = NotificationDeliveryProvider.DiscordBot;
@@ -92,7 +90,7 @@ export class DiscordBotNotificationProvider extends NotificationProviderStrategy
   }
 
   private request(token: string, path: string, body: Record<string, unknown>, signal?: AbortSignal): Promise<Response> {
-    return fetch(`${discordApiBase}${path}`, {
+    return fetch(`${this.config.discordApiBase ?? 'https://discord.com/api/v10'}${path}`, {
       method: 'POST',
       signal,
       headers: { authorization: `Bot ${token}`, 'content-type': 'application/json' },

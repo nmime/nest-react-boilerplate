@@ -34,7 +34,7 @@ export class MailPaceEmailNotificationProvider extends NotificationProviderStrat
     if (input.message.kind !== 'email') {
       return unsupportedChannel();
     }
-    const { serverToken, from } = this.config.mailPace;
+    const { serverToken, from, apiBase } = this.config.mailPace;
     if (!serverToken || !from) {
       return configurationError(
         'MAILPACE_SERVER_TOKEN and NOTIFICATION_EMAIL_FROM are required for MailPace delivery.',
@@ -69,7 +69,7 @@ export class MailPaceEmailNotificationProvider extends NotificationProviderStrat
     });
     await this.beginDispatch(input);
     try {
-      const response = await fetch('https://app.mailpace.com/api/v1/send', {
+      const response = await fetch(`${apiBase ?? 'https://app.mailpace.com'}/api/v1/send`, {
         method: 'POST',
         signal: input.signal,
         headers: {

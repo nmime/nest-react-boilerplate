@@ -26,7 +26,7 @@ export class ResendEmailNotificationProvider extends NotificationProviderStrateg
     if (input.message.kind !== 'email') {
       return unsupportedChannel();
     }
-    const { apiKey, from } = this.config.resend;
+    const { apiKey, from, apiBase } = this.config.resend;
     if (!apiKey || !from) {
       return configurationError('RESEND_API_KEY and NOTIFICATION_EMAIL_FROM are required for Resend delivery.');
     }
@@ -49,7 +49,7 @@ export class ResendEmailNotificationProvider extends NotificationProviderStrateg
     });
     await this.beginDispatch(input);
     try {
-      const response = await fetch('https://api.resend.com/emails', {
+      const response = await fetch(`${apiBase ?? 'https://api.resend.com'}/emails`, {
         method: 'POST',
         signal: input.signal,
         headers: {

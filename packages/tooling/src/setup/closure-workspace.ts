@@ -125,10 +125,32 @@ export function referenceClosureContextPath(provider: DurableDatabaseProviderId)
   return `.nrb/reference/${provider}`;
 }
 
-function allReferenceConfig(provider: DurableDatabaseProviderId) {
+/**
+ * The maintainer "everything" selection for one provider.
+ *
+ * Exported so tests can build their fixtures from it rather than restating the
+ * filtering. A copy in `closure-workspace.test.ts` drifted the moment a
+ * capability gained a `conflictsWith` entry, which is precisely the bug the
+ * filter below exists to prevent.
+ */
+export function allReferenceConfig(provider: DurableDatabaseProviderId) {
+  const oppositeProvider = provider === 'postgres' ? 'mongodb' : 'postgres';
   const apps = Object.keys(appCatalog).sort() as Array<keyof typeof appCatalog>;
   const capabilities = Object.keys(capabilityCatalog)
-    .filter((capability) => capability !== (provider === 'postgres' ? 'mongodb' : 'postgres'))
+    .filter((capability) => {
+      if (capability === oppositeProvider) {
+        return false;
+      }
+      // Dropping only the opposite provider is not enough: a capability may
+      // legitimately conflict with THIS provider and still be in the catalog.
+      // `tenancy` is the first — it conflicts with `mongodb` because MongoDB has
+      // no row-level security — and including it made the mongodb reference
+      // closure fail validation with "tenancy conflicts with capability
+      // mongodb", which surfaced as an unbuildable migrator image rather than
+      // as a selection error.
+      const conflicts = capabilityCatalog[capability as keyof typeof capabilityCatalog].conflictsWith;
+      return !conflicts.includes(provider);
+    })
     .sort() as Array<keyof typeof capabilityCatalog>;
   const config = parseNrbConfig({
     schemaVersion,

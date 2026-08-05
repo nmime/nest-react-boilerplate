@@ -11,7 +11,7 @@ or evaluate Nx's documented side-by-side TypeScript 7 build path in a dedicated 
 | Breaking change                 | Impact on this repo                                                  |
 | ------------------------------- | -------------------------------------------------------------------- |
 | `baseUrl` removed               | `tsconfig.base.json` uses `"baseUrl": "."`                           |
-| `paths` values must be relative | All 63 path aliases use absolute paths (`libs/...` not `./libs/...`) |
+| `paths` values must be relative | All 82 path aliases use absolute paths (`libs/...` not `./libs/...`) |
 | `ignoreDeprecations` removed    | Currently set to `"6.0"` in base config                              |
 
 ## Migration steps (run in order)
@@ -21,7 +21,7 @@ or evaluate Nx's documented side-by-side TypeScript 7 build path in a dedicated 
 Wait until all of these support TS 7.0 in the same configuration used by this
 workspace:
 
-- [x] `typescript-eslint` — 8.64.0 is installed
+- [x] `typescript-eslint` — 8.65.0 is installed
 - [ ] `ts-api-utils` — must handle the TypeScript 7 API surface used by linting
 - [ ] `nx` — must compile the project graph with TypeScript 7.0
 - [ ] `vite` — must resolve TS 7.0 module resolution
@@ -55,7 +55,7 @@ for line in lines:
 
 with open("tsconfig.base.json", "w") as f:
     f.writelines(out)
-print("Done: 63 paths made relative, baseUrl removed, ignoreDeprecations removed")
+print("Done: 82 paths made relative, baseUrl removed, ignoreDeprecations removed")
 PY
 ```
 
@@ -91,11 +91,15 @@ pnpm install
 ## Current state (July 2026)
 
 - TypeScript pinned at **6.0.3**, the newest release supported by Nx 23.x
-- `typescript-eslint` is **8.64.0**; `ts-api-utils` is **2.5.0**
+- `typescript-eslint` is **8.65.0**; `ts-api-utils` is **2.5.0**
 - A direct TypeScript 7.0.2 trial failed during Nx project-graph creation, before
   application builds could start
-- 63 path aliases in `tsconfig.base.json` using `baseUrl: "."` pattern
+- 82 path aliases in `tsconfig.base.json` using `baseUrl: "."` pattern
 - Zero code changes required — migration is config-only
+
+Installed versions are the ones in `package.json` and the resolved store;
+`minimumReleaseAgeExclude` entries in `pnpm-workspace.yaml` are release-age
+exclusions reviewed for this scaffold refresh, not the installed versions.
 
 Nx references:
 

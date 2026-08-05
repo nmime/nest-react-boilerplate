@@ -1,6 +1,8 @@
 # Presets and technologies
 
-The monorepo has no default application. Presets are exact shortcuts; the saved selection is explicit and can be rerun to add or remove applications and capabilities.
+The monorepo selection is explicit: presets are exact shortcuts, the saved
+selection is rerunnable, and the committed upstream reference selection only
+exists so maintainers can run every surface.
 
 ## Applications
 

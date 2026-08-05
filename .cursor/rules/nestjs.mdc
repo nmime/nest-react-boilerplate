@@ -1,34 +1,16 @@
 ---
-description: NestJS backend rules
+description: NestJS backend policy adapter
 globs: apps/backend/**/*, libs/backend/**/*
+alwaysApply: false
 ---
 
 # NestJS Backend Rules
 
-## Architecture
-- Feature-sliced: each feature has main + shared libs
-- Thin app modules: only import feature main modules + health
-- Bootstrap via bootstrapNestApi() from shared lib
-- Fastify adapter for all apps
-- Health endpoints: /live, /ready on all apps
+Canonical repository policy lives in [AGENTS.md](../../AGENTS.md). Backend
+architecture expectations live in the [architecture docs](../../docs/architecture.md)
+and [API conventions](../../docs/api-conventions.md).
 
-## Patterns
-- Port/Adapter: use InMemory* for dev, Postgres* for prod
-- Global validation pipe: transform, whitelist, forbidNonWhitelisted
-- RFC 9457 error responses via ClientDataValidationException
-- Authentication guards: SessionAuthGuard plus database-backed RBAC guards
-- DTOs with class-validator decorators
-- Use @Public() to mark unauthenticated routes
-
-## Database
-- MikroORM with PostgreSQL
-- Migrations via pnpm db:migrate
-- POSTGRES_SYNCHRONIZE=false (never auto-sync schema)
-- Separate migration job runs before app deployment
-
-## Security
-- Rate limiting: 100 req/min, Redis-backed in production
-- Helmet for security headers
-- CORS origins configured per environment
-- No in-memory persistence in production
-- PBKDF2-SHA256 with 120k iterations for passwords
+This file is redirect-only. It must not contain independent rules. When policy
+and this file disagree, AGENTS.md wins. External AI coding assistants are not
+approved for repository work unless a maintainer explicitly changes that policy
+for the current task.

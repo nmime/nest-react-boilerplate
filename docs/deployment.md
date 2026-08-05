@@ -36,27 +36,27 @@ written root-owned at mode `0640`, and never regenerated on re-run:
 Only externally issued values ever need pasting: an external `DATABASE_URL`,
 provider tokens (BotFather, Discord portal, Resend/MailPace), and FCM/APNs keys.
 
-## One command: `pnpm deploy`
+## One command: `pnpm run deploy`
 
-`pnpm deploy` is the single entrypoint for every mode above. Run with no
+`pnpm run deploy` is the single entrypoint for every mode above. Run with no
 arguments it asks which runtime, database, domain style, and TLS owner you want,
 prints the exact ordered plan, and executes it after confirmation. Everything is
 also drivable non-interactively for CI or a runbook:
 
 ```bash
-pnpm deploy                                     # interactive wizard
-pnpm deploy --dry-run                           # print the plan, execute nothing
-pnpm deploy --target=compose --domain=acme.example \
+pnpm run deploy                                     # interactive wizard
+pnpm run deploy --dry-run                           # print the plan, execute nothing
+pnpm run deploy --target=compose --domain=acme.example \
   --registry=ghcr.io/acme-org/acme --image-tag=sha-<git-sha> --yes
-pnpm deploy --target=pm2 --domain=acme.example --yes
-pnpm deploy --target=helm --release=acme --namespace=acme --yes
+pnpm run deploy --target=pm2 --domain=acme.example --yes
+pnpm run deploy --target=helm --release=acme --namespace=acme --yes
 
 # Compose behind host nginx + Certbot, one hostname, images built locally:
-pnpm deploy --edge=host-nginx --tls=certbot --domains=single-domain \
+pnpm run deploy --edge=host-nginx --tls=certbot --domains=single-domain \
   --images=local --domain=acme.example --yes
 
 # The same thing as a preset, on a host this also provisions:
-pnpm deploy --target=single-server --domain=acme.example --yes
+pnpm run deploy --target=single-server --domain=acme.example --yes
 ```
 
 There is one container runtime with **independent, all-optional axes** — the edge,
@@ -126,7 +126,7 @@ flowchart TD
   domains -- Per app or wildcard DNS --> multi[Compose Caddy per-app-domains]
   domains -- Existing edge --> proxy[external-proxy]
   host -- No --> k8s{Kubernetes?}
-  k8s -- No --> pm2[PM2: pnpm deploy --target=pm2 with a host-owned proxy]
+  k8s -- No --> pm2[PM2: pnpm run deploy --target=pm2 with a host-owned proxy]
   k8s -- Yes --> controller{GitOps controller owns reconciliation?}
   controller -- No --> helm[Direct Helm upgrade/install]
   controller -- Yes --> gitops[Argo CD or Flux]

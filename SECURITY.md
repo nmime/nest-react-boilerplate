@@ -36,6 +36,7 @@ protected branches, or merge blocking.
 | Platform | Checked-in coverage                                                                                                         | Enforcement notes                                                                                                                           |
 | -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | GitHub   | Gitleaks, native secret/SAST tests, CodeQL, `audit:ci`, Dependabot, and release-image Trivy scanning                        | CI, CodeQL, dependency audit, and Trivy commands are blocking; repository rules still determine whether merges require them.                |
+| GitHub   | Weekly OpenSSF Scorecard (`.github/workflows/scorecard.yml`) with results published to the Security tab                     | Advisory signal; not a merge gate by itself.                                                                                                |
 | GitLab   | Blocking Gitleaks and `audit:ci`, plus GitLab Secret Detection, Dependency Scanning, SAST, and Container Scanning templates | The checked-in jobs do not use `allow_failure`; availability of GitLab-managed scanner templates depends on the hosting tier/configuration. |
 
 ## Secured components

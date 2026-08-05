@@ -207,32 +207,40 @@ client state as authority.
 - **WHEN** the backend rejects an expired session
 - **THEN** the UI clears protected state and offers a safe sign-in path
 
-### Requirement: [REQ-AUTH-TENANT-ISOLATION-010] Tenant isolation is enforced by the database
+### Requirement: [REQ-AUTH-TENANT-ISOLATION-010] Tenant isolation is enforced fail-closed
 
-Tenant-scoped data SHALL be isolated by PostgreSQL row-level security, not by
-application convention alone. A query that omits its tenant predicate MUST
-return no cross-tenant rows. Requests that resolve no tenant MUST be refused
+Tenant-scoped data SHALL be isolated by tenant-scoped queries: every repository
+access carries its `tenant_id` predicate, and the ambient tenant scope fails
+closed — a tenant-scoped request without a resolved tenant MUST be refused
 rather than silently scoped to nothing.
+
+PostgreSQL row-level security is the planned database-level enforcement, but it
+MUST NOT be installed while no runtime path engages it: the application must
+actually set the tenant GUC and restricted role on the connection path, and the
+pools must connect as a non-`BYPASSRLS` role. Installing fail-closed policies
+before that engagement exists protects nothing (superuser/`BYPASSRLS` pools
+bypass them) while making every future restricted-role query return zero rows.
+Policies installed without engagement SHALL be removed by reversal migrations.
 
 **Evidence profile:** domain, persistence, security
 
 **Invariants:**
 
-- Every table carrying `tenant_id` has a force-enabled isolation policy.
-- The runtime role cannot bypass row-level security.
-- Cross-tenant work happens only through an explicit system context.
+- Every tenant-scoped repository access carries its tenant predicate.
+- No unengaged fail-closed row-level-security policy remains installed.
+- A tenant-scoped request without a resolved tenant fails loudly.
 
 **Failure behavior:**
 
-- A write attributed to another tenant is rejected by the database.
-- A tenant-scoped request without a resolved tenant fails loudly.
-
-#### Scenario: Query omitting the tenant predicate
-
-- **WHEN** a statement selects from a tenant-scoped table under one tenant's scope
-- **THEN** rows belonging to any other tenant are not returned
+- A tenant-scoped request without a resolved tenant is refused.
+- The migration set contains no policy installation without runtime engagement.
 
 #### Scenario: Request without a resolved tenant
 
 - **WHEN** a tenant-scoped route resolves no tenant and declares no exemption
 - **THEN** the request is refused instead of running unscoped
+
+#### Scenario: Unengaged row-level security is rolled back
+
+- **WHEN** the migration set runs against a database with or without previously installed policies
+- **THEN** no tenant isolation policy, `FORCE ROW LEVEL SECURITY` state, or restricted-role grant is installed, and any previously installed policy is dropped

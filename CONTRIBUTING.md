@@ -105,15 +105,25 @@ Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage
 
 ## Changelog
 
+`CHANGELOG.md` is the manual changelog of record. The release pipeline
+(semantic-release) computes version bumps and git tags from Conventional
+Commits but intentionally writes no changelog plugin output, so release
+sections are backfilled from the tag ranges during documentation maintenance
+and never appear automatically.
+
 Every PR that changes user-facing behavior MUST include a changelog entry:
 
 1. Edit `CHANGELOG.md`
-2. Add your change under `[Unreleased]` with the appropriate heading:
+2. Add your change under a top `## [Unreleased]` section (create it at the
+   very top of `CHANGELOG.md` if it does not exist yet) with the appropriate
+   heading:
    - `### Added` for new features
    - `### Changed` for changes in existing functionality
    - `### Fixed` for bug fixes
    - `### Removed` for deprecated/removed features
 3. Follow the format: `- Brief description of the change (#PR_NUMBER)`
+4. When the next release is cut, move the `[Unreleased]` entries under the new
+   version header in the same PR that records the release.
 
 Example:
 

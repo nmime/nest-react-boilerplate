@@ -3,12 +3,12 @@
  * deploy — one entry point that takes a deployment from a clean checkout to a
  * running system, for every supported runtime.
  *
- *   pnpm deploy                       # interactive wizard (asks target/domain/DB/TLS)
- *   pnpm deploy --target=compose --domain=acme.example --yes
- *   pnpm deploy --target=pm2 --domain=acme.example --yes
- *   pnpm deploy --target=helm --release=acme --namespace=acme --yes
- *   pnpm deploy --target=single-server --yes
- *   pnpm deploy --dry-run             # print the plan without executing anything
+ *   pnpm run deploy                       # interactive wizard (asks target/domain/DB/TLS)
+ *   pnpm run deploy --target=compose --domain=acme.example --yes
+ *   pnpm run deploy --target=pm2 --domain=acme.example --yes
+ *   pnpm run deploy --target=helm --release=acme --namespace=acme --yes
+ *   pnpm run deploy --target=single-server --yes
+ *   pnpm run deploy --dry-run             # print the plan without executing anything
  *
  * Design: `buildDeployPlan()` is pure — it turns answers into an ordered list of
  * steps. Execution is a separate pass, so every topology is unit-tested without
@@ -540,7 +540,7 @@ export function parseDeployArgs(argv = []) {
 // ---------------------------------------------------------------------------
 
 function usage() {
-  console.log(`Usage: pnpm deploy [options]
+  console.log(`Usage: pnpm run deploy [options]
 
 Runs a full deployment for the selected runtime. With no options it asks.
 

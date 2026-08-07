@@ -54,7 +54,12 @@ web export, Cucumber acceptance, and the fullstack `node:test` suite remain
 explicit Node child-tool boundaries. The Nest readiness probe verifies that
 runtime health reports Bun rather than Bun's Node compatibility version.
 
-Provider-backed lanes require Docker Compose. CI runs every preset; isolated
+Provider-backed lanes require Docker Compose, and the compose-driven
+migrate/backend image builds need a container-image-capable storage driver
+(such as overlay2) with generous free disk on the host. Hosts whose container
+runtime falls back to the vfs storage driver full-copy every layer per build
+step, so the closure-based image builds run out of disk before the probe
+completes. CI runs every preset; isolated
 landing, site, user frontend, admin frontend, mobile, user/admin API,
 Discord/Telegram selections; and separate MongoDB core and bot selections. The
 standalone frontend lanes prevent one renderer from masking another renderer's

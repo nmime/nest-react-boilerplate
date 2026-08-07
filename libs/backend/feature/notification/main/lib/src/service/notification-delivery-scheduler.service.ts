@@ -89,14 +89,8 @@ export class NotificationDeliverySchedulerService {
           continue;
         }
         handled += 1;
-        if (this.shouldQuarantineUnknownOutcome(item.delivery, execution)) {
-          this.logger.error(
-            `Notification delivery ${item.delivery.delivery.id} has an unknown non-idempotent provider outcome; automatic retry is quarantined.`,
-          );
-          continue;
-        }
         const claimResults = resultsByClaim.get(item.claimToken) ?? [];
-        claimResults.push(execution.result);
+        claimResults.push(this.executionResultForClaim(item.delivery, execution, execution.result));
         resultsByClaim.set(item.claimToken, claimResults);
       }
       for (const [claimToken, claimResults] of resultsByClaim) {
@@ -226,6 +220,31 @@ export class NotificationDeliverySchedulerService {
     }
   }
 
+  /**
+   * Maps a delivery execution to the result persisted under its claim.
+   *
+   * An unknown non-idempotent provider outcome becomes a terminal `Error` with
+   * the `Quarantined` reason instead of the raw result: persisting nothing
+   * left the row claimed-but-Pending, and the lease-based claim query
+   * re-claimed it after the lease expired — re-dispatching a delivery whose
+   * first attempt may already have reached the provider, which is exactly the
+   * duplicate-send scenario quarantine exists to prevent.
+   */
+  private executionResultForClaim(
+    delivery: PendingNotificationDelivery,
+    execution: DeliveryExecution,
+    result: NotificationDeliveryResult,
+  ): NotificationDeliveryResult {
+    if (!this.shouldQuarantineUnknownOutcome(delivery, execution)) {
+      return result;
+    }
+
+    this.logger.error(
+      `Notification delivery ${delivery.delivery.id} has an unknown non-idempotent provider outcome; automatic retry is quarantined.`,
+    );
+    return this.quarantinedResult(result);
+  }
+
   private shouldQuarantineUnknownOutcome(pending: PendingNotificationDelivery, execution: DeliveryExecution): boolean {
     return (
       execution.dispatchStarted &&
@@ -233,6 +252,23 @@ export class NotificationDeliverySchedulerService {
       execution.result.error?.reason === NotificationErrorReason.NetworkError &&
       !this.notificationProviderResolver.supportsIdempotentRetry(pending.delivery.provider)
     );
+  }
+
+  /**
+   * Turns an unknown non-idempotent outcome into a terminal Error so persistence
+   * releases the claim without leaving the delivery re-claimable.
+   */
+  private quarantinedResult(result: NotificationDeliveryResult): NotificationDeliveryResult {
+    return {
+      ...result,
+      status: NotificationStatus.Error,
+      error: {
+        reason: NotificationErrorReason.Quarantined,
+        message:
+          result.error?.message ??
+          'Provider outcome is unknown and the provider is not idempotent; automatic retry is quarantined.',
+      },
+    };
   }
 
   private chunk<T>(items: T[], size: number): T[][] {

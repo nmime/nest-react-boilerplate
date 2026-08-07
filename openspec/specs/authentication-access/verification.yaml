@@ -336,14 +336,16 @@ requirements:
       - security
     cucumber:
       disposition: not-applicable
-      reason: Isolation is a database guarantee; proving it needs a real PostgreSQL with policies installed, not a scripted user journey.
+      reason: Isolation enforcement is proven against the migration SQL and the ambient-scope seams, not by a scripted user journey.
       alternativeEvidence:
         - component
         - security
         - vitest
     evidence:
-      # The same real-PostgreSQL run is both the persistence proof and the
-      # security proof: it shows cross-tenant reads and writes are denied.
+      # The real-PostgreSQL run proves the enforcement seam (policy SQL +
+      # restricted role + transaction GUC switching) works when engaged. The
+      # policies themselves are not installed by the migration set until the
+      # runtime engagement exists; see the reversal migration evidence below.
       - kind: component
         file: libs/backend/postgres/main/shared/lib/src/tenant-transaction.component-spec.ts
         target: '@app/backend-postgres-main:component-test'
@@ -379,7 +381,7 @@ requirements:
           - pr
           - main
       - kind: vitest
-        file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/tenant-row-level-security.migration.spec.ts
+        file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/remove-tenant-row-level-security.migration.spec.ts
         target: '@app/backend-postgres-main-auth:test'
         lanes:
           - pr

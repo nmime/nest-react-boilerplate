@@ -198,7 +198,19 @@ describe(NotificationDeliverySchedulerService.name, () => {
       'claim-a',
       expect.any(Date),
     );
-    expect(saveClaimedDeliveryResults).not.toHaveBeenCalled();
+    // The quarantined delivery is persisted as a terminal Error so the claim is
+    // released without leaving the row re-claimable after the lease expires.
+    expect(saveClaimedDeliveryResults).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          id: 'd1',
+          claimToken: 'claim-a',
+          status: NotificationStatus.Error,
+          error: expect.objectContaining({ reason: NotificationErrorReason.Quarantined }),
+        }),
+      ],
+      'claim-a',
+    );
   });
 
   it('aborts and quarantines a timed-out non-idempotent provider attempt', async () => {
@@ -235,7 +247,17 @@ describe(NotificationDeliverySchedulerService.name, () => {
 
     await expect(iteration).resolves.toBe(1);
     expect(observedSignal?.aborted).toBe(true);
-    expect(saveClaimedDeliveryResults).not.toHaveBeenCalled();
+    expect(saveClaimedDeliveryResults).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          id: 'd1',
+          claimToken: 'claim-a',
+          status: NotificationStatus.Error,
+          error: expect.objectContaining({ reason: NotificationErrorReason.Quarantined }),
+        }),
+      ],
+      'claim-a',
+    );
   });
 
   it('reschedules a timed-out provider attempt when its idempotency key is stable', async () => {

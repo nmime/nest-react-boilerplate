@@ -1,6 +1,7 @@
 // @requirements REQ-AUTH-ACCESS-001
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { getBetterAuthConfig } from './better-auth';
+import { DefaultBetterAuthSessionMaxAgeSeconds, getBetterAuthConfig } from './better-auth';
 
 describe('getBetterAuthConfig', () => {
   const originalEnv = process.env;
@@ -28,6 +29,7 @@ describe('getBetterAuthConfig', () => {
     delete process.env.ALLOWED_RETURN_URLS;
     delete process.env.NODE_ENV;
     delete process.env.OPENAPI_ENABLED;
+    delete process.env.SESSION_COOKIE_MAX_AGE_SECONDS;
     delete process.env.MONGODB_DATABASE;
     delete process.env.MONGODB_REPLICA_SET;
     delete process.env.MONGODB_URI;
@@ -66,6 +68,40 @@ describe('getBetterAuthConfig', () => {
       sessionMaxAge: 7200,
     });
     expect(auth).toBeDefined();
+  });
+
+  it('aligns the Better-Auth session lifetime with the first-party session cookie', () => {
+    // The default must match the app session cookie (7 days), not a 1h window
+    // that expires Better-Auth sessions out from under valid app sessions.
+    const defaulted = getBetterAuthConfig(null, {}) as unknown as {
+      options: { session?: { expiresIn?: number } };
+    };
+    expect(defaulted.options.session?.expiresIn).toBe(DefaultBetterAuthSessionMaxAgeSeconds);
+
+    process.env.SESSION_COOKIE_MAX_AGE_SECONDS = '3600';
+    const configured = getBetterAuthConfig(null, {}) as unknown as {
+      options: { session?: { expiresIn?: number } };
+    };
+    expect(configured.options.session?.expiresIn).toBe(3600);
+  });
+
+  it('prefers an explicit sessionMaxAge option over SESSION_COOKIE_MAX_AGE_SECONDS', () => {
+    process.env.SESSION_COOKIE_MAX_AGE_SECONDS = '3600';
+    const auth = getBetterAuthConfig(null, { sessionMaxAge: 7200 }) as unknown as {
+      options: { session?: { expiresIn?: number } };
+    };
+    expect(auth.options.session?.expiresIn).toBe(7200);
+  });
+
+  it('pins the session default to the bootstrap cookie default', () => {
+    // Mirrors the constant-pinning pattern used for the tenant default: read the
+    // bootstrap source so the two defaults cannot drift silently.
+    const bootstrapSource = readFileSync(
+      new URL('../../../../../../common/bootstrap/lib/src/bootstrap-nest-api.ts', import.meta.url),
+      'utf8',
+    );
+    const match = /const DefaultSessionCookieMaxAgeSeconds = ([\d_]+);/u.exec(bootstrapSource);
+    expect(match?.[1]?.replace(/_/gu, '')).toBe(String(DefaultBetterAuthSessionMaxAgeSeconds));
   });
 
   it('uses custom trusted origins', () => {

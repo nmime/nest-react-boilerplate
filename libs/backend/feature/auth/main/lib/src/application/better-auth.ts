@@ -23,6 +23,15 @@ export interface BetterAuthConfigOptions {
   sessionMaxAge?: number;
 }
 
+/**
+ * Matches `DefaultSessionCookieMaxAgeSeconds` in `@app/backend-common-bootstrap`
+ * (7 days). The bootstrap lib reads the same `SESSION_COOKIE_MAX_AGE_SECONDS`
+ * variable for the first-party session cookie; this constant exists as the
+ * fallback when that variable is unset, and the two are pinned together by
+ * `better-auth.config.spec.ts`.
+ */
+export const DefaultBetterAuthSessionMaxAgeSeconds = 604_800;
+
 export function getBetterAuthConfig(database: unknown, options: BetterAuthConfigOptions = {}): Auth {
   const baseURL = getBaseUrl();
   const telegramOidc = resolveTelegramOidcConfig(options);
@@ -42,7 +51,13 @@ export function getBetterAuthConfig(database: unknown, options: BetterAuthConfig
     },
 
     session: {
-      expiresIn: options.sessionMaxAge ?? 3600,
+      // Align the Better-Auth session lifetime with the first-party session
+      // cookie (SESSION_COOKIE_MAX_AGE_SECONDS). A hard-coded 1h expiry broke
+      // session-gated flows — e.g. Telegram TMA requires a valid Better-Auth
+      // session — once the app session outlived it after ~1h of idle time.
+      expiresIn:
+        options.sessionMaxAge ??
+        readPositiveInteger(process.env.SESSION_COOKIE_MAX_AGE_SECONDS, DefaultBetterAuthSessionMaxAgeSeconds),
       updateAge: 600,
     },
 

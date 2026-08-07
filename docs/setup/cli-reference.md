@@ -82,22 +82,30 @@ pnpm nrb setup --remove-app landing-app --non-interactive
 pnpm nrb setup --replace --app landing-app --non-interactive
 ```
 
-| Flag                       | Type    | Description                                                                     |
-| -------------------------- | ------- | ------------------------------------------------------------------------------- |
-| `--preset <name>`          | string  | Exact profile shortcut: `minimal`, `web`, `fullstack`, `enterprise`, or `bots`. |
-| `--config <path>`          | string  | Exact JSON configuration source; cannot be combined with selection flags.       |
-| `--app <id>`               | string  | Add an app to the current selection (repeatable).                               |
-| `--capability <id>`        | string  | Add a capability to the current selection (repeatable).                         |
-| `--remove-app <id>`        | string  | Remove an app unless another selected app requires it.                          |
-| `--remove-capability <id>` | string  | Remove a capability unless it remains required.                                 |
-| `--replace`                | boolean | Start from an empty selection before applying explicit additions.               |
-| `--list`                   | boolean | Show available entries with selection markers, runtime, and template hostname.  |
-| `--dry-run`                | boolean | Show plan without modifying files.                                              |
-| `--prune`                  | boolean | Remove stale files previously managed by setup.                                 |
-| `--force`                  | boolean | Overwrite existing setup-managed files without refusing.                        |
-| `--non-interactive`        | boolean | Skip prompts; first run still requires an explicit selection.                   |
-| `--json`                   | boolean | Output a plan or `--list` result as JSON.                                       |
-| `--help`, `-h`             | boolean | Show usage.                                                                     |
+| Flag                            | Type    | Description                                                                                                             |
+| ------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `--preset <name>`               | string  | Exact profile shortcut: `minimal`, `web`, `fullstack`, `enterprise`, or `bots`.                                         |
+| `--config <path>`               | string  | Exact JSON configuration source; cannot be combined with selection flags.                                               |
+| `--app <id>`                    | string  | Add an app to the current selection (repeatable).                                                                       |
+| `--capability <id>`             | string  | Add a capability to the current selection (repeatable).                                                                 |
+| `--remove-app <id>`             | string  | Remove an app unless another selected app requires it.                                                                  |
+| `--remove-capability <id>`      | string  | Remove a capability unless it remains required.                                                                         |
+| `--replace`                     | boolean | Start from an empty selection before applying explicit additions.                                                       |
+| `--list`                        | boolean | Show available entries with selection markers, runtime, and template hostname.                                          |
+| `--dry-run`                     | boolean | Show plan without modifying files.                                                                                      |
+| `--prune`                       | boolean | Remove stale files previously managed by setup.                                                                         |
+| `--force`                       | boolean | Overwrite existing setup-managed files without refusing.                                                                |
+| `--non-interactive`             | boolean | Skip prompts; first run still requires an explicit selection.                                                           |
+| `--json`                        | boolean | Output a plan or `--list` result as JSON.                                                                               |
+| `--ci-mode <mode>`              | string  | CI identity written to `product.ciMode`: `product` or `maintainer`.                                                     |
+| `--frontend-api-mode <mode>`    | string  | Frontend/API origin mode written to `product.frontendApiMode`: `same-origin` or `split-origin`.                         |
+| `--mobile-target <target>`      | string  | Mobile build target written to `product.mobileTargets` (repeatable): `web`, `android`, or `ios`.                        |
+| `--deployment-target <target>`  | string  | Deployment target written to `deployment.targets` (repeatable): `docker`, `single-server`, or `kubernetes`.             |
+| `--public-topology <mode>`      | string  | Public hostname layout written to `deployment.publicTopology`: `single-domain`, `per-app-domains`, or `external-proxy`. |
+| `--kubernetes-delivery <mode>`  | string  | Kubernetes delivery mode written to `deployment.kubernetesDelivery`: `direct`, `argocd`, or `flux`.                     |
+| `--redis-ownership <ownership>` | string  | Redis ownership written to `deployment.infrastructure.redis`: `bundled` or `external`.                                  |
+| `--nats-ownership <ownership>`  | string  | NATS ownership written to `deployment.infrastructure.nats`: `bundled` or `external`.                                    |
+| `--help`, `-h`                  | boolean | Show usage.                                                                                                             |
 
 With no selection flags, interactive setup starts from `custom` on first run
 and from the current selection on later runs. Scripted additions are additive;
@@ -272,9 +280,10 @@ abort before any migration implementation is loaded.
 
 ## Development commands
 
-| Command         | Description                         |
-| --------------- | ----------------------------------- |
-| `dev:fullstack` | Run the local fullstack dev helper. |
+| Command         | Description                              |
+| --------------- | ---------------------------------------- |
+| `dev:database`  | Start the setup-selected local database. |
+| `dev:fullstack` | Run the local fullstack dev helper.      |
 
 Development selectors fail closed when setup configuration or the live Nx graph
 has changed since `.nrb/closure.json` was generated. Rerun `pnpm nrb setup`
@@ -337,22 +346,23 @@ Existing features must be modified in place; regeneration is rejected.
 
 ## QA commands
 
-| Command                 | Description                                          |
-| ----------------------- | ---------------------------------------------------- |
-| `qa:mutation`           | Run Stryker mutation testing or dry-run report.      |
-| `qa:test-aggregate`     | Run resource-aware aggregate unit or coverage tests. |
-| `qa:consumer-contracts` | Validate consumer contracts.                         |
-| `qa:openapi-lint`       | Lint OpenAPI contracts.                              |
-| `qa:openapi-fuzz`       | Generate OpenAPI fuzz cases.                         |
-| `qa:accessibility`      | Run accessibility checks.                            |
-| `qa:cross-browser-e2e`  | Run cross-browser e2e matrix.                        |
-| `qa:performance`        | Run performance checks.                              |
-| `qa:property`           | Run property-based checks.                           |
-| `qa:secret-scan`        | Run secret scanning checks.                          |
-| `qa:security-sast`      | Run SAST checks.                                     |
-| `qa:security-dast`      | Run DAST checks.                                     |
-| `qa:security-suite`     | Run the security suite.                              |
-| `qa:world-class-gates`  | Run world-class quality gates.                       |
+| Command                 | Description                                                          |
+| ----------------------- | -------------------------------------------------------------------- |
+| `qa:mutation`           | Run Stryker mutation testing or dry-run report.                      |
+| `qa:bundle-budget`      | Enforce per-app JS/CSS/single-chunk byte budgets on built frontends. |
+| `qa:test-aggregate`     | Run resource-aware aggregate unit or coverage tests.                 |
+| `qa:consumer-contracts` | Validate consumer contracts.                                         |
+| `qa:openapi-lint`       | Lint OpenAPI contracts.                                              |
+| `qa:openapi-fuzz`       | Generate OpenAPI fuzz cases.                                         |
+| `qa:accessibility`      | Run accessibility checks.                                            |
+| `qa:cross-browser-e2e`  | Run cross-browser e2e matrix.                                        |
+| `qa:performance`        | Run performance checks.                                              |
+| `qa:property`           | Run property-based checks.                                           |
+| `qa:secret-scan`        | Run secret scanning checks.                                          |
+| `qa:security-sast`      | Run SAST checks.                                                     |
+| `qa:security-dast`      | Run DAST checks.                                                     |
+| `qa:security-suite`     | Run the security suite.                                              |
+| `qa:world-class-gates`  | Run world-class quality gates.                                       |
 
 World-class command overrides use JSON argv arrays rather than shell strings.
 The real-user journey, observability, and concurrency gates require an
@@ -385,10 +395,11 @@ worktree.
 
 ## Tooling commands
 
-| Command                        | Description                                  |
-| ------------------------------ | -------------------------------------------- |
-| `tooling:static-check`         | TS-first static validation for repo tooling. |
-| `tooling:changed-format-check` | Run Prettier on changed files only.          |
+| Command                        | Description                                                             |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `tooling:static-check`         | TS-first static validation for repo tooling.                            |
+| `tooling:changed-format-check` | Run Prettier on changed files only.                                     |
+| `tooling:bun-compat`           | Run the pinned Bun compatibility contract across builds, tests, smokes. |
 
 ## Git commands
 

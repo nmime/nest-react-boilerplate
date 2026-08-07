@@ -193,7 +193,7 @@ assert.ok(value(serverExample, 'RUNTIME_MODE') === 'compose', 'the example must 
 assert.ok(value(serverExample, 'PM2_VERSION'), 'the native runtime needs a pinned PM2 version');
 assert.ok(bootstrap.includes('--runtime'), 'bootstrap must be able to select the runtime');
 
-// The shared native sequence, used by both serverctl and `pnpm deploy --preset=native`.
+// The shared native sequence, used by both serverctl and `pnpm run deploy --preset=native`.
 const nativeRelease = read('scripts/native-release.mjs');
 const nativeEnv = read('scripts/native-runtime-env.mjs');
 assert.match(

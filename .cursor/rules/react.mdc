@@ -1,31 +1,16 @@
 ---
-description: React frontend rules
+description: React frontend policy adapter
 globs: apps/frontend/**/*, libs/frontend/**/*
+alwaysApply: false
 ---
 
 # React Frontend Rules
 
-## Architecture
-- Feature-Sliced Design: entities/features/pages/widgets/shared
-- Custom pathname-based routers (no React Router)
-- MobX for app state, TanStack Query for server state
-- OpenAPI-generated API clients via @app/frontend/api-client
-- Shared UI components from @app/frontend/ui
+Canonical repository policy lives in [AGENTS.md](../../AGENTS.md). Frontend
+architecture expectations live in [Feature-Sliced Design](../../docs/frontend-fsd.md)
+and [frontend state](../../docs/frontend-state.md).
 
-## Patterns
-- All apps wrap with <UiErrorBoundary> from @app/frontend/ui
-- API clients in React context providers
-- Per-API hooks: useAuthApiClient, useAdminApiClient
-- i18n via @app/common/i18n with supported locales
-- Error boundaries on all route groups
-
-## Testing
-- Vitest with happy-dom environment
-- FSD boundary tests verify layer imports
-- Integration tests with mocked API client
-- E2E via Playwright fullstack tests
-
-## Styling
-- Tailwind CSS v4
-- Design tokens from @app/common/design-tokens
-- CSS modules for component-scoped styles
+This file is redirect-only. It must not contain independent rules. When policy
+and this file disagree, AGENTS.md wins. External AI coding assistants are not
+approved for repository work unless a maintainer explicitly changes that policy
+for the current task.

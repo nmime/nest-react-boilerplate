@@ -4,7 +4,9 @@ import {
   TenantScopedTablesByDomain,
   tenantAppRoleUpSql,
   tenantRegistryRowLevelSecurityDownSql,
+  tenantRegistryRowLevelSecurityUpSql,
   tenantRowLevelSecurityDownSql,
+  tenantRowLevelSecurityUpSql,
 } from '@app/backend-common-tenant-policy';
 
 /**
@@ -56,9 +58,18 @@ export class Migration20260804120000RemoveTenantRowLevelSecurity extends Migrati
   }
 
   override down(): void {
-    throw new Error(
-      'Migration20260804120000RemoveTenantRowLevelSecurity is a reversal and cannot be rolled back. ' +
-        'Tenant row-level security is intentionally not installed while no runtime engagement exists.',
-    );
+    // Rollback of the reversal = re-installing the fail-closed policies.
+    // Required by the repo's migration rollback gate (up → down({to:0}) → up):
+    // a migration whose down() throws breaks `migrator.down({ to: 0 })`.
+    // The role is re-created idempotently in up(); here it already exists.
+    for (const table of TenantScopedTablesByDomain.auth) {
+      for (const statement of tenantRowLevelSecurityUpSql(table)) {
+        this.addSql(statement);
+      }
+    }
+
+    for (const statement of tenantRegistryRowLevelSecurityUpSql()) {
+      this.addSql(statement);
+    }
   }
 }

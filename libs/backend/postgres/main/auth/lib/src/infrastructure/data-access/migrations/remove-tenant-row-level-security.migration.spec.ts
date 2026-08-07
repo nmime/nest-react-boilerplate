@@ -59,10 +59,20 @@ describe('remove tenant row-level-security migration', () => {
     expect(sql).not.toMatch(/\balter table "[^"]+" force row level security/u);
   });
 
-  it('refuses to roll the reversal back', () => {
+  it('reinstalls the fail-closed policies when the reversal itself is rolled back', () => {
     const migration = new Migration20260804120000RemoveTenantRowLevelSecurity(undefined as never, undefined as never);
-    expect(() => {
+    const sql = collectSql(migration, () => {
       migration.down();
-    }).toThrow('is a reversal and cannot be rolled back');
+    });
+
+    for (const table of TenantScopedTablesByDomain.auth) {
+      expect(sql).toContain(`create policy "${table}_tenant_isolation" on "${table}"`);
+      expect(sql).toContain(`alter table "${table}" force row level security;`);
+      expect(sql).toContain(`alter table "${table}" enable row level security;`);
+    }
+
+    // The tenant registry gets its own fail-closed policy keyed on id.
+    expect(sql).toContain(`create policy "auth_tenants_tenant_isolation" on "auth_tenants"`);
+    expect(sql).toContain(`alter table "auth_tenants" enable row level security;`);
   });
 });

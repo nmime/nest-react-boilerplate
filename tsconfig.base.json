@@ -66,6 +66,7 @@
       "@app/common-feature-flags": ["libs/common/feature-flags/lib/src/index.ts"],
       "@app/common-i18n-keys": ["libs/common/i18n/keys/lib/src/index.ts"],
       "@app/common-i18n-runtime": ["libs/common/i18n/runtime/lib/src/index.ts"],
+      "@app/common-money": ["libs/common/money/lib/src/index.ts"],
       "@app/common-notifications": ["libs/common/notifications/lib/src/index.ts"],
       "@app/common-websocket": ["libs/common/websocket/lib/src/index.ts"],
       "@app/frontend-api-client": ["libs/frontend/api-client/lib/src/index.ts"],

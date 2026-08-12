@@ -185,3 +185,21 @@ requirements:
         lanes:
           - pr
           - main
+  - id: REQ-API-MONEY-007
+    projects:
+      - '@app/common-money'
+    risk: high
+    profiles:
+      - domain
+    cucumber:
+      disposition: not-applicable
+      reason: Rounding direction, currency scale, and allocation totals are arithmetic invariants rather than stakeholder examples.
+      alternativeEvidence:
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/common/money/lib/src/money.spec.ts
+        target: '@app/common-money:test'
+        lanes:
+          - pr
+          - main

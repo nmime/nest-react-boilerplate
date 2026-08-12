@@ -2,6 +2,7 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
 import { AuthUserEntity, AuthUserEntitySchema, DefaultAuthTenantId } from './auth-user.entity';
+import { NullableEpochDateType } from './type/nullable-epoch-date.type';
 
 const invokeLifecycleHook = (hook: unknown): unknown => (hook as (() => unknown) | undefined)?.();
 
@@ -48,6 +49,10 @@ describe('AuthUserEntity', () => {
     expect(new AuthUserEntity()).toBeInstanceOf(AuthUserEntity);
   });
 
+  it('starts with an unconfirmed address', () => {
+    expect(new AuthUserEntity({ email: 'user@example.com' }).emailVerifiedAt).toBeNull();
+  });
+
   it('registers table, primary key, partial unique tenant email, and access metadata', () => {
     AuthUserEntitySchema.init();
     const metadata = AuthUserEntitySchema.meta;
@@ -74,6 +79,9 @@ describe('AuthUserEntity', () => {
     expect(metadata.properties.theme.default).toBe('system');
     expect(metadata.properties.theme.nullable).not.toBe(true);
     expect(metadata.properties.lastLoginAt.nullable).not.toBe(true);
+    expect(metadata.properties.emailVerifiedAt.fieldNames).toContain('email_verified_at');
+    expect(metadata.properties.emailVerifiedAt.nullable).not.toBe(true);
+    expect(metadata.properties.emailVerifiedAt.type).toBe(NullableEpochDateType);
     expect(metadata.uniques).toContainEqual(
       expect.objectContaining({
         name: 'uq__auth_users__tenant_id_email_not_null',

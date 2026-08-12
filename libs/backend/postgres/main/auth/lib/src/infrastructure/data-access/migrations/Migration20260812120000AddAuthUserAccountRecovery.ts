@@ -6,9 +6,12 @@ import { Migration } from '@mikro-orm/migrations';
  */
 export class Migration20260812120000AddAuthUserAccountRecovery extends Migration {
   override up(): void {
-    // Nullable rather than defaulted: an account that has never confirmed its address must stay
-    // distinguishable from one that confirmed it at deploy time.
-    this.addSql('alter table "auth_users" add column if not exists "email_verified_at" timestamptz null;');
+    // The epoch means "never confirmed", the same sentinel `last_login_at` already uses on this
+    // table. Existing rows inherit it, so an account that has never confirmed its address stays
+    // distinguishable from one that confirmed it at deploy time without the column being nullable.
+    this.addSql(
+      `alter table "auth_users" add column if not exists "email_verified_at" timestamptz not null default 'epoch'::timestamptz;`,
+    );
 
     // Existing rows take revision 0, which is exactly what a session minted before this column
     // existed reports. Backfilling any other value would sign every logged-in user out on deploy.

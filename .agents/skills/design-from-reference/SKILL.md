@@ -11,7 +11,7 @@ repository's tokens and primitives. Never clone another product's identity.
 
 ## Read first
 
-- Read `../../../docs/frontend-uiux-pro-max-lazyweb.md`, `../../../docs/frontend-ux.md`, and `../../../docs/frontend-fsd.md`.
+- Read `../../../docs/frontend-ux.md` and `../../../docs/frontend-fsd.md`.
 - Read `../design-frontend-experience/SKILL.md` for in-system design and `../shadcn-ui/SKILL.md` for source-owned component boundaries.
 - Inspect the supplied reference (DESIGN.md file, URL, screenshot, or named product), the shared `@app/common-design-tokens` `--xr-*` scale, the current app screens, and existing Storybook stories before proposing anything.
 

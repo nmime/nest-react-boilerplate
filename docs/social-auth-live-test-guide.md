@@ -136,7 +136,7 @@ Provide:
 - Account with Telegram linked: `<account-id-or-email>`
 - Account with Discord linked: `<account-id-or-email>`
 - Account with only one login method remaining: `<account-id-or-email>`
-- Preferred locales to test: `en`, `ru`
+- Preferred locales to test: every locale in `supportedLocales`
 
 Acceptance checklist:
 

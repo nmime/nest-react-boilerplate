@@ -2,6 +2,14 @@
 
 Supply-chain posture, SLSA alignment, SBOM generation, and dependency management for the Nest React Boilerplate platform.
 
+**Forge coupling.** The controls in this document are forge-neutral; the
+reference implementation is GitHub Actions. Three sections describe that
+implementation rather than the control — [Dependency update
+automation](#dependency-update-automation), [CI gates for supply
+chain](#ci-gates-for-supply-chain), and the `cosign verify` invocation under
+[Image signing with Sigstore/cosign](#image-signing-with-sigstorecosign).
+A project on another forge replaces those three and keeps the rest.
+
 ## Checked-in provenance and supply-chain posture
 
 [SLSA](https://slsa.dev/) (Supply-chain Levels for Software Artifacts) defines a framework for securing the software supply chain. The table below reports only controls visible in this repository. It does not claim a SLSA level or infer GitHub organization and repository settings that are configured outside Git.
@@ -123,7 +131,11 @@ package-manager-strict=true  # Fail if pnpm version doesn't match packageManager
 
 These prevent accidental installs with incompatible toolchain versions that might pull different dependency resolutions.
 
-## Dependabot configuration
+## Dependency update automation
+
+The control is "grouped, scheduled, reviewable dependency updates". The
+reference implementation is Dependabot; Renovate is the equivalent on GitLab
+and provides the same groupings.
 
 Dependabot runs automated dependency updates with grouped PRs:
 
@@ -138,7 +150,7 @@ Dependabot runs automated dependency updates with grouped PRs:
 
 There is no dedicated major-only npm group; major updates surface as individual PRs. npm dependency PRs are labeled `dependencies, security` and use the `deps:` commit prefix (github-actions uses `ci:`, docker uses `docker:`). All PRs must pass the full CI gate before merging.
 
-### Updating Dependabot groupings
+### Updating dependency-bot groupings
 
 Edit `.github/dependabot.yml` to add/remove groupings or change schedules. Keep groupings coarse enough to avoid PR spam, but fine enough that major updates are reviewable individually.
 
@@ -161,6 +173,8 @@ Already implemented in `release-images.yml`. To verify images locally:
 ```bash
 # Verify a signed image
 cosign verify \
+  # Owner and repository are this boilerplate's identity; a fork substitutes
+  # its own. See docs/product-identity.md.
   --certificate-identity-regexp='^https://github\.com/nmime/nest-react-boilerplate/\.github/workflows/release-images\.yml@refs/(tags/v.*|heads/main)$' \
   --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
   ghcr.io/nmime/nest-react-boilerplate/admin-app-api@sha256:<digest>

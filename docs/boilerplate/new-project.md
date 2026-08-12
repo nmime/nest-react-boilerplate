@@ -57,7 +57,7 @@ pnpm nrb setup --config nrb.config.json
 pnpm nrb setup --preset fullstack --dry-run
 ```
 
-See [Setup and Configuration](setup/configuration.md) for details.
+See [Setup and Configuration](../setup/configuration.md) for details.
 
 `pnpm nrb init` refuses a dirty worktree unless `--force` is provided and does
 not rewrite Git history. Its required `--domain` replaces `example.com` across
@@ -66,7 +66,7 @@ staging hosts, TLS/CSP/deployment values, and example emails. It does not create
 DNS records, certificates, environment secrets, or infrastructure accounts.
 The selected landing/site owner receives `acme.example`; every other deployable
 keeps its exact app ID as the hostname prefix. The generated
-[Project Catalog](project-catalog.md) owns the complete template mapping and
+[Project Catalog](../project-catalog.md) owns the complete template mapping and
 marks the E2E project as non-deployable.
 
 ## Manual checklist
@@ -85,7 +85,7 @@ Before production, search changed files for weak defaults such as `change-me`, `
 
 ## Next steps
 
-- [Migration Guide](setup/migration.md) — migrate from legacy `init:project` / `generate:feature` to the setup engine.
+- [Migration Guide](../setup/migration.md) — migrate from legacy `init:project` / `generate:feature` to the setup engine.
 - [Quick Start](quick-start.md) — get the stack running locally.
-- [CLI Reference](setup/cli-reference.md) — every command with flags and examples.
-- [Scaffolding and Extension Contract](scaffolding-and-extension.md) — required/optional apps and deployable completion criteria.
+- [CLI Reference](../setup/cli-reference.md) — every command with flags and examples.
+- [Scaffolding and Extension Contract](../scaffolding-and-extension.md) — required/optional apps and deployable completion criteria.

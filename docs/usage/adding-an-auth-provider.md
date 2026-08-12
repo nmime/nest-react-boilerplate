@@ -125,8 +125,9 @@ Before production, review:
 - **Rate limits**: per-provider and per-endpoint.
 - **Audit events**: login, logout, registration, password change.
 
-See [Auth Production Gap Register](../auth-production-roadmap.md) for the full
-checklist.
+See [Auth Production Gap Register](../boilerplate/auth-production-roadmap.md)
+for the full checklist. That register is boilerplate-owned content — see
+[Boilerplate-owned content](../boilerplate/README.md).
 
 ## 8. Frontend integration
 
@@ -191,7 +192,7 @@ pnpm run check:fast
 
 ## Next steps
 
-- [Auth Production Gap Register](../auth-production-roadmap.md) — implemented
-  foundation and remaining production checklist.
+- [Auth Production Gap Register](../boilerplate/auth-production-roadmap.md) — implemented
+  foundation and remaining production checklist (boilerplate-owned).
 - [Auth Tenant Hardening](../auth-tenant-hardening.md) — multi-tenant security.
 - [Social Auth and Bots](../social-auth-bots.md) — bot platform authentication patterns.

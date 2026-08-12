@@ -194,7 +194,7 @@ OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/con
 
 ## i18n and Problem Details
 
-Supported locales are `en` and `ru`; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `en`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves stable, product-owned `https://<root-domain>/problems#<code>` identifiers and localizes the standard `title` and `detail` members. Clients use the problem `type` as the primary identifier, then status or the documented `code` alias; they never branch on localized text.
+Supported locales are declared by the `supportedLocales` tuple in `@app/common-i18n-runtime` and are deliberately not restated here; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `defaultLocale`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves stable, product-owned `https://<root-domain>/problems#<code>` identifiers and localizes the standard `title` and `detail` members. Clients use the problem `type` as the primary identifier, then status or the documented `code` alias; they never branch on localized text.
 
 ## Testing layers
 

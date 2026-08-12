@@ -8,6 +8,11 @@ import {
   defaultLocale,
   supportedLocales,
 } from "@app/common-i18n-runtime";
+import {
+  discoverCatalogNamespaces,
+  discoverLocaleCatalogFiles,
+  isLocaleMetadataFile,
+} from "../i18n/catalog-sources.ts";
 import { run } from "../../runtime/process.ts";
 import { declaredPipelineFiles } from "../ci/check-pipelines.ts";
 
@@ -173,32 +178,12 @@ const forbiddenSocialAuthImportPatterns: RestrictedImportPattern[] = [
   },
 ];
 
-export const thinLocaleCatalogFileNames = [
-  "common/shared.json",
-  "common/errors.json",
-  "landing/app.json",
-  "admin/shell.json",
-  "admin/dashboard.json",
-  "admin/users.json",
-  "admin/audit.json",
-  "admin/roles.json",
-  "admin/navigation.json",
-  "admin/feature-flags.json",
-  "admin/notifications.json",
-  "admin/notification-options.json",
-  "admin/notification-navigation.json",
-  "admin/problem-presentations.json",
-  "admin/login-analytics.json",
-  "user/shell.json",
-  "user/site.json",
-  "user/mobile.json",
-  "user/auth.json",
-  "user/social-auth.json",
-  "user/tma.json",
-  "bots/shared.json",
-  "bots/telegram.json",
-  "bots/discord.json",
-] as const;
+/**
+ * The namespace axis is discovered from the default locale rather than enumerated here, matching the
+ * generator that builds the catalog bindings from the same tree: adding `i18n/<locale>/user/billing.json`
+ * to every locale is the documented way to add a namespace, and it used to hard-fail this gate until
+ * someone edited this package.
+ */
 
 /**
  * Translation quality rules are a property of the locale, not of the tool: which orthography a
@@ -1475,6 +1460,12 @@ export function checkTrackedSocialAuthSecrets(
 export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
   const i18nRoot = join(workspaceRoot, "i18n");
   const failures: CheckFailure[] = [];
+  // The default locale is the namespace source of truth, the same choice the catalog binding
+  // generator makes, so a namespace present only in a translation is still reported as unexpected
+  // and one missing from a translation is still reported as missing.
+  const expectedFiles = discoverCatalogNamespaces(workspaceRoot, defaultLocale).sort(
+    (left, right) => left.localeCompare(right),
+  );
 
   for (const locale of supportedLocales) {
     const localeDirectory = join(i18nRoot, locale);
@@ -1486,9 +1477,6 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
     const actualFiles = collectLocaleJsonFiles(localeDirectory).sort(
       (left, right) => left.localeCompare(right),
     );
-    const expectedFiles = [...thinLocaleCatalogFileNames].sort((left, right) =>
-      left.localeCompare(right),
-    );
 
     for (const missingFile of expectedFiles.filter(
       (file) => !actualFiles.includes(file),
@@ -1498,10 +1486,11 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
       );
     }
 
+    // Metadata is recognised by shape — a catalog is always `<scope>/<file>.json`, so anything at
+    // the locale root describes the locale rather than translating it. Matching one hardcoded name
+    // meant a product's review ledger failed a merge-blocking gate.
     for (const extraFile of actualFiles.filter(
-      (file) =>
-        file !== localeLintRuleFileName &&
-        !expectedFiles.includes(file as (typeof thinLocaleCatalogFileNames)[number]),
+      (file) => !isLocaleMetadataFile(file) && !expectedFiles.includes(file),
     )) {
       failures.push(
         thinLocaleFailure(`i18n/${locale}/${extraFile}`, "unexpected locale JSON file"),
@@ -1519,7 +1508,7 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
     const localeDirectory = join(i18nRoot, locale);
     if (!existsSync(localeDirectory)) continue;
 
-    for (const fileName of thinLocaleCatalogFileNames) {
+    for (const fileName of expectedFiles) {
       const relativeFile = `i18n/${locale}/${fileName}`;
       const file = join(localeDirectory, fileName);
       if (!existsSync(file)) continue;
@@ -1689,7 +1678,7 @@ function localeProseFailures(
     // is removed before the prose rules look at what is left.
     const residual = loaded.reviewedTechnicalTerms.reduce(
       (text, term) => text.replaceAll(new RegExp(escapeRegExp(term), "giu"), " "),
-      value,
+      withoutInterpolation(value),
     );
 
     for (const { regex, label } of loaded.residuePatterns) {
@@ -1815,6 +1804,28 @@ function placeholderParityFailures(
   return failures;
 }
 
+/**
+ * A message with its interpolation removed.
+ *
+ * Placeholder names are ASCII identifiers a developer chose; they are machinery, never prose, and
+ * leaving them in broke the prose rules in both directions. A non-Latin locale could not declare the
+ * rule it means -- `[A-Za-z]` would fire on every message carrying any placeholder, which is why the
+ * shipped Russian rules had to spell it as a Latin/Cyrillic adjacency hack -- and a marker word that
+ * collides with a placeholder name (`{{error}}`) could not be silenced at all, since listing it as a
+ * reviewed term would also stop it matching real prose.
+ *
+ * Each match becomes a space so neighbouring words do not fuse into one, and the replacement runs to
+ * a fixed point because a nested construct such as `{{outer{inner}tail}}` survives a single pass.
+ */
+function withoutInterpolation(value: string): string {
+  let text = value;
+  for (;;) {
+    const stripped = text.replace(/\{[^{}]*\}/gu, " ");
+    if (stripped === text) return text;
+    text = stripped;
+  }
+}
+
 /** The distinct `{{name}}` placeholders in a message, sorted so reordering is not a defect. */
 function translationPlaceholders(value: string): string[] {
   return [
@@ -1875,16 +1886,21 @@ function thinLocaleFailure(file: string, stderr: string): CheckFailure {
 
 const translationKeyUnionSource = "libs/common/i18n/keys/lib/src/index.ts";
 
-// The hand-written TranslationKey union and the runtime en catalogs are separate
-// sources of truth, so a typo or removal in either drifts silently (catalogs are
-// Record<string, string>). Fail on drift in either direction.
+// The generated TranslationKey union and the runtime en catalogs are separate sources of truth, so a
+// typo or removal in either drifts silently (catalogs are Record<string, string>). Fail on drift in
+// either direction.
+//
+// The catalog set comes from the same discovery the union's generator uses. Walking every JSON under
+// the locale instead pulled locale-root metadata (`lint.json`, a review ledger) in as a catalog and
+// demanded its top-level keys join the union — which regenerating can never do, since the generator
+// excludes metadata, and hand-adding them makes the module report as stale.
 export function checkTranslationKeyDrift(workspaceRoot: string): CheckFailure[] {
   const localeDirectory = join(workspaceRoot, "i18n", defaultLocale);
   const keysSource = resolve(workspaceRoot, translationKeyUnionSource);
   if (!existsSync(localeDirectory) || !existsSync(keysSource)) return [];
 
   const catalogKeys = new Set<string>();
-  for (const relativeFile of collectLocaleJsonFiles(localeDirectory)) {
+  for (const relativeFile of discoverLocaleCatalogFiles(workspaceRoot, defaultLocale)) {
     let catalog: unknown;
     try {
       catalog = JSON.parse(

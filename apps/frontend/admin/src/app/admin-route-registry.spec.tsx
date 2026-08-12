@@ -37,8 +37,17 @@ describe('admin route registry', () => {
   });
 
   it('renders every descriptor through a page, so no route can be registered without one', () => {
+    // Each factory is invoked, not just looked up: a descriptor whose page factory reads a context
+    // field the router never supplies would still type-check and still pass a presence check.
+    const context = {
+      access: accessFor(['admin:manage:all']),
+      currentPath: '/admin',
+      payload: { principal: { subject: 'admin-id' }, profile: { id: 'admin-id' } },
+    };
+
     for (const route of adminRouteDescriptors) {
       expect(adminRoutePages[route.id]).toBeTypeOf('function');
+      expect(adminRoutePages[route.id](context).type).toBeTypeOf('function');
     }
   });
 

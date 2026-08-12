@@ -24,13 +24,13 @@ fork made a slightly different judgement about which ones.
 These could not move without breaking tooling that hardcodes their path, so they
 are declared here instead. A fork deletes them too.
 
-| Path                          | Held in place by                                                         |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| `docs/superpowers/**`         | Path is hardcoded in `scripts/validate-doc-links.mjs` and `static-check` |
-| `CHANGELOG.md`                | Path is hardcoded in two doc-tooling scripts                             |
-| `docs/assets/readme-hero.svg` | Referenced by the root `README.md` header                                |
-| `openspec/changes/archive/**` | The boilerplate's own completed change proposals                         |
-| `.mailmap`                    | Canonicalises the boilerplate's historical contributors                  |
+| Path                          | Held in place by                                        |
+| ----------------------------- | ------------------------------------------------------- |
+| `docs/superpowers/**`         | Declared in `docs/.docsrc.json` and `.prettierignore`   |
+| `CHANGELOG.md`                | Path is hardcoded in two doc-tooling scripts            |
+| `docs/assets/readme-hero.svg` | Referenced by the root `README.md` header               |
+| `openspec/changes/archive/**` | The boilerplate's own completed change proposals        |
+| `.mailmap`                    | Canonicalises the boilerplate's historical contributors |
 
 ## Pruning
 

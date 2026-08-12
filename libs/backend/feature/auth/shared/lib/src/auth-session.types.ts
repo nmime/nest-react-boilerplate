@@ -4,6 +4,7 @@ import {
   resolveTenantId,
   AuthenticatedTheme,
   isAuthenticatedTheme,
+  type AuthenticatedPrincipal,
   type UserThemePreference,
   type AuthProvider,
   type AuthProviderChannel,
@@ -29,6 +30,12 @@ export interface AuthSessionView {
   authChannel?: AuthProviderChannel;
   authTime?: number;
   externalIdentityId?: string;
+  emailVerified?: boolean;
+  /**
+   * The account's credential epoch at the moment this session was minted. Access guards compare
+   * it against the stored account so a later password change invalidates this session.
+   */
+  credentialRevision?: number;
 }
 
 export function toAuthenticatedUserView(input: {
@@ -55,6 +62,25 @@ export function toAuthenticatedUserView(input: {
     ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
     ...(input.avatarStatus && input.avatarStatus !== 'none' ? { avatarStatus: input.avatarStatus } : {}),
   };
+}
+
+/**
+ * The account view of a principal that has no account row behind it — today, the demo
+ * principal. Everything the app shell renders already lives on the principal, so this is a
+ * projection of it rather than a second source of truth about the user.
+ */
+export function principalUserView(principal: AuthenticatedPrincipal): AuthenticatedUserView {
+  return toAuthenticatedUserView({
+    id: principal.subject,
+    tenantId: principal.tenantId,
+    email: principal.email ?? null,
+    displayName: principal.displayName,
+    locale: principal.locale,
+    theme: principal.theme,
+    roles: principal.roles,
+    permissions: principal.permissions,
+    avatarUrl: principal.avatarUrl,
+  });
 }
 
 export function normalizeUserThemePreference(value: string | null | undefined): UserThemePreference | undefined {

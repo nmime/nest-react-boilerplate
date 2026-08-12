@@ -12,6 +12,7 @@ import { createAdminAbility, type AdminAuthorizedRequest } from '@app/backend-fe
 import {
   AuthUserRepositoryInjectToken,
   AuthUserRoleRepositoryInjectToken,
+  isDemoPrincipal,
   PublicAuthMetadataKey,
   type AuthenticatedPrincipal,
   type AuthUserRepositoryPort,
@@ -41,6 +42,15 @@ export class AdminDatabaseAccessGuard implements CanActivate {
     const principal = request.user ?? request.auth;
     if (!principal) {
       throw new UnauthorizedException();
+    }
+
+    // Demo mode mints a principal with no account row; its grants already come from the shared
+    // role matrix, so there is nothing for the database to add. See `isDemoPrincipal`.
+    if (isDemoPrincipal(principal)) {
+      request.user = principal;
+      request.auth = principal;
+      request.adminAbility = createAdminAbility(principal);
+      return true;
     }
 
     const user = await this.users.findById(principal.subject, principal.tenantId);

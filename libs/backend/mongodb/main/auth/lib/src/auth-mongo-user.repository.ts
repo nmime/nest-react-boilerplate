@@ -12,7 +12,7 @@ import {
   type AuthUserRepositoryPort,
   type AuthUserThemePreference,
 } from '@app/backend-feature-auth-shared';
-import type { Db, Filter } from 'mongodb';
+import type { Db, Filter, UpdateFilter } from 'mongodb';
 import type { ResultAsync } from 'neverthrow';
 import { MongoDatabaseToken } from './mongo-runtime';
 import { AuthMongoCollections } from './auth-mongo.collections';
@@ -87,6 +87,24 @@ export class MongoAuthUserRepository implements AuthUserRepositoryPort {
   ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError> {
     return repositoryResult(this.syncAvatar(id, tenantId, input));
   }
+  verifyEmail(
+    id: string,
+    tenantId = DefaultAuthTenantId,
+    verifiedAt: Date = new Date(),
+  ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError> {
+    return repositoryResult(this.update(id, tenantId, { emailVerifiedAt: verifiedAt }));
+  }
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError> {
+    // `$inc` rather than a read-then-write: two resets racing on one account must each advance the
+    // epoch, or the loser silently leaves the sessions it was meant to revoke alive.
+    return repositoryResult(
+      this.mutate(id, tenantId, { $set: { passwordHash }, $inc: { credentialRevision: 1 } }),
+    );
+  }
 
   private async create(input: AuthUserCreateInput): Promise<AuthUserPersistenceRecord> {
     const now = new Date();
@@ -103,6 +121,8 @@ export class MongoAuthUserRepository implements AuthUserRepositoryPort {
       avatarUrl: input.avatarUrl ?? '',
       avatarHash: input.avatarHash ?? '',
       avatarStatus: input.avatarStatus ?? 'none',
+      emailVerifiedAt: null,
+      credentialRevision: 0,
       createdAt: now,
       updatedAt: now,
     };
@@ -154,14 +174,21 @@ export class MongoAuthUserRepository implements AuthUserRepositoryPort {
       ? filtered.slice(pageOffset(input.offset), pageOffset(input.offset) + pageLimit(input.limit))
       : filtered;
   }
-  private async update(
+  private update(
     id: string,
     tenantId: string,
     changes: Record<string, unknown>,
   ): Promise<AuthUserPersistenceRecord | null> {
+    return this.mutate(id, tenantId, { $set: changes });
+  }
+  private async mutate(
+    id: string,
+    tenantId: string,
+    update: UpdateFilter<MongoAuthDocument>,
+  ): Promise<AuthUserPersistenceRecord | null> {
     const document = await collection(this.database, AuthMongoCollections.users).findOneAndUpdate(
       { _id: id, tenantId },
-      { $set: { ...changes, updatedAt: new Date() } },
+      { ...update, $set: { ...update.$set, updatedAt: new Date() } },
       { returnDocument: 'after', includeResultMetadata: false },
     );
     return document ? toMongoAuthUserRecord(this.database, document) : null;
@@ -211,6 +238,10 @@ export async function toMongoAuthUserRecord(
     avatarUrl: String(document.avatarUrl),
     avatarHash: String(document.avatarHash),
     avatarStatus: document.avatarStatus as AuthUserAvatarStatus,
+    // Documents written before account recovery existed carry neither field. Absent reads as never
+    // verified at revision zero, which is exactly what sessions minted back then claim.
+    emailVerifiedAt: (document.emailVerifiedAt as Date | null | undefined) ?? null,
+    credentialRevision: Number(document.credentialRevision ?? 0),
     createdAt: document.createdAt as Date,
     updatedAt: document.updatedAt as Date,
   };

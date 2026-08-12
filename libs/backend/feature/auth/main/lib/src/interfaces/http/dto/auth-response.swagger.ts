@@ -35,6 +35,9 @@ export class AuthenticatedPrincipalDto {
 
   @ApiProperty({ items: { type: 'string' }, type: 'array' })
   permissions!: string[];
+
+  @ApiPropertyOptional()
+  emailVerified?: boolean;
 }
 
 export class AuthenticatedUserViewDto {
@@ -89,6 +92,12 @@ export class AuthSessionViewDto {
 
   @ApiPropertyOptional({ format: 'uuid' })
   externalIdentityId?: string;
+
+  @ApiPropertyOptional()
+  emailVerified?: boolean;
+
+  @ApiPropertyOptional()
+  credentialRevision?: number;
 }
 
 export class ExternalAuthIdentityDto {
@@ -181,6 +190,11 @@ export class LinkTokenResultDto {
 export class UserActionTokenPayloadDto {
   @ApiProperty()
   issued!: boolean;
+}
+
+export class UserActionConfirmPayloadDto {
+  @ApiProperty({ enum: [true] })
+  confirmed!: true;
 }
 
 export class MePayloadDto {

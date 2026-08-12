@@ -27,6 +27,7 @@ import {
   AuthTokenStoreInjectToken,
   type AuthTokenStore,
   type AuthUserTokenPurpose,
+  type UserActionTokenRecord,
   InMemoryAuthTokenStore,
   SocialAuthStoreInjectToken,
   type SocialAuthStore,
@@ -35,7 +36,13 @@ import { createAuthSession } from './auth-session.factory';
 import { EffectivePermissionService } from './effective-permission.service';
 import { AuthNotificationPublisher } from './auth-notification.publisher';
 import { normalizeEmail, hashPassword, verifyPassword } from '../domain';
-import type { LoginInput, RegisterUserInput, UserActionTokenInput } from './type/auth-service.type';
+import type {
+  LoginInput,
+  PasswordResetConfirmInput,
+  RegisterUserInput,
+  UserActionTokenConfirmInput,
+  UserActionTokenInput,
+} from './type/auth-service.type';
 import { parseTenantId } from './util/auth-error-adapter.util';
 
 // Input DTOs and tenant exception-translation helpers were decomposed
@@ -157,6 +164,18 @@ export class AuthService {
   ): Promise<boolean> {
     const consumed = await this.tokens.consumeUserActionToken(token, purpose, parseTenantId(tenantId));
     return consumed.isOk() && Boolean(consumed.value);
+  }
+
+  async confirmEmailVerification(input: UserActionTokenConfirmInput): Promise<AuthenticatedUserView> {
+    const consumed = await this.redeemUserActionToken(input, 'email_verification');
+    return this.requireRecoveredUser(await this.users.verifyEmail(consumed.userId, consumed.tenantId, new Date()));
+  }
+
+  async confirmPasswordReset(input: PasswordResetConfirmInput): Promise<AuthenticatedUserView> {
+    const consumed = await this.redeemUserActionToken(input, 'password_reset');
+    return this.requireRecoveredUser(
+      await this.users.replacePassword(consumed.userId, hashPassword(input.password), consumed.tenantId),
+    );
   }
 
   async getUserById(id: string, tenantId?: string | null): Promise<AuthenticatedUserView | null> {
@@ -281,6 +300,37 @@ export class AuthService {
       });
     }
     return issued.value.token;
+  }
+
+  /**
+   * Burns a one-time recovery code and returns the account it was issued for.
+   *
+   * Unknown, expired, already-consumed, and wrong-purpose codes all fail identically: telling
+   * them apart would turn the confirm routes into an oracle for which codes exist.
+   */
+  private async redeemUserActionToken(
+    input: UserActionTokenConfirmInput,
+    purpose: AuthUserTokenPurpose,
+  ): Promise<UserActionTokenRecord> {
+    const consumed = await this.tokens.consumeUserActionToken(input.token, purpose, parseTenantId(input.tenantId));
+    if (consumed.isErr() || !consumed.value) {
+      throw new UnauthorizedException('Recovery code is invalid or has already been used.');
+    }
+
+    return consumed.value;
+  }
+
+  private requireRecoveredUser(
+    result: Awaited<ReturnType<AuthUserStore['verifyEmail']>>,
+  ): AuthenticatedUserView {
+    if (result.isErr()) {
+      throw new ConflictException(result.error.message);
+    }
+    if (!result.value) {
+      throw new NotFoundException('User was not found in tenant.');
+    }
+
+    return toAuthenticatedUserView(result.value);
   }
 
   private async recordPasswordMethod(user: AuthUserRecord): Promise<void> {

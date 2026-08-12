@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { canAdmin, type AdminAuthorizedRequest } from '@app/backend-feature-admin-shared';
 import {
   PublicAuthMetadataKey,
+  resolveDemoPrincipal,
   type AuthenticatedRequest,
   type AuthUserRepositoryPort,
   type AuthUserRoleRepositoryPort,
@@ -119,6 +120,29 @@ describe('AdminDatabaseAccessGuard', () => {
     await expect(publicRoute.guard.canActivate(contextFor({}))).resolves.toBe(true);
     expect(publicRoute.users.findById).not.toHaveBeenCalled();
     expect(publicRoute.roles.resolveEffectiveAccess).not.toHaveBeenCalled();
+  });
+
+  it('grants the demo principal its configured admin access without a database account', async () => {
+    const demo = resolveDemoPrincipal({ AUTH_DEMO_MODE: 'true', AUTH_DEMO_ROLES: 'admin' });
+    const request: AdminAuthorizedRequest = { user: demo };
+    const { guard, roles, users } = dependencies();
+
+    await expect(guard.canActivate(contextFor(request))).resolves.toBe(true);
+
+    expect(users.findById).not.toHaveBeenCalled();
+    expect(roles.resolveEffectiveAccess).not.toHaveBeenCalled();
+    expect(request.user).toBe(demo);
+    expect(canAdmin(request.adminAbility, 'read', 'admin.users')).toBe(true);
+  });
+
+  it('still refuses a look-alike principal that only claims to be the demo user', async () => {
+    const forged = JSON.parse(
+      JSON.stringify(resolveDemoPrincipal({ AUTH_DEMO_MODE: 'true', AUTH_DEMO_ROLES: 'admin' })),
+    );
+    const { guard, users } = dependencies({ user: null });
+
+    await expect(guard.canActivate(contextFor({ user: forged }))).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(users.findById).toHaveBeenCalled();
   });
 
   it('requires authentication when exclusion metadata is absent', async () => {

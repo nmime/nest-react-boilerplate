@@ -54,6 +54,12 @@ export class AuthUserEntity {
   avatarUrl = '';
   avatarHash = '';
   avatarStatus: AuthUserAvatarStatus = 'none';
+  emailVerifiedAt: Date | null = null;
+  /**
+   * Session epoch. Every credential replacement advances it and access guards reject sessions
+   * stamped with an older value, so a password reset revokes sessions that are already live.
+   */
+  credentialRevision = 0;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 
@@ -126,6 +132,16 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       fieldName: 'avatar_status',
       length: 16,
       default: 'none',
+    },
+    emailVerifiedAt: {
+      type: 'timestamptz',
+      fieldName: 'email_verified_at',
+      nullable: true,
+    },
+    credentialRevision: {
+      type: 'int',
+      fieldName: 'credential_revision',
+      default: 0,
     },
     createdAt: {
       type: 'timestamptz',

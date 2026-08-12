@@ -7,6 +7,7 @@ import {
   AuthProviderChannel,
   DefaultAuthTenantId,
   ExternalAuthIntent,
+  resolveDemoPrincipal,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
   type AuthenticatedResponse,
@@ -21,6 +22,8 @@ import { AuthController, DiscordCallbackQueryDto, SessionCookieName } from './au
 
 type AuthControllerService = Pick<
   AuthService,
+  | 'confirmEmailVerification'
+  | 'confirmPasswordReset'
   | 'getUserById'
   | 'issueEmailVerificationToken'
   | 'issuePasswordResetToken'
@@ -90,20 +93,15 @@ const externalIdentity = {
 } satisfies ExternalAuthIdentityView;
 
 function createService(
-  overrides: Partial<{
-    getUserById: AuthControllerService['getUserById'];
-    issueEmailVerificationToken: AuthControllerService['issueEmailVerificationToken'];
-    issuePasswordResetToken: AuthControllerService['issuePasswordResetToken'];
-    login: AuthControllerService['login'];
-    register: AuthControllerService['register'];
-    updateUserPreferences: AuthControllerService['updateUserPreferences'];
-  }> = {},
+  overrides: Partial<AuthControllerService> = {},
 ): AuthControllerService {
   return {
     register: vi.fn(() => Promise.resolve(sessionView)),
     login: vi.fn(() => Promise.resolve(sessionView)),
     issueEmailVerificationToken: vi.fn(() => Promise.resolve('verification-token')),
     issuePasswordResetToken: vi.fn(() => Promise.resolve('reset-token')),
+    confirmEmailVerification: vi.fn(() => Promise.resolve(sessionView.user)),
+    confirmPasswordReset: vi.fn(() => Promise.resolve(sessionView.user)),
     getUserById: vi.fn(() => Promise.resolve(sessionView.user)),
     updateUserPreferences: vi.fn(() => Promise.resolve(sessionView.user)),
     ...overrides,
@@ -234,6 +232,23 @@ describe('AuthController', () => {
     });
     expect(session.regenerate).toHaveBeenCalledOnce();
     expect(session.save).toHaveBeenCalledOnce();
+  });
+
+  it('answers /auth/me for the demo principal without an account row', async () => {
+    const service = createService();
+    service.getUserById = vi.fn(async () => null);
+    const controller = toController(service);
+    const demo = resolveDemoPrincipal({ AUTH_DEMO_MODE: 'true' });
+
+    // The SPAs read the shell (display name, locale, theme) off this payload; a null user is
+    // what a demo deployment would otherwise render, which is the "demo does not work" symptom.
+    await expect(controller.me(demo as AuthenticatedPrincipal)).resolves.toMatchObject({
+      data: {
+        principal: demo,
+        user: { id: demo?.subject, tenantId: demo?.tenantId, email: demo?.email, displayName: demo?.displayName },
+      },
+    });
+    expect(service.getUserById).not.toHaveBeenCalled();
   });
 
   it('stores identity-only session data while exposing the resolved request principal', async () => {
@@ -485,6 +500,24 @@ describe('AuthController', () => {
     });
     await expect(controller.requestPasswordReset({ email: 'user@example.com' })).resolves.toEqual({
       data: { issued: true },
+    });
+  });
+
+  it('exposes a redemption route for every code it emails', async () => {
+    const service = createService();
+    const controller = toController(service);
+
+    await expect(controller.confirmEmailVerification({ token: 'verification-token' })).resolves.toEqual({
+      data: { confirmed: true },
+    });
+    expect(service.confirmEmailVerification).toHaveBeenCalledWith({ token: 'verification-token' });
+
+    await expect(controller.confirmPasswordReset({ token: 'reset-token', password: 'replacement123' })).resolves.toEqual(
+      { data: { confirmed: true } },
+    );
+    expect(service.confirmPasswordReset).toHaveBeenCalledWith({
+      token: 'reset-token',
+      password: 'replacement123',
     });
   });
 

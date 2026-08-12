@@ -10,6 +10,7 @@ import { Reflector } from '@nestjs/core';
 import { HealthRouteMetadataKey } from '@app/backend-common-health';
 import {
   assertRequestTenantMatchesPrincipal,
+  isDemoPrincipal,
   PublicAuthMetadataKey,
   readSessionPrincipal,
   type AuthenticatedPrincipal,
@@ -53,11 +54,27 @@ export class PersistentSessionAccessGuard implements CanActivate {
     }
     assertRequestTenantMatchesPrincipal(request, principal);
 
+    // The demo principal has no account row to reload, and its grants already come from the same
+    // role matrix the database resolves against. Recognition is by object identity, so a session
+    // that merely looks like the demo user still takes the database path below.
+    if (isDemoPrincipal(principal)) {
+      request.user = principal;
+      request.auth = principal;
+      return true;
+    }
+
     const user = await this.users.findById(principal.subject, principal.tenantId);
     if (user.isErr()) {
       throw new InternalServerErrorException();
     }
     if (!user.value || user.value.status !== 'active') {
+      throw new UnauthorizedException();
+    }
+
+    // A credential change advances the account's revision, which strands every session minted
+    // against the previous one. Sessions predating the epoch carry no revision and read as zero,
+    // matching the column default, so this check only ever rejects a genuinely stale session.
+    if ((principal.credentialRevision ?? 0) !== user.value.credentialRevision) {
       throw new UnauthorizedException();
     }
 
@@ -70,6 +87,9 @@ export class PersistentSessionAccessGuard implements CanActivate {
       ...principal,
       roles: effectiveAccess.value.roleKeys,
       permissions: effectiveAccess.value.permissionKeys,
+      // Read from the account, not the cookie, for the same reason grants are: a claim confirmed
+      // after the session was minted must not need a re-login to take effect.
+      emailVerified: Boolean(user.value.emailVerifiedAt),
     };
     request.user = resolvedPrincipal;
     request.auth = resolvedPrincipal;

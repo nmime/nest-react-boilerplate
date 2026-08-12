@@ -58,7 +58,9 @@ describe('session lifecycle utilities', () => {
           id: 'user-id',
           tenantId: 'tenant-id',
           email: null,
-          locale: 'uz' as never,
+          // A private-use tag, so it can never become a supported locale and quietly turn this
+          // assertion into a no-op the way a real tag like "uz" would the day it ships.
+          locale: 'x-unsupported' as never,
           theme: AuthenticatedTheme.System,
           roles: [],
           permissions: [],

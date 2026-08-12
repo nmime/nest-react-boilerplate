@@ -25,6 +25,7 @@ import { Migration20260722090000DropLegacyRefreshTokens } from './Migration20260
 import { Migration20260722091000DropLegacyAuthUserAccessCache } from './Migration20260722091000DropLegacyAuthUserAccessCache';
 import { Migration20260722092000CreateCanonicalSessions } from './Migration20260722092000CreateCanonicalSessions';
 import { Migration20260722100000GrantFeatureFlagPermissions } from './Migration20260722100000GrantFeatureFlagPermissions';
+import { Migration20260812120000AddAuthUserAccountRecovery } from './Migration20260812120000AddAuthUserAccountRecovery';
 import { Migration20260803120000TenantRowLevelSecurity } from './Migration20260803120000TenantRowLevelSecurity';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
@@ -56,6 +57,7 @@ export const authMigrations = [
   Migration20260722091000DropLegacyAuthUserAccessCache,
   Migration20260722092000CreateCanonicalSessions,
   Migration20260722100000GrantFeatureFlagPermissions,
+  Migration20260812120000AddAuthUserAccountRecovery,
 ] as const;
 
 /**
@@ -109,4 +111,5 @@ export * from './Migration20260722090000DropLegacyRefreshTokens';
 export * from './Migration20260722091000DropLegacyAuthUserAccessCache';
 export * from './Migration20260722092000CreateCanonicalSessions';
 export * from './Migration20260722100000GrantFeatureFlagPermissions';
+export * from './Migration20260812120000AddAuthUserAccountRecovery';
 export * from './Migration20260803120000TenantRowLevelSecurity';

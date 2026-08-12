@@ -24,8 +24,12 @@ function createEntityManagerMock() {
     findOne,
     getConnection: () => ({ execute }),
   } as unknown as EntityManager;
+  // Runs the callback against the same manager, so a repository that wraps a read-modify-write in a
+  // transaction is still observable through the plain findOne/flush spies.
+  const transactional = vi.fn((handler: (manager: EntityManager) => unknown) => handler(entityManager));
+  Object.assign(entityManager, { transactional });
 
-  return { create, persist, flush, findOne, execute, entityManager };
+  return { create, persist, flush, findOne, execute, transactional, entityManager };
 }
 
 describe('AuthUserRepository', () => {
@@ -84,6 +88,47 @@ describe('AuthUserRepository', () => {
       tenantId: DefaultAuthTenantId,
       email: { $ne: null, $eq: 'user@example.com' },
     });
+  });
+
+  it('stamps the verification time and leaves the credential epoch alone', async () => {
+    const entity = new AuthUserEntity({ email: 'user@example.com' });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+    const verifiedAt = new Date('2026-02-02T00:00:00.000Z');
+
+    const result = await authUsers.verifyEmail('user-id', DefaultAuthTenantId, verifiedAt);
+
+    expect(result._unsafeUnwrap()).toBe(entity);
+    expect(entity.emailVerifiedAt).toEqual(verifiedAt);
+    expect(entity.credentialRevision).toBe(0);
+    expect(flush).toHaveBeenCalledOnce();
+  });
+
+  it('advances the credential epoch in the same write that replaces the password', async () => {
+    const entity = new AuthUserEntity({ email: 'user@example.com', passwordHash: 'old-hash' });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.replacePassword('user-id', 'new-hash', DefaultAuthTenantId);
+
+    expect(result._unsafeUnwrap()).toBe(entity);
+    expect(entity.passwordHash).toBe('new-hash');
+    expect(entity.credentialRevision).toBe(1);
+    // One flush: a revision that lands without the new hash would revoke sessions for nothing,
+    // and a hash that lands without the revision would leave stolen sessions alive.
+    expect(flush).toHaveBeenCalledOnce();
+  });
+
+  it('reports a missing account for both recovery writes', async () => {
+    const { entityManager } = createEntityManagerMock();
+    const authUsers = new AuthUserRepository(entityManager);
+
+    await expect(authUsers.verifyEmail('missing').then((result) => result._unsafeUnwrap())).resolves.toBeNull();
+    await expect(
+      authUsers.replacePassword('missing', 'new-hash').then((result) => result._unsafeUnwrap()),
+    ).resolves.toBeNull();
   });
 
   it('returns null without querying for blank or null email', async () => {

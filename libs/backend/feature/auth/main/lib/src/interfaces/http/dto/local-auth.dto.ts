@@ -57,6 +57,25 @@ export class UserActionTokenRequestDto {
   email!: string;
 }
 
+export class UserActionTokenConfirmDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ writeOnly: true })
+  @IsString()
+  @MinLength(1)
+  token!: string;
+}
+
+export class PasswordResetConfirmDto extends UserActionTokenConfirmDto {
+  @ApiProperty({ minLength: 8, writeOnly: true })
+  @IsString()
+  @MinLength(8)
+  password!: string;
+}
+
 export class UpdateLocaleDto {
   @ApiProperty({ enum: supportedLocales })
   @IsString()

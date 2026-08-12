@@ -1,10 +1,15 @@
 /* eslint-disable no-await-in-loop -- collection/index creation and RBAC seeding are intentionally ordered */
 import { randomUUID } from 'node:crypto';
 import type { ClientSession, Db, Document, IndexDescription } from 'mongodb';
+// Unlike the versioned Postgres migrations, this reconciler converges the database on every boot,
+// so it binds to the *composed* catalog: permissions and roles a product registered through
+// `productAuthzExtensions` are seeded here without the product writing a migration.
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import { permissionCatalog } from '../../../../../../common/authz/lib/src/permission-catalog';
-// eslint-disable-next-line @nx/enforce-module-boundaries
-import { defaultRolePermissions, roleKeys } from '../../../../../../common/authz/lib/src/role-matrix';
+import {
+  permissionCatalog,
+  permissionsForRoles,
+  roleKeys,
+} from '../../../../../../common/authz/lib/src/effective-catalog';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { DefaultAuthTenantId } from '../../../../../feature/auth/shared/lib/src/oauth/tenant-context';
 // eslint-disable-next-line @nx/enforce-module-boundaries
@@ -83,6 +88,10 @@ export const AuthMongoCollectionDefinitions: Array<{
         avatarUrl: text,
         avatarHash: text,
         avatarStatus: { enum: ['none', 'provider', 'manual', 'deleted'] },
+        // Deliberately not required: this validator also gates updates to documents that predate
+        // account recovery, and those documents carry neither field.
+        emailVerifiedAt: nullableDate,
+        credentialRevision: { bsonType: ['int', 'long'] },
         createdAt: date,
         updatedAt: date,
       },
@@ -551,7 +560,7 @@ async function seedRbac(database: Db): Promise<void> {
     if (!role) {
       throw new Error('MongoDB RBAC role initialization failed.');
     }
-    await reconcileManagedRolePermissions(database, String(role._id), defaultRolePermissions[key], now);
+    await reconcileManagedRolePermissions(database, String(role._id), permissionsForRoles([key]), now);
   }
 }
 
@@ -579,7 +588,7 @@ async function verifyRbac(database: Db): Promise<void> {
       throw new Error(`MongoDB RBAC role ${key} is missing or incompatible.`);
     }
     const expectedGrantIds = new Set(
-      defaultRolePermissions[key].map((permissionKey) => permissionIds.get(permissionKey)),
+      permissionsForRoles([key]).map((permissionKey) => permissionIds.get(permissionKey)),
     );
     const managedGrants = await grants.find({ roleId: role._id, managed: true }).toArray();
     if (

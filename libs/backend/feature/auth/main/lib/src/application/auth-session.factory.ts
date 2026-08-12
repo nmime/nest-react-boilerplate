@@ -25,6 +25,8 @@ export interface AuthSessionUserRecord {
   lastLoginAt: Date | null;
   avatarUrl?: string | null;
   avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
+  emailVerifiedAt?: Date | null;
+  credentialRevision?: number;
 }
 
 export function createAuthSession(
@@ -39,6 +41,8 @@ export function createAuthSession(
   const view = toAuthenticatedUserView(user);
   return {
     user: view,
+    emailVerified: Boolean(user.emailVerifiedAt),
+    credentialRevision: user.credentialRevision ?? 0,
     ...(claims.amr ? { amr: claims.amr } : {}),
     ...(claims.authProvider ? { authProvider: claims.authProvider } : {}),
     ...(claims.authChannel ? { authChannel: claims.authChannel } : {}),
@@ -63,6 +67,8 @@ export function toSessionPrincipal(session: AuthSessionView): AuthenticatedPrinc
     authChannel: session.authChannel,
     authTime: session.authTime,
     externalIdentityId: session.externalIdentityId,
+    emailVerified: session.emailVerified,
+    credentialRevision: session.credentialRevision,
   };
 }
 

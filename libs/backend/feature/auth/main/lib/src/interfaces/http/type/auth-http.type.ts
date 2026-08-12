@@ -5,6 +5,14 @@ export interface UserActionTokenPayload {
   issued: boolean;
 }
 
+/**
+ * Deliberately says nothing about the account behind the code. The confirm routes are public and
+ * a caller only ever learns whether the code worked.
+ */
+export interface UserActionConfirmPayload {
+  confirmed: true;
+}
+
 export interface MePayload {
   principal: AuthenticatedPrincipal;
   user: AuthSessionView['user'] | null;

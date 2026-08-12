@@ -69,6 +69,16 @@ describe("locale catalog discovery", () => {
     assert.deepEqual(discoverLocaleCatalogFiles(root, "xx", ["nonexistent"]), []);
   });
 
+  it("narrows a selector to one catalog of a scope several consumers share", () => {
+    const root = fixtureWorkspace();
+
+    assert.deepEqual(
+      discoverLocaleCatalogFiles(root, "xx", ["common/shared.json", "admin"]),
+      ["admin/shell.json", "common/shared.json"],
+    );
+    assert.deepEqual(discoverLocaleCatalogFiles(root, "xx", ["common/absent.json"]), []);
+  });
+
   it("treats a file at the locale root as metadata rather than a catalog", () => {
     assert.equal(isLocaleMetadataFile("untranslated-allowlist.json"), true);
     assert.equal(isLocaleMetadataFile("common/shared.json"), false);
@@ -132,6 +142,34 @@ describe("locale catalog bindings", () => {
 
   it("keeps every checked-in binding identical to the generated one", () => {
     assert.deepEqual(checkLocaleCatalogBindings(workspaceRoot), []);
+  });
+
+  it("generates the bot catalog modules from the registry, each bound to its own bot catalog", () => {
+    for (const { id, own, foreign } of [
+      { foreign: "telegram", id: "backend-discord", own: "discord" },
+      { foreign: "discord", id: "backend-telegram", own: "telegram" },
+    ]) {
+      const binding = localeCatalogBindings.find((candidate) => candidate.id === id);
+      assert.ok(binding, `${id} is not registered`);
+
+      const rendered = renderLocaleCatalogBinding(workspaceRoot, binding);
+
+      for (const locale of supportedLocales) {
+        assert.ok(
+          rendered.includes(`from '@app/i18n-${locale}-bots/${own}.json'`),
+          `${id} does not import the ${locale} ${own} catalog`,
+        );
+        assert.ok(
+          rendered.includes(`from '@app/i18n-${locale}-common/errors.json'`),
+          `${id} does not import the ${locale} common errors catalog`,
+        );
+      }
+      assert.equal(
+        rendered.includes(`bots/${foreign}.json`),
+        false,
+        `${id} binds the ${foreign} bot's catalog`,
+      );
+    }
   });
 
   it("reports every unregenerated binding instead of rewriting it during a check", () => {

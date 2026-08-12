@@ -9,7 +9,8 @@ import {
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from 'discord-api-types/v10';
 import { defaultLocale } from '@app/backend-common-i18n';
-import { localizationsFor, t } from './discord-i18n';
+import type { TranslationKey } from '@app/common-i18n-keys';
+import { localizationsFor, t, type DiscordLocalizationOptions } from './discord-i18n';
 
 export const DiscordAccountCommandName = 'account';
 export const DiscordHelpCommandName = 'help';
@@ -20,35 +21,36 @@ export interface DiscordCommandDefinition {
   json: RESTPostAPIChatInputApplicationCommandsJSONBody;
 }
 
-export function buildDiscordCommands(): DiscordCommandDefinition[] {
+export function buildDiscordCommands(localization: DiscordLocalizationOptions = {}): DiscordCommandDefinition[] {
+  const localized = (key: TranslationKey) => localizationsFor(key, localization);
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [
     {
       name: DiscordAccountCommandName,
       description: t('discord.commands.account.description', defaultLocale),
-      name_localizations: localizationsFor('discord.commands.account.label'),
-      description_localizations: localizationsFor('discord.commands.account.description'),
+      name_localizations: localized('discord.commands.account.label'),
+      description_localizations: localized('discord.commands.account.description'),
       options: [
         {
           type: 1,
           name: 'link',
           description: t('discord.commands.link.description', defaultLocale),
-          name_localizations: localizationsFor('discord.commands.link.label'),
-          description_localizations: localizationsFor('discord.commands.link.description'),
+          name_localizations: localized('discord.commands.link.label'),
+          description_localizations: localized('discord.commands.link.description'),
         },
         {
           type: 1,
           name: 'status',
           description: t('discord.commands.status.description', defaultLocale),
-          name_localizations: localizationsFor('discord.commands.status.label'),
-          description_localizations: localizationsFor('discord.commands.status.description'),
+          name_localizations: localized('discord.commands.status.label'),
+          description_localizations: localized('discord.commands.status.description'),
         },
       ],
     },
     {
       name: DiscordHelpCommandName,
       description: t('discord.commands.help.description', defaultLocale),
-      name_localizations: localizationsFor('discord.commands.help.label'),
-      description_localizations: localizationsFor('discord.commands.help.description'),
+      name_localizations: localized('discord.commands.help.label'),
+      description_localizations: localized('discord.commands.help.description'),
     },
   ];
 

@@ -9,40 +9,53 @@ export interface LocaleCatalogBinding {
   readonly id: string;
   /** Workspace-relative path of the generated module. */
   readonly outputPath: string;
-  /** Catalog scopes this consumer merges. The scope list is the ONLY hand-maintained axis left. */
-  readonly scopes: readonly string[];
+  /**
+   * What this consumer merges: a catalog scope, or a single `<scope>/<file>.json` of a scope that is
+   * split between consumers. The selector list is the ONLY hand-maintained axis left.
+   */
+  readonly sources: readonly string[];
 }
 
 /**
- * Which catalog scopes each consumer binds. Neither the locale axis nor the namespace axis appears
- * here: locales come from `supportedLocales` and namespaces are discovered from the catalog tree, so
- * adding either is a file drop plus a regeneration rather than an edit to every binding module.
+ * What each consumer binds. Neither the locale axis nor the namespace axis appears here: locales come
+ * from `supportedLocales` and namespaces are discovered from the catalog tree, so adding either is a
+ * file drop plus a regeneration rather than an edit to every binding module.
  */
 export const localeCatalogBindings: readonly LocaleCatalogBinding[] = [
   {
     id: "backend-common",
     outputPath: "libs/backend/common/i18n/lib/src/catalogs.generated.ts",
-    scopes: ["common"],
+    sources: ["common"],
+  },
+  {
+    id: "backend-discord",
+    outputPath: "libs/backend/feature/discord/bot/lib/src/catalogs.generated.ts",
+    sources: ["common", "bots/shared.json", "bots/discord.json"],
+  },
+  {
+    id: "backend-telegram",
+    outputPath: "libs/backend/feature/telegram/bot/lib/src/catalogs.generated.ts",
+    sources: ["common", "bots/shared.json", "bots/telegram.json"],
   },
   {
     id: "frontend-shared",
     outputPath: "libs/frontend/i18n/shared/lib/src/catalogs.generated.ts",
-    scopes: ["common"],
+    sources: ["common"],
   },
   {
     id: "frontend-landing",
     outputPath: "libs/frontend/feature/landing/i18n/lib/src/catalogs.generated.ts",
-    scopes: ["common", "landing"],
+    sources: ["common", "landing"],
   },
   {
     id: "frontend-admin",
     outputPath: "libs/frontend/feature/admin/i18n/lib/src/catalogs.generated.ts",
-    scopes: ["common", "admin"],
+    sources: ["common", "admin"],
   },
   {
     id: "frontend-user",
     outputPath: "libs/frontend/feature/user/i18n/lib/src/catalogs.generated.ts",
-    scopes: ["common", "user"],
+    sources: ["common", "user"],
   },
 ];
 
@@ -73,7 +86,7 @@ function objectKey(value: string): string {
 
 export function renderLocaleCatalogBinding(workspaceRoot: string, binding: LocaleCatalogBinding): string {
   const filesByLocale = supportedLocales.map((locale) => ({
-    files: discoverLocaleCatalogFiles(workspaceRoot, locale, binding.scopes),
+    files: discoverLocaleCatalogFiles(workspaceRoot, locale, binding.sources),
     locale,
   }));
 

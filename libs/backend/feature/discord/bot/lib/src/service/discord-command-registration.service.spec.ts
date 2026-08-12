@@ -1,4 +1,5 @@
 // @requirements REQ-SOCIAL-COMMANDS-003
+import { Locale as DiscordApiLocale } from 'discord-api-types/v10';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscordCommandRegistrationService } from './discord-command-registration.service';
 import { DiscordBotConfig } from './discord-config';
@@ -37,6 +38,25 @@ describe('Discord command registration', () => {
     expect(snapshot.commands[0]?.options?.[0]?.description_localizations).toEqual({
       ru: 'Привязать Discord к учетной записи на сайте.',
     });
+  });
+
+  it('keeps every published localization key inside Discord locale vocabulary', () => {
+    const vocabulary = new Set<string>(Object.values(DiscordApiLocale));
+    const service = new DiscordCommandRegistrationService(new DiscordBotConfig());
+    const snapshot = service.dryRun({ ...baseEnv, DISCORD_LOCALE_OVERRIDES: 'uz-cyrl=ru' });
+
+    expect(snapshot.unpublishedLocales).toEqual([]);
+    const localizationKeys = snapshot.commands.flatMap((command) =>
+      [command, ...(command.options ?? [])].flatMap((input) => [
+        ...Object.keys(input.name_localizations ?? {}),
+        ...Object.keys(input.description_localizations ?? {}),
+      ]),
+    );
+
+    expect(localizationKeys.length).toBeGreaterThan(0);
+    for (const key of localizationKeys) {
+      expect(vocabulary.has(key), key).toBe(true);
+    }
   });
 
   it('keeps command names lowercase and descriptions within Discord limits', () => {

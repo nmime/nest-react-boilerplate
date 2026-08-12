@@ -1,4 +1,5 @@
 import { Check, ChevronDown, Languages, Lightbulb, Monitor, Moon, Sun } from 'lucide-react';
+import { hasFrontendTranslationKey, localeLabel } from '@app/frontend-i18n-shared';
 import { observer, supportedLocales, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { UiButton } from './button';
 import { UiDropdownMenu } from './dropdown-menu';
@@ -14,10 +15,20 @@ export const LanguageSwitcher = observer(function LanguageSwitcher({
   variant = 'select',
 }: Readonly<LanguageSwitcherProps>) {
   const { locale, setLocale, t } = useI18n();
+  // Derived rather than read from the catalog: a `common.language.<locale>` key per locale per
+  // catalog is the N x N grid `localeLabel` exists to remove. A catalog entry is still honoured
+  // where a product wants its own wording, so the shipped entries keep working as that example.
+  const languageLabel = (labelled: Locale) => {
+    const key = `common.language.${labelled}`;
+    return localeLabel(labelled, {
+      displayLocale: locale,
+      override: hasFrontendTranslationKey(key) ? t(key) : undefined,
+    });
+  };
   const languageOptions = supportedLocales.map((nextLocale) => ({
     label: (
       <span className="xr-switcher-menu__option">
-        <span>{t(`common.language.${nextLocale}`)}</span>
+        <span>{languageLabel(nextLocale)}</span>
         {nextLocale === locale ? <Check aria-hidden="true" className="xr-switcher-menu__check" size={16} /> : null}
       </span>
     ),
@@ -35,7 +46,7 @@ export const LanguageSwitcher = observer(function LanguageSwitcher({
         trigger={
           <UiButton aria-label={t('common.language')} className="xr-language-menu-trigger" size="sm" variant="ghost">
             <Languages aria-hidden="true" size={17} strokeWidth={2} />
-            <span>{t(`common.language.${locale}`)}</span>
+            <span>{languageLabel(locale)}</span>
             <ChevronDown aria-hidden="true" size={15} strokeWidth={2.2} />
           </UiButton>
         }
@@ -51,7 +62,7 @@ export const LanguageSwitcher = observer(function LanguageSwitcher({
       onValueChange={(value) => {
         setLocale(value as Locale);
       }}
-      options={supportedLocales.map((nextLocale) => ({ label: t(`common.language.${nextLocale}`), value: nextLocale }))}
+      options={supportedLocales.map((nextLocale) => ({ label: languageLabel(nextLocale), value: nextLocale }))}
       value={locale}
     />
   );

@@ -56,25 +56,34 @@ export function discoverLocaleScopes(workspaceRoot: string, locale: string): str
 /**
  * Every catalog file of one locale as `<scope>/<file>.json`, discovered rather than enumerated so a
  * new namespace is a JSON file rather than an edit to this package.
+ *
+ * A selector is normally a scope directory, whose catalogs are all discovered. It may instead name a
+ * single `<scope>/<file>.json` for a scope several consumers share and split between them — the
+ * `bots` scope carries one catalog per bot, and a bot that bound the whole scope would ship the
+ * other bot's copy.
  */
 export function discoverLocaleCatalogFiles(
   workspaceRoot: string,
   locale: string,
-  scopes?: readonly string[],
+  selectors?: readonly string[],
 ): string[] {
   const directory = localeDirectory(workspaceRoot, locale);
-  const selected = scopes ?? discoverLocaleScopes(workspaceRoot, locale);
+  const selected = selectors ?? discoverLocaleScopes(workspaceRoot, locale);
 
   return selected
-    .flatMap((scope) => {
-      const scopeDirectory = join(directory, scope);
+    .flatMap((selector) => {
+      if (isCatalogFile(selector)) {
+        return existsSync(join(directory, selector)) ? [selector] : [];
+      }
+
+      const scopeDirectory = join(directory, selector);
       if (!existsSync(scopeDirectory) || !statSync(scopeDirectory).isDirectory()) {
         return [];
       }
 
       return readdirSync(scopeDirectory, { withFileTypes: true })
         .filter((entry) => entry.isFile())
-        .map((entry) => `${scope}/${entry.name}`)
+        .map((entry) => `${selector}/${entry.name}`)
         .filter((relativePath) => isCatalogFile(relativePath));
     })
     .sort((left, right) => left.localeCompare(right));

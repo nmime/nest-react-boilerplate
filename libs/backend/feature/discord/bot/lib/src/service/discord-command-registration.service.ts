@@ -1,13 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { Routes, type RESTPostAPIChatInputApplicationCommandsJSONBody } from 'discord-api-types/v10';
+import { supportedLocales } from '@app/common-i18n-runtime';
 import { DiscordBotConfig, type DiscordBotConfigSnapshot } from './discord-config';
 import { buildDiscordCommands } from '../discord-ui';
+import { unpublishableDiscordLocales } from '../discord-i18n';
 
 export interface DiscordCommandRegistrationSnapshot {
   scope: 'global' | 'guild';
   applicationId: string;
   guildId?: string;
   commands: RESTPostAPIChatInputApplicationCommandsJSONBody[];
+  /** Workspace locales Discord will not carry, so a dry run shows the gap before commands ship. */
+  unpublishedLocales: string[];
 }
 
 /* v8 ignore start -- Nest @Injectable() emits a decorator-helper branch that is unreachable for a class-only decorator. */
@@ -39,7 +43,8 @@ export class DiscordCommandRegistrationService {
       scope: snapshot.registrationScope,
       applicationId: snapshot.applicationId,
       guildId: snapshot.registrationGuildId,
-      commands: buildDiscordCommands().map((command) => command.json),
+      commands: buildDiscordCommands({ overrides: snapshot.localeOverrides }).map((command) => command.json),
+      unpublishedLocales: unpublishableDiscordLocales(supportedLocales, snapshot.localeOverrides),
     };
   }
 }

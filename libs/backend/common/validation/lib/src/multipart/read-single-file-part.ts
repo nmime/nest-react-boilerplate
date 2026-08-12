@@ -52,8 +52,14 @@ async function drainPart(part: MultipartPartLike): Promise<void> {
     return;
   }
 
-  for await (const chunk of part.file) {
-    void chunk;
+  // Stepped by hand rather than with `for await`, which would bind a chunk only to discard it.
+  // The bytes are pulled off and dropped: the client keeps sending until they are read, so a part
+  // this request does not want still has to be consumed before the response can be written.
+  const chunks = part.file[Symbol.asyncIterator]();
+  let step = await chunks.next();
+
+  while (step.done !== true) {
+    step = await chunks.next();
   }
 }
 

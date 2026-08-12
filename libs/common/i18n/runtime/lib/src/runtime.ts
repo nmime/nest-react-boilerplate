@@ -477,6 +477,32 @@ function parseMessageArgument(body: string): MessageArgument | undefined {
 }
 
 /**
+ * The branch an argument's value selects, and the number `#` stands for inside it.
+ *
+ * `count` is undefined whenever no number was in play — a `select` argument, or a plural whose
+ * value is not finite — because `#` then has nothing to name and must be left as written.
+ */
+function selectMessageBranch(
+  argument: MessageArgument,
+  value: TranslationParams[string],
+  locale: string,
+): { branch: string; count: number | undefined } {
+  if (argument.kind === 'select') {
+    return { branch: argument.branches.get(String(value ?? '')) ?? argument.other, count: undefined };
+  }
+
+  const count = Number(value);
+
+  if (!Number.isFinite(count)) {
+    return { branch: argument.other, count: undefined };
+  }
+
+  const category = pluralCategory(count, locale, argument.kind === 'selectordinal' ? 'ordinal' : 'cardinal');
+
+  return { branch: argument.branches.get(`=${count}`) ?? argument.branches.get(category) ?? argument.other, count };
+}
+
+/**
  * Expands the ICU subset the catalogs are allowed to carry: `plural`, `selectordinal` and `select`.
  * Plural categories come from `Intl.PluralRules`, so Russian's `one/few/many/other` works without any
  * per-locale code. Anything that does not parse — an unknown argument type, a missing `other` branch,
@@ -509,25 +535,8 @@ function expandMessageArguments(message: string, params: TranslationParams, loca
       continue;
     }
 
-    const value = params[argument.name];
-    let selected: string | undefined;
-    let count: number | undefined;
+    const { branch, count } = selectMessageBranch(argument, params[argument.name], locale);
 
-    if (argument.kind === 'select') {
-      selected = argument.branches.get(String(value ?? ''));
-    } else {
-      const parsed = Number(value);
-      if (Number.isFinite(parsed)) {
-        count = parsed;
-        selected =
-          argument.branches.get(`=${parsed}`) ??
-          argument.branches.get(
-            pluralCategory(parsed, locale, argument.kind === 'selectordinal' ? 'ordinal' : 'cardinal'),
-          );
-      }
-    }
-
-    const branch = selected ?? argument.other;
     result += expandMessageArguments(
       count === undefined ? branch : branch.replaceAll('#', String(count)),
       params,

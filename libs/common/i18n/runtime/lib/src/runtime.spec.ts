@@ -280,7 +280,7 @@ describe('resolveLocaleFromRequest', () => {
     expect(resolveLocaleFromRequest({ url: '/api?lang=ru' })).toBe('ru');
     expect(resolveLocaleFromRequest({ originalUrl: '/api?locale=ru' })).toBe('ru');
     expect(resolveLocaleFromRequest({ url: '/api' })).toBe('en');
-    expect(resolveLocaleFromRequest({ url: 'http://[' })).toBe('en');
+    expect(resolveLocaleFromRequest({ url: 'https://[' })).toBe('en');
     expect(resolveLocaleFromRequest({ cookies: { locale: 'ru' } })).toBe('ru');
     expect(resolveLocaleFromRequest({ cookies: { locale: 7, lang: 'ru' } })).toBe('ru');
     expect(resolveLocaleFromRequest({ locale: 'ru' })).toBe('ru');

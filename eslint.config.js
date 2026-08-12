@@ -319,6 +319,14 @@ module.exports = [
           format: null,
         },
         {
+          // A quoted key holding a function is still a key. Records keyed by an identifier from
+          // the domain -- a route id, a permission, a locale -- are kebab-case there and cannot
+          // be renamed to satisfy a naming rule without breaking the thing they key.
+          selector: 'objectLiteralMethod',
+          format: null,
+          modifiers: ['requiresQuotes'],
+        },
+        {
           selector: 'typeProperty',
           format: null,
         },

@@ -314,7 +314,9 @@ export function publicHostnameFor(
   entry: Pick<AppEntry, 'id' | 'deployable'> | undefined,
   config: PublicDomainConfig,
 ): string | null {
-  if (!entry?.deployable) return null;
+  if (!entry?.deployable) {
+    return null;
+  }
   return entry.id === config.primaryApp ? config.publicDomain : `${entry.id}.${config.publicDomain}`;
 }
 

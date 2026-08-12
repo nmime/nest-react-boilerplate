@@ -74,7 +74,7 @@ describe('readSingleFilePart', () => {
       options,
     );
 
-    expect([...drained].sort()).toEqual(['file', 'other']);
+    expect([...drained].sort((left, right) => left.localeCompare(right))).toEqual(['file', 'other']);
   });
 
   it('rejects a media type outside the allowlist', async () => {

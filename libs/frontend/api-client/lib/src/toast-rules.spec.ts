@@ -42,10 +42,8 @@ describe('per-service toast rule modules', () => {
   });
 
   it('keeps the presentation catalog spanning every service', () => {
-    expect([...new Set(apiToastRuleCatalog.map((rule) => rule.app))].sort()).toEqual([
-      'admin-app-api',
-      'auth-app-api',
-      'user-app-api',
-    ]);
+    expect(
+      [...new Set(apiToastRuleCatalog.map((rule) => rule.app))].sort((left, right) => left.localeCompare(right)),
+    ).toEqual(['admin-app-api', 'auth-app-api', 'user-app-api']);
   });
 });

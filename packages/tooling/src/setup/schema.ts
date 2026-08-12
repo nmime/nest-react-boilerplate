@@ -83,7 +83,9 @@ const dnsLabelPattern = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/u;
  * are rejected because they cannot appear in an ingress host or a Caddy site address.
  */
 export function isPublicDomain(value: string): boolean {
-  if (value.length === 0 || value.length > 253) return false;
+  if (value.length === 0 || value.length > 253) {
+    return false;
+  }
   const labels = value.split('.');
   return labels.length >= 2 && labels.every((label) => label.length <= 63 && dnsLabelPattern.test(label));
 }

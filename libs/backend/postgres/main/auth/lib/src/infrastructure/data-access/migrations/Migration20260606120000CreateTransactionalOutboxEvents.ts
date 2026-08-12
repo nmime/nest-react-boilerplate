@@ -9,7 +9,7 @@ export class Migration20260606120000CreateTransactionalOutboxEvents extends Migr
       'create index if not exists "ix__transactional_outbox_events__tenant_id_status_created_at" on "transactional_outbox_events" ("tenant_id", "status", "created_at");',
     );
     this.addSql(
-      'create index if not exists "ix__transactional_outbox_events__tenant_id_aggregate_type_aggregate_id" on "transactional_outbox_events" ("tenant_id", "aggregate_type", "aggregate_id");',
+      'create index if not exists "ix__transactional_outbox_events__tenant_id_aggregate___1ff45f5d" on "transactional_outbox_events" ("tenant_id", "aggregate_type", "aggregate_id");',
     );
     this.addSql(
       'create index if not exists "ix__admin_audit_logs__tenant_id_created_at_id" on "admin_audit_logs" ("tenant_id", "created_at", "id");',
@@ -18,7 +18,7 @@ export class Migration20260606120000CreateTransactionalOutboxEvents extends Migr
 
   override down(): void {
     this.addSql('drop index if exists "ix__admin_audit_logs__tenant_id_created_at_id";');
-    this.addSql('drop index if exists "ix__transactional_outbox_events__tenant_id_aggregate_type_aggregate_id";');
+    this.addSql('drop index if exists "ix__transactional_outbox_events__tenant_id_aggregate___1ff45f5d";');
     this.addSql('drop index if exists "ix__transactional_outbox_events__tenant_id_status_created_at";');
     this.addSql('drop table if exists "transactional_outbox_events";');
   }

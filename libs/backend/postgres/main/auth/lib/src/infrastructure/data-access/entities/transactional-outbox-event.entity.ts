@@ -87,7 +87,7 @@ export const TransactionalOutboxEventEntitySchema = new EntitySchema<Transaction
       properties: ['tenantId', 'status', 'createdAt'],
     },
     {
-      name: 'ix__transactional_outbox_events__tenant_id_aggregate_type_aggregate_id',
+      name: 'ix__transactional_outbox_events__tenant_id_aggregate___1ff45f5d',
       properties: ['tenantId', 'aggregateType', 'aggregateId'],
     },
   ],

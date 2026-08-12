@@ -68,6 +68,15 @@ flowchart TD
 - Name indexes `ix__{table}__{columns}`, unique constraints
   `uq__{table}__{columns}`, foreign keys `fk__{table}__{column}`, and checks
   `ck__{table}__{rule}`.
+- PostgreSQL truncates identifiers to 63 bytes without warning, so a longer name
+  creates an object the migration cannot later drop by the name it declared.
+  Index and unique-constraint names past that limit are therefore cut to 55
+  bytes and suffixed with `__{8 hex}`, a digest of the full name that keeps two
+  otherwise-identical prefixes distinct. `pnpm run db:migrations:check` computes
+  the expected name with `canonicalIndexName` and prints it on mismatch, so copy
+  the name it reports rather than deriving the suffix by hand. Author-chosen
+  `fk__`/`ck__` names get no automatic suffix and are simply rejected past 63
+  bytes — shorten them.
 - Keep add-column changes metadata-only where practical and split risky changes
   into expand/backfill/contract phases.
 - Do not commit MySQL/MariaDB syntax such as `ALGORITHM=INSTANT` or

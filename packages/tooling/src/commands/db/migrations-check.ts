@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import {
+  postgresIdentifierMaxBytes,
+  canonicalIndexName,
+  exceedsIdentifierLimit,
+} from "./migration-index-name.ts";
 
 const repoRoot = process.cwd();
 const errors: string[] = [];
@@ -78,7 +83,11 @@ function validate(file: string, sql: string) {
   for (const match of sql.matchAll(
     /create\s+(unique\s+)?index\s+(?:if\s+not\s+exists\s+)?"?([a-zA-Z0-9_]+)"?\s+on\s+"?([a-zA-Z0-9_]+)"?\s*\(([^)]+)\)/gi,
   )) {
-    const expected = `${match[1] ? "uq" : "ix"}__${match[3]}__${columnsFromName(match[4])}`;
+    const expected = canonicalIndexName({
+      unique: Boolean(match[1]),
+      table: match[3],
+      columns: columnsFromName(match[4]),
+    });
     if (match[2] !== expected) {
       fail(file, `index must be named ${expected}, got ${match[2]}`);
     }
@@ -95,6 +104,16 @@ function validate(file: string, sql: string) {
   )) {
     if (!/^ck__[a-zA-Z0-9_]+__[a-zA-Z0-9_]+$/.test(match[1])) {
       fail(file, `check constraint name must match ck__{table}__{rule}: ${match[1]}`);
+    }
+  }
+  // Index names are derived, so `canonicalIndexName` already caps them. Constraint names are
+  // author-chosen, so they need the cap applied as a rule of its own.
+  for (const match of sql.matchAll(/constraint\s+"?([a-zA-Z0-9_]+)"?/gi)) {
+    if (exceedsIdentifierLimit(match[1])) {
+      fail(
+        file,
+        `constraint name exceeds the PostgreSQL ${postgresIdentifierMaxBytes}-byte identifier limit and would be silently truncated: ${match[1]}`,
+      );
     }
   }
 }

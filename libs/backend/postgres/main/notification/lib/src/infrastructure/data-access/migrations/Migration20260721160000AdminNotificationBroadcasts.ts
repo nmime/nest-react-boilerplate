@@ -203,7 +203,7 @@ export class Migration20260721160000AdminNotificationBroadcasts extends Migratio
         constraint "ck__notification_audience_snapshot_members__target_type"
           check ("target_type" in ('user', 'email', 'push-token', 'telegram-chat', 'system-telegram-chat'))
       );
-      create index "ix__notification_audience_snapshot_members__snapshot_id_materialized_at_id"
+      create index "ix__notification_audience_snapshot_members__snapshot___ee4357c2"
         on "notification_audience_snapshot_members" ("snapshot_id", "materialized_at", "id");
 
       create table "notification_broadcast_commands" (

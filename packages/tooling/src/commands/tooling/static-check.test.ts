@@ -27,7 +27,6 @@ import {
   checkVersionedMigrationAuthzBinding,
   checkWorkspaceMetadata,
   isWorkspaceMetadataFileName,
-  thinLocaleCatalogFileNames,
 } from "./static-check.ts";
 
 describe("static-check Bun and pnpm dependency parity", () => {
@@ -238,6 +237,36 @@ describe("static-check translation key drift guard", () => {
         workspaceRoot,
         "i18n/en/common/shared.json",
         JSON.stringify({ "common.a": "A", "common.b": "B" }),
+      );
+      writeTranslationKeyUnion(workspaceRoot, ["common.a", "common.b"], 'single');
+
+      assert.deepEqual(checkTranslationKeyDrift(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // `i18n/<locale>/lint.json` is a supported, thin-catalog-exempt file, but the drift gate parsed it
+  // as a catalog and demanded its top-level keys join the TranslationKey union — a failure the
+  // generated module can never satisfy, because its generator excludes locale-root metadata.
+  it("does not read locale-root metadata as a catalog", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "i18n/en/common/shared.json",
+        JSON.stringify({ "common.a": "A", "common.b": "B" }),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/en/lint.json",
+        JSON.stringify({ foreignProseMarkers: ["the"], untranslatedKeys: [] }),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/en/review-ledger.json",
+        JSON.stringify({ reviewedBy: "nobody" }),
       );
       writeTranslationKeyUnion(workspaceRoot, ["common.a", "common.b"], 'single');
 
@@ -1355,6 +1384,35 @@ describe("static-check package project reference guard", () => {
 
 
 describe("static-check thin locale catalog guard", () => {
+  // The namespace axis is discovered from the default locale in production, so the fixture declares
+  // what it writes rather than importing a list the checker no longer owns.
+  const thinLocaleCatalogFileNames = [
+    "common/shared.json",
+    "common/errors.json",
+    "landing/app.json",
+    "admin/shell.json",
+    "admin/dashboard.json",
+    "admin/users.json",
+    "admin/audit.json",
+    "admin/roles.json",
+    "admin/navigation.json",
+    "admin/feature-flags.json",
+    "admin/notifications.json",
+    "admin/notification-options.json",
+    "admin/notification-navigation.json",
+    "admin/problem-presentations.json",
+    "admin/login-analytics.json",
+    "user/shell.json",
+    "user/site.json",
+    "user/mobile.json",
+    "user/auth.json",
+    "user/social-auth.json",
+    "user/tma.json",
+    "bots/shared.json",
+    "bots/telegram.json",
+    "bots/discord.json",
+  ] as const;
+
   function writeThinLocaleWorkspace(workspaceRoot: string): void {
     for (const locale of supportedLocales) {
       for (const fileName of thinLocaleCatalogFileNames) {
@@ -1384,6 +1442,100 @@ describe("static-check thin locale catalog guard", () => {
       writeThinLocaleWorkspace(workspaceRoot);
 
       assert.deepEqual(checkThinLocaleCatalogs(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // The generator discovers namespaces from the default locale and says so: adding one is a file
+  // drop, not an edit to this package. The guard used to disagree, so the first product catalog was
+  // reported as an unexpected file by a merge-blocking gate.
+  it("accepts a namespace the hardcoded list never knew", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      for (const locale of supportedLocales) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/user/billing.json`,
+          JSON.stringify({ "user.billing.title": `${locale}:billing` }, null, 2),
+        );
+      }
+
+      assert.deepEqual(checkThinLocaleCatalogs(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // Discovery must not cost the parity guarantee: a namespace the default locale carries is still
+  // required of every other locale.
+  it("still requires every locale to carry a discovered namespace", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "i18n/en/user/billing.json",
+        JSON.stringify({ "user.billing.title": "en:billing" }, null, 2),
+      );
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => `${failure.file} ${failure.stderr}`)
+        .join("\n");
+
+      for (const locale of supportedLocales.filter((candidate) => candidate !== "en")) {
+        assert.match(
+          stderr,
+          new RegExp(`i18n/${locale}/user/billing\\.json.*missing thin locale file`, "u"),
+        );
+      }
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // `isLocaleMetadataFile` recognises metadata by shape so a product can add a review ledger without
+  // editing this package; the guard used to allow exactly one hardcoded name.
+  it("accepts locale-root metadata by shape rather than by name", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      for (const locale of supportedLocales) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/untranslated-allowlist.json`,
+          JSON.stringify({ untranslatedKeys: [] }, null, 2),
+        );
+      }
+
+      assert.deepEqual(checkThinLocaleCatalogs(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // The shape rule must stay narrow: inside a scope directory, JSON is a catalog, and one no other
+  // locale carries is still drift.
+  it("still reports a stray catalog only one locale carries", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "i18n/ru/user/stray.json",
+        JSON.stringify({ "user.stray": "ru" }, null, 2),
+      );
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => `${failure.file} ${failure.stderr}`)
+        .join("\n");
+
+      assert.match(stderr, /i18n\/ru\/user\/stray\.json.*unexpected locale JSON file/u);
     } finally {
       removeWorkspace(workspaceRoot);
     }
@@ -1585,6 +1737,73 @@ ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(
       assert.equal(/common\.reviewed/u.test(stderr), false);
       assert.equal(/common\.api/u.test(stderr), false);
       assert.equal(/common\.copied/u.test(stderr), false);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // Placeholder names are ASCII identifiers a developer picked; they are machinery, not prose. While
+  // they reached the rules, a non-Latin locale could not state the rule it actually means
+  // (`[A-Za-z]`) and had to write an adjacency hack, and a marker colliding with a placeholder name
+  // was unsuppressable.
+  it("does not inspect interpolation placeholders as prose", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "i18n/en/common/shared.json",
+        JSON.stringify(
+          {
+            "common/shared.json.key": "en:common/shared.json",
+            "common.failure": "Failed: {{error}}",
+            "common.nested": "Owed: {{outer{inner}tail}}",
+            "common.realProse": "Please save",
+          },
+          null,
+          2,
+        ),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/ru/common/shared.json",
+        JSON.stringify(
+          {
+            "common/shared.json.key": "ru:common/shared.json",
+            "common.failure": "Сбой: {{error}}",
+            "common.nested": "Долг: {{outer{inner}tail}}",
+            "common.realProse": "Please save",
+          },
+          null,
+          2,
+        ),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/ru/lint.json",
+        JSON.stringify(
+          {
+            residuePatterns: [{ pattern: "[A-Za-z]", label: "Latin residue" }],
+            foreignProseMarkers: ["error", "please", "save"],
+            reviewedTechnicalTerms: [],
+            untranslatedKeys: [],
+          },
+          null,
+          2,
+        ),
+      );
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => failure.stderr)
+        .join("\n");
+
+      assert.equal(/common\.failure/u.test(stderr), false);
+      // Nested braces survive a single pass, so this case is what pins the fixed point.
+      assert.equal(/common\.nested/u.test(stderr), false);
+      // The strip must not become a blanket exemption: Latin prose outside any placeholder still fails.
+      assert.match(stderr, /common\.realProse: Latin residue/u);
+      assert.match(stderr, /common\.realProse: untranslated prose \(please, save\)/u);
     } finally {
       removeWorkspace(workspaceRoot);
     }

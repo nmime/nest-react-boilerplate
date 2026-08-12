@@ -1,5 +1,9 @@
-import { problemCodeFromType, type ProblemTypeCode } from '@app/common-problem-details';
-import { translate, type TranslationKey } from '@app/frontend-i18n-shared';
+import {
+  registeredProblemCodeFromType,
+  type ProblemTypeCode,
+  type RegisteredProblemCode,
+} from '@app/common-problem-details';
+import { hasFrontendTranslationKey, translate, type TranslationKey } from '@app/frontend-i18n-shared';
 import { getApiLocale } from './api-locale';
 
 export type NormalizedApiErrorKind = 'auth' | 'client' | 'network' | 'server' | 'unknown' | 'validation';
@@ -40,14 +44,26 @@ const stringFrom = (value: unknown): string | undefined =>
 
 /**
  * The detail key of a problem type is fully derived from its code, so no allow-list is maintained
- * here: a product that registers a problem type upstream gets its localized detail for free. The
- * `TranslationKey` return type keeps the guarantee the old literal map bought — the derived union
- * must be assignable to the generated key union, so a problem type without a translation fails to
- * compile rather than reaching a user as a missing key.
+ * here. The `TranslationKey` return type keeps the guarantee the old literal map bought — the
+ * derived union must be assignable to the generated key union, so a *base* problem type without a
+ * translation fails to compile rather than reaching a user as a missing key.
+ *
+ * A product code cannot carry that guarantee, since its catalog is not in this build; see
+ * `registeredProblemDetail` for the runtime-checked path those take.
  */
 export const problemDetailTranslationKey = (code: ProblemTypeCode): TranslationKey => {
   const key: `errors.${ProblemTypeCode}.detail` = `errors.${code}.detail`;
   return key;
+};
+
+/**
+ * The same derivation for a code that may have come from a product extension, where the compile-time
+ * guarantee above cannot apply: the key is checked against the catalog at runtime instead, and an
+ * absent one leaves the caller on the server's own detail rather than rendering a raw key.
+ */
+const registeredProblemDetail = (code: RegisteredProblemCode): string | undefined => {
+  const key = `errors.${code}.detail`;
+  return hasFrontendTranslationKey(key) ? translate(key, { locale: getApiLocale() }) : undefined;
 };
 
 const isNormalizedApiError = (value: unknown): value is NormalizedApiError =>
@@ -156,7 +172,7 @@ const statusKind = (status: number | null, body: unknown, error: unknown): Norma
 const extractCode = (status: number | null, body: unknown, fallbackKind: NormalizedApiErrorKind): string => {
   if (isRecord(body)) {
     const type = stringFrom(body['type']);
-    const registeredCode = problemCodeFromType(type);
+    const registeredCode = registeredProblemCodeFromType(type);
     if (registeredCode) {
       return registeredCode;
     }
@@ -181,9 +197,10 @@ const extractCode = (status: number | null, body: unknown, fallbackKind: Normali
 
 const extractMessage = (status: number | null, body: unknown, fallbackKind: NormalizedApiErrorKind): string => {
   if (isRecord(body)) {
-    const registeredCode = problemCodeFromType(stringFrom(body['type']));
-    if (registeredCode) {
-      return translate(problemDetailTranslationKey(registeredCode), { locale: getApiLocale() });
+    const registeredCode = registeredProblemCodeFromType(stringFrom(body['type']));
+    const localized = registeredCode === undefined ? undefined : registeredProblemDetail(registeredCode);
+    if (localized !== undefined) {
+      return localized;
     }
 
     const message =

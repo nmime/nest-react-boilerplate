@@ -46,12 +46,9 @@ describe('fiat currency persistence against MongoDB', () => {
   it('keeps the headline rate and the newest history row in agreement across a late arrival', async () => {
     await persistence.upsertCurrency({
       code: 'EUR',
-      symbol: '€',
+      name: { en: 'Euro', ru: 'Евро' },
+      symbol: { default: '€' },
       displayOrder: 1,
-      translations: [
-        { locale: 'en', name: 'Euro' },
-        { locale: 'ru', name: 'Евро', symbol: '€' },
-      ],
     });
 
     const monday = new Date('2026-08-10T00:00:00.000Z');
@@ -64,14 +61,11 @@ describe('fiat currency persistence against MongoDB', () => {
 
     const history = await persistence.listRateHistory({ code: 'EUR', limit: 10 });
     expect(history.map((rate) => rate.asOf)).toEqual([tuesday, monday]);
-    expect(await persistence.listTranslations(['EUR'])).toEqual([
-      { code: 'EUR', locale: 'en', name: 'Euro', symbol: null },
-      { code: 'EUR', locale: 'ru', name: 'Евро', symbol: '€' },
-    ]);
+    expect(stored).toMatchObject({ name: { en: 'Euro', ru: 'Евро' }, symbol: { default: '€' } });
   });
 
   it('collapses a provider retry onto one history row through the unique index', async () => {
-    await persistence.upsertCurrency({ code: 'GBP', symbol: '£' });
+    await persistence.upsertCurrency({ code: 'GBP', name: { en: 'Pound sterling' }, symbol: { default: '£' } });
 
     const asOf = new Date('2026-08-11T12:00:00.000Z');
     await persistence.recordRates([{ code: 'GBP', usdPerUnit: '1.2700000000', asOf, source: 'ecb' }]);
@@ -117,29 +111,23 @@ describe('fiat currency persistence against MongoDB', () => {
     ).rejects.toThrow(/[Vv]alidation/u);
   });
 
-  it('replaces a named locale in place and leaves every other locale alone', async () => {
+  it('replaces the whole locale map, so a locale an operator drops stays dropped', async () => {
     await persistence.upsertCurrency({
       code: 'TRY',
-      symbol: '₺',
+      name: { en: 'Turkish lira', ru: 'Турецкая лира' },
+      symbol: { default: '₺' },
       imageUrl: 'https://cdn.example.test/try.svg',
       displayOrder: 9,
-      translations: [
-        { locale: 'en', name: 'Turkish lira' },
-        { locale: 'ru', name: 'Турецкая лира' },
-      ],
     });
-    await persistence.upsertCurrency({
-      code: 'TRY',
-      symbol: '₺',
-      translations: [{ locale: 'en', name: 'Turkish Lira' }],
-    });
+    await persistence.upsertCurrency({ code: 'TRY', name: { en: 'Turkish Lira' }, symbol: { default: '₺' } });
 
-    expect(await persistence.listTranslations(['TRY'])).toEqual([
-      { code: 'TRY', locale: 'ru', name: 'Турецкая лира', symbol: null },
-      { code: 'TRY', locale: 'en', name: 'Turkish Lira', symbol: null },
-    ]);
     expect(await persistence.listCurrencies({ codes: ['TRY'] })).toEqual([
-      expect.objectContaining({ code: 'TRY', imageUrl: 'https://cdn.example.test/try.svg', displayOrder: 9 }),
+      expect.objectContaining({
+        code: 'TRY',
+        name: { en: 'Turkish Lira' },
+        imageUrl: 'https://cdn.example.test/try.svg',
+        displayOrder: 9,
+      }),
     ]);
 
     expect(await persistence.deactivateCurrency('TRY')).toBe(true);
@@ -155,12 +143,23 @@ describe('fiat currency persistence against MongoDB', () => {
 
     expect(document).toMatchObject({
       _id: 'GBP',
-      symbol: '£',
+      name: { en: 'Pound sterling' },
+      symbol: { default: '£' },
       active: true,
       displayOrder: 0,
       imageUrl: null,
       minorUnitExponent: 2,
-      translations: [],
     });
+  });
+
+  it('refuses a locale map whose value is not a string', async () => {
+    // The validator is the MongoDB axis's equivalent of the jsonb check constraint on the other
+    // one. Without it the two axes would disagree about what the collection can hold.
+    await expect(
+      client
+        .db(databaseName)
+        .collection<FiatCurrencyDocument>(FiatCurrencyCollectionName)
+        .updateOne({ _id: 'GBP' }, { $set: { name: { en: 42 } as unknown as FiatCurrencyDocument['name'] } }),
+    ).rejects.toThrow(/[Vv]alidation/u);
   });
 });

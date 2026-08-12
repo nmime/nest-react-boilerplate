@@ -2,7 +2,6 @@
 import {
   type FiatCurrency,
   type FiatCurrencyRate,
-  type FiatCurrencyTranslation,
   FiatCurrencyPersistence,
   type ListFiatCurrenciesFilter,
   type ListFiatRateHistoryQuery,
@@ -19,7 +18,8 @@ function currency(overrides: Partial<FiatCurrency> = {}): FiatCurrency {
   return {
     code: 'EUR',
     minorUnitExponent: 2,
-    symbol: '€',
+    name: { en: 'Euro' },
+    symbol: { default: '€' },
     imageUrl: null,
     active: true,
     displayOrder: 0,
@@ -31,15 +31,13 @@ function currency(overrides: Partial<FiatCurrency> = {}): FiatCurrency {
 
 class StubPersistence extends FiatCurrencyPersistence {
   currencies: FiatCurrency[] = [];
-  translations: FiatCurrencyTranslation[] = [];
   history: FiatCurrencyRate[] = [];
   readonly listCurrencies = vi.fn((_filter: ListFiatCurrenciesFilter) => Promise.resolve(this.currencies));
   readonly findCurrency = vi.fn((code: string) =>
     Promise.resolve(this.currencies.find((entry) => entry.code === code) ?? null),
   );
-  readonly listTranslations = vi.fn((_codes: readonly string[]) => Promise.resolve(this.translations));
   readonly upsertCurrency = vi.fn((params: UpsertFiatCurrencyParams) =>
-    Promise.resolve(currency({ code: params.code, symbol: params.symbol })),
+    Promise.resolve(currency({ code: params.code, name: params.name, symbol: params.symbol })),
   );
   readonly deactivateCurrency = vi.fn((_code: string) => Promise.resolve(true));
   readonly recordRates = vi.fn((rates: readonly RecordFiatRateParams[]) => Promise.resolve([...rates]));
@@ -55,15 +53,29 @@ function createService() {
 describe('FiatCurrencyService', () => {
   it('answers the catalogue in the caller locale', async () => {
     const { persistence, service } = createService();
-    persistence.currencies = [currency(), currency({ code: 'JPY', symbol: '¥', minorUnitExponent: 0 })];
-    persistence.translations = [{ code: 'EUR', locale: 'ru', name: 'Евро', symbol: 'евро' }];
+    persistence.currencies = [
+      currency({ name: { en: 'Euro', ru: 'Евро' }, symbol: { default: '€', ru: 'евро' } }),
+      currency({ code: 'JPY', name: {}, symbol: { default: '¥' }, minorUnitExponent: 0 }),
+    ];
 
     const listed = await service.listCurrencies('ru-RU');
 
-    expect(persistence.listTranslations).toHaveBeenCalledWith(['EUR', 'JPY']);
     expect(listed[0]).toMatchObject({ code: 'EUR', name: 'Евро', symbol: 'евро' });
-    // Nothing translated JPY, so its own code and symbol stand in rather than an empty label.
+    // Nobody typed a Russian name for the yen, so the code stands in rather than an empty label,
+    // and the shared symbol is used because no locale overrode it.
     expect(listed[1]).toMatchObject({ code: 'JPY', name: 'JPY', symbol: '¥' });
+  });
+
+  it('reads the catalogue in one call rather than one per currency', async () => {
+    // The names used to come from a second query keyed by code. Now they are on the row, so a
+    // catalogue page is one read on both axes and there is no N+1 to reintroduce.
+    const { persistence, service } = createService();
+    persistence.currencies = [currency(), currency({ code: 'JPY' })];
+
+    await service.listCurrencies('en');
+
+    expect(persistence.listCurrencies).toHaveBeenCalledTimes(1);
+    expect(persistence.findCurrency).not.toHaveBeenCalled();
   });
 
   it('serves only active currencies unless the caller asks for the retired ones', async () => {
@@ -78,7 +90,7 @@ describe('FiatCurrencyService', () => {
 
   it('converts through the stored USD rates', async () => {
     const { persistence, service } = createService();
-    persistence.currencies = [currency(), currency({ code: 'JPY', symbol: '¥', usdPerUnit: '0.0064' })];
+    persistence.currencies = [currency(), currency({ code: 'JPY', usdPerUnit: '0.0064' })];
 
     // 100.00 EUR at 1.08 USD/EUR is 108 USD, which at 0.0064 USD/JPY is 16875 JPY — and the yen
     // has no minor unit, so that is 16875 minor units, not 1687500.
@@ -87,7 +99,7 @@ describe('FiatCurrencyService', () => {
 
   it('honours the rounding the caller asks for', async () => {
     const { persistence, service } = createService();
-    persistence.currencies = [currency(), currency({ code: 'GBP', symbol: '£', usdPerUnit: '1.27' })];
+    persistence.currencies = [currency(), currency({ code: 'GBP', usdPerUnit: '1.27' })];
 
     // 100.00 EUR is 108 USD, which is 85.0393… GBP: the last penny depends on the rounding mode.
     expect(await service.convert(money(10_000, 'EUR'), 'GBP')).toEqual(money(8_504, 'GBP'));
@@ -126,8 +138,12 @@ describe('FiatCurrencyService', () => {
   it('passes catalogue writes straight through to the persistence port', async () => {
     const { persistence, service } = createService();
 
-    await service.upsertCurrency({ code: 'EUR', symbol: '€' });
-    expect(persistence.upsertCurrency).toHaveBeenCalledWith({ code: 'EUR', symbol: '€' });
+    await service.upsertCurrency({ code: 'EUR', name: { en: 'Euro' }, symbol: { default: '€' } });
+    expect(persistence.upsertCurrency).toHaveBeenCalledWith({
+      code: 'EUR',
+      name: { en: 'Euro' },
+      symbol: { default: '€' },
+    });
 
     expect(await service.deactivateCurrency('EUR')).toBe(true);
     expect(persistence.deactivateCurrency).toHaveBeenCalledWith('EUR');

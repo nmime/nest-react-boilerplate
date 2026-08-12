@@ -40,16 +40,15 @@ export class FiatCurrencyService {
   /**
    * The catalogue resolved for one reader, in operator order.
    *
-   * Translations are fetched in one call for the whole page rather than per currency — the N+1
-   * version of this is the classic way a catalogue endpoint gets slow without anyone noticing.
+   * One read: the localized name and symbol are fields on the currency, so there is no second query
+   * to batch and no N+1 to reintroduce by looping.
    */
   async listCurrencies(locale: string, options: ListFiatCurrenciesOptions = {}): Promise<LocalizedFiatCurrency[]> {
     const currencies = sortFiatCurrencies(
       await this.persistence.listCurrencies({ activeOnly: options.includeInactive !== true }),
     );
-    const translations = await this.persistence.listTranslations(currencies.map((entry) => entry.code));
 
-    return currencies.map((entry) => localizeFiatCurrency(entry, translations, locale));
+    return currencies.map((entry) => localizeFiatCurrency(entry, locale));
   }
 
   findCurrency(code: CurrencyCode): Promise<FiatCurrency | null> {

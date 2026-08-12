@@ -53,9 +53,32 @@ describe('fiat currency collections', () => {
     expect(new RegExp(usdPerUnit, 'u').test('-1.08')).toBe(false);
   });
 
-  it('embeds localized names alongside the currency they belong to', () => {
-    expect(FiatCurrencyCollectionValidator.$jsonSchema.properties.translations.bsonType).toBe('array');
-    expect(FiatCurrencyCollectionValidator.$jsonSchema.required).toContain('translations');
+  it('carries the localized name and symbol as one object on the currency', () => {
+    const { properties, required } = FiatCurrencyCollectionValidator.$jsonSchema;
+
+    expect(properties.name.bsonType).toBe('object');
+    expect(properties.symbol.bsonType).toBe('object');
+    expect(required).toContain('name');
+    expect(required).toContain('symbol');
+  });
+
+  it('has no embedded array of names for the two axes to disagree over', () => {
+    // The Postgres axis stores one jsonb column. An array of `{locale, name}` here would be a
+    // different shape reaching the same port, and the difference would surface as a bug in
+    // whichever axis a product happened not to run its tests against.
+    expect(FiatCurrencyCollectionValidator.$jsonSchema.required).not.toContain('translations');
+    expect(JSON.stringify(FiatCurrencyCollectionValidator)).not.toContain('translations');
+  });
+
+  it('requires every value in a locale map to be a string', () => {
+    // A document store will take `{"en": 42}` without complaint. The validator is the only thing
+    // standing between that and a reader handing a number to the localization resolver.
+    expect(FiatCurrencyCollectionValidator.$jsonSchema.properties.name.additionalProperties).toMatchObject({
+      bsonType: 'string',
+    });
+    expect(FiatCurrencyCollectionValidator.$jsonSchema.properties.symbol.additionalProperties).toMatchObject({
+      bsonType: 'string',
+    });
   });
 
   it('accepts one quote per source and instant', () => {

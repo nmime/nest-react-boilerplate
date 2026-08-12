@@ -10,15 +10,33 @@ ships on both persistence axes.
 
 ## What it stores
 
-| Table / collection           | Holds                                                                                   |
-| ---------------------------- | --------------------------------------------------------------------------------------- |
-| `fiat_currencies`            | The offered currencies, their symbol, image, display order, and the current rate to USD |
-| `fiat_currency_translations` | One localized name (and optional local symbol) per currency per locale                  |
-| `fiat_currency_rates`        | Every rate ever recorded, keyed by `(code, as_of, source)`                              |
+| Table / collection    | Holds                                                                                          |
+| --------------------- | ---------------------------------------------------------------------------------------------- |
+| `fiat_currencies`     | The offered currencies, their localized name and symbol, image, display order, and rate to USD |
+| `fiat_currency_rates` | Every rate ever recorded, keyed by `(code, as_of, source)`                                     |
 
-On MongoDB the translations are an embedded array on the currency document
-rather than a second collection. Same port, axis-idiomatic storage — nothing
-above `FiatCurrencyPersistence` can tell which axis is underneath.
+### Why the names are a column, not a table
+
+`name` and `symbol` are `Localizations<string>` — the same locale map
+`@app/common-i18n-runtime` uses everywhere else, stored as one `jsonb` column
+per field (an object on the MongoDB document, constrained by the collection
+validator). A currency has a handful of names, they are written with the
+currency, read with the currency, and change when it does; a row per locale
+bought a join on the hot list path and an insert ordering the unit of work had
+no dependency to derive.
+
+A write replaces the whole map rather than merging locale by locale: an editor
+that wants to change one language sends back the map it read with that one key
+changed. Merging would leave a locale nobody could delete.
+
+Both axes constrain the value to an object of strings — `jsonb_typeof(…) =
+'object'` on Postgres, `additionalProperties: { bsonType: 'string' }` in the
+MongoDB validator — because both stores accept `"Euro"` or `42` as a valid
+document otherwise, and a reader would then hand a scalar to the localization
+resolver.
+
+A product that needs to search names across hundreds of currencies adds a GIN
+index on the column; it does not need a second table back.
 
 ### Why one rate per currency, not a pair table
 

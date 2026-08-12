@@ -1,7 +1,7 @@
 // @requirements REQ-FIAT-HISTORY-003
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
-import { FiatCurrencyEntity, FiatCurrencyRateEntity, FiatCurrencyTranslationEntity } from '../entities';
+import { FiatCurrencyEntity, FiatCurrencyRateEntity } from '../entities';
 import { FiatCurrencyPostgresPersistence } from './fiat-currency.repository';
 
 function createEntityManagerMock() {
@@ -18,7 +18,10 @@ function createEntityManagerMock() {
 }
 
 const euro = (overrides: Partial<FiatCurrencyEntity> = {}): FiatCurrencyEntity =>
-  Object.assign(new FiatCurrencyEntity({ code: 'EUR', symbol: '€' }), overrides);
+  Object.assign(
+    new FiatCurrencyEntity({ code: 'EUR', name: { en: 'Euro', ru: 'Евро' }, symbol: { default: '€' } }),
+    overrides,
+  );
 
 describe('FiatCurrencyPostgresPersistence', () => {
   it('lists the catalogue in operator order', async () => {
@@ -33,7 +36,8 @@ describe('FiatCurrencyPostgresPersistence', () => {
       {
         code: 'EUR',
         minorUnitExponent: 2,
-        symbol: '€',
+        name: { en: 'Euro', ru: 'Евро' },
+        symbol: { default: '€' },
         imageUrl: null,
         active: true,
         displayOrder: 0,
@@ -66,30 +70,15 @@ describe('FiatCurrencyPostgresPersistence', () => {
     expect(await persistence.findCurrency('EUR')).toMatchObject({ code: 'EUR', usdPerUnit: '1.0800000000' });
   });
 
-  it('does not query for translations of nothing', async () => {
-    const { find, entityManager } = createEntityManagerMock();
-    const persistence = new FiatCurrencyPostgresPersistence(entityManager);
-
-    expect(await persistence.listTranslations([])).toEqual([]);
-    expect(find).not.toHaveBeenCalled();
-  });
-
-  it('reads translations for the codes it was given', async () => {
-    const { find, entityManager } = createEntityManagerMock();
-    find.mockResolvedValue([new FiatCurrencyTranslationEntity({ code: 'EUR', locale: 'ru', name: 'Евро' })]);
-    const persistence = new FiatCurrencyPostgresPersistence(entityManager);
-
-    const translations = await persistence.listTranslations(['EUR']);
-
-    expect(find).toHaveBeenCalledWith(FiatCurrencyTranslationEntity, { code: { $in: ['EUR'] } });
-    expect(translations).toEqual([{ code: 'EUR', locale: 'ru', name: 'Евро', symbol: null }]);
-  });
-
   it('creates a currency that is not in the catalogue yet', async () => {
     const { findOne, persist, entityManager } = createEntityManagerMock();
     const persistence = new FiatCurrencyPostgresPersistence(entityManager);
 
-    const created = await persistence.upsertCurrency({ code: 'JPY', symbol: '¥' });
+    const created = await persistence.upsertCurrency({
+      code: 'JPY',
+      name: { en: 'Japanese yen' },
+      symbol: { default: '¥' },
+    });
 
     expect(persist).toHaveBeenCalledWith(expect.any(FiatCurrencyEntity));
     expect(findOne).toHaveBeenCalledWith(FiatCurrencyEntity, { code: 'JPY' });
@@ -101,7 +90,12 @@ describe('FiatCurrencyPostgresPersistence', () => {
     findOne.mockResolvedValue(euro({ displayOrder: 7, imageUrl: 'https://cdn.example.test/eur.svg' }));
     const persistence = new FiatCurrencyPostgresPersistence(entityManager);
 
-    const updated = await persistence.upsertCurrency({ code: 'EUR', symbol: '€', active: false });
+    const updated = await persistence.upsertCurrency({
+      code: 'EUR',
+      name: { en: 'Euro', ru: 'Евро' },
+      symbol: { default: '€' },
+      active: false,
+    });
 
     expect(updated).toMatchObject({ active: false, displayOrder: 7, imageUrl: 'https://cdn.example.test/eur.svg' });
   });
@@ -113,7 +107,8 @@ describe('FiatCurrencyPostgresPersistence', () => {
 
     const updated = await persistence.upsertCurrency({
       code: 'EUR',
-      symbol: '€',
+      name: { en: 'Euro' },
+      symbol: { default: '€' },
       minorUnitExponent: 4,
       imageUrl: 'https://cdn.example.test/new.svg',
     });
@@ -121,42 +116,33 @@ describe('FiatCurrencyPostgresPersistence', () => {
     expect(updated).toMatchObject({ minorUnitExponent: 4, imageUrl: 'https://cdn.example.test/new.svg' });
   });
 
-  it('clears a locale symbol back to the canonical one', async () => {
-    const { findOne, find, entityManager } = createEntityManagerMock();
-    const existing = new FiatCurrencyTranslationEntity({ code: 'EUR', locale: 'ru', name: 'Евро', symbol: 'евро' });
+  it('replaces the whole locale map rather than merging into the stored one', async () => {
+    // A merge would leave a locale nobody can delete: an editor who removes the Russian name and
+    // saves would get it back on the next read. The map is one value, so a write is one value.
+    const { findOne, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(euro());
-    find.mockResolvedValue([existing]);
     const persistence = new FiatCurrencyPostgresPersistence(entityManager);
 
-    await persistence.upsertCurrency({
+    const updated = await persistence.upsertCurrency({
       code: 'EUR',
-      symbol: '€',
-      translations: [{ locale: 'ru', name: 'Евро' }],
+      name: { en: 'Euro' },
+      symbol: { default: '€', ru: 'евро' },
     });
 
-    expect(existing.symbol).toBeNull();
+    expect(updated.name).toEqual({ en: 'Euro' });
+    expect(updated.symbol).toEqual({ default: '€', ru: 'евро' });
   });
 
-  it('replaces the named translations and leaves other locales alone', async () => {
-    const { findOne, find, persist, entityManager } = createEntityManagerMock();
-    const existing = new FiatCurrencyTranslationEntity({ code: 'EUR', locale: 'ru', name: 'Евро' });
+  it('writes a currency and its names without opening a transaction', async () => {
+    // The names used to live in a second table, so the write needed one statement per locale and a
+    // transaction to keep them in step with the currency. One row needs neither.
+    const { findOne, transactional, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(euro());
-    find.mockResolvedValue([existing]);
     const persistence = new FiatCurrencyPostgresPersistence(entityManager);
 
-    await persistence.upsertCurrency({
-      code: 'EUR',
-      symbol: '€',
-      translations: [
-        { locale: 'ru', name: 'Евро', symbol: 'евро' },
-        { locale: 'en', name: 'Euro' },
-      ],
-    });
+    await persistence.upsertCurrency({ code: 'EUR', name: { en: 'Euro' }, symbol: { default: '€' } });
 
-    expect(existing.symbol).toBe('евро');
-    expect(persist).toHaveBeenCalledWith(
-      expect.objectContaining({ code: 'EUR', locale: 'en', name: 'Euro', symbol: null }),
-    );
+    expect(transactional).not.toHaveBeenCalled();
   });
 
   it('retires a currency without deleting its history', async () => {

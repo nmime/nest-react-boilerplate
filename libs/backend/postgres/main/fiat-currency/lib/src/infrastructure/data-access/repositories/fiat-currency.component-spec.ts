@@ -10,11 +10,7 @@ import {
   startPostgresContainer,
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
-import {
-  FiatCurrencyEntitySchema,
-  FiatCurrencyRateEntitySchema,
-  FiatCurrencyTranslationEntitySchema,
-} from '../entities';
+import { FiatCurrencyEntitySchema, FiatCurrencyRateEntitySchema } from '../entities';
 import { fiatCurrencyMigrationOptions } from '../migrations';
 import { FiatCurrencyPostgresPersistence } from './fiat-currency.repository';
 
@@ -31,11 +27,10 @@ describeIfDocker('fiat currency persistence against PostgreSQL', () => {
   beforeAll(async () => {
     container = await startPostgresContainer();
     orm = await MikroORM.init<PostgreSqlDriver>(
-      createPostgresContainerMikroOrmOptions(
-        container,
-        [FiatCurrencyEntitySchema, FiatCurrencyTranslationEntitySchema, FiatCurrencyRateEntitySchema],
-        { extensions: [Migrator], migrations: fiatCurrencyMigrationOptions },
-      ),
+      createPostgresContainerMikroOrmOptions(container, [FiatCurrencyEntitySchema, FiatCurrencyRateEntitySchema], {
+        extensions: [Migrator],
+        migrations: fiatCurrencyMigrationOptions,
+      }),
     );
     await orm.migrator.up();
   });
@@ -49,12 +44,9 @@ describeIfDocker('fiat currency persistence against PostgreSQL', () => {
     const persistence = repository(orm.em.fork());
     await persistence.upsertCurrency({
       code: 'EUR',
-      symbol: '€',
+      name: { en: 'Euro', ru: 'Евро' },
+      symbol: { default: '€' },
       displayOrder: 1,
-      translations: [
-        { locale: 'en', name: 'Euro' },
-        { locale: 'ru', name: 'Евро', symbol: '€' },
-      ],
     });
 
     const monday = new Date('2026-08-10T00:00:00.000Z');
@@ -72,7 +64,7 @@ describeIfDocker('fiat currency persistence against PostgreSQL', () => {
 
   it('collapses a provider retry onto one history row through the storage constraint', async () => {
     const persistence = repository(orm.em.fork());
-    await persistence.upsertCurrency({ code: 'GBP', symbol: '£' });
+    await persistence.upsertCurrency({ code: 'GBP', name: { en: 'Pound sterling' }, symbol: { default: '£' } });
 
     const asOf = new Date('2026-08-11T12:00:00.000Z');
     await persistence.recordRates([{ code: 'GBP', usdPerUnit: '1.2700000000', asOf, source: 'ecb' }]);
@@ -97,7 +89,7 @@ describeIfDocker('fiat currency persistence against PostgreSQL', () => {
 
   it('refuses a rate for a currency the catalogue does not hold and writes none of the batch', async () => {
     const persistence = repository(orm.em.fork());
-    await persistence.upsertCurrency({ code: 'CHF', symbol: 'Fr' });
+    await persistence.upsertCurrency({ code: 'CHF', name: { en: 'Swiss franc' }, symbol: { default: 'Fr' } });
 
     const asOf = new Date('2026-08-11T13:00:00.000Z');
     await expect(
@@ -111,38 +103,57 @@ describeIfDocker('fiat currency persistence against PostgreSQL', () => {
   });
 
   it('rejects a non-positive rate at the table, not only in the repository', async () => {
-    await repository(orm.em.fork()).upsertCurrency({ code: 'JPY', symbol: '¥', minorUnitExponent: 0 });
+    await repository(orm.em.fork()).upsertCurrency({
+      code: 'JPY',
+      name: { en: 'Japanese yen' },
+      symbol: { default: '¥' },
+      minorUnitExponent: 0,
+    });
 
     await expect(
       insert(orm.em, 'update fiat_currencies set usd_per_unit = ?, rate_as_of = now() where code = ?', ['0', 'JPY']),
     ).rejects.toThrow(/ck__fiat_currencies__usd_per_unit/u);
   });
 
-  it('reads a currency and its translations back exactly as an operator wrote them', async () => {
+  it('reads the locale maps back through jsonb exactly as an operator wrote them', async () => {
     const persistence = repository(orm.em.fork());
     await persistence.upsertCurrency({
       code: 'TRY',
-      symbol: '₺',
+      name: { en: 'Turkish lira', ru: 'Турецкая лира' },
+      symbol: { default: '₺' },
       imageUrl: 'https://cdn.example.test/try.svg',
       displayOrder: 9,
-      translations: [{ locale: 'en', name: 'Turkish lira' }],
     });
-    // A second write replaces the name in place rather than appending a duplicate locale row.
-    await persistence.upsertCurrency({
-      code: 'TRY',
-      symbol: '₺',
-      translations: [{ locale: 'en', name: 'Turkish Lira' }],
-    });
+    // A second write replaces the whole map: the Russian name written above is gone, not merged
+    // back in from the stored row.
+    await persistence.upsertCurrency({ code: 'TRY', name: { en: 'Turkish Lira' }, symbol: { default: '₺' } });
 
-    expect(await persistence.listTranslations(['TRY'])).toEqual([
-      { code: 'TRY', locale: 'en', name: 'Turkish Lira', symbol: null },
-    ]);
-    expect(await persistence.listCurrencies({ codes: ['TRY'] })).toEqual([
-      expect.objectContaining({ code: 'TRY', imageUrl: 'https://cdn.example.test/try.svg', displayOrder: 9 }),
+    expect(await repository(orm.em.fork()).listCurrencies({ codes: ['TRY'] })).toEqual([
+      expect.objectContaining({
+        code: 'TRY',
+        name: { en: 'Turkish Lira' },
+        symbol: { default: '₺' },
+        imageUrl: 'https://cdn.example.test/try.svg',
+        displayOrder: 9,
+      }),
     ]);
 
     expect(await persistence.deactivateCurrency('TRY')).toBe(true);
     expect(await repository(orm.em.fork()).listCurrencies({ activeOnly: true, codes: ['TRY'] })).toEqual([]);
+  });
+
+  it('rejects a name that is a json scalar rather than a map of locales', async () => {
+    // jsonb happily stores `"Euro"`. Only the check constraint stops a reader from calling
+    // getLocalization on a string, so it has to hold at the table and not only in the entity.
+    await repository(orm.em.fork()).upsertCurrency({
+      code: 'SEK',
+      name: { en: 'Swedish krona' },
+      symbol: { default: 'kr' },
+    });
+
+    await expect(
+      insert(orm.em, 'update fiat_currencies set name = ?::jsonb where code = ?', ['"Swedish krona"', 'SEK']),
+    ).rejects.toThrow(/ck__fiat_currencies__name/u);
   });
 });
 

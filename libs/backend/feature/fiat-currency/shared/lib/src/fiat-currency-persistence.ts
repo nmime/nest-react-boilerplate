@@ -1,5 +1,6 @@
+import type { Localizations } from '@app/common-i18n-runtime';
 import type { CurrencyCode } from '@app/common-money';
-import type { FiatCurrency, FiatCurrencyRate, FiatCurrencyTranslation } from './fiat-currency.types';
+import type { FiatCurrency, FiatCurrencyRate } from './fiat-currency.types';
 
 export interface ListFiatCurrenciesFilter {
   /** Omits currencies an operator has retired. Historical amounts still resolve through `find`. */
@@ -7,22 +8,22 @@ export interface ListFiatCurrenciesFilter {
   codes?: readonly CurrencyCode[];
 }
 
-export interface UpsertFiatCurrencyTranslation {
-  locale: string;
-  name: string;
-  symbol?: string | null;
-}
-
 export interface UpsertFiatCurrencyParams {
   code: CurrencyCode;
   /** Defaults to the ISO exponent for the code when the caller does not say. */
   minorUnitExponent?: number;
-  symbol: string;
+  /**
+   * Replaces the whole field rather than merging locale by locale.
+   *
+   * The names arrive as one value and are stored as one value, so a partial write would have to
+   * invent a merge rule that the caller cannot see the result of. An editor that wants to change a
+   * single language sends the map it read back with that one key changed.
+   */
+  name: Localizations<string>;
+  symbol: Localizations<string>;
   imageUrl?: string | null;
   active?: boolean;
   displayOrder?: number;
-  /** Replaces the locales named here and leaves any others alone. */
-  translations?: readonly UpsertFiatCurrencyTranslation[];
 }
 
 export interface RecordFiatRateParams {
@@ -54,8 +55,6 @@ export abstract class FiatCurrencyPersistence {
   abstract listCurrencies(filter: ListFiatCurrenciesFilter): Promise<FiatCurrency[]>;
 
   abstract findCurrency(code: CurrencyCode): Promise<FiatCurrency | null>;
-
-  abstract listTranslations(codes: readonly CurrencyCode[]): Promise<FiatCurrencyTranslation[]>;
 
   abstract upsertCurrency(params: UpsertFiatCurrencyParams): Promise<FiatCurrency>;
 

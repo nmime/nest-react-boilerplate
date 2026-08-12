@@ -22,38 +22,29 @@ export const FiatCurrencyCollectionValidator = {
     required: [
       '_id',
       'minorUnitExponent',
+      'name',
       'symbol',
       'imageUrl',
       'active',
       'displayOrder',
       'usdPerUnit',
       'rateAsOf',
-      'translations',
       'createdAt',
       'updatedAt',
     ],
     properties: {
       _id: { bsonType: 'string', pattern: currencyCodePattern },
       minorUnitExponent: { bsonType: 'int', minimum: 0, maximum: 12 },
-      symbol: { bsonType: 'string', minLength: 1, maxLength: 16 },
+      // Locale maps, mirroring the jsonb columns on the Postgres axis. `additionalProperties`
+      // constrains the values without naming the locales: a product that adds one should not have
+      // to write a migration for a collection validator to accept a name in it.
+      name: { bsonType: 'object', additionalProperties: { bsonType: 'string', minLength: 1, maxLength: 120 } },
+      symbol: { bsonType: 'object', additionalProperties: { bsonType: 'string', minLength: 1, maxLength: 16 } },
       imageUrl: { bsonType: ['string', 'null'] },
       active: { bsonType: 'bool' },
       displayOrder: { bsonType: 'int' },
       usdPerUnit: { bsonType: ['string', 'null'], pattern: usdRatePattern },
       rateAsOf: { bsonType: ['date', 'null'] },
-      translations: {
-        bsonType: 'array',
-        items: {
-          bsonType: 'object',
-          additionalProperties: false,
-          required: ['locale', 'name', 'symbol'],
-          properties: {
-            locale: { bsonType: 'string', minLength: 2, maxLength: 35 },
-            name: { bsonType: 'string', minLength: 1, maxLength: 120 },
-            symbol: { bsonType: ['string', 'null'], maxLength: 16 },
-          },
-        },
-      },
       createdAt: { bsonType: 'date' },
       updatedAt: { bsonType: 'date' },
     },

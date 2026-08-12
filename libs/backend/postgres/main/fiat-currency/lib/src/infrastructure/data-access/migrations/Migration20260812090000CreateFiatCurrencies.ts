@@ -19,11 +19,17 @@ export class Migration20260812090000CreateFiatCurrencies extends Migration {
     // ever existed, and fifteen significant digits is the most the exact ratio arithmetic in
     // @app/backend-feature-fiat-currency-shared can hold without overflowing a safe integer. A
     // wider column would let an operator store a rate the application then refuses to use.
+    // "name" and "symbol" are locale maps — `{"en": "Euro", "ru": "Евро"}` — rather than a row per
+    // language in a second table. A currency's names are written with the currency, read with the
+    // currency, and number in the single digits; the join the other shape bought paid for nothing.
+    // The catalogue is small enough that no index on the map is warranted: a product searching
+    // names across hundreds of rows adds a GIN index on "name" rather than a table.
     this.addSql(`
       create table "fiat_currencies" (
         "code" varchar(3) not null,
         "minor_unit_exponent" smallint not null default 2,
-        "symbol" varchar(16) not null,
+        "name" jsonb not null default '{}'::jsonb,
+        "symbol" jsonb not null default '{}'::jsonb,
         "image_url" text null,
         "active" boolean not null default true,
         "display_order" integer not null default 0,
@@ -34,6 +40,8 @@ export class Migration20260812090000CreateFiatCurrencies extends Migration {
         constraint "pk__fiat_currencies" primary key ("code"),
         constraint "ck__fiat_currencies__code" check ("code" ~ '^[A-Z]{3}$'),
         constraint "ck__fiat_currencies__minor_unit_exponent" check ("minor_unit_exponent" between 0 and 12),
+        constraint "ck__fiat_currencies__name" check (jsonb_typeof("name") = 'object'),
+        constraint "ck__fiat_currencies__symbol" check (jsonb_typeof("symbol") = 'object'),
         constraint "ck__fiat_currencies__usd_per_unit" check ("usd_per_unit" is null or "usd_per_unit" > 0),
         constraint "ck__fiat_currencies__rate_pairing" check (("usd_per_unit" is null) = ("rate_as_of" is null))
       );
@@ -41,19 +49,6 @@ export class Migration20260812090000CreateFiatCurrencies extends Migration {
     this.addSql(
       'create index "ix__fiat_currencies__active_display_order" on "fiat_currencies" ("active", "display_order");',
     );
-
-    this.addSql(`
-      create table "fiat_currency_translations" (
-        "code" varchar(3) not null,
-        "locale" varchar(35) not null,
-        "name" varchar(120) not null,
-        "symbol" varchar(16) null,
-        constraint "pk__fiat_currency_translations" primary key ("code", "locale"),
-        constraint "fk__fiat_currency_translations__code" foreign key ("code")
-          references "fiat_currencies" ("code") on delete cascade
-      );
-    `);
-    this.addSql('create index "ix__fiat_currency_translations__locale" on "fiat_currency_translations" ("locale");');
 
     this.addSql(`
       create table "fiat_currency_rates" (
@@ -78,7 +73,6 @@ export class Migration20260812090000CreateFiatCurrencies extends Migration {
 
   override down(): void {
     this.addSql('drop table if exists "fiat_currency_rates" cascade;');
-    this.addSql('drop table if exists "fiat_currency_translations" cascade;');
     this.addSql('drop table if exists "fiat_currencies" cascade;');
   }
 }

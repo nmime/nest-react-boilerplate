@@ -20,7 +20,8 @@ function currency(code: string): FiatCurrency {
   return {
     code,
     minorUnitExponent: 2,
-    symbol: code,
+    name: { en: code },
+    symbol: { default: code },
     imageUrl: null,
     active: true,
     displayOrder: 0,
@@ -33,7 +34,6 @@ class StubPersistence extends FiatCurrencyPersistence {
   currencies: FiatCurrency[] = [currency('EUR'), currency('GBP')];
   readonly listCurrencies = vi.fn((_filter: ListFiatCurrenciesFilter) => Promise.resolve(this.currencies));
   readonly findCurrency = vi.fn((_code: string) => Promise.resolve<FiatCurrency | null>(null));
-  readonly listTranslations = vi.fn(() => Promise.resolve([]));
   readonly upsertCurrency = vi.fn((_params: UpsertFiatCurrencyParams) => Promise.resolve(currency('EUR')));
   readonly deactivateCurrency = vi.fn((_code: string) => Promise.resolve(true));
   readonly recordRates = vi.fn((rates: readonly RecordFiatRateParams[]) =>

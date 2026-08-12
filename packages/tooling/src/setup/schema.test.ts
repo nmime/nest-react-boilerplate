@@ -23,6 +23,7 @@ import {
 } from './schema.js';
 import {
   appCatalog,
+  appPublicHostname,
   backendCapabilityModuleCatalog,
   capabilityCatalog,
   validateSelection,
@@ -33,6 +34,36 @@ import { presets, findPreset, listPresetIds, listPresets, expandPreset } from '.
 /* ==================================================================
  * UNIT: Schema validation
  * ================================================================== */
+describe('schema — public domain ownership', () => {
+  it('defaults to the example domain with the landing page on the apex', () => {
+    const config = parseNrbConfig({ schemaVersion });
+    assert.equal(config.deployment.publicDomain, 'example.com');
+    assert.equal(config.deployment.primaryApp, 'landing-app');
+  });
+
+  it('accepts a product domain and any frontend app as the apex owner', () => {
+    const config = parseNrbConfig({
+      schemaVersion,
+      deployment: { publicDomain: 'dehqonhub.uz', primaryApp: 'site-app' },
+    });
+    assert.equal(config.deployment.publicDomain, 'dehqonhub.uz');
+    assert.equal(config.deployment.primaryApp, 'site-app');
+  });
+
+  it('accepts no apex owner so every app keeps its own subdomain', () => {
+    const config = parseNrbConfig({ schemaVersion, deployment: { primaryApp: null } });
+    assert.equal(config.deployment.primaryApp, null);
+  });
+
+  it('rejects a backend service, an unknown app, or a domain that is not a DNS name', () => {
+    assert.equal(safeParseNrbConfig({ schemaVersion, deployment: { primaryApp: 'auth-app-api' } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, deployment: { primaryApp: 'nope' } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, deployment: { publicDomain: 'https://x.uz' } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, deployment: { publicDomain: 'localhost' } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, deployment: { publicDomain: '*.x.uz' } }).success, false);
+  });
+});
+
 describe('schema — parseNrbConfig', () => {
   it('accepts minimal valid config with just schemaVersion', () => {
     const c = parseNrbConfig({ schemaVersion });
@@ -73,6 +104,22 @@ describe('schema — parseNrbConfig', () => {
 
   it('rejects unknown top-level keys', () => {
     assert.equal(safeParseNrbConfig({ schemaVersion, unknownKey: 'nope' }).success, false);
+  });
+
+  // `nrb.config.json` is one file with several owners. The strict schema above must not make it
+  // impossible for a product to configure the git-convention gate there, which is the only place
+  // that gate reads its overrides from — the alternative is forking boilerplate tooling source.
+  it('carries the git convention overrides its own gate reads from this file', () => {
+    const result = safeParseNrbConfig({
+      schemaVersion,
+      gitConventions: { size: { maxFilesChanged: 250 }, body: { maxSubjectLength: 100 } },
+    });
+
+    assert.equal(result.success, true);
+    assert.deepEqual(result.data?.gitConventions, {
+      size: { maxFilesChanged: 250 },
+      body: { maxSubjectLength: 100 },
+    });
   });
 
   it('rejects wrong schema version', () => {
@@ -246,19 +293,40 @@ describe('catalog — appCatalog', () => {
     ]);
   });
 
-  it('uses landing-app as the apex and app IDs for every other deployable hostname', () => {
+  it('derives a unique hostname for every deployable app from the configured domain', () => {
+    const domain = { publicDomain: 'dehqonhub.uz', primaryApp: 'landing-app' } as const;
     const hostnames = new Set<string>();
     for (const entry of Object.values(appCatalog)) {
-      if (entry.publicHostname === null) {
-        assert.equal(entry.publicHostname, null);
+      const hostname = appPublicHostname(entry.id, domain);
+      if (!entry.deployable) {
+        assert.equal(hostname, null, entry.id);
         continue;
       }
-      const expectedHostname = entry.id === 'landing-app' ? 'example.com' : `${entry.id}.example.com`;
-      assert.equal(entry.publicHostname, expectedHostname);
-      assert.equal(hostnames.has(entry.publicHostname), false, entry.publicHostname);
-      hostnames.add(entry.publicHostname);
+      assert.ok(hostname);
+      assert.equal(hostname, entry.id === 'landing-app' ? 'dehqonhub.uz' : `${entry.id}.dehqonhub.uz`);
+      assert.equal(hostnames.has(hostname), false, hostname);
+      hostnames.add(hostname);
     }
     assert.equal(hostnames.size, 10);
+  });
+
+  it('moves the apex to whichever app is configured as primary', () => {
+    const domain = { publicDomain: 'dehqonhub.uz', primaryApp: 'site-app' } as const;
+    assert.equal(appPublicHostname('site-app', domain), 'dehqonhub.uz');
+    assert.equal(appPublicHostname('landing-app', domain), 'landing-app.dehqonhub.uz');
+    assert.equal(appPublicHostname('user-app', domain), 'user-app.dehqonhub.uz');
+  });
+
+  it('leaves every app on a subdomain when no app owns the apex', () => {
+    const domain = { publicDomain: 'dehqonhub.uz', primaryApp: null } as const;
+    assert.equal(appPublicHostname('landing-app', domain), 'landing-app.dehqonhub.uz');
+    assert.equal(appPublicHostname('site-app', domain), 'site-app.dehqonhub.uz');
+  });
+
+  it('has no hostname for projects that are not publicly deployable', () => {
+    const domain = { publicDomain: 'dehqonhub.uz', primaryApp: 'landing-app' } as const;
+    assert.equal(appPublicHostname('fullstack-e2e', domain), null);
+    assert.equal(appPublicHostname('notification-consumer', domain), null);
   });
 
   it('fullstack-e2e requires the complete stack it starts', () => {

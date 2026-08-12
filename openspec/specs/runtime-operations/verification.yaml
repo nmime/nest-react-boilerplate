@@ -229,6 +229,12 @@ requirements:
           - main
           - nightly
       - kind: vitest
+        file: packages/tooling/src/commands/db/migration-index-name.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
         file: libs/backend/postgres/main/shared/lib/src/data-source-options.spec.ts
         target: '@app/backend-postgres-main:test'
         lanes:

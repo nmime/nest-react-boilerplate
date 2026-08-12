@@ -19,7 +19,7 @@ services:
       - caddyfile
     environment:
       PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?set PUBLIC_DOMAIN to the product base domain}
-      PRIMARY_APP_UPSTREAM: ${PRIMARY_APP_UPSTREAM:?select landing-app or site-app through PRIMARY_APP}
+      PRIMARY_APP_UPSTREAM: ${PRIMARY_APP_UPSTREAM:?select the app that owns PUBLIC_DOMAIN through PRIMARY_APP}
       LANDING_APP_DOMAIN: ${LANDING_APP_DOMAIN:?derived by scripts/compose-production.mjs}
       SITE_APP_DOMAIN: ${SITE_APP_DOMAIN:?derived by scripts/compose-production.mjs}
       USER_APP_DOMAIN: ${USER_APP_DOMAIN:?derived by scripts/compose-production.mjs}

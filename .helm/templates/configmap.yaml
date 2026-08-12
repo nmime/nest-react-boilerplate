@@ -18,6 +18,13 @@ data:
   AUTH_TOKEN_CLEANUP_ENABLED: {{ .Values.config.authTokenCleanupEnabled | quote }}
   AUTH_TOKEN_CLEANUP_INTERVAL_MS: {{ .Values.config.authTokenCleanupIntervalMs | quote }}
   AUTH_TOKEN_CLEANUP_RUN_ON_START: {{ .Values.config.authTokenCleanupRunOnStart | quote }}
+  AUTH_DEMO_MODE: {{ .Values.config.authDemoMode | quote }}
+  AUTH_DEMO_ALLOW_PRODUCTION: {{ .Values.config.authDemoAllowProduction | quote }}
+  AUTH_DEMO_ROLES: {{ .Values.config.authDemoRoles | quote }}
+  AUTH_DEMO_SUBJECT: {{ .Values.config.authDemoSubject | quote }}
+  AUTH_DEMO_TENANT_ID: {{ .Values.config.authDemoTenantId | quote }}
+  AUTH_DEMO_EMAIL: {{ .Values.config.authDemoEmail | quote }}
+  AUTH_DEMO_DISPLAY_NAME: {{ .Values.config.authDemoDisplayName | quote }}
   OPENAPI_ENABLED: {{ .Values.config.openApiEnabled | quote }}
   LOG_LEVEL: {{ .Values.config.logLevel | quote }}
   RATE_LIMIT_ENABLED: {{ .Values.config.rateLimitEnabled | quote }}
@@ -150,132 +157,51 @@ data:
         try_files $uri =404;
       }
 
-      location = /profile {
+      {{/*
+      One route table drives both edges: this ConfigMap and, through
+      scripts/generate-nginx-config.mjs, docker/nginx-fullstack.conf. A product adds an API
+      namespace by appending a row to .helm/frontend-routes.json, never by editing either edge.
+      */}}
+      {{- $routes := .Files.Get "frontend-routes.json" | fromJson }}
+      {{- if .Values.frontendNginx.routes }}
+      {{- $routes = .Values.frontendNginx.routes }}
+      {{- end }}
+      {{- range $route := $routes.spaRoutes }}
+      {{- if $route.note }}
+      # {{ $route.note }}
+      {{- end }}
+      location = {{ $route.path }} {
         try_files /index.html =404;
       }
 
-      location = /app {
-        try_files /index.html =404;
-      }
-
-      location = /app/ {
-        try_files /index.html =404;
-      }
-
-      location = /admin {
-        try_files /index.html =404;
-      }
-
-      location = /admin/ {
-        try_files /index.html =404;
-      }
-
-      location = /admin/dashboard {
-        try_files /index.html =404;
-      }
-
-      location = /admin/dashboard/ {
-        try_files /index.html =404;
-      }
-
-      location = /admin/profile {
-        try_files /index.html =404;
-      }
-
-      location = /admin/profile/ {
-        try_files /index.html =404;
-      }
-
+      {{ end }}
       error_page 418 = @frontend_spa;
 
       location @frontend_spa {
         try_files /index.html =404;
       }
-
-      location ^~ /auth/docs {
-        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "auth-app-api")) "true" }}
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-app-api:{{ default .Values.apps.authAppApi.port .Values.apps.authAppApi.servicePort }};
-        {{- else }}
-        return 404;
-        {{- end }}
-      }
-
-      location ^~ /api/auth/ {
-        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "auth-app-api")) "true" }}
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-app-api:{{ default .Values.apps.authAppApi.port .Values.apps.authAppApi.servicePort }};
-        {{- else }}
-        return 404;
-        {{- end }}
-      }
-
-      location ^~ /auth/ {
+      {{ range $location := $routes.apiLocations }}
+      {{- if $location.note }}
+      # {{ $location.note }}
+      {{- end }}
+      location ^~ {{ $location.prefix }} {
+        {{- if $location.spaFallback }}
         if ($frontend_spa_navigation) {
           return 418;
         }
-
-        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "auth-app-api")) "true" }}
+        {{ end }}
+        {{- if eq (include "boilerplate.appEnabled" (dict "root" $ "appId" $location.app)) "true" }}
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://{{ include "boilerplate.fullname" . }}-auth-app-api:{{ default .Values.apps.authAppApi.port .Values.apps.authAppApi.servicePort }};
+        proxy_pass http://{{ include "boilerplate.fullname" $ }}-{{ $location.app }}:{{ include "boilerplate.appServicePort" (dict "root" $ "appId" $location.app) }};
         {{- else }}
         return 404;
         {{- end }}
       }
 
-      location ^~ /profile/ {
-        if ($frontend_spa_navigation) {
-          return 418;
-        }
-
-        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "user-app-api")) "true" }}
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://{{ include "boilerplate.fullname" . }}-user-app-api:{{ default .Values.apps.userAppApi.port .Values.apps.userAppApi.servicePort }};
-        {{- else }}
-        return 404;
-        {{- end }}
-      }
-
-      location ^~ /admin/docs {
-        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "admin-app-api")) "true" }}
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://{{ include "boilerplate.fullname" . }}-admin-app-api:{{ default .Values.apps.adminAppApi.port .Values.apps.adminAppApi.servicePort }};
-        {{- else }}
-        return 404;
-        {{- end }}
-      }
-
-      location ^~ /admin/ {
-        if ($frontend_spa_navigation) {
-          return 418;
-        }
-
-        {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "admin-app-api")) "true" }}
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://{{ include "boilerplate.fullname" . }}-admin-app-api:{{ default .Values.apps.adminAppApi.port .Values.apps.adminAppApi.servicePort }};
-        {{- else }}
-        return 404;
-        {{- end }}
-      }
-
+      {{ end }}
       location / {
         try_files $uri $uri/ /index.html;
       }

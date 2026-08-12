@@ -31,7 +31,7 @@ test('joins setup metadata with Nx project roots', () => {
       platform: 'frontend',
       classification: 'reference',
       runtime: 'React + Vite SPA',
-      publicHostname: 'demo-app.example.com',
+      deployable: true,
       requiresApps: [],
       requiresCapabilities: [],
       requiresDurableDatabase: true,
@@ -65,7 +65,7 @@ test('rejects catalog and Nx application drift in either direction', () => {
     platform: 'frontend',
     classification: 'reference',
     runtime: 'React + Vite SPA',
-    publicHostname: 'demo-app.example.com',
+    deployable: true,
     requiresApps: [],
     requiresCapabilities: [],
   };
@@ -99,7 +99,7 @@ test('rejects copied application path or hostname rows outside the catalog', () 
     platform: 'frontend',
     classification: 'reference',
     runtime: 'React + Vite SPA',
-    publicHostname: 'demo-app.example.com',
+    deployable: true,
     requiresApps: [],
     requiresCapabilities: [],
   };
@@ -129,7 +129,7 @@ test('ignores local nested worktree storage when scanning copied rows', () => {
     platform: 'frontend',
     classification: 'reference',
     runtime: 'React + Vite SPA',
-    publicHostname: 'demo-app.example.com',
+    deployable: true,
     requiresApps: [],
     requiresCapabilities: [],
   };

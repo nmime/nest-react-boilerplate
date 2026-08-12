@@ -77,6 +77,23 @@
 {{- $enabled -}}
 {{- end -}}
 
+{{/*
+Resolve a Service port by appId rather than by values key, so templates that iterate a route table
+never have to know that auth-app-api is spelled authAppApi under .Values.apps.
+*/}}
+{{- define "boilerplate.appServicePort" -}}
+{{- $port := "" -}}
+{{- range $app := .root.Values.apps -}}
+{{- if eq $app.appId $.appId -}}
+{{- $port = default $app.port $app.servicePort -}}
+{{- end -}}
+{{- end -}}
+{{- if eq (toString $port) "" -}}
+{{- fail (printf "No app in .Values.apps declares appId %q" .appId) -}}
+{{- end -}}
+{{- $port -}}
+{{- end -}}
+
 {{- define "boilerplate.validateMongoSecretNames" -}}
 {{- $runtimeSecret := include "boilerplate.secretName" . -}}
 {{- $migrationSecret := "" -}}

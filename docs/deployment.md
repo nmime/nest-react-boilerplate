@@ -138,6 +138,18 @@ flowchart TD
   gitops --> verify
 ```
 
+### MVP and demo deployments
+
+A demo or investor build usually needs the product reachable without accounts or
+a seeded database. That is a runtime switch rather than a separate deployment
+mode: set `AUTH_DEMO_MODE=true` (plus `AUTH_DEMO_ALLOW_PRODUCTION=true` when the
+process runs with `NODE_ENV=production`) and every API request without a session
+runs as one synthetic principal whose grants come from the normal RBAC role
+matrix. Every deploy path forwards it — Compose through `x-backend-env`, Helm
+through `config.authDemoMode`, single-server through `.env.production`. See
+[Demo mode](environment-variables.md#demo-mode-no-login-at-all) for the full
+variable set and what the bypass deliberately does not weaken.
+
 ## Local development
 
 Local development is separate from production Compose:

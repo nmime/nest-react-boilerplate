@@ -1,15 +1,19 @@
 // @requirements REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import {
   certificateDomains,
   expectedListeningPorts,
   loadSingleServerConfiguration,
   renderNginx,
 } from './single-server-deployment.mjs';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const fixture = ({
   certificateMode = 'exact-hosts',
@@ -415,8 +419,8 @@ test('single-domain static keeps an SSR primary proxied instead of serving it fr
 });
 
 test('single-domain static refuses the telegram profile it cannot serve', () => {
-  // PRIMARY_APP is landing-app or site-app only, so the single public host can never
-  // be the user SPA that owns /telegram-mini-app, and static mode runs no SPA process.
+  // The single public host serves one bundle. Unless that bundle is the user SPA that owns
+  // /telegram-mini-app, static mode has no SPA process left to proxy the Mini App route to.
   assert.throws(
     () => fixture({ frontendMode: 'static', publicMode: 'single-domain', profiles: 'telegram' }),
     /per-app-domains/u,
@@ -425,6 +429,30 @@ test('single-domain static refuses the telegram profile it cannot serve', () => 
     () =>
       fixture({ frontendMode: 'static', publicMode: 'single-domain', primaryApp: 'site-app', profiles: 'telegram' }),
     /per-app-domains/u,
+  );
+});
+
+test('single-domain static serves the Mini App when the user SPA owns the apex', () => {
+  // The Mini App is a client-side route of the user SPA, so serving that SPA's bundle at the apex
+  // is exactly what makes the route reachable — its history fallback answers it from disk.
+  const { configuration, cleanup } = fixture({
+    frontendMode: 'static',
+    publicMode: 'single-domain',
+    primaryApp: 'user-app',
+    profiles: 'telegram',
+  });
+  try {
+    assert.equal(configuration.domains.USER_APP_DOMAIN, 'product.example');
+    assert.ok(renderStaticNginx(configuration).includes('root /srv/nrb/dist/apps/frontend/app;'));
+  } finally {
+    cleanup();
+  }
+});
+
+test('an apex owner with no frontend bundle fails closed instead of rendering an empty vhost', () => {
+  assert.throws(
+    () => fixture({ publicMode: 'single-domain', primaryApp: 'auth-app-api' }),
+    /PRIMARY_APP must be a frontend application/u,
   );
 });
 
@@ -521,4 +549,94 @@ test('static frontend mode rejects an unsafe dist root', () => {
   assert.throws(() => fixture({ frontendMode: 'static', distRoot: '/srv/a b' }), /whitespace/u);
   assert.throws(() => fixture({ frontendMode: 'static', distRoot: '/srv/../etc' }), /\.\./u);
   assert.throws(() => fixture({ frontendMode: 'static', distRoot: 'relative/path' }), /absolute/u);
+});
+
+test('corepack provisioning survives a host that already owns /usr/local/bin/corepack', () => {
+  // A rented VPS very often already has Node with corepack shims. Installing corepack into the
+  // shared prefix makes npm create every package-manager shim and abort with EEXIST on the first
+  // name an operator or an earlier Node installation already owns, which fails provisioning.
+  const controller = readFileSync(join(root, 'deploy/single-server/serverctl'), 'utf8');
+  const installCorepack = /^install_corepack\(\) \{$[\s\S]*?^\}$/mu.exec(controller)?.[0];
+  assert.ok(installCorepack, 'serverctl must expose install_corepack() so provisioning is testable');
+
+  const sandbox = mkdtempSync(join(tmpdir(), 'nrb-corepack-'));
+  try {
+    const binRoot = join(sandbox, 'bin');
+    const corepackRoot = join(sandbox, 'corepack');
+    const stubs = join(sandbox, 'stubs');
+    mkdirSync(binRoot, { recursive: true });
+    mkdirSync(stubs, { recursive: true });
+    // A corepack shim this host got from somewhere other than npm.
+    writeFileSync(join(binRoot, 'corepack'), '#!/bin/sh\necho 0.29.0\n', { mode: 0o755 });
+
+    // Stands in for the corepack CLI npm would install: a JS entry point invoked through node.
+    const corepackCli = [
+      "const { mkdirSync, writeFileSync } = require('node:fs');",
+      "const { dirname, join } = require('node:path');",
+      'const args = process.argv.slice(2);',
+      "if (args[0] === '--version') { console.log('0.35.0'); process.exit(0); }",
+      "if (args[0] === 'enable') {",
+      "  const directory = args[args.indexOf('--install-directory') + 1];",
+      '  mkdirSync(directory, { recursive: true });',
+      "  for (const shim of args.slice(args.indexOf('--install-directory') + 2)) {",
+      "    writeFileSync(join(directory, shim), '#!/bin/sh\\n', { mode: 0o755 });",
+      '  }',
+      '}',
+    ].join('\n');
+
+    // Stands in for npm's global install, including the bin-link collision it aborts on.
+    writeFileSync(
+      join(stubs, 'npm'),
+      [
+        '#!/bin/sh',
+        'set -eu',
+        'for arg in "$@"; do [ "$arg" = "--no-bin-links" ] && no_bin_links=1; done',
+        'package_root="${npm_config_prefix}/lib/node_modules/corepack/dist"',
+        'mkdir -p "$package_root"',
+        `cat >"$package_root/corepack.js" <<'CLI'\n${corepackCli}\nCLI`,
+        'if [ -z "${no_bin_links:-}" ]; then',
+        '  for shim in corepack yarn yarnpkg pnpm pnpx; do',
+        `    if [ -e "\${npm_config_prefix}/bin/\${shim}" ]; then echo "EEXIST: \${shim}" >&2; exit 1; fi`,
+        '    mkdir -p "${npm_config_prefix}/bin"; : >"${npm_config_prefix}/bin/${shim}"',
+        '  done',
+        'fi',
+      ].join('\n'),
+      { mode: 0o755 },
+    );
+
+    const harness = [
+      'set -Eeuo pipefail',
+      "log() { :; }",
+      'die() { echo "$*" >&2; exit 1; }',
+      'COREPACK_VERSION=0.35.0',
+      'PNPM_VERSION=11.0.0',
+      `NRB_COREPACK_ROOT=${JSON.stringify(corepackRoot)}`,
+      `NRB_BIN_ROOT=${JSON.stringify(binRoot)}`,
+      installCorepack,
+      'install_corepack',
+    ].join('\n');
+    const result = spawnSync('bash', ['-c', harness], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        NRB_TEST_COREPACK_VERSION: '0.35.0',
+        PATH: `${stubs}:${process.env.PATH}`,
+      },
+    });
+
+    assert.equal(result.status, 0, `install_corepack failed on a host with an existing shim:\n${result.stderr}`);
+    assert.equal(readFileSync(join(binRoot, 'corepack'), 'utf8'), '#!/bin/sh\necho 0.29.0\n');
+    assert.ok(readFileSync(join(binRoot, 'pnpm'), 'utf8'), 'corepack must still activate the pinned pnpm shim');
+
+    // The superseded strategy — the shared prefix, with npm free to write its bin links — still
+    // fails in this same sandbox, which is what makes the assertion above meaningful.
+    const shared = spawnSync('bash', ['-c', 'npm install --global corepack@0.35.0'], {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${stubs}:${process.env.PATH}`, npm_config_prefix: sandbox },
+    });
+    assert.notEqual(shared.status, 0);
+    assert.match(shared.stderr, /EEXIST/u);
+  } finally {
+    rmSync(sandbox, { force: true, recursive: true });
+  }
 });

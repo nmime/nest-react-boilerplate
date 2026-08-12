@@ -130,10 +130,11 @@ wrapper validates it and derives the complete mapping documented in the
 [Project Catalog](project-catalog.md). Optional bot hosts are included only
 when their application profiles are enabled.
 
-With `PRIMARY_APP=site-app`, the site owns the apex and landing moves to its
-app-ID subdomain; API hostnames do not change. In particular, an app called
-`auth-app-api` always keeps its exact app ID in the hostname, never a starter or
-generic name.
+Any publicly served app may own the apex. With `PRIMARY_APP=site-app`, the site
+owns it and landing moves to its app-ID subdomain; with `PRIMARY_APP=user-app`,
+the product SPA is the front door. Other hostnames do not change either way. In
+particular, an app called `auth-app-api` always keeps its exact app ID in the
+hostname, never a starter or generic name.
 
 The edge modes derive `CORS_ORIGINS`, `BETTER_AUTH_URL`,
 `BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_ALLOWED_RETURN_URLS`, Telegram webhook URLs,

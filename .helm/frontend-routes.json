@@ -1,0 +1,30 @@
+{
+  "$comment": "The one route table for the same-origin frontend edge. Both edges read it: the Helm chart via .Files.Get (which is why the file lives inside the chart) and Compose via docker/nginx-fullstack.conf, which scripts/generate-nginx-config.mjs renders from here. Adding an API namespace is one row; never hand-edit the generated conf or restate a location in the chart. spaRoutes are exact-match locations that serve index.html — they must be listed here rather than left to the SPA fallback whenever an `^~` API prefix would otherwise swallow them, because a `^~` prefix skips regex locations. apiLocations are proxied prefixes in nginx-declaration order; spaFallback marks the ones a browser navigation should hand back to the SPA.",
+  "spaRoutes": [
+    { "path": "/profile" },
+    { "path": "/app" },
+    { "path": "/app/" },
+    { "path": "/admin" },
+    { "path": "/admin/" },
+    { "path": "/admin/dashboard" },
+    { "path": "/admin/dashboard/" },
+    { "path": "/admin/profile" },
+    { "path": "/admin/profile/" },
+    {
+      "path": "/auth",
+      "note": "Keep the frontend auth entry point on the public origin. Without this exact match, nginx canonicalizes the adjacent `/auth/` proxy location and emits an absolute redirect to its internal listener."
+    }
+  ],
+  "apiLocations": [
+    { "prefix": "/auth/docs", "app": "auth-app-api" },
+    {
+      "prefix": "/api/auth/",
+      "app": "auth-app-api",
+      "note": "Better Auth owns /api/auth, including the Telegram OIDC callback. This route must never fall through to the SPA navigation fallback."
+    },
+    { "prefix": "/auth/", "app": "auth-app-api", "spaFallback": true },
+    { "prefix": "/profile/", "app": "user-app-api", "spaFallback": true },
+    { "prefix": "/admin/docs", "app": "admin-app-api" },
+    { "prefix": "/admin/", "app": "admin-app-api", "spaFallback": true }
+  ]
+}

@@ -27,6 +27,33 @@ database:
   engine: postgres
 migrations:
   enabled: true
+ingress:
+  hosts:
+    - host: admin-app.example.com
+      service: admin-app
+      paths: ['/']
+    - host: admin-app-api.example.com
+      service: admin-app-api
+      paths: ['/']
+    - host: auth-app-api.example.com
+      service: auth-app-api
+      paths: ['/']
+    - host: example.com
+      service: landing-app
+      paths: ['/']
+    - host: mobile-app.example.com
+      service: mobile-app
+      paths: ['/']
+    - host: site-app.example.com
+      service: site-app
+      paths: ['/']
+    - host: user-app.example.com
+      service: user-app
+      paths: ['/']
+    - host: user-app-api.example.com
+      service: user-app-api
+      paths: ['/']
+  tls: []
 apps:
   adminApp:
     enabled: true

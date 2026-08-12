@@ -439,12 +439,34 @@ install_node() {
     log "installed Node.js ${expected} from the checksummed official binary"
   fi
 
-  if ! command -v corepack >/dev/null 2>&1 || [[ "$(corepack --version)" != "${COREPACK_VERSION}" ]]; then
-    npm_config_prefix=/usr/local npm install --global "corepack@${COREPACK_VERSION}"
-  fi
-  corepack install --global "pnpm@${PNPM_VERSION}"
-  corepack enable --install-directory /usr/local/bin pnpm
+  install_corepack
   [[ "$(pnpm --version)" == "${PNPM_VERSION}" ]] || die 'pnpm activation failed'
+}
+
+install_corepack() {
+  local install_root="${NRB_COREPACK_ROOT:-/usr/local/lib/nrb-corepack}"
+  local shim_root="${NRB_BIN_ROOT:-/usr/local/bin}"
+  local corepack_cli="${install_root}/lib/node_modules/corepack/dist/corepack.js"
+  local node_binary
+  node_binary="$(command -v node)"
+
+  # Installing corepack into the shared /usr/local prefix makes npm create a shim for every
+  # package manager corepack ships, and abort with EEXIST as soon as an operator or an earlier
+  # Node installation already owns one of those names — a very common state on a rented VPS. Use a
+  # controller-owned prefix with no bin links at all, and invoke the pinned CLI by absolute path.
+  if [[ ! -x "${corepack_cli}" ]] || [[ "$("${node_binary}" "${corepack_cli}" --version 2>/dev/null)" != "${COREPACK_VERSION}" ]]; then
+    if [[ -L "${install_root}" ]]; then
+      rm -f "${install_root}"
+    fi
+    install -d "${install_root}"
+    npm_config_prefix="${install_root}" npm install --global --no-bin-links --no-audit --no-fund \
+      "corepack@${COREPACK_VERSION}"
+  fi
+  [[ "$("${node_binary}" "${corepack_cli}" --version)" == "${COREPACK_VERSION}" ]] ||
+    die "corepack ${COREPACK_VERSION} did not install"
+
+  "${node_binary}" "${corepack_cli}" install --global "pnpm@${PNPM_VERSION}"
+  "${node_binary}" "${corepack_cli}" enable --install-directory "${shim_root}" pnpm
 }
 
 install_firewall() {

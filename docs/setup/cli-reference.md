@@ -91,6 +91,8 @@ pnpm nrb setup --replace --app landing-app --non-interactive
 | `--remove-app <id>`        | string  | Remove an app unless another selected app requires it.                          |
 | `--remove-capability <id>` | string  | Remove a capability unless it remains required.                                 |
 | `--replace`                | boolean | Start from an empty selection before applying explicit additions.               |
+| `--public-domain <domain>` | string  | Base domain every public hostname is derived from.                              |
+| `--primary-app <id>`       | string  | App served on the base domain itself, or `none` to keep every app on a subdomain. |
 | `--list`                   | boolean | Show available entries with selection markers, runtime, and template hostname.  |
 | `--dry-run`                | boolean | Show plan without modifying files.                                              |
 | `--prune`                  | boolean | Remove stale files previously managed by setup.                                 |

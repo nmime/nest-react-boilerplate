@@ -150,6 +150,13 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv, fronte
   const domain = validateBaseDomain(required(production, 'PUBLIC_DOMAIN', 'the production environment'));
   const primaryApp = required(production, 'PRIMARY_APP', 'the production environment');
   const domains = derivePublicDomains(domain, primaryApp);
+  // The single-domain vhost serves the apex owner's bundle, so an API at the apex would render a
+  // location block pointing at an undefined port instead of failing.
+  if (publicMode === 'single-domain' && !Object.hasOwn(frontendPortKeys, primaryApp)) {
+    fail(
+      `PRIMARY_APP must be a frontend application for EXTERNAL_PROXY_PUBLIC_MODE=single-domain; received "${primaryApp}".`,
+    );
+  }
   const enabledProfiles = unique(splitList(production.COMPOSE_PROFILES)).sort();
   for (const profile of enabledProfiles) {
     if (!profiles.has(profile)) fail(`Unsupported COMPOSE_PROFILES entry: ${profile}.`);
@@ -249,11 +256,15 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv, fronte
   if (runtimeMode === 'native' && frontendMode !== 'static') {
     fail('RUNTIME_MODE=native serves SPAs from disk; set EXTERNAL_PROXY_FRONTEND_MODE=static.');
   }
-  // Single-domain serves every frontend route from the primary bundle, and
-  // PRIMARY_APP can only be landing-app or site-app — never the user SPA that owns
-  // /telegram-mini-app. Static mode runs no SPA process to proxy that route to, so
-  // the Mini App needs the user SPA on its own host.
-  if (frontendMode === 'static' && publicMode === 'single-domain' && enabledProfiles.includes('telegram')) {
+  // Single-domain serves every frontend route from the primary bundle, so /telegram-mini-app is
+  // only present when the user SPA is that bundle. Static mode runs no SPA process to proxy the
+  // route to, so any other apex owner leaves the Mini App unreachable.
+  if (
+    frontendMode === 'static' &&
+    publicMode === 'single-domain' &&
+    primaryApp !== 'user-app' &&
+    enabledProfiles.includes('telegram')
+  ) {
     fail(
       'The Telegram Mini App is a user-app route, which EXTERNAL_PROXY_PUBLIC_MODE=single-domain cannot serve from the primary bundle; use EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains with EXTERNAL_PROXY_FRONTEND_MODE=static.',
     );

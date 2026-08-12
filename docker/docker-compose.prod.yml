@@ -47,6 +47,13 @@ x-backend-env: &backend-env
   TELEGRAM_OIDC_DISCOVERY_URL: ${TELEGRAM_OIDC_DISCOVERY_URL:-}
   TELEGRAM_OIDC_ISSUER: ${TELEGRAM_OIDC_ISSUER:-}
   TELEGRAM_OIDC_JWKS_URL: ${TELEGRAM_OIDC_JWKS_URL:-}
+  AUTH_DEMO_MODE: ${AUTH_DEMO_MODE:-false}
+  AUTH_DEMO_ALLOW_PRODUCTION: ${AUTH_DEMO_ALLOW_PRODUCTION:-false}
+  AUTH_DEMO_ROLES: ${AUTH_DEMO_ROLES:-}
+  AUTH_DEMO_SUBJECT: ${AUTH_DEMO_SUBJECT:-}
+  AUTH_DEMO_TENANT_ID: ${AUTH_DEMO_TENANT_ID:-}
+  AUTH_DEMO_EMAIL: ${AUTH_DEMO_EMAIL:-}
+  AUTH_DEMO_DISPLAY_NAME: ${AUTH_DEMO_DISPLAY_NAME:-}
   AUTH_TOKEN_CLEANUP_ENABLED: ${AUTH_TOKEN_CLEANUP_ENABLED:-true}
   AUTH_TOKEN_CLEANUP_INTERVAL_MS: ${AUTH_TOKEN_CLEANUP_INTERVAL_MS:-3600000}
   AUTH_TOKEN_CLEANUP_RUN_ON_START: ${AUTH_TOKEN_CLEANUP_RUN_ON_START:-true}
@@ -181,6 +188,12 @@ x-frontend-service: &frontend-service
   environment: &frontend-runtime-env
     TELEGRAM_AUTH_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
     DISCORD_AUTH_ENABLED: ${DISCORD_AUTH_ENABLED:-false}
+    # Product identity. Unset values keep the identity built into the image, so a
+    # rebrand is a deployment variable rather than a rebuild.
+    PRODUCT_NAME: ${PRODUCT_NAME:-}
+    PRODUCT_ICON_HREF: ${PRODUCT_ICON_HREF:-}
+    PRODUCT_ICON_TYPE: ${PRODUCT_ICON_TYPE:-}
+    PRODUCT_THEME_COLOR: ${PRODUCT_THEME_COLOR:-}
 
 x-notification-scheduler-service: &notification-scheduler-service
   restart: unless-stopped

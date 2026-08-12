@@ -32,6 +32,8 @@
     "targets": [
       "docker"
     ],
+    "publicDomain": "example.com",
+    "primaryApp": "landing-app",
     "publicTopology": "single-domain",
     "kubernetesDelivery": "direct",
     "infrastructure": {

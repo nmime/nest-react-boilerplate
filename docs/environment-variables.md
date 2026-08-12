@@ -78,6 +78,40 @@ from the selected bundled/external database overlay.
 | `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY` / `_FILE` | When provider-token encryption is enabled | 32-byte base64 key supplied inline or through the deployment secret-file path.                                    |
 | `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_ID`        | Optional                                  | Key identifier stored with encrypted provider-token records to support rotation.                                  |
 
+### Demo mode (no login at all)
+
+An MVP or investor demo usually needs the product reachable without accounts,
+credentials, or a seeded database. `AUTH_DEMO_MODE` turns that on at the single
+place every access guard resolves a principal, so every API request that carries
+no session runs as one synthetic user:
+
+| Variable                     | When required                             | Purpose                                                                                                   |
+| ---------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `AUTH_DEMO_MODE`             | Optional                                  | `true` serves every unauthenticated request as the demo principal. Defaults to `false`.                   |
+| `AUTH_DEMO_ALLOW_PRODUCTION` | With the above when `NODE_ENV=production` | Second acknowledgement; without it a production process refuses to start serving demo traffic.            |
+| `AUTH_DEMO_ROLES`            | Optional                                  | Comma-separated roles for the demo principal; defaults to `user`. Use `user,admin` to open the admin app. |
+| `AUTH_DEMO_SUBJECT`          | Optional                                  | Subject id of the demo principal; defaults to an obviously synthetic UUID.                                |
+| `AUTH_DEMO_TENANT_ID`        | Optional                                  | Tenant UUID for the demo principal; defaults to the default tenant.                                       |
+| `AUTH_DEMO_EMAIL`            | Optional                                  | Display email; defaults to `demo@example.invalid`.                                                        |
+| `AUTH_DEMO_DISPLAY_NAME`     | Optional                                  | Display name; defaults to `Demo User`.                                                                    |
+
+What demo mode does and does not do:
+
+- Permissions still come from the shared RBAC role matrix, so the demo principal
+  can never hold a grant a real account with those roles would not have. An
+  unknown role in `AUTH_DEMO_ROLES` is a startup-time error rather than a
+  silently powerless demo.
+- No account row is required. The database-backed guards skip their per-request
+  account and role lookups for the demo principal only, recognised by object
+  identity — a session, token, or request body that merely looks like the demo
+  user still takes the normal database path and is rejected.
+- A real session always wins. Logging in over a demo deployment works and
+  replaces the demo principal for that session; logging out returns to it.
+- It is refused outside a demo. `NODE_ENV=production` needs
+  `AUTH_DEMO_ALLOW_PRODUCTION=true` as well, and any incoherent value (a bad
+  UUID, a `AUTH_DEMO_MODE` that is neither `true` nor `false`) fails loudly
+  instead of half-enabling the bypass.
+
 Production Compose mounts `SESSION_SECRET_FILE` and `BETTER_AUTH_SECRET_FILE`;
 `docker/secret-entrypoint.sh` loads them into the
 canonical runtime variables before Node starts. The single-server bootstrap
@@ -263,7 +297,7 @@ falling back to example domains.
 | Variable                     | Supported values                                                                                                                       |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `PUBLIC_DOMAIN`              | Base domain such as `example.com`; no scheme, path, port, or wildcard.                                                                 |
-| `PRIMARY_APP`                | `landing-app` or `site-app`; owns the apex domain.                                                                                     |
+| `PRIMARY_APP`                | Any publicly served app ID; owns the apex domain. Host Nginx single-domain mode additionally requires a frontend app.                  |
 | `DATABASE_ENGINE`            | `postgres` or `mongodb`; independent from ownership but must match auth persistence and provider secrets.                              |
 | `COMPOSE_DATABASE_MODE`      | `bundled-db` or `external-db`.                                                                                                         |
 | `COMPOSE_DOMAIN_MODE`        | `single-domain`, `per-app-domains`, or `external-proxy`.                                                                               |

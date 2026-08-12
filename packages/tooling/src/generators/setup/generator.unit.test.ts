@@ -71,6 +71,50 @@ describe('setup generator', () => {
       assert.deepEqual(config.apps, ['user-app-api']);
       assert.deepEqual(config.capabilities, ['postgres']);
     });
+
+    it('offers exactly the app, capability, and preset IDs the parser accepts', () => {
+      // schema.json is what `nx g setup --help` and every editor completion read; schema.ts is what
+      // actually validates. Transcribing the unions into both means a new capability is offered by
+      // one and rejected by the other, and nothing fails until a user hits it. This asserts the two
+      // agree so the transcription is at least checked, until the JSON can be generated outright.
+      const schema = require('./schema.json');
+      const {
+        appIds,
+        capabilityIds,
+        ciModeIds,
+        deploymentTargetIds,
+        frontendApiModeIds,
+        infrastructureOwnershipIds,
+        kubernetesDeliveryIds,
+        mobileTargetIds,
+        presetIds,
+        publicTopologyIds,
+      } = require('../../setup/schema.js');
+
+      const arrayEnum = (property: string): string[] =>
+        schema.properties[property].items.enum as string[];
+      const scalarEnum = (property: string): string[] =>
+        schema.properties[property].enum as string[];
+
+      for (const [actual, expected] of [
+        [scalarEnum('preset'), presetIds],
+        [arrayEnum('apps'), appIds],
+        [arrayEnum('removeApps'), appIds],
+        [arrayEnum('capabilities'), capabilityIds],
+        [arrayEnum('removeCapabilities'), capabilityIds],
+        [scalarEnum('ciMode'), ciModeIds],
+        [scalarEnum('frontendApiMode'), frontendApiModeIds],
+        [arrayEnum('mobileTargets'), mobileTargetIds],
+        [arrayEnum('deploymentTargets'), deploymentTargetIds],
+        [scalarEnum('publicTopology'), publicTopologyIds],
+        [scalarEnum('kubernetesDelivery'), kubernetesDeliveryIds],
+        [scalarEnum('redisOwnership'), infrastructureOwnershipIds],
+        [scalarEnum('natsOwnership'), infrastructureOwnershipIds],
+        [scalarEnum('s3Ownership'), infrastructureOwnershipIds],
+      ] as Array<[string[], readonly string[]]>) {
+        assert.deepEqual([...actual].sort(), [...expected].sort());
+      }
+    });
   });
 
   // -----------------------------------------------------------------------

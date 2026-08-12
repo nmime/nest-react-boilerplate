@@ -132,6 +132,20 @@ Outputs the resolved config, operations, and summary as JSON for scripting.
 
 Unknown top-level keys are rejected with a clear error. Every field is validated against an explicit enum.
 
+### Product identity is not in this schema
+
+`nrb.config.json` records _what the workspace contains_ — apps, capabilities,
+deployment shape. It does not yet record _whose product it is_: the name,
+owner, registry namespace, database name, and domain live only as literals
+across the tree, and `nrb init` rewrites them without recording what it was
+given.
+
+The practical consequence is that the rename cannot be replayed. After an
+upstream merge reintroduces boilerplate literals, you must remember the exact
+arguments you used the first time. Keep them in a checked-in script until
+identity becomes a declared field. See
+[Product Identity](../product-identity.md).
+
 ### Example config
 
 ```json
@@ -218,6 +232,16 @@ deployable app IDs and provider, disable every unselected chart app and edge
 site, and disable the migrator for provider-free selections. Product Compose
 and Helm commands fail closed rather than choosing all reference apps.
 
+`deployment.publicDomain` and `deployment.primaryApp` (`--public-domain`,
+`--primary-app <id>|none`, or the interactive prompts) own every public
+hostname. The app named by `primaryApp` is served on the domain itself and every
+other deployable app on `<app-id>.<domain>`; `none` keeps every app on a
+subdomain. The generated `.helm/values-selection.yaml` carries the resulting
+`ingress.hosts` table and clears `ingress.tls`, so the chart issues one
+certificate — `ingress.tlsSecretName` — covering exactly those hosts. The same
+pair drives Compose and single-server through `PUBLIC_DOMAIN` and `PRIMARY_APP`.
+No deploy path hardcodes which app owns the apex.
+
 The resolved `.nrb/workspace.json` groups apps by platform. `.nrb/capabilities.json` records project, service, environment, generated-file, module, and transport-import ownership. `.nrb/closure.json` records the selected roots, transitive Nx projects, available targets, exact `productExternalPackages`, separate `toolingExternalPackages`, Compose services, `releaseImages`, provider, and graph/config digests. Lint, typecheck, and test-like targets list every eligible transitive closure project, not only application roots. Provider-free selections contain only their app images; durable PostgreSQL or MongoDB selections also contain `migrator`. MongoDB services include initialization and `mongodb-migrate`. Release/Bake planning can only reduce this set, including for force-full builds. Its sibling package and pnpm workspace manifests install product packages as dependencies and source-tooling support as devDependencies. A provider swap invalidates an existing selected lock rather than retaining the opposite provider. `pnpm nrb closure install` deletes prior workspace dependency links, installs a clean selected tree under `.nrb/closure/node_modules`, and links only selected project roots; `pnpm run tooling:install` explicitly restores the full maintainer tree. `.nrb/capabilities.env` activates Compose/bootstrap flags, including the selected durable provider when the selection needs one, and every backend app imports only its generated capability module. `pnpm run dev:fullstack` consumes explicit serve projects from the closure. `pnpm run docker:selected` validates the environment's exact apps, capabilities, profiles, and rendered services against the fresh closure before launch. It accepts a provider-free graph for selections such as a standalone landing app and rejects stale app/profile leakage, conflicting providers, or missing migration/preparation services. Doctor validates both the selected closure and exact Compose dependency graph when Docker is available. Before setup these commands fail with an instruction to select apps; they never fall back to a hidden profile.
 
 ## Recovery
@@ -301,6 +325,7 @@ helm upgrade --install nrb ./.helm \
 
 ## Next steps
 
+- [Product Identity](../product-identity.md) — replace the boilerplate name, owner, domain, and database names.
 - [Presets and Technologies](presets-and-technologies.md) — full preset matrix and support table.
 - [CLI Reference](cli-reference.md) — every command with flags and examples.
 - [Troubleshooting](troubleshooting.md) — detailed recovery procedures.

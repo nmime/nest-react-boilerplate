@@ -340,6 +340,23 @@ test('frontend runtime flags are injected as env on SPA deployments only', { ski
   assert.doesNotMatch(authApi, /name: TELEGRAM_AUTH_ENABLED/, 'backend deployments must not get frontend runtime env');
 });
 
+test('demo mode is off in the chart defaults and reachable through values', { skip: !HELM }, () => {
+  const off = render('nrbtest');
+  assert.match(off, /AUTH_DEMO_MODE: "false"/u, 'the chart must default demo mode off, explicitly');
+
+  const on = render('nrbtest', [
+    '--set-string',
+    'config.authDemoMode=true',
+    '--set-string',
+    'config.authDemoAllowProduction=true',
+    '--set-string',
+    'config.authDemoRoles=user\\,admin',
+  ]);
+  assert.match(on, /AUTH_DEMO_MODE: "true"/u, 'config.authDemoMode must reach the backend ConfigMap');
+  assert.match(on, /AUTH_DEMO_ALLOW_PRODUCTION: "true"/u, 'the production acknowledgement must reach the ConfigMap');
+  assert.match(on, /AUTH_DEMO_ROLES: "user,admin"/u, 'the demo role list must reach the ConfigMap');
+});
+
 test('frontend runtime flags are absent when unconfigured', { skip: !HELM }, () => {
   const out = render('nrbtest');
   assert.doesNotMatch(out, /name: TELEGRAM_AUTH_ENABLED/, 'no flags must render when frontendRuntimeConfig is empty');
@@ -388,6 +405,57 @@ test('landing runtime destinations become validated same-origin paths for a shar
       ]),
     /must use a non-root ingress path/u,
   );
+});
+
+test('one route table serves both edges, so a new namespace is a single row', { skip: !HELM }, () => {
+  // The route table used to be transcribed into the chart and into docker/nginx-fullstack.conf,
+  // so a product adding an API namespace edited both and the two edges could route differently.
+  const routes = JSON.parse(readFileSync(resolve(chart, 'frontend-routes.json'), 'utf8'));
+  const composeConf = readFileSync(resolve(root, 'docker/nginx-fullstack.conf'), 'utf8');
+  const nginxConfigMap = docFor(render('nrbtest'), 'ConfigMap', 'nrbtest-frontend-nginx');
+  assert.ok(nginxConfigMap, 'expected a frontend-nginx ConfigMap in the production render');
+
+  for (const route of routes.spaRoutes) {
+    assert.ok(nginxConfigMap.includes(`location = ${route.path} {`), `chart is missing SPA route ${route.path}`);
+    assert.ok(composeConf.includes(`location = ${route.path} {`), `Compose edge is missing SPA route ${route.path}`);
+  }
+  for (const location of routes.apiLocations) {
+    assert.ok(nginxConfigMap.includes(`location ^~ ${location.prefix} {`), `chart is missing ${location.prefix}`);
+    assert.ok(composeConf.includes(`location ^~ ${location.prefix} {`), `Compose is missing ${location.prefix}`);
+  }
+
+  // A registered namespace reaches the chart without touching a template.
+  const productRoutes = {
+    spaRoutes: [{ path: '/marketplace' }],
+    apiLocations: [{ prefix: '/marketplace/', app: 'user-app-api', spaFallback: true }],
+  };
+  const overridden = render('nrbtest', ['--set-json', `frontendNginx.routes=${JSON.stringify(productRoutes)}`]);
+  const overriddenConfigMap = docFor(overridden, 'ConfigMap', 'nrbtest-frontend-nginx');
+  assert.match(overriddenConfigMap, /location = \/marketplace \{/u);
+  assert.match(overriddenConfigMap, /location \^~ \/marketplace\/ \{[\s\S]*?nrbtest-user-app-api:80/u);
+});
+
+test('a generated host table gets TLS for every enabled host without restating them', { skip: !HELM }, () => {
+  // `nrb setup` regenerates ingress.hosts for the product's own domain. A TLS list keyed to the
+  // chart's example.com hosts would silently intersect to nothing and ship a certificate-free
+  // Ingress, so the chart derives the certificate from the hosts it is actually serving.
+  const hosts = [
+    { host: 'dehqonhub.uz', paths: ['/'], service: 'site-app' },
+    { host: 'user-app.dehqonhub.uz', paths: ['/'], service: 'user-app' },
+    { host: 'telegram-bot-api.dehqonhub.uz', paths: ['/'], service: 'telegram-bot-api', enabled: false },
+  ];
+  const out = render('nrbtest', [
+    '--set-json',
+    `ingress.hosts=${JSON.stringify(hosts)}`,
+    '--set-json',
+    'ingress.tls=[]',
+  ]);
+  const ingress = docFor(out, 'Ingress', 'nrbtest');
+
+  assert.match(ingress, /secretName: nest-react-boilerplate-tls/u);
+  assert.match(ingress, /- "dehqonhub\.uz"/u);
+  assert.match(ingress, /- "user-app\.dehqonhub\.uz"/u);
+  assert.doesNotMatch(ingress, /telegram-bot-api\.dehqonhub\.uz/u);
 });
 
 test('backup CronJob fails closed when enabled without a durable destination', { skip: !HELM }, () => {

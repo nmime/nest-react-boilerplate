@@ -74,6 +74,19 @@ export type KubernetesDelivery = (typeof kubernetesDeliveryIds)[number];
 export const infrastructureOwnershipIds = ['bundled', 'external'] as const;
 export type InfrastructureOwnership = (typeof infrastructureOwnershipIds)[number];
 
+const dnsLabelPattern = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/u;
+
+/**
+ * The public base name a deployment is reachable under. A single label (`localhost`) is rejected
+ * because every derived hostname would be a bare label, and protocols, ports, paths and wildcards
+ * are rejected because they cannot appear in an ingress host or a Caddy site address.
+ */
+export function isPublicDomain(value: string): boolean {
+  if (value.length === 0 || value.length > 253) return false;
+  const labels = value.split('.');
+  return labels.length >= 2 && labels.every((label) => label.length <= 63 && dnsLabelPattern.test(label));
+}
+
 export const defaultProductConfig = {
   ciMode: 'product',
   frontendApiMode: 'same-origin',
@@ -82,6 +95,13 @@ export const defaultProductConfig = {
 
 export const defaultDeploymentConfig = {
   targets: ['docker'],
+  publicDomain: 'example.com',
+  /**
+   * The app that owns the apex. Nothing about the apex is special to the landing page — a product
+   * whose marketing site is the front door sets this to `site-app` and every other app moves to a
+   * subdomain without touching a template, a chart, or a Compose file.
+   */
+  primaryApp: 'landing-app',
   publicTopology: 'single-domain',
   kubernetesDelivery: 'direct',
   infrastructure: {
@@ -118,6 +138,14 @@ export const NrbConfigSchema = z
     preset: z.enum(presetIds).optional(),
     apps: z.array(z.enum(appIds)).default([]),
     capabilities: z.array(z.enum(capabilityIds)).default([]),
+    /**
+     * Thresholds for `nrb git:conventions`. Held open rather than mirrored: the gate's own
+     * `resolveGitConventionsConfig` already validates this object key by key and reports which
+     * threshold is wrong, so restating the shape here would only give the two definitions a chance
+     * to drift. Setup neither reads nor writes it — it is passed through so a product can retune
+     * the gate without the strict schema above rejecting its own config file.
+     */
+    gitConventions: z.record(z.string(), z.unknown()).optional(),
     product: z
       .object({
         ciMode: z.enum(ciModeIds).default(defaultProductConfig.ciMode),
@@ -132,6 +160,13 @@ export const NrbConfigSchema = z
           .array(z.enum(deploymentTargetIds))
           .min(1)
           .default([...defaultDeploymentConfig.targets]),
+        publicDomain: z
+          .string()
+          .refine(isPublicDomain, {
+            message: 'publicDomain must be a DNS base name without a protocol, port, path, or wildcard',
+          })
+          .default(defaultDeploymentConfig.publicDomain),
+        primaryApp: z.enum(frontendAppIds).nullable().default(defaultDeploymentConfig.primaryApp),
         publicTopology: z.enum(publicTopologyIds).default(defaultDeploymentConfig.publicTopology),
         kubernetesDelivery: z.enum(kubernetesDeliveryIds).default(defaultDeploymentConfig.kubernetesDelivery),
         infrastructure: z

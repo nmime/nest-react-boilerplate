@@ -10,8 +10,12 @@ import {
   buildComposeInvocation as buildComposeInvocationBase,
   composeExecutionStatus,
   derivePublicDomains,
+  optionalIntegrations,
+  optionalProfileIds,
   parseEnvFile,
   productionComposeDiagnostics,
+  publicComposeApps,
+  selectOptionalIntegrationOverlays,
   validateBaseDomain,
   validateExternalMongoUri,
 } from './compose-production.mjs';
@@ -146,6 +150,61 @@ test('frontend runtime config emits only same-origin, HTTPS, or loopback HTTP la
   assert.doesNotMatch(invalid, /userAppUrl|adminAppUrl/u);
 });
 
+// Without these keys the one-image-many-brands claim is only half true: the build-time
+// VITE_PRODUCT_* values are baked into the image, so two deployments of the same image
+// cannot present different identities.
+// The emitter can only publish what the deployment hands it, so the shared frontend service
+// environment has to carry the brand for every SPA rather than one chosen app.
+test('compose passes the product brand to every frontend service', () => {
+  const compose = readFileSync(resolve(root, 'docker/docker-compose.prod.yml'), 'utf8');
+  const sharedEnv = compose.slice(
+    compose.indexOf('environment: &frontend-runtime-env'),
+    compose.indexOf('x-notification-scheduler-service'),
+  );
+
+  for (const variable of ['PRODUCT_NAME', 'PRODUCT_ICON_HREF', 'PRODUCT_ICON_TYPE', 'PRODUCT_THEME_COLOR']) {
+    assert.match(sharedEnv, new RegExp(`${variable}: \\$\\{${variable}`, 'u'), `${variable} must reach every SPA`);
+  }
+});
+
+test('frontend runtime config emits a per-deployment product brand and rejects unusable values', (context) => {
+  const temporaryDirectory = mkdtempSync(join(tmpdir(), 'nrb-frontend-runtime-brand-'));
+  context.after(() => rmSync(temporaryDirectory, { force: true, recursive: true }));
+  const target = join(temporaryDirectory, 'runtime-config.js');
+  const script = resolve(root, 'docker/frontend-runtime-config.sh');
+  const render = (environment) => {
+    writeFileSync(target, '');
+    const result = spawnSync('sh', [script], {
+      cwd: root,
+      encoding: 'utf8',
+      env: { PATH: process.env.PATH, FRONTEND_RUNTIME_CONFIG_PATH: target, ...environment },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return readFileSync(target, 'utf8');
+  };
+
+  const branded = render({
+    PRODUCT_ICON_HREF: '/brand/logo.svg',
+    PRODUCT_ICON_TYPE: 'image/svg+xml',
+    PRODUCT_NAME: 'Акме Клауд',
+    PRODUCT_THEME_COLOR: '#0b7138',
+  });
+  assert.match(branded, /"productName": "Акме Клауд"/u);
+  assert.match(branded, /"productIconHref": "\/brand\/logo\.svg"/u);
+  assert.match(branded, /"productIconType": "image\/svg\+xml"/u);
+  assert.match(branded, /"productThemeColor": "#0b7138"/u);
+
+  // A quote or backslash would close the JSON string and turn a deployment value into
+  // executable source, so the emitter drops the key instead of escaping it.
+  const unsafe = render({
+    PRODUCT_ICON_HREF: 'javascript:alert(1)',
+    PRODUCT_ICON_TYPE: 'text/html',
+    PRODUCT_NAME: 'Acme", "adminAppUrl": "https://evil.example',
+    PRODUCT_THEME_COLOR: 'red; background: url(//evil.example)',
+  });
+  assert.doesNotMatch(unsafe, /productName|productIconHref|productIconType|productThemeColor/u);
+});
+
 test(
   'secret entrypoint ignores Kubernetes service-account mounts but rejects declared Docker secrets',
   { skip: !dockerAvailable },
@@ -221,7 +280,32 @@ test('rejects schemes, ports, paths, wildcards, and invalid apex owners', () => 
   for (const invalid of ['https://example.com', 'example.com:443', 'example.com/path', '*.example.com', 'localhost']) {
     assert.throws(() => validateBaseDomain(invalid), /PUBLIC_DOMAIN/u);
   }
-  assert.throws(() => derivePublicDomains('example.com', 'user-app'), /PRIMARY_APP/u);
+  assert.throws(() => derivePublicDomains('example.com', 'notification-scheduler'), /PRIMARY_APP/u);
+});
+
+test('lets any publicly served app own the apex, including the user SPA', () => {
+  // Which app is the front door is a product decision. Restricting it to the two marketing shells
+  // forced every other product to move its real front door onto a subdomain of its own domain.
+  const domains = derivePublicDomains('dehqonhub.uz', 'user-app');
+  assert.equal(domains.USER_APP_DOMAIN, 'dehqonhub.uz');
+  assert.equal(domains.SITE_APP_DOMAIN, 'site-app.dehqonhub.uz');
+  assert.equal(domains.AUTH_APP_API_DOMAIN, 'auth-app-api.dehqonhub.uz');
+});
+
+test('the Compose public app table is exactly the catalog of deployable apps', async () => {
+  const { createJiti } = await import('jiti');
+  const jiti = createJiti(import.meta.url);
+  const { appCatalog } = await jiti.import('../packages/tooling/src/setup/catalog.ts');
+  const expected = Object.values(appCatalog)
+    .filter((app) => app.deployable && app.releaseImage?.composePort)
+    .map((app) => [
+      app.id,
+      `${app.id.replaceAll('-', '_').toUpperCase()}_DOMAIN`,
+      `${app.id}:${app.releaseImage.composePort}`,
+    ]);
+  const byAppId = (rows) => [...rows].sort(([left], [right]) => left.localeCompare(right));
+
+  assert.deepEqual(byAppId(publicComposeApps), byAppId(expected));
 });
 
 test('builds the per-app automatic HTTPS topology from the production example', () => {
@@ -731,5 +815,61 @@ test('rejects an unselected apex app when Compose owns the edge', () => {
         { readProductionClosure: () => closure(null, ['site-app'], []) },
       ),
     /PRIMARY_APP must be selected/u,
+  );
+});
+
+test('optional integrations are registry rows, not branches in this script', () => {
+  // The shipped registry must still describe exactly the integrations the script used to hardcode.
+  const byId = Object.fromEntries(optionalIntegrations.map((integration) => [integration.id, integration]));
+  assert.deepEqual(Object.keys(byId).sort(), [
+    'discord',
+    'notification-consumer',
+    'notification-scheduler',
+    'redis',
+    'telegram',
+  ]);
+  assert.equal(byId.telegram.overlayFile, 'docker/docker-compose.prod.telegram.yml');
+  assert.equal(byId.telegram.app, 'telegram-bot-api');
+  assert.equal(byId.redis.service, 'redis');
+  assert.equal(byId['notification-consumer'].overlayFile, undefined);
+
+  assert.deepEqual(optionalProfileIds(optionalIntegrations).sort(), [
+    'discord',
+    'notification-consumer',
+    'notification-scheduler',
+    'telegram',
+  ]);
+});
+
+test('a product registers an overlay by adding a registry row keyed on its own env', () => {
+  // The extension a downstream actually needs: an external provider whose only compose surface is
+  // a secret attachment. It must not require a new branch in the overlay chain.
+  const registry = [
+    { id: 'redis', service: 'redis', overlayFile: 'docker/docker-compose.prod.redis.yml' },
+    {
+      id: 'payments',
+      requiredEnv: ['PAYMENTS_MERCHANT_ID', 'PAYMENTS_SECRET_KEY_FILE'],
+      overlayFile: 'docker/docker-compose.prod.payments.yml',
+    },
+  ];
+  const context = { services: [], profiles: [], environment: { PAYMENTS_MERCHANT_ID: 'm-1' } };
+
+  assert.deepEqual(selectOptionalIntegrationOverlays(registry, context), []);
+  assert.deepEqual(
+    selectOptionalIntegrationOverlays(registry, {
+      ...context,
+      environment: { PAYMENTS_MERCHANT_ID: 'm-1', PAYMENTS_SECRET_KEY_FILE: './secrets/payments.txt' },
+    }),
+    ['docker/docker-compose.prod.payments.yml'],
+  );
+  assert.deepEqual(selectOptionalIntegrationOverlays(registry, { ...context, services: ['redis'] }), [
+    'docker/docker-compose.prod.redis.yml',
+  ]);
+});
+
+test('the unsupported-profile message enumerates the registry rather than a literal list', () => {
+  assert.throws(
+    () => buildComposeInvocation(['config', '--env-file=.env.production.example', '--profile=payments'], {}, {}),
+    /Unsupported production profile "payments"\. Supported profiles: discord, notification-consumer, notification-scheduler, telegram\./u,
   );
 });

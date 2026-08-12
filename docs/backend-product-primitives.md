@@ -91,33 +91,36 @@ Amounts are a whole number of minor units plus an ISO 4217 code. A `number` of
 major units cannot represent money — `0.1 + 0.2` is not `0.3`, and the error
 compounds through every discount and split.
 
-```ts
-import { addMoney, allocateMoney, money, moneyRate, multiplyMoney, parseMoney } from '@app/common-money';
+The operations hang off one `Money` namespace, and `Money` is also the type of
+the value they carry, so a single import gives you both.
 
-const price = parseMoney('19.99', 'USD');
-const tax = multiplyMoney(price, moneyRate('0.075')); // exact 75/1000, not a float
-const shares = allocateMoney(addMoney(price, tax), [1, 1, 1]);
+```ts
+import { Money } from '@app/common-money';
+
+const price = Money.parse('19.99', 'USD');
+const tax = Money.multiply(price, Money.rate('0.075')); // exact 75/1000, not a float
+const shares = Money.allocate(Money.add(price, tax), [1, 1, 1]);
 ```
 
 Four properties are worth knowing before you use it:
 
-- **Currency scale is per currency.** `formatMoneyAmount` and `parseMoney` use
+- **Currency scale is per currency.** `Money.formatAmount` and `Money.parse` use
   the currency's own exponent — two places for USD, none for JPY, three for BHD.
   Text with more places than the currency holds is rejected rather than
   truncated, because a silently dropped digit is a price that is wrong by an
   amount nobody can trace.
-- **Fractional rates must be exact.** `multiplyMoney` accepts a whole number
+- **Fractional rates must be exact.** `Money.multiply` accepts a whole number
   directly but refuses a float; build anything fractional with
-  `moneyRate('0.075')`, which is a ratio, not the nearest double.
+  `Money.rate('0.075')`, which is a ratio, not the nearest double.
 - **Rounding is named.** The default is half-even, because half-up biases every
   tie in the same direction and a schedule of many ties drifts upward.
   `'half-up'` and `'trunc'` are available per call.
-- **Allocation preserves the total.** `allocateMoney` hands leftover minor units
+- **Allocation preserves the total.** `Money.allocate` hands leftover minor units
   to the earliest weights, so the parts always sum back to the original.
   Rounding each share independently turns three ways of $10.00 into $9.99.
 
-`registerCurrency` declares a unit the ISO table does not describe — a crypto
-unit, a loyalty point, an internal ledger unit. Any other well-formed
+`Money.registerCurrency` declares a unit the ISO table does not describe — a
+crypto unit, a loyalty point, an internal ledger unit. Any other well-formed
 three-letter code gets the ISO default of two decimal places.
 
 ## Tenant-scoped queries

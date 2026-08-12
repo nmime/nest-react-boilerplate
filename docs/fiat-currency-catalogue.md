@@ -78,7 +78,7 @@ the service in an admin use case and add the permission there.
 ## Converting
 
 ```ts
-const gbp = await fiatCurrencyService.convert(money(10_000, 'EUR'), 'GBP');
+const gbp = await fiatCurrencyService.convert(Money.of(10_000, 'EUR'), 'GBP');
 ```
 
 `convert` refuses rather than guessing:

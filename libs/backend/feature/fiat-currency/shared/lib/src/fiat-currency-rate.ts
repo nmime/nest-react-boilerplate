@@ -1,13 +1,4 @@
-import {
-  type Money,
-  type MoneyRatio,
-  type MoneyRounding,
-  MoneyCurrencyMismatchError,
-  currencyMinorUnitExponent,
-  money,
-  moneyRate,
-  multiplyMoney,
-} from '@app/common-money';
+import { type MoneyRatio, type MoneyRounding, Money, MoneyCurrencyMismatchError } from '@app/common-money';
 import type { FiatCurrency, FiatRateQuote } from './fiat-currency.types';
 
 /** The pivot. One USD is one USD, so this quote is a constant rather than a stored row. */
@@ -19,7 +10,7 @@ const decimalTextPattern = /^-?\d+(?:\.\d+)?$/u;
  * Reads stored rate text as an exact ratio.
  *
  * Trailing zeros are trimmed first. A `numeric(20,10)` column hands back `1.0800000000`, which
- * {@link moneyRate} would read as 10800000000/10000000000 — arithmetically right, but the ten
+ * {@link Money.rate} would read as 10800000000/10000000000 — arithmetically right, but the ten
  * spare digits multiply into the cross-rate below and overflow the exact-integer range for a pair
  * that is otherwise unremarkable. `1.08` and `1.0800000000` are the same number; only one of them
  * still leaves room to compute.
@@ -40,7 +31,7 @@ export function fiatRateRatio(usdPerUnit: string): MoneyRatio {
   }
 
   const trimmed = fraction.slice(0, significant);
-  const ratio = moneyRate(trimmed === '' ? whole : `${whole}.${trimmed}`);
+  const ratio = Money.rate(trimmed === '' ? whole : `${whole}.${trimmed}`);
 
   if (ratio.numerator <= 0) {
     throw new RangeError(`A USD rate must be above zero (received ${JSON.stringify(usdPerUnit)}).`);
@@ -105,15 +96,15 @@ export function convertFiatMoney(
 
   const fromRatio = fiatRateRatio(from.usdPerUnit);
   const toRatio = fiatRateRatio(to.usdPerUnit);
-  const scaleShift = currencyMinorUnitExponent(to.code) - currencyMinorUnitExponent(from.code);
+  const scaleShift = Money.minorUnitExponent(to.code) - Money.minorUnitExponent(from.code);
 
   const numerator = BigInt(fromRatio.numerator) * BigInt(toRatio.denominator) * 10n ** BigInt(Math.max(0, scaleShift));
   const denominator =
     BigInt(fromRatio.denominator) * BigInt(toRatio.numerator) * 10n ** BigInt(Math.max(0, -scaleShift));
   const divisor = greatestCommonDivisor(numerator, denominator);
 
-  return multiplyMoney(
-    money(value.amountMinor, to.code),
+  return Money.multiply(
+    Money.of(value.amountMinor, to.code),
     toExactRatio(numerator / divisor, denominator / divisor, from, to),
     rounding,
   );

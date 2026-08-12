@@ -8,7 +8,7 @@ import {
   type RecordFiatRateParams,
   type UpsertFiatCurrencyParams,
 } from '@app/backend-feature-fiat-currency-shared';
-import { money } from '@app/common-money';
+import { Money } from '@app/common-money';
 import { describe, expect, it, vi } from 'vitest';
 import { FiatCurrencyService } from './fiat-currency.service';
 
@@ -94,7 +94,7 @@ describe('FiatCurrencyService', () => {
 
     // 100.00 EUR at 1.08 USD/EUR is 108 USD, which at 0.0064 USD/JPY is 16875 JPY — and the yen
     // has no minor unit, so that is 16875 minor units, not 1687500.
-    expect(await service.convert(money(10_000, 'EUR'), 'JPY')).toEqual(money(16_875, 'JPY'));
+    expect(await service.convert(Money.of(10_000, 'EUR'), 'JPY')).toEqual(Money.of(16_875, 'JPY'));
   });
 
   it('honours the rounding the caller asks for', async () => {
@@ -102,16 +102,16 @@ describe('FiatCurrencyService', () => {
     persistence.currencies = [currency(), currency({ code: 'GBP', usdPerUnit: '1.27' })];
 
     // 100.00 EUR is 108 USD, which is 85.0393… GBP: the last penny depends on the rounding mode.
-    expect(await service.convert(money(10_000, 'EUR'), 'GBP')).toEqual(money(8_504, 'GBP'));
-    expect(await service.convert(money(10_000, 'EUR'), 'GBP', 'trunc')).toEqual(money(8_503, 'GBP'));
+    expect(await service.convert(Money.of(10_000, 'EUR'), 'GBP')).toEqual(Money.of(8_504, 'GBP'));
+    expect(await service.convert(Money.of(10_000, 'EUR'), 'GBP', 'trunc')).toEqual(Money.of(8_503, 'GBP'));
   });
 
   it('names the currency it could not find rather than converting into a guess', async () => {
     const { persistence, service } = createService();
     persistence.currencies = [currency()];
 
-    await expect(service.convert(money(10_000, 'EUR'), 'JPY')).rejects.toThrow(/JPY/u);
-    await expect(service.convert(money(10_000, 'JPY'), 'EUR')).rejects.toThrow(/JPY/u);
+    await expect(service.convert(Money.of(10_000, 'EUR'), 'JPY')).rejects.toThrow(/JPY/u);
+    await expect(service.convert(Money.of(10_000, 'JPY'), 'EUR')).rejects.toThrow(/JPY/u);
   });
 
   it('reads a currency, or nothing', async () => {

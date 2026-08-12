@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
-import { readFullstackSelection, validateFullstackEnvironment } from './selection';
+import { fullstackStartupPlan, readFullstackSelection, validateFullstackEnvironment } from './selection';
 
 const composeParallelLimit = process.env.COMPOSE_PARALLEL_LIMIT ?? '2';
 export const composeArgs = ['compose', '--parallel', composeParallelLimit, '-f', 'docker/docker-compose.yml'];
@@ -201,19 +201,26 @@ export function run(command: string, args: string[]): Promise<void> {
 
 export async function upStack(): Promise<void> {
   const startStack = async (): Promise<void> => {
-    if (databaseProvider === 'mongodb') {
-      await run('docker', [...composeArgs, 'up', '--no-build', '-d', 'mongodb']);
-      await run('docker', [...composeArgs, 'run', '--rm', '--no-deps', 'mongodb-init']);
-      await run('docker', [...composeArgs, 'run', '--rm', '--no-deps', 'mongodb-migrate']);
-      const remainingServices = stackServices.filter(
-        (service) => !['mongodb', 'mongodb-init', 'mongodb-migrate'].includes(service),
-      );
-      if (remainingServices.length > 0) {
-        await run('docker', [...composeArgs, 'up', '--no-build', '-d', ...remainingServices]);
-      }
+    if (fullstackSelection === undefined) {
+      await run('docker', stackUpArgs);
       return;
     }
-    await run('docker', stackUpArgs);
+
+    for (const step of fullstackStartupPlan(fullstackSelection)) {
+      if (step.kind === 'run') {
+        // `--no-deps` because the plan has already started and awaited everything this one-shot
+        // depends on; without it Compose would run the preceding one-shots a second time.
+        for (const service of step.services) {
+          // eslint-disable-next-line no-await-in-loop -- the point of the plan is that these are sequential.
+          await run('docker', [...composeArgs, 'run', '--rm', '--no-deps', service]);
+        }
+        continue;
+      }
+
+      const waitArgs = step.waitForHealthy === true ? ['--wait'] : [];
+      // eslint-disable-next-line no-await-in-loop -- each step must complete before the next begins.
+      await run('docker', [...composeArgs, 'up', '--no-build', '-d', ...waitArgs, ...step.services]);
+    }
   };
 
   try {

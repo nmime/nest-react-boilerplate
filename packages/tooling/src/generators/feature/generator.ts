@@ -30,6 +30,24 @@ const productionMigrationImportName = 'createPostgresMikroOrmOptions';
 const productionMigrationImportPath = 'libs/backend/postgres/main/shared/lib/src/data-source-options.ts';
 const productionMigrationListPattern = /migrationsList:\s*\[([\s\S]*?)\](?=\s*,)/gu;
 
+/**
+ * Coverage exclusions every scaffolded library ships with.
+ *
+ * `fullCoverage` demands 100% on every metric, so a scaffold that measures files no generated
+ * spec can meaningfully execute fails its own gate the first time a consumer runs `--coverage`.
+ * That taught the first lesson of the repo as "edit the generated config", and every consumer
+ * then invented its own exclusion vocabulary. These are the ones the boilerplate's own feature
+ * libraries already use: Nest module declarations and DTO shape declarations carry no behaviour
+ * a spec can assert. Everything else the generator emits gets a generated spec instead.
+ */
+const scaffoldCoverageExclusions = ['src/**/*.module.ts', 'src/**/*.dto.ts'];
+
+/**
+ * Libraries whose `index.ts` files are pure re-export barrels also exclude them. The shared
+ * library is the exception: its `index.ts` IS the DTO and permission contract, and it has a spec.
+ */
+const barrelCoverageExclusions = ['src/**/index.ts', ...scaffoldCoverageExclusions];
+
 // ---------------------------------------------------------------------------
 
 function backendFeatureMainAlias(names: ReturnType<typeof generateNames>): string {
@@ -66,6 +84,185 @@ function permissionWriteName(names: ReturnType<typeof generateNames>): string {
 
 function migrationsName(names: ReturnType<typeof generateNames>): string {
   return `${names.camel}Migrations`;
+}
+
+/**
+ * The service spec covers `list`, `create`, and both repository-failure branches, because those
+ * are every branch the generated service has. A scaffold whose specs stop at the happy path
+ * cannot pass the coverage gate it also scaffolds.
+ */
+function serviceSpecContents(
+  names: ReturnType<typeof generateNames>,
+  database: DatabaseProvider,
+  requirementId: string,
+): string {
+  const entityImport =
+    database === 'postgres'
+      ? `import { ${names.pascal}Entity } from "${backendPostgresMainAlias(names)}";`
+      : `import type { ${names.pascal}Entity } from "${backendMongoMainAlias(names)}";`;
+  const entityValue =
+    database === 'postgres'
+      ? `new ${names.pascal}Entity({ name: "Example" })`
+      : `{ id: "123e4567-e89b-12d3-a456-426614174000", name: "Example", createdAt: new Date() }`;
+  const entityDeclaration =
+    database === 'postgres'
+      ? `const entity = ${entityValue};`
+      : `const entity: ${names.pascal}Entity = ${entityValue};`;
+
+  return `// @requirements ${requirementId}
+import { errAsync, okAsync } from "neverthrow";
+import { describe, expect, it } from "vitest";
+${entityImport}
+import { ${names.pascal}Service } from "./${names.kebab}.service";
+
+${entityDeclaration}
+const failure = { code: "repository_error" as const };
+
+function serviceWith(repository: unknown): ${names.pascal}Service {
+  return new ${names.pascal}Service(repository as never);
+}
+
+describe("${names.pascal}Service", () => {
+  it("persists and maps a ${names.title.toLowerCase()}", async () => {
+    const service = serviceWith({ list: () => okAsync([entity]), create: () => okAsync(entity) });
+    await expect(service.create({ name: "Example" })).resolves.toMatchObject({ name: "Example" });
+  });
+
+  it("lists and maps every stored ${names.title.toLowerCase()}", async () => {
+    const service = serviceWith({ list: () => okAsync([entity]), create: () => okAsync(entity) });
+    await expect(service.list()).resolves.toMatchObject([{ name: "Example" }]);
+  });
+
+  it("raises an internal exception when the repository cannot read", async () => {
+    const service = serviceWith({ list: () => errAsync(failure), create: () => okAsync(entity) });
+    await expect(service.list()).rejects.toThrow();
+  });
+
+  it("raises an internal exception when the repository cannot write", async () => {
+    const service = serviceWith({ list: () => okAsync([entity]), create: () => errAsync(failure) });
+    await expect(service.create({ name: "Example" })).rejects.toThrow();
+  });
+});
+`;
+}
+
+/** The controller is HTTP transport, so its spec asserts the envelope both routes must produce. */
+function controllerSpecContents(names: ReturnType<typeof generateNames>, requirementId: string): string {
+  return `// @requirements ${requirementId}
+import { describe, expect, it } from "vitest";
+import type { ${names.pascal}Dto } from "${backendFeatureSharedAlias(names)}";
+import { ${names.pascal}Controller } from "./${names.kebab}.controller";
+
+const dto: ${names.pascal}Dto = {
+  id: "123e4567-e89b-12d3-a456-426614174000",
+  name: "Example",
+  createdAt: "2024-01-01T00:00:00.000Z",
+};
+
+function controllerWith(service: unknown): ${names.pascal}Controller {
+  return new ${names.pascal}Controller(service as never);
+}
+
+describe("${names.pascal}Controller", () => {
+  it("wraps the listed ${names.title.toLowerCase()} in an ok envelope", async () => {
+    const controller = controllerWith({ list: async () => [dto], create: async () => dto });
+    await expect(controller.list()).resolves.toEqual({ data: [dto] });
+  });
+
+  it("wraps the created ${names.title.toLowerCase()} in an ok envelope", async () => {
+    const controller = controllerWith({ list: async () => [dto], create: async () => dto });
+    await expect(controller.create({ name: "Example" })).resolves.toEqual({ data: dto });
+  });
+});
+`;
+}
+
+/** The entity carries a constructor and an `onCreate` hook, both of which the gate measures. */
+function postgresEntitySpecContents(names: ReturnType<typeof generateNames>, requirementId: string): string {
+  const tableName = names.kebab.replaceAll('-', '_');
+  return `// @requirements ${requirementId}
+import { describe, expect, it } from "vitest";
+import { ${names.pascal}Entity, ${names.pascal}EntitySchema } from "./${names.kebab}.entity";
+
+describe("${names.pascal}Entity", () => {
+  it("assigns an identifier and creation timestamp on construction", () => {
+    const entity = new ${names.pascal}Entity({ name: "Example" });
+
+    expect(entity.name).toBe("Example");
+    expect(entity.id).toMatch(/^[0-9a-f-]{36}$/u);
+    expect(entity.createdAt).toBeInstanceOf(Date);
+  });
+
+  it("leaves the name unset when constructed without input", () => {
+    expect(new ${names.pascal}Entity().name).toBeUndefined();
+  });
+
+  it("maps to the ${tableName} table and stamps createdAt on insert", () => {
+    expect(${names.pascal}EntitySchema.meta.tableName).toBe("${tableName}");
+    expect(${names.pascal}EntitySchema.meta.properties.createdAt?.onCreate?.({} as never, {} as never)).toBeInstanceOf(
+      Date,
+    );
+  });
+});
+`;
+}
+
+/** Both repository methods have a success and a failure path; a fake EntityManager drives all four. */
+function postgresRepositorySpecContents(names: ReturnType<typeof generateNames>, requirementId: string): string {
+  return `// @requirements ${requirementId}
+import { describe, expect, it } from "vitest";
+import { ${names.pascal}Entity } from "../entities";
+import { ${names.pascal}Repository } from "./${names.kebab}.repository";
+
+function repositoryWith(entityManager: unknown): ${names.pascal}Repository {
+  return new ${names.pascal}Repository(entityManager as never);
+}
+
+describe("${names.pascal}Repository", () => {
+  it("lists newest first", async () => {
+    const entity = new ${names.pascal}Entity({ name: "Example" });
+    const repository = repositoryWith({ find: async () => [entity] });
+
+    const result = await repository.list();
+
+    expect(result._unsafeUnwrap()).toEqual([entity]);
+  });
+
+  it("reports a repository error when the read fails", async () => {
+    const repository = repositoryWith({
+      find: async () => {
+        throw new Error("unavailable");
+      },
+    });
+
+    expect((await repository.list())._unsafeUnwrapErr()).toEqual({ code: "repository_error" });
+  });
+
+  it("persists and flushes a new ${names.title.toLowerCase()}", async () => {
+    const persisted: unknown[] = [];
+    const repository = repositoryWith({
+      persist: (entity: unknown) => persisted.push(entity),
+      flush: async () => undefined,
+    });
+
+    const result = await repository.create("Example");
+
+    expect(result._unsafeUnwrap().name).toBe("Example");
+    expect(persisted).toHaveLength(1);
+  });
+
+  it("reports a repository error when the flush fails", async () => {
+    const repository = repositoryWith({
+      persist: () => undefined,
+      flush: async () => {
+        throw new Error("unavailable");
+      },
+    });
+
+    expect((await repository.create("Example"))._unsafeUnwrapErr()).toEqual({ code: "repository_error" });
+  });
+});
+`;
 }
 
 function libDepth(dir: string): number {
@@ -224,7 +421,7 @@ pnpm exec nx run ${projectName}:test
   ];
 }
 
-function tsconfig(libDir: string): TemplateFile[] {
+function tsconfig(libDir: string, coverageExclusions: string[] = barrelCoverageExclusions): TemplateFile[] {
   const d = dots(libDir);
 
   // tsconfig.json — extends base, references lib + spec
@@ -304,7 +501,7 @@ export default defineConfig({
     coverage: fullCoverage(
       "coverage/${libDir}",
       ["src/**/*.ts"],
-      [],
+      ${JSON.stringify(coverageExclusions)},
     ),
   },
 });
@@ -730,7 +927,7 @@ describe("${names.pascal}Dto", () => {
       'type:feature-shared',
       `scope:${names.kebab}`,
     ]),
-    ...tsconfig(`${base}/shared/lib`),
+    ...tsconfig(`${base}/shared/lib`, scaffoldCoverageExclusions),
     ...projectGuides(
       `${base}/shared/lib`,
       sharedAlias,
@@ -760,10 +957,11 @@ describe("${names.pascal}Dto", () => {
     },
     {
       path: `${base}/main/lib/src/${names.kebab}.service.spec.ts`,
-      contents:
-        database === 'postgres'
-          ? `// @requirements ${requirementId}\nimport { okAsync } from "neverthrow";\nimport { describe, expect, it } from "vitest";\nimport { ${names.pascal}Entity } from "${backendPostgresMainAlias(names)}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("persists and maps a ${names.title.toLowerCase()}", async () => {\n    const entity = new ${names.pascal}Entity({ name: "Example" });\n    const repository = { list: () => okAsync([entity]), create: () => okAsync(entity) };\n    const service = new ${names.pascal}Service(repository as never);\n    await expect(service.create({ name: "Example" })).resolves.toMatchObject({ name: "Example" });\n  });\n});\n`
-          : `// @requirements ${requirementId}\nimport { okAsync } from "neverthrow";\nimport { describe, expect, it } from "vitest";\nimport type { ${names.pascal}Entity } from "${backendMongoMainAlias(names)}";\nimport { ${names.pascal}Service } from "./${names.kebab}.service";\n\ndescribe("${names.pascal}Service", () => {\n  it("persists and maps a ${names.title.toLowerCase()}", async () => {\n    const entity: ${names.pascal}Entity = { id: "123e4567-e89b-12d3-a456-426614174000", name: "Example", createdAt: new Date() };\n    const repository = { list: () => okAsync([entity]), create: () => okAsync(entity) };\n    const service = new ${names.pascal}Service(repository as never);\n    await expect(service.create({ name: "Example" })).resolves.toMatchObject({ name: "Example" });\n  });\n});\n`,
+      contents: serviceSpecContents(names, database, requirementId),
+    },
+    {
+      path: `${base}/main/lib/src/${names.kebab}.controller.spec.ts`,
+      contents: controllerSpecContents(names, requirementId),
     },
     projectJson(`${base}/main/lib`, mainAlias, `${base}/main/lib/src`, `dist/${base}/main`, [
       'platform:backend',
@@ -808,6 +1006,14 @@ describe("${names.pascal}Dto", () => {
           {
             path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/repositories/index.ts`,
             contents: `export * from "./${names.kebab}.repository";\n`,
+          },
+          {
+            path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/entities/${names.kebab}.entity.spec.ts`,
+            contents: postgresEntitySpecContents(names, requirementId),
+          },
+          {
+            path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/repositories/${names.kebab}.repository.spec.ts`,
+            contents: postgresRepositorySpecContents(names, requirementId),
           },
           {
             path: `libs/backend/postgres/main/${names.kebab}/lib/src/infrastructure/data-access/migrations/Migration${migrationTimestamp}Create${names.pascal}.ts`,

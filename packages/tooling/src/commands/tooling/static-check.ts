@@ -9,6 +9,7 @@ import {
   supportedLocales,
 } from "@app/common-i18n-runtime";
 import { run } from "../../runtime/process.ts";
+import { declaredPipelineFiles } from "../ci/check-pipelines.ts";
 
 export interface StaticCheckOptions {
   workspaceRoot?: string;
@@ -199,6 +200,15 @@ export const thinLocaleCatalogFileNames = [
   "bots/discord.json",
 ] as const;
 
+/**
+ * Translation quality rules are a property of the locale, not of the tool: which orthography a
+ * language considers residue, which English words betray untranslated prose, and which terms stay
+ * in Latin script on purpose all differ per language. Hardcoding them here would mean a product
+ * adding a locale has to patch the checker; declaring them in `i18n/<locale>/lint.json` means the
+ * locale carries its own rules and a locale that ships no file is simply not prose-linted.
+ */
+export const localeLintRuleFileName = "lint.json";
+
 const thinLocaleCatalogMaxKeys = 60;
 const thinLocaleCatalogMaxNonEmptyLines = 90;
 
@@ -387,7 +397,23 @@ const staleReferenceIgnoredFiles = new Set([
 ]);
 
 const localWorktreePrefix = ".claude/worktrees/";
-const staleReferenceArchivePrefix = "docs/superpowers/";
+
+/**
+ * Documentation archives are exempt from the architecture/version denylist: a retired term is the
+ * point of an archived design note. Which directory holds the archive is an installation choice,
+ * so it is read from the `.prettierignore` entries the repository already keeps for the same
+ * directories rather than compiled in — a product that archives elsewhere re-points one file.
+ */
+function staleReferenceArchivePrefixes(workspaceRoot: string): string[] {
+  const file = join(workspaceRoot, ".prettierignore");
+  if (!existsSync(file)) return [];
+
+  return readFileSync(file, "utf8")
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("docs/") && line.endsWith("/**"))
+    .map((line) => line.slice(0, -2));
+}
 
 const generatedContractImportExtensions = new Set([
   ".cjs",
@@ -438,6 +464,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkDuplicatedLibrarySourceLibPaths(workspaceRoot),
     ...checkFrontendUiOwnership(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
+    ...checkVersionedMigrationAuthzBinding(workspaceRoot),
     ...checkStaleSlashStyleAliasImports(workspaceRoot),
     ...checkForbiddenSocialAuthImports(workspaceRoot),
     ...checkForbiddenSocialAuthDependencies(workspaceRoot),
@@ -512,6 +539,7 @@ export function checkBunPackageManagerParity(workspaceRoot: string): CheckFailur
   if (existsSync(workflowsRoot)) {
     for (const file of walk(workflowsRoot)) executableFiles.add(relativeToWorkspace(workspaceRoot, file));
   }
+  for (const file of declaredPipelineFiles(workspaceRoot)) executableFiles.add(file);
 
   const forbiddenCommand = /\b(?:bunx|bun\s+(?:add|install|pm|remove|update|x))\b/u;
   for (const file of [...executableFiles].sort()) {
@@ -1048,6 +1076,56 @@ function walkWorkspaceMetadata(workspaceRoot: string, current: string): string[]
   });
 }
 
+// A versioned migration is replayed against databases that already ran it, so what it seeds must
+// never change meaning. The composed authz exports widen the moment a product registers
+// `productAuthzExtensions`, which would retroactively rewrite history; the `base*` exports are
+// frozen. Converging reconcilers (Mongo bootstrap) and specs are deliberately exempt.
+const composedAuthzCatalogSymbols = new Map([
+  ["defaultRolePermissions", "baseRolePermissions"],
+  ["permissionCatalog", "basePermissionCatalog"],
+  ["permissionsForRoles", "baseRolePermissions"],
+  ["roleKeys", "baseRoleKeys"],
+]);
+
+const versionedMigrationFile = /(?:^|\/)migrations\/Migration\d+[A-Za-z0-9]*\.ts$/u;
+
+export function checkVersionedMigrationAuthzBinding(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectGeneratedContractImportTargets(workspaceRoot).flatMap((file) => {
+    const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    if (!versionedMigrationFile.test(relativeFile)) return [];
+
+    const text = readFileSync(file, "utf8");
+    const failures: CheckFailure[] = [];
+
+    // Named imports span multiple lines, so match the whole statement and report its first line.
+    const authzImport = /import\s*\{([^}]*)\}\s*from\s*["']@app\/common-authz["']/gu;
+    for (const match of text.matchAll(authzImport)) {
+      const imported = (match[1] ?? "")
+        .split(",")
+        .map((entry) => entry.trim().split(/\s+as\s+/u)[0]?.trim() ?? "")
+        .filter(Boolean);
+      const offenders = imported.filter((name) => composedAuthzCatalogSymbols.has(name)).sort();
+      if (offenders.length === 0) continue;
+
+      const replacements = [
+        ...new Set(offenders.map((name) => composedAuthzCatalogSymbols.get(name) ?? name)),
+      ].sort();
+
+      failures.push({
+        command: "versioned migration authz binding",
+        file: `${relativeFile}:${text.slice(0, match.index).split(/\r?\n/u).length}`,
+        status: 1,
+        stdout: "",
+        stderr: `Versioned migration imports composed authz catalog symbols (${offenders.join(", ")}). Import the frozen base exports instead (${replacements.join(", ")}) so a product registering productAuthzExtensions cannot retroactively change rows this migration already seeded.`,
+      });
+    }
+
+    return failures;
+  });
+}
+
 export function checkGeneratedContractImports(
   workspaceRoot: string,
 ): CheckFailure[] {
@@ -1421,7 +1499,9 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
     }
 
     for (const extraFile of actualFiles.filter(
-      (file) => !expectedFiles.includes(file as (typeof thinLocaleCatalogFileNames)[number]),
+      (file) =>
+        file !== localeLintRuleFileName &&
+        !expectedFiles.includes(file as (typeof thinLocaleCatalogFileNames)[number]),
     )) {
       failures.push(
         thinLocaleFailure(`i18n/${locale}/${extraFile}`, "unexpected locale JSON file"),
@@ -1430,9 +1510,12 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
   }
 
   const localeKeys = new Map<string, Set<string>>();
+  const localeValues = new Map<string, Map<string, string>>();
 
   for (const locale of supportedLocales) {
     const mergedKeys = new Set<string>();
+    const mergedValues = new Map<string, string>();
+    localeValues.set(locale, mergedValues);
     const localeDirectory = join(i18nRoot, locale);
     if (!existsSync(localeDirectory)) continue;
 
@@ -1510,6 +1593,7 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
           );
         }
         mergedKeys.add(key);
+        if (typeof value === "string") mergedValues.set(key, value);
       }
     }
 
@@ -1542,9 +1626,210 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
         ),
       );
     }
+
+    failures.push(...placeholderParityFailures(locale, localeValues));
+    failures.push(...localeProseFailures(i18nRoot, locale, localeValues));
   }
 
   return failures;
+}
+
+interface LocaleLintRules {
+  readonly residuePatterns: readonly { readonly regex: RegExp; readonly label: string }[];
+  readonly foreignProseMarkers: readonly string[];
+  readonly reviewedTechnicalTerms: readonly string[];
+  readonly untranslatedKeys: ReadonlySet<string>;
+}
+
+const localeLintRuleKeys = [
+  "residuePatterns",
+  "foreignProseMarkers",
+  "reviewedTechnicalTerms",
+  "untranslatedKeys",
+] as const;
+
+/**
+ * Key parity and placeholder parity both pass on a catalog that was never actually translated —
+ * the keys are there and the placeholders match, because the values are still English. These rules
+ * catch that, but only for a locale that declared what "still English" means for it.
+ */
+function localeProseFailures(
+  i18nRoot: string,
+  locale: string,
+  localeValues: Map<string, Map<string, string>>,
+): CheckFailure[] {
+  const relativeRuleFile = `i18n/${locale}/${localeLintRuleFileName}`;
+  const ruleFile = join(i18nRoot, locale, localeLintRuleFileName);
+  if (!existsSync(ruleFile)) {
+    if (locale === defaultLocale) return [];
+    // An absent rule set is how a locale opts out of prose linting entirely, silently. Requiring the
+    // declaration means even an empty `{}` keeps the identical-to-fallback rule, and a locale that
+    // needs orthography or foreign-prose rules has one obvious place to put them.
+    return [
+      thinLocaleFailure(
+        relativeRuleFile,
+        `${relativeRuleFile}: locale must declare its prose rules; an empty object is a valid start`,
+      ),
+    ];
+  }
+
+  const loaded = loadLocaleLintRules(readFileSync(ruleFile, "utf8"));
+  if (typeof loaded === "string") {
+    // A rule set that cannot be honoured is named in the message itself: silently skipping it would
+    // turn a typo into a locale that quietly stops being linted at all.
+    return [thinLocaleFailure(relativeRuleFile, `${relativeRuleFile}: ${loaded}`)];
+  }
+
+  const fallbackValues = localeValues.get(defaultLocale) ?? new Map<string, string>();
+  const values = localeValues.get(locale) ?? new Map<string, string>();
+  const failures: CheckFailure[] = [];
+
+  for (const [key, value] of values) {
+    // A term the locale keeps in its source form is not evidence of an untranslated string, so it
+    // is removed before the prose rules look at what is left.
+    const residual = loaded.reviewedTechnicalTerms.reduce(
+      (text, term) => text.replaceAll(new RegExp(escapeRegExp(term), "giu"), " "),
+      value,
+    );
+
+    for (const { regex, label } of loaded.residuePatterns) {
+      regex.lastIndex = 0;
+      if (regex.test(residual)) failures.push(thinLocaleFailure(relativeRuleFile, `${key}: ${label}`));
+    }
+
+    const markers = loaded.foreignProseMarkers.filter((marker) =>
+      new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(marker)}(?![\\p{L}\\p{N}_])`, "iu").test(residual),
+    );
+    if (markers.length > 0) {
+      failures.push(
+        thinLocaleFailure(relativeRuleFile, `${key}: untranslated prose (${markers.join(", ")})`),
+      );
+    }
+
+    if (locale === defaultLocale || loaded.untranslatedKeys.has(key)) continue;
+    if (fallbackValues.get(key) === value) {
+      failures.push(thinLocaleFailure(relativeRuleFile, `${key}: identical to the fallback locale`));
+    }
+  }
+
+  return failures;
+}
+
+/** Returns the compiled rules, or the reason the declaration cannot be honoured. */
+function loadLocaleLintRules(text: string): LocaleLintRules | string {
+  let declaration: unknown;
+  try {
+    declaration = JSON.parse(text) as unknown;
+  } catch (error) {
+    return `invalid JSON: ${String(error)}`;
+  }
+  if (!declaration || Array.isArray(declaration) || typeof declaration !== "object") {
+    return "locale lint rules must be a JSON object";
+  }
+
+  const record = declaration as Record<string, unknown>;
+  const unknownKeys = Object.keys(record).filter(
+    (key) => !localeLintRuleKeys.includes(key as (typeof localeLintRuleKeys)[number]),
+  );
+  if (unknownKeys.length > 0) {
+    return `unknown locale lint rule ${unknownKeys.sort((left, right) => left.localeCompare(right)).join(", ")}`;
+  }
+
+  const residuePatterns: { regex: RegExp; label: string }[] = [];
+  const rawResiduePatterns = record["residuePatterns"] ?? [];
+  if (!Array.isArray(rawResiduePatterns)) return "residuePatterns must be an array";
+  for (const entry of rawResiduePatterns) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      return "every residuePatterns entry must be an object with pattern and label";
+    }
+    const { pattern, label } = entry as Record<string, unknown>;
+    if (typeof pattern !== "string" || typeof label !== "string" || label.trim() === "") {
+      return "every residuePatterns entry must be an object with pattern and label";
+    }
+    try {
+      residuePatterns.push({ regex: new RegExp(pattern, "u"), label });
+    } catch (error) {
+      return `residue pattern ${pattern} is not a valid regular expression: ${String(error)}`;
+    }
+  }
+
+  const stringList = (key: (typeof localeLintRuleKeys)[number]): string[] | string => {
+    const raw = record[key] ?? [];
+    if (!Array.isArray(raw) || raw.some((entry) => typeof entry !== "string" || entry.trim() === "")) {
+      return `${key} must be an array of non-empty strings`;
+    }
+    return raw as string[];
+  };
+
+  const foreignProseMarkers = stringList("foreignProseMarkers");
+  if (typeof foreignProseMarkers === "string") return foreignProseMarkers;
+  const reviewedTechnicalTerms = stringList("reviewedTechnicalTerms");
+  if (typeof reviewedTechnicalTerms === "string") return reviewedTechnicalTerms;
+  const untranslatedKeys = stringList("untranslatedKeys");
+  if (typeof untranslatedKeys === "string") return untranslatedKeys;
+
+  return {
+    foreignProseMarkers,
+    // Longest first, so a term that contains another is removed whole rather than shredded.
+    reviewedTechnicalTerms: [...reviewedTechnicalTerms].sort((left, right) => right.length - left.length),
+    residuePatterns,
+    untranslatedKeys: new Set(untranslatedKeys),
+  };
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+/**
+ * Key parity cannot see the most common translation defect there is: a translator who keeps the
+ * key but drops or renames `{{count}}`. The result renders a literal placeholder or a missing
+ * value to the user and passes every other gate, because the key exists in both catalogs.
+ */
+function placeholderParityFailures(
+  locale: string,
+  localeValues: Map<string, Map<string, string>>,
+): CheckFailure[] {
+  if (locale === defaultLocale) return [];
+
+  const fallbackValues = localeValues.get(defaultLocale) ?? new Map<string, string>();
+  const values = localeValues.get(locale) ?? new Map<string, string>();
+  const failures: CheckFailure[] = [];
+
+  for (const [key, fallbackValue] of fallbackValues) {
+    const value = values.get(key);
+    if (value === undefined) continue;
+
+    const expected = translationPlaceholders(fallbackValue);
+    const actual = translationPlaceholders(value);
+    if (expected.join(" ") === actual.join(" ")) continue;
+
+    failures.push(
+      thinLocaleFailure(
+        `i18n/${locale}`,
+        `placeholder mismatch for ${key}: expected ${formatPlaceholders(expected)}, received ${formatPlaceholders(actual)}`,
+      ),
+    );
+  }
+
+  return failures;
+}
+
+/** The distinct `{{name}}` placeholders in a message, sorted so reordering is not a defect. */
+function translationPlaceholders(value: string): string[] {
+  return [
+    ...new Set(
+      [...value.matchAll(/\{\{\s*([\p{L}\p{N}_.-]+)\s*\}\}/gu)].map(
+        (match) => match[1] ?? "",
+      ),
+    ),
+  ]
+    .filter((name) => name.length > 0)
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function formatPlaceholders(names: string[]): string {
+  return names.length === 0 ? "none" : names.map((name) => `{{${name}}}`).join(", ");
 }
 
 function collectLocaleJsonFiles(localeDirectory: string): string[] {
@@ -1832,9 +2117,11 @@ function envExampleFailure(file: string, message: string): CheckFailure {
 }
 
 export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
+  const archivePrefixes = staleReferenceArchivePrefixes(workspaceRoot);
+
   return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
     const relativeFile = relativeToWorkspace(workspaceRoot, file);
-    if (relativeFile.startsWith(staleReferenceArchivePrefix)) return [];
+    if (archivePrefixes.some((prefix) => relativeFile.startsWith(prefix))) return [];
     const text = readFileSync(file, "utf8");
     const failures: CheckFailure[] = [];
 

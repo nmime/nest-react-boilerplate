@@ -46,6 +46,8 @@ function closure(provider: 'postgres' | 'mongodb' | null): SelectedClosureManife
     },
     deployment: {
       targets: ['docker'],
+      publicDomain: 'example.com',
+      primaryApp: null,
       publicTopology: 'single-domain',
       kubernetesDelivery: 'direct',
       infrastructure: { redis: 'bundled', nats: 'bundled', s3: 'bundled' },
@@ -116,6 +118,34 @@ describe('closure materializer', () => {
     const selected = closure('postgres');
     selected.releaseImages = ['migrator', 'notification-scheduler'];
     assert.match(renderClosureHelmValues(selected), /ingress:\n {2}enabled: false/u);
+  });
+
+  it('derives the ingress host table from the configured domain and apex owner', () => {
+    const selected = closure('postgres');
+    selected.deployment.publicDomain = 'dehqonhub.uz';
+    selected.deployment.primaryApp = 'site-app';
+    selected.releaseImages = ['migrator', 'site-app', 'user-app', 'user-app-api'];
+    const values = renderClosureHelmValues(selected);
+
+    assert.match(values, /ingress:\n {2}hosts:\n {4}- host: dehqonhub\.uz\n {6}service: site-app\n {6}paths: \['\/'\]/u);
+    assert.match(values, / {4}- host: user-app\.dehqonhub\.uz\n {6}service: user-app\n/u);
+    assert.match(values, / {4}- host: user-app-api\.dehqonhub\.uz\n {6}service: user-app-api\n/u);
+    assert.doesNotMatch(values, /site-app\.dehqonhub\.uz/u);
+    assert.doesNotMatch(values, /example\.com/u);
+    // The chart's example.com certificate cannot cover these hosts, so the overlay clears it and
+    // lets the chart derive one from the generated table.
+    assert.match(values, / {2}tls: \[\]\n/u);
+  });
+
+  it('keeps every app on a subdomain when no app owns the apex', () => {
+    const selected = closure('postgres');
+    selected.deployment.publicDomain = 'dehqonhub.uz';
+    selected.deployment.primaryApp = null;
+    selected.releaseImages = ['landing-app', 'migrator'];
+    const values = renderClosureHelmValues(selected);
+
+    assert.match(values, / {4}- host: landing-app\.dehqonhub\.uz\n {6}service: landing-app\n/u);
+    assert.doesNotMatch(values, /- host: dehqonhub\.uz\n/u);
   });
 
   it('is idempotent and invalidates a selected lock on provider swap', () => {

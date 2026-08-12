@@ -4,6 +4,10 @@ import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MongoClient } from "mongodb";
+import { sharedMongoMigrations } from "../../../../../libs/backend/mongodb/main/shared/lib/src/migrations/index.ts";
+import { authMongoMigrations } from "../../../../../libs/backend/mongodb/main/auth/lib/src/migrations/index.ts";
+import { featureFlagMongoMigrations } from "../../../../../libs/backend/mongodb/main/feature-flags/lib/src/migrations/index.ts";
+import { notificationMongoMigrations } from "../../../../../libs/backend/mongodb/main/notification/lib/src/migrations/index.ts";
 import {
   createMongoMigrationClientOptions,
   createMongoMigrationEnvironment,
@@ -11,17 +15,39 @@ import {
 } from "./mongo-migrate.ts";
 
 describe("MongoDB migration environment", () => {
+  // The property worth pinning is that the ledger is *complete, unique, and ordered* — not which
+  // migrations happen to exist today. A hardcoded list turned every new migration into a red test
+  // whose only fix was appending a string, which is exactly the edit that also hides a dropped
+  // provider.
   it("composes every current persistence provider in deterministic ledger order", () => {
-    assert.deepEqual(
-      mongoMigrations.map((migration) => migration.id),
-      [
-        "20260726000000_create_better_auth_collections",
-        "20260726000100_create_canonical_sessions",
-        "20260726000200_initialize_auth_persistence",
-        "20260726000300_initialize_feature_flags",
-        "20260726000400_initialize_notifications",
-      ],
-    );
+    const ledger = mongoMigrations.map((migration) => migration.id);
+
+    assert.deepEqual([...ledger].sort((left, right) => left.localeCompare(right)), ledger);
+    assert.equal(new Set(ledger).size, ledger.length);
+
+    for (const [provider, migrations] of Object.entries({
+      shared: sharedMongoMigrations,
+      auth: authMongoMigrations,
+      "feature-flags": featureFlagMongoMigrations,
+      notification: notificationMongoMigrations,
+    })) {
+      assert.ok(migrations.length > 0, `${provider} contributes no migrations`);
+      for (const migration of migrations) {
+        assert.ok(ledger.includes(migration.id), `${provider} migration ${migration.id} is missing from the ledger`);
+      }
+    }
+  });
+
+  // The bootstrap migrations already ran on live databases, so their ids may never be renamed or
+  // reordered — later additions append, they never rewrite this prefix.
+  it("keeps the shipped bootstrap prefix frozen", () => {
+    assert.deepEqual(mongoMigrations.slice(0, 5).map((migration) => migration.id), [
+      "20260726000000_create_better_auth_collections",
+      "20260726000100_create_canonical_sessions",
+      "20260726000200_initialize_auth_persistence",
+      "20260726000300_initialize_feature_flags",
+      "20260726000400_initialize_notifications",
+    ]);
   });
 
   it("keeps the pruned migrator dependency closure MongoDB-capable", () => {

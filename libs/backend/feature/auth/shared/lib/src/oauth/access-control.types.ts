@@ -29,6 +29,12 @@ export interface AuthenticatedPrincipal {
   authChannel?: AuthProviderChannel;
   authTime?: number;
   externalIdentityId?: string;
+  emailVerified?: boolean;
+  /**
+   * Credential epoch this session was minted at. Absent on sessions issued before the account
+   * carried one, which the guards read as revision zero.
+   */
+  credentialRevision?: number;
 }
 
 type SessionCallback = (error?: unknown) => void;

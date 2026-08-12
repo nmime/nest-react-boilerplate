@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   activeUserNavPath,
   defineUserRoutes,
+  matchUserRoute,
   userNavRoutes,
   userRoutesWithChrome,
   type UserRouteDescriptor,
@@ -75,5 +76,31 @@ describe('user route registry', () => {
     expect(activeUserNavPath(routes, '/auth')).toBe('/profile');
     expect(activeUserNavPath(routes, '/auth/discord/callback/')).toBe('/profile');
     expect(activeUserNavPath(routes, '/unknown')).toBeUndefined();
+  });
+
+  it('resolves an identifier-bearing URL to the descriptor that declares the parameter', () => {
+    const routes = defineUserRoutes([
+      descriptor({ nav: { label: 'user.nav.home', order: 1 }, path: '/items' }),
+      descriptor({ navParent: '/items', path: '/items/$itemId' }),
+      descriptor({ navParent: '/items', path: '/items/new' }),
+    ]);
+
+    expect(matchUserRoute(routes, '/items/abc')?.path).toBe('/items/$itemId');
+    expect(activeUserNavPath(routes, '/items/abc')).toBe('/items');
+    // A parameter owns exactly one segment, so neither a deeper URL nor a blank
+    // segment may fall into it.
+    expect(matchUserRoute(routes, '/items/abc/extra')).toBeUndefined();
+    expect(activeUserNavPath(routes, '/items/abc/extra')).toBeUndefined();
+    expect(matchUserRoute(routes, '/items//')).toBeUndefined();
+  });
+
+  it('prefers a static route over a parameterised one claiming the same URL', () => {
+    const routes = defineUserRoutes([
+      descriptor({ nav: { label: 'user.nav.home', order: 1 }, path: '/items' }),
+      descriptor({ navParent: '/items', path: '/items/$itemId' }),
+      descriptor({ navParent: '/items', path: '/items/new' }),
+    ]);
+
+    expect(matchUserRoute(routes, '/items/new')?.path).toBe('/items/new');
   });
 });

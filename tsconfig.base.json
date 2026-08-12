@@ -27,6 +27,7 @@
       "@app/backend-feature-admin-shared": ["libs/backend/feature/admin/shared/lib/src/index.ts"],
       "@app/backend-feature-auth-main": ["libs/backend/feature/auth/main/lib/src/index.ts"],
       "@app/backend-postgres-main-auth": ["libs/backend/postgres/main/auth/lib/src/index.ts"],
+      "@app/backend-postgres-main-fiat-currency": ["libs/backend/postgres/main/fiat-currency/lib/src/index.ts"],
       "@app/backend-feature-auth-shared": ["libs/backend/feature/auth/shared/lib/src/index.ts"],
       "@app/backend-feature-auth-test": ["libs/backend/feature/auth/test/lib/src/index.ts"],
       "@app/backend-feature-fiat-currency-shared": ["libs/backend/feature/fiat-currency/shared/lib/src/index.ts"],

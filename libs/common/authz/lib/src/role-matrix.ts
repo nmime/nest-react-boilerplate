@@ -31,12 +31,13 @@ import type { RoleKey } from './types';
 export const UserRole = 'user';
 export const AdminRole = 'admin';
 
-export const roleKeys = [UserRole, AdminRole] as const satisfies readonly RoleKey[];
+export const baseRoleKeys = [UserRole, AdminRole] as const satisfies readonly RoleKey[];
 
-// Default role -> permission grants. `admin` holds the full admin-scoped catalog
+// Boilerplate-owned role -> permission grants. `admin` holds the full admin-scoped catalog
 // including the break-glass `admin:manage:all` and the DB-backed role management
-// grant `admin:roles:write` (RBAC Phase 3).
-export const defaultRolePermissions = {
+// grant `admin:roles:write` (RBAC Phase 3). Products extend these — and add roles of their
+// own — through `productAuthzExtensions`; read ./effective-catalog for the composed matrix.
+export const baseRolePermissions = {
   [UserRole]: [UserProfileReadPermission],
   [AdminRole]: [
     AdminDashboardReadPermission,
@@ -66,8 +67,10 @@ export const defaultRolePermissions = {
   ],
 } as const satisfies Record<RoleKey, readonly PermissionKey[]>;
 
-// De-duplicated union of the default grants for the given roles, preserving
-// catalog order. Unknown roles contribute nothing (fail closed).
-export const permissionsForRoles = (roles: readonly string[]): string[] => [
-  ...new Set(roles.flatMap((role) => (role === UserRole || role === AdminRole ? defaultRolePermissions[role] : []))),
-];
+/**
+ * The composed matrix always carries the two base roles, so those stay precisely typed; any
+ * further role a product registers is reachable through the index signature.
+ */
+export type RolePermissionMatrix = { readonly [Role in RoleKey]: readonly string[] } & {
+  readonly [role: string]: readonly string[];
+};

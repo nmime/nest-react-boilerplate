@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop -- ordered upserts preserve deterministic RBAC reconciliation */
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { defaultRolePermissions, roleKeys } from '@app/common-authz';
+import { permissionsForRoles, roleKeys } from '@app/common-authz';
 import {
   DefaultAuthTenantId,
   type AuthPermissionRecord,
@@ -302,7 +302,7 @@ export async function ensureMongoTenantRbac(database: Db, tenantId: string, sess
     if (!role) {
       throw new Error('MongoDB tenant RBAC initialization failed.');
     }
-    await reconcileManagedRolePermissions(database, role._id, defaultRolePermissions[key], now, session);
+    await reconcileManagedRolePermissions(database, role._id, permissionsForRoles([key]), now, session);
   }
 }
 
@@ -431,7 +431,8 @@ export const countPowerfulUsers = async (database: Db, tenantId: string, session
   return powerful;
 };
 
+// `permissionsForRoles` already fails closed on a role the catalog does not know, so the explicit
+// membership check the base matrix needed is redundant here.
 function defaultPermissionKeys(roleKey: string): ReadonlySet<string> {
-  const key = roleKeys.find((candidate) => candidate === roleKey);
-  return new Set(key ? defaultRolePermissions[key] : []);
+  return new Set(permissionsForRoles([roleKey]));
 }

@@ -11,6 +11,9 @@ import {
   createAdminAccessPolicy,
   assertCanReadAdminProfile,
   normalizeStringList,
+  AdminCapabilityPermissions,
+  composeAdminCapabilities,
+  createAdminAccessPolicyFactory,
 } from './index';
 
 describe('@app/frontend-feature-admin-shared access policy', () => {
@@ -113,6 +116,78 @@ describe('@app/frontend-feature-admin-shared access policy', () => {
 
   it('normalizes claim lists', () => {
     expect(normalizeStringList([' admin ', '', 'admin', null])).toEqual(['admin']);
+  });
+
+  it('derives a product capability from a composed extension without editing the shared map', () => {
+    const policyFor = createAdminAccessPolicyFactory(
+      composeAdminCapabilities({
+        capabilities: AdminCapabilityPermissions,
+        extensions: [{ id: 'agritech', capabilities: { canApproveAgriTech: 'admin:agritech:approve' } }],
+      }),
+    );
+
+    const policy = policyFor({
+      subject: 'admin-id',
+      roles: [AdminRole],
+      permissions: ['admin:agritech:approve'],
+    });
+
+    expect(policy.canApproveAgriTech).toBe(true);
+    expect(policy.canReadUsers).toBe(false);
+    expect(policy.canAccessAdmin).toBe(true);
+  });
+
+  it('grants composed product capabilities through the manage-all wildcard', () => {
+    const policyFor = createAdminAccessPolicyFactory(
+      composeAdminCapabilities({
+        capabilities: AdminCapabilityPermissions,
+        extensions: [{ id: 'agritech', capabilities: { canReadAgriTech: 'admin:agritech:read' } }],
+      }),
+    );
+
+    expect(
+      policyFor({ subject: 'admin-id', roles: [AdminRole], permissions: [AdminManageAllPermission] }).canReadAgriTech,
+    ).toBe(true);
+  });
+
+  it('rejects an extension that redefines a shared capability', () => {
+    expect(() =>
+      composeAdminCapabilities({
+        capabilities: AdminCapabilityPermissions,
+        extensions: [{ id: 'agritech', capabilities: { canReadUsers: 'admin:agritech:read' } }],
+      }),
+    ).toThrow('admin access-policy extension "agritech" redefines capability "canReadUsers"');
+  });
+
+  it('rejects an extension that maps a capability to a blank permission', () => {
+    expect(() =>
+      composeAdminCapabilities({
+        capabilities: AdminCapabilityPermissions,
+        extensions: [{ id: 'agritech', capabilities: { canReadAgriTech: '  ' } }],
+      }),
+    ).toThrow('admin access-policy extension "agritech" maps capability "canReadAgriTech" to a blank permission');
+  });
+
+  it('rejects two extensions that claim the same capability', () => {
+    expect(() =>
+      composeAdminCapabilities({
+        capabilities: AdminCapabilityPermissions,
+        extensions: [
+          { id: 'agritech', capabilities: { canReadAgriTech: 'admin:agritech:read' } },
+          { id: 'logistics', capabilities: { canReadAgriTech: 'admin:logistics:read' } },
+        ],
+      }),
+    ).toThrow('admin access-policy extension "logistics" redefines capability "canReadAgriTech"');
+  });
+
+  it('keeps the shared capability map aligned with the default policy flags', () => {
+    const policy = createAdminAccessPolicy();
+
+    expect(Object.keys(AdminCapabilityPermissions).sort()).toEqual(
+      Object.keys(policy)
+        .filter((key) => key.startsWith('can') && key !== 'canAccessAdmin')
+        .sort(),
+    );
   });
 
   it('throws when the principal cannot read the admin profile', () => {

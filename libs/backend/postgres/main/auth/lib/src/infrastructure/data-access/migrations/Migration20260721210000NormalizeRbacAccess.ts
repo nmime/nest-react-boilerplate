@@ -9,9 +9,9 @@ import {
   AdminNotificationTemplatesReadPermission,
   AdminNotificationTemplatesTestPermission,
   AdminNotificationTemplatesWritePermission,
-  defaultRolePermissions,
-  permissionCatalog,
-  roleKeys,
+  basePermissionCatalog,
+  baseRoleKeys,
+  baseRolePermissions,
 } from '@app/common-authz';
 
 const DefaultTenantId = '00000000-0000-0000-0000-000000000000';
@@ -93,7 +93,7 @@ export class Migration20260721210000NormalizeRbacAccess extends Migration {
       end $$;
     `);
 
-    const permissionValues = permissionCatalog
+    const permissionValues = basePermissionCatalog
       .map(
         (permission) =>
           `(gen_random_uuid(), ${sqlText(permission.key)}, ${sqlText(permission.resource)}, ${sqlText(permission.action)}, ${sqlText(permission.description)}, now())`,
@@ -104,7 +104,7 @@ export class Migration20260721210000NormalizeRbacAccess extends Migration {
         `on conflict ("key") do update set "resource" = excluded."resource", "action" = excluded."action", "description" = excluded."description";`,
     );
 
-    const systemRoleRows = roleKeys.map((key) => `(${sqlText(key)}, ${sqlText(roleLabel(key))})`).join(', ');
+    const systemRoleRows = baseRoleKeys.map((key) => `(${sqlText(key)}, ${sqlText(roleLabel(key))})`).join(', ');
     this.addSql(
       `insert into "auth_roles" ("id", "tenant_id", "key", "label", "description", "is_system", "created_at", "updated_at") ` +
         `select gen_random_uuid(), tenants."tenant_id", system_roles."key", system_roles."label", '', true, now(), now() ` +
@@ -118,8 +118,8 @@ export class Migration20260721210000NormalizeRbacAccess extends Migration {
     // assigned to `admin` or `user` resolves the same canonical permissions
     // regardless of when that tenant was first created. Custom roles are never
     // touched by this repair.
-    for (const key of roleKeys) {
-      const permissionKeys = defaultRolePermissions[key].map(sqlText).join(', ');
+    for (const key of baseRoleKeys) {
+      const permissionKeys = baseRolePermissions[key].map(sqlText).join(', ');
       this.addSql(
         `insert into "auth_role_permissions" ("role_id", "permission_id", "created_at") ` +
           `select r."id", p."id", now() from "auth_roles" r cross join "auth_permissions" p ` +

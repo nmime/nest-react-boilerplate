@@ -1,4 +1,4 @@
-import { problemCodeFromType } from '@app/common-problem-details';
+import { registeredProblemCodeFromType } from '@app/common-problem-details';
 import type { TranslationKey } from '@app/common-i18n-keys';
 import {
   defaultLocale,
@@ -51,8 +51,18 @@ function localizeValidationIssues(value: unknown, locale: string | undefined): u
   });
 }
 
+/**
+ * Resolves against the composed catalog rather than the base array, so a problem type a product
+ * registered keeps its own identity here. Resolving against the base array only meant a registered
+ * type fell through to `problemCodeForStatus`, and for any status the boilerplate translates
+ * generically (400, 401, 403, 404, 409, 429, 500) the product's declared title and detail were then
+ * overwritten with that generic text — a registered 409 came back as "Conflict".
+ *
+ * The status fallback is for a type the catalog cannot resolve at all (`about:blank`, or an
+ * unrecognised URI), which is the case it was written for.
+ */
 function translationCodeForProblem(problem: ProblemDetailsResponse): string {
-  return problemCodeFromType(problem.type) ?? problemCodeForStatus(problem.status);
+  return registeredProblemCodeFromType(problem.type) ?? problemCodeForStatus(problem.status);
 }
 
 export function resolveProblemContentLanguage(problem: ProblemDetailsResponse, requestedLocale?: string): string {
@@ -63,7 +73,9 @@ export function resolveProblemContentLanguage(problem: ProblemDetailsResponse, r
 
 /** Localize the standard RFC members while preserving the problem type URI. */
 export function localizeProblemDetails(problem: ProblemDetailsResponse, locale?: string): ProblemDetailsResponse {
-  const customCode = problemCodeFromType(problem.type);
+  // Re-derived from the catalog rather than carried over from the inbound member, so a caller
+  // cannot spoof a code by supplying one; `delete members.code` below is what enforces that.
+  const customCode = registeredProblemCodeFromType(problem.type);
   const translationCode = translationCodeForProblem(problem);
   const titleKey = `errors.${translationCode}.title`;
   const detailKey = `errors.${translationCode}.detail`;

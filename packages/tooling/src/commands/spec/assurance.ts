@@ -81,8 +81,14 @@ export interface RequirementVerification {
   evidence: EvidenceReference[];
 }
 
+/**
+ * Schema version of `openspec/specs/*\/verification.yaml`. Exported so the authoring brief in
+ * openspec/config.yaml is checked against the enforced number instead of restating it.
+ */
+export const evidenceSidecarVersion = 3;
+
 export interface VerificationDocument {
-  version: 3;
+  version: typeof evidenceSidecarVersion;
   capability: string;
   owners: {
     product: string;
@@ -220,6 +226,12 @@ const REQUIREMENT_ID_PATTERN = /\bREQ-[A-Z0-9]+(?:-[A-Z0-9]+)+-\d{3}\b/gu;
 const SCENARIO_TAG_PATTERN = /@(SCN-[A-Z0-9]+(?:-[A-Z0-9]+)+-\d{2,3})\b/gu;
 const BEHAVIOR_TEST_PATTERN =
   /(?:\.(?:spec|test)|(?:^|[._-])(?:component|e2e)-spec)\.(?:ts|tsx|mts|mjs)$/u;
+/**
+ * Matches a root script that runs the assurance verifier itself, either as the CLI verb
+ * (`tooling spec verify`) or by delegating to another script (`pnpm run spec:verify`). Mapping
+ * such a script as evidence makes verification spawn itself without a base case.
+ */
+const ASSURANCE_COMMAND_PATTERN = /\bspec[\s:]verify\b/u;
 const CUCUMBER_REASON_PLACEHOLDERS = new Set([
   'covered elsewhere',
   'cucumber not needed',
@@ -236,7 +248,13 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
   const rootPackage = readJsonFile<{
     scripts?: Record<string, string>;
   }>(resolve(workspaceRoot, 'package.json'), errors);
-  const rootScripts = new Set(Object.keys(rootPackage?.scripts ?? {}));
+  const rootScriptCommands = Object.entries(rootPackage?.scripts ?? {});
+  const rootScripts = new Set(rootScriptCommands.map(([name]) => name));
+  const assuranceScripts = new Set(
+    rootScriptCommands
+      .filter(([, command]) => ASSURANCE_COMMAND_PATTERN.test(command))
+      .map(([name]) => name),
+  );
   const requirements = new Map<string, RequirementRecord>();
   const evidenceFiles = new Set<string>();
   const coveredProjects = new Set<string>();
@@ -318,6 +336,7 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
         owners: verification.owners,
         projects,
         rootScripts,
+        assuranceScripts,
         errors,
         warnings,
         evidenceFiles,
@@ -566,6 +585,11 @@ export function verifyRequirements(options: {
   const workspaceState = dryRun
     ? 'planned'
     : verificationWorkspaceState(model.workspaceRoot);
+  const checkedOutSha = sourceSha(model.workspaceRoot);
+  const headError =
+    dryRun || head === undefined
+      ? null
+      : headAttributionError(model.workspaceRoot, head, checkedOutSha);
 
   if (workspaceState === 'dirty' || workspaceState === 'unavailable') {
     runs.push(
@@ -578,6 +602,16 @@ export function verifyRequirements(options: {
           workspaceState === 'dirty'
             ? 'The worktree is dirty; commit the exact source before collecting passing evidence.'
             : 'Git worktree state could not be established.',
+      },
+    );
+  } else if (headError !== null) {
+    runs.push(
+      {
+        key: 'exact-source-head',
+        kind: 'script',
+        command: `git rev-parse --verify ${head}^{commit}`,
+        status: 'failed',
+        stderrTail: headError,
       },
     );
   } else {
@@ -610,7 +644,7 @@ export function verifyRequirements(options: {
     status: dryRun ? 'planned' : failed ? 'failed' : 'ok',
     lane,
     workspaceState,
-    sourceSha: sourceSha(model.workspaceRoot),
+    sourceSha: checkedOutSha,
     generatedAt: new Date().toISOString(),
     specificationHash: model.hash,
     ...(base === undefined ? {} : { base }),
@@ -699,6 +733,7 @@ function validateRequirementMapping(options: {
   owners: VerificationDocument['owners'];
   projects: Map<string, ProjectRecord>;
   rootScripts: Set<string>;
+  assuranceScripts: Set<string>;
   errors: string[];
   warnings: string[];
   evidenceFiles: Set<string>;
@@ -710,6 +745,7 @@ function validateRequirementMapping(options: {
     owners,
     projects,
     rootScripts,
+    assuranceScripts,
     errors,
     evidenceFiles,
   } = options;
@@ -858,6 +894,10 @@ function validateRequirementMapping(options: {
     } else if (evidence.script) {
       if (!rootScripts.has(evidence.script)) {
         errors.push(`${prefix}: unknown root package script ${evidence.script}`);
+      } else if (assuranceScripts.has(evidence.script)) {
+        errors.push(
+          `${prefix}: evidence script ${evidence.script} re-enters specification assurance; evidence must be an independent command`,
+        );
       }
     } else if (evidence.kind !== 'documentation') {
       errors.push(`${prefix}: ${evidence.kind} evidence requires target or script`);
@@ -1090,7 +1130,8 @@ function parseVerificationDocument(
     }
     return null;
   }
-  if (value.version !== 3) errors.push(`${file}: version must be 3`);
+  if (value.version !== evidenceSidecarVersion)
+    errors.push(`${file}: version must be ${evidenceSidecarVersion}`);
   if (typeof value.capability !== 'string' || value.capability.trim() === '') {
     errors.push(`${file}: capability is required`);
   }
@@ -1106,7 +1147,7 @@ function parseVerificationDocument(
   }
 
   return {
-    version: 3,
+    version: evidenceSidecarVersion,
     capability: typeof value.capability === 'string' ? value.capability : '',
     owners: {
       product: typeof owners.product === 'string' ? owners.product : '',
@@ -1273,9 +1314,42 @@ function executeEvidenceCommand(options: {
   };
 }
 
+function resolveRevision(workspaceRoot: string, revision: string): string | null {
+  const result = run(
+    'git',
+    ['rev-parse', '--verify', '--quiet', `${revision}^{commit}`],
+    { cwd: workspaceRoot },
+  );
+  const resolved = result.stdout.trim();
+  return result.status === 0 && resolved !== '' ? resolved : null;
+}
+
 function sourceSha(workspaceRoot: string): string {
-  const result = run('git', ['rev-parse', 'HEAD'], { cwd: workspaceRoot });
-  return result.status === 0 ? result.stdout.trim() : 'unknown';
+  return resolveRevision(workspaceRoot, 'HEAD') ?? 'unknown';
+}
+
+/**
+ * A dossier records `head` as the commit its evidence describes, but the evidence is always
+ * collected from the checked-out tree. Without this comparison a passing report can be filed
+ * against a commit that was never built, which is precisely what REQ-ASSURANCE-FRESHNESS-002
+ * forbids.
+ */
+function headAttributionError(
+  workspaceRoot: string,
+  head: string,
+  checkedOutSha: string,
+): string | null {
+  const resolved = resolveRevision(workspaceRoot, head);
+  if (resolved === null) {
+    return `--head ${head} does not resolve to a commit in this workspace.`;
+  }
+  if (checkedOutSha === 'unknown') {
+    return 'The checked-out commit could not be established, so evidence cannot be attributed to --head.';
+  }
+  if (resolved !== checkedOutSha) {
+    return `--head ${head} resolves to ${resolved} but ${checkedOutSha} is checked out; evidence would be attributed to a commit it was not collected from.`;
+  }
+  return null;
 }
 
 function safeWorkspacePath(

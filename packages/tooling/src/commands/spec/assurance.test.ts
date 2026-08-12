@@ -16,6 +16,7 @@ import {
   calculateImpactFromChangedFiles,
   calculateImpact,
   createTraceReport,
+  evidenceSidecarVersion,
   loadAssuranceModel,
   verifyRequirements,
 } from './assurance';
@@ -538,10 +539,30 @@ test('keeps the complete repository disposition inventory synchronized', () => {
   const report = createTraceReport(model);
 
   assert.deepEqual(model.errors, []);
-  const expectedInventory = {
+
+  const { totals } = report;
+
+  // The property worth pinning is that the inventory is *complete*, not how large it happens to
+  // be. Exact totals made every added spec file or Nx project fail this test for no defect, which
+  // trained the reflex of bumping the constant — the one edit that also hides a real regression.
+  assert.equal(totals.coveredProjects, totals.projects, 'every Nx project must have capability ownership');
+  assert.equal(totals.tracedBehaviorTests, totals.behaviorTests, 'every behavior test must trace to a requirement');
+  assert.equal(
+    totals.requirementsWithCucumberDisposition,
+    totals.requirements,
+    'every requirement must declare a cucumber disposition',
+  );
+  assert.equal(
+    totals.cucumberNotApplicableRequirements,
+    totals.requirements - totals.acceptanceRequirements,
+    'a requirement is either acceptance-tested or explicitly not-applicable, never both or neither',
+  );
+
+  // Floors catch the failure mode completeness ratios cannot see: a loader that silently starts
+  // returning an empty or truncated inventory, where every ratio above still holds trivially.
+  // Raise these only when the corresponding artifacts are deliberately removed.
+  const inventoryFloors = {
     projects: 96,
-    // 519 after adding the tenant-context, tenant-policy, row-level-security and
-    // TenantContextModule behaviour tests.
     behaviorTests: 519,
     features: 5,
     scenarios: 8,
@@ -549,14 +570,10 @@ test('keeps the complete repository disposition inventory synchronized', () => {
     acceptanceRequirements: 5,
     evidence: 162,
   };
-  assert.deepEqual(report.totals, {
-    ...expectedInventory,
-    coveredProjects: expectedInventory.projects,
-    tracedBehaviorTests: expectedInventory.behaviorTests,
-    requirementsWithCucumberDisposition: expectedInventory.requirements,
-    cucumberNotApplicableRequirements:
-      expectedInventory.requirements - expectedInventory.acceptanceRequirements,
-  });
+  for (const [key, floor] of Object.entries(inventoryFloors)) {
+    const actual = totals[key as keyof typeof inventoryFloors];
+    assert.ok(actual >= floor, `assurance inventory shrank: ${key} is ${actual}, expected at least ${floor}`);
+  }
   assert.ok(
     model.requirements
       .get('REQ-RUNTIME-OBSERVABILITY-005')
@@ -698,5 +715,92 @@ test('rejects duplicate requirement mappings in a verification manifest', () => 
     model.errors.includes(
       'openspec/specs/fixture/verification.yaml: duplicate evidence mapping for REQ-FIXTURE-RULE-001',
     ),
+  );
+});
+
+test('fails before collecting evidence when --head is not the checked-out commit', () => {
+  const workspace = fixtureWorkspace();
+  runGit(workspace, ['init', '--quiet']);
+  runGit(workspace, ['add', '.']);
+  runGit(workspace, ['commit', '--quiet', '-m', 'fixture base']);
+  const stale = runGit(workspace, ['rev-parse', 'HEAD']);
+  writeFileSync(join(workspace, 'NOTES.md'), '# notes\n');
+  runGit(workspace, ['add', '-A']);
+  runGit(workspace, ['commit', '--quiet', '-m', 'fixture head']);
+  const checkedOut = runGit(workspace, ['rev-parse', 'HEAD']);
+  const model = loadAssuranceModel(workspace);
+
+  const report = verifyRequirements({
+    model,
+    requirementIds: ['REQ-FIXTURE-RULE-001'],
+    dryRun: false,
+    lane: 'pr',
+    head: stale,
+  });
+
+  assert.equal(report.status, 'failed');
+  assert.deepEqual(
+    report.runs.map(({ key }) => key),
+    ['exact-source-head'],
+  );
+  assert.equal(report.sourceSha, checkedOut);
+});
+
+test('accepts a --head revision that resolves to the checked-out commit', () => {
+  const workspace = fixtureWorkspace();
+  runGit(workspace, ['init', '--quiet']);
+  runGit(workspace, ['add', '.']);
+  runGit(workspace, ['commit', '--quiet', '-m', 'fixture base']);
+  const model = loadAssuranceModel(workspace);
+
+  const report = verifyRequirements({
+    model,
+    requirementIds: ['REQ-FIXTURE-RULE-001'],
+    dryRun: false,
+    lane: 'nonexistent-lane' as never,
+    head: 'HEAD',
+  });
+
+  assert.equal(
+    report.runs.some(({ key }) => key === 'exact-source-head'),
+    false,
+  );
+});
+
+test('keeps the authoring brief in openspec/config.yaml on the enforced sidecar version', () => {
+  // config.yaml is the brief every spec author reads before writing a sidecar. When it names a
+  // version the validator rejects, the first thing an author writes is invalid — so the prose is
+  // derived from the same constant the validator enforces rather than transcribed.
+  const config = readFileSync(join(process.cwd(), 'openspec/config.yaml'), 'utf8');
+  const stated = /version (\d+) evidence sidecar/u.exec(config);
+
+  assert.ok(stated, 'openspec/config.yaml must state the evidence sidecar version it governs');
+  assert.equal(Number(stated[1]), evidenceSidecarVersion);
+});
+
+test('rejects evidence whose script re-enters specification assurance', () => {
+  const workspace = fixtureWorkspace();
+  writeFileSync(
+    join(workspace, 'package.json'),
+    JSON.stringify({
+      scripts: {
+        'fixture:check': 'true',
+        'spec:verify': 'pnpm --filter @repo/tooling tooling spec verify',
+      },
+    }),
+  );
+  const verification = readFileSync(verificationFile(workspace), 'utf8');
+  writeFileSync(
+    verificationFile(workspace),
+    verification.replace('        target: fixture:static-check', '        script: spec:verify'),
+  );
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: evidence script spec:verify re-enters specification assurance; evidence must be an independent command',
+    ),
+    model.errors.join('\n'),
   );
 });

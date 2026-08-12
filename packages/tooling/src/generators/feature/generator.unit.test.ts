@@ -8,9 +8,12 @@
  * E2E: full feature generation on in-memory tree, dry-run, duplicate rejection
  */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
+import type { Tree } from 'nx/src/generators/tree';
 
 async function createTree() {
   const { createTreeWithEmptyWorkspace } = await import('nx/src/devkit-testing-exports');
@@ -56,6 +59,30 @@ const ormMigrationConfigPath = 'packages/tooling/src/commands/db/orm-migration-c
 
 function readOrmMigrationConfig() {
   return readFileSync(join(process.cwd(), ormMigrationConfigPath), 'utf8');
+}
+
+/**
+ * Runs the repository documentation validator over the given generated files and returns
+ * its report, empty when the gate passes. Outside a git repository the validator falls
+ * back to a recursive scan, so the throwaway workspace holds exactly the files under test.
+ */
+function runDocumentationGate(tree: Tree, paths: string[]): string {
+  const workspaceRoot = mkdtempSync(join(tmpdir(), 'nrb-feature-docs-'));
+  try {
+    writeFileSync(join(workspaceRoot, 'package.json'), JSON.stringify({ scripts: {} }));
+    for (const path of paths) {
+      const target = join(workspaceRoot, path);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, tree.read(path, 'utf8') ?? '');
+    }
+    const gate = spawnSync(process.execPath, [join(process.cwd(), 'scripts/validate-doc-links.mjs')], {
+      cwd: workspaceRoot,
+      encoding: 'utf8',
+    });
+    return gate.status === 0 ? '' : gate.stderr.trim();
+  } finally {
+    rmSync(workspaceRoot, { force: true, recursive: true });
+  }
 }
 
 /** The registry symbols spread into `migrationsList`, in declaration order. */
@@ -361,6 +388,33 @@ describe('feature generator', () => {
       assert.ok(tree.exists('libs/backend/feature/support-cases/shared/lib/README.md'));
       assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/AGENTS.md'));
     });
+
+    for (const database of ['postgres', 'mongodb'] as const) {
+      it(`scaffolds ${database} library READMEs the documentation gate accepts`, async () => {
+        const tree = await createTree();
+        tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+
+        const { featureGenerator } = await import('./generator.js');
+        await featureGenerator(tree, {
+          ...featureTargets,
+          database,
+          name: 'Support Cases',
+          migrationTimestamp: '20260713000000',
+          skipFormat: true,
+        });
+
+        const libraryReadmes = tree
+          .listChanges()
+          .map(({ path }) => path)
+          .filter((path) => /^libs\/.+\/lib\/README\.md$/u.test(path));
+        assert.ok(libraryReadmes.length >= 3, 'the feature scaffold must emit a README per generated library');
+
+        // Grade the scaffold with the gate that will grade it in CI. `pnpm run docs:check`
+        // runs in check:fast and ci:pr, so a template the validator rejects makes generated
+        // code uncommittable the moment it lands on disk.
+        assert.equal(runDocumentationGate(tree, libraryReadmes), '');
+      });
+    }
 
     it('scaffolds a library that can reach its own coverage floor', async () => {
       const tree = await createTree();

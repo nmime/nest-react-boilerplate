@@ -163,3 +163,16 @@ configuration, run `pnpm run docs:catalog`, and let `pnpm run docs:check` prove
 that the rendered catalog and all local links remain current. The same check
 requires every Markdown document under `docs/**` to be reachable from this
 index, directly or through a linked nested index.
+
+Working documents that are not canonical repository documentation — tool-written
+specs, imported research, archived change records — are exempt from link and
+reachability validation. `docs/.docsrc.json` declares which subtrees those are:
+
+```json
+{ "workingSpecPrefixes": ["docs/superpowers/"] }
+```
+
+Each entry is a workspace-relative directory prefix; a declaration replaces the
+default rather than extending it, and an absolute or `..`-escaping entry fails
+`pnpm run docs:check` instead of being ignored. Products repoint this file
+instead of editing `scripts/validate-doc-links.mjs`.

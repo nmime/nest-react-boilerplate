@@ -158,6 +158,67 @@ test('exempts the superpowers working-spec area from documentation validation', 
   assert.deepEqual(result.failures, []);
 });
 
+test('exempts the working-spec areas a product declares in docs/.docsrc.json', () => {
+  write('docs/.docsrc.json', JSON.stringify({ workingSpecPrefixes: ['docs/archive/working-specs'] }));
+  write('docs/README.md', '# Documentation\n\n[Guide](guide.md)\n');
+  write('docs/guide.md', '# Guide\n');
+  write('docs/archive/working-specs/2026-01-01-example.md', '# Example spec\n\n[dangling](../../nowhere.md)\n');
+
+  const result = validateWorkspace({
+    workspaceRoot,
+    markdownFiles: [
+      resolve(workspaceRoot, 'docs/README.md'),
+      resolve(workspaceRoot, 'docs/guide.md'),
+      resolve(workspaceRoot, 'docs/archive/working-specs/2026-01-01-example.md'),
+    ],
+  });
+
+  assert.deepEqual(result.failures, []);
+});
+
+test('keeps validating documentation outside every declared working-spec prefix', () => {
+  write('docs/.docsrc.json', JSON.stringify({ workingSpecPrefixes: ['docs/archive/working-specs'] }));
+  write('docs/README.md', '# Documentation\n');
+  write('docs/superpowers/specs/2026-01-01-example-design.md', '# Example spec\n\n[dangling](../../nowhere.md)\n');
+
+  const result = validateWorkspace({
+    workspaceRoot,
+    markdownFiles: [
+      resolve(workspaceRoot, 'docs/README.md'),
+      resolve(workspaceRoot, 'docs/superpowers/specs/2026-01-01-example-design.md'),
+    ],
+  });
+
+  assert.equal(result.failures.length, 2);
+  assert.match(result.failures.join('\n'), /2026-01-01-example-design\.md:3: missing local target/);
+  assert.match(result.failures.join('\n'), /2026-01-01-example-design\.md:1: documentation is not reachable/);
+});
+
+test('rejects working-spec prefixes that escape the workspace instead of ignoring them', () => {
+  write('docs/.docsrc.json', JSON.stringify({ workingSpecPrefixes: ['/etc/docs', '../outside/', 7] }));
+  write('docs/README.md', '# Documentation\n');
+
+  const result = validateWorkspace({ workspaceRoot, markdownFiles: [resolve(workspaceRoot, 'docs/README.md')] });
+
+  assert.equal(result.failures.length, 3);
+  assert.match(result.failures.join('\n'), /docs\/\.docsrc\.json:1: invalid workingSpecPrefixes entry "\/etc\/docs"/);
+  assert.match(
+    result.failures.join('\n'),
+    /docs\/\.docsrc\.json:1: invalid workingSpecPrefixes entry "\.\.\/outside\/"/,
+  );
+  assert.match(result.failures.join('\n'), /docs\/\.docsrc\.json:1: invalid workingSpecPrefixes entry 7/);
+});
+
+test('reports an unparseable documentation configuration instead of exempting nothing', () => {
+  write('docs/.docsrc.json', '{ "workingSpecPrefixes": [ ');
+  write('docs/README.md', '# Documentation\n');
+
+  const result = validateWorkspace({ workspaceRoot, markdownFiles: [resolve(workspaceRoot, 'docs/README.md')] });
+
+  assert.equal(result.failures.length, 1);
+  assert.match(result.failures[0], /docs\/\.docsrc\.json:1: invalid documentation configuration/);
+});
+
 test('collects untracked documentation and repo-local skill files', () => {
   write('README.md', '# Root\n');
   execFileSync('git', ['init', '--quiet'], { cwd: workspaceRoot });

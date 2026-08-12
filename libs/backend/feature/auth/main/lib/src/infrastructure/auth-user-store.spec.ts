@@ -19,6 +19,8 @@ const record: AuthUserRecord = {
   avatarUrl: null,
   avatarHash: null,
   avatarStatus: 'none',
+  emailVerifiedAt: null,
+  credentialRevision: 0,
 };
 
 describe('auth user stores', () => {
@@ -130,8 +132,54 @@ describe('auth user stores', () => {
     expect((await store.recordLogin('missing'))._unsafeUnwrap()).toBeNull();
   });
 
+  it('records email verification and bumps the credential revision on password replacement', async () => {
+    const store = new InMemoryAuthUserStore();
+    const created = (await store.create(record))._unsafeUnwrap();
+    expect(created).toMatchObject({ emailVerifiedAt: null, credentialRevision: 0 });
+
+    const verifiedAt = new Date('2026-02-02T00:00:00.000Z');
+    expect((await store.verifyEmail(created.id, created.tenantId, verifiedAt))._unsafeUnwrap()).toMatchObject({
+      emailVerifiedAt: verifiedAt,
+    });
+    expect((await store.verifyEmail('missing'))._unsafeUnwrap()).toBeNull();
+
+    expect((await store.replacePassword(created.id, 'next-hash', created.tenantId))._unsafeUnwrap()).toMatchObject({
+      passwordHash: 'next-hash',
+      credentialRevision: 1,
+    });
+    expect((await store.replacePassword(created.id, 'third-hash'))._unsafeUnwrap()).toMatchObject({
+      credentialRevision: 2,
+    });
+    expect((await store.replacePassword('missing', 'next-hash'))._unsafeUnwrap()).toBeNull();
+  });
+
+  it('delegates recovery writes to the Postgres repository', async () => {
+    const verifiedAt = new Date('2026-02-02T00:00:00.000Z');
+    const repository = {
+      verifyEmail: vi.fn(() => okAsync({ ...record, emailVerifiedAt: verifiedAt })),
+      replacePassword: vi.fn(() => okAsync({ ...record, passwordHash: 'next-hash', credentialRevision: 4 })),
+    };
+    const store = new PostgresAuthUserStore(repository as never);
+
+    expect((await store.verifyEmail(record.id, record.tenantId, verifiedAt))._unsafeUnwrap()).toMatchObject({
+      emailVerifiedAt: verifiedAt,
+    });
+    expect(repository.verifyEmail).toHaveBeenCalledWith(record.id, record.tenantId, verifiedAt);
+    expect((await store.replacePassword(record.id, 'next-hash'))._unsafeUnwrap()).toMatchObject({
+      passwordHash: 'next-hash',
+      credentialRevision: 4,
+    });
+    expect(repository.replacePassword).toHaveBeenCalledWith(record.id, 'next-hash', DefaultAuthTenantId);
+  });
+
   it('maps repository entities to auth user records', () => {
     expect(toAuthUserRecord(record)).toEqual(record);
+  });
+
+  it('defaults the recovery columns for adapters that predate them', () => {
+    const { emailVerifiedAt: _verified, credentialRevision: _revision, ...legacy } = record;
+
+    expect(toAuthUserRecord(legacy)).toMatchObject({ emailVerifiedAt: null, credentialRevision: 0 });
   });
 
   it('defaults missing tenant and invalid theme values when mapping records', () => {

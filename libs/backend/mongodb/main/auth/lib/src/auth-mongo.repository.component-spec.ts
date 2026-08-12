@@ -66,6 +66,30 @@ describe('Mongo auth repositories on a replica set', () => {
     await expect(unwrap(reloaded.users.findById(user.id, DefaultAuthTenantId))).resolves.toBeNull();
   });
 
+  it('records account recovery against the live validator', async () => {
+    const { users } = repositories();
+    const tenantId = randomUUID();
+    const user = await unwrap(users.createUser({ tenantId, email: 'recover@example.com', passwordHash: 'old-hash' }));
+
+    expect(user.emailVerifiedAt).toBeNull();
+    expect(user.credentialRevision).toBe(0);
+
+    const verified = await unwrap(users.verifyEmail(user.id, tenantId));
+    expect(verified?.emailVerifiedAt).toBeInstanceOf(Date);
+    expect(verified?.credentialRevision).toBe(0);
+
+    // Concurrent resets must each advance the epoch: a lost increment would leave sessions minted
+    // against the older revision usable after the password they belonged to was replaced.
+    await Promise.all([
+      unwrap(users.replacePassword(user.id, 'hash-a', tenantId)),
+      unwrap(users.replacePassword(user.id, 'hash-b', tenantId)),
+    ]);
+    const reloaded = await unwrap(users.findById(user.id, tenantId));
+    expect(reloaded?.credentialRevision).toBe(2);
+    expect(reloaded?.passwordHash).toMatch(/^hash-[ab]$/u);
+    expect(reloaded?.emailVerifiedAt).toBeInstanceOf(Date);
+  });
+
   it('consumes a one-time token exactly once under concurrency', async () => {
     const { linkTokens, tokens } = repositories();
     await unwrap(

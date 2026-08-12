@@ -51,6 +51,11 @@ export interface AuthUserPersistenceRecord extends Required<AuthUserAccessPolicy
   avatarStatus: AuthUserAvatarStatus;
   createdAt: Date;
   updatedAt: Date;
+  // Optional so an adapter written before account recovery existed still satisfies the record
+  // contract. `toAuthUserRecord` is the single place that resolves the absent value to the
+  // safe default (never verified, revision zero).
+  emailVerifiedAt?: Date | null;
+  credentialRevision?: number;
 }
 
 export interface AuthUserCreateInput extends AuthUserAccessPolicyInput {
@@ -114,6 +119,22 @@ export interface AuthUserRepositoryPort {
   syncProviderAvatar(
     id: string,
     input: { url: string | null; hash: string | null },
+    tenantId?: string,
+  ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError>;
+  verifyEmail(
+    id: string,
+    tenantId?: string,
+    verifiedAt?: Date,
+  ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError>;
+  /**
+   * Replaces the stored credential and advances `credentialRevision` in the same write.
+   *
+   * The counter is the session epoch every access guard compares against, so the two must move
+   * together or a reset leaves previously issued sessions usable.
+   */
+  replacePassword(
+    id: string,
+    passwordHash: string,
     tenantId?: string,
   ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError>;
 }

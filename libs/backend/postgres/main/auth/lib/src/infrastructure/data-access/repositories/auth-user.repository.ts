@@ -1,4 +1,4 @@
-import { EntityManager, raw } from '@mikro-orm/core';
+import { EntityManager, LockMode, raw } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync } from 'neverthrow';
 import type { Locale } from '@app/backend-common-i18n';
@@ -123,6 +123,53 @@ export class AuthUserRepository {
     tenantId: string = DefaultAuthTenantId,
   ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
     return ResultAsync.fromPromise(this.doSyncProviderAvatar(id, input, tenantId), mapAuthUserRepositoryError);
+  }
+
+  verifyEmail(
+    id: string,
+    tenantId: string = DefaultAuthTenantId,
+    verifiedAt: Date = new Date(),
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(this.updateEmailVerifiedAt(id, verifiedAt, tenantId), mapAuthUserRepositoryError);
+  }
+
+  /**
+   * Replaces the credential and advances the session epoch in one flush. Splitting them would
+   * leave a window where either the old password still works or live sessions survive the reset.
+   */
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(this.updatePassword(id, passwordHash, tenantId), mapAuthUserRepositoryError);
+  }
+
+  private async updateEmailVerifiedAt(id: string, verifiedAt: Date, tenantId: string): Promise<AuthUserEntity | null> {
+    const entity = await this.entityManager.findOne(AuthUserEntity, { id, tenantId });
+    if (!entity) {
+      return null;
+    }
+
+    entity.emailVerifiedAt = verifiedAt;
+    await this.entityManager.flush();
+    return this.hydrateAccess(entity);
+  }
+
+  private async updatePassword(id: string, passwordHash: string, tenantId: string): Promise<AuthUserEntity | null> {
+    return this.entityManager.transactional(async (transaction) => {
+      // Two concurrent resets must not settle on the same revision, so the row is locked for the
+      // read-modify-write rather than incremented from a stale in-memory value.
+      const entity = await transaction.findOne(AuthUserEntity, { id, tenantId }, { lockMode: LockMode.PESSIMISTIC_WRITE });
+      if (!entity) {
+        return null;
+      }
+
+      entity.passwordHash = passwordHash;
+      entity.credentialRevision += 1;
+      await transaction.flush();
+      return this.hydrateAccess(entity);
+    });
   }
 
   private async persistUser(input: AuthUserEntityInput): Promise<AuthUserEntity> {

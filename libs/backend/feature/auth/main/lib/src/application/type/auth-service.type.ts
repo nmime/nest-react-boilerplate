@@ -17,3 +17,12 @@ export interface UserActionTokenInput {
   tenantId?: string | null;
   email: string;
 }
+
+export interface UserActionTokenConfirmInput {
+  tenantId?: string | null;
+  token: string;
+}
+
+export interface PasswordResetConfirmInput extends UserActionTokenConfirmInput {
+  password: string;
+}

@@ -343,6 +343,65 @@ describe('AuthService', () => {
     );
   });
 
+  it('redeems an emailed verification code and reports the verified account', async () => {
+    const users = new InMemoryAuthUserStore();
+    const service = new AuthService(users, new InMemoryAuthTokenStore());
+    const registered = await service.register({ email: 'verify@example.com', password: 'password123' });
+
+    const token = await service.issueEmailVerificationToken({ email: 'verify@example.com' });
+    await expect(service.confirmEmailVerification({ token: token ?? '' })).resolves.toMatchObject({
+      id: registered.user.id,
+    });
+
+    expect((await users.findById(registered.user.id))._unsafeUnwrap()?.emailVerifiedAt).toBeInstanceOf(Date);
+  });
+
+  it('redeems an emailed reset code, replaces the password, and advances the credential revision', async () => {
+    const users = new InMemoryAuthUserStore();
+    const service = new AuthService(users, new InMemoryAuthTokenStore());
+    await service.register({ email: 'reset@example.com', password: 'password123' });
+
+    const token = await service.issuePasswordResetToken({ email: 'reset@example.com' });
+    await expect(
+      service.confirmPasswordReset({ token: token ?? '', password: 'replacement123' }),
+    ).resolves.toMatchObject({ email: 'reset@example.com' });
+
+    await expect(service.login({ email: 'reset@example.com', password: 'password123' })).rejects.toThrow(
+      UnauthorizedException,
+    );
+    const session = await service.login({ email: 'reset@example.com', password: 'replacement123' });
+    expect(session.credentialRevision).toBe(1);
+  });
+
+  it('refuses unknown, replayed, and cross-purpose recovery codes', async () => {
+    const users = new InMemoryAuthUserStore();
+    const service = new AuthService(users, new InMemoryAuthTokenStore());
+    await service.register({ email: 'replay@example.com', password: 'password123' });
+
+    await expect(service.confirmEmailVerification({ token: 'never-issued' })).rejects.toThrow(UnauthorizedException);
+
+    const resetToken = (await service.issuePasswordResetToken({ email: 'replay@example.com' })) ?? '';
+    // A reset code must not double as a verification code: the purpose is part of the lookup.
+    await expect(service.confirmEmailVerification({ token: resetToken })).rejects.toThrow(UnauthorizedException);
+
+    await service.confirmPasswordReset({ token: resetToken, password: 'replacement123' });
+    await expect(service.confirmPasswordReset({ token: resetToken, password: 'again12345' })).rejects.toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('fails a recovery confirmation whose account disappeared between issue and redemption', async () => {
+    const users = new InMemoryAuthUserStore();
+    const tokens = new InMemoryAuthTokenStore();
+    const service = new AuthService(users, tokens);
+    const registered = await service.register({ email: 'vanished@example.com', password: 'password123' });
+    const token = (await service.issueEmailVerificationToken({ email: 'vanished@example.com' })) ?? '';
+
+    (users as unknown as { usersById: Map<string, AuthUserRecord> }).usersById.delete(registered.user.id);
+
+    await expect(service.confirmEmailVerification({ token })).rejects.toThrow(NotFoundException);
+  });
+
   it('maps explicit-tenant preference updates, conflicts, and missing users', async () => {
     const updatedRecord = createUserRecord({
       id: 'preferences-id',

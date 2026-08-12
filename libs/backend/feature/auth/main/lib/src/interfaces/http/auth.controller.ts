@@ -20,6 +20,8 @@ import { ApiOkDataResponse, ApiExceptions, ApiProblemTypes, ApiSessionCookieAuth
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import {
   CurrentUser,
+  isDemoPrincipal,
+  principalUserView,
   Public,
   setSessionPrincipal,
   SessionAuthGuard,
@@ -41,12 +43,14 @@ import {
   DiscordCallbackQueryDto,
   LinkTokenDto,
   LoginDto,
+  PasswordResetConfirmDto,
   RegisterDto,
   TelegramBotLinkDto,
   TelegramOidcSessionDto,
   TelegramTmaDto,
   UpdateLocaleDto,
   UpdatePreferencesDto,
+  UserActionTokenConfirmDto,
   UserActionTokenRequestDto,
 } from './dto';
 import {
@@ -60,9 +64,16 @@ import {
   ProviderIdentitiesPayloadDto,
   SupportedLocalesPayloadDto,
   UnlinkProviderIdentityPayloadDto,
+  UserActionConfirmPayloadDto,
   UserActionTokenPayloadDto,
 } from './dto/auth-response.swagger';
-import type { LogoutPayload, MePayload, SupportedLocalesPayload, UserActionTokenPayload } from './type/auth-http.type';
+import type {
+  LogoutPayload,
+  MePayload,
+  SupportedLocalesPayload,
+  UserActionConfirmPayload,
+  UserActionTokenPayload,
+} from './type/auth-http.type';
 import {
   callSessionMethod,
   clearRequestSession,
@@ -327,6 +338,29 @@ export class AuthController {
     return createOkResponse({ issued: true });
   }
 
+  @Post('email-verification/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOkDataResponse(UserActionConfirmPayloadDto)
+  async confirmEmailVerification(
+    @Body() input: UserActionTokenConfirmDto,
+  ): Promise<OkResponse<UserActionConfirmPayload>> {
+    await this.auth.confirmEmailVerification(input);
+    return createOkResponse({ confirmed: true });
+  }
+
+  // Public by necessity: the caller of a password reset is by definition unable to authenticate.
+  // The emailed code is the only credential, and redeeming it revokes every session the account
+  // already had.
+  @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOkDataResponse(UserActionConfirmPayloadDto)
+  async confirmPasswordReset(@Body() input: PasswordResetConfirmDto): Promise<OkResponse<UserActionConfirmPayload>> {
+    await this.auth.confirmPasswordReset(input);
+    return createOkResponse({ confirmed: true });
+  }
+
   @Get('me')
   @ApiOkDataResponse(MePayloadDto)
   @ApiSessionCookieAuth()
@@ -334,7 +368,12 @@ export class AuthController {
   async me(@CurrentUser() principal: AuthenticatedPrincipal): Promise<OkResponse<MePayload>> {
     return createOkResponse({
       principal,
-      user: await this.auth.getUserById(principal.subject, principal.tenantId),
+      // The demo principal has no account row to look up, and the app shell reads its display
+      // name, locale, and theme off this payload — a null user here is what makes a demo
+      // deployment render as signed out.
+      user: isDemoPrincipal(principal)
+        ? principalUserView(principal)
+        : await this.auth.getUserById(principal.subject, principal.tenantId),
     });
   }
 

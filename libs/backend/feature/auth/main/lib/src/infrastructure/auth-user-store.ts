@@ -27,6 +27,13 @@ export interface AuthUserRecord {
   avatarUrl: string | null;
   avatarHash: string | null;
   avatarStatus: 'none' | 'provider' | 'manual' | 'deleted';
+  emailVerifiedAt: Date | null;
+  /**
+   * Session epoch for this account. Every credential replacement advances it, and
+   * `PersistentSessionAccessGuard` rejects a session stamped with an older value, which is what
+   * makes a password reset revoke sessions that were already live.
+   */
+  credentialRevision: number;
 }
 
 export interface AuthUserStoreError {
@@ -64,6 +71,12 @@ export interface AuthUserStore {
     input: { url: string | null; hash: string | null },
     tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  verifyEmail(id: string, tenantId?: string, verifiedAt?: Date): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId?: string,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
 }
 
 export const AuthUserStoreInjectToken = Symbol('AuthUserStoreInjectToken');
@@ -83,6 +96,8 @@ export function toAuthUserRecord(entity: {
   avatarUrl?: string | null;
   avatarHash?: string | null;
   avatarStatus?: 'none' | 'provider' | 'manual' | 'deleted';
+  emailVerifiedAt?: Date | null;
+  credentialRevision?: number;
 }): AuthUserRecord {
   return {
     id: entity.id,
@@ -99,6 +114,8 @@ export function toAuthUserRecord(entity: {
     avatarUrl: entity.avatarUrl || null,
     avatarHash: entity.avatarHash || null,
     avatarStatus: entity.avatarStatus ?? 'none',
+    emailVerifiedAt: entity.emailVerifiedAt ?? null,
+    credentialRevision: entity.credentialRevision ?? 0,
   };
 }
 
@@ -168,6 +185,26 @@ export class PostgresAuthUserStore implements AuthUserStore {
       .syncProviderAvatar(id, input, tenantId)
       .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
   }
+
+  verifyEmail(
+    id: string,
+    tenantId: string = DefaultAuthTenantId,
+    verifiedAt?: Date,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    return this.repository
+      .verifyEmail(id, tenantId, verifiedAt)
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
+  }
+
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    return this.repository
+      .replacePassword(id, passwordHash, tenantId)
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
+  }
 }
 
 @Injectable()
@@ -208,6 +245,8 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       avatarUrl: null,
       avatarHash: null,
       avatarStatus: 'none',
+      emailVerifiedAt: null,
+      credentialRevision: 0,
     };
     this.usersById.set(record.id, record);
     if (key) {
@@ -299,6 +338,41 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       avatarHash: input.hash,
       avatarStatus: input.url ? 'provider' : 'none',
     };
+    this.usersById.set(id, updated);
+    return okAsync(updated);
+  }
+
+  verifyEmail(
+    id: string,
+    tenantId: string = DefaultAuthTenantId,
+    verifiedAt: Date = new Date(),
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    return this.mutate(id, tenantId, (record) => ({ ...record, emailVerifiedAt: verifiedAt }));
+  }
+
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    return this.mutate(id, tenantId, (record) => ({
+      ...record,
+      passwordHash,
+      credentialRevision: record.credentialRevision + 1,
+    }));
+  }
+
+  private mutate(
+    id: string,
+    tenantId: string,
+    change: (record: AuthUserRecord) => AuthUserRecord,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    const record = this.usersById.get(id);
+    if (!record || record.tenantId !== tenantId) {
+      return okAsync(null);
+    }
+
+    const updated = change(record);
     this.usersById.set(id, updated);
     return okAsync(updated);
   }

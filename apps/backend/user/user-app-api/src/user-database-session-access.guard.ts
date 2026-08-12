@@ -10,6 +10,7 @@ import { Reflector } from '@nestjs/core';
 import { HealthRouteMetadataKey } from '@app/backend-common-health';
 import {
   assertRequestTenantMatchesPrincipal,
+  isDemoPrincipal,
   PublicAuthMetadataKey,
   readSessionPrincipal,
   type AuthenticatedPrincipal,
@@ -40,6 +41,14 @@ export class UserDatabaseSessionAccessGuard implements CanActivate {
       throw new UnauthorizedException();
     }
     assertRequestTenantMatchesPrincipal(request, principal);
+
+    // Demo mode mints a principal with no account row; its grants already come from the shared
+    // role matrix, so there is nothing for the database to add. See `isDemoPrincipal`.
+    if (isDemoPrincipal(principal)) {
+      request.user = principal;
+      request.auth = principal;
+      return true;
+    }
 
     const user = await this.users.findById(principal.subject, principal.tenantId);
     if (user.isErr()) {

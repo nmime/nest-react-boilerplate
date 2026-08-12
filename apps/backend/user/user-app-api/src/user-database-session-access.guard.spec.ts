@@ -3,6 +3,7 @@ import { InternalServerErrorException, UnauthorizedException } from '@nestjs/com
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  DefaultDemoSubject,
   PublicAuthMetadataKey,
   type AuthenticatedRequest,
   type AuthUserRepositoryPort,
@@ -80,5 +81,17 @@ describe(UserDatabaseSessionAccessGuard.name, () => {
     await expect(guard.canActivate(contextFor({}))).resolves.toBe(true);
     expect(users.findById).not.toHaveBeenCalled();
     expect(roles.resolveEffectiveAccess).not.toHaveBeenCalled();
+  });
+
+  it('serves a demo-mode request without touching the database', async () => {
+    vi.stubEnv('AUTH_DEMO_MODE', 'true');
+    const request: AuthenticatedRequest = {};
+    const { guard, roles, users } = dependencies();
+
+    await expect(guard.canActivate(contextFor(request))).resolves.toBe(true);
+    expect(users.findById).not.toHaveBeenCalled();
+    expect(roles.resolveEffectiveAccess).not.toHaveBeenCalled();
+    expect(request.user?.subject).toBe(DefaultDemoSubject);
+    expect(request.auth).toBe(request.user);
   });
 });

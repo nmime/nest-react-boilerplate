@@ -31,12 +31,13 @@ export interface ComposedAuthzCatalog {
 }
 
 /**
- * Folds product extensions into the base catalog. Every failure mode here is a configuration
- * mistake that would otherwise surface as a silently powerless principal at request time, so each
- * one throws at composition (module load) instead: a permission may not be redefined, and a role
- * may not be granted a permission no catalog declares.
+ * Folds every extension's permissions into the base list, tracking who defined each key so the
+ * grant pass below can reject an undeclared one and so a redefinition names both parties.
  */
-export const composeAuthzCatalog = ({ permissions, grants, extensions }: AuthzCatalogInput): ComposedAuthzCatalog => {
+const composePermissions = (
+  permissions: readonly PermissionDefinition[],
+  extensions: readonly AuthzExtension[],
+): { composedPermissions: PermissionDefinition[]; definedBy: Map<string, string> } => {
   const composedPermissions = [...permissions];
   const definedBy = new Map<string, string>(permissions.map((entry) => [entry.key, 'the base catalog']));
 
@@ -57,14 +58,25 @@ export const composeAuthzCatalog = ({ permissions, grants, extensions }: AuthzCa
     }
   }
 
+  return { composedPermissions, definedBy };
+};
+
+/**
+ * Folds every extension's grants into the base matrix. A grant may name a role the base matrix
+ * never declared — that is how a product adds a role — but never a permission no catalog defines.
+ */
+const composeRolePermissions = (
+  grants: Readonly<Record<string, readonly string[]>>,
+  extensions: readonly AuthzExtension[],
+  definedBy: ReadonlyMap<string, string>,
+): Map<string, string[]> => {
   const rolePermissions = new Map<string, string[]>(
     Object.entries(grants).map(([role, granted]) => [role, [...granted]]),
   );
 
   for (const extension of extensions) {
     for (const grant of extension.grants ?? []) {
-      const existing = rolePermissions.get(grant.role) ?? [];
-      const merged = new Set(existing);
+      const merged = new Set(rolePermissions.get(grant.role) ?? []);
 
       for (const permission of grant.permissions) {
         if (!definedBy.has(permission)) {
@@ -80,6 +92,18 @@ export const composeAuthzCatalog = ({ permissions, grants, extensions }: AuthzCa
     }
   }
 
+  return rolePermissions;
+};
+
+/**
+ * Folds product extensions into the base catalog. Every failure mode here is a configuration
+ * mistake that would otherwise surface as a silently powerless principal at request time, so each
+ * one throws at composition (module load) instead: a permission may not be redefined, and a role
+ * may not be granted a permission no catalog declares.
+ */
+export const composeAuthzCatalog = ({ permissions, grants, extensions }: AuthzCatalogInput): ComposedAuthzCatalog => {
+  const { composedPermissions, definedBy } = composePermissions(permissions, extensions);
+  const rolePermissions = composeRolePermissions(grants, extensions, definedBy);
   const resolved = Object.fromEntries(rolePermissions);
 
   return {

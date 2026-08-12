@@ -26,8 +26,10 @@ import {
   AdminFeatureFlagsReadPermission,
   AdminFeatureFlagsWritePermission,
   AdminManageAllPermission,
+  baseRolePermissions,
   defaultRolePermissions,
   permissionCatalog,
+  roleKeys,
   type PermissionKey,
 } from '@app/common-authz';
 
@@ -104,13 +106,15 @@ export interface AdminPrincipalClaims {
   permissions?: readonly string[];
 }
 
-// The admin-scoped catalog is the subset of the shared catalog granted to the
-// admin role (everything except the user-scoped `profile:read`), sourced from
-// the shared definitions so resource/action metadata never drifts.
-const adminPermissionKeys = new Set<string>(defaultRolePermissions[AdminRole]);
+// The admin-scoped catalog is the whole composed catalog minus the user-scoped grants of the base
+// `user` role, sourced from the shared definitions so resource/action metadata never drifts. It is
+// deliberately not keyed on what the `admin` role happens to hold: a permission a product registers
+// through `productAuthzExtensions` and grants to a role of its own must still be assignable and
+// CASL-mappable here, or the guard would refuse a principal that legitimately holds it.
+const userScopedPermissionKeys = new Set<string>(baseRolePermissions[UserRole]);
 
 export const adminPermissionCatalog = permissionCatalog
-  .filter((entry) => adminPermissionKeys.has(entry.key))
+  .filter((entry) => !userScopedPermissionKeys.has(entry.key))
   .map((entry) => ({
     permission: entry.key,
     // Resource and action are cast for CASL's benefit: the shared catalog is open to product
@@ -129,29 +133,30 @@ const adminPermissionByName: ReadonlyMap<string, (typeof adminPermissionCatalog)
 
 export const adminRolePermissionMatrix = defaultRolePermissions;
 
-export const adminRoleCatalog = [
-  {
-    role: UserRole,
-    label: 'User',
-    description: 'Baseline application user role.',
-    permissions: [...adminRolePermissionMatrix[UserRole]],
-  },
-  {
-    role: AdminRole,
+// Only the boilerplate's own roles carry human-facing copy. A role composed in through
+// `productAuthzExtensions` has none, so its key stands in and the RBAC UI still lists it.
+const adminRoleDescriptions: Readonly<Record<string, { label: string; description: string }>> = {
+  [UserRole]: { label: 'User', description: 'Baseline application user role.' },
+  [AdminRole]: {
     label: 'Administrator',
     description: 'Back-office administrator with explicit granular grants.',
-    permissions: [...adminRolePermissionMatrix[AdminRole]],
   },
-] as const;
+};
 
-export const adminAssignableRoles = adminRoleCatalog.map((item) => item.role);
-export const adminAssignablePermissions = [
-  UserProfileReadPermission,
-  ...adminPermissionCatalog.map((item) => item.permission),
-] as const;
+export const adminRoleCatalog = roleKeys.map((role) => ({
+  role,
+  label: adminRoleDescriptions[role]?.label ?? role,
+  description: adminRoleDescriptions[role]?.description ?? role,
+  permissions: [...(adminRolePermissionMatrix[role] ?? [])],
+}));
 
-export const isAdminAssignableRole = (value: string): boolean =>
-  adminAssignableRoles.includes(value as (typeof adminAssignableRoles)[number]);
+export const adminAssignableRoles: readonly string[] = adminRoleCatalog.map((item) => item.role);
+
+// Everything an administrator may hand out, including the user-scoped grants the admin surface
+// itself never gates on, in catalog order.
+export const adminAssignablePermissions: readonly string[] = permissionCatalog.map((entry) => entry.key);
+
+export const isAdminAssignableRole = (value: string): boolean => adminAssignableRoles.includes(value);
 
 export const isAdminAssignablePermission = (value: string): boolean => adminAssignablePermissions.includes(value);
 

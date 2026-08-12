@@ -1,5 +1,12 @@
 // @requirements REQ-AUTH-TENANT-004
-import { describe, expect, it } from 'vitest';
+import { Reflector } from '@nestjs/core';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { basePermissionCatalog, defaultRolePermissions } from '@app/common-authz';
+import {
+  DefaultAuthTenantId,
+  type AuthenticatedPrincipal,
+  type PermissionEvaluationContext,
+} from '@app/backend-feature-auth-shared';
 import {
   AdminAuditReadPermission,
   AdminDashboardReadPermission,
@@ -15,6 +22,7 @@ import {
   AdminUsersStatusUpdatePermission,
   UserProfileReadPermission,
   UserRole,
+  adminAssignablePermissions,
   adminPermissionCatalog,
   adminResources,
   adminRoleCatalog,
@@ -28,6 +36,7 @@ import {
   isKnownAdminPermission,
   toAdminProfileView,
   toAdminRbacCatalogView,
+  type AdminAuthorizedRequest,
 } from './index';
 
 const adminPrincipal = {
@@ -251,5 +260,129 @@ describe('@app/backend-feature-admin-shared CASL RBAC', () => {
     expect(policy.roles).toEqual([]);
     expect(policy.permissions).toEqual([AdminDashboardReadPermission, AdminProfileReadPermission]);
     expect(policy.canAccessAdmin).toBe(true);
+  });
+});
+
+// A product permission held by a role other than the boilerplate's own `admin` must still reach
+// every admin surface: assignment, the CASL vocabulary and the guard. The mock composes the real
+// catalog with one extension, so these assert the composition seam rather than a stubbed shape.
+const productExtension = {
+  id: 'ops',
+  permissions: [{ key: 'ops:jobs:read', resource: 'ops.jobs', action: 'read', description: 'Read operations jobs.' }],
+  grants: [{ role: 'operator', permissions: ['ops:jobs:read'] }],
+};
+
+const importWithProductExtension = async (): Promise<typeof import('./index')> => {
+  vi.resetModules();
+  vi.doMock('@app/common-authz', async () => {
+    const actual = await vi.importActual<typeof import('@app/common-authz')>('@app/common-authz');
+    const composed = actual.composeAuthzCatalog({
+      permissions: actual.basePermissionCatalog,
+      grants: actual.baseRolePermissions,
+      extensions: [productExtension],
+    });
+
+    return {
+      ...actual,
+      permissionCatalog: composed.permissions,
+      roleKeys: composed.roles,
+      rolePermissions: composed.rolePermissions,
+      defaultRolePermissions: composed.rolePermissions,
+    };
+  });
+
+  return import('./index');
+};
+
+afterEach(() => {
+  vi.doUnmock('@app/common-authz');
+  vi.resetModules();
+});
+
+describe('@app/backend-feature-admin-shared product permission seam', () => {
+  it('makes a product permission assignable even when the admin role does not hold it', async () => {
+    const admin = await importWithProductExtension();
+
+    expect(admin.adminAssignablePermissions).toContain('ops:jobs:read');
+    expect(admin.isAdminAssignablePermission('ops:jobs:read')).toBe(true);
+    expect(admin.isKnownAdminPermission('ops:jobs:read')).toBe(true);
+  });
+
+  it('maps a product permission onto its CASL action and resource', async () => {
+    const admin = await importWithProductExtension();
+
+    expect(admin.adminPermissionToAbility('ops:jobs:read')).toEqual({ action: 'read', resource: 'ops.jobs' });
+  });
+
+  it('lists a composed product role as assignable, keyed on its own grants', async () => {
+    const admin = await importWithProductExtension();
+
+    expect(admin.adminAssignableRoles).toContain('operator');
+    expect(admin.isAdminAssignableRole('operator')).toBe(true);
+    expect(admin.adminRoleCatalog).toContainEqual({
+      role: 'operator',
+      label: 'operator',
+      description: 'operator',
+      permissions: ['ops:jobs:read'],
+    });
+  });
+
+  it('authorizes an admin route guarded by a product permission', async () => {
+    const admin = await importWithProductExtension();
+    class ExposedAdminRbacGuard extends admin.AdminRbacGuard {
+      evaluate(context: PermissionEvaluationContext): boolean | undefined {
+        return this.evaluateDomainPermission(context);
+      }
+    }
+    const principal: AuthenticatedPrincipal = {
+      subject: 'operator-id',
+      roles: ['operator'],
+      permissions: ['ops:jobs:read'],
+      tenantId: DefaultAuthTenantId,
+    };
+    const request: AdminAuthorizedRequest = {
+      user: principal,
+      adminAbility: admin.createAdminAbility(principal),
+    };
+
+    expect(
+      new ExposedAdminRbacGuard(new Reflector()).evaluate({
+        permission: 'ops:jobs:read',
+        principal,
+        request,
+        requiredRoles: ['operator'],
+      }),
+    ).toBe(true);
+  });
+
+  it('leaves the boilerplate catalog untouched when no product registers anything', () => {
+    expect(adminAssignablePermissions).toEqual(basePermissionCatalog.map((entry) => entry.key));
+    expect(adminRoleCatalog).toEqual([
+      {
+        role: UserRole,
+        label: 'User',
+        description: 'Baseline application user role.',
+        permissions: defaultRolePermissions[UserRole],
+      },
+      {
+        role: AdminRole,
+        label: 'Administrator',
+        description: 'Back-office administrator with explicit granular grants.',
+        permissions: defaultRolePermissions[AdminRole],
+      },
+    ]);
+  });
+
+  it('turns on every access-policy flag for a principal holding the whole admin catalog', () => {
+    const policy = createAdminAccessPolicy({
+      subject: 'admin-id',
+      roles: [AdminRole],
+      permissions: adminPermissionCatalog.map((entry) => entry.permission),
+    });
+
+    const flags = Object.entries(policy).filter(([key]) => key.startsWith('can'));
+
+    expect(flags.length).toBeGreaterThan(0);
+    expect(flags.filter(([, granted]) => granted !== true)).toEqual([]);
   });
 });

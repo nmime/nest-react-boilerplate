@@ -24,6 +24,7 @@ import {
   AdminManageAllPermission,
   normalizeStringList,
 } from '@app/common-authz';
+import { productAdminCapabilityExtensions } from './product-admin-capabilities';
 
 export interface AdminPrincipalClaims {
   subject?: string;
@@ -73,8 +74,6 @@ export interface AdminAccessPolicyIdentity {
 
 export type AdminAccessPolicyFor<Capabilities extends AdminCapabilityMap> = AdminAccessPolicyIdentity &
   Record<keyof Capabilities, boolean>;
-
-export type AdminAccessPolicy = AdminAccessPolicyFor<typeof AdminCapabilityPermissions>;
 
 /** One product's additional admin capabilities. The id names the extension in composition errors. */
 export interface AdminCapabilityExtension<Capabilities extends AdminCapabilityMap = AdminCapabilityMap> {
@@ -165,7 +164,22 @@ export const createAdminAccessPolicyFactory =
     };
   };
 
-export const createAdminAccessPolicy = createAdminAccessPolicyFactory(AdminCapabilityPermissions);
+/**
+ * The map the shipped console actually gates on: the shared capabilities plus whatever the product
+ * registered. Composition throws here, at module load, if an extension clashes with the shared map.
+ */
+export const adminCapabilityPermissions = composeAdminCapabilities({
+  capabilities: AdminCapabilityPermissions,
+  extensions: productAdminCapabilityExtensions,
+});
+
+/**
+ * Declared from the composed map rather than the shared one, so a product capability is visible to
+ * every consumer of the policy — route guards and page props included — without widening them.
+ */
+export type AdminAccessPolicy = AdminAccessPolicyFor<typeof adminCapabilityPermissions>;
+
+export const createAdminAccessPolicy = createAdminAccessPolicyFactory(adminCapabilityPermissions);
 
 export const assertCanReadAdminProfile = (principal?: AdminPrincipalClaims): void => {
   const policy = createAdminAccessPolicy(principal);

@@ -57,6 +57,7 @@
       "@app/backend-mongodb-main-feature-flags": ["libs/backend/mongodb/main/feature-flags/lib/src/index.ts"],
       "@app/backend-mongodb-main-auth": ["libs/backend/mongodb/main/auth/lib/src/index.ts"],
       "@app/backend-mongodb-main-notification": ["libs/backend/mongodb/main/notification/lib/src/index.ts"],
+      "@app/backend-mongodb-main-fiat-currency": ["libs/backend/mongodb/main/fiat-currency/lib/src/index.ts"],
       "@app/backend-feature-telegram-bot": ["libs/backend/feature/telegram/bot/lib/src/index.ts"],
       "@app/backend-feature-telegram-shared": ["libs/backend/feature/telegram/shared/lib/src/index.ts"],
       "@app/backend-feature-user-main": ["libs/backend/feature/user/main/lib/src/index.ts"],

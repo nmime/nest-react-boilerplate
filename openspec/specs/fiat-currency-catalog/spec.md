@@ -22,20 +22,28 @@ caller explicitly asks for it.
 
 - Catalogue order is total: `displayOrder` first, then the code, so a paged read
   cannot drop or repeat a row.
-- A locale with no row falls back along its own chain before falling back to the
-  currency code.
-- Reading the catalogue costs one currency query and one translation query,
-  whatever the page size.
+- A locale the name does not carry falls back along its own chain before falling
+  back to the currency code.
+- Reading the catalogue costs one query, whatever the page size: a currency's
+  localized name and symbol are fields on the currency itself.
+- A write of the localized name or symbol replaces the whole locale map, so a
+  locale the caller omits is a locale they removed.
 
 **Failure behavior:**
 
 - A conversion request naming a currency the catalogue does not hold is refused
   and names the missing code; it is never converted at par.
 
-#### Scenario: A currency nobody has translated
+#### Scenario: A currency nobody has named
 
 - **WHEN** the catalogue is read in a locale that has no name for a currency
 - **THEN** the currency's own code stands in as its name
+
+#### Scenario: An editor removes one language
+
+- **WHEN** a currency is written with a locale map that omits a locale it
+  previously carried
+- **THEN** that locale is gone from the stored name rather than merged back in
 
 #### Scenario: A retired currency
 

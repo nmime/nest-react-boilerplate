@@ -1,28 +1,19 @@
-import { localeFallbackChain } from '@app/common-i18n-runtime';
-import type { FiatCurrency, FiatCurrencyTranslation, LocalizedFiatCurrency } from './fiat-currency.types';
+import { getLocalization } from '@app/common-i18n-runtime';
+import type { FiatCurrency, LocalizedFiatCurrency } from './fiat-currency.types';
 
 /**
  * Resolves a catalogue row for one reader.
  *
- * The lookup walks the locale fallback chain over the locales that actually have a row, so a
- * `ru-RU` reader gets the `ru` name instead of skipping past it to English. A missing translation
- * degrades to the currency code: a list endpoint that 500s because nobody typed a Georgian name
- * for the Lari is a worse outcome than one that shows `GEL`.
+ * `getLocalization` walks the locale fallback chain over the keys the field actually carries, so a
+ * `ru-RU` reader gets the `ru` name instead of skipping past it to `default`. A field with nothing
+ * usable degrades to the currency code: a list endpoint that 500s because nobody typed a Georgian
+ * name for the Lari is a worse outcome than one that shows `GEL`.
  */
-export function localizeFiatCurrency(
-  currency: FiatCurrency,
-  translations: readonly FiatCurrencyTranslation[],
-  locale: string,
-): LocalizedFiatCurrency {
-  const own = translations.filter((entry) => entry.code === currency.code);
-  const byLocale = new Map(own.map((entry) => [entry.locale, entry]));
-  const chain = localeFallbackChain(locale, { supported: own.map((entry) => entry.locale) });
-  const resolved = chain.map((candidate) => byLocale.get(candidate)).find((entry) => entry !== undefined);
-
+export function localizeFiatCurrency(currency: FiatCurrency, locale: string): LocalizedFiatCurrency {
   return {
     code: currency.code,
-    name: resolved?.name ?? currency.code,
-    symbol: resolved?.symbol ?? currency.symbol,
+    name: getLocalization(currency.name, locale) ?? currency.code,
+    symbol: getLocalization(currency.symbol, locale) ?? currency.code,
     imageUrl: currency.imageUrl,
     minorUnitExponent: currency.minorUnitExponent,
     usdPerUnit: currency.usdPerUnit,

@@ -1,3 +1,4 @@
+import type { Localizations } from '@app/common-i18n-runtime';
 import type { CurrencyCode } from '@app/common-money';
 
 /**
@@ -37,8 +38,20 @@ export interface FiatCurrency {
   readonly code: CurrencyCode;
   /** Decimal places in the minor unit. Mirrors `currencyMinorUnitExponent` so a row is self-describing. */
   readonly minorUnitExponent: number;
-  /** Canonical symbol, used when a locale has no override of its own. */
-  readonly symbol: string;
+  /**
+   * The currency's name per locale, as one JSON value rather than a row per language.
+   *
+   * A name is only ever read with the currency it belongs to and is written in the same operation,
+   * so the second table it used to live in bought a join and an ordering constraint for nothing.
+   * {@link Localizations} is the workspace's shape for this: keys are supported locales plus
+   * `default`, and {@link getLocalization} resolves one through the locale fallback chain.
+   */
+  readonly name: Localizations<string>;
+  /**
+   * The symbol per locale. `default` carries the one most locales use; name a locale only where it
+   * genuinely differs, rather than copying `€` into every language.
+   */
+  readonly symbol: Localizations<string>;
   /** Flag or badge for the currency. Not localized — the artwork is the same in every language. */
   readonly imageUrl: string | null;
   /** Inactive currencies stay in the catalogue for historical amounts but are not offered. */
@@ -46,21 +59,6 @@ export interface FiatCurrency {
   readonly displayOrder: number;
   readonly usdPerUnit: string | null;
   readonly rateAsOf: Date | null;
-}
-
-/**
- * A currency's name in one locale.
- *
- * Names live in a table rather than the static i18n catalogues because an operator adds a currency
- * at runtime, and a string added at runtime cannot come from a file that ships with the build.
- * `symbol` is nullable: most locales use the canonical one, and a null says "no override" rather
- * than duplicating it into every row.
- */
-export interface FiatCurrencyTranslation {
-  readonly code: CurrencyCode;
-  readonly locale: string;
-  readonly name: string;
-  readonly symbol: string | null;
 }
 
 /** A catalogue row resolved for one reader. */

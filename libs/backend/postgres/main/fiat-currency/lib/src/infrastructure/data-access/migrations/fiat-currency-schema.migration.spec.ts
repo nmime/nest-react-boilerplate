@@ -35,12 +35,25 @@ describe('fiat currency migrations', () => {
     expect(renderUp()).toContain('constraint "ck__fiat_currencies__rate_pairing"');
   });
 
-  it('stores localized names in their own table keyed by currency and locale', () => {
+  it('carries the localized name and symbol on the row itself', () => {
     const sql = renderUp();
 
-    expect(sql).toContain('create table "fiat_currency_translations"');
-    expect(sql).toContain('constraint "pk__fiat_currency_translations" primary key ("code", "locale")');
-    expect(sql).toContain('constraint "fk__fiat_currency_translations__code"');
+    expect(sql).toContain('"name" jsonb not null');
+    expect(sql).toContain('"symbol" jsonb not null');
+    expect(sql).toContain('constraint "ck__fiat_currencies__name"');
+  });
+
+  it('has no second table for names to fall out of step with', () => {
+    // A row per locale meant a join on the hot list path and an insert order the unit of work had
+    // no dependency to derive. One jsonb value is written and read with the currency it describes.
+    expect(renderUp()).not.toContain('fiat_currency_translations');
+  });
+
+  it('refuses a currency whose name is not a json object', () => {
+    // jsonb accepts `"Euro"`, `42` and `null` as valid documents. Only an object is a locale map,
+    // and the check is the only thing standing between a typo in an admin payload and a list
+    // endpoint that throws on every read.
+    expect(renderUp()).toContain(`jsonb_typeof("name") = 'object'`);
   });
 
   it('keeps rate history append-only and idempotent per source and instant', () => {

@@ -1,9 +1,11 @@
 import { EntitySchema } from '@mikro-orm/core';
+import type { Localizations } from '@app/common-i18n-runtime';
 import { type CurrencyCode, currencyMinorUnitExponent } from '@app/common-money';
 
 export interface FiatCurrencyEntityInput {
   code: CurrencyCode;
-  symbol: string;
+  name?: Localizations<string>;
+  symbol?: Localizations<string>;
   minorUnitExponent?: number;
   imageUrl?: string | null;
   active?: boolean;
@@ -26,7 +28,8 @@ export interface FiatCurrencyEntityInput {
 export class FiatCurrencyEntity {
   code!: CurrencyCode;
   minorUnitExponent = 2;
-  symbol!: string;
+  name: Localizations<string> = {};
+  symbol: Localizations<string> = {};
   imageUrl: string | null = null;
   active = true;
   displayOrder = 0;
@@ -38,7 +41,8 @@ export class FiatCurrencyEntity {
   constructor(input?: FiatCurrencyEntityInput) {
     if (input) {
       this.code = input.code;
-      this.symbol = input.symbol;
+      this.name = input.name ?? {};
+      this.symbol = input.symbol ?? {};
       this.minorUnitExponent = input.minorUnitExponent ?? currencyMinorUnitExponent(input.code);
       this.imageUrl = input.imageUrl ?? null;
       this.active = input.active ?? true;
@@ -55,7 +59,10 @@ export const FiatCurrencyEntitySchema = new EntitySchema<FiatCurrencyEntity>({
   properties: {
     code: { type: 'varchar', length: 3, primary: true },
     minorUnitExponent: { type: 'smallint', fieldName: 'minor_unit_exponent', default: 2 },
-    symbol: { type: 'varchar', length: 16 },
+    // Locale maps, not text. `json` here means jsonb in the Postgres driver, so the value is stored
+    // parsed and the check constraint on the column can see it is an object.
+    name: { type: 'json', defaultRaw: `'{}'::jsonb` },
+    symbol: { type: 'json', defaultRaw: `'{}'::jsonb` },
     imageUrl: { type: 'text', fieldName: 'image_url', nullable: true },
     active: { type: 'boolean', default: true },
     displayOrder: { type: 'integer', fieldName: 'display_order', default: 0 },
@@ -78,6 +85,8 @@ export const FiatCurrencyEntitySchema = new EntitySchema<FiatCurrencyEntity>({
       name: 'ck__fiat_currencies__minor_unit_exponent',
       expression: '"minor_unit_exponent" between 0 and 12',
     },
+    { name: 'ck__fiat_currencies__name', expression: `jsonb_typeof("name") = 'object'` },
+    { name: 'ck__fiat_currencies__symbol', expression: `jsonb_typeof("symbol") = 'object'` },
     {
       name: 'ck__fiat_currencies__usd_per_unit',
       expression: '"usd_per_unit" is null or "usd_per_unit" > 0',

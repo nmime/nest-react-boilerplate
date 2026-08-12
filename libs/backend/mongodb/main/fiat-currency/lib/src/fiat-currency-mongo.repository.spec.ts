@@ -11,13 +11,13 @@ function euroDocument(overrides: Partial<FiatCurrencyDocument> = {}): FiatCurren
   return {
     _id: 'EUR',
     minorUnitExponent: 2,
-    symbol: '€',
+    name: { en: 'Euro', ru: 'Евро' },
+    symbol: { default: '€' },
     imageUrl: null,
     active: true,
     displayOrder: 0,
     usdPerUnit: null,
     rateAsOf: null,
-    translations: [],
     createdAt: now,
     updatedAt: now,
     ...overrides,
@@ -71,7 +71,8 @@ describe('FiatCurrencyMongoPersistence', () => {
       {
         code: 'EUR',
         minorUnitExponent: 2,
-        symbol: '€',
+        name: { en: 'Euro', ru: 'Евро' },
+        symbol: { default: '€' },
         imageUrl: null,
         active: true,
         displayOrder: 0,
@@ -101,56 +102,42 @@ describe('FiatCurrencyMongoPersistence', () => {
     expect(await persistence.findCurrency('EUR')).toMatchObject({ usdPerUnit: '1.08', rateAsOf: now });
   });
 
-  it('reads embedded translations back as flat rows', async () => {
-    const { currencyFind, persistence } = createRepository();
-    currencyFind.mockReturnValue({
-      toArray: () => Promise.resolve([euroDocument({ translations: [{ locale: 'ru', name: 'Евро', symbol: null }] })]),
-    });
-
-    expect(await persistence.listTranslations(['EUR'])).toEqual([
-      { code: 'EUR', locale: 'ru', name: 'Евро', symbol: null },
-    ]);
-  });
-
-  it('does not query for translations of nothing', async () => {
-    const { currencyFind, persistence } = createRepository();
-
-    expect(await persistence.listTranslations([])).toEqual([]);
-    expect(currencyFind).not.toHaveBeenCalled();
-  });
-
   it('creates a currency that is not in the catalogue yet', async () => {
     const { currencyUpdateOne, currencyFindOne, persistence } = createRepository();
     currencyFindOne.mockResolvedValueOnce(null).mockResolvedValueOnce(euroDocument({ _id: 'JPY' }));
 
-    await persistence.upsertCurrency({ code: 'JPY', symbol: '¥' });
+    await persistence.upsertCurrency({ code: 'JPY', name: { en: 'Japanese yen' }, symbol: { default: '¥' } });
 
     expect(currencyUpdateOne).toHaveBeenCalledWith(
       { _id: 'JPY' },
       expect.objectContaining({
-        $set: expect.objectContaining({ symbol: '¥', minorUnitExponent: 0 }),
-        $setOnInsert: expect.objectContaining({ translations: [] }),
+        $set: expect.objectContaining({
+          name: { en: 'Japanese yen' },
+          symbol: { default: '¥' },
+          minorUnitExponent: 0,
+        }),
       }),
       { upsert: true },
     );
   });
 
   it('takes every field the operator states verbatim', async () => {
-    const { currencyUpdateOne, persistence } = createRepository();
+    const { persistence } = createRepository();
 
     const currency = await persistence.upsertCurrency({
       code: 'EUR',
-      symbol: '€',
+      name: { en: 'Euro' },
+      symbol: { default: '€' },
       minorUnitExponent: 3,
       active: false,
       displayOrder: 7,
       imageUrl: 'https://cdn.example/eur.svg',
-      translations: [],
     });
 
     expect(currency).toEqual({
       code: 'EUR',
-      symbol: '€',
+      name: { en: 'Euro' },
+      symbol: { default: '€' },
       minorUnitExponent: 3,
       active: false,
       displayOrder: 7,
@@ -158,8 +145,6 @@ describe('FiatCurrencyMongoPersistence', () => {
       usdPerUnit: null,
       rateAsOf: null,
     });
-    const [, update] = currencyUpdateOne.mock.calls[0] ?? [];
-    expect((update as { $setOnInsert: { translations?: unknown } }).$setOnInsert.translations).toEqual([]);
   });
 
   it('leaves the image and its settings alone when the update does not mention them', async () => {
@@ -174,9 +159,10 @@ describe('FiatCurrencyMongoPersistence', () => {
       }),
     );
 
-    expect(await persistence.upsertCurrency({ code: 'EUR', symbol: '€' })).toEqual({
+    expect(await persistence.upsertCurrency({ code: 'EUR', name: { en: 'Euro' }, symbol: { default: '€' } })).toEqual({
       code: 'EUR',
-      symbol: '€',
+      name: { en: 'Euro' },
+      symbol: { default: '€' },
       minorUnitExponent: 2,
       active: false,
       displayOrder: 4,
@@ -186,39 +172,17 @@ describe('FiatCurrencyMongoPersistence', () => {
     });
   });
 
-  it('stores a localized name that has no symbol of its own', async () => {
-    const { currencyUpdateOne, persistence } = createRepository();
-
-    await persistence.upsertCurrency({ code: 'EUR', symbol: '€', translations: [{ locale: 'de', name: 'Euro' }] });
-
-    const [, update] = currencyUpdateOne.mock.calls[0] ?? [];
-    expect((update as { $set: { translations: unknown[] } }).$set.translations).toEqual([
-      { locale: 'de', name: 'Euro', symbol: null },
-    ]);
-  });
-
-  it('merges named translations into the embedded array', async () => {
+  it('replaces the whole locale map rather than merging it into the stored document', async () => {
+    // $set on the field itself, not a positional update into an array. The port promises a write
+    // replaces the map, and both axes have to keep that promise or a product that switches axis
+    // discovers it cannot delete a locale.
     const { currencyFindOne, currencyUpdateOne, persistence } = createRepository();
-    currencyFindOne.mockResolvedValue(
-      euroDocument({
-        translations: [
-          { locale: 'ru', name: 'Евро', symbol: null },
-          { locale: 'de', name: 'Euro', symbol: null },
-        ],
-      }),
-    );
+    currencyFindOne.mockResolvedValue(euroDocument({ name: { en: 'Euro', ru: 'Евро', default: 'Euro' } }));
 
-    await persistence.upsertCurrency({
-      code: 'EUR',
-      symbol: '€',
-      translations: [{ locale: 'ru', name: 'Евро', symbol: 'евро' }],
-    });
+    await persistence.upsertCurrency({ code: 'EUR', name: { en: 'Euro' }, symbol: { default: '€' } });
 
     const [, update] = currencyUpdateOne.mock.calls[0] ?? [];
-    expect((update as { $set: { translations: unknown[] } }).$set.translations).toEqual([
-      { locale: 'de', name: 'Euro', symbol: null },
-      { locale: 'ru', name: 'Евро', symbol: 'евро' },
-    ]);
+    expect((update as { $set: { name: unknown } }).$set.name).toEqual({ en: 'Euro' });
   });
 
   it('retires a currency without deleting its history', async () => {

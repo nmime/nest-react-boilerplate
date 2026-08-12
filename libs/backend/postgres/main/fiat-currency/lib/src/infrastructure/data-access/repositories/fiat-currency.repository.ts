@@ -4,7 +4,6 @@ import type { CurrencyCode } from '@app/common-money';
 import {
   type FiatCurrency,
   type FiatCurrencyRate,
-  type FiatCurrencyTranslation,
   FiatCurrencyPersistence,
   type ListFiatCurrenciesFilter,
   type ListFiatRateHistoryQuery,
@@ -12,12 +11,13 @@ import {
   type UpsertFiatCurrencyParams,
   fiatRateRatio,
 } from '@app/backend-feature-fiat-currency-shared';
-import { FiatCurrencyEntity, FiatCurrencyRateEntity, FiatCurrencyTranslationEntity } from '../entities';
+import { FiatCurrencyEntity, FiatCurrencyRateEntity } from '../entities';
 
 function toFiatCurrency(entity: FiatCurrencyEntity): FiatCurrency {
   return {
     code: entity.code,
     minorUnitExponent: entity.minorUnitExponent,
+    name: entity.name,
     symbol: entity.symbol,
     imageUrl: entity.imageUrl,
     active: entity.active,
@@ -25,10 +25,6 @@ function toFiatCurrency(entity: FiatCurrencyEntity): FiatCurrency {
     usdPerUnit: entity.usdPerUnit,
     rateAsOf: entity.rateAsOf,
   };
-}
-
-function toFiatCurrencyTranslation(entity: FiatCurrencyTranslationEntity): FiatCurrencyTranslation {
-  return { code: entity.code, locale: entity.locale, name: entity.name, symbol: entity.symbol };
 }
 
 function toFiatCurrencyRate(entity: FiatCurrencyRateEntity): FiatCurrencyRate {
@@ -75,41 +71,26 @@ export class FiatCurrencyPostgresPersistence extends FiatCurrencyPersistence {
     return row ? toFiatCurrency(row) : null;
   }
 
-  async listTranslations(codes: readonly CurrencyCode[]): Promise<FiatCurrencyTranslation[]> {
-    if (codes.length === 0) {
-      return [];
+  async upsertCurrency(params: UpsertFiatCurrencyParams): Promise<FiatCurrency> {
+    const existing = await this.entityManager.findOne(FiatCurrencyEntity, { code: params.code });
+    const currency = existing ?? new FiatCurrencyEntity(params);
+
+    // Assigned rather than merged: the names are one column now, and the port says a write replaces
+    // the whole map. A currency and its names are a single row, so this needs no transaction.
+    currency.name = params.name;
+    currency.symbol = params.symbol;
+    currency.minorUnitExponent = params.minorUnitExponent ?? currency.minorUnitExponent;
+    currency.imageUrl = params.imageUrl === undefined ? currency.imageUrl : params.imageUrl;
+    currency.active = params.active ?? currency.active;
+    currency.displayOrder = params.displayOrder ?? currency.displayOrder;
+
+    if (!existing) {
+      this.entityManager.persist(currency);
     }
 
-    const rows = await this.entityManager.find(FiatCurrencyTranslationEntity, { code: { $in: [...codes] } });
+    await this.entityManager.flush();
 
-    return rows.map(toFiatCurrencyTranslation);
-  }
-
-  async upsertCurrency(params: UpsertFiatCurrencyParams): Promise<FiatCurrency> {
-    return this.entityManager.transactional(async (manager) => {
-      const existing = await manager.findOne(FiatCurrencyEntity, { code: params.code });
-      const currency = existing ?? new FiatCurrencyEntity(params);
-
-      currency.symbol = params.symbol;
-      currency.minorUnitExponent = params.minorUnitExponent ?? currency.minorUnitExponent;
-      currency.imageUrl = params.imageUrl === undefined ? currency.imageUrl : params.imageUrl;
-      currency.active = params.active ?? currency.active;
-      currency.displayOrder = params.displayOrder ?? currency.displayOrder;
-
-      if (!existing) {
-        manager.persist(currency);
-        // Flushed before the translations are touched. The translation rows carry the currency code
-        // as a plain column rather than a mapped relation, so the unit of work has no dependency to
-        // order on and is free to insert a translation before the currency it references — which the
-        // foreign key then rejects. Both statements still share this transaction.
-        await manager.flush();
-      }
-
-      await this.replaceTranslations(manager, params);
-      await manager.flush();
-
-      return toFiatCurrency(currency);
-    });
+    return toFiatCurrency(currency);
   }
 
   async deactivateCurrency(code: CurrencyCode): Promise<boolean> {
@@ -185,30 +166,5 @@ export class FiatCurrencyPostgresPersistence extends FiatCurrencyPersistence {
     });
 
     return rows.map(toFiatCurrencyRate);
-  }
-
-  private async replaceTranslations(manager: EntityManager, params: UpsertFiatCurrencyParams): Promise<void> {
-    if (!params.translations || params.translations.length === 0) {
-      return;
-    }
-
-    const locales = params.translations.map((entry) => entry.locale);
-    const existing = await manager.find(FiatCurrencyTranslationEntity, {
-      code: params.code,
-      locale: { $in: locales },
-    });
-    const byLocale = new Map(existing.map((entry) => [entry.locale, entry]));
-
-    for (const translation of params.translations) {
-      const row = byLocale.get(translation.locale);
-
-      if (row) {
-        row.name = translation.name;
-        row.symbol = translation.symbol ?? null;
-        continue;
-      }
-
-      manager.persist(new FiatCurrencyTranslationEntity({ code: params.code, ...translation }));
-    }
   }
 }

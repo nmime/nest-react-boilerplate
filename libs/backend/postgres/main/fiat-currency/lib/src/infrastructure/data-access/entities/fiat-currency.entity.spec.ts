@@ -5,19 +5,18 @@ import {
   FiatCurrencyEntitySchema,
   FiatCurrencyRateEntity,
   FiatCurrencyRateEntitySchema,
-  FiatCurrencyTranslationEntity,
-  FiatCurrencyTranslationEntitySchema,
 } from './index';
 
 const invokeLifecycleHook = (hook: unknown): unknown => (hook as (() => unknown) | undefined)?.();
 
 describe('FiatCurrencyEntity', () => {
   it('starts a currency active, unrated, and at the ISO minor unit', () => {
-    const entity = new FiatCurrencyEntity({ code: 'EUR', symbol: '€' });
+    const entity = new FiatCurrencyEntity({ code: 'EUR', name: { en: 'Euro' }, symbol: { default: '€' } });
 
     expect(entity).toMatchObject({
       code: 'EUR',
-      symbol: '€',
+      name: { en: 'Euro' },
+      symbol: { default: '€' },
       minorUnitExponent: 2,
       imageUrl: null,
       active: true,
@@ -28,15 +27,26 @@ describe('FiatCurrencyEntity', () => {
   });
 
   it('takes the minor unit from the currency rather than assuming two places', () => {
-    expect(new FiatCurrencyEntity({ code: 'JPY', symbol: '¥' }).minorUnitExponent).toBe(0);
-    expect(new FiatCurrencyEntity({ code: 'BHD', symbol: '.د.ب' }).minorUnitExponent).toBe(3);
+    expect(new FiatCurrencyEntity({ code: 'JPY' }).minorUnitExponent).toBe(0);
+    expect(new FiatCurrencyEntity({ code: 'BHD' }).minorUnitExponent).toBe(3);
+  });
+
+  it('starts the locale maps empty rather than null', () => {
+    // The column is `not null default '{}'`, so an entity that models the absent case as null would
+    // hand the driver a value the table rejects. An empty map is the honest representation of "no
+    // name has been typed yet", and the presentation layer already degrades that to the code.
+    const entity = new FiatCurrencyEntity({ code: 'EUR' });
+
+    expect(entity.name).toEqual({});
+    expect(entity.symbol).toEqual({});
   });
 
   it('preserves explicitly supplied fields', () => {
     const rateAsOf = new Date('2026-08-12T00:00:00.000Z');
     const entity = new FiatCurrencyEntity({
       code: 'EUR',
-      symbol: '€',
+      name: { en: 'Euro', ru: 'Евро' },
+      symbol: { default: '€' },
       minorUnitExponent: 2,
       imageUrl: 'https://cdn.example.test/eur.svg',
       active: false,
@@ -46,6 +56,7 @@ describe('FiatCurrencyEntity', () => {
     });
 
     expect(entity).toMatchObject({
+      name: { en: 'Euro', ru: 'Евро' },
       imageUrl: 'https://cdn.example.test/eur.svg',
       active: false,
       displayOrder: 30,
@@ -68,9 +79,19 @@ describe('FiatCurrencyEntity', () => {
     expect(FiatCurrencyEntitySchema.meta.checks?.map((check) => check.name)).toEqual([
       'ck__fiat_currencies__code',
       'ck__fiat_currencies__minor_unit_exponent',
+      'ck__fiat_currencies__name',
+      'ck__fiat_currencies__symbol',
       'ck__fiat_currencies__usd_per_unit',
       'ck__fiat_currencies__rate_pairing',
     ]);
+  });
+
+  it('stores the locale maps as json so the column check can see an object', () => {
+    // `text` would round-trip the map through JSON.stringify and defeat `jsonb_typeof`, which is
+    // the only guard against an admin payload writing `"Euro"` into a field the reader treats as a
+    // map of locales.
+    expect(FiatCurrencyEntitySchema.meta.properties.name.type).toBe('json');
+    expect(FiatCurrencyEntitySchema.meta.properties.symbol.type).toBe('json');
   });
 
   it('defines timestamp lifecycle hooks', () => {
@@ -79,30 +100,6 @@ describe('FiatCurrencyEntity', () => {
     expect(invokeLifecycleHook(FiatCurrencyEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
     expect(invokeLifecycleHook(FiatCurrencyEntitySchema.meta.properties.updatedAt.onCreate)).toBeInstanceOf(Date);
     expect(invokeLifecycleHook(FiatCurrencyEntitySchema.meta.properties.updatedAt.onUpdate)).toBeInstanceOf(Date);
-  });
-});
-
-describe('FiatCurrencyTranslationEntity', () => {
-  it('leaves the symbol null so a locale inherits the canonical one', () => {
-    const entity = new FiatCurrencyTranslationEntity({ code: 'EUR', locale: 'ru', name: 'Евро' });
-
-    expect(entity).toMatchObject({ code: 'EUR', locale: 'ru', name: 'Евро', symbol: null });
-  });
-
-  it('keeps a locale-specific symbol when one is given', () => {
-    const entity = new FiatCurrencyTranslationEntity({ code: 'EUR', locale: 'ru', name: 'Евро', symbol: 'евро' });
-
-    expect(entity.symbol).toBe('евро');
-  });
-
-  it('defaults every field when constructed without input', () => {
-    expect(new FiatCurrencyTranslationEntity().symbol).toBeNull();
-  });
-
-  it('is keyed by currency and locale together', () => {
-    expect(FiatCurrencyTranslationEntitySchema.meta.tableName).toBe('fiat_currency_translations');
-    expect(FiatCurrencyTranslationEntitySchema.meta.properties.code.primary).toBe(true);
-    expect(FiatCurrencyTranslationEntitySchema.meta.properties.locale.primary).toBe(true);
   });
 });
 

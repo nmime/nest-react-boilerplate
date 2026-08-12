@@ -15,7 +15,8 @@ import type { FiatCurrency } from './fiat-currency.types';
 const currency = (overrides: Partial<FiatCurrency> = {}): FiatCurrency => ({
   code: 'EUR',
   minorUnitExponent: 2,
-  symbol: '€',
+  name: { en: 'Euro' },
+  symbol: { default: '€' },
   imageUrl: null,
   active: true,
   displayOrder: 0,

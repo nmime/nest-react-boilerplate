@@ -3,7 +3,6 @@ import { MongoDatabaseToken } from '@app/backend-mongodb-main';
 import {
   type FiatCurrency,
   type FiatCurrencyRate,
-  type FiatCurrencyTranslation,
   FiatCurrencyPersistence,
   type ListFiatCurrenciesFilter,
   type ListFiatRateHistoryQuery,
@@ -15,16 +14,13 @@ import { type CurrencyCode, currencyMinorUnitExponent } from '@app/common-money'
 import { Inject, Injectable } from '@nestjs/common';
 import type { Collection, Db, Filter } from 'mongodb';
 import { FiatCurrencyCollectionName, FiatCurrencyRateCollectionName } from './fiat-currency-mongo.collection';
-import type {
-  FiatCurrencyDocument,
-  FiatCurrencyRateDocument,
-  FiatCurrencyTranslationDocument,
-} from './fiat-currency-mongo.types';
+import type { FiatCurrencyDocument, FiatCurrencyRateDocument } from './fiat-currency-mongo.types';
 
 function toFiatCurrency(document: FiatCurrencyDocument): FiatCurrency {
   return {
     code: document._id,
     minorUnitExponent: document.minorUnitExponent,
+    name: document.name,
     symbol: document.symbol,
     imageUrl: document.imageUrl,
     active: document.active,
@@ -41,9 +37,9 @@ function toFiatCurrencyRate(document: FiatCurrencyRateDocument): FiatCurrencyRat
 /**
  * The MongoDB side of {@link FiatCurrencyPersistence}.
  *
- * Same port, different shape: translations live inside the currency document instead of a second
- * collection, so `listTranslations` projects them out rather than reading a join table. Nothing
- * above this class can tell the difference, which is the point of the port.
+ * Same port, same shape: the localized name and symbol are locale maps on the currency document,
+ * as they are jsonb columns on the other axis. Nothing above this class can tell which axis it is
+ * talking to, which is the point of the port.
  *
  * Rate writes are two statements without a transaction. A replica set would give one, but a
  * single-node deployment cannot, and the pair is ordered so the failure mode is benign: the
@@ -76,18 +72,6 @@ export class FiatCurrencyMongoPersistence extends FiatCurrencyPersistence {
     return document ? toFiatCurrency(document) : null;
   }
 
-  async listTranslations(codes: readonly CurrencyCode[]): Promise<FiatCurrencyTranslation[]> {
-    if (codes.length === 0) {
-      return [];
-    }
-
-    const documents = await this.currencies.find({ _id: { $in: [...codes] } }).toArray();
-
-    return documents.flatMap((document) =>
-      document.translations.map((translation) => ({ code: document._id, ...translation })),
-    );
-  }
-
   async upsertCurrency(params: UpsertFiatCurrencyParams): Promise<FiatCurrency> {
     const existing = await this.currencies.findOne({ _id: params.code });
     const now = new Date();
@@ -95,6 +79,9 @@ export class FiatCurrencyMongoPersistence extends FiatCurrencyPersistence {
     // one thing while the collection holds another.
     const resolved = {
       code: params.code,
+      // Whole-value $set, not a positional update into an array: the port says a write replaces the
+      // map, so a locale the caller left out is a locale they deleted.
+      name: params.name,
       symbol: params.symbol,
       minorUnitExponent:
         params.minorUnitExponent ?? existing?.minorUnitExponent ?? currencyMinorUnitExponent(params.code),
@@ -105,29 +92,20 @@ export class FiatCurrencyMongoPersistence extends FiatCurrencyPersistence {
       usdPerUnit: existing?.usdPerUnit ?? null,
       rateAsOf: existing?.rateAsOf ?? null,
     };
-    const translations =
-      params.translations && params.translations.length > 0
-        ? mergeTranslations(existing?.translations ?? [], params.translations)
-        : undefined;
 
     await this.currencies.updateOne(
       { _id: params.code },
       {
         $set: {
+          name: resolved.name,
           symbol: resolved.symbol,
           minorUnitExponent: resolved.minorUnitExponent,
           active: resolved.active,
           displayOrder: resolved.displayOrder,
           imageUrl: resolved.imageUrl,
           updatedAt: now,
-          ...(translations ? { translations } : {}),
         },
-        $setOnInsert: {
-          usdPerUnit: null,
-          rateAsOf: null,
-          createdAt: now,
-          ...(translations ? {} : { translations: [] }),
-        },
+        $setOnInsert: { usdPerUnit: null, rateAsOf: null, createdAt: now },
       },
       { upsert: true },
     );
@@ -217,17 +195,4 @@ function toCurrencyFilter(filter: ListFiatCurrenciesFilter): Filter<FiatCurrency
   }
 
   return query as Filter<FiatCurrencyDocument>;
-}
-
-/** Named locales win; every other locale on the document is left exactly as it was. */
-function mergeTranslations(
-  existing: readonly FiatCurrencyTranslationDocument[],
-  incoming: NonNullable<UpsertFiatCurrencyParams['translations']>,
-): FiatCurrencyTranslationDocument[] {
-  const replaced = new Set(incoming.map((entry) => entry.locale));
-
-  return [
-    ...existing.filter((entry) => !replaced.has(entry.locale)),
-    ...incoming.map((entry) => ({ locale: entry.locale, name: entry.name, symbol: entry.symbol ?? null })),
-  ];
 }

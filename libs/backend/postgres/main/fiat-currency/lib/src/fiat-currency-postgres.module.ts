@@ -1,11 +1,7 @@
 import { FiatCurrencyPersistence } from '@app/backend-feature-fiat-currency-shared';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
-import {
-  FiatCurrencyEntitySchema,
-  FiatCurrencyRateEntitySchema,
-  FiatCurrencyTranslationEntitySchema,
-} from './infrastructure/data-access/entities';
+import { FiatCurrencyEntitySchema, FiatCurrencyRateEntitySchema } from './infrastructure/data-access/entities';
 import { FiatCurrencyPostgresPersistence } from './infrastructure/data-access/repositories';
 
 /**
@@ -15,13 +11,7 @@ import { FiatCurrencyPostgresPersistence } from './infrastructure/data-access/re
  * lets the same service run unchanged on the MongoDB axis.
  */
 @Module({
-  imports: [
-    MikroOrmModule.forFeature([
-      FiatCurrencyEntitySchema,
-      FiatCurrencyTranslationEntitySchema,
-      FiatCurrencyRateEntitySchema,
-    ]),
-  ],
+  imports: [MikroOrmModule.forFeature([FiatCurrencyEntitySchema, FiatCurrencyRateEntitySchema])],
   providers: [
     FiatCurrencyPostgresPersistence,
     { provide: FiatCurrencyPersistence, useExisting: FiatCurrencyPostgresPersistence },

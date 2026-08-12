@@ -12,7 +12,7 @@ context: |
   A normative change is not complete until its required evidence is fresh
   and passing for the exact source commit.
   Every executable test names at least one durable requirement, and each
-  requirement owns its exact Nx project scope in a version 2 evidence sidecar.
+  requirement owns its exact Nx project scope in a version 3 evidence sidecar.
 
 rules:
   proposal:

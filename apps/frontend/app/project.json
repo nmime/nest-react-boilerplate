@@ -6,6 +6,7 @@
   "tags": ["platform:frontend", "type:frontend-app", "scope:user", "fsd:layer:app"],
   "// targets": "to see all targets run: nx show project user-app --web",
   "// e2e marker": "The rendered page must contain the configured product brand (shell header + document title), not reference-page copy, so replacing the reference page never touches this target. Rebrand with VITE_PRODUCT_NAME.",
+  "// e2e routes": "The coverage run walks every route the app links to, so a page added to the route registry raises covered and total together. A page nothing links to (an alias, an OAuth callback) is named with --visit <path>; --skip-visit <path> drops a linked one.",
   "targets": {
     "test": {
       "executor": "nx:run-commands",

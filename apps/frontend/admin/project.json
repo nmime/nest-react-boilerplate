@@ -5,6 +5,7 @@
   "projectType": "application",
   "tags": ["platform:frontend", "type:frontend-app", "scope:admin", "fsd:layer:app"],
   "// targets": "to see all targets run: nx show project admin-app --web",
+  "// e2e routes": "The coverage run walks every route the app links to. Signed out, the admin shell renders the access-denied page and links nothing, so this run stays on the entry point until a product supplies --visit <path>.",
   "targets": {
     "test": {
       "executor": "nx:run-commands",

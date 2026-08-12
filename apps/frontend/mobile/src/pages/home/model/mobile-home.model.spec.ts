@@ -1,5 +1,6 @@
 // @requirements REQ-FRONTEND-NATIVE-006
 import { describe, expect, it } from 'vitest';
+import { supportedLocales } from '@app/frontend-runtime';
 
 import { mobileCapabilityCards, mobileLocaleOptions } from './mobile-home.model';
 
@@ -12,8 +13,14 @@ describe('mobile home model', () => {
     ]);
   });
 
-  it('offers the shared en/ru locale switch options', () => {
-    expect(mobileLocaleOptions.map((option) => option.locale)).toEqual(['en', 'ru']);
-    expect(mobileLocaleOptions.map((option) => option.label)).toEqual(['EN', 'RU']);
+  it('offers every configured locale, in the order the workspace declares them', () => {
+    expect(mobileLocaleOptions.map((option) => option.locale)).toEqual([...supportedLocales]);
+  });
+
+  // `toUpperCase()` rendered a script-qualified locale as "UZ-CYRL"; the endonym is what a switcher
+  // is supposed to show, and it needs no per-locale catalog entry.
+  it('labels each locale with its endonym rather than an uppercased tag', () => {
+    expect(mobileLocaleOptions.find((option) => option.locale === 'en')?.label).toBe('English');
+    expect(mobileLocaleOptions.map((option) => option.label)).not.toContain('EN');
   });
 });

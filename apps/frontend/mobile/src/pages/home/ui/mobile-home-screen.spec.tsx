@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 import { MobileRuntimeProvider } from '../../../shared';
+import { mobileLocaleOptions } from '../model/mobile-home.model';
 
 vi.mock('@app/frontend-ui-native', async () => {
   // Mock only the Tamagui React wrappers; use the REAL shared design tokens so
@@ -79,7 +80,10 @@ describe('mobile home screen', () => {
   it('switches locale through the shared preference model', async () => {
     await renderScreen();
 
-    fireEvent.click(screen.getByText('RU'));
+    // Read the label back off the model instead of restating it: the switcher renders whatever
+    // label the shared helper derives, and this assertion must not turn into a locale enumeration.
+    const russian = mobileLocaleOptions.find((option) => option.locale === 'ru');
+    fireEvent.click(screen.getByText(russian?.label ?? 'ru'));
 
     expect(applyUserLocale).toHaveBeenCalledWith('ru');
     expect(persistUserLocale).toHaveBeenCalledWith('ru');

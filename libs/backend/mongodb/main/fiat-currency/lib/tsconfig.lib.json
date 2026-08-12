@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../../../../dist/out-tsc/libs/backend/mongodb/main/fiat-currency",
+    "types": ["node"],
+    "declaration": true
+  },
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.component-spec.ts"],
+  "include": ["src/**/*.ts"]
+}

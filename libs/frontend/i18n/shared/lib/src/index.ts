@@ -5,6 +5,9 @@ export {
   interpolate,
   isLanguage,
   Language,
+  localeDisplayName,
+  localeFallbackChain,
+  localeLabel,
   normalizeLocale,
   parseAcceptLanguage,
   resolveLocale,
@@ -14,10 +17,13 @@ export {
   resolveLanguageFromHeaders,
   resolveLanguageFromRequest,
   supportedLocales,
+  toBcp47,
 } from '@app/common-i18n-runtime';
 export type {
   Locale,
+  LocaleFallbackOptions,
   LocaleHeaders,
+  LocaleLabelOptions,
   Localizations,
   LocaleRequestSource,
   TranslateOptions,

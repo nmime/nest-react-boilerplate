@@ -1,0 +1,55 @@
+{
+  "residuePatterns": [
+    {
+      "pattern": "[іїєґўњљџѣѳѵІЇЄҐЎЊЉЏѢѲѴ]",
+      "label": "non-Russian Cyrillic letter; the string was copied from another Cyrillic locale"
+    },
+    {
+      "pattern": "[А-Яа-яЁё][A-Za-z]|[A-Za-z][А-Яа-яЁё]",
+      "label": "Latin and Cyrillic letters run together inside one word; separate them or review the term"
+    }
+  ],
+  "foreignProseMarkers": [
+    "account",
+    "cancel",
+    "continue",
+    "delete",
+    "error",
+    "failed",
+    "invalid",
+    "loading",
+    "password",
+    "please",
+    "required",
+    "save",
+    "settings",
+    "sign in",
+    "sign out",
+    "the",
+    "your"
+  ],
+  "reviewedTechnicalTerms": ["/account link", "/account status"],
+  "untranslatedKeys": [
+    "admin.audit.filter.uuidPlaceholder",
+    "admin.loginAnalytics.column.geo",
+    "admin.loginAnalytics.detail.userAgent",
+    "admin.notification.option.provider.appleApns",
+    "admin.notification.option.provider.googleFcm",
+    "admin.notification.option.provider.mailPace",
+    "admin.notification.option.provider.resend",
+    "admin.problemPresentations.column.endpoint",
+    "admin.problemPresentations.display.toast",
+    "admin.profile.emailLine",
+    "admin.users.column.email",
+    "auth.provider.discord",
+    "auth.provider.telegram",
+    "auth.social.protocol.oauth",
+    "landing.productName",
+    "mobile.appName",
+    "tma.title",
+    "user.appName",
+    "user.form.email",
+    "user.form.emailPlaceholder",
+    "user.form.registerEmailPlaceholder"
+  ]
+}

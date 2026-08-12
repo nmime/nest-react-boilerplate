@@ -196,6 +196,11 @@ registerScript(
   'Run a selected-provider backup/restore drill or CI-safe dry-run.',
   'db/restore-drill.ts',
 );
+registerScript(
+  'i18n:catalogs',
+  'Regenerate every artifact derived from the locale axis; --check reports drift instead.',
+  'i18n/catalogs.ts',
+);
 registerScript('dev:database', 'Start the setup-selected local database.', 'dev/database.ts');
 registerScript('dev:fullstack', 'Run the local fullstack dev helper.', 'dev/fullstack.ts');
 registerScript('docker:smoke', 'Run Docker smoke checks.', 'docker/smoke.ts');

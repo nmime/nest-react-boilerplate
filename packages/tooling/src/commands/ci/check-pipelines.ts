@@ -43,6 +43,7 @@ export function declaredPipelineFiles(workspaceRoot: string): string[] {
     files.add(forge.pipeline);
     if (forge.releasePipeline !== undefined) files.add(forge.releasePipeline);
     if (forge.promotionPipeline !== undefined) files.add(forge.promotionPipeline);
+    if (forge.provenancePipeline !== undefined) files.add(forge.provenancePipeline);
   }
   for (const lane of Object.values(contract.lanes)) {
     for (const executor of Object.values(lane.executors)) files.add(executor.file);
@@ -57,6 +58,7 @@ export interface ConfiguredForge {
   pipeline: string;
   releasePipeline?: string;
   promotionPipeline?: string;
+  provenancePipeline?: string;
 }
 
 /**
@@ -86,6 +88,7 @@ export function configuredForges(workspaceRoot: string): ConfiguredForge[] {
       pipeline: forge.pipeline,
       ...(forge.releasePipeline === undefined ? {} : { releasePipeline: forge.releasePipeline }),
       ...(forge.promotionPipeline === undefined ? {} : { promotionPipeline: forge.promotionPipeline }),
+      ...(forge.provenancePipeline === undefined ? {} : { provenancePipeline: forge.provenancePipeline }),
     }));
 }
 
@@ -126,6 +129,9 @@ export function collectForgeSources(
       ...(forge.promotionPipeline === undefined
         ? {}
         : { promotionPipeline: readIfPresent(workspaceRoot, forge.promotionPipeline) }),
+      ...(forge.provenancePipeline === undefined
+        ? {}
+        : { provenancePipeline: readIfPresent(workspaceRoot, forge.provenancePipeline) }),
       laneFiles,
     };
   }

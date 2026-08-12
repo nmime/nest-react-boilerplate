@@ -186,6 +186,38 @@ describe('cross-forge gate parity', () => {
     );
   });
 
+  // Release provenance — cut a release only from the exact revision whose gates passed — is a
+  // forge-neutral control, but the pipeline that cuts a release is not always the pipeline that
+  // builds its images: on GitHub the two are separate workflow files.
+  it('checks a provenance-scoped control against the pipeline that cuts the release', () => {
+    const raw = JSON.parse(JSON.stringify(contract)) as Record<string, unknown>;
+    const provenanceAware = parseCiContract({
+      ...raw,
+      forges: {
+        github: { ...contract.forges.github, provenancePipeline: '.github/workflows/release.yml' },
+        gitlab: { ...contract.forges.gitlab, provenancePipeline: '.gitlab-ci.yml' },
+      },
+      supplyChain: [
+        {
+          id: 'release-exact-revision',
+          requirement: 'A release is cut from the exact revision whose merge-blocking gates passed.',
+          scope: 'provenance',
+          evidence: ['git rev-parse HEAD'],
+        },
+      ],
+    });
+
+    const report = evaluateParity(provenanceAware, {
+      github: { ...githubSources, provenancePipeline: 'test "$(git rev-parse HEAD)" = "$VERIFIED_SHA"' },
+      gitlab: gitlabSources,
+    });
+
+    assert.deepEqual(
+      report.problems.map(({ code, forge, control }) => ({ code, forge, control })),
+      [{ code: 'supply-chain-lane-missing', forge: 'gitlab', control: 'release-exact-revision' }],
+    );
+  });
+
   it('does not demand a forge-restricted supply-chain control from the forges it excludes', () => {
     const restricted = parseCiContract({
       ...JSON.parse(JSON.stringify(contract)),

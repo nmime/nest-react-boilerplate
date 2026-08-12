@@ -77,16 +77,23 @@ requirements, evidence lane, commands, outcomes, and execution time.
 
 ### Requirement: [REQ-ASSURANCE-RELEASE-003] Releases consume verified source only
 
-A release SHALL run only after the required CI workflow succeeds and SHALL
-checkout the exact successful workflow commit while confirming it is still the
-current main revision.
+Every configured forge SHALL cut a release only after the merge-blocking gates
+of that exact source revision succeed, SHALL build from that revision rather
+than from a branch tip re-resolved later, and SHALL refuse a revision the
+default branch has already moved past.
 
 **Evidence profile:** acceptance, security, operations
 
 **Invariants:**
 
 - Release automation never creates an untested source-code commit.
-- A stale successful workflow cannot release a newer or replaced main revision.
+- A stale gate result cannot release a newer or replaced default-branch
+  revision.
+- What "release provenance" means is stated once, forge-neutrally, in the CI
+  gate descriptor: each control names the release pipeline evidence it demands,
+  and a forge that cannot carry a control — because its release runs inside the
+  very pipeline that ran the gates, say — records the exclusion and its reason
+  there instead of leaving the control unchecked.
 - Every merge-blocking gate — commit conventions, specification validation,
   typecheck, and the repository-wide test sweep among them — is inventoried in
   one forge-neutral descriptor, and every configured forge renders that
@@ -97,14 +104,14 @@ current main revision.
 
 - Any provenance mismatch stops the release before publication.
 
-#### Scenario: Successful CI provenance
+#### Scenario: Verified-revision provenance
 
-- **WHEN** release automation receives a successful main CI workflow
-- **THEN** it verifies and releases only that workflow source SHA
+- **WHEN** a configured forge's release pipeline runs
+- **THEN** it releases only the exact revision whose gates it verified
 
-#### Scenario: Main moved after validation
+#### Scenario: Default branch moved after validation
 
-- **WHEN** the verified SHA is no longer current main
+- **WHEN** the verified revision is no longer the default-branch head
 - **THEN** release automation refuses to continue
 
 ### Requirement: [REQ-ASSURANCE-INVENTORY-004] Executable tests are fully traceable

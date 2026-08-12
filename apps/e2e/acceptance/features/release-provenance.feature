@@ -1,11 +1,11 @@
 @REQ-ASSURANCE-RELEASE-003
 Feature: Releases use verified source
 
-  Rule: A successful workflow authorizes only its own current main revision
+  Rule: Every configured forge releases only its own verified, current revision
 
     @SCN-ASSURANCE-RELEASE-01
     Scenario: Release provenance is exact
-      Given the release workflow
-      When its successful CI provenance is inspected
-      Then it checks out the successful workflow SHA
-      And it refuses a SHA that is no longer current main
+      Given the release provenance controls in the CI gate descriptor
+      When every configured forge's release pipeline is inspected
+      Then each release is cut from the exact revision its gates verified
+      And a revision the default branch has moved past is refused

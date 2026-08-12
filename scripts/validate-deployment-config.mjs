@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createJiti } from 'jiti';
 import { composeDeclaredSecrets, composeMountedSecrets, parseDeclaredSecrets } from './declared-secrets.mjs';
 import { renderNginxFullstackConfig } from './generate-nginx-config.mjs';
@@ -7,16 +9,26 @@ import { renderNginxFullstackConfig } from './generate-nginx-config.mjs';
 const jiti = createJiti(import.meta.url);
 const { appPublicHostname } = await jiti.import('../packages/tooling/src/setup/catalog.ts');
 const { defaultDeploymentConfig } = await jiti.import('../packages/tooling/src/setup/schema.ts');
+const { configuredForges, loadCiContract } = await jiti.import(
+  '../packages/tooling/src/commands/ci/check-pipelines.ts',
+);
+const { extractJob } = await jiti.import('../packages/tooling/src/commands/ci/pipeline-contract.ts');
 const documentedDomain = {
   publicDomain: defaultDeploymentConfig.publicDomain,
   primaryApp: defaultDeploymentConfig.primaryApp,
 };
 
-const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+// The checkout under validation. It is this script's own parent by default; `--root=` points it
+// at a materialized checkout instead, which is how the forge-neutral assertions below are proved
+// against a tree that ships a different set of pipelines than this one.
+const rootArgument = process.argv.find((arg) => arg.startsWith('--root='))?.split('=', 2)[1];
+const rootDir = resolve(rootArgument ?? join(dirname(fileURLToPath(import.meta.url)), '..'));
+const workspacePath = (path) => join(rootDir, path);
+const read = (path) => readFileSync(workspacePath(path), 'utf8');
 const treeContainsFiles = (root) =>
   existsSync(root) &&
   readdirSync(root, { withFileTypes: true }).some(
-    (entry) => !entry.isDirectory() || treeContainsFiles(new URL(`${entry.name}/`, root)),
+    (entry) => !entry.isDirectory() || treeContainsFiles(join(root, entry.name)),
   );
 const has = (text, needle, label = needle) =>
   assert.ok(text.includes(needle), `Missing expected deployment config: ${label}`);
@@ -123,8 +135,8 @@ assert.ok(
   'Docker source builds must not fall back to the all-workspace manifest tree.',
 );
 assert.ok(
-  !treeContainsFiles(new URL('../docker/workspace-manifests/', import.meta.url)) &&
-    !existsSync(new URL('../scripts/sync-docker-workspace-manifests.mjs', import.meta.url)),
+  !treeContainsFiles(workspacePath('docker/workspace-manifests')) &&
+    !existsSync(workspacePath('scripts/sync-docker-workspace-manifests.mjs')),
   'Retired Docker workspace manifest artifacts and their synchronizer must be removed.',
 );
 has(
@@ -177,19 +189,41 @@ has(
   `sed -i "s/script-src 'self';/script-src 'self' 'unsafe-inline';/g"`,
   'frontend image admits Astro hydration only behind the generated hash policy',
 );
-const ciWorkflow = read('.github/workflows/ci.yml');
-const runtimeOpsJob = section(ciWorkflow, '  ops-gates:', '  fullstack-e2e:');
-for (const expected of [
-  "AUTH_TELEGRAM_ENABLED: 'true'",
-  "TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'",
-  "VITE_TELEGRAM_AUTH_ENABLED: 'true'",
-  "NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='",
-  'CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate',
-  "SITE_APP_PORT: '4203'",
-  'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app',
-]) {
-  has(runtimeOpsJob, expected, `runtime QA Telegram TMA fixture ${expected}`);
+/**
+ * The runtime QA fixture is a property of whichever job runs the ops gates, not of one forge's
+ * YAML. scripts/ci/gates.json already says which job that is on each forge, so ask it instead of
+ * opening `.github/workflows/ci.yml` by name — a checkout that keeps a single non-GitHub forge
+ * used to die here on ENOENT before it asserted anything.
+ */
+const ciContract = loadCiContract(rootDir);
+const opsGate = ciContract.gates.find(({ id }) => id === 'world-class-ops');
+assert.ok(opsGate, 'scripts/ci/gates.json must inventory the world-class-ops gate that runs the runtime QA fixture');
+const runtimeFixtureForges = [];
+const releasePipelinesValidated = [];
+const releasePipelinesDeferred = [];
+for (const forge of configuredForges(rootDir)) {
+  const jobId = opsGate.jobs[forge.id];
+  // An unmapped gate is ci-pipeline-parity's finding to report, not this validator's.
+  if (jobId === undefined) continue;
+  const runtimeOpsJob = extractJob(read(forge.pipeline), jobId, forge.jobStyle);
+  assert.ok(runtimeOpsJob, `${forge.pipeline} declares no job "${jobId}" to carry the runtime QA fixture`);
+  for (const expected of [
+    "AUTH_TELEGRAM_ENABLED: 'true'",
+    "TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'",
+    "VITE_TELEGRAM_AUTH_ENABLED: 'true'",
+    "NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='",
+    'CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate',
+    "SITE_APP_PORT: '4203'",
+    'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app',
+  ]) {
+    has(runtimeOpsJob, expected, `${forge.id} runtime QA Telegram TMA fixture ${expected}`);
+  }
+  runtimeFixtureForges.push(forge.id);
 }
+assert.ok(
+  runtimeFixtureForges.length > 0,
+  'No configured forge runs the runtime QA gates; scripts/ci/gates.json must map world-class-ops to a job on a pipeline this checkout ships.',
+);
 const assertNginxHardening = (text, label) => {
   for (const required of [
     'add_header X-Content-Type-Options "nosniff" always;',
@@ -732,7 +766,7 @@ for (const { app, healthProvider, modulePath, configPath, localControllerPath } 
   },
 ]) {
   assert.ok(
-    !existsSync(new URL(`../${localControllerPath}`, import.meta.url)),
+    !existsSync(workspacePath(localControllerPath)),
     `${app} should use the shared BaseHealthController instead of an app-local health.controller.ts`,
   );
 
@@ -1104,14 +1138,8 @@ if (validateHelmStatic) {
 
   const productionValues = read('.helm/values-production.yaml');
   has(productionValues, 'readSecrets: false', 'production Coroot Secret access remains disabled');
-  const releaseWorkflow = read('.github/workflows/release-images.yml');
   const releaseImagePlan = read('scripts/release-image-plan.mjs');
   const setupCatalog = read('packages/tooling/src/setup/catalog.ts');
-  has(
-    releaseWorkflow,
-    "VITE_TELEGRAM_AUTH_ENABLED: ${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}",
-    'release user-app supports an explicit Telegram auth build flag',
-  );
   const frontendDomainAssignments = [
     ['landingApp', 'landing-app', 'example.com'],
     ['siteApp', 'site-app', 'site-app.example.com'],
@@ -1140,22 +1168,57 @@ if (validateHelmStatic) {
   has(setupCatalog, 'releaseImage:', 'setup catalog owns immutable release image metadata');
   has(releaseImagePlan, 'Object.values(appCatalog)', 'release image plan derives app images from the setup catalog');
   has(setupCatalog, "target: 'site-runtime'", 'setup catalog uses the actual Vike runtime Docker target');
-  has(releaseWorkflow, 'image-plan', 'release workflow selects affected images before build');
-  has(
-    releaseWorkflow,
-    'pnpm nrb closure install',
-    'release workflow fails closed and installs a clean selected dependency tree',
-  );
-  has(releaseWorkflow, 'generate-bake-file.mjs --only', 'release workflow generates its selected Bake plan');
-  has(releaseWorkflow, 'docker buildx bake -f docker-bake.json', 'release workflow builds through selected Bake only');
+  /**
+   * "The release pipeline plans images before it builds them" is a claim about every forge that
+   * ships one, so each configured forge's declared release pipeline is read rather than one
+   * forge's file. Needles written in GitHub Actions dialect stay behind the jobStyle guard, the
+   * way scripts/validate-gitops-config.mjs already does it; their cross-forge half is the
+   * `supplyChain` inventory in scripts/ci/gates.json, which check-pipelines.mjs evaluates.
+   */
+  for (const forge of configuredForges(rootDir)) {
+    if (forge.releasePipeline === undefined) {
+      releasePipelinesDeferred.push(forge.id);
+      continue;
+    }
+    const releasePipeline = read(forge.releasePipeline);
+    releasePipelinesValidated.push(forge.id);
+    has(releasePipeline, 'image-plan', `${forge.id} release pipeline selects affected images before build`);
+    has(
+      releasePipeline,
+      'pnpm nrb closure install',
+      `${forge.id} release pipeline fails closed and installs a clean selected dependency tree`,
+    );
+    has(
+      releasePipeline,
+      'generate-bake-file.mjs --only',
+      `${forge.id} release pipeline generates its selected Bake plan`,
+    );
+    has(
+      releasePipeline,
+      'docker buildx bake -f docker-bake.json',
+      `${forge.id} release pipeline builds through selected Bake only`,
+    );
+    assert.ok(
+      !releasePipeline.includes('docker/build-push-action') && !releasePipeline.includes('target: workspace'),
+      `${forge.id} release pipeline must not prime an unscoped direct Docker target`,
+    );
+    if (forge.jobStyle !== 'github') continue;
+    has(
+      releasePipeline,
+      "VITE_TELEGRAM_AUTH_ENABLED: ${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}",
+      `${forge.id} release user-app supports an explicit Telegram auth build flag`,
+    );
+    has(
+      releasePipeline,
+      'cache-to=type=gha,mode=max,scope=release-',
+      `${forge.id} release pipeline persists the shared BuildKit dependency cache for reuse across the bake build`,
+    );
+  }
   assert.ok(
-    !releaseWorkflow.includes('docker/build-push-action') && !releaseWorkflow.includes('target: workspace'),
-    'release workflow must not prime an unscoped direct Docker target',
-  );
-  has(
-    releaseWorkflow,
-    'cache-to=type=gha,mode=max,scope=release-',
-    'release workflow persists the shared BuildKit dependency cache for reuse across the bake build',
+    releasePipelinesValidated.length > 0,
+    `No configured forge declares a release pipeline${
+      releasePipelinesDeferred.length > 0 ? ` (${releasePipelinesDeferred.join(', ')} declare none)` : ''
+    }; scripts/ci/gates.json must name the pipeline that builds release images.`,
   );
   // The contract lives in the setup catalog, not in this file: `appPublicHostname` is what setup,
   // Compose, and the generated Helm overlay all derive their hostnames from.
@@ -1276,7 +1339,7 @@ const infrastructureOnlySecrets = new Set([
   'mongodb_root_password',
 ]);
 const declaredSecretNames = new Set(declaredSecrets.map((entry) => entry.secret));
-const composeSecretFiles = readdirSync(new URL('../docker/', import.meta.url))
+const composeSecretFiles = readdirSync(workspacePath('docker'))
   .filter((name) => name.startsWith('docker-compose') && name.endsWith('.yml'))
   .map((name) => `docker/${name}`);
 const composeDeclared = new Set(composeSecretFiles.flatMap((path) => composeDeclaredSecrets(read(path))));
@@ -1298,4 +1361,21 @@ for (const integration of JSON.parse(read('docker/optional-integrations.json')).
   }
 }
 
-console.log(`deployment config static assertions passed (${selectedMode} mode)`);
+// The forges are named, not counted: a claim that held for one pipeline and was never evaluated
+// for another is the failure this descriptor exists to make visible.
+console.log(
+  [
+    `deployment config static assertions passed (${selectedMode} mode)`,
+    `runtime QA fixture validated on: ${runtimeFixtureForges.join(', ')}`,
+    ...(validateHelmStatic
+      ? [
+          `release pipelines validated: ${releasePipelinesValidated.join(', ')}`,
+          ...(releasePipelinesDeferred.length > 0
+            ? [
+                `forges without a declared release pipeline, deferred to ci-pipeline-parity: ${releasePipelinesDeferred.join(', ')}`,
+              ]
+            : []),
+        ]
+      : []),
+  ].join('; '),
+);

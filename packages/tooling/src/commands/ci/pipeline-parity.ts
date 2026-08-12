@@ -17,6 +17,8 @@ export interface ParityProblem {
   code: ParityProblemCode;
   forge: string;
   gate?: string;
+  /** Supply-chain control the problem belongs to, for callers that assert one control. */
+  control?: string;
   message: string;
 }
 
@@ -24,6 +26,7 @@ export interface ForgeSources {
   pipeline: string;
   releasePipeline?: string;
   promotionPipeline?: string;
+  provenancePipeline?: string;
   /** Every file a lane executor can point at, keyed by workspace-relative path. */
   laneFiles: Record<string, string | undefined>;
 }
@@ -42,6 +45,12 @@ function gatePipelineText(sources: ForgeSources, kind: PipelineKind): string | u
   if (kind === 'release') return sources.releasePipeline;
   if (kind === 'promotion') return sources.promotionPipeline;
   return sources.pipeline;
+}
+
+function controlPipelineText(sources: ForgeSources, scope: SupplyChainControl['scope']): string | undefined {
+  if (scope === 'release') return sources.releasePipeline;
+  if (scope === 'promotion') return sources.promotionPipeline;
+  return sources.provenancePipeline;
 }
 
 function gatePipelineFile(forge: CiForge, kind: PipelineKind): string {
@@ -160,11 +169,12 @@ export function evaluateParity(contract: CiContract, sources: Record<string, For
     for (const control of contract.supplyChain) {
       if (!appliesTo(control, forgeId)) continue;
 
-      const lane = control.scope === 'release' ? forgeSources.releasePipeline : forgeSources.promotionPipeline;
+      const lane = controlPipelineText(forgeSources, control.scope);
       if (lane === undefined) {
         problems.push({
           code: 'supply-chain-lane-missing',
           forge: forgeId,
+          control: control.id,
           message: `${forgeId} declares no ${control.scope} pipeline, so control "${control.id}" cannot hold`,
         });
         continue;
@@ -175,6 +185,7 @@ export function evaluateParity(contract: CiContract, sources: Record<string, For
         problems.push({
           code: 'supply-chain-control-missing',
           forge: forgeId,
+          control: control.id,
           message: `${forgeId} ${control.scope} lane does not implement "${control.id}" (${control.requirement}); missing: ${missing.join(', ')}`,
         });
       }

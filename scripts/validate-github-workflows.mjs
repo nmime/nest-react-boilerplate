@@ -3,9 +3,36 @@
 // Security, operations, and quality-lane evidence.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createJiti } from 'jiti';
 
-const workflowDir = new URL('../.github/workflows', import.meta.url);
+const jiti = createJiti(import.meta.url);
+const { configuredForges } = await jiti.import('../packages/tooling/src/commands/ci/check-pipelines.ts');
+
+// The checkout under validation. It is this script's own parent by default; `--root=` points it at
+// a materialized checkout instead, which is how the stand-down below is proved against a tree that
+// ships a different forge than this one.
+const rootArgument = process.argv.find((arg) => arg.startsWith('--root='))?.split('=', 2)[1];
+const rootDir = resolve(rootArgument ?? join(dirname(fileURLToPath(import.meta.url)), '..'));
+const workspaceUrl = pathToFileURL(`${rootDir}/`);
+
+// Everything below hardens GitHub Actions, so it is evidence only where that forge is configured.
+// A checkout that keeps another forge has to be told that in words: crashing on the missing
+// directory makes the merge-blocking spec-evidence gate unsatisfiable, and exiting quietly would
+// claim an assertion that never ran. Which gates each configured forge still owes is the job of
+// ci-pipeline-parity, which reads the same descriptor consulted here.
+if (!configuredForges(rootDir).some((forge) => forge.id === 'github')) {
+  console.log(
+    JSON.stringify({
+      status: 'not-applicable',
+      reason: 'scripts/ci/gates.json declares no configured github forge in this checkout',
+    }),
+  );
+  process.exit(0);
+}
+
+const workflowDir = new URL('.github/workflows', workspaceUrl);
 const workflows = readdirSync(workflowDir)
   .filter((name) => /\.ya?ml$/u.test(name))
   .sort()
@@ -38,7 +65,7 @@ for (const { name, text } of workflows) {
   }
 }
 
-const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const packageJson = JSON.parse(readFileSync(new URL('package.json', workspaceUrl), 'utf8'));
 const scripts = packageJson.scripts ?? {};
 const ci = workflows.find((workflow) => workflow.name === 'ci.yml')?.text ?? '';
 const release = workflows.find((workflow) => workflow.name === 'release.yml')?.text ?? '';
@@ -46,17 +73,17 @@ const releaseImagesWorkflow = workflows.find((workflow) => workflow.name === 're
 const deployWorkflow = workflows.find((workflow) => workflow.name === 'deploy.yml')?.text ?? '';
 const nightlyAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-nightly.yml')?.text ?? '';
 const runtimeAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-runtime.yml')?.text ?? '';
-const githubReleaseNotes = readFileSync(new URL('../.github/release.yml', import.meta.url), 'utf8');
-const gitleaksConfig = readFileSync(new URL('../.gitleaks.toml', import.meta.url), 'utf8');
-const nxCacheAction = readFileSync(new URL('../.github/actions/nx-cache/action.yml', import.meta.url), 'utf8');
-const nxCacheDocs = readFileSync(new URL('../docs/ci-cache.md', import.meta.url), 'utf8');
-const fullstackCompose = readFileSync(new URL('../apps/e2e/fullstack/src/compose.ts', import.meta.url), 'utf8');
-const fullstackSpec = readFileSync(new URL('../apps/e2e/fullstack/src/fullstack.spec.ts', import.meta.url), 'utf8');
+const githubReleaseNotes = readFileSync(new URL('.github/release.yml', workspaceUrl), 'utf8');
+const gitleaksConfig = readFileSync(new URL('.gitleaks.toml', workspaceUrl), 'utf8');
+const nxCacheAction = readFileSync(new URL('.github/actions/nx-cache/action.yml', workspaceUrl), 'utf8');
+const nxCacheDocs = readFileSync(new URL('docs/ci-cache.md', workspaceUrl), 'utf8');
+const fullstackCompose = readFileSync(new URL('apps/e2e/fullstack/src/compose.ts', workspaceUrl), 'utf8');
+const fullstackSpec = readFileSync(new URL('apps/e2e/fullstack/src/fullstack.spec.ts', workspaceUrl), 'utf8');
 const bunCompatibilityCommand = readFileSync(
-  new URL('../packages/tooling/src/commands/tooling/bun-compat.ts', import.meta.url),
+  new URL('packages/tooling/src/commands/tooling/bun-compat.ts', workspaceUrl),
   'utf8',
 );
-const developmentCompose = readFileSync(new URL('../docker/docker-compose.yml', import.meta.url), 'utf8');
+const developmentCompose = readFileSync(new URL('docker/docker-compose.yml', workspaceUrl), 'utf8');
 assert.ok(
   nxCacheAction.includes('actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9'),
   'Nx cache composite action must pin actions/cache to a full commit SHA',
@@ -177,7 +204,7 @@ for (const [name, text] of [
 // The reporter itself owns the behaviour the per-workflow contracts used to
 // assert inline.
 const scheduledFailureAction = readFileSync(
-  new URL('../.github/actions/report-scheduled-failure/action.yml', import.meta.url),
+  new URL('.github/actions/report-scheduled-failure/action.yml', workspaceUrl),
   'utf8',
 );
 for (const required of ['gh issue create', 'gh issue comment', 'gh issue reopen', 'Consecutive failing runs']) {
@@ -280,7 +307,7 @@ assert.ok(
   'GitLab releases must run in GitLab CI, not as a second workflow on every GitHub push',
 );
 
-const gitlabCi = readFileSync(new URL('../.gitlab-ci.yml', import.meta.url), 'utf8');
+const gitlabCi = readFileSync(new URL('.gitlab-ci.yml', workspaceUrl), 'utf8');
 const gitlabJob = (name, nextName) => {
   const start = gitlabCi.indexOf(`${name}:\n`);
   const end = nextName ? gitlabCi.indexOf(`${nextName}:\n`, start + name.length + 2) : gitlabCi.length;
@@ -527,10 +554,7 @@ assert.ok(
 // start sequence in a single place is the fix for quality-presets and
 // spec-assurance-nightly having drifted away from ci.yml's retry and then
 // failing on every scheduled run for a month.
-const runtimeStackAction = readFileSync(
-  new URL('../.github/actions/runtime-stack/action.yml', import.meta.url),
-  'utf8',
-);
+const runtimeStackAction = readFileSync(new URL('.github/actions/runtime-stack/action.yml', workspaceUrl), 'utf8');
 for (const required of [
   'docker compose -f "$COMPOSE_FILE_PATH" up -d --build',
   'assert_ready',

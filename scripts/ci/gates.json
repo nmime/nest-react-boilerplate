@@ -6,13 +6,15 @@
       "jobStyle": "github",
       "aggregateJob": "ci-status-summary",
       "releasePipeline": ".github/workflows/release-images.yml",
-      "promotionPipeline": ".github/workflows/deploy.yml"
+      "promotionPipeline": ".github/workflows/deploy.yml",
+      "provenancePipeline": ".github/workflows/release.yml"
     },
     "gitlab": {
       "pipeline": ".gitlab-ci.yml",
       "jobStyle": "gitlab",
       "aggregateJob": "ci-status-summary",
-      "releasePipeline": ".gitlab-ci.yml"
+      "releasePipeline": ".gitlab-ci.yml",
+      "provenancePipeline": ".gitlab-ci.yml"
     }
   },
   "lanes": {
@@ -507,6 +509,26 @@
         "severities: [\"CRITICAL\", \"HIGH\"]",
         "allowUnfixed: false"
       ]
+    },
+    {
+      "id": "release-exact-revision",
+      "requirement": "A release is cut from the exact source revision the pipeline verified, never from a branch tip re-resolved at build time.",
+      "scope": "provenance",
+      "evidence": ["git rev-parse HEAD"]
+    },
+    {
+      "id": "release-refuses-stale-head",
+      "requirement": "The current default-branch head is re-read from the remote before a release is published, so a revision it has already moved past is refused.",
+      "scope": "provenance",
+      "evidence": ["git fetch"]
+    },
+    {
+      "id": "release-follows-verified-gates",
+      "requirement": "The release runs only after the merge-blocking gates of that exact revision succeeded.",
+      "scope": "provenance",
+      "evidence": ["workflow_run", "conclusion == 'success'", "github.event.workflow_run.head_sha"],
+      "forges": ["github"],
+      "reason": "GitHub cuts the release from a separate workflow, so it has to name the successful CI run it follows. GitLab's release job runs in the very pipeline that ran those gates, and its rules already restrict it to the default branch."
     },
     {
       "id": "promotion-full-sha",

@@ -21,6 +21,11 @@ export interface CiForge {
   releasePipeline?: string;
   /** Pipeline file that promotes a released digest to an environment. */
   promotionPipeline?: string;
+  /**
+   * Pipeline file that cuts a release from source. It is not always the one that builds the
+   * images: GitHub tags the reviewed revision in one workflow and builds it in another.
+   */
+  provenancePipeline?: string;
 }
 
 export type PipelineKind = 'default' | 'release' | 'promotion';
@@ -55,7 +60,7 @@ export interface SupplyChainControl {
   id: string;
   requirement: string;
   /** Pipeline of the forge that must carry this control. */
-  scope: 'release' | 'promotion';
+  scope: 'release' | 'promotion' | 'provenance';
   /** Literal commands or settings that implement the control on every forge. */
   evidence: string[];
   /** Present only when a control deliberately holds on some forges and not others. */
@@ -82,7 +87,7 @@ export class CiContractError extends Error {
 }
 
 const jobStyles = new Set<string>(['github', 'gitlab'] satisfies JobStyle[]);
-const supplyChainScopes = new Set<string>(['release', 'promotion']);
+const supplyChainScopes = new Set<string>(['release', 'promotion', 'provenance']);
 const pipelineKinds = new Set<string>(['default', 'release', 'promotion'] satisfies PipelineKind[]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -130,7 +135,7 @@ function parseForges(raw: unknown, problems: string[]): Record<string, CiForge> 
       problems.push(`forges.${id} must be an object`);
       continue;
     }
-    const { pipeline, jobStyle, aggregateJob, releasePipeline, promotionPipeline } = value;
+    const { pipeline, jobStyle, aggregateJob, releasePipeline, promotionPipeline, provenancePipeline } = value;
     if (typeof pipeline !== 'string' || pipeline.length === 0) {
       problems.push(`forges.${id}.pipeline must be a workspace-relative path`);
       continue;
@@ -149,6 +154,7 @@ function parseForges(raw: unknown, problems: string[]): Record<string, CiForge> 
       aggregateJob,
       ...(typeof releasePipeline === 'string' ? { releasePipeline } : {}),
       ...(typeof promotionPipeline === 'string' ? { promotionPipeline } : {}),
+      ...(typeof provenancePipeline === 'string' ? { provenancePipeline } : {}),
     };
   }
 

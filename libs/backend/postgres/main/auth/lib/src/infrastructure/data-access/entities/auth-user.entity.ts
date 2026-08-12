@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
 import { defaultLocale, supportedLocales, type Locale } from '@app/backend-common-i18n';
+import { NullableEpochDateType } from './type/nullable-epoch-date.type';
 
 export type AuthUserThemePreference = 'system' | 'light' | 'dark';
 
@@ -54,6 +55,10 @@ export class AuthUserEntity {
   avatarUrl = '';
   avatarHash = '';
   avatarStatus: AuthUserAvatarStatus = 'none';
+  /**
+   * `null` means the address was never confirmed. The column itself is NOT NULL and records that
+   * case as the epoch; {@link NullableEpochDateType} is where the two representations meet.
+   */
   emailVerifiedAt: Date | null = null;
   /**
    * Session epoch. Every credential replacement advances it and access guards reject sessions
@@ -134,9 +139,9 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       default: 'none',
     },
     emailVerifiedAt: {
-      type: 'timestamptz',
+      type: NullableEpochDateType,
       fieldName: 'email_verified_at',
-      nullable: true,
+      defaultRaw: "'epoch'::timestamptz",
     },
     credentialRevision: {
       type: 'int',

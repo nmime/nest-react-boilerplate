@@ -16,13 +16,21 @@ describe('auth account recovery migration', () => {
   it('adds the verification timestamp and the credential epoch', () => {
     const sql = collectSql('up');
 
-    expect(sql).toContain('add column if not exists "email_verified_at" timestamptz null');
+    expect(sql).toContain(
+      `add column if not exists "email_verified_at" timestamptz not null default 'epoch'::timestamptz`,
+    );
     expect(sql).toContain('add column if not exists "credential_revision" int not null default 0');
+  });
+
+  it('records "never verified" as the epoch rather than as a missing value', () => {
+    // Every timestamp on auth_users is NOT NULL with a sentinel default, so a half-written row is
+    // impossible to represent. The entity trades the epoch back for null at the boundary.
+    expect(collectSql('up')).not.toMatch(/"email_verified_at"\s+timestamptz\s+null/u);
   });
 
   it('defaults the epoch for rows that predate it so live sessions survive the deploy', () => {
     // A backfill to anything but zero would 401 every signed-in user the moment this ships.
-    expect(collectSql('up')).toContain("default 0");
+    expect(collectSql('up')).toContain('default 0');
     expect(collectSql('up')).not.toMatch(/update "auth_users"\s+set "credential_revision"/u);
   });
 

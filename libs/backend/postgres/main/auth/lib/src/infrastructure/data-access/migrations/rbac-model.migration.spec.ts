@@ -68,9 +68,13 @@ describe('RBAC model migration', () => {
       migration.up();
     });
 
-    for (const key of roleKeys) {
+    // Walked as entries rather than indexed by role key: the catalog is open to product roles, so
+    // the matrix is keyed by plain strings and indexing it would only prove the seed covers the
+    // roles this test happened to name.
+    for (const [key, permissions] of Object.entries(defaultRolePermissions)) {
+      expect(roleKeys).toContain(key);
       expect(sql).toContain(`insert into "auth_role_permissions" ("role_id", "permission_id", "created_at")`);
-      for (const permissionKey of defaultRolePermissions[key]) {
+      for (const permissionKey of permissions) {
         expect(sql).toContain(`'${permissionKey}'`);
       }
     }

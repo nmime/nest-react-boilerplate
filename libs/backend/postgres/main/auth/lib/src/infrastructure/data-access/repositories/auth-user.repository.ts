@@ -160,7 +160,11 @@ export class AuthUserRepository {
     return this.entityManager.transactional(async (transaction) => {
       // Two concurrent resets must not settle on the same revision, so the row is locked for the
       // read-modify-write rather than incremented from a stale in-memory value.
-      const entity = await transaction.findOne(AuthUserEntity, { id, tenantId }, { lockMode: LockMode.PESSIMISTIC_WRITE });
+      const entity = await transaction.findOne(
+        AuthUserEntity,
+        { id, tenantId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
       if (!entity) {
         return null;
       }

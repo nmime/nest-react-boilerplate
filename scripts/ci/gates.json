@@ -1,0 +1,532 @@
+{
+  "$comment": "Forge-neutral CI gate inventory. Both .github/workflows and .gitlab-ci.yml render it, and node scripts/ci/check-pipelines.mjs verifies every configured forge against it. Add a gate here first, then wire it into every forge; a forge that cannot run a gate must say so with `forges` plus `reason`. See docs/ci-lanes.md.",
+  "forges": {
+    "github": {
+      "pipeline": ".github/workflows/ci.yml",
+      "jobStyle": "github",
+      "aggregateJob": "ci-status-summary",
+      "releasePipeline": ".github/workflows/release-images.yml",
+      "promotionPipeline": ".github/workflows/deploy.yml"
+    },
+    "gitlab": {
+      "pipeline": ".gitlab-ci.yml",
+      "jobStyle": "gitlab",
+      "aggregateJob": "ci-status-summary",
+      "releasePipeline": ".gitlab-ci.yml"
+    }
+  },
+  "lanes": {
+    "pr": {
+      "description": "Evidence for the requirements a change proposal touches.",
+      "executors": {
+        "github": { "file": ".github/workflows/ci.yml", "job": "spec-evidence" },
+        "gitlab": { "file": ".gitlab-ci.yml", "job": "spec-evidence" }
+      }
+    },
+    "main": {
+      "description": "Evidence for the requirements a default-branch push touches.",
+      "executors": {
+        "github": { "file": ".github/workflows/ci.yml", "job": "spec-evidence" },
+        "gitlab": { "file": ".gitlab-ci.yml", "job": "spec-evidence" }
+      }
+    },
+    "nightly": {
+      "description": "Scheduled full-inventory evidence for every declared requirement.",
+      "executors": {
+        "github": { "file": ".github/workflows/spec-assurance-nightly.yml", "job": "assurance" },
+        "gitlab": { "file": ".gitlab-ci.yml", "job": "spec-evidence-nightly" }
+      }
+    },
+    "runtime": {
+      "description": "Evidence that needs a live runtime stack rather than a build sandbox.",
+      "executors": {
+        "github": { "file": ".github/workflows/spec-assurance-runtime.yml", "job": "assurance" },
+        "gitlab": { "file": ".gitlab-ci.yml", "job": "spec-evidence-runtime" }
+      }
+    },
+    "scheduled-quality": {
+      "description": "Scheduled cross-browser and mobile visual regression matrix.",
+      "executors": {
+        "github": { "file": ".github/workflows/quality-presets.yml", "job": "presets" },
+        "gitlab": { "file": ".gitlab-ci.yml", "job": "visual-regression-matrix" }
+      }
+    },
+    "release": {
+      "description": "Tagged build that publishes signed, scanned, attested images.",
+      "executors": {
+        "github": { "file": ".github/workflows/release-images.yml", "job": "build-scan-sign" },
+        "gitlab": { "file": ".gitlab-ci.yml", "job": "release-images" }
+      }
+    }
+  },
+  "gates": [
+    {
+      "id": "secret-scan-history",
+      "description": "Full-history secret scan over the repository.",
+      "commands": ["gitleaks/gitleaks-action", "gitleaks detect"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "gitleaks", "gitlab": "gitleaks" }
+    },
+    {
+      "id": "helm-render",
+      "description": "Render the selected Helm deployment for every provider selection.",
+      "commands": ["pnpm run deploy:validate:helm"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "helm-validation", "gitlab": "helm-validation" }
+    },
+    {
+      "id": "ci-pipeline-parity",
+      "description": "Every forge renders this gate inventory and no forge silently drops a gate.",
+      "commands": ["node scripts/ci/check-pipelines.mjs"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "helm-validation", "gitlab": "helm-validation" }
+    },
+    {
+      "id": "github-workflow-hardening",
+      "description": "Pinned action SHAs, least-privilege permissions, and no pull_request_target.",
+      "commands": ["node scripts/validate-github-workflows.mjs"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "helm-validation" },
+      "forges": ["github"],
+      "reason": "The checker reads .github/workflows text; a GitLab-only checkout has nothing for it to harden. Its GitLab-contract half is superseded by ci-pipeline-parity."
+    },
+    {
+      "id": "git-conventions",
+      "description": "Branch naming, commit messages, linear history, and agent attribution.",
+      "commands": ["pnpm run git:conventions"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "tooling-static-check",
+      "description": "TS-first static validation and import smoke checks for repo tooling.",
+      "commands": ["pnpm run tooling:static-check", "pnpm run ci:pr"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "locale-artifact-freshness",
+      "description": "Generated locale catalog bindings and translation keys match the i18n tree.",
+      "commands": ["pnpm run i18n:catalogs:check", "pnpm run ci:pr"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "docs-check",
+      "description": "Project catalog freshness and documentation link integrity.",
+      "commands": ["pnpm run docs:check", "pnpm run ci:pr"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "spec-validate",
+      "description": "OpenSpec artifacts and repository evidence ownership.",
+      "commands": ["pnpm run spec:validate", "pnpm run ci:pr"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "format-changed",
+      "description": "Prettier over the changed files only, for a memory-safe PR check.",
+      "commands": ["pnpm run format:changed", "pnpm run ci:pr"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "secret-scan-native",
+      "description": "Repository-owned secret scanning independent of any forge feature tier.",
+      "commands": ["pnpm run test:security:secrets", "pnpm run ci:pr"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "sast-native",
+      "description": "Repository-owned static application security testing.",
+      "commands": ["pnpm run test:security:sast", "pnpm run ci:pr"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "production-dependency-audit",
+      "description": "Moderate-and-above advisories in the production dependency tree.",
+      "commands": ["pnpm run audit:ci", "pnpm run ci:pr"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fast-check", "gitlab": "fast-check" }
+    },
+    {
+      "id": "spec-evidence",
+      "description": "Fresh evidence for every requirement the change impacts, bound to the exact SHA.",
+      "commands": ["pnpm run spec:verify"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "spec-evidence", "gitlab": "spec-evidence" }
+    },
+    {
+      "id": "onboarding-verify",
+      "description": "Fresh onboarding, agent scaffolding, and generated application scaffolds.",
+      "commands": ["pnpm run onboarding:verify"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "migration-freshness",
+      "description": "Database migration naming, ordering, and entity drift.",
+      "commands": ["pnpm run db:migrations:check"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "library-configs",
+      "description": "Nx library configuration placement and standards.",
+      "commands": ["pnpm run lib:configs:check"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "frontend-fsd",
+      "description": "Strict frontend Feature-Sliced Design boundaries.",
+      "commands": ["pnpm run frontend:fsd:check"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "toast-config",
+      "description": "Generated app-local API toast rules match the OpenAPI contracts.",
+      "commands": ["pnpm run api:toast-config:check"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "licence-audit",
+      "description": "Dependency licences stay inside the allowed set.",
+      "commands": ["pnpm run audit:licenses"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "full-dependency-audit",
+      "description": "High-and-above advisories across the whole dependency tree.",
+      "commands": ["pnpm run audit:full"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "api-contracts",
+      "description": "Generated OpenAPI contracts are current.",
+      "commands": ["pnpm run api:contracts:check"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "api-clients",
+      "description": "Generated API clients are current.",
+      "commands": ["pnpm run api:clients:check"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "openapi-lint",
+      "description": "OpenAPI contract lint rules.",
+      "commands": ["pnpm run api:openapi:lint"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "consumer-contracts",
+      "description": "Consumer-driven contract checks against the generated API surface.",
+      "commands": ["pnpm run api:contracts:consumer"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "openapi-fuzz",
+      "description": "Bounded OpenAPI fuzz case generation.",
+      "commands": ["pnpm run api:openapi:fuzz"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "property-invariants",
+      "description": "Property-based invariant checks.",
+      "commands": ["pnpm run test:property"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "pm2-deployment-config",
+      "description": "Native PM2 deployment configuration validates against the selected closure.",
+      "commands": ["pnpm run deploy:validate:pm2"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "gitops-deployment-config",
+      "description": "GitOps manifests, promotion safety, and release supply-chain wiring.",
+      "commands": ["pnpm run deploy:validate:gitops"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
+      "id": "bun-compatibility",
+      "description": "Pinned Bun compatibility contract across every setup-selected closure.",
+      "commands": ["pnpm run bun:check"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "bun-compat", "gitlab": "bun-compat" }
+    },
+    {
+      "id": "format-check",
+      "description": "Prettier over the whole workspace.",
+      "commands": ["pnpm run format:check"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "quality", "gitlab": "full-check" }
+    },
+    {
+      "id": "lint-typecheck-build",
+      "description": "Lint, typecheck, and build — affected on proposals, everything on the default branch.",
+      "commands": ["nx affected -t lint typecheck build", "pnpm run lint:all"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "quality", "gitlab": "full-check" }
+    },
+    {
+      "id": "coverage-thresholds",
+      "description": "Unit test coverage floors.",
+      "commands": ["pnpm run test:coverage:all"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "quality", "gitlab": "full-check" }
+    },
+    {
+      "id": "bundle-budget",
+      "description": "Per-app JavaScript, CSS, and single-chunk byte budgets.",
+      "commands": ["pnpm run test:bundle-budget"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "quality", "gitlab": "full-check" }
+    },
+    {
+      "id": "postgres-component-tests",
+      "description": "Testcontainers-backed PostgreSQL component tests.",
+      "commands": ["nx run @app/backend-feature-auth-test:component-test"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "quality", "gitlab": "component-tests" }
+    },
+    {
+      "id": "mongodb-validation",
+      "description": "MongoDB migration ledger, transaction semantics, and provider wiring.",
+      "commands": [
+        "--projects=@app/backend-mongodb-main,@app/backend-mongodb-main-auth,@app/backend-mongodb-main-feature-flags,@app/backend-mongodb-main-notification"
+      ],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "mongodb-validation", "gitlab": "mongodb-validation" }
+    },
+    {
+      "id": "e2e-coverage",
+      "description": "Static and browser end-to-end coverage.",
+      "commands": ["pnpm run test:e2e:coverage:all"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "e2e", "gitlab": "e2e-tests" }
+    },
+    {
+      "id": "storybook-interaction",
+      "description": "Storybook interaction tests.",
+      "commands": ["pnpm run test:storybook"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "visual-regression", "gitlab": "storybook-tests" }
+    },
+    {
+      "id": "visual-baselines",
+      "description": "Reviewed visual regression baselines.",
+      "commands": ["pnpm run test:visual"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "visual-regression", "gitlab": "storybook-tests" }
+    },
+    {
+      "id": "docker-smoke",
+      "description": "Docker smoke stack over the materialized reference build contexts.",
+      "commands": ["pnpm run test:docker-smoke"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "docker-smoke", "gitlab": "docker-smoke-test" }
+    },
+    {
+      "id": "compose-deployment-modes",
+      "description": "Production Compose database-mode matrix.",
+      "commands": ["pnpm run test:compose-deployment-modes"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "docker-smoke", "gitlab": "docker-smoke-test" }
+    },
+    {
+      "id": "world-class-ops",
+      "description": "Runtime-backed load, chaos, disaster-recovery, observability, and canary gates.",
+      "commands": ["pnpm run test:world-class"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "ops-gates", "gitlab": "ops-gates" }
+    },
+    {
+      "id": "accessibility",
+      "description": "Axe accessibility scan against the running frontends.",
+      "commands": ["pnpm run test:a11y"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "ops-gates", "gitlab": "ops-gates" }
+    },
+    {
+      "id": "fullstack-e2e-postgres",
+      "description": "Fullstack Playwright e2e against the PostgreSQL closure.",
+      "commands": ["pnpm run test:fullstack"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fullstack-e2e", "gitlab": "docker-fullstack" }
+    },
+    {
+      "id": "fullstack-e2e-mongodb",
+      "description": "Fullstack Playwright e2e against the MongoDB closure.",
+      "commands": ["pnpm run test:fullstack"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "fullstack-e2e", "gitlab": "docker-fullstack-mongodb" }
+    },
+    {
+      "id": "release-image-build",
+      "description": "Build and publish the affected release images through the generated Bake plan.",
+      "commands": ["docker buildx bake -f docker-bake.json"],
+      "pipeline": "release",
+      "lanes": ["release"],
+      "requiredForMerge": false,
+      "jobs": { "github": "build-scan-sign", "gitlab": "release-images" }
+    },
+    {
+      "id": "release-image-signing",
+      "description": "Sign, attest, and vulnerability-gate every published digest.",
+      "commands": ["cosign sign --yes \"$ref\""],
+      "pipeline": "release",
+      "lanes": ["release"],
+      "requiredForMerge": false,
+      "jobs": { "github": "build-scan-sign", "gitlab": "release-images" }
+    }
+  ],
+  "supplyChain": [
+    {
+      "id": "affected-image-plan",
+      "requirement": "The images built are selected by the shared plan from the installed product closure, not enumerated per forge.",
+      "scope": "release",
+      "evidence": ["scripts/release-image-plan.mjs", "generate-bake-file.mjs --only"]
+    },
+    {
+      "id": "bake-only-build",
+      "requirement": "Images are produced only by the generated Bake plan, so every image shares one build definition.",
+      "scope": "release",
+      "evidence": ["docker buildx bake -f docker-bake.json"]
+    },
+    {
+      "id": "build-attestations",
+      "requirement": "Every image carries max-mode BuildKit provenance and an SBOM attestation.",
+      "scope": "release",
+      "evidence": ["*.attest=type=provenance,mode=max", "*.attest=type=sbom"]
+    },
+    {
+      "id": "immutable-digest",
+      "requirement": "Post-build steps address images by the digest the build reported, never by a mutable tag.",
+      "scope": "release",
+      "evidence": ["bake-metadata.json", "^sha256:[0-9a-f]{64}$"]
+    },
+    {
+      "id": "sbom-generation",
+      "requirement": "An SPDX SBOM is generated for every published digest.",
+      "scope": "release",
+      "evidence": ["syft \"$ref\"", "spdx-json=sboms/sbom-"]
+    },
+    {
+      "id": "vulnerability-gate",
+      "requirement": "A CRITICAL or HIGH finding fails the release rather than warning.",
+      "scope": "release",
+      "evidence": ["trivy image --format sarif", "--severity CRITICAL,HIGH", "--exit-code 1"]
+    },
+    {
+      "id": "keyless-signature",
+      "requirement": "Every published digest is signed with keyless cosign against the forge OIDC identity.",
+      "scope": "release",
+      "evidence": ["cosign sign --yes \"$ref\""]
+    },
+    {
+      "id": "sbom-attestation",
+      "requirement": "The SBOM is attached to the digest as a verifiable SPDX attestation.",
+      "scope": "release",
+      "evidence": ["cosign attest --yes --type spdxjson"]
+    },
+    {
+      "id": "provenance-attestation",
+      "requirement": "SLSA provenance naming the exact source commit is attached to the digest.",
+      "scope": "release",
+      "evidence": ["cosign attest --yes --type slsaprovenance1", "resolvedDependencies"]
+    },
+    {
+      "id": "scan-attestation",
+      "requirement": "The scan result and its severity policy are attached to the digest.",
+      "scope": "release",
+      "evidence": [
+        "cosign attest --yes --type \"$SCAN_PREDICATE_TYPE\"",
+        "severities: [\"CRITICAL\", \"HIGH\"]",
+        "allowUnfixed: false"
+      ]
+    },
+    {
+      "id": "promotion-full-sha",
+      "requirement": "Promotion accepts only a full 40-character source SHA.",
+      "scope": "promotion",
+      "evidence": ["^[0-9a-f]{40}$"],
+      "forges": ["github"],
+      "reason": "Only GitHub ships a GitOps promotion pipeline; a GitLab promotion lane is still to be written."
+    },
+    {
+      "id": "promotion-verifies-attestations",
+      "requirement": "Promotion verifies the signature, provenance, SBOM, and scan attestation of the digest it deploys.",
+      "scope": "promotion",
+      "evidence": [
+        "cosign verify-attestation --type slsaprovenance1",
+        "cosign verify-attestation --type spdxjson",
+        "cosign verify-attestation --type \"$SCAN_PREDICATE_TYPE\""
+      ],
+      "forges": ["github"],
+      "reason": "Only GitHub ships a GitOps promotion pipeline; a GitLab promotion lane is still to be written."
+    }
+  ]
+}

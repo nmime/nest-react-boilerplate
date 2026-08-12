@@ -73,6 +73,12 @@ jobs:
       - name: Validate GitHub workflow hardening
         run: node scripts/validate-github-workflows.mjs
 
+      # Runs before `nrb setup --replace` rewrites the workspace, so it reads the
+      # pipelines as they are committed. Asserts this file and .gitlab-ci.yml both
+      # render every gate in scripts/ci/gates.json.
+      - name: Check CI gate parity across forges
+        run: node scripts/ci/check-pipelines.mjs
+
       - name: Materialize selected Helm deployment ownership
         run: pnpm nrb setup ${{ matrix.setup_args }}
 
@@ -264,6 +270,12 @@ jobs:
 
       - name: Run property-based invariant checks
         run: pnpm run test:property
+
+      - name: Validate native PM2 deployment configuration
+        run: pnpm run deploy:validate:pm2
+
+      - name: Validate GitOps deployment configuration
+        run: pnpm run deploy:validate:gitops
 
       - name: Write non-runtime validation summary
         if: always()

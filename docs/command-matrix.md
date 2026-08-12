@@ -130,6 +130,9 @@ These public root scripts are part of the supported DX/CI contract even when the
 | `pnpm run spec:report` | repository tooling `spec report` | Re-renders a JSON assurance dossier as human-readable Markdown without rerunning evidence. |
 | `pnpm test` / `pnpm run test:coverage` | selected-closure target execution | Runs only eligible projects in the fresh selected closure, including transitive libraries; the `:all` variants are the explicit repository-wide sweeps. |
 | `pnpm run ci:workflows:check` | `node scripts/validate-github-workflows.mjs` | Static GitHub Actions workflow validation. |
+| `pnpm run ci:pipelines:check` | `node scripts/ci/check-pipelines.mjs` | Verifies every configured forge renders the gate inventory in `scripts/ci/gates.json`. |
+| `pnpm run i18n:catalogs` | repository tooling `i18n catalogs` | Regenerates every artifact derived from the locale axis: per-consumer catalog bindings and the translation-key module. |
+| `pnpm run i18n:catalogs:check` | repository tooling `i18n catalogs --check` | Fails when a generated locale artifact is stale against `i18n/**`. |
 | `pnpm run scaffold:verify` | `node --test --test-concurrency=1 --import tsconfig-paths/register.js --import jiti/register packages/tooling/src/generators/application/generated.integration.ts` | Locked, existing-owner-safe generate/build/test/typecheck verification for all renderer/process/library canaries plus source-backed production migration registration. |
 | `pnpm run onboarding:verify` | `node scripts/validate-onboarding.mjs && pnpm run agent:verify && pnpm run scaffold:verify` | Non-deploying fresh-install proof for runtime prerequisites, all five required/optional preset closures, and all app/library templates. |
 | `pnpm run branch:cleanup` | `pnpm --filter @repo/tooling tooling git branch-cleanup` | Branch cleanup implementation entrypoint; use explicit flags such as `--apply` and `--remote` for destructive cleanup. |

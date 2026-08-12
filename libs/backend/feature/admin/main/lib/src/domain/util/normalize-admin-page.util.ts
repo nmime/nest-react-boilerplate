@@ -1,7 +1,11 @@
-import { AdminMaxPageSize } from '../const';
+import { normalizeOffsetPage } from '@app/backend-common-response';
+import { AdminDefaultPageSize, AdminMaxPageSize } from '../const';
 import type { AdminPage, AdminPageQuery } from '../type';
 
-export const normalizeAdminPage = (query: AdminPageQuery): AdminPage => ({
-  limit: Math.min(query.limit ?? 50, AdminMaxPageSize),
-  offset: query.offset ?? 0,
-});
+/**
+ * Admin list paging is the shared offset convention with the admin ceiling; the
+ * clamping rules (non-positive limits, negative offsets) live once in
+ * `@app/backend-common-response` rather than per feature.
+ */
+export const normalizeAdminPage = (query: AdminPageQuery): AdminPage =>
+  normalizeOffsetPage(query, { defaultPageSize: AdminDefaultPageSize, maxPageSize: AdminMaxPageSize });

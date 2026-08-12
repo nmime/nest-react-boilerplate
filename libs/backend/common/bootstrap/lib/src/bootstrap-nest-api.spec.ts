@@ -167,6 +167,7 @@ vi.mock('./util/port.util', async (importOriginal) => {
 
 import {
   bootstrapNestApi,
+  DefaultRequestBodyLimitBytes,
   DurableDatabaseRuntimeInjectToken,
   RedisRateLimitStore,
   resolveBackendEnvironmentConfig,
@@ -342,6 +343,7 @@ describe('bootstrapNestApi', () => {
     });
 
     expect(mocks.fastifyAdapter).toHaveBeenCalledWith({
+      bodyLimit: DefaultRequestBodyLimitBytes,
       logger: false,
       trustProxy: false,
     });
@@ -419,6 +421,33 @@ describe('bootstrapNestApi', () => {
     expect(mocks.app.listen).toHaveBeenCalledWith(4123);
   });
 
+  it('registers application Fastify plugins after the shared session plugins', async () => {
+    const multipartPlugin = { name: 'multipart' };
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+      fastifyPlugins: [{ plugin: multipartPlugin, options: { limits: { fileSize: 1024 } } }],
+    });
+
+    expect(mocks.fastifyRegister).toHaveBeenCalledTimes(3);
+    expect(mocks.fastifyRegister).toHaveBeenLastCalledWith(multipartPlugin, { limits: { fileSize: 1024 } });
+  });
+
+  it('applies an application body limit to the Fastify adapter', async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+      bodyLimit: 15_728_640,
+    });
+
+    expect(mocks.fastifyAdapter).toHaveBeenCalledWith({
+      bodyLimit: 15_728_640,
+      logger: false,
+      trustProxy: false,
+    });
+  });
+
   it('passes explicit TRUST_PROXY configuration to Fastify', async () => {
     process.env.TRUST_PROXY = 'true';
 
@@ -428,6 +457,7 @@ describe('bootstrapNestApi', () => {
     });
 
     expect(mocks.fastifyAdapter).toHaveBeenCalledWith({
+      bodyLimit: DefaultRequestBodyLimitBytes,
       logger: false,
       trustProxy: true,
     });

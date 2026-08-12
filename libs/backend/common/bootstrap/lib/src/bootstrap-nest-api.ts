@@ -47,6 +47,19 @@ export interface BootstrapNestApiOptions {
   rateLimit?: BootstrapRateLimitOptions;
   cookieSecret?: string;
   trustProxy?: boolean | number | string;
+  /** Maximum accepted request body in bytes. Overrides `HTTP_BODY_LIMIT_BYTES`. */
+  bodyLimit?: number;
+  /**
+   * Fastify plugins the application registers on top of the shared set, e.g.
+   * `@fastify/multipart` for upload routes. This is the seam that keeps product
+   * ingress requirements out of this file.
+   */
+  fastifyPlugins?: readonly BootstrapFastifyPlugin[];
+}
+
+export interface BootstrapFastifyPlugin {
+  plugin: unknown;
+  options?: unknown;
 }
 
 export interface BootstrapOpenApiOptions {
@@ -70,6 +83,7 @@ export type BackendSessionPersistence = 'memory' | 'mongodb' | 'postgres';
 type BackendPortSource = 'configured';
 
 export interface BackendEnvironmentConfig {
+  bodyLimit: number;
   corsOrigins: string[];
   host?: string;
   isProduction: boolean;
@@ -133,6 +147,18 @@ interface RateLimitStore {
   init?: () => Promise<void>;
   increment: (key: string, windowMs: number) => RateLimitStoreHit | Promise<RateLimitStoreHit>;
 }
+
+/**
+ * Fastify's own default, restated here so the ceiling is an explicit, auditable
+ * configuration value rather than an implicit framework constant a reader has to
+ * know about.
+ */
+export const DefaultRequestBodyLimitBytes = 1_048_576;
+/**
+ * Upper bound on the configurable limit. Anything larger belongs behind streamed
+ * multipart ingest or a presigned direct-to-storage upload, not a buffered body.
+ */
+export const MaximumRequestBodyLimitBytes = 104_857_600;
 
 const DefaultRateLimitWindowMs = 60_000;
 const DefaultRateLimitMax = 100;
@@ -399,6 +425,23 @@ async function registerFastifySession(app: NestFastifyApplication, config: Backe
   await registerFastifyPlugin(fastifySession, sessionOptions);
 }
 
+/**
+ * Registers the application's own Fastify plugins. Ingress concerns a product
+ * adds — multipart uploads, websocket upgrades, a vendor's signature verifier —
+ * arrive through this list instead of as edits to this shared file.
+ */
+async function registerApplicationFastifyPlugins(
+  app: NestFastifyApplication,
+  plugins: readonly BootstrapFastifyPlugin[],
+): Promise<void> {
+  const fastify = app.getHttpAdapter().getInstance();
+  const registerFastifyPlugin = fastify.register.bind(fastify) as FastifyPluginRegister;
+
+  for (const { plugin, options } of plugins) {
+    await registerFastifyPlugin(plugin, options);
+  }
+}
+
 function resolveDurableDatabaseRuntime(app: NestFastifyApplication): DurableDatabaseRuntime | undefined {
   try {
     return app.get<DurableDatabaseRuntime>(DurableDatabaseRuntimeInjectToken, { strict: false });
@@ -566,6 +609,20 @@ function resolveRateLimitOptions(
   };
 }
 
+function resolveBodyLimit(options: BootstrapNestApiOptions, env: NodeJS.ProcessEnv): number {
+  const configured =
+    options.bodyLimit ??
+    readPositiveInteger('HTTP_BODY_LIMIT_BYTES', env.HTTP_BODY_LIMIT_BYTES, DefaultRequestBodyLimitBytes);
+
+  if (!Number.isInteger(configured) || configured < 1 || configured > MaximumRequestBodyLimitBytes) {
+    throw new Error(
+      `The request body limit (options.bodyLimit or HTTP_BODY_LIMIT_BYTES) must be an integer from 1 through ${MaximumRequestBodyLimitBytes} bytes.`,
+    );
+  }
+
+  return configured;
+}
+
 export function resolveBackendEnvironmentConfig(
   options: BootstrapNestApiOptions,
   env: NodeJS.ProcessEnv = process.env,
@@ -576,6 +633,7 @@ export function resolveBackendEnvironmentConfig(
   const port = resolvePort(options, env);
 
   return {
+    bodyLimit: resolveBodyLimit(options, env),
     corsOrigins: resolveConfiguredCorsOrigins(options, env),
     host: resolveHost(env),
     isProduction,
@@ -785,6 +843,7 @@ async function createAndStartNestApi(
   const app = await NestFactory.create<NestFastifyApplication>(
     withOpenTelemetryLifecycle(module),
     new FastifyAdapter({
+      bodyLimit: config.bodyLimit,
       logger: false,
       trustProxy: config.trustProxy,
     }),
@@ -802,6 +861,7 @@ async function createAndStartNestApi(
 
   app.enableShutdownHooks();
   await registerFastifySession(app, config);
+  await registerApplicationFastifyPlugins(app, options.fastifyPlugins ?? []);
   // CLS: wraps entire async pipeline in AsyncLocalStorage — requestId available everywhere
   app.useGlobalInterceptors(new ClsInterceptor(), new ExceptionsResponseTransformer());
   app.useGlobalFilters(new ExceptionsFilter());

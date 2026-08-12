@@ -1,4 +1,5 @@
 export * from './response';
+export * from './page';
 export * from './exceptions.filter';
 export * from './problem-descriptor.util';
 export * from './exceptions-response.transformer';

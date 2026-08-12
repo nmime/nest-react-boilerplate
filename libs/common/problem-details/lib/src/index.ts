@@ -1,31 +1,26 @@
+import {
+  composeProblemCatalog,
+  isProblemCode,
+  type ComposedProblemCatalog,
+  type ProblemTypeDefinition,
+  type ProblemTypeExtension,
+} from './catalog-composition';
+
+export * from './catalog-composition';
+
 export const ProblemTypeDocumentationUrl = 'https://example.com/problems';
 export const ProblemInstanceBaseUrl = 'https://example.com/problem-instances';
 
-const ProblemCodePattern = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u;
 const RequestIdPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u;
 const UriReferenceCharacterPattern = /^[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]+$/u;
 const InvalidPercentEncodingPattern = /%(?![0-9A-Fa-f]{2})/u;
 const UriReferenceResolutionBase = 'https://uri-reference.invalid/';
-
-export interface ProblemTypeExtensionDefinition {
-  readonly name: string;
-  readonly description: string;
-}
 
 export const ProblemPresentationDisplays = ['toast', 'silent'] as const;
 export type ProblemPresentationDisplay = (typeof ProblemPresentationDisplays)[number];
 
 export const ProblemPresentationSeverities = ['error', 'warning', 'info', 'success'] as const;
 export type ProblemPresentationSeverity = (typeof ProblemPresentationSeverities)[number];
-
-export interface ProblemTypeDefinition {
-  readonly code: string;
-  readonly title: string;
-  readonly status: number;
-  readonly detail: string;
-  readonly resolution: string;
-  readonly extensions: readonly ProblemTypeExtensionDefinition[];
-}
 
 export const ProblemTypeDefinitions = [
   {
@@ -145,10 +140,6 @@ export function isProblemPresentationSeverity(value: string): value is ProblemPr
   return ProblemPresentationSeverities.includes(value as ProblemPresentationSeverity);
 }
 
-export function isProblemCode(value: string): boolean {
-  return value.length <= 64 && ProblemCodePattern.test(value);
-}
-
 export function problemTypeForCode(code: string): string {
   if (!isProblemCode(code)) {
     throw new TypeError(`Invalid problem code: ${JSON.stringify(code)}`);
@@ -157,8 +148,48 @@ export function problemTypeForCode(code: string): string {
   return `${ProblemTypeDocumentationUrl}#${code}`;
 }
 
+/**
+ * Product problem types registered on top of the base catalog.
+ *
+ * The base array stays a closed `as const` so `ProblemTypeCode` remains the
+ * narrow union that exhaustive consumers (the frontend's translation map) rely
+ * on; product codes widen the runtime registry only.
+ */
+const registeredExtensions: ProblemTypeExtension[] = [];
+let composedCatalog: ComposedProblemCatalog = composeProblemCatalog({
+  definitions: ProblemTypeDefinitions,
+  extensions: [],
+});
+
+/** A base problem code, or any product code registered through `registerProblemTypes`. */
+export type RegisteredProblemCode = ProblemTypeCode | (string & {});
+
+export function registerProblemTypes(extension: ProblemTypeExtension): void {
+  if (registeredExtensions.some((entry) => entry.id === extension.id)) {
+    throw new Error(`problem extension "${extension.id}" is already registered`);
+  }
+
+  // Compose before mutating: a rejected extension must leave the registry exactly
+  // as it was, or the second failure would be a confusing consequence of the first.
+  composedCatalog = composeProblemCatalog({
+    definitions: ProblemTypeDefinitions,
+    extensions: [...registeredExtensions, extension],
+  });
+  registeredExtensions.push(extension);
+}
+
+/** The base catalog plus every registered product extension. */
+export function registeredProblemTypeDefinitions(): readonly ProblemTypeDefinition[] {
+  return composedCatalog.definitions;
+}
+
 export function getProblemTypeDefinition(code: string): ProblemTypeDefinition | undefined {
-  return ProblemTypeDefinitions.find((definition) => definition.code === code);
+  return composedCatalog.definitionFor(code);
+}
+
+/** Resolves a type URI against the composed catalog, product codes included. */
+export function registeredProblemCodeFromType(type: string | undefined): RegisteredProblemCode | undefined {
+  return registeredProblemTypeDefinitions().find((definition) => problemTypeForCode(definition.code) === type)?.code;
 }
 
 export function problemCodeFromType(type: string | undefined): ProblemTypeCode | undefined {

@@ -194,6 +194,10 @@ x-frontend-service: &frontend-service
     PRODUCT_ICON_HREF: ${PRODUCT_ICON_HREF:-}
     PRODUCT_ICON_TYPE: ${PRODUCT_ICON_TYPE:-}
     PRODUCT_THEME_COLOR: ${PRODUCT_THEME_COLOR:-}
+    # Chrome an embedding host paints for us (the Telegram mini app); no stylesheet reaches it.
+    PRODUCT_CHROME_BACKGROUND_COLOR: ${PRODUCT_CHROME_BACKGROUND_COLOR:-}
+    PRODUCT_CHROME_BOTTOM_BAR_COLOR: ${PRODUCT_CHROME_BOTTOM_BAR_COLOR:-}
+    PRODUCT_CHROME_HEADER_COLOR: ${PRODUCT_CHROME_HEADER_COLOR:-}
 
 x-notification-scheduler-service: &notification-scheduler-service
   restart: unless-stopped

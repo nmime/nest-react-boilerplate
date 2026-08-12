@@ -1,6 +1,14 @@
 import { getFrontendRuntimeConfig, type FrontendEnv, type FrontendRuntimeConfig } from './frontend-env';
 
 export interface ProductBrand {
+  /**
+   * Surfaces an embedding host paints for us — the Telegram mini-app header, background and bottom
+   * bar. They sit outside the document, so neither the stylesheet nor `applyProductBrand` reaches
+   * them and a rebrand that only covers the tab leaves them on the boilerplate palette.
+   */
+  chromeBackgroundColor: string;
+  chromeBottomBarColor: string;
+  chromeHeaderColor: string;
   iconHref: string;
   iconType: string;
   name: string;
@@ -10,8 +18,15 @@ export interface ProductBrand {
 /**
  * Identity a product overrides instead of editing sources. The boilerplate's own
  * values are the defaults, so an untouched checkout looks exactly as it does now.
+ *
+ * The colours are literals rather than `designColors` reads because the Vite config imports this
+ * module directly to brand `index.html` at build time, where workspace aliases do not resolve. The
+ * spec pins each one to the token it mirrors, so drift fails a test instead of shipping.
  */
 export const defaultProductBrand: ProductBrand = {
+  chromeBackgroundColor: '#f8fafc',
+  chromeBottomBarColor: '#0f172a',
+  chromeHeaderColor: '#2563eb',
   iconHref: '/favicon.ico',
   iconType: 'image/x-icon',
   name: 'Nest React Boilerplate',
@@ -35,6 +50,15 @@ export const resolveProductBrand = (
   env: FrontendEnv,
   runtimeConfig: FrontendRuntimeConfig = getFrontendRuntimeConfig(),
 ): ProductBrand => ({
+  chromeBackgroundColor:
+    text(runtimeConfig['productChromeBackgroundColor'], env['VITE_PRODUCT_CHROME_BACKGROUND_COLOR']) ??
+    defaultProductBrand.chromeBackgroundColor,
+  chromeBottomBarColor:
+    text(runtimeConfig['productChromeBottomBarColor'], env['VITE_PRODUCT_CHROME_BOTTOM_BAR_COLOR']) ??
+    defaultProductBrand.chromeBottomBarColor,
+  chromeHeaderColor:
+    text(runtimeConfig['productChromeHeaderColor'], env['VITE_PRODUCT_CHROME_HEADER_COLOR']) ??
+    defaultProductBrand.chromeHeaderColor,
   iconHref: text(runtimeConfig['productIconHref'], env['VITE_PRODUCT_ICON_HREF']) ?? defaultProductBrand.iconHref,
   iconType: text(runtimeConfig['productIconType'], env['VITE_PRODUCT_ICON_TYPE']) ?? defaultProductBrand.iconType,
   name: text(runtimeConfig['productName'], env['VITE_PRODUCT_NAME']) ?? defaultProductBrand.name,

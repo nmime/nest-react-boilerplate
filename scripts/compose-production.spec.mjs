@@ -162,7 +162,15 @@ test('compose passes the product brand to every frontend service', () => {
     compose.indexOf('x-notification-scheduler-service'),
   );
 
-  for (const variable of ['PRODUCT_NAME', 'PRODUCT_ICON_HREF', 'PRODUCT_ICON_TYPE', 'PRODUCT_THEME_COLOR']) {
+  for (const variable of [
+    'PRODUCT_NAME',
+    'PRODUCT_ICON_HREF',
+    'PRODUCT_ICON_TYPE',
+    'PRODUCT_THEME_COLOR',
+    'PRODUCT_CHROME_BACKGROUND_COLOR',
+    'PRODUCT_CHROME_BOTTOM_BAR_COLOR',
+    'PRODUCT_CHROME_HEADER_COLOR',
+  ]) {
     assert.match(sharedEnv, new RegExp(`${variable}: \\$\\{${variable}`, 'u'), `${variable} must reach every SPA`);
   }
 });
@@ -184,6 +192,9 @@ test('frontend runtime config emits a per-deployment product brand and rejects u
   };
 
   const branded = render({
+    PRODUCT_CHROME_BACKGROUND_COLOR: '#101010',
+    PRODUCT_CHROME_BOTTOM_BAR_COLOR: '#202020',
+    PRODUCT_CHROME_HEADER_COLOR: '#303030',
     PRODUCT_ICON_HREF: '/brand/logo.svg',
     PRODUCT_ICON_TYPE: 'image/svg+xml',
     PRODUCT_NAME: 'Акме Клауд',
@@ -193,16 +204,25 @@ test('frontend runtime config emits a per-deployment product brand and rejects u
   assert.match(branded, /"productIconHref": "\/brand\/logo\.svg"/u);
   assert.match(branded, /"productIconType": "image\/svg\+xml"/u);
   assert.match(branded, /"productThemeColor": "#0b7138"/u);
+  // The embedding host paints this chrome, so it is out of reach of the stylesheet; without these
+  // keys a per-deployment rebrand stops at the tab and the mini app stays boilerplate blue.
+  assert.match(branded, /"productChromeBackgroundColor": "#101010"/u);
+  assert.match(branded, /"productChromeBottomBarColor": "#202020"/u);
+  assert.match(branded, /"productChromeHeaderColor": "#303030"/u);
 
   // A quote or backslash would close the JSON string and turn a deployment value into
   // executable source, so the emitter drops the key instead of escaping it.
   const unsafe = render({
+    PRODUCT_CHROME_BACKGROUND_COLOR: 'red; background: url(//evil.example)',
+    PRODUCT_CHROME_BOTTOM_BAR_COLOR: '"; alert(1); "',
+    PRODUCT_CHROME_HEADER_COLOR: 'not-a-colour',
     PRODUCT_ICON_HREF: 'javascript:alert(1)',
     PRODUCT_ICON_TYPE: 'text/html',
     PRODUCT_NAME: 'Acme", "adminAppUrl": "https://evil.example',
     PRODUCT_THEME_COLOR: 'red; background: url(//evil.example)',
   });
   assert.doesNotMatch(unsafe, /productName|productIconHref|productIconType|productThemeColor/u);
+  assert.doesNotMatch(unsafe, /productChromeBackgroundColor|productChromeBottomBarColor|productChromeHeaderColor/u);
 });
 
 test(

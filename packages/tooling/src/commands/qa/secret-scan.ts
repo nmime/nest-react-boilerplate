@@ -2,7 +2,13 @@
 import { readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { collectFiles, commandExists, defaultIgnore, parseArgs, run, textFileFilter, workspaceRoot, writeJson } from "./runtime-utils.ts";
-import { isAllowedSecretScanValue, isSecretScanIgnoredPath, secretValueEntropy } from "./secret-scan-policy.ts";
+import {
+  highEntropySecretPattern,
+  isAllowedSecretScanValue,
+  isSecretScanIgnoredPath,
+  secretEntropyThreshold,
+  secretValueEntropy,
+} from "./secret-scan-policy.ts";
 
 const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
@@ -44,13 +50,13 @@ if (engine !== "gitleaks" || findings.length === 0) {
     for (const pattern of patterns) for (const match of text.matchAll(pattern.regex)) {
       const value = match[1] ?? match[0];
       const rawValue = match[0];
-      if (isAllowedSecretScanValue(value, rel) || isAllowedSecretScanValue(rawValue, rel)) continue;
+      if (isAllowedSecretScanValue(value, rel, text) || isAllowedSecretScanValue(rawValue, rel, text)) continue;
       const line = text.slice(0, match.index).split("\n").length;
       findings.push({ file: rel, line, rule: pattern.id, severity: pattern.severity });
     }
-    for (const match of text.matchAll(/["']([A-Za-z0-9+/=_-]{40,})["']/g)) {
+    for (const match of text.matchAll(highEntropySecretPattern)) {
       const value = match[1];
-      if (isAllowedSecretScanValue(value, rel) || secretValueEntropy(value) < 4.4) continue;
+      if (isAllowedSecretScanValue(value, rel, text) || secretValueEntropy(value) < secretEntropyThreshold) continue;
       const line = text.slice(0, match.index).split("\n").length;
       findings.push({ file: rel, line, rule: "high-entropy-string", severity: "medium" });
     }

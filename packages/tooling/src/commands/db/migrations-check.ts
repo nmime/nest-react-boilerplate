@@ -6,6 +6,7 @@ import {
   canonicalIndexName,
   exceedsIdentifierLimit,
 } from "./migration-index-name.ts";
+import { isMigrationFilePath } from "./migration-naming.ts";
 
 const repoRoot = process.cwd();
 const errors: string[] = [];
@@ -118,9 +119,7 @@ function validate(file: string, sql: string) {
   }
 }
 
-const migrationFiles = listFiles(join(repoRoot, "libs")).filter((file) =>
-  /\/migrations\/Migration\d+.*\.ts$/.test(file),
-);
+const migrationFiles = listFiles(join(repoRoot, "libs")).filter(isMigrationFilePath);
 for (const file of migrationFiles) validate(file, readFileSync(file, "utf8"));
 if (errors.length) {
   console.error("Database migration standards check failed:");

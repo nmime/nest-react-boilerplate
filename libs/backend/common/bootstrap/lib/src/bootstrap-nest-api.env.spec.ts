@@ -1,7 +1,11 @@
 // @requirements REQ-RUNTIME-LIFECYCLE-004
 import { describe, expect, it } from 'vitest';
 import { RedisMode } from '@app/backend-common-redis';
-import { resolveBackendEnvironmentConfig } from './bootstrap-nest-api';
+import {
+  DefaultRequestBodyLimitBytes,
+  MaximumRequestBodyLimitBytes,
+  resolveBackendEnvironmentConfig,
+} from './bootstrap-nest-api';
 
 describe('resolveBackendEnvironmentConfig', () => {
   it('centralizes validated defaults for development APIs', () => {
@@ -211,5 +215,52 @@ describe('resolveBackendEnvironmentConfig', () => {
         },
       ),
     ).toThrow('REDIS_SENTINEL_GROUP_IDENTIFIER is required for sentinel Redis mode.');
+  });
+});
+
+describe('request body limits', () => {
+  it('bounds the request body with an explicit default instead of relying on the framework', () => {
+    const config = resolveBackendEnvironmentConfig({ appName: 'test-api', port: 3010 }, { SESSION_SECRET: 'x' });
+
+    expect(config.bodyLimit).toBe(DefaultRequestBodyLimitBytes);
+  });
+
+  it('honours HTTP_BODY_LIMIT_BYTES so an upload route can raise the ceiling', () => {
+    const config = resolveBackendEnvironmentConfig(
+      { appName: 'test-api', port: 3010 },
+      { SESSION_SECRET: 'x', HTTP_BODY_LIMIT_BYTES: '10485760' },
+    );
+
+    expect(config.bodyLimit).toBe(10_485_760);
+  });
+
+  it('lets the application pin the limit regardless of the environment', () => {
+    const config = resolveBackendEnvironmentConfig(
+      { appName: 'test-api', port: 3010, bodyLimit: 2048 },
+      { SESSION_SECRET: 'x', HTTP_BODY_LIMIT_BYTES: '10485760' },
+    );
+
+    expect(config.bodyLimit).toBe(2048);
+  });
+
+  it('refuses a non-positive application body limit', () => {
+    expect(() =>
+      resolveBackendEnvironmentConfig({ appName: 'test-api', port: 3010, bodyLimit: 0 }, { SESSION_SECRET: 'x' }),
+    ).toThrow('HTTP_BODY_LIMIT_BYTES');
+  });
+
+  it('refuses a fractional application body limit', () => {
+    expect(() =>
+      resolveBackendEnvironmentConfig({ appName: 'test-api', port: 3010, bodyLimit: 1.5 }, { SESSION_SECRET: 'x' }),
+    ).toThrow('HTTP_BODY_LIMIT_BYTES');
+  });
+
+  it('refuses a body limit above the supported ceiling', () => {
+    expect(() =>
+      resolveBackendEnvironmentConfig(
+        { appName: 'test-api', port: 3010 },
+        { SESSION_SECRET: 'x', HTTP_BODY_LIMIT_BYTES: String(MaximumRequestBodyLimitBytes + 1) },
+      ),
+    ).toThrow('HTTP_BODY_LIMIT_BYTES');
   });
 });

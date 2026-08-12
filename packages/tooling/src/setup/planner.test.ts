@@ -740,6 +740,17 @@ describe('planner — concrete capability activation', () => {
     }
   });
 
+  // "Do not edit by hand" without saying where the hand-written wiring goes is what sends the
+  // next author into the generated file anyway, and `pnpm nrb setup` then reverts their module.
+  it('tells the reader where product modules belong instead of only forbidding edits', () => {
+    for (const app of ['user-app-api', 'admin-app-api', 'notification-consumer'] as const) {
+      const generated = generateBackendCapabilityModule(app, summary).content;
+
+      assert.match(generated, /Do not edit by hand/u);
+      assert.match(generated, /root module that imports it/u);
+    }
+  });
+
   it('generates producer wiring for APIs and delivery wiring for the scheduler', () => {
     const producer = generateBackendCapabilityModule('user-app-api', summary).content;
     const consumer = generateBackendCapabilityModule('notification-consumer', summary).content;

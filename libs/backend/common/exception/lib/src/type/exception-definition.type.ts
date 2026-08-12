@@ -1,5 +1,5 @@
 import type { ExceptionKind } from './exception-kind.type';
-import type { ProblemTypeCode } from '@app/common-problem-details';
+import type { RegisteredProblemCode } from '@app/common-problem-details';
 
 /**
  * Static exception definition. Custom problem types are resolved from the
@@ -10,8 +10,11 @@ export interface ExceptionDefinition {
   name: string;
   /** Client or server classification */
   kind: ExceptionKind;
-  /** Registered custom problem type. Omit for the RFC-defined about:blank type. */
-  problemType?: ProblemTypeCode;
+  /**
+   * Registered custom problem type — a base code, or one a product registered
+   * through `registerProblemTypes`. Omit for the RFC-defined about:blank type.
+   */
+  problemType?: RegisteredProblemCode;
   /** HTTP status for about:blank; registered problem types derive it from the registry. */
   status?: number;
   /** Typed public extension shape for documentation and constructor ownership. */

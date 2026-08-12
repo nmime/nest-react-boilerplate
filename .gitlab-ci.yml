@@ -1,8 +1,11 @@
-# GitLab CI — the PRIMARY pipeline for this template.
+# GitLab CI — one of two renderings of the same gate inventory.
 #
-# GitHub Actions runs a documented subset (see docs/ci-lanes.md); this file is
-# where the full gate matrix lives. Keep that direction in mind when adding a
-# gate: it belongs here first.
+# The list of gates that must pass before a change merges lives in
+# scripts/ci/gates.json, NOT in this file and not in .github/workflows. Both
+# forges render that descriptor and `node scripts/ci/check-pipelines.mjs` fails
+# the pipeline when either rendering drops a gate, misses the aggregate job, or
+# loses a release supply-chain control. Add a gate to the descriptor first, then
+# wire it into both files. See docs/ci-lanes.md for the rendered matrix.
 #
 # Three things this file gets deliberately right, each of which was wrong before:
 #
@@ -27,6 +30,7 @@ workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
     - if: $CI_PIPELINE_SOURCE == 'schedule'
     - if: $CI_PIPELINE_SOURCE == 'web'
     - when: never
@@ -46,6 +50,12 @@ variables:
   # Full history: `nx affected` and the spec-evidence lane both diff against a
   # base commit, and GitLab's default depth of 20 silently breaks them.
   GIT_DEPTH: '0'
+  # Release supply-chain toolchain. Pinned for the same reason the GitHub side
+  # pins action SHAs: an unpinned signer or scanner is an unreviewed dependency
+  # in the release path.
+  SYFT_VERSION: v1.18.0
+  TRIVY_VERSION: v0.72.0
+  COSIGN_VERSION: v2.4.1
 
 # Shared Node setup: pnpm store cache, Nx local cache, and the self-hosted
 # remote cache when its variables are configured.
@@ -127,7 +137,11 @@ helm-validation:
       - HELM_SELECTION: mongodb
         SETUP_ARGS: '--replace --app auth-app-api --capability mongodb --non-interactive'
   script:
-    - node scripts/validate-github-workflows.mjs
+    # Forge-neutral: asserts this file and .github/workflows/ci.yml both render
+    # every gate in scripts/ci/gates.json. This replaced a call to
+    # scripts/validate-github-workflows.mjs, which polices GitHub workflow
+    # hardening and therefore proves nothing about a GitLab-hosted product.
+    - node scripts/ci/check-pipelines.mjs
     - pnpm nrb setup $SETUP_ARGS
     - pnpm run deploy:validate:helm
   variables:
@@ -144,18 +158,22 @@ fast-check:
   stage: test
   script:
     - |
-      if [ -n "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-}" ]; then
+      if [ -n "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-}" ]; then
         git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+        export FORMAT_BASE_REF="origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
         pnpm run git:conventions -- --branch "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" --range "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..HEAD"
       else
+        git fetch origin "$CI_DEFAULT_BRANCH"
+        export FORMAT_BASE_REF="origin/$CI_DEFAULT_BRANCH"
         pnpm run git:conventions -- --branch "$CI_COMMIT_BRANCH" --range "$CI_COMMIT_BEFORE_SHA..HEAD"
       fi
-    # These four had no GitLab equivalent at all and are cheap, so they belong in
-    # the fail-fast job rather than being GitHub-only.
-    - pnpm run tooling:static-check
-    - pnpm run docs:check
-    - pnpm run spec:validate
-    - pnpm run format:check
+    # The same aggregate GitHub's fast-check runs, rather than a hand-copied
+    # subset that silently fell four gates behind. `ci:pr` expands to:
+    #   pnpm run tooling:static-check && pnpm run docs:check &&
+    #   pnpm run i18n:catalogs:check && pnpm run spec:validate &&
+    #   pnpm run format:changed && pnpm run test:security:secrets &&
+    #   pnpm run test:security:sast && pnpm run audit:ci
+    - pnpm run ci:pr
   timeout: 15m
 
 spec-evidence:
@@ -194,6 +212,81 @@ spec-evidence:
     expire_in: 14 days
   timeout: 45m
 
+non-runtime-validation:
+  extends: .node
+  stage: test
+  needs:
+    - fast-check
+  script:
+    - pnpm run onboarding:verify
+    - pnpm run db:migrations:check
+    - pnpm run lib:configs:check
+    - pnpm run frontend:fsd:check
+    - pnpm run api:toast-config:check
+    - pnpm run audit:licenses
+    - pnpm run audit:full
+    - pnpm run api:contracts:check
+    - pnpm run api:clients:check
+    - pnpm run api:openapi:lint
+    - pnpm run api:contracts:consumer
+    - pnpm run api:openapi:fuzz
+    - pnpm run test:property
+    # Deployment configuration. The GitOps validator reads its pipeline set from
+    # scripts/ci/gates.json, so it validates whichever forges this checkout ships and
+    # leaves the rest to the supply-chain controls that ci-pipeline-parity evaluates.
+    - pnpm run deploy:validate:pm2
+    - pnpm run deploy:validate:gitops
+  timeout: 30m
+
+bun-compat:
+  extends: .node
+  stage: test
+  needs:
+    - fast-check
+  parallel:
+    matrix:
+      - BUN_CLOSURE: provider-free
+        SETUP_ARGS: '--replace --app landing-app --non-interactive'
+      - BUN_CLOSURE: standalone-site
+        SETUP_ARGS: '--replace --app site-app --non-interactive'
+      - BUN_CLOSURE: standalone-user-frontend
+        SETUP_ARGS: '--replace --app user-app --capability postgres --non-interactive'
+      - BUN_CLOSURE: standalone-admin-frontend
+        SETUP_ARGS: '--replace --app admin-app --capability postgres --non-interactive'
+      - BUN_CLOSURE: standalone-mobile
+        SETUP_ARGS: '--replace --app mobile-app --capability postgres --non-interactive'
+      - BUN_CLOSURE: standalone-user-api
+        SETUP_ARGS: '--replace --app user-app-api --capability postgres --non-interactive'
+      - BUN_CLOSURE: standalone-admin-api
+        SETUP_ARGS: '--replace --app admin-app-api --capability postgres --non-interactive'
+      - BUN_CLOSURE: standalone-discord-api
+        SETUP_ARGS: '--replace --app discord-app-api --capability postgres --non-interactive'
+      - BUN_CLOSURE: standalone-telegram-api
+        SETUP_ARGS: '--replace --app telegram-bot-api --capability postgres --non-interactive'
+      - BUN_CLOSURE: preset-minimal
+        SETUP_ARGS: '--preset minimal --non-interactive'
+      - BUN_CLOSURE: preset-web
+        SETUP_ARGS: '--preset web --non-interactive'
+      - BUN_CLOSURE: preset-fullstack
+        SETUP_ARGS: '--preset fullstack --non-interactive'
+      - BUN_CLOSURE: preset-enterprise
+        SETUP_ARGS: '--preset enterprise --non-interactive'
+      - BUN_CLOSURE: preset-bots
+        SETUP_ARGS: '--preset bots --non-interactive'
+      - BUN_CLOSURE: mongodb-core
+        SETUP_ARGS: '--replace --app auth-app-api --app user-app-api --capability mongodb --non-interactive'
+      - BUN_CLOSURE: mongodb-bots
+        SETUP_ARGS: '--replace --app auth-app-api --app user-app-api --app discord-app-api --app telegram-bot-api --capability mongodb --non-interactive'
+  script:
+    - apk add --no-cache bash curl unzip
+    - curl -fsSL https://bun.sh/install | bash -s -- "bun-v$(cat .bun-version)"
+    - export PATH="$HOME/.bun/bin:$PATH"
+    - pnpm run tooling:install
+    - pnpm nrb setup $SETUP_ARGS
+    - pnpm nrb closure install
+    - pnpm run bun:check
+  timeout: 60m
+
 full-check:
   extends: .node
   stage: test
@@ -210,27 +303,42 @@ full-check:
     DATABASE_URL: 'postgresql://postgres:postgres@postgres:5432/app_test'
     TEST_DB_URL: 'postgresql://postgres:postgres@postgres:5432/app_test'
   script:
-    - pnpm run db:migrations:check
-    - pnpm run lib:configs:check
-    - pnpm run api:contracts:check
-    - pnpm run api:clients:check
-    - pnpm run api:openapi:lint
-    - pnpm run api:contracts:consumer
-    - pnpm run api:openapi:fuzz
-    - pnpm run test:property
+    - pnpm run format:check
     # Affected on a merge request, everything on the default branch. The base is
     # GitLab's own diff-base SHA, which is why GIT_DEPTH must be 0.
     - |
       if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]; then
         pnpm exec nx affected -t lint typecheck build --base="$CI_MERGE_REQUEST_DIFF_BASE_SHA" --head=HEAD
         pnpm exec nx affected -t test --base="$CI_MERGE_REQUEST_DIFF_BASE_SHA" --head=HEAD -- --coverage
+        pnpm run test:bundle-budget -- --skip-missing
       else
         pnpm run lint:all
         pnpm run typecheck:all
         pnpm run build:all
         pnpm run test:coverage:all
+        pnpm run test:bundle-budget
       fi
   timeout: 60m
+
+component-tests:
+  stage: test
+  image: node:24.18.0-alpine
+  needs:
+    - fast-check
+  services:
+    - docker:27.5.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ''
+    TESTCONTAINERS_HOST_OVERRIDE: docker
+  before_script:
+    - apk add --no-cache docker-cli
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm exec nx run @app/backend-feature-auth-test:component-test
+  timeout: 30m
 
 mongodb-validation:
   stage: test
@@ -282,6 +390,7 @@ docker-smoke-test:
     - pnpm nrb closure materialize --all-reference --provider postgres
     - pnpm nrb closure materialize --all-reference --provider mongodb
     - pnpm run test:docker-smoke
+    - pnpm run test:compose-deployment-modes
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ''
@@ -353,6 +462,87 @@ storybook-tests:
     expire_in: 7 days
   timeout: 30m
 
+# Runtime-backed lane. Deliberately placed after storybook-tests: the workflow
+# validator isolates docker-fullstack-mongodb by reading everything up to
+# `storybook-tests:`, and this job legitimately pins COMPOSE_PROFILES.
+ops-gates:
+  stage: e2e
+  image: node:24.18.0-alpine
+  needs:
+    - docker-smoke-test
+  services:
+    - docker:27.5.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ''
+    DATABASE_ENGINE: postgres
+    AUTH_PERSISTENCE: postgres
+    DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+    CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+    ADMIN_BOOTSTRAP_ENABLED: 'true'
+    ADMIN_BOOTSTRAP_EMAILS: admin@example.com
+    # The cross-browser matrix includes the real Telegram TMA auth journey.
+    # Keep its explicitly fake signing token aligned with the fullstack fixture.
+    AUTH_TELEGRAM_ENABLED: 'true'
+    EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
+    TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
+    VITE_TELEGRAM_AUTH_ENABLED: 'true'
+    # Deterministic CI-only AES-256 fixture; production loads an external secret.
+    NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='
+    # Six browser/device projects share the same runtime client address.
+    RATE_LIMIT_MAX: '1000'
+    COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app,site-app
+    PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
+    PLAYWRIGHT_AUTO_INSTALL: '1'
+    POSTGRES_PORT: '5432'
+    ADMIN_APP_API_PORT: '3001'
+    USER_APP_API_PORT: '3002'
+    AUTH_APP_API_PORT: '3003'
+    ADMIN_APP_PORT: '8081'
+    USER_APP_PORT: '8082'
+    LANDING_APP_PORT: '8083'
+    SITE_APP_PORT: '4203'
+    NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/reference/postgres'
+    FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true'
+    LANDING_ADMIN_APP_URL: http://127.0.0.1:8081
+    LANDING_USER_APP_URL: http://127.0.0.1:8082
+    A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+    PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
+    PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+    SECURITY_DAST_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+    QA_LOAD_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+    QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+    QA_CHAOS_URLS: http://127.0.0.1:3002/health
+    QA_CHAOS_SERVICE: user-app-api
+    QA_USER_JOURNEY_COMMAND: '["pnpm","run","test:e2e:matrix","--","--project","chromium"]'
+    QA_CONCURRENCY_COMMAND: '["pnpm","exec","nx","run","@app/backend-postgres-main-notification:component-test","--","src/repositories/notification-concurrency.component-spec.ts","--maxWorkers=1"]'
+    QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
+    QA_MIGRATION_ROLLBACK_COMMAND: '["pnpm","run","db:migrations:rollback-check"]'
+    POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.6-alpine
+  before_script:
+    - apk add --no-cache bash curl git jq python3 make postgresql-client docker-cli docker-cli-compose
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm exec playwright install --with-deps chromium firefox webkit
+    - pnpm nrb closure materialize --all-reference --provider postgres
+    # Same start-and-wait sequence as .github/actions/runtime-stack.
+    - bash scripts/ci/runtime-stack.sh
+    - pnpm run test:world-class
+    # A11Y_URLS is already set for this job and the stack is already up, so the
+    # axe scan belongs in the blocking lane rather than a scheduled preset.
+    - pnpm run test:a11y
+  after_script:
+    - docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
+  artifacts:
+    when: always
+    paths:
+      - test-results/
+      - playwright-report/
+    expire_in: 7 days
+  timeout: 90m
+
 visual-regression-matrix:
   stage: test
   image: mcr.microsoft.com/playwright:v1.61.1-noble@sha256:5b8f294aff9041b7191c34a4bab3ac270157a28774d4b0660e9743297b697e48
@@ -373,6 +563,106 @@ visual-regression-matrix:
     - if: $CI_PIPELINE_SOURCE == "web"
   timeout: 45m
 
+# Scheduled full-inventory evidence. The GitHub twin is
+# .github/workflows/spec-assurance-nightly.yml; scripts/ci/gates.json names both
+# as the executors of the `nightly` lane so neither can quietly disappear.
+spec-evidence-nightly:
+  stage: reports
+  image: node:24.18.0-alpine
+  services:
+    - docker:27.5.1-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ''
+    NX_PARALLEL: '2'
+    VITEST_MAX_WORKERS: '1'
+    WORLD_CLASS_COMMAND_TIMEOUT_MS: '1800000'
+    DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+    CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
+    ADMIN_BOOTSTRAP_ENABLED: 'true'
+    ADMIN_BOOTSTRAP_EMAILS: admin@example.com
+    AUTH_TELEGRAM_ENABLED: 'true'
+    EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
+    TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
+    VITE_TELEGRAM_AUTH_ENABLED: 'true'
+    # Deterministic CI-only AES-256 fixture; production loads an external secret.
+    NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='
+    RATE_LIMIT_MAX: '1000'
+    COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app,site-app
+    PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
+    PLAYWRIGHT_AUTO_INSTALL: '1'
+    POSTGRES_PORT: '5432'
+    ADMIN_APP_API_PORT: '3001'
+    USER_APP_API_PORT: '3002'
+    AUTH_APP_API_PORT: '3003'
+    ADMIN_APP_PORT: '8081'
+    USER_APP_PORT: '8082'
+    LANDING_APP_PORT: '8083'
+    SITE_APP_PORT: '4203'
+    NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/reference/postgres'
+    FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true'
+    LANDING_ADMIN_APP_URL: http://127.0.0.1:8081
+    LANDING_USER_APP_URL: http://127.0.0.1:8082
+    A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+    PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
+    PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+    SECURITY_DAST_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+    QA_LOAD_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+    QA_CANARY_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083,http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+    QA_RELIABILITY_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
+    QA_RELIABILITY_CONCURRENCY: '4'
+    QA_CHAOS_URLS: http://127.0.0.1:3002/health
+    QA_CHAOS_SERVICE: user-app-api
+    QA_USER_JOURNEY_COMMAND: '["pnpm","run","test:e2e:matrix","--","--project","chromium"]'
+    QA_CONCURRENCY_COMMAND: '["pnpm","exec","nx","run","@app/backend-postgres-main-notification:component-test","--","src/repositories/notification-concurrency.component-spec.ts","--maxWorkers=1"]'
+    QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
+    POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.6-alpine
+  before_script:
+    - apk add --no-cache bash curl git jq python3 make postgresql-client docker-cli docker-cli-compose
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm exec playwright install --with-deps chromium firefox webkit
+    - pnpm nrb closure materialize --all-reference --provider postgres
+    - bash scripts/ci/runtime-stack.sh
+    - pnpm run spec:verify -- --all --lane nightly --report test-results/spec-evidence/nightly.json
+  after_script:
+    - docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
+  artifacts:
+    when: always
+    paths:
+      - test-results/
+      - coverage/
+      - reports/mutation/
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  timeout: 240m
+
+# Evidence that needs a live runtime rather than a build sandbox. Manual, like
+# its GitHub twin's workflow_dispatch trigger.
+spec-evidence-runtime:
+  stage: reports
+  image: mcr.microsoft.com/playwright:v1.61.1-noble
+  before_script:
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm run spec:verify -- --all --lane runtime --report test-results/spec-evidence/runtime.json
+  artifacts:
+    when: always
+    paths:
+      - test-results/
+      - playwright-report/
+      - coverage/e2e/
+    expire_in: 30 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+  timeout: 90m
+
 dependency-review:
   stage: security
   image: node:24.18.0-alpine
@@ -384,6 +674,173 @@ dependency-review:
     - pnpm run audit:ci
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# The single fan-in check a protected-branch rule can require, equivalent to
+# GitHub's "CI status summary". GitLab starts a job only once every job in
+# `needs:` has succeeded, so this job reaching `success` is itself the proof that
+# every merge-required gate passed; naming fifteen jobs in the branch rule
+# instead would silently stop covering whatever is added next.
+ci-status-summary:
+  stage: reports
+  image: node:24.18.0-alpine
+  needs:
+    - job: gitleaks
+      optional: true
+    - job: helm-validation
+    - job: fast-check
+    - job: spec-evidence
+    - job: non-runtime-validation
+    - job: bun-compat
+    - job: full-check
+    - job: component-tests
+    - job: mongodb-validation
+      optional: true
+    - job: e2e-tests
+      optional: true
+    - job: storybook-tests
+    - job: docker-smoke-test
+    - job: ops-gates
+    - job: docker-fullstack
+      optional: true
+    - job: docker-fullstack-mongodb
+      optional: true
+  script:
+    - node scripts/ci/check-pipelines.mjs
+    - echo "All merge-required gates in scripts/ci/gates.json reported success."
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  timeout: 10m
+
+# Build, scan, sign, and publish the affected release images. This lane did not
+# exist on GitLab at all: a product that deleted .github/ shipped unsigned,
+# unscanned, unattested images. scripts/ci/gates.json lists every supply-chain
+# control this job has to implement, and check-pipelines.mjs fails the pipeline
+# if one goes missing here.
+release-images:
+  stage: release
+  image: node:24.18.0-alpine
+  services:
+    - docker:27.5.1-dind
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ''
+    IMAGE_PREFIX: $CI_REGISTRY_IMAGE
+    SCAN_PREDICATE_TYPE: $CI_SERVER_URL/$CI_PROJECT_PATH/attestations/trivy-scan/v1
+  before_script:
+    - apk add --no-cache bash curl git jq tar docker-cli docker-cli-buildx
+    - curl -fsSL "https://github.com/anchore/syft/releases/download/${SYFT_VERSION}/syft_${SYFT_VERSION#v}_linux_amd64.tar.gz" | tar xz -C /usr/local/bin syft
+    - curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz" | tar xz -C /usr/local/bin trivy
+    - curl -fsSL -o /usr/local/bin/cosign "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+    - chmod +x /usr/local/bin/cosign
+    - corepack enable pnpm
+    - corepack prepare pnpm@$PNPM_VERSION --activate
+    - pnpm run tooling:install
+    - pnpm nrb closure install
+  script:
+    # Which images to build comes from the shared plan over the installed product
+    # closure, so neither forge carries its own hardcoded image list.
+    - node scripts/release-image-plan.mjs --head "$CI_COMMIT_SHA" --force-full --github-output image-plan.env
+    - |
+      set -eu
+      # shellcheck disable=SC1091
+      . ./image-plan.env
+      if [ "$has_images" != 'true' ]; then
+        echo "No release images selected ($reason); nothing to build."
+        exit 0
+      fi
+
+      echo "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+      # The default docker driver cannot emit attestations; the container driver can.
+      docker buildx create --use --driver docker-container --name release-builder
+
+      node scripts/generate-bake-file.mjs --only "$selected_images"
+
+      names=$(echo "$selected_images" | tr ',' ' ')
+      set_args=''
+      for name in $names; do
+        set_args="$set_args --set ${name}.tags=${IMAGE_PREFIX}/${name}:sha-${CI_COMMIT_SHA}"
+      done
+
+      # shellcheck disable=SC2086
+      docker buildx bake -f docker-bake.json $names $set_args \
+        --set "*.args.VITE_TELEGRAM_AUTH_ENABLED=${VITE_TELEGRAM_AUTH_ENABLED:-false}" \
+        --set "*.cache-from=type=registry,ref=${IMAGE_PREFIX}/buildcache" \
+        --set "*.cache-to=type=registry,mode=max,ref=${IMAGE_PREFIX}/buildcache" \
+        --set "*.attest=type=provenance,mode=max" \
+        --set "*.attest=type=sbom" \
+        --set "*.labels.org.opencontainers.image.source=${CI_PROJECT_URL}" \
+        --set "*.labels.org.opencontainers.image.revision=${CI_COMMIT_SHA}" \
+        --set "*.labels.org.opencontainers.image.version=${CI_COMMIT_TAG:-$CI_COMMIT_SHA}" \
+        --push --metadata-file bake-metadata.json
+
+      mkdir -p attestations sboms sarifs
+      scan_failed=0
+      for name in $names; do
+        # Every post-build step addresses the digest the build reported, never a
+        # tag another pipeline could move underneath it.
+        digest=$(jq -r --arg t "$name" '.[$t]."containerimage.digest"' bake-metadata.json)
+        if ! printf '%s' "$digest" | grep -Eq '^sha256:[0-9a-f]{64}$'; then
+          echo "build metadata returned an invalid digest for ${name}: ${digest}" >&2
+          exit 1
+        fi
+        ref="${IMAGE_PREFIX}/${name}@${digest}"
+        syft "$ref" -o "spdx-json=sboms/sbom-${name}.spdx.json"
+        if trivy image --format sarif --output "sarifs/trivy-${name}.sarif" \
+          --pkg-types os,library --severity CRITICAL,HIGH --exit-code 1 "$ref"; then
+          echo "scan PASS ${name}"
+          jq -n \
+            --arg builder "${CI_PROJECT_URL}/-/pipelines/${CI_PIPELINE_ID}" \
+            --arg invocation "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}" \
+            --arg ref "${CI_COMMIT_REF_NAME}" \
+            --arg sha "$CI_COMMIT_SHA" \
+            --arg source "git+${CI_PROJECT_URL}.git" \
+            '{
+              buildDefinition: {
+                buildType: "https://gitlab.com/attestations/GitLabPipeline@v1",
+                externalParameters: {ref: $ref},
+                internalParameters: {},
+                resolvedDependencies: [{uri: $source, digest: {gitCommit: $sha}}]
+              },
+              runDetails: {
+                builder: {id: $builder},
+                metadata: {invocationId: $invocation}
+              }
+            }' > "attestations/provenance-${name}.json"
+          jq -n \
+            --arg digest "$digest" \
+            --arg scanner "pkg:github/aquasecurity/trivy@${TRIVY_VERSION}" \
+            '{
+              scanner: {uri: $scanner},
+              artifactDigest: $digest,
+              result: "pass",
+              policy: {severities: ["CRITICAL", "HIGH"], allowUnfixed: false}
+            }' > "attestations/scan-${name}.json"
+          cosign sign --yes "$ref"
+          cosign attest --yes --type spdxjson --predicate "sboms/sbom-${name}.spdx.json" "$ref"
+          cosign attest --yes --type slsaprovenance1 --predicate "attestations/provenance-${name}.json" "$ref"
+          cosign attest --yes --type "$SCAN_PREDICATE_TYPE" --predicate "attestations/scan-${name}.json" "$ref"
+        else
+          findings=$(jq '[.runs[].results[]?] | length' "sarifs/trivy-${name}.sarif" 2>/dev/null || echo '?')
+          echo "scan FAIL ${name} (${findings} CRITICAL/HIGH findings)" >&2
+          scan_failed=1
+        fi
+      done
+      # A CRITICAL/HIGH finding fails the release; it is never downgraded to a warning.
+      test "$scan_failed" = 0
+  artifacts:
+    when: always
+    paths:
+      - sboms/
+      - sarifs/
+      - attestations/
+    expire_in: 90 days
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+  timeout: 90m
 
 release:
   stage: release

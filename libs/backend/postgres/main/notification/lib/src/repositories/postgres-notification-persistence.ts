@@ -99,7 +99,11 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
           createdAt: now,
           updatedAt: now,
         });
+        // The version and channel rows below carry their parents as plain uuid columns rather than
+        // as declared relations, so the unit of work has no dependency edge to order the inserts by.
+        // Each generation is flushed on its own instead, parent first.
         em.persist(template);
+        await em.flush();
       }
 
       const currentVersion = template.currentVersionId
@@ -137,8 +141,13 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
               createdAt: now,
             }),
         );
+        // `notification_template_version_channels.template_version_id` and
+        // `notification_templates.current_version_id` both reference this row through a scalar
+        // column, so it has to be in the table before either of them is written.
+        em.persist(version);
+        await em.flush();
         template.currentVersionId = version.id;
-        em.persist([version, ...versionChannels]);
+        em.persist(versionChannels);
       }
       await em.flush();
       return mapTemplate(template, versionChannels, version ?? undefined);

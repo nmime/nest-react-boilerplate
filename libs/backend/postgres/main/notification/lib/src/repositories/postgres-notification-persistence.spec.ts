@@ -53,9 +53,34 @@ describe('PostgresNotificationPersistence', () => {
       description: 'Account link confirmation',
     });
     expect(Object.keys(template.channels)).toEqual([NotificationChannel.Bot, NotificationChannel.InApp]);
-    // Template identity and immutable version/channel rows are persisted in one transaction.
-    expect(transaction.persist).toHaveBeenCalledTimes(2);
-    expect(transaction.flush).toHaveBeenCalledOnce();
+    // Template identity and immutable version/channel rows are persisted in one transaction, but in
+    // three generations: each references the one before it through a scalar column the unit of work
+    // cannot order inserts by.
+    expect(transaction.persist).toHaveBeenCalledTimes(3);
+    expect(transaction.flush).toHaveBeenCalledTimes(3);
+  });
+
+  it('flushes a new version before persisting the rows whose foreign key points at it', async () => {
+    const transaction = createTransactionEntityManager();
+    transaction.findOne.mockResolvedValue(null);
+    transaction.find.mockResolvedValue([]);
+    const persistence = createPersistence(transaction);
+
+    await persistence.upsertTemplate({
+      code: 'account-linked',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Linked' } } }],
+    });
+
+    // `template_version_id` and `current_version_id` are plain uuid columns rather than declared
+    // relations, so the unit of work has no edge to order the inserts by. Handing it the version and
+    // the rows that reference it in one flush lets it emit them in either order, and the wrong order
+    // trips `notification_template_version_channels_template_version_id_foreign`.
+    const versionPersist = persistOrderOf(transaction, NotificationTemplateVersionEntity);
+    const channelPersist = persistOrderOf(transaction, NotificationTemplateVersionChannelEntity);
+    const flushes = transaction.flush.mock.invocationCallOrder;
+
+    expect(versionPersist).toBeLessThan(channelPersist);
+    expect(flushes.some((order) => order > versionPersist && order < channelPersist)).toBe(true);
   });
 
   it('creates a new immutable version when code-owned channel content changes', async () => {
@@ -737,6 +762,26 @@ function buildPendingDelivery(id: string, notificationId: string): NotificationD
   });
   delivery.id = id;
   return delivery;
+}
+
+/** Named separately so the failure message can quote the class the caller asked about. */
+type EntityConstructor = (abstract new (...args: never[]) => unknown) & { readonly name: string };
+
+/**
+ * When the given entity type first reaches `persist`, on the shared invocation clock vitest keeps
+ * across every mock. `persist` takes either one entity or an array, so both shapes are searched.
+ */
+function persistOrderOf(
+  transaction: ReturnType<typeof createTransactionEntityManager>,
+  entityType: EntityConstructor,
+): number {
+  const index = transaction.persist.mock.calls.findIndex(([persisted]) =>
+    (Array.isArray(persisted) ? persisted : [persisted]).some((entity) => entity instanceof entityType),
+  );
+
+  expect(index, `${entityType.name} was never persisted`).toBeGreaterThanOrEqual(0);
+
+  return transaction.persist.mock.invocationCallOrder[index] ?? Number.NaN;
 }
 
 function createPersistence(transaction: ReturnType<typeof createTransactionEntityManager>) {

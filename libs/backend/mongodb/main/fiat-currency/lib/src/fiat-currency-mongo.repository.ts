@@ -194,5 +194,5 @@ function toCurrencyFilter(filter: ListFiatCurrenciesFilter): Filter<FiatCurrency
     query['_id'] = { $in: [...filter.codes] };
   }
 
-  return query as Filter<FiatCurrencyDocument>;
+  return query;
 }

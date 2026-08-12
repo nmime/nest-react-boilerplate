@@ -1,4 +1,4 @@
-import type { CreateIndexesOptions, Db, IndexDescription } from 'mongodb';
+import type { CreateIndexesOptions, Db, Document, IndexDescription } from 'mongodb';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { assertCollectionDefinition } from '../../../shared/lib/src/migrations/mongo-migration';
 import type { FiatCurrencyDocument, FiatCurrencyRateDocument } from './fiat-currency-mongo.types';
@@ -99,7 +99,7 @@ export async function verifyFiatCurrencyCollections(database: Db): Promise<void>
   });
 }
 
-async function defineCollection(database: Db, name: string, validator: object): Promise<void> {
+async function defineCollection(database: Db, name: string, validator: Document): Promise<void> {
   let existed = false;
 
   try {

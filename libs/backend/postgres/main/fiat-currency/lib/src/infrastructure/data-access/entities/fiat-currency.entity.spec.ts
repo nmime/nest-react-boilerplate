@@ -76,7 +76,7 @@ describe('FiatCurrencyEntity', () => {
   it('maps to the fiat_currencies table keyed by its code', () => {
     expect(FiatCurrencyEntitySchema.meta.tableName).toBe('fiat_currencies');
     expect(FiatCurrencyEntitySchema.meta.properties.code.primary).toBe(true);
-    expect(FiatCurrencyEntitySchema.meta.checks?.map((check) => check.name)).toEqual([
+    expect(FiatCurrencyEntitySchema.meta.checks.map((check) => check.name)).toEqual([
       'ck__fiat_currencies__code',
       'ck__fiat_currencies__minor_unit_exponent',
       'ck__fiat_currencies__name',

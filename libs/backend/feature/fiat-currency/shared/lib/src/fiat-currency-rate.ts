@@ -30,7 +30,17 @@ export function fiatRateRatio(usdPerUnit: string): MoneyRatio {
   }
 
   const [whole = '', fraction = ''] = usdPerUnit.split('.');
-  const ratio = moneyRate(`${whole}.${fraction.replace(/0+$/u, '')}`.replace(/\.$/u, ''));
+
+  // Scanned rather than trimmed with `/0+$/`: an anchored one-or-more group re-tries from every
+  // position it fails at, so a long run of zeros costs quadratic time on text that arrives from a
+  // rate provider rather than from us.
+  let significant = fraction.length;
+  while (significant > 0 && fraction[significant - 1] === '0') {
+    significant -= 1;
+  }
+
+  const trimmed = fraction.slice(0, significant);
+  const ratio = moneyRate(trimmed === '' ? whole : `${whole}.${trimmed}`);
 
   if (ratio.numerator <= 0) {
     throw new RangeError(`A USD rate must be above zero (received ${JSON.stringify(usdPerUnit)}).`);

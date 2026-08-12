@@ -93,6 +93,8 @@ describe('FiatRateRefreshService', () => {
 
   it('reports a failure that was not thrown as an Error', async () => {
     const persistence = new StubPersistence();
+    // A provider that rejects with a bare string is this test's subject, not an oversight in it.
+    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
     const source = new StubSource('broken', () => Promise.reject('gateway closed'));
 
     const summary = await new FiatRateRefreshService(persistence, [source]).refresh();

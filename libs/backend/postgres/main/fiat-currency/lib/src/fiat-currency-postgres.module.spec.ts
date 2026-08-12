@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { FiatCurrencyPostgresModule } from './fiat-currency-postgres.module';
 import { FiatCurrencyPostgresPersistence } from './infrastructure/data-access/repositories';
 
-const metadata = <T>(key: string): T[] => (Reflect.getMetadata(key, FiatCurrencyPostgresModule) as T[]) ?? [];
+const metadata = <T>(key: string): T[] =>
+  (Reflect.getMetadata(key, FiatCurrencyPostgresModule) as T[] | undefined) ?? [];
 
 describe('FiatCurrencyPostgresModule', () => {
   it('binds the persistence port to the Postgres implementation', () => {

@@ -24,6 +24,16 @@ function euroDocument(overrides: Partial<FiatCurrencyDocument> = {}): FiatCurren
   };
 }
 
+// The driver's cursor is a chain, and building it inline nests a function per link deep enough to
+// bury what the test is actually saying.
+function rateCursor(documents: unknown[] = []) {
+  const toArray = (): Promise<unknown[]> => Promise.resolve(documents);
+  const limit = (_count?: number) => ({ toArray });
+  const sort = (_order?: unknown) => ({ limit });
+
+  return { sort };
+}
+
 function createRepository() {
   const currencyFind = vi.fn((_filter?: unknown, _options?: unknown) => ({
     toArray: () => Promise.resolve<FiatCurrencyDocument[]>([]),
@@ -32,9 +42,7 @@ function createRepository() {
   const currencyUpdateOne = vi.fn((_filter: unknown, _update: unknown, _options?: unknown) =>
     Promise.resolve({ matchedCount: 1 }),
   );
-  const rateFind = vi.fn((_filter: unknown) => ({
-    sort: (_order?: unknown) => ({ limit: (_count?: number) => ({ toArray: () => Promise.resolve<unknown[]>([]) }) }),
-  }));
+  const rateFind = vi.fn((_filter: unknown) => rateCursor());
   const rateUpdateOne = vi.fn((_filter: unknown, _update: unknown, _options?: unknown) =>
     Promise.resolve({ upsertedCount: 1 }),
   );
@@ -261,14 +269,9 @@ describe('FiatCurrencyMongoPersistence', () => {
 
   it('reads unbounded history when no window is given', async () => {
     const { rateFind, persistence } = createRepository();
-    rateFind.mockReturnValue({
-      sort: () => ({
-        limit: () => ({
-          toArray: () =>
-            Promise.resolve([{ _id: 'x', code: 'EUR', usdPerUnit: '1.08', asOf: now, source: 'ecb', recordedAt: now }]),
-        }),
-      }),
-    });
+    rateFind.mockReturnValue(
+      rateCursor([{ _id: 'x', code: 'EUR', usdPerUnit: '1.08', asOf: now, source: 'ecb', recordedAt: now }]),
+    );
 
     expect(await persistence.listRateHistory({ code: 'EUR', limit: 10 })).toEqual([
       { code: 'EUR', usdPerUnit: '1.08', asOf: now, source: 'ecb' },

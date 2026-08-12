@@ -31,7 +31,7 @@ describe('fiat currency MongoDB migration', () => {
   it('re-checks the deployed shape rather than trusting the ledger', async () => {
     const database = {} as Db;
 
-    await Migration20260812090000InitializeFiatCurrencies.verify?.(database);
+    await Migration20260812090000InitializeFiatCurrencies.verify(database);
 
     expect(collectionMocks.verifyFiatCurrencyCollections).toHaveBeenCalledWith(database);
   });

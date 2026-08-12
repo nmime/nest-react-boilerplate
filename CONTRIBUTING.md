@@ -21,17 +21,86 @@ cp .env.example .env
 
 1. Branch from current `main` as `<type>/<kebab-case>`, for example `feat/billing-settings` or `fix/auth-cookie-flags`. Allowed types are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`, `release`, and `hotfix`. Never use `codex`, `claude`, or another assistant/vendor identity as a branch segment. Dependabot's generated prefix is the only automation exception.
 2. Use Conventional Commits: `<type>(<optional-scope>)!: <lowercase description>`. Use the same types as branches except `release` and `hotfix`; express release metadata as `chore(release): <version>`.
-3. Human contributors keep their real Git author and committer identity. Commits produced by repository agents must use author and committer exactly `nmime <66474195+nmime@users.noreply.github.com>`.
-4. Agent-produced commits must not add assistant, model, executor, or automation attribution trailers. Legitimate human contribution trailers remain allowed.
-5. Do not use GitHub web merge/squash or GitHub API merge/squash for author-sensitive work; use raw git branch commits and pushes.
-6. Document any new runtime variable in `.env.example`, relevant environment examples, and root/docs guidance.
-7. Update generated contract and client artifacts only when the API source changed and the task includes regeneration.
-8. Do not commit secrets, real `.env*` values, Docker secret files, `dist/`, `coverage/`, `.nx/`, Playwright reports, or local database volumes.
+3. Keep the subject at 80 characters or fewer, and write a commit body whenever the subject cannot carry the reason. A body is required for commits that add or remove a pipeline definition, change a quality gate, replace a dependency or framework, or touch more than 20 non-generated files or 400 non-generated inserted lines. State what was rejected and why, not what the diff already shows. A decision that outlives the commit belongs in [docs/adr](docs/adr) as well.
+4. Mark breaking changes explicitly with `!` after the type/scope or a `BREAKING CHANGE:` footer. A breaking change with neither marker releases as a minor version.
+5. Human contributors keep their real Git author and committer identity. Commits produced by repository agents must use author and committer exactly `nmime <66474195+nmime@users.noreply.github.com>`. That identity is this repository's declared owner; a fork must change it in both the convention checker and [AGENTS.md](AGENTS.md) — see [Product identity](docs/product-identity.md).
+6. Agent-produced commits must not add assistant, model, executor, or automation attribution trailers. Legitimate human contribution trailers remain allowed.
+7. Do not use GitHub web merge/squash or GitHub API merge/squash for author-sensitive work; use raw git branch commits and pushes.
+8. Document any new runtime variable in `.env.example`, relevant environment examples, and root/docs guidance.
+9. Update generated contract and client artifacts only when the API source changed and the task includes regeneration.
+10. Do not commit secrets, real `.env*` values, Docker secret files, `dist/`, `coverage/`, `.nx/`, Playwright reports, or local database volumes.
 
 Run `pnpm run git:conventions` before pushing. CI validates the branch name,
 every commit in the PR range, linear history, and agent attribution. Human and
 trusted dependency-bot identities remain valid; known assistant identities must
 be replaced by the required `nmime` author and committer.
+
+### What the commit gate checks per commit
+
+Beyond the subject shape, the gate reads each commit's own tree — not just the
+tip — so a branch that is green at the end but broken in the middle is caught
+while it can still be rewritten. `git bisect`, a revert, and a cherry-pick all
+land on individual commits, so every commit has to stand on its own.
+
+| Rule | Threshold | Escape |
+| --- | --- | --- |
+| Size cap | 100 non-generated files, 2000 non-generated insertions | `[bulk]` in the subject or body |
+| Body required | above 20 non-generated files or 400 non-generated insertions | write the body |
+| Subject length | 80 characters | — |
+| Generated output without its source | `pnpm-lock.yaml`, `.nrb/**`, `**/*.generated.*`, `**/__snapshots__/**`, `**/baselines/**`, `**/contracts/openapi/*.json`, `CHANGELOG.md` | `[regenerate]` in the subject or body |
+| Author and committer identity match | divergence must be explained | a `Co-authored-by:`/`Signed-off-by:` trailer, or a forge-bot identity |
+| Every lockfile importer has a `package.json` at that commit | — | — |
+| Every `tsconfig.base.json` path target exists at that commit | — | — |
+| Every `@app/*` import resolves at that commit | — | — |
+
+Use an escape marker when the commit really is what the rule describes — a
+mechanical sweep, or a regeneration whose source moved in an earlier commit —
+not to get a red gate to go quiet.
+
+Every threshold above is a default a product can retune from the `gitConventions`
+key of its own `nrb.config.json`, so a fork never has to edit boilerplate tooling
+source:
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "gitConventions": {
+    "size": { "maxFilesChanged": 250 },
+    "identity": { "allowedDivergentIdentities": ["*[bot]*", "release@example.com"] }
+  }
+}
+```
+
+### Local hooks (recommended)
+
+CI is the authority, but it only speaks after a push, and by then rewriting
+history is the only fix. Install local hooks for the fast signal. This
+repository ships no hook manager on purpose — `core.hooksPath` needs no
+dependency and, unlike husky, works inside a `git worktree`.
+
+```bash
+mkdir -p .git-hooks
+
+cat > .git-hooks/commit-msg <<'HOOK'
+#!/bin/sh
+# Subject shape only; pnpm run git:conventions remains the authority.
+head -n1 "$1" | grep -Eq '^(build|chore|ci|docs|feat|fix|perf|refactor|revert|test)(\([a-z0-9][a-z0-9/-]*\))?!?: [a-z0-9].+$' && exit 0
+echo "commit-msg: subject must be <type>(<scope>)!: <lowercase description>" >&2
+exit 1
+HOOK
+
+cat > .git-hooks/pre-push <<'HOOK'
+#!/bin/sh
+[ -n "$SKIP_GIT_CONVENTIONS" ] && exit 0
+pnpm run git:conventions
+HOOK
+
+chmod +x .git-hooks/commit-msg .git-hooks/pre-push
+git config core.hooksPath .git-hooks
+```
+
+`git commit --no-verify` and `SKIP_GIT_CONVENTIONS=1 git push` bypass them for
+automation. Keep `.git-hooks/` untracked and out of review.
 
 ## Release numbering
 
@@ -103,28 +172,20 @@ Run `pnpm run check` for release-risk, security-sensitive, or broad cross-cuttin
 
 Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes. New projects default to 100%. Existing negative thresholds are maximum uncovered-item budgets and must only move toward zero as coverage improves.
 
-## Changelog
+## Release notes
 
-Every PR that changes user-facing behavior MUST include a changelog entry:
+Release notes are generated by semantic-release from Conventional Commit
+subjects and published with the release. Do not hand-edit release notes, and do
+not add an entry to a changelog file as part of a PR.
 
-1. Edit `CHANGELOG.md`
-2. Add your change under `[Unreleased]` with the appropriate heading:
-   - `### Added` for new features
-   - `### Changed` for changes in existing functionality
-   - `### Fixed` for bug fixes
-   - `### Removed` for deprecated/removed features
-3. Follow the format: `- Brief description of the change (#PR_NUMBER)`
+Because the commit subject _is_ the release note, write it for a reader who was
+not in the PR. `fix(auth): correct cookie flags` is a release note;
+`fix(auth): address review` is not.
 
-Example:
-
-```markdown
-## [Unreleased]
-
-### Fixed
-
-- Deploy workflow now gated on CI success (#42)
-- Docker Node.js version corrected to 24.18.0 (#43)
-```
+`CHANGELOG.md` is this boilerplate's own frozen release history, kept for
+upstream reference only. It is not maintained per PR, nothing gates it, and a
+product forked from this repository should delete it — see
+[Product identity](docs/product-identity.md).
 
 ## Backend changes
 

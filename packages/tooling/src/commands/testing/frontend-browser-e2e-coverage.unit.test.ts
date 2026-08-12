@@ -21,6 +21,13 @@ import {
   resolveExistingStaticFile,
   resolveWorkspaceSubdirectory,
 } from "./frontend-browser-e2e-coverage-paths.ts";
+import {
+  contentType,
+  mergeVisitCoverage,
+  normalizeRoutePath,
+  parseCoverageArgs,
+  selectRouteLinks,
+} from "./frontend-browser-e2e-coverage.ts";
 
 /**
  * Unit tests for the frontend-browser-e2e-coverage.ts module.
@@ -85,14 +92,6 @@ describe("frontend-browser-e2e-coverage: Istanbul types", () => {
 });
 
 describe("frontend-browser-e2e-coverage: contentType helper", () => {
-  function contentType(filePath: string): string {
-    if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
-    if (filePath.endsWith(".js")) return "text/javascript; charset=utf-8";
-    if (filePath.endsWith(".css")) return "text/css; charset=utf-8";
-    if (filePath.endsWith(".svg")) return "image/svg+xml";
-    return "application/octet-stream";
-  }
-
   it("returns correct content-type for HTML", () => {
     assert.equal(contentType("index.html"), "text/html; charset=utf-8");
   });
@@ -168,42 +167,126 @@ describe("frontend-browser-e2e-coverage: path confinement", () => {
 });
 
 describe("frontend-browser-e2e-coverage: argument parsing", () => {
+  const required = [
+    "--dist",
+    "build",
+    "--app-name",
+    "myapp",
+    "--contains",
+    "Hello",
+    "--coverage-dir",
+    "cov",
+  ];
+
   it("parses --key value pairs correctly", () => {
-    const args = new Map<string, string>();
-    const argv = ["--dist", "build", "--app-name", "myapp", "--contains", "Hello", "--coverage-dir", "cov"];
-    for (let i = 0; i < argv.length; i += 1) {
-      const key = argv[i];
-      const value = argv[i + 1];
-      if (key.startsWith("--") && value && !value.startsWith("--")) {
-        args.set(key.slice(2), value);
-        i += 1;
-      }
-    }
-    assert.equal(args.get("dist"), "build");
-    assert.equal(args.get("app-name"), "myapp");
-    assert.equal(args.get("contains"), "Hello");
-    assert.equal(args.get("coverage-dir"), "cov");
+    const args = parseCoverageArgs(required);
+    assert.equal(args.dist, "build");
+    assert.equal(args.appName, "myapp");
+    assert.equal(args.contains, "Hello");
+    assert.equal(args.coverageDir, "cov");
+    assert.deepEqual(args.visits, []);
+    assert.deepEqual(args.skipVisits, []);
   });
 
   it("throws when required arguments are missing", () => {
-    assert.throws(() => {
-      const args = new Map<string, string>();
-      const argv = ["--dist", "build"];
-      for (let i = 0; i < argv.length; i += 1) {
-        const key = argv[i];
-        const value = argv[i + 1];
-        if (key.startsWith("--") && value && !value.startsWith("--")) {
-          args.set(key.slice(2), value);
-          i += 1;
-        }
-      }
-      const dist = args.get("dist");
-      const appName = args.get("app-name");
-      const contains = args.get("contains");
-      const coverageDir = args.get("coverage-dir");
-      if (!dist || !appName || !contains || !coverageDir) {
-        throw new Error("Usage: frontend-browser-e2e-coverage --dist <dir> --app-name <name> --contains <text> --coverage-dir <dir>");
-      }
-    }, /Usage/);
+    assert.throws(() => parseCoverageArgs(["--dist", "build"]), /Usage/);
+  });
+
+  it("keeps every --visit occurrence in order instead of the last one", () => {
+    const args = parseCoverageArgs([
+      ...required,
+      "--visit",
+      "/profile",
+      "--visit",
+      "/settings?tab=locale",
+      "--visit",
+      "/link/telegram#top",
+    ]);
+    assert.deepEqual(args.visits, ["/profile", "/settings", "/link/telegram"]);
+  });
+
+  it("collects repeated --skip-visit exclusions", () => {
+    const args = parseCoverageArgs([...required, "--skip-visit", "/tma", "--skip-visit", "/auth"]);
+    assert.deepEqual(args.skipVisits, ["/tma", "/auth"]);
+  });
+
+  it("rejects navigation targets that leave the app origin", () => {
+    for (const target of ["relative/path", "../escape", "https://elsewhere/x", "//elsewhere/x"]) {
+      assert.throws(
+        () => parseCoverageArgs([...required, "--visit", target]),
+        /--visit must be an absolute same-origin path/,
+        `expected ${target} to be rejected`,
+      );
+    }
+  });
+
+  it("names the rejected option so the failure points at the right flag", () => {
+    assert.throws(
+      () => normalizeRoutePath("https://elsewhere/x", "--skip-visit"),
+      /--skip-visit must be an absolute same-origin path/,
+    );
+    assert.equal(normalizeRoutePath("/profile?tab=a#b", "--visit"), "/profile");
+  });
+});
+
+describe("frontend-browser-e2e-coverage: route link discovery", () => {
+  const isRoutePath = (candidate: string): boolean => !candidate.startsWith("/assets/");
+
+  it("keeps same-origin route links once, in DOM order", () => {
+    assert.deepEqual(
+      selectRouteLinks(["/", "/profile", "/settings", "/profile"], isRoutePath),
+      ["/", "/profile", "/settings"],
+    );
+  });
+
+  it("drops anchors that are not app routes", () => {
+    assert.deepEqual(
+      selectRouteLinks(
+        [
+          null,
+          "#xr-content",
+          "mailto:support@example.com",
+          "https://elsewhere/docs",
+          "//elsewhere/docs",
+          "/assets/index.js",
+          "/profile",
+        ],
+        isRoutePath,
+      ),
+      ["/profile"],
+    );
+  });
+
+  it("normalises query and hash so one route is not visited twice", () => {
+    assert.deepEqual(selectRouteLinks(["/settings?tab=locale", "/settings#top"], isRoutePath), [
+      "/settings",
+    ]);
+  });
+});
+
+describe("frontend-browser-e2e-coverage: per-visit coverage merge", () => {
+  const visitCoverage = (statements: Record<string, number>) => ({
+    "src/page.tsx": {
+      path: "src/page.tsx",
+      statementMap: {
+        "0": { start: { line: 1, column: 0 }, end: { line: 1, column: 10 } },
+        "1": { start: { line: 2, column: 0 }, end: { line: 2, column: 10 } },
+      },
+      fnMap: {},
+      branchMap: {},
+      s: statements,
+      f: {},
+      b: {},
+    },
+  });
+
+  it("adds each visit's counters instead of replacing the previous ones", () => {
+    const total = istanbulCoverage.createCoverageMap();
+    mergeVisitCoverage(total, visitCoverage({ "0": 3, "1": 0 }));
+    mergeVisitCoverage(total, visitCoverage({ "0": 0, "1": 5 }));
+
+    const summary = total.getCoverageSummary().toJSON();
+    assert.equal(summary.statements.covered, 2, "both visits must contribute covered statements");
+    assert.deepEqual(total.fileCoverageFor("src/page.tsx").s, { "0": 3, "1": 5 });
   });
 });

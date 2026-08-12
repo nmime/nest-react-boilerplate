@@ -732,6 +732,8 @@ function createViteFrontendApp(
         sourceRoot: srcRoot,
         projectType: 'application',
         tags,
+        '// e2e routes':
+          'The coverage run walks every route the app links to, so a page added to the router raises covered and total together. A page nothing links to (an alias, an OAuth callback) is named with --visit <path>; --skip-visit <path> drops a linked one.',
         targets: {
           test: {
             executor: 'nx:run-commands',

@@ -115,13 +115,13 @@ export function useAuthSessionFlow({
       };
     }
 
-    return getProfileState(
-      authMeQuery.isLoading || profileQuery.isLoading || Boolean(authLocale && authLocale !== locale),
-      profileQuery.data,
-      messages.profileRequestFailed,
-      messages.profileUnknown,
-      profileQuery.error,
-    );
+    return getProfileState({
+      loading: authMeQuery.isLoading || profileQuery.isLoading || Boolean(authLocale && authLocale !== locale),
+      profile: profileQuery.data,
+      profileRequestFailedMessage: messages.profileRequestFailed,
+      profileUnknownMessage: messages.profileUnknown,
+      error: profileQuery.error,
+    });
   }, [
     authLocale,
     authMeQuery.isLoading,

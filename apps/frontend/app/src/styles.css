@@ -38,7 +38,6 @@
   max-width: 46rem;
 }
 
-.user-home__grid,
 .user-auth__grid,
 .user-settings__grid {
   display: grid;
@@ -46,20 +45,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.user-home__card {
-  min-height: 12rem;
-}
-
-.user-home__card .xr-card__body,
 .user-auth__card .xr-card__body,
 .user-settings__card .xr-card__body {
   display: grid;
   gap: 1rem;
-}
-
-.user-home__card .xr-button {
-  align-self: end;
-  justify-self: start;
 }
 
 .xr-auth-form {
@@ -145,14 +134,9 @@
 }
 
 @media (max-width: 48rem) {
-  .user-home__grid,
   .user-auth__grid,
   .user-settings__grid {
     grid-template-columns: 1fr;
-  }
-
-  .user-home__card {
-    min-height: auto;
   }
 
   .user-provider-row {

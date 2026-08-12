@@ -111,6 +111,7 @@ requirements:
       - mobile-app
       - '@app/frontend-feature-admin-shared'
       - '@app/frontend-runtime'
+      - '@app/frontend-api-support'
     risk: high
     profiles:
       - domain
@@ -125,6 +126,14 @@ requirements:
       - kind: vitest
         file: apps/frontend/admin/src/app/admin-routing.spec.tsx
         target: admin-app:test
+        lanes:
+          - pr
+          - main
+      # Product identity is shell composition too: every shell brands its document from one
+      # shared resolution, so a rebrand cannot land on one app and miss another.
+      - kind: vitest
+        file: libs/frontend/api-support/lib/src/product-brand.spec.ts
+        target: '@app/frontend-api-support:test'
         lanes:
           - pr
           - main
@@ -160,6 +169,12 @@ requirements:
       - kind: contract
         file: libs/frontend/api-support/lib/src/runtime-fetch.spec.ts
         target: '@app/frontend-api-support:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/app/src/app/providers/auth-redirect-bridge.spec.tsx
+        target: user-app:test
         lanes:
           - pr
           - main

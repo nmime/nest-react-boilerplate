@@ -7,7 +7,8 @@ import {
 } from '@tanstack/react-router';
 import { useI18n } from '@app/frontend-runtime';
 import { NotFoundPage } from '../../pages/not-found';
-import { adminBasepath, useAdminCurrentPath } from './admin-navigation';
+import { adminBasepath, adminRouteDescriptors } from '../../shared';
+import { useAdminCurrentPath } from './admin-navigation';
 import { AdminShell } from './admin-shell';
 import { renderAdminRoute } from './admin-route-matrix';
 import { useAdminRuntime } from './admin-runtime-context';
@@ -30,27 +31,18 @@ function AdminRouteComponent() {
   return renderAdminRoute(currentPath, state, t, { requestOptions });
 }
 
-// Explicit per-path nodes so the router matches known routes (and delivers a
-// real notFound for everything else); the RBAC matrix decides the page.
-const paths = [
-  '/',
-  '/dashboard',
-  '/users',
-  '/users/$userId',
-  '/roles',
-  '/audit',
-  '/audit/$',
-  '/auth/login-analytics',
-  '/profile',
-  '/settings/errors',
-  '/settings/feature-flags',
-  '/notifications/templates',
-  '/notifications/segments',
-  '/notifications/broadcasts',
-];
+/**
+ * Explicit per-path nodes so the router matches known routes (and delivers a
+ * real notFound for everything else); the RBAC matrix decides the page. The list
+ * is derived from the route registry rather than restated here: a product adding
+ * a descriptor gets a routable URL without also having to remember this file.
+ */
+export const adminRouterPaths: readonly string[] = adminRouteDescriptors.flatMap((route) => [...route.paths]);
 
 const routeTree = rootRoute.addChildren(
-  paths.map((path) => createRoute({ getParentRoute: () => rootRoute, path, component: AdminRouteComponent })),
+  adminRouterPaths.map((path) =>
+    createRoute({ getParentRoute: () => rootRoute, path, component: AdminRouteComponent }),
+  ),
 );
 
 export const createAdminRouter = (history: RouterHistory = createBrowserHistory()) =>

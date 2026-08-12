@@ -2,6 +2,7 @@
 import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { defaultProductBrand } from '@app/frontend-api-support';
 import App from './app';
 
 vi.mock('@tma.js/sdk-react', async () => {
@@ -199,7 +200,7 @@ describe('social auth and TMA UI', () => {
     });
     expect(share).toHaveBeenCalledWith({
       text: 'Sign in, review your profile, and manage preferences across web and Telegram.',
-      title: 'Nest React Boilerplate',
+      title: defaultProductBrand.name,
       url: 'https://app.local.test/profile?ref=friend',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));

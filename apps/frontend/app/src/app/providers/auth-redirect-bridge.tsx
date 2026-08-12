@@ -1,5 +1,11 @@
 import { useEffect } from 'react';
-import { apiRuntimeEvents, clearApiAuthRequired } from '@app/frontend-api-support';
+import {
+  apiRuntimeEvents,
+  clearApiAuthRequired,
+  resolveAuthRequiredAction,
+  type AuthRequiredPolicy,
+  type AuthRequiredPolicyContext,
+} from '@app/frontend-api-support';
 import { isTmaApp, type TmaEnvironment } from '@app/frontend-runtime';
 
 const defaultAuthRoute = '/auth';
@@ -56,30 +62,50 @@ const navigateReplace = (to: string): void => {
   globalThis.dispatchEvent(new Event('popstate'));
 };
 
-export const AuthRedirectBridge = () => {
-  useEffect(
-    () =>
-      apiRuntimeEvents.subscribe((event) => {
-        if (event.type !== 'auth-required') {
-          return;
-        }
+/**
+ * The rules this app owns. A product adds its own through the `policy` prop rather than editing
+ * this file, so a surface that legitimately 401s never has to become a route literal in here.
+ */
+const appAuthRequiredPolicy: AuthRequiredPolicy = {
+  isAuthRoute: ({ event, pathname }) => isAuthRoute(pathname, safeInternalPath(event.redirectTo) ?? defaultAuthRoute),
+  suppressRedirect: ({ pathname }) => isTelegramRoute(pathname) || isTmaApp(tmaEnvironment()),
+};
 
-        const pathname = globalThis.location.pathname;
-        const authRoute = safeInternalPath(event.redirectTo) ?? defaultAuthRoute;
-        if (isAuthRoute(pathname, authRoute)) {
-          clearApiAuthRequired();
-          return;
-        }
+/** Product rules run first; whichever of the two says "not a redirect" wins. */
+const mergePolicies = (product: AuthRequiredPolicy): AuthRequiredPolicy => {
+  const either =
+    (key: keyof AuthRequiredPolicy) =>
+    (context: AuthRequiredPolicyContext): boolean =>
+      product[key]?.(context) === true || appAuthRequiredPolicy[key]?.(context) === true;
 
-        if (isTelegramRoute(pathname) || isTmaApp(tmaEnvironment())) {
-          return;
-        }
+  return { isAuthRoute: either('isAuthRoute'), suppressRedirect: either('suppressRedirect'), tolerate: either('tolerate') };
+};
 
-        clearApiAuthRequired();
+export interface AuthRedirectBridgeProps {
+  /** Extra rules layered on top of the app's own; see {@link AuthRequiredPolicy}. */
+  readonly policy?: AuthRequiredPolicy;
+}
+
+export const AuthRedirectBridge = ({ policy }: AuthRedirectBridgeProps = {}) => {
+  useEffect(() => {
+    const effectivePolicy = policy ? mergePolicies(policy) : appAuthRequiredPolicy;
+
+    return apiRuntimeEvents.subscribe((event) => {
+      if (event.type !== 'auth-required') {
+        return;
+      }
+
+      const action = resolveAuthRequiredAction({ event, pathname: globalThis.location.pathname }, effectivePolicy);
+      if (action === 'ignore') {
+        return;
+      }
+
+      clearApiAuthRequired();
+      if (action === 'redirect') {
         navigateReplace(buildAuthRedirectUrl(event.redirectTo, currentReturnUrl()));
-      }),
-    [],
-  );
+      }
+    });
+  }, [policy]);
 
   return null;
 };

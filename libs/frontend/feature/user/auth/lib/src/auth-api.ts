@@ -1,9 +1,7 @@
 import { authApi, throwOnOpenApiErrorData } from '@app/frontend-api-client';
 import type { AuthMePayload, AuthSessionPayload } from '@app/frontend-feature-user-profile';
+import { formValueToString } from '@app/frontend-runtime';
 import { AuthMode, type AuthFormInput, type AuthRequest } from './auth-model';
-
-const formValueToString = (value: FormDataEntryValue | null | undefined): string =>
-  typeof value === 'string' ? value : '';
 
 export async function fetchAuthMe(
   authClient: Pick<typeof authApi, 'authControllerMe'>,

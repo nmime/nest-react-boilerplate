@@ -1,6 +1,35 @@
 import { normalizeLocale, type Locale, type UiTheme } from '@app/frontend-runtime';
 import type { LocalePayload } from './session-preferences-model';
 
+const asRecord = (value: unknown): Record<string, unknown> | undefined =>
+  typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : undefined;
+
+/**
+ * Reads one field out of an auth payload, trying the payload itself and then its `user`, `profile`
+ * and `principal` scopes. The shared payload types deliberately model only what every app needs, so
+ * this is how a product surfaces a backend field (`emailVerified`, a tenant id, a plan) without
+ * widening those types — and it is the same reader the locale and theme accessors below use.
+ */
+export const readAuthPayloadField = <Value>(
+  payload: LocalePayload | null,
+  field: string,
+  parse: (value: unknown) => Value | undefined,
+): Value | undefined => {
+  const root = asRecord(payload);
+  if (!root) {
+    return undefined;
+  }
+
+  for (const scope of [root, asRecord(root['user']), asRecord(root['profile']), asRecord(root['principal'])]) {
+    const parsed = scope ? parse(scope[field]) : undefined;
+    if (parsed !== undefined) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+};
+
 const normalizeTheme = (value: unknown): UiTheme | undefined => {
   if (typeof value !== 'string') {
     return undefined;
@@ -11,23 +40,10 @@ const normalizeTheme = (value: unknown): UiTheme | undefined => {
   return normalized === 'system' || normalized === 'light' || normalized === 'dark' ? normalized : undefined;
 };
 
-const readTheme = (value: unknown): UiTheme | undefined =>
-  normalizeTheme(value && typeof value === 'object' ? (value as Record<string, unknown>)['theme'] : undefined);
-
-export const getPayloadLocale = (payload?: LocalePayload | null): Locale | undefined => {
-  const directLocale = payload && 'locale' in payload ? payload.locale : undefined;
-  const userLocale = payload && 'user' in payload ? payload.user?.locale : undefined;
-  const profileLocale = payload && 'profile' in payload ? payload.profile?.locale : undefined;
-  const principalLocale = payload && 'principal' in payload ? payload.principal?.locale : undefined;
-
-  return normalizeLocale(directLocale ?? userLocale ?? profileLocale ?? principalLocale ?? undefined);
-};
-
-export const getPayloadTheme = (payload?: LocalePayload | null): UiTheme | undefined => {
-  return (
-    readTheme(payload) ??
-    (payload && 'user' in payload ? readTheme(payload.user) : undefined) ??
-    (payload && 'profile' in payload ? readTheme(payload.profile) : undefined) ??
-    (payload && 'principal' in payload ? readTheme(payload.principal) : undefined)
+export const getPayloadLocale = (payload?: LocalePayload | null): Locale | undefined =>
+  readAuthPayloadField(payload ?? null, 'locale', (value) =>
+    normalizeLocale(typeof value === 'string' ? value : undefined),
   );
-};
+
+export const getPayloadTheme = (payload?: LocalePayload | null): UiTheme | undefined =>
+  readAuthPayloadField(payload ?? null, 'theme', normalizeTheme);

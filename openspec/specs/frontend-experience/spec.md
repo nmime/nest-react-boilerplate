@@ -84,6 +84,9 @@ boundaries.
 
 - Shared libraries do not own deployable routing.
 - One application's product state cannot leak into another deployable.
+- Product identity — title, icon, and theme colour — resolves from shared
+  configuration for every shell, in the shipped markup and again at start-up, so
+  rebranding never means editing per-application markup or source.
 
 **Failure behavior:**
 

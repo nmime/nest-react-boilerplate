@@ -38,14 +38,17 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const stringFrom = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
 
-const problemDetailTranslationKeys = {
-  'client-data-validation': 'errors.client-data-validation.detail',
-  'last-auth-method-unlink-forbidden': 'errors.last-auth-method-unlink-forbidden.detail',
-  'rate-limited': 'errors.rate-limited.detail',
-  'resource-conflict': 'errors.resource-conflict.detail',
-  'resource-not-found': 'errors.resource-not-found.detail',
-  'step-up-required': 'errors.step-up-required.detail',
-} as const satisfies Record<ProblemTypeCode, TranslationKey>;
+/**
+ * The detail key of a problem type is fully derived from its code, so no allow-list is maintained
+ * here: a product that registers a problem type upstream gets its localized detail for free. The
+ * `TranslationKey` return type keeps the guarantee the old literal map bought — the derived union
+ * must be assignable to the generated key union, so a problem type without a translation fails to
+ * compile rather than reaching a user as a missing key.
+ */
+export const problemDetailTranslationKey = (code: ProblemTypeCode): TranslationKey => {
+  const key: `errors.${ProblemTypeCode}.detail` = `errors.${code}.detail`;
+  return key;
+};
 
 const isNormalizedApiError = (value: unknown): value is NormalizedApiError =>
   isRecord(value) &&
@@ -180,7 +183,7 @@ const extractMessage = (status: number | null, body: unknown, fallbackKind: Norm
   if (isRecord(body)) {
     const registeredCode = problemCodeFromType(stringFrom(body['type']));
     if (registeredCode) {
-      return translate(problemDetailTranslationKeys[registeredCode], { locale: getApiLocale() });
+      return translate(problemDetailTranslationKey(registeredCode), { locale: getApiLocale() });
     }
 
     const message =

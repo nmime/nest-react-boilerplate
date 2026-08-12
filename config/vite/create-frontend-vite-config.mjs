@@ -8,6 +8,7 @@ import {
   applyDefaultFrontendBuildApiBaseUrlMode,
   assertRequiredFrontendBuildApiBaseUrls,
 } from '../../libs/frontend/api-support/lib/src/frontend-env';
+import { applyProductBrandToHtml, resolveProductBrand } from '../../libs/frontend/api-support/lib/src/product-brand';
 import { workspaceTsconfigAliases } from './workspace-tsconfig-aliases.mjs';
 
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -48,6 +49,13 @@ export function createFrontendViteConfig({ appName, port }) {
       plugins: [
         tailwindcss(),
         react(),
+        {
+          // The runtime pass in each app's entry rebrands the live document; this rebrands the
+          // markup that ships, so the tab title and icon are the product's before the bundle
+          // runs. Both read the same configuration, so they cannot disagree.
+          name: 'nrb-product-brand-html',
+          transformIndexHtml: (html) => applyProductBrandToHtml(html, resolveProductBrand(process.env, {})),
+        },
         ...(isE2eCoverage
           ? [
               istanbul({

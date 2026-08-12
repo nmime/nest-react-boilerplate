@@ -5,131 +5,50 @@ import {
   createRouter,
   type RouterHistory,
 } from '@tanstack/react-router';
-import { AuthPage } from '../../pages/auth';
-import { AuthDiscordCallbackPage } from '../../pages/auth-discord-callback';
-import { AuthTelegramCallbackPage } from '../../pages/auth-telegram-callback';
-import { ProfilePage } from '../../pages/profile';
-import { SettingsPage } from '../../pages/settings';
-import { TmaPage } from '../../pages/tma';
-import { UserHomeContent } from '../../pages/user-home';
+import { NotFoundPage } from '../../pages/not-found';
+import { UserRoot } from './user-root';
 import { UserShell } from './user-shell';
-import { useUserNavigate } from './user-navigation';
-import { useUserRuntime } from './user-runtime-context';
+import { userRoutesWithChrome, type UserRouteDescriptor } from './user-route-registry';
+import { userRoutes } from './user-routes';
 
-const rootRoute = createRootRoute({
-  component: UserShell,
-  notFoundComponent: () => <UserHomeContent />,
-});
+/**
+ * Builds the router tree from a route registry. Chrome is a property of each
+ * descriptor: `shell` routes hang off a pathless layout route rendering
+ * {@link UserShell}, `none` routes hang off the root so they render bare. The
+ * root itself carries only cross-cutting behaviour, never product chrome.
+ */
+const createUserRouteTree = (routes: readonly UserRouteDescriptor[]) => {
+  const rootRoute = createRootRoute({
+    component: UserRoot,
+    notFoundComponent: () => (
+      <UserShell routes={routes}>
+        <NotFoundPage />
+      </UserShell>
+    ),
+  });
 
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/',
-  component: UserHomeContent,
-});
+  const shellRoute = createRoute({
+    component: () => <UserShell routes={routes} />,
+    getParentRoute: () => rootRoute,
+    id: 'shell',
+  });
 
-function AuthRouteComponent() {
-  const { applyUserLocale, applyUserTheme } = useUserRuntime();
-  const navigate = useUserNavigate();
-  return <AuthPage applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} navigate={navigate} />;
-}
+  const framedRoutes = userRoutesWithChrome(routes, 'shell').map(({ component, path }) =>
+    createRoute({ component, getParentRoute: () => shellRoute, path }),
+  );
+  const bareRoutes = userRoutesWithChrome(routes, 'none').map(({ component, path }) =>
+    createRoute({ component, getParentRoute: () => rootRoute, path }),
+  );
 
-const authRoute = createRoute({ getParentRoute: () => rootRoute, path: '/auth', component: AuthRouteComponent });
+  return rootRoute.addChildren([shellRoute.addChildren(framedRoutes), ...bareRoutes]);
+};
 
-function DiscordCallbackRouteComponent() {
-  const navigate = useUserNavigate();
-  return <AuthDiscordCallbackPage navigate={navigate} />;
-}
-
-const discordCallbackRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/auth/discord/callback',
-  component: DiscordCallbackRouteComponent,
-});
-
-function TelegramCallbackRouteComponent() {
-  const navigate = useUserNavigate();
-  return <AuthTelegramCallbackPage navigate={navigate} />;
-}
-
-const telegramCallbackRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/auth/telegram/callback',
-  component: TelegramCallbackRouteComponent,
-});
-
-function ProfileRouteComponent() {
-  const { applyUserLocale, applyUserTheme } = useUserRuntime();
-  return <ProfilePage applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} />;
-}
-
-const profileRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/profile',
-  component: ProfileRouteComponent,
-});
-
-function SettingsRouteComponent() {
-  const { applyUserLocale, applyUserTheme } = useUserRuntime();
-  const navigate = useUserNavigate();
-  return <SettingsPage applyUserLocale={applyUserLocale} applyUserTheme={applyUserTheme} navigate={navigate} />;
-}
-
-const settingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/settings',
-  component: SettingsRouteComponent,
-});
-
-function TmaRouteComponent() {
-  const navigate = useUserNavigate();
-  return <TmaPage navigate={navigate} />;
-}
-
-// `/tma`, `/tma/auth`, `/telegram-mini-app` are aliases for the same Telegram
-// mini-app view; `/link/telegram` opens it in account-linking mode.
-const tmaRoute = createRoute({ getParentRoute: () => rootRoute, path: '/tma', component: TmaRouteComponent });
-const tmaAuthRoute = createRoute({ getParentRoute: () => rootRoute, path: '/tma/auth', component: TmaRouteComponent });
-const telegramMiniAppRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/telegram-mini-app',
-  component: TmaRouteComponent,
-});
-
-function LinkTelegramRouteComponent() {
-  const navigate = useUserNavigate();
-  return <TmaPage fallbackStartParam="link_telegram" navigate={navigate} />;
-}
-
-const linkTelegramRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/link/telegram',
-  component: LinkTelegramRouteComponent,
-});
-
-// `/link/discord` reuses the settings surface (Discord linking lives there).
-const linkDiscordRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/link/discord',
-  component: SettingsRouteComponent,
-});
-
-const routeTree = rootRoute.addChildren([
-  indexRoute,
-  authRoute,
-  discordCallbackRoute,
-  telegramCallbackRoute,
-  profileRoute,
-  settingsRoute,
-  tmaRoute,
-  tmaAuthRoute,
-  telegramMiniAppRoute,
-  linkTelegramRoute,
-  linkDiscordRoute,
-]);
-
-export const createUserRouter = (history: RouterHistory = createBrowserHistory()) =>
+export const createUserRouter = (
+  history: RouterHistory = createBrowserHistory(),
+  routes: readonly UserRouteDescriptor[] = userRoutes,
+) =>
   createRouter({
-    routeTree,
+    routeTree: createUserRouteTree(routes),
     history,
     trailingSlash: 'never',
     defaultPreload: false,

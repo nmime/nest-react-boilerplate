@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRuntimeEvents } from '@app/frontend-api-support';
+import { defaultProductBrand } from '@app/frontend-api-support';
 import App from './app';
 
 const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
@@ -231,7 +232,7 @@ describe('User app shell', () => {
     await screen.findByText('Account essentials');
     const html = container.innerHTML;
 
-    expect(html).toContain('Nest React Boilerplate');
+    expect(html).toContain(defaultProductBrand.name);
     expect(html).toContain('A clear place to manage your account.');
     expect(html).toContain('Account essentials');
     expect(html).toContain('Choose how to sign in');
@@ -365,7 +366,7 @@ describe('User app shell', () => {
 
     const { container } = render(<App />);
     await screen.findByText('Account essentials');
-    expect(container.innerHTML).toContain('Nest React Boilerplate');
+    expect(container.innerHTML).toContain(defaultProductBrand.name);
   });
 
   it('loads a profile after login establishes a cookie session', async () => {
@@ -705,7 +706,10 @@ describe('User app shell', () => {
     window.history.pushState({}, '', '/unknown');
     render(<App />);
 
-    expect(await screen.findByText('Account essentials')).toBeTruthy();
+    // An unknown URL is a dead end, not the home page: it keeps the URL and
+    // says so, through the same shell.
+    expect(await screen.findByText('The requested resource was not found.')).toBeTruthy();
+    expect(screen.queryByText('Account essentials')).toBeNull();
     expect(window.location.pathname).toBe('/unknown');
   });
 

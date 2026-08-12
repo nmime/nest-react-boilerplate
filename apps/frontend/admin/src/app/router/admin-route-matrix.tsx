@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import type { ApiClientRequestOptions } from '@app/frontend-api-client';
+import type { AdminAccessPolicy } from '@app/frontend-feature-admin-shared';
 import { UiLoading, UiSection } from '@app/frontend-ui-web';
 import { AuditPage } from '../../pages/audit';
 import { AuthLoginAnalyticsPage } from '../../pages/auth-login-analytics';
@@ -16,9 +17,10 @@ import { RolesPage } from '../../pages/roles';
 import { UsersPage } from '../../pages/users';
 import {
   fallbackTranslate,
-  isUsersRoute,
-  normalizeAdminPath,
+  findAdminRoute,
+  type AdminProfilePayload,
   type AdminProfileState,
+  type AdminRouteId,
   type Translate,
 } from '../../shared';
 
@@ -26,100 +28,71 @@ export interface AdminRouteRuntime {
   requestOptions?: ApiClientRequestOptions;
 }
 
+export interface AdminRouteContext {
+  access: AdminAccessPolicy;
+  /** Full browser path including the `/admin` prefix and query string. */
+  currentPath: string;
+  payload: AdminProfilePayload;
+  requestOptions?: ApiClientRequestOptions;
+}
+
 /**
- * RBAC route matrix: single source of truth mapping a normalized admin path +
- * access state to the guarded page (or ForbiddenPage). Shared by the router's
- * per-path route components and by tests that assert the matrix directly, so
- * the guard decisions never drift between the two.
+ * The page behind each route descriptor. Keying by `AdminRouteId` makes the
+ * registry and this record mutually exhaustive: a descriptor without a page (or
+ * a page without a descriptor) fails to compile, so a product adding a route
+ * cannot end up with an unreachable page or an unrendered URL.
  */
-/* eslint-disable sonarjs/cognitive-complexity -- route matrix is explicit for RBAC auditability. */
+export const adminRoutePages: Record<AdminRouteId, (context: AdminRouteContext) => ReactElement> = {
+  audit: ({ currentPath, requestOptions }) => <AuditPage currentPath={currentPath} requestOptions={requestOptions} />,
+  'auth-login-analytics': ({ currentPath, requestOptions }) => (
+    <AuthLoginAnalyticsPage currentPath={currentPath} requestOptions={requestOptions} />
+  ),
+  dashboard: ({ access, requestOptions }) => <DashboardPage access={access} requestOptions={requestOptions} />,
+  'feature-flags': ({ access, requestOptions }) => <FeatureFlagsPage access={access} requestOptions={requestOptions} />,
+  'notification-broadcasts': ({ access, requestOptions }) => (
+    <NotificationBroadcastsPage access={access} requestOptions={requestOptions} />
+  ),
+  'notification-segments': ({ access, requestOptions }) => (
+    <NotificationSegmentsPage access={access} requestOptions={requestOptions} />
+  ),
+  'notification-templates': ({ access, requestOptions }) => (
+    <NotificationTemplatesPage access={access} requestOptions={requestOptions} />
+  ),
+  'problem-presentations': ({ access, requestOptions }) => (
+    <ProblemPresentationsPage access={access} requestOptions={requestOptions} />
+  ),
+  profile: ({ payload }) => <ProfilePage payload={payload} />,
+  roles: ({ access, requestOptions }) => <RolesPage access={access} requestOptions={requestOptions} />,
+  users: ({ access, currentPath, requestOptions }) => (
+    <UsersPage access={access} currentPath={currentPath} requestOptions={requestOptions} />
+  ),
+};
+
+/**
+ * RBAC route matrix. The guard is the descriptor's own `access` predicate — the
+ * same one the sidebar calls — so a visible nav entry and a reachable page can
+ * never disagree.
+ */
 function renderReadyAdminRoute(
   path: string,
   state: Extract<AdminProfileState, { status: 'ready' }>,
   t: Translate,
   runtime: AdminRouteRuntime,
 ): ReactElement {
-  const routePath = normalizeAdminPath(path);
-  if (routePath === '/' || routePath === '/dashboard') {
-    return state.access.canReadDashboard ? (
-      <DashboardPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.dashboardMissing')} />
-    );
+  const route = findAdminRoute(path);
+  if (!route) {
+    return <NotFoundPage />;
   }
-  if (isUsersRoute(routePath)) {
-    return state.access.canReadUsers ? (
-      <UsersPage access={state.access} currentPath={path} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.usersMissing')} />
-    );
+  if (!route.access(state.access)) {
+    return <ForbiddenPage reason={t(route.deniedReason)} />;
   }
-  if (routePath === '/roles') {
-    return state.access.canReadRoles ? (
-      <RolesPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.rolesMissing')} />
-    );
-  }
-  if (routePath === '/audit' || routePath.startsWith('/audit/')) {
-    return state.access.canReadAudit ? (
-      <AuditPage currentPath={path} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.auditMissing')} />
-    );
-  }
-  if (routePath === '/auth/login-analytics') {
-    return state.access.canReadAuthLoginAnalytics ? (
-      <AuthLoginAnalyticsPage currentPath={path} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.authLoginAnalyticsMissing')} />
-    );
-  }
-  if (routePath === '/profile') {
-    return state.access.canReadProfile ? (
-      <ProfilePage payload={state.payload} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.profileMissing')} />
-    );
-  }
-  if (routePath === '/settings/errors') {
-    return state.access.canReadSettings ? (
-      <ProblemPresentationsPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.settingsMissing')} />
-    );
-  }
-  if (routePath === '/settings/feature-flags') {
-    return state.access.canReadFeatureFlags ? (
-      <FeatureFlagsPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.featureFlagsMissing')} />
-    );
-  }
-  if (routePath === '/notifications/templates') {
-    return state.access.canReadNotificationTemplates ? (
-      <NotificationTemplatesPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.notificationTemplatesMissing')} />
-    );
-  }
-  if (routePath === '/notifications/segments') {
-    return state.access.canReadNotificationSegments ? (
-      <NotificationSegmentsPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.notificationSegmentsMissing')} />
-    );
-  }
-  if (routePath === '/notifications/broadcasts') {
-    return state.access.canReadNotificationBroadcasts ? (
-      <NotificationBroadcastsPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.notificationBroadcastsMissing')} />
-    );
-  }
-  return <NotFoundPage />;
+  return adminRoutePages[route.id]({
+    access: state.access,
+    currentPath: path,
+    payload: state.payload,
+    requestOptions: runtime.requestOptions,
+  });
 }
-/* eslint-enable sonarjs/cognitive-complexity */
 
 export function renderAdminRoute(
   path: string,

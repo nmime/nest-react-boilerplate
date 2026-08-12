@@ -1,17 +1,8 @@
-import {
-  parseApiToastRules,
-  type ApiToastCategory,
-  type ApiToastDisplay,
-  type ApiToastRule,
-} from '@app/frontend-api-support';
+import type { ApiToastCategory, ApiToastDisplay } from '@app/frontend-api-support';
 
-import adminToastConfig from './generated/toast/admin-app-api.toast-rules.frontend.generated.json';
-import authToastConfig from './generated/toast/auth-app-api.toast-rules.frontend.generated.json';
-import userToastConfig from './generated/toast/user-app-api.toast-rules.frontend.generated.json';
-
-export const adminApiToastRules: readonly ApiToastRule[] = parseApiToastRules(adminToastConfig.rules);
-export const authApiToastRules: readonly ApiToastRule[] = parseApiToastRules(authToastConfig.rules);
-export const userApiToastRules: readonly ApiToastRule[] = parseApiToastRules(userToastConfig.rules);
+import adminToastConfig from '../generated/toast/admin-app-api.toast-rules.frontend.generated.json';
+import authToastConfig from '../generated/toast/auth-app-api.toast-rules.frontend.generated.json';
+import userToastConfig from '../generated/toast/user-app-api.toast-rules.frontend.generated.json';
 
 export interface ApiToastRuleCatalogItem {
   readonly app: string;
@@ -35,7 +26,10 @@ interface GeneratedCatalogRule {
 const catalogFrom = (rules: readonly unknown[]): ApiToastRuleCatalogItem[] =>
   (rules as readonly GeneratedCatalogRule[]).map((rule) => ({ id: rule.id, ...rule.catalog }));
 
-export const apiToastRuleCatalog: readonly ApiToastRuleCatalogItem[] = [
+// The admin problem-presentations screen is the only consumer that needs every service at once, so
+// this cross-app view lives apart from the per-service rule sets and is annotated pure: the user
+// app pays for none of it.
+export const apiToastRuleCatalog: readonly ApiToastRuleCatalogItem[] = /* @__PURE__ */ [
   ...catalogFrom(adminToastConfig.rules),
   ...catalogFrom(authToastConfig.rules),
   ...catalogFrom(userToastConfig.rules),

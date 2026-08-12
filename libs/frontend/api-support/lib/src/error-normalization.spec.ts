@@ -1,5 +1,7 @@
 // @requirements REQ-FRONTEND-ERROR-005
 import { beforeEach, describe, expect, it } from 'vitest';
+import { ProblemTypeDefinitions } from '@app/common-problem-details';
+import { hasFrontendTranslationKey } from '@app/frontend-i18n-shared';
 
 import { configureApiLocale } from './api-locale';
 import {
@@ -10,6 +12,7 @@ import {
   getNormalizedApiError,
   isNetworkFailure,
   normalizeApiError,
+  problemDetailTranslationKey,
   readJsonBody,
 } from './error-normalization';
 
@@ -140,6 +143,18 @@ describe('normalizeApiError', () => {
         response: { status: 418, statusText: '' },
       }).code,
     ).toBe('http.418');
+  });
+
+  it('derives the problem detail translation key from the problem code', () => {
+    expect(problemDetailTranslationKey('resource-conflict')).toBe('errors.resource-conflict.detail');
+  });
+
+  it('has a translation for every registered problem type without a hand-maintained map', () => {
+    const untranslated = ProblemTypeDefinitions.map((definition) => definition.code).filter(
+      (code) => !hasFrontendTranslationKey(problemDetailTranslationKey(code)),
+    );
+
+    expect(untranslated).toEqual([]);
   });
 
   it('translates registered problem details locally instead of trusting server prose', () => {

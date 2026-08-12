@@ -1,5 +1,6 @@
 import { observer, useI18n } from '@app/frontend-runtime';
 import { UiButton, UiCard, UiSection } from '../../../shared/ui';
+import './user-home.css';
 
 const homeDestinations = [
   {

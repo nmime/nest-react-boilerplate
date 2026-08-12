@@ -1,17 +1,14 @@
-import { translate, type TranslationKey, type TranslationParams } from '@app/frontend-runtime';
+import type { TranslationKey } from '@app/frontend-runtime';
 import { getApiErrorDisplayMessage } from '@app/frontend-api-support';
-import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
 import type { adminApi } from '@app/frontend-api-client';
 import type { AdminAccessPolicy } from '@app/frontend-feature-admin-shared';
+import { normalizeAdminPath, type Translate } from './admin-path';
 
+export * from './admin-path';
+export * from './admin-route-registry';
 export * from './notification-options';
 
 type UserStatus = 'active' | 'disabled' | 'invited';
-
-export type Translate = (key: TranslationKey, params?: TranslationParams) => string;
-
-export const fallbackTranslate: Translate = (key, params) =>
-  translate(key, { params, translations: adminFrontendTranslations });
 
 export const pageSize = 10;
 
@@ -31,14 +28,6 @@ export const statusLabelKey: Record<UserStatus, TranslationKey> = {
   active: 'admin.status.active',
   disabled: 'admin.status.disabled',
   invited: 'admin.status.invited',
-};
-
-export const normalizeAdminPath = (path: string): string => {
-  const normalizedPath = path.split('?')[0]?.replace(/\/$/u, '') || '/';
-  if (normalizedPath === '/admin') {
-    return '/';
-  }
-  return normalizedPath.startsWith('/admin/') ? normalizedPath.slice('/admin'.length) : normalizedPath;
 };
 
 export const isUsersRoute = (path: string): boolean => {

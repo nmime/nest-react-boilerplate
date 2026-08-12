@@ -2,10 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Pre-hydration defaults. The product identity below (title, theme colour,
+         icon) is rewritten at build time and again at start-up from the shared
+         product brand, which reads VITE_PRODUCT_* / runtime-config.js — rebrand
+         there, not here. -->
     <title>Admin App</title>
     <base href="/" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2563eb" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>

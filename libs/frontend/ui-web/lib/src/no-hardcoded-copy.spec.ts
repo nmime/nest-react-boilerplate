@@ -122,9 +122,19 @@ const isLikelyNonCopyLiteral = (value: string): boolean => {
     /^&\s+[A-Za-z_$][\w$]*(?:<.*>)?$/u.test(normalized) ||
     /^>*\([A-Za-z_$][\w$]*:\s*[A-Za-z_$][\w$.]*$/u.test(normalized) ||
     /^[a-z0-9@:_./#?=&${}()[\]-]+$/u.test(normalized) ||
-    /^[A-Z0-9_]+$/u.test(normalized)
+    /^[A-Z0-9_]+$/u.test(normalized) ||
+    isTranslationKeyShape(normalized)
   );
 };
+
+/**
+ * A dotted lowercase-rooted identifier path — `admin.action.featureFlags` — is a translation key,
+ * not copy. The generic lowercase allowance above misses these the moment a key segment is
+ * camelCase, which made declaring a route's `label:` as a key look like the very defect this guard
+ * exists to catch. Real copy has spaces, so requiring an unbroken dotted path keeps the guard sharp.
+ */
+const isTranslationKeyShape = (value: string): boolean =>
+  /^[a-z][A-Za-z0-9]*(?:[.:][A-Za-z0-9]+)+$/u.test(value);
 
 type Offender = {
   file: string;

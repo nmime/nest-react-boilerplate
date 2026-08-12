@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useRouter } from '@tanstack/react-router';
 
 /**
@@ -13,14 +13,6 @@ export const normalizePath = (path: string): string => {
   /* v8 ignore next -- browser location.pathname is never blank; fallback keeps the helper total for server snapshots. */
   const normalized = path.trim() || '/';
   return normalized.endsWith('/') && normalized !== '/' ? normalized.slice(0, -1) : normalized;
-};
-
-export const getLinkRoute = (path: string): '/link/telegram' | '/link/discord' | null => {
-  const normalized = normalizePath(path);
-  if (normalized === '/link/telegram' || normalized === '/link/discord') {
-    return normalized;
-  }
-  return null;
 };
 
 /**
@@ -42,4 +34,52 @@ export const useUserNavigate = (): UserNavigate => {
     },
     [router],
   );
+};
+
+/**
+ * Delegates in-app anchor clicks to the router so plain `<a href="/...">` links
+ * route client-side. Installed by the root route rather than the shell so
+ * chrome-less routes keep client-side navigation.
+ */
+export const useInAppLinkNavigation = (): void => {
+  const navigate = useUserNavigate();
+
+  useEffect(() => {
+    const clickHandler = (event: MouseEvent) => {
+      // Let the browser handle anything that is not a plain left click, or a
+      // click the app already handled, so new-tab/download/modified clicks work.
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      const anchor = target.closest('a[href]');
+      if (!(anchor instanceof HTMLAnchorElement)) {
+        return;
+      }
+      const anchorTarget = anchor.getAttribute('target');
+      if ((anchorTarget && anchorTarget !== '_self') || anchor.hasAttribute('download')) {
+        return;
+      }
+      const href = anchor.getAttribute('href');
+      if (!href?.startsWith('/')) {
+        return;
+      }
+      event.preventDefault();
+      navigate(href);
+    };
+    globalThis.document.addEventListener('click', clickHandler);
+    return () => {
+      globalThis.document.removeEventListener('click', clickHandler);
+    };
+  }, [navigate]);
 };

@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useRouter, useRouterState } from '@tanstack/react-router';
+import { adminBasepath } from '../../shared';
 
-/** Admin URLs are reverse-proxied under `/admin`; the router uses it as basepath. */
-export const adminBasepath = '/admin';
+export { adminBasepath };
 
 /**
  * Full browser path (with the `/admin` prefix + query) for the active route,

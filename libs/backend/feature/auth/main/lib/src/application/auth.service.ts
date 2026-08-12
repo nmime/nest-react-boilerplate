@@ -320,9 +320,7 @@ export class AuthService {
     return consumed.value;
   }
 
-  private requireRecoveredUser(
-    result: Awaited<ReturnType<AuthUserStore['verifyEmail']>>,
-  ): AuthenticatedUserView {
+  private requireRecoveredUser(result: Awaited<ReturnType<AuthUserStore['verifyEmail']>>): AuthenticatedUserView {
     if (result.isErr()) {
       throw new ConflictException(result.error.message);
     }

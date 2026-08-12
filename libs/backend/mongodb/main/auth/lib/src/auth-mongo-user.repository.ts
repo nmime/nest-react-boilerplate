@@ -101,9 +101,7 @@ export class MongoAuthUserRepository implements AuthUserRepositoryPort {
   ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError> {
     // `$inc` rather than a read-then-write: two resets racing on one account must each advance the
     // epoch, or the loser silently leaves the sessions it was meant to revoke alive.
-    return repositoryResult(
-      this.mutate(id, tenantId, { $set: { passwordHash }, $inc: { credentialRevision: 1 } }),
-    );
+    return repositoryResult(this.mutate(id, tenantId, { $set: { passwordHash }, $inc: { credentialRevision: 1 } }));
   }
 
   private async create(input: AuthUserCreateInput): Promise<AuthUserPersistenceRecord> {

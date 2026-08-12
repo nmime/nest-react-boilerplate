@@ -48,7 +48,12 @@ describe('requireIdempotencyKey', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(ClientDataValidationException);
       expect((error as ClientDataValidationException).extensions).toEqual({
-        errors: [{ detail: `${IdempotencyKeyHeader} header is not a valid idempotency key.`, pointer: '#/headers/idempotency-key' }],
+        errors: [
+          {
+            detail: `${IdempotencyKeyHeader} header is not a valid idempotency key.`,
+            pointer: '#/headers/idempotency-key',
+          },
+        ],
       });
     }
   });

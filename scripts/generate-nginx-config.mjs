@@ -27,7 +27,7 @@ const securityHeaders = [
   'add_header Referrer-Policy "strict-origin-when-cross-origin" always;',
 ];
 const contentSecurityPolicy =
-  'add_header Content-Security-Policy "default-src \'self\'; script-src \'self\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data:; font-src \'self\' data:; connect-src \'self\'; frame-ancestors \'self\'; base-uri \'self\'; form-action \'self\'" always;';
+  "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'\" always;";
 const noStoreHeaders = [
   'add_header Cache-Control "private, no-cache, no-store, must-revalidate" always;',
   'add_header Expires "Sat, 01 Jan 2000 00:00:00 GMT" always;',
@@ -125,7 +125,14 @@ export function renderNginxFullstackConfig(routes, upstreams = composeUpstreams)
     lines.push(`  location = ${route.path} {`, '    try_files /index.html =404;', '  }', '');
   }
 
-  lines.push('  error_page 418 = @frontend_spa;', '', '  location @frontend_spa {', '    try_files /index.html =404;', '  }', '');
+  lines.push(
+    '  error_page 418 = @frontend_spa;',
+    '',
+    '  location @frontend_spa {',
+    '    try_files /index.html =404;',
+    '  }',
+    '',
+  );
 
   for (const location of routes.apiLocations) {
     const upstream = upstreams[location.app];

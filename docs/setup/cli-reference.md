@@ -82,24 +82,24 @@ pnpm nrb setup --remove-app landing-app --non-interactive
 pnpm nrb setup --replace --app landing-app --non-interactive
 ```
 
-| Flag                       | Type    | Description                                                                     |
-| -------------------------- | ------- | ------------------------------------------------------------------------------- |
-| `--preset <name>`          | string  | Exact profile shortcut: `minimal`, `web`, `fullstack`, `enterprise`, or `bots`. |
-| `--config <path>`          | string  | Exact JSON configuration source; cannot be combined with selection flags.       |
-| `--app <id>`               | string  | Add an app to the current selection (repeatable).                               |
-| `--capability <id>`        | string  | Add a capability to the current selection (repeatable).                         |
-| `--remove-app <id>`        | string  | Remove an app unless another selected app requires it.                          |
-| `--remove-capability <id>` | string  | Remove a capability unless it remains required.                                 |
-| `--replace`                | boolean | Start from an empty selection before applying explicit additions.               |
-| `--public-domain <domain>` | string  | Base domain every public hostname is derived from.                              |
+| Flag                       | Type    | Description                                                                       |
+| -------------------------- | ------- | --------------------------------------------------------------------------------- |
+| `--preset <name>`          | string  | Exact profile shortcut: `minimal`, `web`, `fullstack`, `enterprise`, or `bots`.   |
+| `--config <path>`          | string  | Exact JSON configuration source; cannot be combined with selection flags.         |
+| `--app <id>`               | string  | Add an app to the current selection (repeatable).                                 |
+| `--capability <id>`        | string  | Add a capability to the current selection (repeatable).                           |
+| `--remove-app <id>`        | string  | Remove an app unless another selected app requires it.                            |
+| `--remove-capability <id>` | string  | Remove a capability unless it remains required.                                   |
+| `--replace`                | boolean | Start from an empty selection before applying explicit additions.                 |
+| `--public-domain <domain>` | string  | Base domain every public hostname is derived from.                                |
 | `--primary-app <id>`       | string  | App served on the base domain itself, or `none` to keep every app on a subdomain. |
-| `--list`                   | boolean | Show available entries with selection markers, runtime, and template hostname.  |
-| `--dry-run`                | boolean | Show plan without modifying files.                                              |
-| `--prune`                  | boolean | Remove stale files previously managed by setup.                                 |
-| `--force`                  | boolean | Overwrite existing setup-managed files without refusing.                        |
-| `--non-interactive`        | boolean | Skip prompts; first run still requires an explicit selection.                   |
-| `--json`                   | boolean | Output a plan or `--list` result as JSON.                                       |
-| `--help`, `-h`             | boolean | Show usage.                                                                     |
+| `--list`                   | boolean | Show available entries with selection markers, runtime, and template hostname.    |
+| `--dry-run`                | boolean | Show plan without modifying files.                                                |
+| `--prune`                  | boolean | Remove stale files previously managed by setup.                                   |
+| `--force`                  | boolean | Overwrite existing setup-managed files without refusing.                          |
+| `--non-interactive`        | boolean | Skip prompts; first run still requires an explicit selection.                     |
+| `--json`                   | boolean | Output a plan or `--list` result as JSON.                                         |
+| `--help`, `-h`             | boolean | Show usage.                                                                       |
 
 With no selection flags, interactive setup starts from `custom` on first run
 and from the current selection on later runs. Scripted additions are additive;

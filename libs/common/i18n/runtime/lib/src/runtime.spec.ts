@@ -335,10 +335,12 @@ describe('translation helpers', () => {
   });
 
   it('interpolates placeholders inside a selected branch', () => {
-    expect(interpolate('{count, plural, one {{{name}} has # invite} other {{{name}} has # invites}}', {
-      count: 3,
-      name: 'Ada',
-    })).toBe('Ada has 3 invites');
+    expect(
+      interpolate('{count, plural, one {{{name}} has # invite} other {{{name}} has # invites}}', {
+        count: 3,
+        name: 'Ada',
+      }),
+    ).toBe('Ada has 3 invites');
   });
 
   it('leaves a block it cannot parse untouched', () => {

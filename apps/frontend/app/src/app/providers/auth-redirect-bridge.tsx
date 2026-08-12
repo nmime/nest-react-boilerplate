@@ -78,7 +78,11 @@ const mergePolicies = (product: AuthRequiredPolicy): AuthRequiredPolicy => {
     (context: AuthRequiredPolicyContext): boolean =>
       product[key]?.(context) === true || appAuthRequiredPolicy[key]?.(context) === true;
 
-  return { isAuthRoute: either('isAuthRoute'), suppressRedirect: either('suppressRedirect'), tolerate: either('tolerate') };
+  return {
+    isAuthRoute: either('isAuthRoute'),
+    suppressRedirect: either('suppressRedirect'),
+    tolerate: either('tolerate'),
+  };
 };
 
 export interface AuthRedirectBridgeProps {

@@ -133,8 +133,7 @@ const isLikelyNonCopyLiteral = (value: string): boolean => {
  * camelCase, which made declaring a route's `label:` as a key look like the very defect this guard
  * exists to catch. Real copy has spaces, so requiring an unbroken dotted path keeps the guard sharp.
  */
-const isTranslationKeyShape = (value: string): boolean =>
-  /^[a-z][A-Za-z0-9]*(?:[.:][A-Za-z0-9]+)+$/u.test(value);
+const isTranslationKeyShape = (value: string): boolean => /^[a-z][A-Za-z0-9]*(?:[.:][A-Za-z0-9]+)+$/u.test(value);
 
 type Offender = {
   file: string;

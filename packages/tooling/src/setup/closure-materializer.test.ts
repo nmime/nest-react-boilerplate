@@ -127,7 +127,10 @@ describe('closure materializer', () => {
     selected.releaseImages = ['migrator', 'site-app', 'user-app', 'user-app-api'];
     const values = renderClosureHelmValues(selected);
 
-    assert.match(values, /ingress:\n {2}hosts:\n {4}- host: dehqonhub\.uz\n {6}service: site-app\n {6}paths: \['\/'\]/u);
+    assert.match(
+      values,
+      /ingress:\n {2}hosts:\n {4}- host: dehqonhub\.uz\n {6}service: site-app\n {6}paths: \['\/'\]/u,
+    );
     assert.match(values, / {4}- host: user-app\.dehqonhub\.uz\n {6}service: user-app\n/u);
     assert.match(values, / {4}- host: user-app-api\.dehqonhub\.uz\n {6}service: user-app-api\n/u);
     assert.doesNotMatch(values, /site-app\.dehqonhub\.uz/u);

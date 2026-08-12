@@ -139,3 +139,29 @@ status, headers, media type, redaction, and serialization invariants.
 
 - **WHEN** an application exception crosses the HTTP boundary
 - **THEN** the response status, body status, and media type remain consistent
+
+### Requirement: [REQ-API-MONEY-007] Monetary amounts stay exact end to end
+
+Monetary values SHALL be carried as a whole number of a currency's minor units
+with the currency alongside them, and every operation that could lose a minor
+unit SHALL either name its rounding or preserve the total.
+
+**Evidence profile:** domain
+
+**Invariants:**
+
+- A monetary value never passes through a binary floating-point representation,
+  including the rate applied to it.
+- Text conversion uses the currency's own scale, so a currency with no minor
+  unit and one with three digits are both read and written correctly.
+- Splitting an amount produces parts that sum back to the original exactly.
+
+**Failure behavior:**
+
+- Combining two currencies, reading text with more precision than the currency
+  holds, and scaling by an inexact float are all rejected rather than coerced.
+
+#### Scenario: Splitting an amount preserves the total
+
+- **WHEN** an amount is allocated across weights that do not divide it evenly
+- **THEN** the leftover minor units are distributed and the parts sum to the original

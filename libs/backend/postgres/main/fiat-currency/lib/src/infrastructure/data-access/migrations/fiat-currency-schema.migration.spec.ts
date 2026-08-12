@@ -15,13 +15,36 @@ const renderUp = (): string => {
   return sql.join('\n');
 };
 
+const rendersDdl: Array<[behaviour: string, fragments: string[]]> = [
+  [
+    'creates the catalogue keyed by currency code',
+    [
+      'create table "fiat_currencies"',
+      'constraint "pk__fiat_currencies" primary key ("code")',
+      'constraint "ck__fiat_currencies__code"',
+    ],
+  ],
+  [
+    'carries the localized name and symbol on the row itself',
+    ['"name" jsonb not null', '"symbol" jsonb not null', 'constraint "ck__fiat_currencies__name"'],
+  ],
+  [
+    'keeps rate history append-only and idempotent per source and instant',
+    [
+      'create table "fiat_currency_rates"',
+      'constraint "uq__fiat_currency_rates__code_as_of_source"',
+      'create index "ix__fiat_currency_rates__code_as_of_desc"',
+    ],
+  ],
+];
+
 describe('fiat currency migrations', () => {
-  it('creates the catalogue keyed by currency code', () => {
+  it.each(rendersDdl)('%s', (_behaviour, fragments) => {
     const sql = renderUp();
 
-    expect(sql).toContain('create table "fiat_currencies"');
-    expect(sql).toContain('constraint "pk__fiat_currencies" primary key ("code")');
-    expect(sql).toContain('constraint "ck__fiat_currencies__code"');
+    for (const fragment of fragments) {
+      expect(sql).toContain(fragment);
+    }
   });
 
   it('holds the USD rate at a scale the exact arithmetic can consume', () => {
@@ -35,14 +58,6 @@ describe('fiat currency migrations', () => {
     expect(renderUp()).toContain('constraint "ck__fiat_currencies__rate_pairing"');
   });
 
-  it('carries the localized name and symbol on the row itself', () => {
-    const sql = renderUp();
-
-    expect(sql).toContain('"name" jsonb not null');
-    expect(sql).toContain('"symbol" jsonb not null');
-    expect(sql).toContain('constraint "ck__fiat_currencies__name"');
-  });
-
   it('has no second table for names to fall out of step with', () => {
     // A row per locale meant a join on the hot list path and an insert order the unit of work had
     // no dependency to derive. One jsonb value is written and read with the currency it describes.
@@ -54,14 +69,6 @@ describe('fiat currency migrations', () => {
     // and the check is the only thing standing between a typo in an admin payload and a list
     // endpoint that throws on every read.
     expect(renderUp()).toContain(`jsonb_typeof("name") = 'object'`);
-  });
-
-  it('keeps rate history append-only and idempotent per source and instant', () => {
-    const sql = renderUp();
-
-    expect(sql).toContain('create table "fiat_currency_rates"');
-    expect(sql).toContain('constraint "uq__fiat_currency_rates__code_as_of_source"');
-    expect(sql).toContain('create index "ix__fiat_currency_rates__code_as_of_desc"');
   });
 
   it('drops the history before the catalogue it references', () => {

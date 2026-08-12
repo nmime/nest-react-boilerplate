@@ -91,10 +91,8 @@ describe('setup generator', () => {
         publicTopologyIds,
       } = require('../../setup/schema.js');
 
-      const arrayEnum = (property: string): string[] =>
-        schema.properties[property].items.enum as string[];
-      const scalarEnum = (property: string): string[] =>
-        schema.properties[property].enum as string[];
+      const arrayEnum = (property: string): string[] => schema.properties[property].items.enum as string[];
+      const scalarEnum = (property: string): string[] => schema.properties[property].enum as string[];
 
       for (const [actual, expected] of [
         [scalarEnum('preset'), presetIds],

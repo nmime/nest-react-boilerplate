@@ -45,9 +45,9 @@ describe('auth Mongo migrations', () => {
 
   it('carries a monotonic id so the ordered runner accepts it', () => {
     expect(Migration20260812120000AddAuthUserAccountRecovery.id).toBe('20260812120000_add_auth_user_account_recovery');
-    expect(Migration20260812120000AddAuthUserAccountRecovery.id > Migration20260726000200InitializeAuthPersistence.id).toBe(
-      true,
-    );
+    expect(
+      Migration20260812120000AddAuthUserAccountRecovery.id > Migration20260726000200InitializeAuthPersistence.id,
+    ).toBe(true);
   });
 
   it('relaxes the users validator on databases that were created before the recovery fields', async () => {

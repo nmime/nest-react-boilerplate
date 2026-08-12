@@ -205,8 +205,7 @@ export function findCopiedCatalogRows(root, catalog, projectRoots, markdownFiles
         const cells = markdownTableCells(line);
         const copiedTableRow =
           cells.includes(entry.id) &&
-          (cells.includes(projectRoots.get(entry.id)) ||
-            (entryHostname && cells.includes(entryHostname)));
+          (cells.includes(projectRoots.get(entry.id)) || (entryHostname && cells.includes(entryHostname)));
         const copiedInlineMapping =
           line.includes(id) && (line.includes(projectRoot) || (hostname && line.includes(hostname)));
         if (copiedTableRow || copiedInlineMapping) {

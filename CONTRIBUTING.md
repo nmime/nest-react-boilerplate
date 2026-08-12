@@ -42,16 +42,16 @@ tip — so a branch that is green at the end but broken in the middle is caught
 while it can still be rewritten. `git bisect`, a revert, and a cherry-pick all
 land on individual commits, so every commit has to stand on its own.
 
-| Rule | Threshold | Escape |
-| --- | --- | --- |
-| Size cap | 100 non-generated files, 2000 non-generated insertions | `[bulk]` in the subject or body |
-| Body required | above 20 non-generated files or 400 non-generated insertions | write the body |
-| Subject length | 80 characters | — |
-| Generated output without its source | `pnpm-lock.yaml`, `.nrb/**`, `**/*.generated.*`, `**/__snapshots__/**`, `**/baselines/**`, `**/contracts/openapi/*.json`, `CHANGELOG.md` | `[regenerate]` in the subject or body |
-| Author and committer identity match | divergence must be explained | a `Co-authored-by:`/`Signed-off-by:` trailer, or a forge-bot identity |
-| Every lockfile importer has a `package.json` at that commit | — | — |
-| Every `tsconfig.base.json` path target exists at that commit | — | — |
-| Every `@app/*` import resolves at that commit | — | — |
+| Rule                                                         | Threshold                                                                                                                                | Escape                                                                |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Size cap                                                     | 100 non-generated files, 2000 non-generated insertions                                                                                   | `[bulk]` in the subject or body                                       |
+| Body required                                                | above 20 non-generated files or 400 non-generated insertions                                                                             | write the body                                                        |
+| Subject length                                               | 80 characters                                                                                                                            | —                                                                     |
+| Generated output without its source                          | `pnpm-lock.yaml`, `.nrb/**`, `**/*.generated.*`, `**/__snapshots__/**`, `**/baselines/**`, `**/contracts/openapi/*.json`, `CHANGELOG.md` | `[regenerate]` in the subject or body                                 |
+| Author and committer identity match                          | divergence must be explained                                                                                                             | a `Co-authored-by:`/`Signed-off-by:` trailer, or a forge-bot identity |
+| Every lockfile importer has a `package.json` at that commit  | —                                                                                                                                        | —                                                                     |
+| Every `tsconfig.base.json` path target exists at that commit | —                                                                                                                                        | —                                                                     |
+| Every `@app/*` import resolves at that commit                | —                                                                                                                                        | —                                                                     |
 
 Use an escape marker when the commit really is what the rule describes — a
 mechanical sweep, or a regeneration whose source moved in an earlier commit —

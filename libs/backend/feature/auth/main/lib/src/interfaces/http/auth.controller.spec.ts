@@ -92,9 +92,7 @@ const externalIdentity = {
   username: 'ada',
 } satisfies ExternalAuthIdentityView;
 
-function createService(
-  overrides: Partial<AuthControllerService> = {},
-): AuthControllerService {
+function createService(overrides: Partial<AuthControllerService> = {}): AuthControllerService {
   return {
     register: vi.fn(() => Promise.resolve(sessionView)),
     login: vi.fn(() => Promise.resolve(sessionView)),
@@ -512,9 +510,9 @@ describe('AuthController', () => {
     });
     expect(service.confirmEmailVerification).toHaveBeenCalledWith({ token: 'verification-token' });
 
-    await expect(controller.confirmPasswordReset({ token: 'reset-token', password: 'replacement123' })).resolves.toEqual(
-      { data: { confirmed: true } },
-    );
+    await expect(
+      controller.confirmPasswordReset({ token: 'reset-token', password: 'replacement123' }),
+    ).resolves.toEqual({ data: { confirmed: true } });
     expect(service.confirmPasswordReset).toHaveBeenCalledWith({
       token: 'reset-token',
       password: 'replacement123',

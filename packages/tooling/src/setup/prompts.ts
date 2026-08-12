@@ -10,7 +10,13 @@
  */
 import * as readline from 'node:readline/promises';
 import type { NrbConfig, PresetId } from './schema.js';
-import { defaultDeploymentConfig, defaultProductConfig, frontendAppIds, isPublicDomain, schemaVersion } from './schema.js';
+import {
+  defaultDeploymentConfig,
+  defaultProductConfig,
+  frontendAppIds,
+  isPublicDomain,
+  schemaVersion,
+} from './schema.js';
 import { presets, expandPreset } from './presets.js';
 import { appCatalog, capabilityCatalog, durableDatabaseProviderIds, expandDependencies } from './catalog.js';
 import type { AppId, CapabilityId, FrontendAppId } from './schema.js';

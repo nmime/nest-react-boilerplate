@@ -606,7 +606,7 @@ test('corepack provisioning survives a host that already owns /usr/local/bin/cor
 
     const harness = [
       'set -Eeuo pipefail',
-      "log() { :; }",
+      'log() { :; }',
       'die() { echo "$*" >&2; exit 1; }',
       'COREPACK_VERSION=0.35.0',
       'PNPM_VERSION=11.0.0',

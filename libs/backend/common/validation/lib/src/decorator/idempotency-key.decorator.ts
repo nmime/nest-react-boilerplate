@@ -1,6 +1,11 @@
 import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
 import { ApiHeader } from '@nestjs/swagger';
-import { IdempotencyKeyHeader, IdempotencyKeyMaxLength, IdempotencyKeyMinLength, requireIdempotencyKey } from '../idempotency';
+import {
+  IdempotencyKeyHeader,
+  IdempotencyKeyMaxLength,
+  IdempotencyKeyMinLength,
+  requireIdempotencyKey,
+} from '../idempotency';
 
 interface HeaderCarrier {
   headers?: Record<string, string | string[] | undefined>;

@@ -43,7 +43,10 @@ const options = { field: 'file', maxBytes: 16, mimeTypes: ['image/png'] } as con
 
 describe('readSingleFilePart', () => {
   it('returns the declared file part', async () => {
-    const uploaded = await readSingleFilePart(request([filePart({ fieldname: 'file', chunks: ['ab', 'cd'] })]), options);
+    const uploaded = await readSingleFilePart(
+      request([filePart({ fieldname: 'file', chunks: ['ab', 'cd'] })]),
+      options,
+    );
 
     expect(uploaded).toEqual({ filename: 'photo.png', mimetype: 'image/png', bytes: Buffer.from('abcd', 'utf8') });
   });

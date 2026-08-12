@@ -540,13 +540,10 @@ function expandMessageArguments(message: string, params: TranslationParams, loca
 }
 
 export function interpolate(message: string, params: TranslationParams = {}, locale: string = defaultLocale): string {
-  return expandMessageArguments(message, params, locale).replace(
-    /\{\{\s*([\w.-]+)\s*\}\}/gu,
-    (match, name: string) => {
-      const value = params[name];
-      return value === undefined || value === null ? match : String(value);
-    },
-  );
+  return expandMessageArguments(message, params, locale).replace(/\{\{\s*([\w.-]+)\s*\}\}/gu, (match, name: string) => {
+    const value = params[name];
+    return value === undefined || value === null ? match : String(value);
+  });
 }
 
 export function translateFromCatalog<Key extends string>(

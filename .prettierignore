@@ -22,6 +22,10 @@ nrb.config.json
 # reports any difference as capability drift, so a formatter must not rewrite them.
 **/capabilities.generated.ts
 
+# And again for the locale catalogs: `nrb i18n catalogs --check` byte-compares them against
+# what the generator would emit, so formatting one here reports it as stale instead.
+**/catalogs.generated.ts
+
 # Script implementation package is checked by node --check and purpose-built QA commands.
 packages/tooling/src/commands/**
 playwright.extended.config.ts

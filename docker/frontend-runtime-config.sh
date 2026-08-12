@@ -158,6 +158,11 @@ fi
   emit_url productIconHref "${PRODUCT_ICON_HREF:-}"
   emit_image_media_type productIconType "${PRODUCT_ICON_TYPE:-}"
   emit_color productThemeColor "${PRODUCT_THEME_COLOR:-}"
+  # Chrome an embedding host paints for us (the Telegram mini app). It sits outside the document,
+  # so neither the stylesheet nor the runtime brand pass over <head> can reach it.
+  emit_color productChromeBackgroundColor "${PRODUCT_CHROME_BACKGROUND_COLOR:-}"
+  emit_color productChromeBottomBarColor "${PRODUCT_CHROME_BOTTOM_BAR_COLOR:-}"
+  emit_color productChromeHeaderColor "${PRODUCT_CHROME_HEADER_COLOR:-}"
   echo '};'
 } >"${TARGET}"
 

@@ -189,6 +189,15 @@ identity, and the container generator drops a `PRODUCT_*` value that is not a
 plain string, a public icon URL/path, an `image/*` media type, or a
 `#rgb`/`#rrggbb` colour.
 
+An embedding host paints its own chrome around the app — the Telegram mini app
+supplies the header, background, and bottom bar — and that chrome is outside the
+document, so neither the stylesheet nor the branding passes above reach it.
+`VITE_PRODUCT_CHROME_HEADER_COLOR`, `VITE_PRODUCT_CHROME_BACKGROUND_COLOR`, and
+`VITE_PRODUCT_CHROME_BOTTOM_BAR_COLOR` (with the matching `PRODUCT_CHROME_*`
+container variables) carry it, defaulting to the design tokens the user app used
+to read directly, so an untouched checkout is unchanged and a rebrand no longer
+stops at the browser tab.
+
 The `<title>`, `theme-color`, and icon tags each app's `index.html` ships are
 pre-hydration defaults for that surface, not product identity; both branding
 passes replace them.

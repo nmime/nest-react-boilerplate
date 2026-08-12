@@ -1,5 +1,6 @@
 // @requirements REQ-FRONTEND-SHELL-004
 import { describe, expect, it } from 'vitest';
+import { designColors } from '@app/common-design-tokens';
 import { applyProductBrand, applyProductBrandToHtml, defaultProductBrand, resolveProductBrand } from './product-brand';
 
 describe('product brand configuration', () => {
@@ -19,6 +20,9 @@ describe('product brand configuration', () => {
     );
 
     expect(brand).toEqual({
+      chromeBackgroundColor: defaultProductBrand.chromeBackgroundColor,
+      chromeBottomBarColor: defaultProductBrand.chromeBottomBarColor,
+      chromeHeaderColor: defaultProductBrand.chromeHeaderColor,
       iconHref: '/logo.webp',
       iconType: 'image/webp',
       name: 'Acme Cloud',
@@ -36,10 +40,46 @@ describe('product brand configuration', () => {
     expect(resolveProductBrand({ VITE_PRODUCT_NAME: '  ' }, {}).name).toBe(defaultProductBrand.name);
   });
 
+  // The mini-app chrome is painted by the host (Telegram), not by CSS, so the design tokens never
+  // reach it. Without these fields a configured rebrand stops at the browser tab and the embedded
+  // header/background/bottom bar stay boilerplate blue.
+  it('reads the embedded-chrome colours a host paints outside the document', () => {
+    const brand = resolveProductBrand(
+      {
+        VITE_PRODUCT_CHROME_BACKGROUND_COLOR: '#101010',
+        VITE_PRODUCT_CHROME_BOTTOM_BAR_COLOR: '#202020',
+        VITE_PRODUCT_CHROME_HEADER_COLOR: '#303030',
+      },
+      {},
+    );
+
+    expect(brand.chromeBackgroundColor).toBe('#101010');
+    expect(brand.chromeBottomBarColor).toBe('#202020');
+    expect(brand.chromeHeaderColor).toBe('#303030');
+  });
+
+  it('lets a deployment repaint the chrome without a rebuild', () => {
+    const brand = resolveProductBrand(
+      { VITE_PRODUCT_CHROME_HEADER_COLOR: '#303030' },
+      { productChromeHeaderColor: '#404040' },
+    );
+
+    expect(brand.chromeHeaderColor).toBe('#404040');
+  });
+
+  it('defaults the chrome to the design tokens the app used to hardcode', () => {
+    const brand = resolveProductBrand({}, {});
+
+    expect(brand.chromeBackgroundColor).toBe(designColors.light.background);
+    expect(brand.chromeBottomBarColor).toBe(designColors.light.foreground);
+    expect(brand.chromeHeaderColor).toBe(designColors.light.ring);
+  });
+
   it('applies the brand to the document title, theme colour and icon', () => {
     const documentStub = document.implementation.createHTMLDocument('placeholder');
 
     applyProductBrand(documentStub, {
+      ...defaultProductBrand,
       iconHref: '/logo.webp',
       iconType: 'image/webp',
       name: 'Acme Cloud',
@@ -67,6 +107,7 @@ describe('product brand configuration', () => {
 
 describe('product brand in the served document', () => {
   const brand = {
+    ...defaultProductBrand,
     iconHref: '/logo.webp',
     iconType: 'image/webp',
     name: 'Acme Cloud',

@@ -169,8 +169,8 @@ describe('social auth and TMA UI', () => {
     await waitFor(() => {
       expect(tma.viewport.requestFullscreen).toHaveBeenCalledOnce();
     });
-    expect(tma.miniApp.setHeaderColor).toHaveBeenCalledWith('#2563eb');
-    expect(tma.miniApp.setBottomBarColor).toHaveBeenCalledWith('#0f172a');
+    expect(tma.miniApp.setHeaderColor).toHaveBeenCalledWith(defaultProductBrand.chromeHeaderColor);
+    expect(tma.miniApp.setBottomBarColor).toHaveBeenCalledWith(defaultProductBrand.chromeBottomBarColor);
     expect(tma.backButton.onClick).toHaveBeenCalledOnce();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
@@ -184,6 +184,28 @@ describe('social auth and TMA UI', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/');
     });
+  });
+
+  // Telegram paints the header, background and bottom bar itself, so no stylesheet and no
+  // `applyProductBrand` pass reaches them. Unless the configured brand drives them, a rebranded
+  // product still opens inside boilerplate-blue chrome.
+  it('paints the Telegram chrome from the deployment brand rather than the design tokens', async () => {
+    vi.stubGlobal('__APP_RUNTIME_CONFIG__', {
+      productChromeBackgroundColor: '#101010',
+      productChromeBottomBarColor: '#202020',
+      productChromeHeaderColor: '#303030',
+    });
+    resetPath('/tma?startapp=profile');
+    tma.isTMA.mockReturnValue(true);
+
+    render(<App />);
+
+    await screen.findAllByRole('button', { name: 'Share' });
+    await waitFor(() => {
+      expect(tma.miniApp.setHeaderColor).toHaveBeenCalledWith('#303030');
+    });
+    expect(tma.miniApp.setBottomBarColor).toHaveBeenCalledWith('#202020');
+    expect(tma.miniApp.setBgColor).toHaveBeenCalledWith('#101010');
   });
 
   it('uses browser back and Web Share from the same shell outside Telegram', async () => {

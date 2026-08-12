@@ -1,6 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
-import { designColors } from '@app/common-design-tokens';
 import { ApiClientProvider, authApiToastRules, userApiToastRules } from '@app/frontend-api-client';
 import {
   configureApiLocale,
@@ -20,7 +19,7 @@ import {
 import { UiApiRuntimeOverlay } from '@app/frontend-ui-web';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 import { useUserPreferenceControls } from '../../features/preferences';
-import { getAuthApiBaseUrl, getFrontendEnv, getUserApiBaseUrl } from '../../shared/config';
+import { getAuthApiBaseUrl, getFrontendEnv, getUserApiBaseUrl, resolveAppProductBrand } from '../../shared/config';
 import { MiniAppProvider } from '../../shared/mini-app';
 import { UiErrorBoundary } from '../../shared/ui';
 import { AuthRedirectBridge } from './auth-redirect-bridge';
@@ -119,11 +118,16 @@ const UserAppRouterProviders = observer(function UserAppRouterProviders() {
 });
 
 export function AppProviders({ children }: Readonly<{ children?: ReactNode }> = {}) {
+  // Telegram paints this chrome itself, so it is out of reach of both the stylesheet and the
+  // `applyProductBrand` document pass; taking it from the brand is what makes a rebrand cover the
+  // embedded surface too. The defaults are the design tokens this used to read directly.
+  const brand = resolveAppProductBrand();
+
   return (
     <MiniAppProvider
-      backgroundColor={designColors.light.background}
-      bottomBarColor={designColors.light.foreground}
-      headerColor={designColors.light.ring}
+      backgroundColor={brand.chromeBackgroundColor}
+      bottomBarColor={brand.chromeBottomBarColor}
+      headerColor={brand.chromeHeaderColor}
     >
       <FrontendStateProvider>
         <UserAppApiClientProvider>

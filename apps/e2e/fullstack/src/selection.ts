@@ -65,6 +65,47 @@ export function resolveFullstackSelection(closure: FullstackClosureLike): Fullst
   };
 }
 
+export interface FullstackStartupStep {
+  /** `up` starts long-lived services; `run` executes one one-shot service and waits for it to exit. */
+  kind: 'up' | 'run';
+  services: string[];
+  /** Only meaningful for `up`: hold until every started service reports healthy. */
+  waitForHealthy?: boolean;
+}
+
+/**
+ * One-shot services that must finish before anything else starts, in the order they must finish in.
+ *
+ * The replica-set bootstrap is MongoDB's alone; the migrator is named by the selection, so a
+ * provider added later contributes its own without touching this list.
+ */
+function preparationServices(selection: FullstackSelection): string[] {
+  const bootstrap = selection.provider === 'mongodb' ? ['mongodb-init'] : [];
+  return [...bootstrap, selection.migrationService].filter((service) => selection.services.includes(service));
+}
+
+/**
+ * The order the stack has to start in: the database, held until it is healthy, then each one-shot
+ * preparation service in turn, then everything else.
+ *
+ * `docker compose up -d` honours `depends_on` ordering but does not wait for a one-shot container to
+ * *exit*, so an application whose only declared dependency is the database boots against an
+ * unmigrated schema and fails somewhere unrelated. Only the MongoDB lane used to be sequenced, and
+ * it was sequenced by hand in the compose driver, which left PostgreSQL racing its own migrator.
+ * Deriving the order from the selection covers both providers with one rule.
+ */
+export function fullstackStartupPlan(selection: FullstackSelection): FullstackStartupStep[] {
+  const oneShots = preparationServices(selection);
+  const sequenced = new Set([selection.databaseService, ...oneShots]);
+  const remaining = selection.services.filter((service) => !sequenced.has(service));
+
+  return [
+    { kind: 'up', services: [selection.databaseService], waitForHealthy: true },
+    ...oneShots.map((service) => ({ kind: 'run' as const, services: [service] })),
+    ...(remaining.length > 0 ? [{ kind: 'up' as const, services: remaining }] : []),
+  ];
+}
+
 export function validateFullstackEnvironment(selection: FullstackSelection, environment: NodeJS.ProcessEnv): void {
   for (const name of ['DATABASE_ENGINE', 'AUTH_PERSISTENCE'] as const) {
     const value = environment[name]?.trim();

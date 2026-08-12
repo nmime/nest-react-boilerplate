@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
 
-import { resolveFullstackSelection, validateFullstackEnvironment } from '../src/selection.ts';
+import { fullstackStartupPlan, resolveFullstackSelection, validateFullstackEnvironment } from '../src/selection.ts';
 
 const roots: string[] = [];
 
@@ -108,6 +108,80 @@ void describe('fullstack selected closure', () => {
       restoreEnv('MONGODB_URI', originalMongoUri);
       restoreEnv('MONGODB_DATABASE', originalMongoDatabase);
       restoreEnv('DOCKER_MONGODB_URI', originalDockerMongoUri);
+    }
+  });
+});
+
+void describe('fullstack startup order', () => {
+  const selectionFor = (provider: 'mongodb' | 'postgres') =>
+    resolveFullstackSelection({
+      provider,
+      roots: ['fullstack-e2e', 'user-app', 'user-app-api'],
+      services:
+        provider === 'mongodb'
+          ? ['mongodb', 'mongodb-init', 'mongodb-migrate', 'user-app', 'user-app-api']
+          : ['migrate', 'postgres', 'user-app', 'user-app-api'],
+    });
+
+  void it('waits for the database before running any one-shot against it', () => {
+    for (const provider of ['mongodb', 'postgres'] as const) {
+      const selection = selectionFor(provider);
+      const [first, ...rest] = fullstackStartupPlan(selection);
+
+      assert.deepEqual(
+        first,
+        { kind: 'up', services: [selection.databaseService], waitForHealthy: true },
+        `${provider} must start its database first and wait for it to report healthy`,
+      );
+      assert.ok(
+        rest.every((step) => !step.services.includes(selection.databaseService)),
+        `${provider} must not start its database twice`,
+      );
+    }
+  });
+
+  void it('runs the migrator to completion before any application service starts', () => {
+    // The defect this pins is silent: `docker compose up -d` honours `depends_on` ordering but does
+    // not wait for a one-shot to exit, so an application whose only declared dependency is the
+    // database boots against an unmigrated schema and the suite fails somewhere else entirely.
+    for (const provider of ['mongodb', 'postgres'] as const) {
+      const selection = selectionFor(provider);
+      const plan = fullstackStartupPlan(selection);
+      const migrationStep = plan.findIndex(
+        (step) => step.kind === 'run' && step.services.includes(selection.migrationService),
+      );
+      const applicationStep = plan.findIndex((step) =>
+        selection.applicationServices.some((service) => step.services.includes(service)),
+      );
+
+      assert.ok(migrationStep >= 0, `${provider} must run ${selection.migrationService} as a one-shot`);
+      assert.ok(applicationStep >= 0, `${provider} must start its application services`);
+      assert.ok(
+        migrationStep < applicationStep,
+        `${provider} must finish ${selection.migrationService} before starting applications`,
+      );
+    }
+  });
+
+  void it('orders MongoDB replica-set initialization ahead of its migrator', () => {
+    const selection = selectionFor('mongodb');
+    const plan = fullstackStartupPlan(selection);
+    const oneShots = plan.filter((step) => step.kind === 'run').flatMap((step) => step.services);
+
+    assert.deepEqual(oneShots, ['mongodb-init', 'mongodb-migrate']);
+  });
+
+  void it('starts every remaining selected service exactly once, in one step', () => {
+    for (const provider of ['mongodb', 'postgres'] as const) {
+      const selection = selectionFor(provider);
+      const plan = fullstackStartupPlan(selection);
+      const started = plan.flatMap((step) => step.services);
+
+      assert.deepEqual(
+        [...started].sort((left, right) => left.localeCompare(right)),
+        [...selection.services].sort((left, right) => left.localeCompare(right)),
+        `${provider} must start each selected service exactly once`,
+      );
     }
   });
 });

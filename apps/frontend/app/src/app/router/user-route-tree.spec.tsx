@@ -68,6 +68,19 @@ describe('user route tree', () => {
     expect(await screen.findAllByLabelText('Acme Cloud bottom navigation')).not.toHaveLength(0);
   });
 
+  it('highlights the nav entry that owns a detail page reached through a path parameter', async () => {
+    const routes = defineUserRoutes([
+      { component: () => <p>Item list</p>, nav: { label: 'user.nav.home', order: 1 }, path: '/items' },
+      { component: () => <p>Item detail</p>, navParent: '/items', path: '/items/$itemId' },
+    ]);
+
+    renderAt('/items/abc', routes);
+
+    expect(await screen.findByText('Item detail')).toBeTruthy();
+    const current = await screen.findAllByRole('link', { current: 'page' });
+    expect(current.map((link) => link.getAttribute('href'))).toEqual(['/items']);
+  });
+
   it('keeps the shell around routes that opt into chrome', async () => {
     const routes = defineUserRoutes([
       { component: () => <p>Framed page</p>, nav: { label: 'user.nav.home', order: 1 }, path: '/' },

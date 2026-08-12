@@ -3,12 +3,12 @@ import {
   AdminFeatureFlagsReadPermission,
   AdminFeatureFlagsWritePermission,
   AdminRole,
-  permissionCatalog,
+  basePermissionCatalog,
 } from '@app/common-authz';
 
 const sqlText = (value: string): string => `'${value.replace(/'/g, "''")}'`;
 const featureFlagPermissions = [AdminFeatureFlagsReadPermission, AdminFeatureFlagsWritePermission].map((key) => {
-  const permission = permissionCatalog.find((entry) => entry.key === key);
+  const permission = basePermissionCatalog.find((entry) => entry.key === key);
   if (!permission) {
     throw new Error(`Feature flag permission ${key} is missing from the shared catalog.`);
   }

@@ -1,5 +1,9 @@
 import { Migration } from '@mikro-orm/migrations';
-import { defaultRolePermissions, permissionCatalog, roleKeys } from '@app/common-authz';
+// Versioned migrations bind to the *base* catalog, never the composed one: a migration that
+// already ran must keep meaning what it meant, so a product registering extra permissions through
+// `productAuthzExtensions` may not retroactively change the rows this file seeds. Product
+// permissions and grants belong in a product-owned migration.
+import { basePermissionCatalog, baseRoleKeys, baseRolePermissions } from '@app/common-authz';
 
 const DefaultTenantId = '00000000-0000-0000-0000-000000000000';
 
@@ -75,7 +79,7 @@ export class Migration20260704120000CreateRbacModel extends Migration {
 
     // Seed the global permission catalog straight from @app/common-authz so this
     // table never drifts from the shared source of truth.
-    const permissionValues = permissionCatalog
+    const permissionValues = basePermissionCatalog
       .map(
         (permission) =>
           `(gen_random_uuid(), ${sqlText(permission.key)}, ${sqlText(permission.resource)}, ${sqlText(permission.action)}, ${sqlText(permission.description)}, now())`,
@@ -86,7 +90,7 @@ export class Migration20260704120000CreateRbacModel extends Migration {
     );
 
     // Seed the system roles (user + admin) under the default tenant.
-    const roleValues = roleKeys
+    const roleValues = baseRoleKeys
       .map(
         (key) =>
           `(gen_random_uuid(), ${sqlText(DefaultTenantId)}, ${sqlText(key)}, ${sqlText(roleLabel(key))}, '', true, now(), now())`,
@@ -98,8 +102,8 @@ export class Migration20260704120000CreateRbacModel extends Migration {
 
     // Seed role -> permission grants from the shared default matrix, joining on
     // keys so the concrete row ids stay decoupled from this migration.
-    for (const key of roleKeys) {
-      const permissionList = defaultRolePermissions[key].map((permissionKey) => sqlText(permissionKey)).join(', ');
+    for (const key of baseRoleKeys) {
+      const permissionList = baseRolePermissions[key].map((permissionKey) => sqlText(permissionKey)).join(', ');
       this.addSql(
         `insert into "auth_role_permissions" ("role_id", "permission_id", "created_at") ` +
           `select r."id", p."id", now() from "auth_roles" r ` +

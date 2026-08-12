@@ -1,10 +1,10 @@
 import { Migration } from '@mikro-orm/migrations';
-import { AdminAuthLoginAnalyticsReadPermission, AdminRole, permissionCatalog } from '@app/common-authz';
+import { AdminAuthLoginAnalyticsReadPermission, AdminRole, basePermissionCatalog } from '@app/common-authz';
 
 const sqlText = (value: string): string => `'${value.replace(/'/g, "''")}'`;
 
 const permission = (() => {
-  const match = permissionCatalog.find((entry) => entry.key === AdminAuthLoginAnalyticsReadPermission);
+  const match = basePermissionCatalog.find((entry) => entry.key === AdminAuthLoginAnalyticsReadPermission);
   if (!match) {
     throw new Error('Auth login analytics permission is missing from the shared catalog.');
   }

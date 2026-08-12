@@ -113,8 +113,11 @@ export const adminPermissionCatalog = permissionCatalog
   .filter((entry) => adminPermissionKeys.has(entry.key))
   .map((entry) => ({
     permission: entry.key,
+    // Resource and action are cast for CASL's benefit: the shared catalog is open to product
+    // permissions, whose resource/action pairs are outside the boilerplate's own unions. CASL
+    // compares them as plain strings at runtime, so an unlisted pair authorizes correctly.
     resource: entry.resource as AdminSubject,
-    action: entry.action,
+    action: entry.action as AdminAction,
     description: entry.description,
   }));
 

@@ -1,4 +1,4 @@
-import type { AbilityTarget, PermissionDefinition } from './types';
+import type { PermissionDefinition } from './types';
 
 export const UserProfileReadPermission = 'profile:read';
 export const AdminProfileReadPermission = 'admin:profile:read';
@@ -26,10 +26,12 @@ export const AdminFeatureFlagsReadPermission = 'admin:feature-flags:read';
 export const AdminFeatureFlagsWritePermission = 'admin:feature-flags:write';
 export const AdminManageAllPermission = 'admin:manage:all';
 
-// Single source of truth for every RBAC permission. Resource/action pairs are
+// Every RBAC permission the boilerplate itself owns. Resource/action pairs are
 // framework-neutral data; the backend admin lib maps them onto CASL subjects
 // and actions, while the frontend consumes the same data without CASL.
-export const permissionCatalog = [
+// Products add their own through `productAuthzExtensions`; the composed result
+// that runtime code should read is `permissionCatalog` in ./effective-catalog.
+export const basePermissionCatalog = [
   {
     key: UserProfileReadPermission,
     resource: 'profile',
@@ -182,16 +184,6 @@ export const permissionCatalog = [
   },
 ] as const satisfies readonly PermissionDefinition[];
 
-export type PermissionKey = (typeof permissionCatalog)[number]['key'];
-
-const permissionByKey: ReadonlyMap<string, (typeof permissionCatalog)[number]> = new Map(
-  permissionCatalog.map((entry) => [entry.key, entry]),
-);
-
-export const isKnownPermission = (value: string): value is PermissionKey => permissionByKey.has(value);
-
-export const permissionToAbilityTarget = (permission: string): AbilityTarget | undefined => {
-  const entry = permissionByKey.get(permission);
-
-  return entry ? { action: entry.action, resource: entry.resource } : undefined;
-};
+// Compile-time union of the boilerplate-owned keys. Product permissions are plain strings
+// validated at composition time, so they deliberately do not widen this union.
+export type PermissionKey = (typeof basePermissionCatalog)[number]['key'];

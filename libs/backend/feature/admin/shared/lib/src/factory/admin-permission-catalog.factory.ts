@@ -5,7 +5,7 @@ import {
   defaultRolePermissions,
   permissionCatalog,
 } from '@app/common-authz';
-import type { AdminSubject } from '../type/admin-permission.type';
+import type { AdminAction, AdminSubject } from '../type/admin-permission.type';
 
 // The admin-scoped catalog is the subset of the shared catalog granted to the
 // admin role (everything except the user-scoped `profile:read`), sourced from
@@ -16,8 +16,11 @@ export const adminPermissionCatalog = permissionCatalog
   .filter((entry) => adminPermissionKeys.has(entry.key))
   .map((entry) => ({
     permission: entry.key,
+    // Resource and action are cast for CASL's benefit: the shared catalog is open to product
+    // permissions, whose resource/action pairs are outside the boilerplate's own unions. CASL
+    // compares them as plain strings at runtime, so an unlisted pair authorizes correctly.
     resource: entry.resource as AdminSubject,
-    action: entry.action,
+    action: entry.action as AdminAction,
     description: entry.description,
   }));
 

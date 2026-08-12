@@ -5,7 +5,7 @@ import type { CurrencyCode } from '@app/common-money';
  * The fiat catalogue as the product owns it, on top of the pure arithmetic in `@app/common-money`.
  *
  * `@app/common-money` knows how many decimal places a currency has and how to add two amounts of
- * the same one. It deliberately knows nothing about exchange rates: `addMoney(usd, eur)` throws,
+ * the same one. It deliberately knows nothing about exchange rates: `Money.add(usd, eur)` throws,
  * because a rate is operational data with a source and a timestamp, not a constant a library can
  * carry. This feature is where that data lives — one row per currency holding its current rate to
  * USD, its presentation, and an append-only history of every rate it has ever had.
@@ -36,7 +36,7 @@ export interface FiatCurrencyRate extends FiatRateQuote {
 /** A row of the fiat catalogue. `usdPerUnit` is null until the first rate is recorded. */
 export interface FiatCurrency {
   readonly code: CurrencyCode;
-  /** Decimal places in the minor unit. Mirrors `currencyMinorUnitExponent` so a row is self-describing. */
+  /** Decimal places in the minor unit. Mirrors `Money.minorUnitExponent` so a row is self-describing. */
   readonly minorUnitExponent: number;
   /**
    * The currency's name per locale, as one JSON value rather than a row per language.

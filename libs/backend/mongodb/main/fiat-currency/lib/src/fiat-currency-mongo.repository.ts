@@ -10,7 +10,7 @@ import {
   type UpsertFiatCurrencyParams,
   fiatRateRatio,
 } from '@app/backend-feature-fiat-currency-shared';
-import { type CurrencyCode, currencyMinorUnitExponent } from '@app/common-money';
+import { type CurrencyCode, Money } from '@app/common-money';
 import { Inject, Injectable } from '@nestjs/common';
 import type { Collection, Db, Filter } from 'mongodb';
 import { FiatCurrencyCollectionName, FiatCurrencyRateCollectionName } from './fiat-currency-mongo.collection';
@@ -84,7 +84,7 @@ export class FiatCurrencyMongoPersistence extends FiatCurrencyPersistence {
       name: params.name,
       symbol: params.symbol,
       minorUnitExponent:
-        params.minorUnitExponent ?? existing?.minorUnitExponent ?? currencyMinorUnitExponent(params.code),
+        params.minorUnitExponent ?? existing?.minorUnitExponent ?? Money.minorUnitExponent(params.code),
       active: params.active ?? existing?.active ?? true,
       displayOrder: params.displayOrder ?? existing?.displayOrder ?? 0,
       // `undefined` means "leave the image alone"; an explicit null clears it.

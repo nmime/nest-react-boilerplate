@@ -1,6 +1,6 @@
 import { EntitySchema } from '@mikro-orm/core';
 import type { Localizations } from '@app/common-i18n-runtime';
-import { type CurrencyCode, currencyMinorUnitExponent } from '@app/common-money';
+import { type CurrencyCode, Money } from '@app/common-money';
 
 export interface FiatCurrencyEntityInput {
   code: CurrencyCode;
@@ -43,7 +43,7 @@ export class FiatCurrencyEntity {
       this.code = input.code;
       this.name = input.name ?? {};
       this.symbol = input.symbol ?? {};
-      this.minorUnitExponent = input.minorUnitExponent ?? currencyMinorUnitExponent(input.code);
+      this.minorUnitExponent = input.minorUnitExponent ?? Money.minorUnitExponent(input.code);
       this.imageUrl = input.imageUrl ?? null;
       this.active = input.active ?? true;
       this.displayOrder = input.displayOrder ?? 0;

@@ -5,9 +5,21 @@
  * compounds through every discount, tax line, and split. Every value here is an integer count
  * of the currency's smallest unit, and every operation that could lose a unit either says which
  * way it rounded or refuses to guess.
+ *
+ * The operations hang off {@link Money} rather than standing alone, so a call site reads
+ * `Money.add(a, b)` instead of repeating the noun in every name. The type and the namespace share
+ * that name deliberately: `Money` is what you hold, and `Money.` is what you can do with it.
  */
 
-/** ISO 4217 alphabetic code, uppercase. */
+/**
+ * ISO 4217 alphabetic code, uppercase.
+ *
+ * An alias over `string` rather than a union of codes: the table is extensible at runtime through
+ * {@link Money.registerCurrency}, so a closed union would refuse the crypto and ledger units a
+ * product adds. The name is what makes a signature readable — `of(amount: number, currency:
+ * CurrencyCode)` says which string is meant, where two bare `string`s would not.
+ */
+// eslint-disable-next-line sonarjs/redundant-type-aliases -- named for the reason above.
 export type CurrencyCode = string;
 
 export interface Money {
@@ -25,7 +37,7 @@ export interface CurrencyDefinition {
 /** How a scaling operation resolves a fraction of a minor unit. */
 export type MoneyRounding = 'half-even' | 'half-up' | 'trunc';
 
-/** An exact ratio. Build one with {@link moneyRate}; a float cannot express 7.5% exactly. */
+/** An exact ratio. Build one with {@link Money.rate}; a float cannot express 7.5% exactly. */
 export interface MoneyRatio {
   readonly numerator: number;
   readonly denominator: number;
@@ -44,7 +56,7 @@ const defaultMinorUnitExponent = 2;
  * Only the exceptions are listed: two decimal places is the ISO default and holds for the
  * overwhelming majority, so enumerating every code would be a list to maintain rather than a
  * fact to record. A product currency outside ISO registers itself through
- * {@link registerCurrency}.
+ * {@link Money.registerCurrency}.
  */
 const isoExceptionalMinorUnitExponents = new Map<CurrencyCode, number>([
   ...(
@@ -97,24 +109,24 @@ function assertCurrencyCode(code: string): CurrencyCode {
  * that registers on import stays safe to import more than once; a conflicting exponent throws,
  * because one of the two callers is already computing with the wrong scale.
  */
-export function registerCurrency(definition: CurrencyDefinition): void {
+function registerCurrency(definition: CurrencyDefinition): void {
   const code = assertCurrencyCode(definition.code);
-  const { minorUnitExponent } = definition;
+  const { minorUnitExponent: exponent } = definition;
 
-  if (!Number.isInteger(minorUnitExponent) || minorUnitExponent < 0 || minorUnitExponent > 12) {
+  if (!Number.isInteger(exponent) || exponent < 0 || exponent > 12) {
     throw new RangeError(`${code} minor unit exponent must be a whole number between 0 and 12.`);
   }
 
   const existing = registeredCurrencyExponents.get(code);
-  if (existing !== undefined && existing !== minorUnitExponent) {
+  if (existing !== undefined && existing !== exponent) {
     throw new Error(`${code} is already registered with minor unit exponent ${existing}.`);
   }
 
-  registeredCurrencyExponents.set(code, minorUnitExponent);
+  registeredCurrencyExponents.set(code, exponent);
 }
 
 /** Decimal places in the currency's minor unit. Registrations win over the ISO table. */
-export function currencyMinorUnitExponent(currency: CurrencyCode): number {
+function minorUnitExponent(currency: CurrencyCode): number {
   const code = assertCurrencyCode(currency);
 
   return (
@@ -122,7 +134,7 @@ export function currencyMinorUnitExponent(currency: CurrencyCode): number {
   );
 }
 
-export function money(amountMinor: number, currency: CurrencyCode): Money {
+function of(amountMinor: number, currency: CurrencyCode): Money {
   const code = assertCurrencyCode(currency);
 
   if (!Number.isSafeInteger(amountMinor)) {
@@ -132,14 +144,6 @@ export function money(amountMinor: number, currency: CurrencyCode): Money {
   return { amountMinor, currency: code };
 }
 
-export function zeroMoney(currency: CurrencyCode): Money {
-  return money(0, currency);
-}
-
-export function isZeroMoney(value: Money): boolean {
-  return value.amountMinor === 0;
-}
-
 function assertSameCurrency(left: Money, right: Money): CurrencyCode {
   if (left.currency !== right.currency) {
     throw new MoneyCurrencyMismatchError(left.currency, right.currency);
@@ -147,32 +151,31 @@ function assertSameCurrency(left: Money, right: Money): CurrencyCode {
   return left.currency;
 }
 
-export function addMoney(left: Money, right: Money): Money {
-  return money(left.amountMinor + right.amountMinor, assertSameCurrency(left, right));
+function add(left: Money, right: Money): Money {
+  return of(left.amountMinor + right.amountMinor, assertSameCurrency(left, right));
 }
 
-export function subtractMoney(left: Money, right: Money): Money {
-  return money(left.amountMinor - right.amountMinor, assertSameCurrency(left, right));
-}
-
-export function negateMoney(value: Money): Money {
-  return money(-value.amountMinor, value.currency);
+function subtract(left: Money, right: Money): Money {
+  return of(left.amountMinor - right.amountMinor, assertSameCurrency(left, right));
 }
 
 /** `-1`, `0`, or `1`, so the result composes with `Array.prototype.sort`. */
-export function compareMoney(left: Money, right: Money): -1 | 0 | 1 {
+function compare(left: Money, right: Money): -1 | 0 | 1 {
   assertSameCurrency(left, right);
 
-  if (left.amountMinor < right.amountMinor) return -1;
+  if (left.amountMinor < right.amountMinor) {
+    return -1;
+  }
+
   return left.amountMinor > right.amountMinor ? 1 : 0;
 }
 
 /**
- * Builds an exact ratio from decimal text: `moneyRate('0.075')` is 75/1000, not the nearest
+ * Builds an exact ratio from decimal text: `Money.rate('0.075')` is 75/1000, not the nearest
  * double to 7.5%. Rates arrive as configuration or catalogue data, which is text; parsing it to
  * a float first is where the inexactness enters, so this never sees a float at all.
  */
-export function moneyRate(decimalText: string): MoneyRatio {
+function rate(decimalText: string): MoneyRatio {
   if (!decimalTextPattern.test(decimalText)) {
     throw new TypeError(`A rate must be decimal text such as "0.075" (received ${JSON.stringify(decimalText)}).`);
   }
@@ -188,18 +191,18 @@ export function moneyRate(decimalText: string): MoneyRatio {
   return { numerator: decimalText.startsWith('-') ? -magnitude : magnitude, denominator };
 }
 
-function toRatio(rate: MoneyRate): MoneyRatio {
-  if (typeof rate !== 'number') {
-    return rate;
+function toRatio(value: MoneyRate): MoneyRatio {
+  if (typeof value !== 'number') {
+    return value;
   }
 
-  if (!Number.isSafeInteger(rate)) {
+  if (!Number.isSafeInteger(value)) {
     throw new TypeError(
-      `A fractional rate must be exact: build it with moneyRate("${String(rate)}") instead of passing a float.`,
+      `A fractional rate must be exact: build it with Money.rate("${String(value)}") instead of passing a float.`,
     );
   }
 
-  return { numerator: rate, denominator: 1 };
+  return { numerator: value, denominator: 1 };
 }
 
 function divideRounded(numerator: bigint, denominator: bigint, rounding: MoneyRounding): bigint {
@@ -225,15 +228,15 @@ function toSafeMinorUnits(value: bigint, currency: CurrencyCode): Money {
   if (value > BigInt(Number.MAX_SAFE_INTEGER) || value < BigInt(Number.MIN_SAFE_INTEGER)) {
     throw new RangeError(`Result ${value.toString()} ${currency} is too large to represent exactly.`);
   }
-  return money(Number(value), currency);
+  return of(Number(value), currency);
 }
 
 /**
  * Scales an amount by an integer or an exact ratio. The whole product is computed before any
- * rounding, so `price * 3 * moneyRate('0.075')` never rounds twice.
+ * rounding, so `price * 3 * Money.rate('0.075')` never rounds twice.
  */
-export function multiplyMoney(value: Money, rate: MoneyRate, rounding: MoneyRounding = 'half-even'): Money {
-  const ratio = toRatio(rate);
+function multiply(value: Money, factor: MoneyRate, rounding: MoneyRounding = 'half-even'): Money {
+  const ratio = toRatio(factor);
   const denominator = BigInt(ratio.denominator);
 
   if (denominator <= 0n) {
@@ -251,7 +254,7 @@ export function multiplyMoney(value: Money, rate: MoneyRate, rounding: MoneyRoun
  * to $9.99. The leftover units go to the earliest weights instead, which is arbitrary but
  * total-preserving, and being total-preserving is the property a ledger needs.
  */
-export function allocateMoney(value: Money, weights: readonly number[]): Money[] {
+function allocate(value: Money, weights: readonly number[]): Money[] {
   if (weights.length === 0) {
     throw new RangeError('Allocation needs at least one weight.');
   }
@@ -273,8 +276,14 @@ export function allocateMoney(value: Money, weights: readonly number[]): Money[]
   let leftover = magnitude - shares.reduce((total, entry) => total + entry.share, 0n);
 
   for (const entry of shares) {
-    if (leftover === 0n) break;
-    if (entry.weight === 0) continue;
+    if (leftover === 0n) {
+      break;
+    }
+
+    if (entry.weight === 0) {
+      continue;
+    }
+
     entry.share += 1n;
     leftover -= 1n;
   }
@@ -283,8 +292,8 @@ export function allocateMoney(value: Money, weights: readonly number[]): Money[]
 }
 
 /** Reads decimal text at the currency's own scale: `'12.34'` USD, `'1200'` JPY, `'0.001'` BHD. */
-export function parseMoney(decimalText: string, currency: CurrencyCode): Money {
-  const exponent = currencyMinorUnitExponent(currency);
+function parse(decimalText: string, currency: CurrencyCode): Money {
+  const exponent = minorUnitExponent(currency);
 
   if (!decimalTextPattern.test(decimalText)) {
     throw new TypeError(`Expected decimal text such as "12.34" (received ${JSON.stringify(decimalText)}).`);
@@ -302,8 +311,8 @@ export function parseMoney(decimalText: string, currency: CurrencyCode): Money {
 }
 
 /** Exact decimal text at the currency's scale — the form to persist or put on the wire. */
-export function formatMoneyAmount(value: Money): string {
-  const exponent = currencyMinorUnitExponent(value.currency);
+function formatAmount(value: Money): string {
+  const exponent = minorUnitExponent(value.currency);
   const digits = Math.abs(value.amountMinor)
     .toString()
     .padStart(exponent + 1, '0');
@@ -317,11 +326,11 @@ export function formatMoneyAmount(value: Money): string {
 }
 
 /**
- * Renders an amount for a human. Display only — {@link formatMoneyAmount} is the exact form;
+ * Renders an amount for a human. Display only — {@link Money.formatAmount} is the exact form;
  * this one goes through a double on its way to `Intl`, and locale rules may abbreviate.
  */
-export function formatMoney(value: Money, locale: string, options: Intl.NumberFormatOptions = {}): string {
-  const exponent = currencyMinorUnitExponent(value.currency);
+function format(value: Money, locale: string, options: Intl.NumberFormatOptions = {}): string {
+  const exponent = minorUnitExponent(value.currency);
 
   return new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -331,3 +340,25 @@ export function formatMoney(value: Money, locale: string, options: Intl.NumberFo
     ...options,
   }).format(value.amountMinor / 10 ** exponent);
 }
+
+/**
+ * Everything you can do with a {@link Money}.
+ *
+ * A namespace rather than loose exports: these names are meaningless without the noun in front
+ * of them — `add` alone says nothing, `Money.add` says everything — and a call site that imports
+ * one of them imports the vocabulary with it.
+ */
+export const Money = {
+  of,
+  add,
+  subtract,
+  compare,
+  multiply,
+  allocate,
+  rate,
+  parse,
+  format,
+  formatAmount,
+  registerCurrency,
+  minorUnitExponent,
+} as const;

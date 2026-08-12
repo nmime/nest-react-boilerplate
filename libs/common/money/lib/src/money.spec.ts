@@ -100,6 +100,14 @@ describe('money scaling', () => {
     expect(multiplyMoney(money(-9, 'USD'), moneyRate('0.5'), 'trunc')).toEqual(money(-4, 'USD'));
   });
 
+  it('takes a negative half away from zero rather than upward', () => {
+    // -2.5 minor units. Half-up here means half-away-from-zero, so a refund rounds to the same
+    // magnitude as the charge it reverses. Libraries that read "half up" as "toward +infinity"
+    // return -2, and the difference shows up only on negative ties: every credit note.
+    expect(multiplyMoney(money(-5, 'USD'), moneyRate('0.5'), 'half-up')).toEqual(money(-3, 'USD'));
+    expect(multiplyMoney(money(5, 'USD'), moneyRate('0.5'), 'half-up')).toEqual(money(3, 'USD'));
+  });
+
   it('rounds a fraction that is not a tie in whichever direction is nearer', () => {
     expect(multiplyMoney(money(10, 'USD'), moneyRate('0.333'))).toEqual(money(3, 'USD'));
     expect(multiplyMoney(money(10, 'USD'), moneyRate('0.777'))).toEqual(money(8, 'USD'));
@@ -144,6 +152,19 @@ describe('money allocation', () => {
       money(-333, 'USD'),
       money(-333, 'USD'),
     ]);
+  });
+
+  it('hands the leftover units to the earliest weights, not to the largest', () => {
+    // Every case above is symmetric enough that the earliest-weight policy and a largest-weight
+    // one agree, so none of them can tell the two apart. This one can: 100 over [1, 2, 3] floors
+    // to 16/33/50 with one unit spare, which goes to the first weight here and to the last under
+    // the policy most libraries implement.
+    expect(allocateMoney(money(100, 'USD'), [1, 2, 3])).toEqual([
+      money(17, 'USD'),
+      money(33, 'USD'),
+      money(50, 'USD'),
+    ]);
+    expect(allocateMoney(money(11, 'USD'), [2, 3, 5])).toEqual([money(3, 'USD'), money(3, 'USD'), money(5, 'USD')]);
   });
 
   it('passes a zero weight over when handing out the leftover units', () => {

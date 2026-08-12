@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { DiscordLocaleOverrides } from '../discord-i18n';
 
 export interface DiscordBotConfigSnapshot {
   applicationId: string;
@@ -9,6 +10,8 @@ export interface DiscordBotConfigSnapshot {
   webAppBaseUrl?: string;
   defaultTenantId?: string;
   customIdSecret: string;
+  /** Which Discord locale each workspace locale Discord does not carry should be published under. */
+  localeOverrides: DiscordLocaleOverrides;
 }
 
 export const DefaultDiscordCustomIdTtlSeconds = 15 * 60;
@@ -28,8 +31,23 @@ export class DiscordBotConfig {
       webAppBaseUrl: clean(env.DISCORD_WEB_APP_BASE_URL ?? env.AUTH_APP_BASE_URL),
       defaultTenantId: clean(env.DISCORD_DEFAULT_TENANT_ID),
       customIdSecret: requireConfig(env.DISCORD_CUSTOM_ID_SECRET, 'DISCORD_CUSTOM_ID_SECRET'),
+      localeOverrides: parseLocaleOverrides(clean(env.DISCORD_LOCALE_OVERRIDES)),
     };
   }
+}
+
+/**
+ * `DISCORD_LOCALE_OVERRIDES=uz-cyrl=ru,kk=ru` — comma-separated `<workspace locale>=<Discord locale>`
+ * pairs, for locales Discord does not publish. Malformed pairs are dropped rather than fatal: an
+ * override is a cosmetic improvement to the command payload, never a precondition for serving.
+ */
+function parseLocaleOverrides(value: string | undefined): DiscordLocaleOverrides {
+  const entries = (value ?? '').split(',').flatMap((pair) => {
+    const [locale, tag] = pair.split('=').map((part) => part.trim());
+    return locale && tag ? [[locale.toLowerCase(), tag] as const] : [];
+  });
+
+  return Object.fromEntries(entries);
 }
 
 export function resolveDiscordTenantId(

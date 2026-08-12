@@ -51,6 +51,16 @@ describe('DiscordBotConfig', () => {
     expect(snapshot.defaultTenantId).toBe('11111111-1111-1111-1111-111111111111');
   });
 
+  it('reads locale overrides for workspace locales Discord does not publish', () => {
+    expect(new DiscordBotConfig().snapshot({ ...required }).localeOverrides).toEqual({});
+    expect(
+      new DiscordBotConfig().snapshot({
+        ...required,
+        DISCORD_LOCALE_OVERRIDES: 'uz-cyrl=ru, KK = ru ,unpaired,=ru,zz=',
+      }).localeOverrides,
+    ).toEqual({ kk: 'ru', 'uz-cyrl': 'ru' });
+  });
+
   it('throws when a required value is missing or blank', () => {
     expect(() =>
       new DiscordBotConfig().snapshot({

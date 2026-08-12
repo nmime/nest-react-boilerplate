@@ -1,11 +1,29 @@
 // @requirements REQ-SOCIAL-COMMANDS-003
 import { describe, expect, it } from 'vitest';
-import { createI18nMiddleware, resolveTelegramLocale } from './i18n';
+import {
+  createI18nMiddleware,
+  resolveTelegramLocale,
+  supportedLocales,
+  telegramCatalogFileNames,
+  telegramTranslations,
+} from './i18n';
 import type { TelegramBotContext } from './type';
 
 const testValue = <T>(value: unknown): T => value as T;
 
 describe('Telegram bot i18n', () => {
+  it('binds a catalog for every workspace locale without naming a locale', () => {
+    expect(Object.keys(telegramTranslations)).toEqual([...supportedLocales]);
+    expect([...telegramCatalogFileNames]).toEqual([
+      'bots/shared.json',
+      'bots/telegram.json',
+      'common/errors.json',
+      'common/shared.json',
+    ]);
+    expect(telegramTranslations.ru['errors.unauthorized.title']).toBeTruthy();
+    expect(telegramTranslations.ru['bot.error.expired']).toBeTruthy();
+  });
+
   it('resolves locale by linked user, session, identity, Telegram language, then fallback', () => {
     expect(
       resolveTelegramLocale({

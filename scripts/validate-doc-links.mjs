@@ -21,11 +21,76 @@ const ignoredDirectories = new Set([
 // working-tool artifact, not canonical repository documentation. Exempt that
 // subtree from link and index-reachability validation so tool specs never break
 // the documentation gate.
-const workingSpecPrefixes = ['docs/superpowers/'];
+const defaultWorkingSpecPrefixes = ['docs/superpowers/'];
+const docsConfigPath = 'docs/.docsrc.json';
 
-function isWorkingSpecDoc(filePath, workspaceRoot) {
+function isWorkingSpecDoc(filePath, workspaceRoot, workingSpecPrefixes) {
   const workspacePath = relative(workspaceRoot, filePath).replaceAll('\\', '/');
   return workingSpecPrefixes.some((prefix) => workspacePath.startsWith(prefix));
+}
+
+/**
+ * Resolves the exempt subtrees from `docs/.docsrc.json`, falling back to the default above.
+ *
+ * Which subtrees hold working documents is policy owned by the repository, not gate logic:
+ * the default names the authoring tool this boilerplate happens to use, and a product whose
+ * non-canonical Markdown lives elsewhere (an archive, imported research) would otherwise have
+ * to patch this shared script and carry the patch through every upstream merge. A declaration
+ * replaces the default outright, so a product never inherits a subtree it does not have.
+ */
+function readWorkingSpecPrefixes(workspaceRoot) {
+  const configPath = resolve(workspaceRoot, docsConfigPath);
+  if (!existsSync(configPath)) return { failures: [], prefixes: defaultWorkingSpecPrefixes };
+
+  let config;
+  try {
+    config = JSON.parse(readFileSync(configPath, 'utf8'));
+  } catch (error) {
+    return {
+      failures: [formatFailure(workspaceRoot, configPath, 1, `invalid documentation configuration: ${error.message}`)],
+      prefixes: [],
+    };
+  }
+
+  const declared = config?.workingSpecPrefixes;
+  if (declared === undefined) return { failures: [], prefixes: defaultWorkingSpecPrefixes };
+  if (!Array.isArray(declared)) {
+    return {
+      failures: [
+        formatFailure(workspaceRoot, configPath, 1, 'workingSpecPrefixes must be an array of directory prefixes'),
+      ],
+      prefixes: [],
+    };
+  }
+
+  const failures = [];
+  const prefixes = [];
+  for (const entry of declared) {
+    // A silently dropped prefix reads as "the exemption stopped working" long after the typo.
+    const prefix = normalizeWorkingSpecPrefix(entry);
+    if (prefix === null) {
+      failures.push(
+        formatFailure(
+          workspaceRoot,
+          configPath,
+          1,
+          `invalid workingSpecPrefixes entry ${JSON.stringify(entry)}; use a workspace-relative directory prefix without ".." segments`,
+        ),
+      );
+      continue;
+    }
+    prefixes.push(prefix);
+  }
+  return { failures, prefixes };
+}
+
+function normalizeWorkingSpecPrefix(entry) {
+  if (typeof entry !== 'string') return null;
+  const candidate = entry.trim().replaceAll('\\', '/');
+  if (!candidate || candidate.startsWith('/') || /^[A-Za-z]:/u.test(candidate)) return null;
+  const segments = candidate.split('/').filter(Boolean);
+  if (segments.length === 0 || segments.some((segment) => segment === '.' || segment === '..')) return null;
+  return `${segments.join('/')}/`;
 }
 
 const markdownLinkPattern = /!?(?:\[[^\]]*\])\(([^)]+)\)/gu;
@@ -74,8 +139,11 @@ export function collectTrackedMarkdown(workspaceRoot) {
 
 export function validateWorkspace({ workspaceRoot, markdownFiles = collectTrackedMarkdown(workspaceRoot) }) {
   const rootScripts = readRootScripts(workspaceRoot);
-  const failures = [];
-  const includedFiles = markdownFiles.filter((filePath) => !isWorkingSpecDoc(filePath, workspaceRoot));
+  const { failures: configFailures, prefixes: workingSpecPrefixes } = readWorkingSpecPrefixes(workspaceRoot);
+  const failures = [...configFailures];
+  const includedFiles = markdownFiles.filter(
+    (filePath) => !isWorkingSpecDoc(filePath, workspaceRoot, workingSpecPrefixes),
+  );
   const counts = { anchors: 0, files: includedFiles.length, links: 0, scripts: 0 };
   const headingCache = new Map();
 

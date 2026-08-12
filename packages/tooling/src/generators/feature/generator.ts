@@ -408,6 +408,8 @@ Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
       path: `${libDir}/README.md`,
       contents: `# ${projectName}
 
+## Purpose
+
 ${responsibility}
 
 ## Verification

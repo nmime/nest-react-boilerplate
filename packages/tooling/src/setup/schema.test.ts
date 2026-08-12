@@ -193,6 +193,7 @@ describe('schema — constants', () => {
       'analytics',
       'websockets',
       'feature-flags',
+      'fiat-currency',
       'notifications',
       'design-tokens',
       'authz',

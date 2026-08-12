@@ -42,6 +42,7 @@ export const capabilityIds = [
   'analytics',
   'websockets',
   'feature-flags',
+  'fiat-currency',
   'notifications',
   'design-tokens',
   'authz',

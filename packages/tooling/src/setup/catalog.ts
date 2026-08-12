@@ -519,6 +519,68 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
       ],
     },
   },
+  'fiat-currency': {
+    id: 'fiat-currency',
+    label: 'Fiat Currency Catalogue',
+    activation: 'nest-module',
+    requiresCapabilities: [],
+    requiresApps: [],
+    conflictsWith: [],
+    requiresDurableDatabase: true,
+    ownedProjects: ['@app/backend-feature-fiat-currency-shared', '@app/backend-feature-fiat-currency-main'],
+    providerOwnedProjects: {
+      postgres: ['@app/backend-postgres-main-fiat-currency'],
+      mongodb: ['@app/backend-mongodb-main-fiat-currency'],
+    },
+    dockerServices: [],
+    environmentVariables: [],
+    backendWiring: [],
+    // The catalogue's DDL rides with the capability, so a workspace that never selected it does
+    // not carry three empty tables it will never write to.
+    providerMigrations: {
+      postgres: [
+        {
+          importName: 'Migration20260812090000CreateFiatCurrencies',
+          importPath:
+            '../../../../../libs/backend/postgres/main/fiat-currency/lib/src/infrastructure/data-access/migrations/Migration20260812090000CreateFiatCurrencies.ts',
+        },
+      ],
+    },
+    // The feature module takes its persistence as an import rather than resolving an axis itself,
+    // so the wiring for each axis carries both modules and hands one to the other.
+    providerBackendWiring: {
+      postgres: [
+        {
+          hosts: 'selected-backend',
+          importName: 'FiatCurrencyMainModule',
+          importPath: '@app/backend-feature-fiat-currency-main',
+          additionalImports: [
+            {
+              importName: 'FiatCurrencyPostgresModule',
+              importPath: '@app/backend-postgres-main-fiat-currency',
+            },
+          ],
+          moduleExpression:
+            'FiatCurrencyMainModule.forRoot({ imports: [FiatCurrencyPostgresModule], exposeHttp: true })',
+        },
+      ],
+      mongodb: [
+        {
+          hosts: 'selected-backend',
+          importName: 'FiatCurrencyMainModule',
+          importPath: '@app/backend-feature-fiat-currency-main',
+          additionalImports: [
+            {
+              importName: 'FiatCurrencyMongoPersistenceModule',
+              importPath: '@app/backend-mongodb-main-fiat-currency',
+            },
+          ],
+          moduleExpression:
+            'FiatCurrencyMainModule.forRoot({ imports: [FiatCurrencyMongoPersistenceModule], exposeHttp: true })',
+        },
+      ],
+    },
+  },
   notifications: {
     id: 'notifications',
     label: 'Notifications',

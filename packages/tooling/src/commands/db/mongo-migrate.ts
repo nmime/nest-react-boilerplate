@@ -5,6 +5,7 @@ import { sharedMongoMigrations } from "../../../../../libs/backend/mongodb/main/
 import { runMongoMigrations } from "../../../../../libs/backend/mongodb/main/shared/lib/src/migrations/mongo-migration.ts";
 import { authMongoMigrations } from "../../../../../libs/backend/mongodb/main/auth/lib/src/migrations/index.ts";
 import { featureFlagMongoMigrations } from "../../../../../libs/backend/mongodb/main/feature-flags/lib/src/migrations/index.ts";
+import { fiatCurrencyMongoMigrations } from "../../../../../libs/backend/mongodb/main/fiat-currency/lib/src/migrations/index.ts";
 import { notificationMongoMigrations } from "../../../../../libs/backend/mongodb/main/notification/lib/src/migrations/index.ts";
 import { generatedMongoMigrations } from "./generated-mongo-migrations.ts";
 
@@ -12,6 +13,7 @@ export const mongoMigrations = [
   ...sharedMongoMigrations,
   ...authMongoMigrations,
   ...featureFlagMongoMigrations,
+  ...fiatCurrencyMongoMigrations,
   ...notificationMongoMigrations,
   ...generatedMongoMigrations,
 ].sort((left, right) => left.id.localeCompare(right.id));

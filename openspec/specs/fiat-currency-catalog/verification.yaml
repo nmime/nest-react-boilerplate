@@ -1,0 +1,127 @@
+version: 3
+capability: fiat-currency-catalog
+owners:
+  product: runtime-maintainers
+  verification: backend-maintainers
+  security: security-maintainers
+  operations: platform-operations
+requirements:
+  - id: REQ-FIAT-CATALOG-001
+    projects:
+      - '@app/backend-feature-fiat-currency-shared'
+      - '@app/backend-feature-fiat-currency-main'
+    risk: normal
+    profiles:
+      - domain
+      - api
+    cucumber:
+      disposition: not-applicable
+      reason: >-
+        Catalogue resolution is a pure projection over persistence rows with no
+        user-visible journey of its own; the locale fallback and ordering rules
+        are proven directly against the projection and the HTTP surface.
+      alternativeEvidence:
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/fiat-currency/shared/lib/src/fiat-currency-presentation.spec.ts
+        target: '@app/backend-feature-fiat-currency-shared:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/fiat-currency/main/lib/src/service/fiat-currency.service.spec.ts
+        target: '@app/backend-feature-fiat-currency-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/fiat-currency/main/lib/src/controller/fiat-currency.controller.spec.ts
+        target: '@app/backend-feature-fiat-currency-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: contract
+        file: libs/backend/feature/fiat-currency/main/lib/src/controller/dto/fiat-currency.dto.spec.ts
+        target: '@app/backend-feature-fiat-currency-main:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-FIAT-RATE-002
+    projects:
+      - '@app/backend-feature-fiat-currency-shared'
+      - '@app/backend-feature-fiat-currency-main'
+    risk: high
+    profiles:
+      - domain
+    cucumber:
+      disposition: not-applicable
+      reason: >-
+        Exact ratio arithmetic and its overflow boundary are unit-level numeric
+        properties; a Gherkin scenario would restate the assertions without
+        exercising a different code path.
+      alternativeEvidence:
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/fiat-currency/shared/lib/src/fiat-currency-rate.spec.ts
+        target: '@app/backend-feature-fiat-currency-shared:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/fiat-currency/main/lib/src/service/fiat-rate-refresh.service.spec.ts
+        target: '@app/backend-feature-fiat-currency-main:test'
+        lanes:
+          - pr
+          - main
+  - id: REQ-FIAT-HISTORY-003
+    projects:
+      - '@app/backend-postgres-main-fiat-currency'
+      - '@app/backend-mongodb-main-fiat-currency'
+    risk: high
+    profiles:
+      - persistence
+    cucumber:
+      disposition: not-applicable
+      reason: >-
+        Append-only rate history is a storage invariant proven per axis against
+        the schema and repository; the behavior has no acceptance surface that a
+        scenario could observe independently.
+      alternativeEvidence:
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/postgres/main/fiat-currency/lib/src/infrastructure/data-access/repositories/fiat-currency.repository.spec.ts
+        target: '@app/backend-postgres-main-fiat-currency:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/fiat-currency/lib/src/infrastructure/data-access/migrations/fiat-currency-schema.migration.spec.ts
+        target: '@app/backend-postgres-main-fiat-currency:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/mongodb/main/fiat-currency/lib/src/fiat-currency-mongo.repository.spec.ts
+        target: '@app/backend-mongodb-main-fiat-currency:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/mongodb/main/fiat-currency/lib/src/fiat-currency-mongo.collection.spec.ts
+        target: '@app/backend-mongodb-main-fiat-currency:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/postgres/main/fiat-currency/lib/src/infrastructure/data-access/repositories/fiat-currency.component-spec.ts
+        target: '@app/backend-postgres-main-fiat-currency:component-test'
+        lanes:
+          - main
+      - kind: component
+        file: libs/backend/mongodb/main/fiat-currency/lib/src/fiat-currency-mongo.repository.component-spec.ts
+        target: '@app/backend-mongodb-main-fiat-currency:component-test'
+        lanes:
+          - main

@@ -108,7 +108,10 @@ For deterministic testing practices (fake timers, seed factories, quarantining),
 - `pnpm run frontend:fsd:check` enforces frontend FSD layer tags, slice boundaries, and public API usage across `apps/frontend/**` and `libs/frontend/**`.
 - `admin-app` and `user-app` e2e targets use Vite builds with
   `VITE_E2E_COVERAGE=true` plus the `frontend-browser-e2e-coverage` helper;
-  update their `project.json` copy assertions when shell copy changes.
+  update their `project.json` copy assertions when shell copy changes. The run
+  walks every route the app links to and merges coverage per visit, so a route
+  added to the registry joins the walk on its own; name a route nothing links to
+  with `--visit`, and exclude a linked one with `--skip-visit`.
 - `landing-app`, `site-app`, and `mobile-app` use renderer-specific Astro build,
   Vike SSR build, and Expo web-export smoke scripts. Those targets prove
   build/runtime artifacts but do not claim the Vite browser coverage contract.

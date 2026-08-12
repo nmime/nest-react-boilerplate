@@ -47,6 +47,21 @@ describe('composeAuthzCatalog', () => {
     ]);
   });
 
+  it('accepts an extension that only declares permissions, granting them to nobody', () => {
+    // A permission worth declaring before any role should hold it — the admin UI can list it and a
+    // later extension can grant it — so an extension with no grants at all must still compose.
+    const composed = compose([
+      {
+        id: 'billing',
+        permissions: [{ key: 'billing:invoices:read', resource: 'billing.invoices', action: 'read', description: 'x' }],
+      },
+    ]);
+
+    expect(composed.permissions.map((entry) => entry.key)).toContain('billing:invoices:read');
+    expect(composed.roles).toEqual(['user', 'admin']);
+    expect(composed.permissionsForRoles(['admin'])).not.toContain('billing:invoices:read');
+  });
+
   it('extends an existing role without restating its base grants', () => {
     expect(compose([catalogExtension]).rolePermissions.admin).toEqual([
       'admin:users:read',
@@ -110,6 +125,15 @@ describe('composeAuthzCatalog', () => {
         { id: 'catalog', permissions: [{ key: 'catalog:items:read', resource: '', action: 'read', description: 'x' }] },
       ]),
     ).toThrow('authz extension "catalog" defines permission "catalog:items:read" without a resource');
+
+    expect(() =>
+      compose([
+        {
+          id: 'catalog',
+          permissions: [{ key: 'catalog:items:read', resource: 'catalog:items', action: '', description: 'x' }],
+        },
+      ]),
+    ).toThrow('authz extension "catalog" defines permission "catalog:items:read" without an action');
   });
 
   it('resolves grants for a role set and contributes nothing for unknown roles', () => {

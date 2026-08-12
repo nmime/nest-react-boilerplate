@@ -103,6 +103,15 @@ describe('product brand in the served document', () => {
     expect(html).toContain('&lt;/title&gt;&lt;script&gt;');
   });
 
+  it('leaves an attribute the markup never declared alone rather than inventing one', () => {
+    // Rewriting only what is there keeps this pass from adding an attribute the author omitted on
+    // purpose; `applyProductBrand` fills the gap once the bundle runs.
+    const html = applyProductBrandToHtml('<link rel="icon" href="/favicon.ico" />', brand);
+
+    expect(html).toContain('href="/logo.webp"');
+    expect(html).not.toContain('type=');
+  });
+
   it('leaves markup that declares no brand tags for the runtime pass to fill in', () => {
     const html = '<!doctype html><html><head></head><body><div id="root"></div></body></html>';
 

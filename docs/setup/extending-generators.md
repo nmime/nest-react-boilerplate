@@ -39,7 +39,9 @@ Edit `packages/tooling/src/setup/catalog.ts`:
   platform: "backend",           // "frontend" | "backend" | "e2e"
   classification: "reference",  // or "optional"
   runtime: "NestJS + Fastify API",
-  publicHostname: "my-new-app.example.com",
+  // Public hostnames are derived, never written here: a deployable app is reachable at
+  // `<app-id>.<deployment.publicDomain>`, or at the bare domain when it owns the apex.
+  deployable: true,
   requiresCapabilities: ["postgres"],
   requiresApps: [],
   conflictsWithCapabilities: [],

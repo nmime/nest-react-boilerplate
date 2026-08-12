@@ -46,14 +46,24 @@ async function createTree() {
     'packages/tooling/src/commands/db/generated-mongo-migrations.ts',
     readFileSync(join(process.cwd(), 'packages/tooling/src/commands/db/generated-mongo-migrations.ts'), 'utf8'),
   );
-  tree.write(
-    'packages/tooling/src/commands/db/orm-migration-config.ts',
-    readFileSync(join(process.cwd(), 'packages/tooling/src/commands/db/orm-migration-config.ts'), 'utf8'),
-  );
+  tree.write(ormMigrationConfigPath, readOrmMigrationConfig());
   return tree;
 }
 
 const featureTargets = { apiApp: 'user-app-api', frontendApp: 'user-app' } as const;
+
+const ormMigrationConfigPath = 'packages/tooling/src/commands/db/orm-migration-config.ts';
+
+function readOrmMigrationConfig() {
+  return readFileSync(join(process.cwd(), ormMigrationConfigPath), 'utf8');
+}
+
+/** The registry symbols spread into `migrationsList`, in declaration order. */
+function migrationSpreads(source: string): string[] {
+  const list = /migrationsList:\s*\[([^\]]*)\]/u.exec(source);
+  assert.ok(list?.[1] !== undefined, 'orm-migration-config.ts must declare a migrationsList array');
+  return [...list[1].matchAll(/\.\.\.([A-Za-z0-9_$]+)/gu)].map((match) => match[1] ?? '');
+}
 
 describe('feature generator', () => {
   // -----------------------------------------------------------------------
@@ -339,14 +349,59 @@ describe('feature generator', () => {
         migrationRunner,
         /const \{ supportCasesMigrations \} = require\("@app\/backend-postgres-main-support-cases"\);/u,
       );
-      // A scaffolded feature appends to the end of the list, which now sits
-      // after the capability-owned registry. Both orders are correct today —
-      // capability migrations only policy tables the base sets create — but the
-      // assertion pins the actual shape so a reorder is a deliberate decision.
-      assert.match(migrationRunner, /\.\.\.capabilityMigrations, \.\.\.supportCasesMigrations/u);
+      // The invariant is that a scaffolded feature appends its own registry and disturbs nothing
+      // already registered. Naming the neighbouring feature instead made this assertion fail on
+      // every unrelated migration a product or upstream added, which is a merge conflict in a file
+      // no consumer should ever edit.
+      assert.deepEqual(migrationSpreads(migrationRunner), [
+        ...migrationSpreads(readOrmMigrationConfig()),
+        'supportCasesMigrations',
+      ]);
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/AGENTS.md'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/shared/lib/README.md'));
       assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/AGENTS.md'));
+    });
+
+    it('scaffolds a library that can reach its own coverage floor', async () => {
+      const tree = await createTree();
+      tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+
+      const { featureGenerator } = await import('./generator.js');
+      await featureGenerator(tree, {
+        ...featureTargets,
+        name: 'Support Cases',
+        migrationTimestamp: '20260713000000',
+        skipFormat: true,
+      });
+
+      // fullCoverage defaults to 100% on every metric, so a scaffold that emits untested source
+      // fails its own gate on the first --coverage run. Either the file is excluded by the same
+      // policy the boilerplate's own libraries use, or the generator emits a spec for it.
+      for (const libDir of [
+        'libs/backend/feature/support-cases/main/lib',
+        'libs/backend/postgres/main/support-cases/lib',
+      ]) {
+        assert.match(
+          tree.read(`${libDir}/vitest.config.mts`, 'utf8')!,
+          /\["src\/\*\*\/index\.ts","src\/\*\*\/\*\.module\.ts","src\/\*\*\/\*\.dto\.ts"\]/u,
+          `${libDir} must exclude re-export barrels, Nest modules, and DTO declarations`,
+        );
+      }
+      // The shared library's index.ts is the contract itself, not a barrel, and it has a spec.
+      assert.match(
+        tree.read('libs/backend/feature/support-cases/shared/lib/vitest.config.mts', 'utf8')!,
+        /\["src\/\*\*\/\*\.module\.ts","src\/\*\*\/\*\.dto\.ts"\]/u,
+      );
+
+      const mainSource = 'libs/backend/feature/support-cases/main/lib/src';
+      assert.ok(tree.exists(`${mainSource}/support-cases.controller.spec.ts`));
+      const serviceSpec = tree.read(`${mainSource}/support-cases.service.spec.ts`, 'utf8')!;
+      assert.match(serviceSpec, /service\.list\(\)/u, 'the service spec must exercise list()');
+      assert.match(serviceSpec, /errAsync/u, 'the service spec must exercise the repository failure branches');
+
+      const postgresSource = 'libs/backend/postgres/main/support-cases/lib/src/infrastructure/data-access';
+      assert.ok(tree.exists(`${postgresSource}/entities/support-cases.entity.spec.ts`));
+      assert.ok(tree.exists(`${postgresSource}/repositories/support-cases.repository.spec.ts`));
     });
 
     it('creates native MongoDB persistence with a registered ledger migration', async () => {

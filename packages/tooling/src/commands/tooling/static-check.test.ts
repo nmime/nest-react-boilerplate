@@ -24,6 +24,7 @@ import {
   checkStaleReferences,
   checkStaleSlashStyleAliasImports,
   checkTrackedSocialAuthSecrets,
+  checkVersionedMigrationAuthzBinding,
   checkWorkspaceMetadata,
   isWorkspaceMetadataFileName,
   thinLocaleCatalogFileNames,
@@ -57,6 +58,45 @@ describe("static-check Bun and pnpm dependency parity", () => {
       const failures = checkBunPackageManagerParity(workspaceRoot);
       assert.equal(failures.length, 3);
       assert.ok(failures.every((failure) => failure.command === "bun pnpm dependency parity"));
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // The scan used to hardcode .github/workflows, so a product hosted anywhere else could invoke
+  // `bun install` in its pipeline and this gate would report a clean workspace. Every pipeline the
+  // CI gate descriptor names is now in scope, whichever forge declares it.
+  it("scans the pipeline files every configured forge declares, not only GitHub workflows", () => {
+    const workspaceRoot = createWorkspace();
+    try {
+      writeText(workspaceRoot, "package.json", JSON.stringify({ packageManager: "pnpm@11.11.0" }));
+      writeText(workspaceRoot, "pnpm-workspace.yaml", "packages: []\n");
+      writeText(
+        workspaceRoot,
+        "scripts/ci/gates.json",
+        JSON.stringify({
+          forges: {
+            gitlab: {
+              pipeline: ".gitlab-ci.yml",
+              jobStyle: "gitlab",
+              aggregateJob: "ci-status-summary",
+              releasePipeline: "ci/release.yml",
+            },
+          },
+          lanes: {},
+          gates: [],
+          supplyChain: [],
+        }),
+      );
+      writeText(workspaceRoot, ".gitlab-ci.yml", "script:\n  - bun install\n");
+      writeText(workspaceRoot, "ci/release.yml", "script:\n  - bunx cosign\n");
+
+      const failures = checkBunPackageManagerParity(workspaceRoot);
+
+      assert.deepEqual(
+        failures.map((failure) => failure.file).sort(),
+        [".gitlab-ci.yml", "ci/release.yml"],
+      );
     } finally {
       removeWorkspace(workspaceRoot);
     }
@@ -277,6 +317,70 @@ describe("static-check command import smoke guard", () => {
       );
 
       assert.deepEqual(checkCommandImportSmoke(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+describe("static-check versioned migration authz binding", () => {
+  const migrationPath =
+    "libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/Migration20260704120000CreateRbacModel.ts";
+
+  it("rejects a versioned migration bound to the composed catalog", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        migrationPath,
+        'import {\n  defaultRolePermissions,\n  permissionCatalog,\n  roleKeys,\n} from "@app/common-authz";\n\nexport const seed = () => [permissionCatalog, roleKeys, defaultRolePermissions];\n',
+      );
+
+      const failures = checkVersionedMigrationAuthzBinding(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.equal(failures[0].command, "versioned migration authz binding");
+      assert.equal(failures[0].file, `${migrationPath}:1`);
+      assert.match(failures[0].stderr, /defaultRolePermissions, permissionCatalog, roleKeys/u);
+      assert.match(failures[0].stderr, /basePermissionCatalog/u);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("accepts a versioned migration bound to the frozen base catalog", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        migrationPath,
+        'import { basePermissionCatalog, baseRoleKeys, baseRolePermissions } from "@app/common-authz";\n\nexport const seed = () => [basePermissionCatalog, baseRoleKeys, baseRolePermissions];\n',
+      );
+
+      assert.deepEqual(checkVersionedMigrationAuthzBinding(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("leaves converging reconcilers and migration specs free to use the composed catalog", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "libs/backend/mongodb/main/auth/lib/src/auth-mongo.collections.ts",
+        'import { permissionCatalog, permissionsForRoles, roleKeys } from "@app/common-authz";\n\nexport const seed = () => [permissionCatalog, permissionsForRoles, roleKeys];\n',
+      );
+      writeText(
+        workspaceRoot,
+        "libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/rbac-model.migration.spec.ts",
+        'import { permissionCatalog, roleKeys } from "@app/common-authz";\n\nexport const fixture = [permissionCatalog, roleKeys];\n',
+      );
+
+      assert.deepEqual(checkVersionedMigrationAuthzBinding(workspaceRoot), []);
     } finally {
       removeWorkspace(workspaceRoot);
     }
@@ -1033,6 +1137,7 @@ describe("static-check repository scan boundaries", () => {
 
     try {
       const retiredNode = ["Node", "22"].join(" ");
+      writeText(workspaceRoot, ".prettierignore", "dist\ndocs/superpowers/**\n");
       writeText(
         workspaceRoot,
         "docs/superpowers/specs/historical-design.md",
@@ -1045,6 +1150,30 @@ describe("static-check repository scan boundaries", () => {
       assert.equal(
         structuralFailures[0]?.file,
         "docs/superpowers/specs/historical-design.md:2",
+      );
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("reads the archived-documentation exemption from .prettierignore rather than a compiled-in path", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      const retiredNode = ["Node", "22"].join(" ");
+      writeText(workspaceRoot, ".prettierignore", "dist\ndocs/archive/working-specs/**\n");
+      writeText(
+        workspaceRoot,
+        "docs/archive/working-specs/historical-design.md",
+        `${retiredNode}\n`,
+      );
+      writeText(workspaceRoot, "docs/superpowers/specs/historical-design.md", `${retiredNode}\n`);
+
+      const failures = checkStaleReferences(workspaceRoot);
+
+      assert.deepEqual(
+        failures.map((failure) => failure.file),
+        ["docs/superpowers/specs/historical-design.md:1"],
       );
     } finally {
       removeWorkspace(workspaceRoot);
@@ -1242,6 +1371,9 @@ describe("static-check thin locale catalog guard", () => {
           JSON.stringify({ name: `@app/i18n-${locale}-${scope}` }, null, 2),
         );
       }
+      // Every translated locale declares its prose rules; the empty declaration is what a locale
+      // with nothing locale-specific to say still has to write.
+      if (locale !== "en") writeText(workspaceRoot, `i18n/${locale}/lint.json`, "{}\n");
     }
   }
 
@@ -1309,6 +1441,184 @@ ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(
       assert.match(stderr, /bot\/Discord key bot\.menu\.main/);
       assert.match(stderr, /missing fallback locale keys/);
       assert.match(stderr, /has keys absent from fallback locale/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("rejects a translation that drops, renames, or invents an interpolation placeholder", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "i18n/en/common/shared.json",
+        JSON.stringify(
+          {
+            "common/shared.json.key": "en:common/shared.json",
+            "common.dropped": "{{count}} items",
+            "common.renamed": "Hello {{name}}",
+            "common.invented": "All done",
+          },
+          null,
+          2,
+        ),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/ru/common/shared.json",
+        JSON.stringify(
+          {
+            "common/shared.json.key": "ru:common/shared.json",
+            "common.dropped": "несколько элементов",
+            "common.renamed": "Привет, {{имя}}",
+            "common.invented": "Готово {{count}}",
+          },
+          null,
+          2,
+        ),
+      );
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => failure.stderr)
+        .join("\n");
+
+      assert.match(stderr, /common\.dropped: expected \{\{count\}\}, received none/);
+      assert.match(stderr, /common\.renamed: expected \{\{name\}\}, received \{\{имя\}\}/);
+      assert.match(stderr, /common\.invented: expected none, received \{\{count\}\}/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("accepts a translation that reorders placeholders without changing the set", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      for (const locale of supportedLocales) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/common/shared.json`,
+          JSON.stringify(
+            {
+              "common/shared.json.key": `${locale}:common/shared.json`,
+              "common.reordered":
+                locale === "en" ? "{{first}} then {{second}}" : "{{ second }} после {{first}}",
+            },
+            null,
+            2,
+          ),
+        );
+      }
+
+      assert.deepEqual(checkThinLocaleCatalogs(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("applies orthography, foreign-prose, and untranslated rules a locale declares in lint.json", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "i18n/en/common/shared.json",
+        JSON.stringify(
+          {
+            "common/shared.json.key": "en:common/shared.json",
+            "common.residue": "Settings",
+            "common.prose": "Please save your settings",
+            "common.reviewed": "Connect PostgreSQL",
+            "common.api": "Settings API reference",
+            "common.copied": "Discord",
+            "common.pending": "Cancel",
+          },
+          null,
+          2,
+        ),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/ru/common/shared.json",
+        JSON.stringify(
+          {
+            "common/shared.json.key": "ru:common/shared.json",
+            "common.residue": "Созлаenglishъмалар",
+            "common.prose": "Please save your settings",
+            "common.reviewed": "PostgreSQL уланиш",
+            "common.api": "Справочник Settings API",
+            "common.copied": "Discord",
+            "common.pending": "Cancel",
+          },
+          null,
+          2,
+        ),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/ru/lint.json",
+        JSON.stringify(
+          {
+            residuePatterns: [{ pattern: "[Гг]ъ|englishъ", label: "use ғ" }],
+            foreignProseMarkers: ["please", "save", "settings", "cancel"],
+            reviewedTechnicalTerms: ["PostgreSQL", "Discord", "Settings API"],
+            untranslatedKeys: ["common.copied"],
+          },
+          null,
+          2,
+        ),
+      );
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => failure.stderr)
+        .join("\n");
+
+      assert.match(stderr, /common\.residue: use ғ/);
+      assert.match(stderr, /common\.prose: untranslated prose \(please, save, settings\)/);
+      assert.match(stderr, /common\.pending: identical to the fallback locale/);
+      // A reviewed technical term is not foreign prose — not even when a marker word sits inside
+      // it — and a declared key may stay untranslated.
+      assert.equal(/common\.reviewed/u.test(stderr), false);
+      assert.equal(/common\.api/u.test(stderr), false);
+      assert.equal(/common\.copied/u.test(stderr), false);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("reports a non-default locale that declares no prose rules at all", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      rmSync(join(workspaceRoot, "i18n/ru/lint.json"), { force: true });
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => failure.stderr)
+        .join("\n");
+
+      assert.match(stderr, /i18n\/ru\/lint\.json: locale must declare its prose rules/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("reports a locale lint rule set that is unreadable rather than skipping it", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      writeText(workspaceRoot, "i18n/ru/lint.json", '{ "residuePatterns": [{ "pattern": "[" }] }');
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => failure.stderr)
+        .join("\n");
+
+      assert.match(stderr, /i18n\/ru\/lint\.json/);
     } finally {
       removeWorkspace(workspaceRoot);
     }

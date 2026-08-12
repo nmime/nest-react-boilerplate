@@ -7,10 +7,12 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { dockerAvailable } from "../db/postgres-client.ts";
+import { declaredPipelineFiles } from "../ci/check-pipelines.ts";
 import { crossBrowserProjects } from "./browser-matrix.ts";
 import { commandExists, envList, ensureDir, packageManagerInvocation, parseArgs, readJson, run, writeJson } from "./runtime-utils.ts";
 import {
   boundedInteger,
+  ciOpsGateProblems,
   disallowedRequiredSkips,
   parseCommandArgv,
   unknownWorldClassGates,
@@ -418,12 +420,13 @@ function disasterRecovery() {
 
 function backupRestoreCiGate() {
   const evidence = runBackupRestore();
-  const packageJson = readText("package.json");
-  const workflows = `${readText(".github/workflows/ci.yml")}\n${readText(".github/workflows/quality-presets.yml")}`;
-  assertGate(!/"quality:presets"\s*:\s*"[^"]*--dry-run/.test(packageJson), "quality:presets must not default to dry-run", {});
-  assertGate(!/world-class|backup-restore/.test(workflows) || !/--dry-run/.test(workflows), "CI ops gates must not use dry-run", {});
-  assertGate(/test:world-class|world-class-gates/.test(workflows), "CI must run world-class gates", {});
-  return { ...evidence, workflows: ["ci.yml", "quality-presets.yml"] };
+  // The pipelines come from the CI gate descriptor rather than a hardcoded
+  // `.github/workflows` path: this gate is about what CI runs, and a product hosted on
+  // another forge used to fail it for having no GitHub workflow to read.
+  const pipelines = declaredPipelineFiles(process.cwd()).map((file) => ({ file, text: readText(file) }));
+  const problems = ciOpsGateProblems({ packageJson: readText("package.json"), pipelines });
+  assertGate(problems.length === 0, problems.join("; "), { problems, pipelines: pipelines.map(({ file }) => file) });
+  return { ...evidence, pipelines: pipelines.map(({ file }) => file) };
 }
 
 function multiTenantSecurity() {

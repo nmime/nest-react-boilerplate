@@ -62,6 +62,46 @@ export function unknownWorldClassGates(selectedGates: ReadonlySet<string>): stri
   return [...selectedGates].filter((name) => !knownGates.has(name)).sort();
 }
 
+export interface CiOpsPipeline {
+  /** Workspace-relative path, so a problem names the file a maintainer has to open. */
+  file: string;
+  text: string;
+}
+
+export interface CiOpsGateInput {
+  packageJson: string;
+  /** Every pipeline the CI gate descriptor declares, whichever forge owns it. */
+  pipelines: readonly CiOpsPipeline[];
+}
+
+/**
+ * What the backup/restore CI gate asserts about the pipelines themselves: the ops gates run,
+ * and nothing runs them in dry-run. The caller supplies the pipeline text so the rule is a
+ * property of the declared pipelines rather than of one forge's directory layout.
+ *
+ * Each pipeline is judged on its own text. Concatenating them first meant an unrelated
+ * `--dry-run` — a Helm render in a deploy pipeline — indicted whichever file happened to
+ * mention the gates.
+ */
+export function ciOpsGateProblems(input: CiOpsGateInput): string[] {
+  const problems: string[] = [];
+
+  if (/"quality:presets"\s*:\s*"[^"]*--dry-run/u.test(input.packageJson)) {
+    problems.push('quality:presets must not default to dry-run');
+  }
+
+  for (const pipeline of input.pipelines) {
+    if (!/world-class|backup-restore/u.test(pipeline.text)) continue;
+    if (/--dry-run/u.test(pipeline.text)) problems.push(`CI ops gates must not use dry-run: ${pipeline.file}`);
+  }
+
+  if (!input.pipelines.some((pipeline) => /test:world-class|world-class-gates/u.test(pipeline.text))) {
+    problems.push('CI must run world-class gates');
+  }
+
+  return problems;
+}
+
 export function disallowedRequiredSkips(options: {
   allowCiSkips: boolean;
   ciMode: boolean;

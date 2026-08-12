@@ -1,5 +1,5 @@
 // @requirements REQ-FRONTEND-SHELL-004
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AdminDashboardReadPermission,
   AdminManageAllPermission,
@@ -15,6 +15,11 @@ import {
   composeAdminCapabilities,
   createAdminAccessPolicyFactory,
 } from './index';
+
+afterEach(() => {
+  vi.doUnmock('./product-admin-capabilities');
+  vi.resetModules();
+});
 
 describe('@app/frontend-feature-admin-shared access policy', () => {
   it('derives a frontend-safe admin access policy from principal claims', () => {
@@ -183,11 +188,38 @@ describe('@app/frontend-feature-admin-shared access policy', () => {
   it('keeps the shared capability map aligned with the default policy flags', () => {
     const policy = createAdminAccessPolicy();
 
-    expect(Object.keys(AdminCapabilityPermissions).sort()).toEqual(
-      Object.keys(policy)
-        .filter((key) => key.startsWith('can') && key !== 'canAccessAdmin')
-        .sort(),
+    expect(Object.keys(AdminCapabilityPermissions)).toEqual(
+      Object.keys(policy).filter((key) => key.startsWith('can') && key !== 'canAccessAdmin'),
     );
+  });
+
+  it('ships the product registration file empty, so the policy is exactly the shared map', async () => {
+    const { productAdminCapabilityExtensions } = await import('./product-admin-capabilities');
+
+    expect(productAdminCapabilityExtensions).toEqual([]);
+    expect(
+      Object.keys(createAdminAccessPolicy()).filter((key) => key.startsWith('can') && key !== 'canAccessAdmin'),
+    ).toEqual(Object.keys(AdminCapabilityPermissions));
+  });
+
+  it('reaches the shipped policy once a product registers a capability', async () => {
+    vi.resetModules();
+    vi.doMock('./product-admin-capabilities', () => ({
+      productAdminCapabilityExtensions: [{ id: 'ops', capabilities: { canReadJobs: 'ops:jobs:read' } }],
+    }));
+
+    const shared = await import('./index');
+
+    // Asserted through `toMatchObject` because the capability is contributed by the mocked
+    // registration file: the shipped one is empty, so `canReadJobs` is absent from the type here
+    // while a product that fills the file in gets it on `AdminAccessPolicy` for free.
+    expect(
+      shared.createAdminAccessPolicy({
+        subject: 'admin-id',
+        roles: [AdminRole],
+        permissions: ['ops:jobs:read'],
+      }),
+    ).toMatchObject({ canAccessAdmin: true, canReadJobs: true, canReadUsers: false });
   });
 
   it('throws when the principal cannot read the admin profile', () => {

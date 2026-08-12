@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { UnauthorizedException, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PublicAuthMetadataKey } from './access-control.decorators';
-import { SessionAuthGuard, clearSessionPrincipal, setSessionPrincipal } from './session-auth.guard';
+import { DefaultDemoSubject, isDemoPrincipal } from './demo-access';
+import {
+  SessionAuthGuard,
+  clearSessionPrincipal,
+  readSessionPrincipal,
+  setSessionPrincipal,
+} from './session-auth.guard';
 import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-control.types';
 import { DefaultAuthTenantId } from './tenant-context';
 
@@ -81,6 +87,37 @@ describe('SessionAuthGuard', () => {
     };
 
     expect(() => new SessionAuthGuard().canActivate(createContext(request))).toThrow(UnauthorizedException);
+  });
+});
+
+describe('readSessionPrincipal under demo mode', () => {
+  const demoEnv = { AUTH_DEMO_MODE: 'true' };
+
+  it('returns nothing for an unauthenticated request while demo mode is off', () => {
+    expect(readSessionPrincipal({}, {})).toBeUndefined();
+  });
+
+  it('authenticates an unauthenticated request as the demo principal', () => {
+    const resolved = readSessionPrincipal({}, demoEnv);
+
+    expect(resolved?.subject).toBe(DefaultDemoSubject);
+    expect(isDemoPrincipal(resolved)).toBe(true);
+  });
+
+  it('never displaces a real session principal', () => {
+    const request: AuthenticatedRequest = { session: { user: principal } };
+
+    const resolved = readSessionPrincipal(request, demoEnv);
+
+    expect(resolved).toEqual(principal);
+    expect(isDemoPrincipal(resolved)).toBe(false);
+  });
+
+  it('lets the guard admit a request that carries no credentials at all', () => {
+    const request: AuthenticatedRequest = {};
+
+    expect(new SessionAuthGuard(new Reflector(), demoEnv).canActivate(createContext(request))).toBe(true);
+    expect(request.user?.subject).toBe(DefaultDemoSubject);
   });
 });
 

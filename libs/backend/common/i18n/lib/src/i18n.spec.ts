@@ -19,7 +19,10 @@ import { catalogFileNames, localeCatalogFiles } from './catalogs.generated';
 
 describe('@app/backend-common-i18n', () => {
   it('owns only backend-common and error catalogs', () => {
-    expect([...backendCatalogFileNames].sort()).toEqual(['common/errors.json', 'common/shared.json']);
+    expect([...backendCatalogFileNames].sort((left, right) => left.localeCompare(right))).toEqual([
+      'common/errors.json',
+      'common/shared.json',
+    ]);
     expect(translations.en['common.language']).toBe('Language');
     expect(translations.en['bot.menu.main']).toBeUndefined();
     expect(translations.en['discord.commands.link.label']).toBeUndefined();

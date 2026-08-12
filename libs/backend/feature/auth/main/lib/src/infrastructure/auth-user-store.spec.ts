@@ -177,9 +177,17 @@ describe('auth user stores', () => {
   });
 
   it('defaults the recovery columns for adapters that predate them', () => {
-    const { emailVerifiedAt: _verified, credentialRevision: _revision, ...legacy } = record;
+    // Dropped from a row that carried real values rather than from the fixture's own defaults, so
+    // a mapper that passed the fields straight through would fail here instead of agreeing by
+    // coincidence.
+    const { emailVerifiedAt, credentialRevision, ...legacy } = {
+      ...record,
+      emailVerifiedAt: new Date('2026-08-01T00:00:00.000Z'),
+      credentialRevision: 7,
+    };
 
     expect(toAuthUserRecord(legacy)).toMatchObject({ emailVerifiedAt: null, credentialRevision: 0 });
+    expect(toAuthUserRecord(legacy)).not.toMatchObject({ emailVerifiedAt, credentialRevision });
   });
 
   it('defaults missing tenant and invalid theme values when mapping records', () => {

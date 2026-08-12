@@ -40,10 +40,18 @@ describe('interactive public domain prompt', () => {
     const io: PromptIo = {
       async ask(question, defaultAnswer) {
         questions.push(question);
-        if (question.startsWith('Choose a starting point')) return '1';
-        if (question.includes('Marketing Site (site-app)')) return 'y';
-        if (question.startsWith('Enter the public domain')) return 'dehqonhub.uz';
-        if (question.startsWith('Choose which app is served on')) return '2';
+        if (question.startsWith('Choose a starting point')) {
+          return '1';
+        }
+        if (question.includes('Marketing Site (site-app)')) {
+          return 'y';
+        }
+        if (question.startsWith('Enter the public domain')) {
+          return 'dehqonhub.uz';
+        }
+        if (question.startsWith('Choose which app is served on')) {
+          return '2';
+        }
         return defaultAnswer ?? '';
       },
       write() {},
@@ -59,8 +67,12 @@ describe('interactive public domain prompt', () => {
   it('offers no apex owner when the selection has no frontend app', async () => {
     const io: PromptIo = {
       async ask(question, defaultAnswer) {
-        if (question.startsWith('Choose a starting point')) return '1';
-        if (question.startsWith('Enter the public domain')) return 'api.dehqonhub.uz';
+        if (question.startsWith('Choose a starting point')) {
+          return '1';
+        }
+        if (question.startsWith('Enter the public domain')) {
+          return 'api.dehqonhub.uz';
+        }
         return defaultAnswer ?? '';
       },
       write() {},

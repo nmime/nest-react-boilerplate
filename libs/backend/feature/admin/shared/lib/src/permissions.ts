@@ -153,8 +153,7 @@ export const adminAssignablePermissions = [
 export const isAdminAssignableRole = (value: string): boolean =>
   adminAssignableRoles.includes(value as (typeof adminAssignableRoles)[number]);
 
-export const isAdminAssignablePermission = (value: string): boolean =>
-  adminAssignablePermissions.includes(value as (typeof adminAssignablePermissions)[number]);
+export const isAdminAssignablePermission = (value: string): boolean => adminAssignablePermissions.includes(value);
 
 export const isKnownAdminPermission = (value: string): value is AdminPermission => adminPermissionByName.has(value);
 

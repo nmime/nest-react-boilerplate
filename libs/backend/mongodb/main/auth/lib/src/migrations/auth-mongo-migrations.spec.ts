@@ -11,7 +11,11 @@ import { authMongoMigrations } from './index';
  * through `collMod`, because `createCollection` fails once the namespace exists.
  */
 function createExistingDatabase() {
-  const command = vi.fn(() => Promise.resolve({ ok: 1 }));
+  // Typed through the generic rather than by naming a parameter the body ignores: the test reads
+  // `command.mock.calls` back, and an untyped mock records them as empty tuples.
+  const command = vi.fn<(argument: Record<string, unknown>) => Promise<{ ok: number }>>(() =>
+    Promise.resolve({ ok: 1 }),
+  );
   // The RBAC seed that follows the collMod is not what this test is about, so every collection call
   // it makes resolves to something harmless.
   const stub = {
@@ -22,7 +26,7 @@ function createExistingDatabase() {
     deleteMany: () => Promise.resolve({ deletedCount: 0 }),
     // The seed looks permissions up by key and insists on finding every one it asked for.
     find: (filter: { key?: { $in?: string[] } }) => ({
-      toArray: () => Promise.resolve((filter?.key?.$in ?? []).map((key) => ({ _id: key, key }))),
+      toArray: () => Promise.resolve((filter.key?.$in ?? []).map((key) => ({ _id: key, key }))),
     }),
   };
   const database = {
@@ -58,7 +62,7 @@ describe('auth Mongo migrations', () => {
     await Migration20260812120000AddAuthUserAccountRecovery.up(database);
 
     const usersCollMod = command.mock.calls
-      .map(([argument]) => argument as Record<string, unknown>)
+      .map(([argument]) => argument)
       .find((argument) => argument['collMod'] === AuthMongoCollections.users);
     expect(usersCollMod).toBeDefined();
     const schema = (usersCollMod?.['validator'] as Record<string, Record<string, Record<string, unknown>>>)[

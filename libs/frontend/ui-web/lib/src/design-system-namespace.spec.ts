@@ -40,7 +40,10 @@ const themeBridgeProperties = new Set([
 const allowedClassPrefixes = ['.xr-', '.sr-only'];
 
 const findNamespaceViolations = (css: string): string[] => {
-  const customProperties = [...css.matchAll(/^[^\S\n]*(--[a-zA-Z0-9-]+)[^\S\n]*:/gmu)]
+  // Indentation is spelled out as spaces and tabs rather than as "whitespace that is not a
+  // newline": the negated form makes the two runs around the name look ambiguous to a scanner
+  // even though a property name can never be whitespace.
+  const customProperties = [...css.matchAll(/^[ \t]*(--[a-zA-Z0-9-]+)[ \t]*:/gmu)]
     .map((match) => match[1] ?? '')
     .filter(
       (property) =>
@@ -58,7 +61,7 @@ const findNamespaceViolations = (css: string): string[] => {
     })
     .filter((selector) => !allowedClassPrefixes.some((prefix) => selector.startsWith(prefix)));
 
-  return [...new Set([...customProperties, ...classSelectors])].sort();
+  return [...new Set([...customProperties, ...classSelectors])].sort((left, right) => left.localeCompare(right));
 };
 
 const sharedStylesheet = readFileSync(join(import.meta.dirname, 'styles.css'), 'utf8');

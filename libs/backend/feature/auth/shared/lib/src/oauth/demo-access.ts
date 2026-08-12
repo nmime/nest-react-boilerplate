@@ -122,7 +122,7 @@ function readRoles(value: string | undefined): string[] {
   for (const role of roles) {
     // A typo here would otherwise mint a principal with no permissions at all, which reads as a
     // broken demo rather than as a misconfiguration.
-    if (!roleKeys.includes(role as (typeof roleKeys)[number])) {
+    if (!roleKeys.includes(role)) {
       throw new Error(`AUTH_DEMO_ROLES contains an unknown role "${role}"; known roles: ${roleKeys.join(', ')}.`);
     }
   }

@@ -1274,6 +1274,8 @@ describe('ExternalAuthService', () => {
         avatarUrl: null,
         avatarHash: null,
         avatarStatus: 'none',
+        emailVerifiedAt: null,
+        credentialRevision: 0,
       },
       {
         amr: ['telegram'],

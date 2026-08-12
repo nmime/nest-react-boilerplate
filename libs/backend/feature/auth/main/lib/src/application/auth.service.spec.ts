@@ -27,6 +27,8 @@ const createUserRecord = (overrides: Partial<AuthUserRecord> = {}): AuthUserReco
   avatarUrl: null,
   avatarHash: null,
   avatarStatus: 'none',
+  emailVerifiedAt: null,
+  credentialRevision: 0,
   ...overrides,
 });
 
@@ -211,6 +213,8 @@ describe('AuthService', () => {
       setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
       syncProviderAvatar: () => okAsync(null),
+      verifyEmail: () => okAsync(null),
+      replacePassword: () => okAsync(null),
     };
     const serviceWithFindFailure = new AuthService(failingStore);
     await expect(
@@ -279,6 +283,8 @@ describe('AuthService', () => {
       setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
       syncProviderAvatar: () => okAsync(null),
+      verifyEmail: () => okAsync(null),
+      replacePassword: () => okAsync(null),
     }).login({ email: 'active@example.com', password: 'password123' });
     expect(fallbackLogin.user.id).toBe('active-id');
   });

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
 import { createAdminAccess } from '../entities/admin-session';
+import type { AdminRouteDescriptor } from '../shared';
 import { adminRoutePages, renderAdminRoute } from './router/admin-route-matrix';
 import { adminRouterPaths } from './router/admin-route-tree';
 import {
@@ -33,7 +34,9 @@ const flattenNav = (items: readonly { children?: readonly unknown[]; href?: stri
 
 describe('admin route registry', () => {
   it('is the single source of the router path list', () => {
-    expect([...adminRouterPaths].sort()).toEqual([...adminRouteDescriptors.flatMap((route) => route.paths)].sort());
+    expect([...adminRouterPaths].sort((left, right) => left.localeCompare(right))).toEqual(
+      [...adminRouteDescriptors.flatMap((route) => route.paths)].sort((left, right) => left.localeCompare(right)),
+    );
   });
 
   it('renders every descriptor through a page, so no route can be registered without one', () => {
@@ -68,7 +71,12 @@ describe('admin route registry', () => {
     for (const access of [noAccess, fullAccess]) {
       const hrefs = flattenNav(adminNavigationItems({ access, path: '/', t: fallbackTranslate }));
 
-      for (const route of adminRouteDescriptors.filter((candidate) => candidate.nav)) {
+      // Read through the declared interface rather than the `as const` literal: every route
+      // happens to carry a nav entry today, which would make the filter below look dead, and the
+      // first route added without one is exactly the case this loop must keep skipping.
+      const navigable: readonly AdminRouteDescriptor[] = adminRouteDescriptors;
+
+      for (const route of navigable.filter((candidate) => candidate.nav)) {
         const allowed = route.access(access);
         expect(hrefs.includes(adminRouteHref(route))).toBe(allowed);
         if (allowed) {
@@ -77,7 +85,7 @@ describe('admin route registry', () => {
         // A hidden nav entry must also be an unreachable page, never a link the
         // sidebar omits while the matrix still renders it.
         const markup = renderMarkup(
-          renderAdminRoute(route.paths[0] ?? '/', { access, payload: { principal: {} }, status: 'ready' }),
+          renderAdminRoute(route.paths[0], { access, payload: { principal: {} }, status: 'ready' }),
         );
         expect(markup).toContain('Access denied');
       }

@@ -11,16 +11,29 @@ import {
   resolveLocale,
   resolveLanguageFromHeaders,
   resolveLanguageFromRequest,
+  supportedLocales,
   translate,
   translations,
 } from './index';
+import { catalogFileNames, localeCatalogFiles } from './catalogs.generated';
 
 describe('@app/backend-common-i18n', () => {
   it('owns only backend-common and error catalogs', () => {
-    expect(backendCatalogFileNames).toEqual(['common/shared.json', 'common/errors.json']);
+    expect([...backendCatalogFileNames].sort()).toEqual(['common/errors.json', 'common/shared.json']);
     expect(translations.en['common.language']).toBe('Language');
     expect(translations.en['bot.menu.main']).toBeUndefined();
     expect(translations.en['discord.commands.link.label']).toBeUndefined();
+  });
+
+  it('takes its catalog list from the generated manifest rather than a hand-written import list', () => {
+    // Adding a namespace or a locale means dropping files into `i18n/` and regenerating. If this
+    // module kept its own list, the two would drift and the new file would simply never load.
+    expect(backendCatalogFileNames).toBe(catalogFileNames);
+
+    for (const locale of supportedLocales) {
+      expect(localeCatalogFiles[locale].map(([fileName]) => fileName)).toEqual([...catalogFileNames]);
+      expect(Object.keys(translations[locale]).length).toBeGreaterThan(0);
+    }
   });
 
   it('provides common translation and request locale utilities', () => {

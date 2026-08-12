@@ -14,13 +14,13 @@ export class Migration20260726180000NotificationClaimTokens extends Migration {
       add column "materialization_claim_token" uuid not null
         default '00000000-0000-0000-0000-000000000000';`);
     this
-      .addSql(`create index "ix__notification_broadcasts__status_materialized_at_materialization_claimed_at_updated_at"
+      .addSql(`create index "ix__notification_broadcasts__status_materialized_at_m__4913f696"
       on "notification_broadcasts" ("status", "materialized_at", "materialization_claimed_at", "updated_at");`);
   }
 
   override down(): void {
     this.addSql(
-      'drop index if exists "ix__notification_broadcasts__status_materialized_at_materialization_claimed_at_updated_at";',
+      'drop index if exists "ix__notification_broadcasts__status_materialized_at_m__4913f696";',
     );
     this.addSql(`alter table "notification_broadcasts"
       drop column "materialization_claimed_at", drop column "materialization_claim_token";`);

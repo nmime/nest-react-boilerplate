@@ -82,7 +82,7 @@ export const NotificationEntitySchema = new EntitySchema<NotificationEntity>({
     { name: 'ix__notifications__broadcast_id', properties: ['broadcastId'] },
     { name: 'ix__notifications__created_at', properties: ['createdAt'] },
     {
-      name: 'ix__notifications__target_type_target_id_in_app_visible_created_at_desc_id_desc',
+      name: 'ix__notifications__target_type_target_id_in_app_visib__7a0d1732',
       columns: [
         { name: 'targetType' },
         { name: 'targetId' },

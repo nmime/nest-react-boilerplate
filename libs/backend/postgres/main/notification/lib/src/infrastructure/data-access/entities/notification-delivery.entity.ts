@@ -113,7 +113,7 @@ export const NotificationDeliveryEntitySchema = new EntitySchema<NotificationDel
     { name: 'ix__notification_deliveries__broadcast_id_status', properties: ['broadcastId', 'status'] },
     { name: 'ix__notification_deliveries__claim_token', properties: ['claimToken'] },
     {
-      name: 'ix__notification_deliveries__target_type_status_send_after_target_id_priority_desc_id',
+      name: 'ix__notification_deliveries__target_type_status_send___89e039a8',
       columns: [
         { name: 'targetType' },
         { name: 'status' },

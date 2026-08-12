@@ -70,7 +70,7 @@ export class Migration20260715100000CreateNotifications extends Migration {
     this.addSql('create index "ix__notifications__template_id" on "notifications" ("template_id");');
     this.addSql('create index "ix__notifications__created_at" on "notifications" ("created_at");');
     this.addSql(
-      'create index "ix__notifications__target_type_target_id_in_app_visible_created_at_desc_id_desc" on "notifications" ("target_type", "target_id", "in_app_visible", "created_at" desc, "id" desc);',
+      'create index "ix__notifications__target_type_target_id_in_app_visib__7a0d1732" on "notifications" ("target_type", "target_id", "in_app_visible", "created_at" desc, "id" desc);',
     );
 
     this.addSql('create sequence "notification_deliveries_id_seq";');
@@ -109,7 +109,7 @@ export class Migration20260715100000CreateNotifications extends Migration {
       'create index "ix__notification_deliveries__notification_id" on "notification_deliveries" ("notification_id");',
     );
     this.addSql(
-      'create index "ix__notification_deliveries__target_type_status_send_after_target_id_priority_desc_id" on "notification_deliveries" ("target_type", "status", "send_after", "target_id", "priority" desc, "id");',
+      'create index "ix__notification_deliveries__target_type_status_send___89e039a8" on "notification_deliveries" ("target_type", "status", "send_after", "target_id", "priority" desc, "id");',
     );
     // Boundaries are anchored to UTC month edges so the seeded partitions line up exactly with the
     // partitions created at runtime by NotificationDeliveryPartitionService (which emits UTC/ISO bounds).

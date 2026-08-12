@@ -192,7 +192,7 @@ export const NotificationAudienceSnapshotMemberEntitySchema =
     ],
     indexes: [
       {
-        name: 'ix__notification_audience_snapshot_members__snapshot_id_materialized_at_id',
+        name: 'ix__notification_audience_snapshot_members__snapshot___ee4357c2',
         properties: ['snapshotId', 'materializedAt', 'id'],
       },
     ],

@@ -7,7 +7,7 @@ description: Design or substantially reshape a web or native product experience 
 
 ## Read first
 
-- Read `../../../docs/frontend-uiux-pro-max-lazyweb.md`, `../../../docs/frontend-ux.md`, `../../../docs/frontend-state.md`, `../../../docs/frontend-fsd.md`, the selected app's README/AGENTS files, and the shared web or native UI public API.
+- Read `../../../docs/frontend-ux.md`, `../../../docs/frontend-state.md`, `../../../docs/frontend-fsd.md`, the selected app's README/AGENTS files, and the shared web or native UI public API.
 - Inspect current screens in the running app and existing Storybook stories before proposing a new visual language. If a Figma file or approved design is supplied, treat it as the source of truth.
 
 ## Establish direction

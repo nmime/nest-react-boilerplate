@@ -1,9 +1,37 @@
 # AI Agent Instructions
 
+**This file is the canonical instruction source.** Every tool-specific
+instruction file in this repository is a redirect adapter to it and must not
+restate, summarise, or extend policy — a rule that lives in two files drifts in
+one of them. See [Instruction adapters](#instruction-adapters).
+
 Always-loaded policy for human and AI contributors to
-`nmime/nest-react-boilerplate`. Detailed workflow and architecture docs live in
+`nmime/nest-react-boilerplate`. That repository name is this boilerplate's
+declared identity; a product forked from here replaces it — see
+[docs/product-identity.md](docs/product-identity.md).
+
+Detailed workflow and architecture docs live in
 [docs/ai/agent-policy.md](docs/ai/agent-policy.md) and
 [docs/ai/repo-map.md](docs/ai/repo-map.md).
+
+## Instruction adapters
+
+| Adapter                           | Tool           |
+| --------------------------------- | -------------- |
+| `CLAUDE.md`                       | Claude Code    |
+| `CODEX.md`                        | OpenAI Codex   |
+| `.github/copilot-instructions.md` | GitHub Copilot |
+| `.cursor/rules/repository.mdc`    | Cursor         |
+
+Rules for adapters:
+
+- An adapter points at this file. It carries no project facts — no counts, no
+  library names, no framework claims — because unmaintained facts in an
+  always-applied rule file actively mislead.
+- Adding support for another assistant means adding one more redirect file, not
+  a second copy of policy.
+- Do not add `.devin/rules`, `.windsurf/rules`, or any other tool-specific policy
+  fork unless repository policy explicitly allows that tool.
 
 ## Non-Negotiable Rules
 

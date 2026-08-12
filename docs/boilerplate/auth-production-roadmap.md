@@ -20,7 +20,7 @@ launch.
   into the same application session used by password authentication. Discord
   OAuth and Telegram flows preserve state, return-URL, signed-token,
   account-linking, and encrypted provider-token invariants described in
-  [Social Auth and Bots](social-auth-bots.md).
+  [Social Auth and Bots](../social-auth-bots.md).
 - Admin user/role mutations are tenant-scoped and transactionally write audit
   plus outbox records.
 

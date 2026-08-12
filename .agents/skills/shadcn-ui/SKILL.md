@@ -15,7 +15,7 @@ preview, but never apply, vendor, package, or distribute its source.
 - Read the root and nearest `AGENTS.md` files, both `components.json` files
   (root and `libs/frontend`), current public exports, existing Storybook stories,
   and the component's consumers.
-- Read `../../../docs/frontend-uiux-pro-max-lazyweb.md`,
+- Read `../../../docs/frontend-ux.md`,
   `../../../docs/testing/modern-qa.md`, and the selected registry item's source,
   dependency list, CSS, assets, documentation, and licence before applying it.
 

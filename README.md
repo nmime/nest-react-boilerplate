@@ -107,7 +107,13 @@ missing or conflicting provider selections before the same provider-aware
 
 `pnpm run dev` starts only the applications recorded by setup. It refuses to silently fall back to every application. Use `pnpm run dev:all` only when you intentionally want every serve target.
 
-For noninteractive setup, capability selection, app additions, and troubleshooting, continue with the [Quick Start](docs/quick-start.md) and [Setup and Configuration](docs/setup/configuration.md).
+For noninteractive setup, capability selection, app additions, and troubleshooting, continue with the [Quick Start](docs/boilerplate/quick-start.md) and [Setup and Configuration](docs/setup/configuration.md).
+
+Before the first deploy of a fork, read [Product Identity](docs/product-identity.md).
+This repository ships its own name, owner, domain, and database names in
+roughly 200 files; `BACKUP_PREFIX`, `S3_BUCKET`, and the GitOps `repoURL`
+are the ones that cause real damage if they are left at the boilerplate
+default.
 
 ## Architecture
 
@@ -256,7 +262,7 @@ project-owned behavior.
 
 | Target                      | Start here                                                                                              |
 | --------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Local dependencies          | [Quick Start](docs/quick-start.md) and the root Docker Compose stack                                    |
+| Local dependencies          | [Quick Start](docs/boilerplate/quick-start.md) and the root Docker Compose stack                        |
 | Production Compose          | [Docker Compose Production](docs/docker-compose-production.md)                                          |
 | Kubernetes / Helm           | [Production Deploy](docs/production-deploy.md) and [.helm/README.md](.helm/README.md)                   |
 | Single Ubuntu/Debian server | [Idempotent Single-Server Deployment](docs/single-server-deployment.md)                                 |

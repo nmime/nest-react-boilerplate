@@ -142,7 +142,9 @@ multipart stream, so keep `NOTIFICATION_CSV_MAX_BYTES` conservative.
 
 The full product/technical contract and product-specific category extension
 points are documented in
-[Admin notification broadcasts](admin-notification-broadcasts-spec.md).
+[Admin notification broadcasts](boilerplate/admin-notification-broadcasts-spec.md),
+which is boilerplate-owned content — see
+[Boilerplate-owned content](boilerplate/README.md).
 
 ## Providers and authentication delivery
 

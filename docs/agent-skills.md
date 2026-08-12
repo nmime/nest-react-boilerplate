@@ -176,4 +176,4 @@ Recommended workflow:
 3. Save generated reports under `.lazyweb/design-research/{topic}-{date}/report.html` and references under `.lazyweb/design-research/{topic}-{date}/references/`.
 4. Summarize only the applicable patterns in the PR description; do not vendor LazyWeb repositories or large third-party assets.
 
-See also `docs/frontend-uiux-pro-max-lazyweb.md` for the frontend checklist tied to this template.
+See also `docs/frontend-ux.md` for the frontend design-system policy tied to this template.

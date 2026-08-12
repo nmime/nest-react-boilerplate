@@ -12,7 +12,7 @@ Each layer has one job:
 | Layer                    | Canonical source                                     | Owns                                                              |
 | ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------- |
 | Normative behavior       | `openspec/specs/<capability>/spec.md`                | stable `REQ-*` requirements, invariants, failures, examples       |
-| Discovery/change history | `openspec/changes/**`                                | proposals, counterexamples, design, verification policy, tasks    |
+| Discovery/change history | `openspec/changes/**` (optional)                     | proposals, counterexamples, design, verification policy, tasks    |
 | Evidence mapping         | `openspec/specs/<capability>/verification.yaml`      | requirement-level projects, risk, Cucumber disposition, evidence  |
 | Stakeholder examples     | `apps/e2e/acceptance/features/**/*.feature`          | declarative `@REQ-*` / `@SCN-*` Cucumber examples                 |
 | Domain and failure rules | owning project Vitest suites                         | algorithms, state transitions, boundaries, negative paths         |
@@ -22,6 +22,14 @@ Each layer has one job:
 
 The layers are complementary. Do not restate every Vitest assertion in Gherkin
 or hide stakeholder behavior inside low-level tests.
+
+`openspec/changes/**` is transient working material and per-repository history,
+not a canonical layer. Nothing in the assurance tooling reads it — a repository
+with no `openspec/changes` directory is fully conformant. `openspec/changes/archive/**`
+holds this boilerplate's own completed change sets; a product forked from here
+should clear it rather than inherit three unrelated proposals. Requirements that
+must survive live in `openspec/specs/**`, and decisions that must survive live in
+[docs/adr](adr).
 
 ```mermaid
 flowchart LR

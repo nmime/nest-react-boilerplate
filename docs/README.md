@@ -4,8 +4,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 
 ## Getting started
 
-- [Quick Start](quick-start.md) — clone, set up, and run the stack in under five minutes.
-- [Launching a New Project](new-project.md) — rename, initialize, and harden the boilerplate for your product.
 - [First Feature Walkthrough](first-feature-walkthrough.md) — end-to-end guide for shipping a vertical slice.
 - [Scaffolding and Extension Contract](scaffolding-and-extension.md) — canonical fresh-clone, app/library/feature, domain, and production-registration lifecycle.
 - [Project Catalog](project-catalog.md) — generated application IDs, Nx roots, runtimes, selection dependencies, and template hostnames.
@@ -13,11 +11,11 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 ## Setup and configuration
 
 - [Setup and Configuration](setup/configuration.md) — interactive and noninteractive setup, `pnpm nrb doctor`, config schema.
+- [Product Identity](product-identity.md) — the identity value set, the repeatable `nrb init` rename path, and the placeholder-residue gate.
 - [Presets and Technologies](setup/presets-and-technologies.md) — preset matrix, supported apps/capabilities, dependency rules.
 - [CLI Reference](setup/cli-reference.md) — every `nrb` / `repo-tooling` command with flags and examples.
 - [Nx Generators](setup/nx-generators.md) — repository generators, generated contracts, and verification.
 - [Discord Bot Setup](setup/discord-bot.md) — select, configure, and validate the Discord bot integration.
-- [TypeScript 7 Upgrade](setup/upgrade-typescript-7.md) — staged compiler upgrade research and compatibility plan.
 
 ## Day-to-day usage
 
@@ -36,12 +34,12 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Architecture Overview](architecture.md) — app/library split, runtime boundaries, data flow.
 - [Architecture Deep Dives](architecture/README.md) — DDD boundaries, naming conventions, and library contracts.
 - [Architecture Decision Records](adr/README.md) — durable decisions and ADR template.
-- [Technology Choices](technology-choices.md) — framework and platform decisions.
 
 ## API and contracts
 
 - [API Contracts](api-contracts.md) — OpenAPI generation, consumer contracts, and error responses.
 - [API Conventions](api-conventions.md) — controller patterns, DTOs, validation, and guards.
+- [Backend Product Primitives](backend-product-primitives.md) — paging, idempotency keys, uploads, money, tenant scoping, and the open catalogs.
 - [API Lifecycle Policy](api-lifecycle-policy.md) — versioning, deprecation, and compatibility rules.
 - [API Client](api-client.md) — generated frontend clients and typed service wrappers.
 
@@ -98,7 +96,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 ## Security and auth
 
 - [Security Baseline](../SECURITY.md) — reporting expectations and baseline controls.
-- [Auth Production Gap Register](auth-production-roadmap.md)
 - [Auth Tenant Hardening](auth-tenant-hardening.md)
 - [Multi-tenancy Capability](multi-tenancy-capability.md)
 - [Auth Login Analytics](auth-login-analytics.md)
@@ -129,7 +126,21 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Idempotent Single-Server Deployment](single-server-deployment.md)
 - [Production Hardening](production-hardening.md)
 - [Agent Skills](agent-skills.md)
-- [Billing Extension and Admin Capability Status](billing-admin-roadmap.md)
+
+## Boilerplate-owned content
+
+Documentation about this boilerplate rather than about a product built from
+it. A fork deletes this whole section along with `docs/boilerplate/**`; see
+[Boilerplate-owned content](boilerplate/README.md) for the prune procedure.
+
+- [Boilerplate-owned content](boilerplate/README.md) — what is prunable and how to prune it.
+- [Quick Start](boilerplate/quick-start.md) — clone, set up, and run the stack in under five minutes.
+- [Launching a New Project](boilerplate/new-project.md) — rename, initialize, and harden the boilerplate for your product.
+- [Technology Choices](boilerplate/technology-choices.md) — framework and platform decisions.
+- [Auth Production Gap Register](boilerplate/auth-production-roadmap.md) — unbuilt auth hardening checklist.
+- [Billing Extension and Admin Capability Status](boilerplate/billing-admin-roadmap.md) — unbuilt billing roadmap.
+- [Admin notification broadcasts](boilerplate/admin-notification-broadcasts-spec.md) — unbuilt broadcast specification.
+- [TypeScript 7 Upgrade](boilerplate/upgrade-typescript-7.md) — staged compiler upgrade research.
 
 ## Documentation authority
 

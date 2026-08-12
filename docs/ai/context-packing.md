@@ -70,12 +70,20 @@ nearest platform policy plus the local README.
 
 ## Tool-specific files
 
-Tool-specific files must be adapters, not forks of policy:
+Root `AGENTS.md` is canonical. Tool-specific files are adapters, not forks of
+policy; the current inventory is the table in
+[AGENTS.md](../../AGENTS.md#instruction-adapters).
 
-- `CLAUDE.md` should point to or import `AGENTS.md`.
-- `.github/copilot-instructions.md` should stay redirect-only while external AI assistants remain disallowed.
-- `.cursor/rules/**` may exist only as redirect-only adapters while external AI assistants remain disallowed.
+- An adapter contains a pointer to `AGENTS.md` and nothing else. In particular it
+  must not restate project counts, path aliases, router or framework choices, or
+  code-style rules — those facts go stale and an always-applied rule file that
+  asserts stale facts is worse than no file.
+- `.cursor/rules/**` may exist only as redirect-only adapters while external AI
+  assistants remain disallowed. `.cursor/rules/repository.mdc` is the reference
+  shape.
 - Do not add `.devin/rules`, `.windsurf/rules`, or new tool-specific policy forks unless repository policy explicitly allows those tools.
+- Supporting another assistant is one more redirect file, never a second copy of
+  the rules.
 
 ## Quality checks
 

@@ -244,9 +244,7 @@ All exceptions flow through the `@app/backend-common-exception` library.
   [docs/testing/modern-qa.md](../testing/modern-qa.md).
 - Frontend FSD boundaries: [docs/frontend-fsd.md](../frontend-fsd.md).
 - Frontend state rules: [docs/frontend-state.md](../frontend-state.md).
-- UI/UX/design workflow:
-  [docs/frontend-uiux-pro-max-lazyweb.md](../frontend-uiux-pro-max-lazyweb.md),
-  [docs/frontend-ux.md](../frontend-ux.md), and
+- UI/UX/design workflow: [docs/frontend-ux.md](../frontend-ux.md) and
   [docs/agent-skills.md](../agent-skills.md).
 - Database migrations: [docs/database-migrations.md](../database-migrations.md).
 - API contract lifecycle: [docs/api-contracts.md](../api-contracts.md),

@@ -138,10 +138,14 @@ This repository intentionally allows native build steps only for packages requir
 
 Unexpected new package build scripts should be treated as a supply-chain review item. Approve them only when the package is necessary, the install script is documented, and CI still uses the frozen lockfile.
 
-## GitHub Actions
+## Pipeline step pinning
+
+The rule is forge-neutral: a pipeline step is a dependency, so pin it by
+immutable digest and keep the human-readable version beside it for review.
 
 - Pin third-party and first-party GitHub Actions to full 40-character commit SHAs in workflow `uses:` entries.
-- Keep the human-readable version tag in a trailing comment (for example, `# v4`) so Dependabot action updates remain easy to review.
+- Keep the human-readable version tag in a trailing comment (for example, `# v4`) so dependency-bot action updates remain easy to review.
+- On GitLab, pin `include:` refs to a commit SHA and pin `image:` to a digest for the same reason.
 - Prefer pinned runner images such as `ubuntu-22.04` over floating labels such as `ubuntu-latest` for CI and release reproducibility.
 
 ## Security gates

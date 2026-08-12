@@ -172,8 +172,8 @@ pnpm exec nx serve admin-app-api
 
 ### Local port contract
 
-Use the [Project Catalog](project-catalog.md) for application identities and
-runtimes, and the [Service Port Registry](PORTS.md) for the authoritative local
+Use the [Project Catalog](../project-catalog.md) for application identities and
+runtimes, and the [Service Port Registry](../PORTS.md) for the authoritative local
 and staging ports.
 
 Start Vike: `pnpm exec nx serve site-app`. Start Expo: `pnpm exec nx serve mobile-app`.
@@ -214,8 +214,8 @@ pnpm run onboarding:verify
 
 - **Request context** is automatic — `ClsInterceptor` runs first, `requestContext.getRequestId()` works everywhere. No setup needed.
 - **Error handling** is automatic — RFC 9457 Problem Details with `application/problem+json`. No setup needed.
-- [Setup and Configuration](setup/configuration.md) — deep dive into the setup engine and config schema.
-- [Scaffolding and Extension Contract](scaffolding-and-extension.md) — required/optional surfaces and the complete add-app/library/feature lifecycle.
-- [First Feature Walkthrough](first-feature-walkthrough.md) — ship your first vertical slice.
-- [CLI Reference](setup/cli-reference.md) — every command with flags and examples.
+- [Setup and Configuration](../setup/configuration.md) — deep dive into the setup engine and config schema.
+- [Scaffolding and Extension Contract](../scaffolding-and-extension.md) — required/optional surfaces and the complete add-app/library/feature lifecycle.
+- [First Feature Walkthrough](../first-feature-walkthrough.md) — ship your first vertical slice.
+- [CLI Reference](../setup/cli-reference.md) — every command with flags and examples.
 - [Launching a New Project](new-project.md) — rename and harden the boilerplate for your product.

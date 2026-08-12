@@ -1,5 +1,10 @@
 # Canonical repository contributor identity.
 # Automated dependency updates retain their bot attribution.
+#
+# Scope: this file canonicalises THIS BOILERPLATE'S historical contributors. The
+# aliases below exist only because they appear in upstream commits; they mean
+# nothing in a product forked from here. A fork should replace this file with its
+# own contributors — see docs/product-identity.md.
 nmime <66474195+nmime@users.noreply.github.com> NMI <66474195+nmime@users.noreply.github.com>
 nmime <66474195+nmime@users.noreply.github.com> Nikita <nmi@Nikitas-MacBook-Pro.local>
 nmime <66474195+nmime@users.noreply.github.com> nmime <nmime@users.noreply.github.com>

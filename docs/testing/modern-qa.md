@@ -33,7 +33,7 @@ This repository treats QA as local-first. GitHub and GitLab CI apply the documen
 | Performance                | Page budgets, API p95/load probes, optional Lighthouse                             | `pnpm run test:perf`              | Manual/nightly                    | Set `PERF_URLS` and/or `PERF_API_URLS`. Budgets: `PERF_TTFB_BUDGET_MS`, `PERF_HTML_BUDGET_BYTES`, `PERF_API_P95_BUDGET_MS`, `PERF_API_REQUESTS`. Optional Lighthouse is pinned by default: `PERF_ENGINE=lighthouse` or `PERF_LIGHTHOUSE=1`; override planned upgrades with `LIGHTHOUSE_VERSION`. Dry run supported.                                                                                   |
 | Security SAST              | Lightweight JS/TS static security checks, optional Semgrep                         | `pnpm run test:security:sast`     | Blocking PR gate/manual          | Native rules flag eval, dynamic Function, disabled TLS, dangerous HTML sinks, shell exec, weak random. Optional Semgrep uses a pinned Docker image with `SEMGREP_DOCKER_IMAGE` override. Dry run supported.                                                                                                                                                 |
 | Dependency audit           | Package vulnerability gate                                                         | `pnpm run audit`                  | Blocking/manual                   | Uses `pnpm audit --audit-level=moderate`.                                                                                                                                                                                                                                                                                   |
-| Secret scanning            | Leaked keys/tokens/high-entropy strings                                            | `pnpm run test:security:secrets`  | Blocking PR gate/manual          | Native scan ignores generated/build dirs and placeholders. Gitleaks extends its default rules with path-and-value allowlists in `.gitleaks.toml` for explicit test fixtures only; add no real credential or broad path exclusion. Optional local scans use a pinned Docker image with `GITLEAKS_DOCKER_IMAGE` override. Dry run supported.                                                                                   |
+| Secret scanning            | Leaked keys/tokens/high-entropy strings                                            | `pnpm run test:security:secrets`  | Blocking PR gate/manual          | Native scan ignores generated/build dirs and placeholders; products register their own fixtures in [`config/secret-scan.allowlist.json`](#product-owned-secret-scan-allowlist) instead of editing the shared policy. Gitleaks extends its default rules with path-and-value allowlists in `.gitleaks.toml` for explicit test fixtures only; add no real credential or broad path exclusion. Optional local scans use a pinned Docker image with `GITLEAKS_DOCKER_IMAGE` override. Dry run supported.                                                                                   |
 | Security DAST              | Runtime header, reflected payload, 5xx, sensitive path probes                      | `pnpm run test:security:dast`     | Manual/nightly                    | Set `SECURITY_DAST_URLS`. Required headers default to `x-content-type-options,referrer-policy`; override with `SECURITY_DAST_REQUIRED_HEADERS`. Optional OWASP ZAP: `SECURITY_DAST_ENGINE=zap`. Dry run supported.                                                                                                          |
 | Security aggregate         | SAST + secrets + DAST                                                              | `pnpm run test:security`          | Manual/nightly                    | Pass `-- --dry-run` to validate configuration without targets.                                                                                                                                                                                                                                                              |
 | Property-based invariants  | Randomized OpenAPI/schema/path/workspace invariants                                | `pnpm run test:property`          | Blocking                          | Native randomized checks over contracts, schema examples, path templates, package script references, workspace tooling. Uses `fast-check` automatically if it is present, but does not require lockfile churn.                                                                                                              |
@@ -169,6 +169,49 @@ Generated API contracts are committed under `apps/backend/*/*-app-api/contracts/
 
 Consumer expectations live under `apps/frontend/app/contracts/consumers` as Pact-style JSON. Each interaction names a provider matching an OpenAPI contract title or filename and validates request/response bodies against the committed provider schema.
 
+
+## Secret scan exemptions
+
+The native scan reports any quoted 40-character run whose Shannon entropy reaches
+`secretEntropyThreshold` (4.4). Two families of repository-mandated identifiers reach it on their
+own, so the policy in `packages/tooling/src/commands/qa/secret-scan-policy.ts` exempts them by
+shape rather than by filename:
+
+- **Generated artifacts.** A file counts as generated when its header carries the `generated by`
+  marker every generator in this repository writes, or when it is an OpenAPI document declared in
+  `packages/tooling/config/api-contracts.json` — those are verbatim tool output with nowhere to put
+  a comment. Inside such a file, and only there, Nest `<Controller>_<handler>` operation ids and
+  generated HTTP toast variants are allowed. Every other rule still applies: a real key committed
+  into a generated artifact is still reported.
+- **Migration class names.** `Migration<14-digit timestamp><PascalCase description>` is allowed
+  wherever it appears, because the migration standards gate mandates that exact name and the setup
+  capability registry and migration-registry specs quote it. Both gates read the shape from
+  `packages/tooling/src/commands/db/migration-naming.ts`.
+
+### Product-owned secret scan allowlist
+
+Anything a product needs beyond that goes in `config/secret-scan.allowlist.json`, which ships empty
+and is the only file a product edits — the base policy stays boilerplate-owned so an upgrade never
+conflicts:
+
+```json
+{
+  "entries": [
+    {
+      "id": "marketplace-fixtures",
+      "path": "^libs/backend/marketplace/.*\\.spec\\.ts$",
+      "values": ["^ik[0-9a-f]{40}$"]
+    }
+  ]
+}
+```
+
+Registration is all-or-nothing and validated when the scan loads the file, so a mistake fails the
+gate loudly instead of quietly widening it. Each entry needs an `id`, one anchored `path` regex
+starting with at least three literal characters, and at least one anchored `values` regex that does
+not match unrelated strings. Register narrow fixtures only; a broad path exclusion is a disabled
+gate, not an allowlist. Gitleaks allowlists remain in the repository-root `.gitleaks.toml` under the
+same rule.
 
 ## Pinned optional validator versions
 

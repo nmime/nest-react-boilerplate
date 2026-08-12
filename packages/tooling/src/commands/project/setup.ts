@@ -19,6 +19,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { CommandContext } from "../../cli.js";
 import {
+  defaultDeploymentConfig,
   parseNrbConfig,
   schemaVersion,
   type AppId,
@@ -26,6 +27,7 @@ import {
   type CiMode,
   type DeploymentTarget,
   type FrontendApiMode,
+  type FrontendAppId,
   type InfrastructureOwnership,
   type KubernetesDelivery,
   type MobileTarget,
@@ -38,7 +40,7 @@ import { apply, backupFiles, rollback, type ApplyOptions } from "../../setup/app
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
 import { emptyState, migrateState, type SetupState } from "../../setup/state.js";
 import { runPrompts, buildConfig, formatConfigSummary, formatPlanSummary } from "../../setup/prompts.js";
-import { appCatalog, capabilityCatalog } from "../../setup/catalog.js";
+import { appCatalog, appPublicHostname, capabilityCatalog } from "../../setup/catalog.js";
 import { materializeSelection, updateSelection } from "../../setup/selection.js";
 import { buildSelectedClosure, createLiveProjectGraph } from "../../setup/closure.js";
 import {
@@ -69,6 +71,9 @@ export interface SetupArgs {
   frontendApiMode?: FrontendApiMode;
   mobileTargets: MobileTarget[];
   deploymentTargets: DeploymentTarget[];
+  publicDomain?: string;
+  /** `null` is the explicit "no app on the apex" answer, distinct from an unset flag. */
+  primaryApp?: FrontendAppId | null;
   publicTopology?: PublicTopology;
   kubernetesDelivery?: KubernetesDelivery;
   redisOwnership?: InfrastructureOwnership;
@@ -230,6 +235,21 @@ export function parseArgs(argv: string[]): SetupArgs {
     }
     if (arg.startsWith("--deployment-target=")) {
       result.deploymentTargets.push(requireInlineValue(arg, "--deployment-target") as DeploymentTarget);
+      continue;
+    }
+    if (arg === "--public-domain" || arg.startsWith("--public-domain=")) {
+      result.publicDomain =
+        arg === "--public-domain"
+          ? requireOptionValue(argv, ++i, "--public-domain")
+          : requireInlineValue(arg, "--public-domain");
+      continue;
+    }
+    if (arg === "--primary-app" || arg.startsWith("--primary-app=")) {
+      const value =
+        arg === "--primary-app"
+          ? requireOptionValue(argv, ++i, "--primary-app")
+          : requireInlineValue(arg, "--primary-app");
+      result.primaryApp = value === "none" ? null : (value as FrontendAppId);
       continue;
     }
     for (const [option, key] of [
@@ -540,6 +560,8 @@ function hasOperationalArgs(args: SetupArgs): boolean {
     args.frontendApiMode !== undefined ||
     args.mobileTargets.length > 0 ||
     args.deploymentTargets.length > 0 ||
+    args.publicDomain !== undefined ||
+    args.primaryApp !== undefined ||
     args.publicTopology !== undefined ||
     args.kubernetesDelivery !== undefined ||
     args.redisOwnership !== undefined ||
@@ -560,6 +582,8 @@ function applyOperationalArgs(config: NrbConfig, args: SetupArgs): NrbConfig {
     deployment: {
       ...config.deployment,
       ...(args.deploymentTargets.length > 0 ? { targets: [...new Set(args.deploymentTargets)] } : {}),
+      ...(args.publicDomain ? { publicDomain: args.publicDomain } : {}),
+      ...(args.primaryApp !== undefined ? { primaryApp: args.primaryApp } : {}),
       ...(args.publicTopology ? { publicTopology: args.publicTopology } : {}),
       ...(args.kubernetesDelivery ? { kubernetesDelivery: args.kubernetesDelivery } : {}),
       infrastructure: {
@@ -661,13 +685,17 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
   const selected = existing ? materializeSelection(existing) : { apps: [], capabilities: [] };
   const selectedApps = new Set(selected.apps);
   const selectedCapabilities = new Set(selected.capabilities);
+  const domain = {
+    publicDomain: existing?.deployment.publicDomain ?? defaultDeploymentConfig.publicDomain,
+    primaryApp: existing?.deployment.primaryApp ?? defaultDeploymentConfig.primaryApp,
+  };
   const applications = Object.values(appCatalog).map((app) => ({
     id: app.id,
     label: app.label,
     platform: app.platform,
     classification: app.classification,
     runtime: app.runtime,
-    hostname: app.publicHostname,
+    hostname: appPublicHostname(app.id, domain),
     selected: selectedApps.has(app.id),
   }));
   const capabilities = Object.values(capabilityCatalog).map((capability) => ({
@@ -727,6 +755,8 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
     process.stdout.write(`  mobile-targets: ${product.mobileTargets.join(", ") || "(none)"}\n`);
     process.stdout.write(`\ndeployment:\n`);
     process.stdout.write(`  targets: ${deployment.targets.join(", ")}\n`);
+    process.stdout.write(`  public-domain: ${deployment.publicDomain}\n`);
+    process.stdout.write(`  primary-app: ${deployment.primaryApp ?? "(none)"}\n`);
     process.stdout.write(`  public-topology: ${deployment.publicTopology}\n`);
     process.stdout.write(`  kubernetes-delivery: ${deployment.kubernetesDelivery}\n`);
     process.stdout.write(
@@ -763,6 +793,8 @@ Options:
   --frontend-api-mode <mode> Frontend API routing (same-origin, split-origin)
   --mobile-target <target>   Mobile output to own (web, android, ios; repeatable)
   --deployment-target <id>   Deployment target (docker, single-server, kubernetes; repeatable)
+  --public-domain <domain>   Public base domain every app hostname is derived from
+  --primary-app <id>         App served on the base domain itself, or none
   --public-topology <mode>   Public routing (single-domain, per-app-domains, external-proxy)
   --kubernetes-delivery <id> Kubernetes delivery (direct, argocd, flux)
   --redis-ownership <mode>   Redis ownership (bundled, external)

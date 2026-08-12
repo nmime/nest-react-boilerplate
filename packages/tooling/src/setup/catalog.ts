@@ -5,7 +5,7 @@
  * Catalog of applications, capabilities, and their dependency / conflict
  * rules.  Pure data — no side-effects, no filesystem access.
  */
-import type { AppId, CapabilityId } from './schema.js';
+import type { AppId, CapabilityId, FrontendAppId } from './schema.js';
 
 // ---------------------------------------------------------------------------
 // App metadata
@@ -22,8 +22,12 @@ export interface AppEntry {
   classification: 'reference' | 'optional';
   /** Human-facing runtime summary used by setup and generated reference docs. */
   runtime: string;
-  /** Canonical template hostname; non-deployable projects use null. */
-  publicHostname: string | null;
+  /**
+   * Whether this project is served on a public hostname. The hostname itself is not stored here:
+   * it is derived from the configured domain and apex owner by `appPublicHostname`, so a product
+   * changes its public addressing in one place instead of editing this catalog.
+   */
+  deployable: boolean;
   /** Capabilities that this app REQUIRES when present. */
   requiresCapabilities: CapabilityId[];
   /** Other apps that must be present when this app is enabled. */
@@ -60,7 +64,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'frontend',
     classification: 'reference',
     runtime: 'React + Vite SPA',
-    publicHostname: 'admin-app.example.com',
+    deployable: true,
     requiresCapabilities: ['authz'],
     requiresApps: ['admin-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
@@ -77,7 +81,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'frontend',
     classification: 'reference',
     runtime: 'React + Vite SPA',
-    publicHostname: 'user-app.example.com',
+    deployable: true,
     requiresCapabilities: ['i18n'],
     requiresApps: ['user-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
@@ -94,7 +98,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'frontend',
     classification: 'reference',
     runtime: 'Astro + React islands',
-    publicHostname: 'example.com',
+    deployable: true,
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -111,7 +115,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'frontend',
     classification: 'reference',
     runtime: 'Vike + React SSR',
-    publicHostname: 'site-app.example.com',
+    deployable: true,
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -127,7 +131,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'frontend',
     classification: 'reference',
     runtime: 'Expo + React Native',
-    publicHostname: 'mobile-app.example.com',
+    deployable: true,
     requiresCapabilities: ['design-tokens'],
     requiresApps: ['auth-app-api', 'user-app-api'],
     conflictsWithCapabilities: [],
@@ -147,7 +151,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'backend',
     classification: 'reference',
     runtime: 'NestJS + Fastify API',
-    publicHostname: 'admin-app-api.example.com',
+    deployable: true,
     requiresCapabilities: ['authz', 'feature-flags', 'notifications'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -165,7 +169,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'backend',
     classification: 'reference',
     runtime: 'NestJS + Fastify API',
-    publicHostname: 'user-app-api.example.com',
+    deployable: true,
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -183,7 +187,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'backend',
     classification: 'reference',
     runtime: 'NestJS + Fastify API',
-    publicHostname: 'auth-app-api.example.com',
+    deployable: true,
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -201,7 +205,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'backend',
     classification: 'optional',
     runtime: 'NestJS + Fastify integration API',
-    publicHostname: 'discord-app-api.example.com',
+    deployable: true,
     requiresCapabilities: ['discord-bot', 'redis'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -219,7 +223,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'backend',
     classification: 'optional',
     runtime: 'NestJS + Fastify bot API',
-    publicHostname: 'telegram-bot-api.example.com',
+    deployable: true,
     requiresCapabilities: ['redis', 'telegram-bot'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -237,7 +241,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'backend',
     classification: 'optional',
     runtime: 'NestJS scheduled-job process',
-    publicHostname: null,
+    deployable: false,
     requiresCapabilities: ['notifications'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -254,7 +258,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'backend',
     classification: 'optional',
     runtime: 'NestJS background consumer process',
-    publicHostname: null,
+    deployable: false,
     requiresCapabilities: ['notifications', 's3'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -272,7 +276,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'e2e',
     classification: 'reference',
     runtime: 'Playwright full-stack tests',
-    publicHostname: null,
+    deployable: false,
     requiresCapabilities: [],
     requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'site-app', 'user-app', 'user-app-api'],
     conflictsWithCapabilities: [],
@@ -283,12 +287,40 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     platform: 'e2e',
     classification: 'reference',
     runtime: 'Cucumber.js domain and API acceptance tests',
-    publicHostname: null,
+    deployable: false,
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
   },
 } as const;
+
+/** How a deployment addresses its public surface. */
+export interface PublicDomainConfig {
+  /** DNS base name the deployment is reachable under, e.g. `dehqonhub.uz`. */
+  publicDomain: string;
+  /** Frontend app served on the apex, or null to keep every app on its own subdomain. */
+  primaryApp: FrontendAppId | null;
+}
+
+/**
+ * The single derivation every deploy path agrees on: the apex owner gets the bare domain, every
+ * other deployable app gets `{app-id}.{domain}`, and non-deployable projects get nothing.
+ *
+ * Takes the entry rather than the ID so callers holding a catalog that is not `appCatalog` — the
+ * documentation generator scanning a fixture, for one — get the same rule instead of reimplementing
+ * it. `appPublicHostname` is the by-ID convenience over the same function.
+ */
+export function publicHostnameFor(
+  entry: Pick<AppEntry, 'id' | 'deployable'> | undefined,
+  config: PublicDomainConfig,
+): string | null {
+  if (!entry?.deployable) return null;
+  return entry.id === config.primaryApp ? config.publicDomain : `${entry.id}.${config.publicDomain}`;
+}
+
+export function appPublicHostname(appId: AppId, config: PublicDomainConfig): string | null {
+  return publicHostnameFor(appCatalog[appId], config);
+}
 
 // ---------------------------------------------------------------------------
 // Capability metadata

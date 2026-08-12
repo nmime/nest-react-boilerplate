@@ -16,13 +16,43 @@ const frontendApiBaseUrlModes = new Set(['same-origin', 'split-origin']);
 const frontendApiBaseUrlKeys = ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL'];
 const tlsModes = new Set(['automatic', 'provided', 'external']);
 const imageSources = new Set(['local', 'registry']);
-const supportedProfiles = new Set(['discord', 'notification-consumer', 'notification-scheduler', 'telegram']);
-const profileApps = {
-  discord: 'discord-app-api',
-  'notification-consumer': 'notification-consumer',
-  'notification-scheduler': 'notification-scheduler',
-  telegram: 'telegram-bot-api',
-};
+
+/**
+ * Optional integrations are data, so a product registers one by appending a row to
+ * docker/optional-integrations.json instead of editing the profile allow-list, the reject message
+ * and the overlay chain in this file. See that file's `$comment` for the row shape.
+ */
+export const optionalIntegrations = Object.freeze(
+  JSON.parse(readFileSync(join(rootDir, 'docker/optional-integrations.json'), 'utf8')).integrations,
+);
+
+export function optionalProfileIds(integrations) {
+  return integrations.filter((integration) => integration.profile).map((integration) => integration.profile);
+}
+
+const profileApps = Object.fromEntries(
+  optionalIntegrations
+    .filter((integration) => integration.profile)
+    .map((integration) => [integration.profile, integration.app]),
+);
+const supportedProfiles = new Set(Object.keys(profileApps));
+
+/**
+ * The Compose file chain contributed by the registry, in declaration order. An integration is
+ * active when its selecting condition holds: a closure service, an enabled profile, or — the shape
+ * an external provider usually needs — every variable in `requiredEnv` being present and non-empty.
+ */
+export function selectOptionalIntegrationOverlays(integrations, { services, profiles, environment }) {
+  const active = (integration) => {
+    if (integration.service) return services.includes(integration.service);
+    if (integration.profile) return profiles.includes(integration.profile);
+    if (integration.requiredEnv?.length) return integration.requiredEnv.every((key) => environment[key]?.trim());
+    return false;
+  };
+  return integrations
+    .filter((integration) => integration.overlayFile && active(integration))
+    .map((integration) => integration.overlayFile);
+}
 const productionApps = new Set([
   'admin-app',
   'admin-app-api',
@@ -50,22 +80,28 @@ const productionComposeServices = new Set([
   'prometheus',
   'redis',
 ]);
-const primaryUpstreams = {
-  'landing-app': 'landing-app:8080',
-  'site-app': 'site-app:80',
-};
+/**
+ * Every app the edge can publish, as `[appId, domainEnvName, composeUpstream]`. Deploy hosts run
+ * this file without dev dependencies, so the table is literal here rather than imported from the
+ * TypeScript setup catalog; `compose-production.spec.mjs` asserts the two stay identical.
+ *
+ * Any entry may own the apex. The apex is a product decision, not a property of the marketing
+ * shells, and hardcoding it to those two put every other product's front door on a subdomain.
+ */
 const publicApps = [
-  ['landing-app', 'LANDING_APP_DOMAIN'],
-  ['site-app', 'SITE_APP_DOMAIN'],
-  ['user-app', 'USER_APP_DOMAIN'],
-  ['admin-app', 'ADMIN_APP_DOMAIN'],
-  ['mobile-app', 'MOBILE_APP_DOMAIN'],
-  ['auth-app-api', 'AUTH_APP_API_DOMAIN'],
-  ['user-app-api', 'USER_APP_API_DOMAIN'],
-  ['admin-app-api', 'ADMIN_APP_API_DOMAIN'],
-  ['discord-app-api', 'DISCORD_APP_API_DOMAIN'],
-  ['telegram-bot-api', 'TELEGRAM_BOT_API_DOMAIN'],
+  ['landing-app', 'LANDING_APP_DOMAIN', 'landing-app:8080'],
+  ['site-app', 'SITE_APP_DOMAIN', 'site-app:80'],
+  ['user-app', 'USER_APP_DOMAIN', 'user-app:8080'],
+  ['admin-app', 'ADMIN_APP_DOMAIN', 'admin-app:8080'],
+  ['mobile-app', 'MOBILE_APP_DOMAIN', 'mobile-app:8080'],
+  ['auth-app-api', 'AUTH_APP_API_DOMAIN', 'auth-app-api:80'],
+  ['user-app-api', 'USER_APP_API_DOMAIN', 'user-app-api:80'],
+  ['admin-app-api', 'ADMIN_APP_API_DOMAIN', 'admin-app-api:80'],
+  ['discord-app-api', 'DISCORD_APP_API_DOMAIN', 'discord-app-api:80'],
+  ['telegram-bot-api', 'TELEGRAM_BOT_API_DOMAIN', 'telegram-bot-api:80'],
 ];
+export const publicComposeApps = publicApps;
+const primaryUpstreams = Object.fromEntries(publicApps.map(([appId, , upstream]) => [appId, upstream]));
 
 export const productionComposeDiagnostics = Object.freeze({
   dryRun: JSON.stringify({ status: 'validated', execution: 'skipped' }, null, 2),
@@ -122,7 +158,9 @@ export function validateBaseDomain(value) {
 
 export function derivePublicDomains(baseDomain, primaryApp) {
   if (!Object.hasOwn(primaryUpstreams, primaryApp)) {
-    fail('PRIMARY_APP must be either "landing-app" or "site-app".');
+    fail(
+      `PRIMARY_APP must be one of the publicly served apps: ${publicApps.map(([appId]) => appId).join(', ')} (received "${primaryApp}").`,
+    );
   }
   const domain = validateBaseDomain(baseDomain);
   return Object.fromEntries(
@@ -468,7 +506,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
   for (const profile of requestedProfiles) {
     if (!supportedProfiles.has(profile)) {
       fail(
-        `Unsupported production profile "${profile}". Supported profiles: discord, notification-consumer, notification-scheduler, telegram.`,
+        `Unsupported production profile "${profile}". Supported profiles: ${[...supportedProfiles].sort().join(', ')}.`,
       );
     }
     if (!closure.selectedApps.includes(profileApps[profile])) {
@@ -479,9 +517,17 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
     .filter(([, appId]) => closure.selectedApps.includes(appId))
     .map(([profile]) => profile)
     .sort();
-  if (domainMode === 'single-domain' && profiles.some((profile) => profile === 'telegram' || profile === 'discord')) {
+  const activeIntegrations = optionalIntegrations.filter(
+    (integration) =>
+      (integration.profile && profiles.includes(integration.profile)) ||
+      (integration.service && closure.services.includes(integration.service)),
+  );
+  const publicApiIntegrations = activeIntegrations
+    .filter((integration) => integration.requiresPublicApiDomain)
+    .map((integration) => integration.id);
+  if (domainMode === 'single-domain' && publicApiIntegrations.length > 0) {
     fail(
-      'Optional Telegram/Discord profiles require per-app-domains (or an operator-owned external proxy) because their user app and API must both remain publicly reachable.',
+      `Optional ${publicApiIntegrations.join('/')} profiles require per-app-domains (or an operator-owned external proxy) because their user app and API must both remain publicly reachable.`,
     );
   }
 
@@ -549,25 +595,21 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
     ...domains,
     ...runtimeDefaults,
     ...frontendBuildEnvironment,
-    ...(profiles.includes('telegram')
-      ? {
-          AUTH_TELEGRAM_ENABLED: 'true',
-          TELEGRAM_OIDC_ENABLED: 'true',
-          VITE_TELEGRAM_AUTH_ENABLED: 'true',
-        }
-      : {}),
-    ...(profiles.includes('discord') ? { DISCORD_AUTH_ENABLED: 'true' } : {}),
+    ...Object.assign({}, ...activeIntegrations.map((integration) => integration.environment ?? {})),
     COMPOSE_DATABASE_MODE: databaseMode,
     DATABASE_ENGINE: databaseEngine,
     ...(mongoReplicaSet ? { MONGODB_REPLICA_SET: mongoReplicaSet } : {}),
     COMPOSE_DOMAIN_MODE: domainMode,
     COMPOSE_TLS_MODE: tlsMode,
     ...(domainMode === 'external-proxy' && publicDomainMode ? { EXTERNAL_PROXY_PUBLIC_MODE: publicDomainMode } : {}),
-    // Only discord/telegram have Caddy site/route fragments; notification-* are
-    // background workers with no edge surface. Keep the fixed discord-first order
-    // so the combined value matches the generated "discord-telegram" fragment.
+    // Only integrations that declare an `edgeRoute` have Caddy site/route fragments; the
+    // notification workers have no edge surface. Sort so the combined value always matches the
+    // generated fragment name, which is built from the same sorted registry.
     EDGE_OPTIONAL_ROUTES:
-      ['discord', 'telegram'].filter((profile) => profiles.includes(profile)).join('-') || 'default',
+      activeIntegrations
+        .flatMap((integration) => (integration.edgeRoute ? [integration.edgeRoute] : []))
+        .sort()
+        .join('-') || 'default',
     ...(domainMode !== 'external-proxy'
       ? {
           EDGE_CADDYFILE: '/nrb/Caddyfile.selected',
@@ -601,9 +643,13 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
         : `docker/docker-compose.prod.mongodb-${databaseMode}.yml`,
     );
   }
-  if (closure.services.includes('redis')) files.push('docker/docker-compose.prod.redis.yml');
-  if (profiles.includes('telegram')) files.push('docker/docker-compose.prod.telegram.yml');
-  if (profiles.includes('discord')) files.push('docker/docker-compose.prod.discord.yml');
+  files.push(
+    ...selectOptionalIntegrationOverlays(optionalIntegrations, {
+      services: closure.services,
+      profiles,
+      environment: effectiveEnvironment,
+    }),
+  );
   if (domainMode !== 'external-proxy') files.push('docker/docker-compose.prod.edge.yml');
   if (tlsMode === 'provided') files.push('docker/docker-compose.prod.edge-provided-tls.yml');
   if (sourceBuild) files.push('docker/docker-compose.prod.build.yml');

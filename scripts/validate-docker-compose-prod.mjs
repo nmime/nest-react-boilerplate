@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { parseDeclaredSecrets } from './declared-secrets.mjs';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const has = (text, needle, label = needle) =>
@@ -83,24 +84,24 @@ assert.ok(!prodCompose.includes('      redis:\n'), 'production Compose base must
 assert.ok(!prodCompose.includes('\n  redis_password:\n'), 'production Compose base must omit unselected Redis secrets');
 has(redisCompose, 'redis_password:', 'Redis authentication Docker secret');
 has(redisCompose, 'requirepass %s', 'Redis requires its generated password');
-for (const expected of [
-  'load_secret SESSION_SECRET /run/secrets/session_secret',
-  'load_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY /run/secrets/auth_provider_token_encryption_key',
-  'load_secret NOTIFICATION_PAYLOAD_ENCRYPTION_KEY /run/secrets/notification_payload_encryption_key',
-  'load_secret RESEND_API_KEY /run/secrets/resend_api_key',
-  'load_secret MAILPACE_SERVER_TOKEN /run/secrets/mailpace_server_token',
-  'load_secret REDIS_PASSWORD /run/secrets/redis_password',
-]) {
-  has(secretEntrypoint, expected, `secret entrypoint ${expected}`);
-}
-const declaredSecretGuard = secretEntrypoint.slice(
-  secretEntrypoint.indexOf('has_declared_docker_secret()'),
-  secretEntrypoint.indexOf('\n}\n', secretEntrypoint.indexOf('has_declared_docker_secret()')),
+// The entrypoint's manifest is the only list of secrets; assert on the parsed mapping so this
+// validator cannot drift from it. The fail-closed guard reads the same manifest, so the guard and
+// the loader can no longer disagree.
+const declaredSecretVariables = new Map(
+  parseDeclaredSecrets(secretEntrypoint).map(({ secret, variable }) => [secret, variable]),
 );
-for (const match of secretEntrypoint.matchAll(/^\s*load_secret\s+\S+\s+(\/run\/secrets\/\S+)$/gmu)) {
-  has(declaredSecretGuard, match[1], `declared Docker secret guard ${match[1]}`);
+for (const [secret, variable] of [
+  ['session_secret', 'SESSION_SECRET'],
+  ['auth_provider_token_encryption_key', 'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY'],
+  ['notification_payload_encryption_key', 'NOTIFICATION_PAYLOAD_ENCRYPTION_KEY'],
+  ['resend_api_key', 'RESEND_API_KEY'],
+  ['mailpace_server_token', 'MAILPACE_SERVER_TOKEN'],
+  ['redis_password', 'REDIS_PASSWORD'],
+]) {
+  assert.equal(declaredSecretVariables.get(secret), variable, `secret entrypoint loads ${secret} into ${variable}`);
 }
 has(secretEntrypoint, 'if has_declared_docker_secret; then', 'declared non-root Docker secret mounts fail closed');
+has(secretEntrypoint, 'for entry in $declared_secrets; do', 'the fail-closed guard reads the one declared manifest');
 has(secretEntrypoint, 'exec su-exec 1000:1000 "$@"', 'entrypoint drops to numeric UID/GID 1000');
 has(prodCompose, 'su-exec 1000:1000 node -e', 'backend healthchecks run Node as numeric UID/GID 1000');
 assert.equal(
@@ -177,9 +178,12 @@ has(singleDomainCaddyfile, '{$PUBLIC_DOMAIN}', 'single-domain public hostname');
 has(singleDomainCaddyfile, '{$PRIMARY_APP_UPSTREAM}', 'single-domain selected apex frontend');
 has(perAppCaddyfile, '{$AUTH_APP_API_DOMAIN}', 'per-app auth API hostname');
 has(perAppCaddyfile, 'auth-app-api:80', 'per-app auth API upstream');
-has(composeWrapper, "'auth-app-api', 'AUTH_APP_API_DOMAIN'", 'app-id domain derivation');
-has(composeWrapper, "'landing-app': 'landing-app:8080'", 'landing apex upstream');
-has(composeWrapper, "'site-app': 'site-app:80'", 'site apex upstream');
+has(composeWrapper, "['auth-app-api', 'AUTH_APP_API_DOMAIN', 'auth-app-api:80']", 'app-id domain derivation');
+// Every public app is a candidate apex owner; compose-production.spec.mjs holds this table to the
+// setup catalog, so here it only has to be a table rather than a two-entry allowlist.
+has(composeWrapper, "['landing-app', 'LANDING_APP_DOMAIN', 'landing-app:8080']", 'landing apex upstream');
+has(composeWrapper, "['site-app', 'SITE_APP_DOMAIN', 'site-app:80']", 'site apex upstream');
+has(composeWrapper, "['user-app', 'USER_APP_DOMAIN', 'user-app:8080']", 'product SPA apex upstream');
 for (const expected of [
   'AUTH_TELEGRAM_ENABLED:',
   'TELEGRAM_OIDC_ENABLED:',
@@ -270,6 +274,31 @@ for (const expected of [
   'Never use latest/main/dev/prod-style mutable tags',
 ]) {
   has(productionEnvExample, expected, `.env.production.example ${expected}`);
+}
+
+// The shipped production template is what operators copy verbatim. An active `true` here would
+// hand every copy an unauthenticated deployment; the switch has to be opted into by hand.
+for (const key of ['AUTH_DEMO_MODE', 'AUTH_DEMO_ALLOW_PRODUCTION']) {
+  assert.doesNotMatch(
+    productionEnvExample,
+    new RegExp(`^${key}=true$`, 'mu'),
+    `.env.production.example must not enable ${key}`,
+  );
+}
+
+// Demo mode is only reachable if the backend service env actually forwards it. Enumerated
+// Compose env blocks silently drop anything that is only in the operator's .env file, which is
+// how a documented switch ends up doing nothing on the one deployment that needed it.
+for (const key of [
+  'AUTH_DEMO_MODE',
+  'AUTH_DEMO_ALLOW_PRODUCTION',
+  'AUTH_DEMO_ROLES',
+  'AUTH_DEMO_SUBJECT',
+  'AUTH_DEMO_TENANT_ID',
+  'AUTH_DEMO_EMAIL',
+  'AUTH_DEMO_DISPLAY_NAME',
+]) {
+  has(prodCompose, `${key}: \${${key}`, `production Compose must forward ${key} to the backend services`);
 }
 
 for (const key of ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL']) {
@@ -387,9 +416,15 @@ has(deploymentDocs, '## Compose production', 'deployment docs production Compose
 has(deploymentDocs, 'docker:prod:config', 'deployment docs production Compose entrypoint');
 has(deploymentDocs, 'single-domain', 'deployment docs single-domain topology');
 has(deploymentDocs, 'per-app-domains', 'deployment docs per-app topology');
+// Derived, not embedded: a product that renames its repository should never have to patch a
+// boilerplate validator to keep its own security-reporting channel asserted.
+const repositorySlug = /github\.com\/([\w.-]+\/[\w.-]+?)(?:\.git)?$/u.exec(
+  JSON.parse(read('package.json')).repository.url,
+)?.[1];
+assert.ok(repositorySlug, 'package.json must declare a GitHub repository URL');
 has(
   securityPolicy,
-  'https://github.com/nmime/nest-react-boilerplate/security/advisories/new',
+  `https://github.com/${repositorySlug}/security/advisories/new`,
   'canonical private security reporting channel',
 );
 has(securityPolicy, 'within 3 business days', 'security acknowledgement SLA');

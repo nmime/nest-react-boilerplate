@@ -1,0 +1,47 @@
+{
+  "$comment": "Every optional production integration, as data. A product registers one by appending a row here — never by adding a branch to scripts/compose-production.mjs. Fields: id (unique); profile + app register a Compose profile that may only be requested when the app is selected; service selects the overlay from the setup closure's service list; requiredEnv selects the overlay when every listed variable is present and non-empty (the usual shape for an external provider that only needs a secret mounted); overlayFile is pushed onto the Compose file chain in this file's declaration order; environment is merged into the Compose environment when the integration is active; edgeRoute names the Caddy fragment the edge composes for it; requiresPublicApiDomain rejects single-domain topologies whose API would stop being publicly reachable; secrets lists the Docker secret names the overlay mounts, cross-checked against docker/secret-entrypoint.sh.",
+  "integrations": [
+    {
+      "id": "redis",
+      "service": "redis",
+      "overlayFile": "docker/docker-compose.prod.redis.yml",
+      "secrets": ["redis_password"]
+    },
+    {
+      "id": "telegram",
+      "profile": "telegram",
+      "app": "telegram-bot-api",
+      "overlayFile": "docker/docker-compose.prod.telegram.yml",
+      "edgeRoute": "telegram",
+      "requiresPublicApiDomain": true,
+      "environment": {
+        "AUTH_TELEGRAM_ENABLED": "true",
+        "TELEGRAM_OIDC_ENABLED": "true",
+        "VITE_TELEGRAM_AUTH_ENABLED": "true"
+      },
+      "secrets": ["telegram_bot_token", "telegram_oidc_client_secret", "telegram_bot_webhook_secret"]
+    },
+    {
+      "id": "discord",
+      "profile": "discord",
+      "app": "discord-app-api",
+      "overlayFile": "docker/docker-compose.prod.discord.yml",
+      "edgeRoute": "discord",
+      "requiresPublicApiDomain": true,
+      "environment": {
+        "DISCORD_AUTH_ENABLED": "true"
+      },
+      "secrets": ["discord_bot_token", "discord_client_secret", "discord_public_key", "discord_custom_id_secret"]
+    },
+    {
+      "id": "notification-consumer",
+      "profile": "notification-consumer",
+      "app": "notification-consumer"
+    },
+    {
+      "id": "notification-scheduler",
+      "profile": "notification-scheduler",
+      "app": "notification-scheduler"
+    }
+  ]
+}

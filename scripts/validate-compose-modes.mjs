@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { createJiti } from 'jiti';
 import { buildComposeInvocation } from './compose-production.mjs';
 import { normalizedClosureContextFiles } from './closure-build-context.mjs';
+import { parseDeclaredSecrets } from './declared-secrets.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const jiti = createJiti(import.meta.url);
@@ -90,27 +91,23 @@ assert.ok(!base.includes('\n  mongodb:\n'), 'The production base Compose file mu
 assert.ok(!base.includes('\n  redis:\n'), 'The production base Compose file must not include unselected Redis.');
 assert.ok(!base.includes('      redis:\n'), 'The production base Compose file must not depend on unselected Redis.');
 assert.ok(redis.includes('\n  redis:\n'), 'The Redis overlay must define Redis.');
-assert.ok(
-  secretEntrypoint.includes('load_secret DATABASE_URL /run/secrets/database_url'),
-  'The production entrypoint must load the external database URL secret.',
+// Assert on the entrypoint's parsed manifest, not on its rendered load_secret lines: the manifest
+// is the single enumeration and this validator must derive from it rather than restate it.
+const declaredSecretVariables = new Map(
+  parseDeclaredSecrets(secretEntrypoint).map(({ secret, variable }) => [secret, variable]),
 );
-assert.ok(
-  secretEntrypoint.includes('load_secret POSTGRES_PASSWORD /run/secrets/postgres_password'),
-  'The production entrypoint must load the bundled PostgreSQL secret.',
-);
-assert.ok(secretEntrypoint.includes('load_secret MONGODB_URI /run/secrets/mongodb_uri'));
-assert.ok(secretEntrypoint.includes('load_secret MONGODB_URI /run/secrets/mongodb_migration_uri'));
-assert.ok(secretEntrypoint.includes('load_secret MONGODB_PASSWORD /run/secrets/mongodb_password'));
-assert.ok(secretEntrypoint.includes('load_secret MONGODB_PASSWORD /run/secrets/mongodb_migration_password'));
-for (const [variable, path] of [
-  ['SESSION_SECRET', 'session_secret'],
-  ['AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY', 'auth_provider_token_encryption_key'],
-  ['REDIS_PASSWORD', 'redis_password'],
+for (const [secret, variable, reason] of [
+  ['database_url', 'DATABASE_URL', 'the external database URL secret'],
+  ['postgres_password', 'POSTGRES_PASSWORD', 'the bundled PostgreSQL secret'],
+  ['mongodb_uri', 'MONGODB_URI', 'the external MongoDB URI'],
+  ['mongodb_migration_uri', 'MONGODB_URI', 'the MongoDB migration URI alias'],
+  ['mongodb_password', 'MONGODB_PASSWORD', 'the bundled MongoDB password'],
+  ['mongodb_migration_password', 'MONGODB_PASSWORD', 'the MongoDB migration password alias'],
+  ['session_secret', 'SESSION_SECRET', 'the session secret'],
+  ['auth_provider_token_encryption_key', 'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY', 'the provider-token key'],
+  ['redis_password', 'REDIS_PASSWORD', 'the Redis password'],
 ]) {
-  assert.ok(
-    secretEntrypoint.includes(`load_secret ${variable} /run/secrets/${path}`),
-    `The production entrypoint must load ${variable}.`,
-  );
+  assert.equal(declaredSecretVariables.get(secret), variable, `The production entrypoint must load ${reason}.`);
 }
 assert.ok(
   secretEntrypoint.includes('exec su-exec 1000:1000 "$@"'),
@@ -181,18 +178,13 @@ assert.ok(edge.includes('cap_drop: [ALL]'), 'The public edge must drop ambient L
 assert.ok(edge.includes('no-new-privileges:true'), 'The public edge must prevent privilege escalation.');
 assert.ok(providedTls.includes('EDGE_TLS_CERT_FILE'), 'Provided TLS mode must mount a certificate file.');
 assert.ok(providedTls.includes('EDGE_TLS_KEY_FILE'), 'Provided TLS mode must mount a private-key file.');
-assert.ok(
-  secretEntrypoint.includes('load_secret BETTER_AUTH_SECRET /run/secrets/better_auth_secret'),
-  'The production entrypoint must load the Better Auth secret.',
-);
-assert.ok(
-  secretEntrypoint.includes('load_secret TELEGRAM_OIDC_CLIENT_SECRET /run/secrets/telegram_oidc_client_secret'),
-  'The production entrypoint must load the Telegram OIDC client secret.',
-);
-assert.ok(
-  secretEntrypoint.includes('load_secret DISCORD_CLIENT_SECRET /run/secrets/discord_client_secret'),
-  'The production entrypoint must load the Discord OAuth client secret.',
-);
+for (const [secret, variable, reason] of [
+  ['better_auth_secret', 'BETTER_AUTH_SECRET', 'the Better Auth secret'],
+  ['telegram_oidc_client_secret', 'TELEGRAM_OIDC_CLIENT_SECRET', 'the Telegram OIDC client secret'],
+  ['discord_client_secret', 'DISCORD_CLIENT_SECRET', 'the Discord OAuth client secret'],
+]) {
+  assert.equal(declaredSecretVariables.get(secret), variable, `The production entrypoint must load ${reason}.`);
+}
 for (const service of databaseConsumers) {
   assert.ok(bundled.includes(`  ${service}:`), `Bundled-db overlay must wire ${service}.`);
   assert.ok(external.includes(`  ${service}:`), `External-db overlay must wire ${service}.`);

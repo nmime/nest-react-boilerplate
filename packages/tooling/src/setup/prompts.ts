@@ -10,10 +10,10 @@
  */
 import * as readline from 'node:readline/promises';
 import type { NrbConfig, PresetId } from './schema.js';
-import { defaultDeploymentConfig, defaultProductConfig, schemaVersion } from './schema.js';
+import { defaultDeploymentConfig, defaultProductConfig, frontendAppIds, isPublicDomain, schemaVersion } from './schema.js';
 import { presets, expandPreset } from './presets.js';
 import { appCatalog, capabilityCatalog, durableDatabaseProviderIds, expandDependencies } from './catalog.js';
-import type { AppId, CapabilityId } from './schema.js';
+import type { AppId, CapabilityId, FrontendAppId } from './schema.js';
 import { materializeSelection } from './selection.js';
 
 // ---------------------------------------------------------------------------
@@ -254,6 +254,8 @@ async function promptProductAndDeployment(
   if (targets.length === 0) {
     throw new Error('Select at least one deployment target.');
   }
+  const publicDomain = await askPublicDomain(io, currentDeployment.publicDomain);
+  const primaryApp = await askPrimaryApp(io, apps, publicDomain, currentDeployment.primaryApp);
   const publicTopology = (await askChoice(
     io,
     'Choose public topology',
@@ -291,8 +293,47 @@ async function promptProductAndDeployment(
   }
   return {
     product: { ciMode, frontendApiMode, mobileTargets },
-    deployment: { targets, publicTopology, kubernetesDelivery, infrastructure },
+    deployment: { targets, publicDomain, primaryApp, publicTopology, kubernetesDelivery, infrastructure },
   };
+}
+
+async function askPublicDomain(io: PromptIo, current: string): Promise<string> {
+  const answer = (await io.ask('Enter the public domain', current)).trim().toLowerCase().replace(/\.$/u, '');
+  const domain = answer === '' ? current : answer;
+  if (!isPublicDomain(domain)) {
+    throw new Error(`"${domain}" is not a DNS base name; enter a domain such as example.com.`);
+  }
+  return domain;
+}
+
+/**
+ * Which app answers the bare domain. Only frontend apps in the current selection are offered, plus
+ * an explicit "none" so a selection without a public front door keeps every app on a subdomain.
+ */
+async function askPrimaryApp(
+  io: PromptIo,
+  apps: AppId[],
+  publicDomain: string,
+  current: NrbConfig['deployment']['primaryApp'],
+): Promise<NrbConfig['deployment']['primaryApp']> {
+  const candidates = frontendAppIds.filter((appId) => apps.includes(appId));
+  if (candidates.length === 0) {
+    return null;
+  }
+  const choices = [
+    { label: `No app on ${publicDomain}; every app keeps its own subdomain`, value: '' },
+    ...candidates.map((appId) => ({ label: `${appCatalog[appId].label} (${appId})`, value: appId })),
+  ];
+  // Defaulting to an app the selection no longer contains would silently point the apex at a
+  // service that is never deployed, so an unselected owner falls back to "no apex owner".
+  const currentIndex = current === null ? -1 : candidates.indexOf(current);
+  const selected = await askChoice(
+    io,
+    `Choose which app is served on ${publicDomain}`,
+    choices,
+    currentIndex === -1 ? 0 : currentIndex + 1,
+  );
+  return selected === '' ? null : (selected as FrontendAppId);
 }
 
 async function promptAppGroup(

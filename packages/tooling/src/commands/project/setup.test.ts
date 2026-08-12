@@ -219,6 +219,16 @@ describe("setup — parseArgs", () => {
     assert.deepEqual(args.capabilities, ["postgres"]);
   });
 
+  it("parses the public domain and its apex owner", () => {
+    const args = parseArgs(["--public-domain", "dehqonhub.uz", "--primary-app=site-app"]);
+    assert.equal(args.publicDomain, "dehqonhub.uz");
+    assert.equal(args.primaryApp, "site-app");
+  });
+
+  it("accepts none as the apex owner so every app keeps a subdomain", () => {
+    assert.equal(parseArgs(["--primary-app", "none"]).primaryApp, null);
+  });
+
   it("skips -- separator", () => {
     const args = parseArgs(["--", "--dry-run"]);
     assert.equal(args.dryRun, false); // should be treated as pass-through
@@ -406,6 +416,8 @@ describe("setup — repeatable command selection", () => {
         product: { ciMode: "product", frontendApiMode: "same-origin", mobileTargets: ["web"] },
         deployment: {
           targets: ["docker"],
+          publicDomain: "example.com",
+          primaryApp: null,
           publicTopology: "single-domain",
           kubernetesDelivery: "direct",
           infrastructure: { redis: "bundled", nats: "bundled", s3: "bundled" },
@@ -656,6 +668,8 @@ describe("prompts — buildConfig", () => {
       product: { ciMode: "product", frontendApiMode: "same-origin", mobileTargets: ["web"] },
       deployment: {
         targets: ["docker"],
+        publicDomain: "example.com",
+        primaryApp: null,
         publicTopology: "single-domain",
         kubernetesDelivery: "direct",
         infrastructure: { redis: "bundled", nats: "bundled", s3: "bundled" },
@@ -680,6 +694,8 @@ describe("prompts — buildConfig", () => {
       product: { ciMode: "product", frontendApiMode: "same-origin", mobileTargets: ["web"] },
       deployment: {
         targets: ["docker"],
+        publicDomain: "example.com",
+        primaryApp: null,
         publicTopology: "single-domain",
         kubernetesDelivery: "direct",
         infrastructure: { redis: "bundled", nats: "bundled", s3: "bundled" },

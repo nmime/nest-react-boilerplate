@@ -10,7 +10,19 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.className | quote }}
   tls:
-    {{- range $tls := .Values.ingress.tls }}
+    {{- $tlsGroups := .Values.ingress.tls }}
+    {{- if and (empty $tlsGroups) .Values.ingress.tlsSecretName }}
+    {{- /*
+      No explicit grouping: one certificate covers whatever hosts are enabled. This is what a
+      setup-generated host table relies on, because it cannot know the release's secret name.
+    */}}
+    {{- $derivedHosts := list }}
+    {{- range $host := .Values.ingress.hosts }}
+    {{- $derivedHosts = append $derivedHosts (toString $host.host) }}
+    {{- end }}
+    {{- $tlsGroups = list (dict "secretName" .Values.ingress.tlsSecretName "hosts" (uniq $derivedHosts)) }}
+    {{- end }}
+    {{- range $tls := $tlsGroups }}
     {{- $enabledHosts := list }}
     {{- range $hostname := $tls.hosts }}
     {{- range $host := $.Values.ingress.hosts }}

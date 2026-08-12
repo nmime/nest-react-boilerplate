@@ -29,7 +29,8 @@
           "telegram-bot-api",
           "notification-consumer",
           "notification-scheduler",
-          "fullstack-e2e"
+          "fullstack-e2e",
+          "acceptance-e2e"
         ]
       },
       "description": "Applications to add to the current selection",
@@ -82,7 +83,8 @@
           "telegram-bot-api",
           "notification-consumer",
           "notification-scheduler",
-          "fullstack-e2e"
+          "fullstack-e2e",
+          "acceptance-e2e"
         ]
       },
       "description": "Applications to remove when no selected application requires them",

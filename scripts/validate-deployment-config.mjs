@@ -1,5 +1,16 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { createJiti } from 'jiti';
+import { composeDeclaredSecrets, composeMountedSecrets, parseDeclaredSecrets } from './declared-secrets.mjs';
+import { renderNginxFullstackConfig } from './generate-nginx-config.mjs';
+
+const jiti = createJiti(import.meta.url);
+const { appPublicHostname } = await jiti.import('../packages/tooling/src/setup/catalog.ts');
+const { defaultDeploymentConfig } = await jiti.import('../packages/tooling/src/setup/schema.ts');
+const documentedDomain = {
+  publicDomain: defaultDeploymentConfig.publicDomain,
+  primaryApp: defaultDeploymentConfig.primaryApp,
+};
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const treeContainsFiles = (root) =>
@@ -812,46 +823,72 @@ assert.ok(
   'Docker smoke SESSION_SECRET default must satisfy the production minimum length.',
 );
 
-const assertNginxRoutes = (text, { helm = false } = {}) => {
-  has(
-    text,
-    helm ? 'listen {{ default 8080 .Values.frontendNginx.listenPort }};' : 'listen 8080;',
-    'frontend nginx listen port',
+// Route semantics belong to the one table both edges derive from, not to either rendering of it.
+const frontendRoutes = JSON.parse(read('.helm/frontend-routes.json'));
+const spaRoutePaths = frontendRoutes.spaRoutes.map((route) => route.path);
+const apiLocationsByPrefix = new Map(frontendRoutes.apiLocations.map((location) => [location.prefix, location]));
+for (const shadowed of [
+  '/admin',
+  '/admin/',
+  '/admin/dashboard',
+  '/admin/dashboard/',
+  '/admin/profile',
+  '/admin/profile/',
+  '/profile',
+]) {
+  assert.ok(
+    spaRoutePaths.includes(shadowed),
+    `${shadowed} must be an exact SPA route: an "^~" API prefix skips regex locations, so a regex fallback cannot serve it`,
   );
-  has(text, helm ? '.Values.frontendNginx.healthPath' : '/nginx-health', 'nginx health route');
+}
+for (const [prefix, app] of [
+  ['/auth/', 'auth-app-api'],
+  ['/api/auth/', 'auth-app-api'],
+  ['/profile/', 'user-app-api'],
+  ['/admin/', 'admin-app-api'],
+]) {
+  assert.equal(apiLocationsByPrefix.get(prefix)?.app, app, `${prefix} must be proxied to ${app}`);
+}
+assert.equal(
+  apiLocationsByPrefix.get('/api/auth/')?.spaFallback,
+  undefined,
+  'Better Auth owns /api/auth and must never fall through to the SPA navigation fallback',
+);
+
+assert.equal(
+  read('docker/nginx-fullstack.conf'),
+  renderNginxFullstackConfig(frontendRoutes),
+  'docker/nginx-fullstack.conf is stale; run node scripts/generate-nginx-config.mjs',
+);
+
+const assertNginxRoutes = (text) => {
+  has(text, 'listen 8080;', 'frontend nginx listen port');
+  has(text, '/nginx-health', 'nginx health route');
   has(text, 'add_header Vary "Accept" always;', 'SPA and API cache entries vary by negotiated media type');
-  before(text, 'location = /admin {', 'location ^~ /admin/ {', 'exact /admin SPA route precedes /admin API prefix');
-  before(text, 'location = /admin/ {', 'location ^~ /admin/ {', 'exact /admin/ SPA route precedes /admin API prefix');
-  for (const adminSpaRoute of ['dashboard', 'dashboard/', 'profile', 'profile/']) {
-    before(
-      text,
-      `location = /admin/${adminSpaRoute} {`,
-      'location ^~ /admin/ {',
-      `exact /admin/${adminSpaRoute} SPA route wins over admin API prefix`,
-    );
-  }
   assert.ok(
     !text.includes('location ~ ^/admin/(dashboard|profile)/?$'),
     'Admin SPA deep links must use exact locations because the ^~ admin API prefix skips regex locations.',
   );
-  before(
-    text,
-    'location = /profile {',
-    'location ^~ /profile/ {',
-    'exact /profile SPA route precedes profile API prefix',
-  );
-  has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
-  has(text, 'location ^~ /api/auth/', 'Better Auth API prefix must be proxied to auth-app-api');
-  has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
-  has(text, 'location ^~ /admin/', 'admin API prefix route cannot be shadowed by regex static assets');
+  for (const path of spaRoutePaths) has(text, `location = ${path} {`, `SPA route ${path}`);
+  for (const prefix of apiLocationsByPrefix.keys()) has(text, `location ^~ ${prefix} {`, `API prefix ${prefix}`);
   for (const service of ['auth-app-api', 'user-app-api', 'admin-app-api']) {
-    has(text, helm ? `-${service}:` : `${service}:80`, `${service} upstream`);
+    has(text, `${service}:80`, `${service} upstream`);
   }
 };
 assertNginxRoutes(read('docker/nginx-fullstack.conf'));
 
 if (validateHelmStatic) {
-  assertNginxRoutes(read('.helm/templates/configmap.yaml'), { helm: true });
+  const nginxConfigMap = read('.helm/templates/configmap.yaml');
+  has(nginxConfigMap, 'listen {{ default 8080 .Values.frontendNginx.listenPort }};', 'frontend nginx listen port');
+  has(nginxConfigMap, '.Values.frontendNginx.healthPath', 'nginx health route');
+  has(nginxConfigMap, 'add_header Vary "Accept" always;', 'SPA and API cache entries vary by media type');
+  has(nginxConfigMap, '.Files.Get "frontend-routes.json"', 'the chart reads the shared route table');
+  has(nginxConfigMap, 'range $route := $routes.spaRoutes', 'the chart iterates the shared SPA routes');
+  has(nginxConfigMap, 'range $location := $routes.apiLocations', 'the chart iterates the shared API locations');
+  assert.ok(
+    !/location \^~ \/(auth|profile|admin)\//u.test(nginxConfigMap),
+    'The chart must not restate an API location that the shared route table already declares.',
+  );
 
   const helmValues = read('.helm/values.yaml');
   const helmHelpers = read('.helm/templates/_helpers.tpl');
@@ -1120,9 +1157,14 @@ if (validateHelmStatic) {
     'cache-to=type=gha,mode=max,scope=release-',
     'release workflow persists the shared BuildKit dependency cache for reuse across the bake build',
   );
+  // The contract lives in the setup catalog, not in this file: `appPublicHostname` is what setup,
+  // Compose, and the generated Helm overlay all derive their hostnames from.
   for (const [, service, host] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
-    const expectedHost = service === 'landing-app' ? 'example.com' : `${service}.example.com`;
-    assert.equal(host, expectedHost, `${service} default domain must match the public domain contract`);
+    assert.equal(
+      host,
+      appPublicHostname(service, documentedDomain),
+      `${service} default domain must match the public domain contract`,
+    );
   }
   for (const [label, values] of [
     ['default', helmValues],
@@ -1188,6 +1230,72 @@ if (validateHelmStatic) {
   hasQ(migrationValuesBlock, 'capabilities: { drop: ["ALL"] }', 'migration job drops Linux capabilities');
 } else {
   console.log('Helm static deployment assertions skipped for docker mode.');
+}
+
+// Repository identity has one source: package.json. A product that renames its repo must not have
+// to patch assurance code or operational metadata, so nothing under scripts/ may embed the slug,
+// and the files that genuinely cannot read package.json — Prometheus rules — are pinned to it.
+const repositorySlug = /github\.com\/(?<slug>[\w.-]+\/[\w.-]+?)(?:\.git)?$/u.exec(
+  JSON.parse(read('package.json')).repository.url,
+)?.groups?.slug;
+assert.ok(repositorySlug, 'package.json must declare a GitHub repository URL');
+assert.ok(
+  !/github\.com\/[\w.-]+\/[\w.-]+\/security\/advisories/u.test(read('scripts/validate-docker-compose-prod.mjs')),
+  'scripts/validate-docker-compose-prod.mjs must derive the repository slug from package.json, not embed it',
+);
+for (const runbook of read('docker/prometheus/alert-rules.yml').matchAll(
+  /runbook_url:\s*'https:\/\/github\.com\/(?<slug>[\w.-]+\/[\w.-]+)\//gu,
+)) {
+  assert.equal(
+    runbook.groups.slug,
+    repositorySlug,
+    'docker/prometheus/alert-rules.yml runbook links must point at the repository package.json declares',
+  );
+}
+
+// Docker secrets are enumerated once, in docker/secret-entrypoint.sh. These assertions keep that
+// the only enumeration: a second copy of the list inside the entrypoint, an orphan entry, or a new
+// application secret that Compose mounts but the entrypoint never loads all fail here.
+const secretEntrypointText = read('docker/secret-entrypoint.sh');
+const declaredSecrets = parseDeclaredSecrets(secretEntrypointText);
+assert.ok(declaredSecrets.length > 0, 'docker/secret-entrypoint.sh must declare at least one secret');
+for (const { secret, variable } of declaredSecrets) {
+  assert.equal(
+    (secretEntrypointText.match(new RegExp(`\\b${secret}\\b`, 'gu')) ?? []).length,
+    1,
+    `Docker secret "${secret}" is enumerated more than once in docker/secret-entrypoint.sh`,
+  );
+  assert.match(variable, /^[A-Z][A-Z0-9_]*$/u, `Docker secret "${secret}" must map to an env-var name`);
+}
+// Secrets consumed by infrastructure containers, which never run the application entrypoint.
+const infrastructureOnlySecrets = new Set([
+  'grafana_admin_password',
+  'mongodb_backup_restore_password',
+  'mongodb_backup_restore_uri',
+  'mongodb_keyfile',
+  'mongodb_root_password',
+]);
+const declaredSecretNames = new Set(declaredSecrets.map((entry) => entry.secret));
+const composeSecretFiles = readdirSync(new URL('../docker/', import.meta.url))
+  .filter((name) => name.startsWith('docker-compose') && name.endsWith('.yml'))
+  .map((name) => `docker/${name}`);
+const composeDeclared = new Set(composeSecretFiles.flatMap((path) => composeDeclaredSecrets(read(path))));
+for (const secret of composeSecretFiles.flatMap((path) => composeMountedSecrets(read(path)))) {
+  assert.ok(
+    declaredSecretNames.has(secret) || infrastructureOnlySecrets.has(secret),
+    `Compose mounts Docker secret "${secret}" that docker/secret-entrypoint.sh never loads`,
+  );
+}
+for (const { secret } of declaredSecrets) {
+  assert.ok(composeDeclared.has(secret), `docker/secret-entrypoint.sh loads "${secret}" that no Compose file declares`);
+}
+for (const integration of JSON.parse(read('docker/optional-integrations.json')).integrations) {
+  for (const secret of integration.secrets ?? []) {
+    assert.ok(
+      declaredSecretNames.has(secret),
+      `Optional integration "${integration.id}" declares secret "${secret}" that docker/secret-entrypoint.sh never loads`,
+    );
+  }
 }
 
 console.log(`deployment config static assertions passed (${selectedMode} mode)`);

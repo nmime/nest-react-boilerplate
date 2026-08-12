@@ -14,6 +14,14 @@ namespace, registry path, and all public domains in these files. A manifest that
 still contains `your-github-org`, `example.com`, or
 `sha-REPLACE_WITH_RELEASE_GIT_SHA` is intentionally not deployable.
 
+Nothing stops you from applying such a manifest, so prove the rename
+instead of trusting it: `pnpm run onboarding:verify` fails on surviving
+placeholders. The `repoURL` in `deploy/argocd/application.yaml` and the
+`url` in `deploy/flux/source.yaml` are the two that silently do nothing
+useful when wrong — the cluster syncs from a repository that does not
+exist. See [Product identity](docs/product-identity.md) for the full
+surface and the repeatable rename path.
+
 ## Ownership boundary
 
 The application repository owns image references, Helm templates, application

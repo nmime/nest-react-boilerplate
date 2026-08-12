@@ -7,7 +7,13 @@ import { createJiti } from 'jiti';
 import { format } from 'prettier';
 
 const jiti = createJiti(import.meta.url);
-const { appCatalog } = await jiti.import('../packages/tooling/src/setup/catalog.ts');
+const { appCatalog, publicHostnameFor } = await jiti.import('../packages/tooling/src/setup/catalog.ts');
+const { defaultDeploymentConfig } = await jiti.import('../packages/tooling/src/setup/schema.ts');
+// Documentation shows the shipped defaults; a product changes them in nrb.config.json.
+const documentedDomain = {
+  publicDomain: defaultDeploymentConfig.publicDomain,
+  primaryApp: defaultDeploymentConfig.primaryApp,
+};
 
 const workspaceRoot = resolve(import.meta.dirname, '..');
 const catalogPath = resolve(workspaceRoot, 'docs/project-catalog.md');
@@ -124,7 +130,7 @@ export function renderProjectCatalog(catalog, projectRoots, libraryRoots) {
         ...(entry.requiresDurableDatabase ? ['`postgres` or `mongodb` capability'] : []),
       ];
       lines.push(
-        `| \`${entry.id}\` | \`${projectRoots.get(entry.id)}\` | ${entry.runtime} | ${capitalize(entry.classification)} | ${entry.publicHostname ? `\`${entry.publicHostname}\`` : 'Not deployable'} | ${requirements.length > 0 ? requirements.join(', ') : 'None'} |`,
+        `| \`${entry.id}\` | \`${projectRoots.get(entry.id)}\` | ${entry.runtime} | ${capitalize(entry.classification)} | ${publicHostnameFor(entry, documentedDomain) ? `\`${publicHostnameFor(entry, documentedDomain)}\`` : 'Not deployable'} | ${requirements.length > 0 ? requirements.join(', ') : 'None'} |`,
       );
     }
     lines.push('');
@@ -193,13 +199,14 @@ export function findCopiedCatalogRows(root, catalog, projectRoots, markdownFiles
     for (const entry of Object.values(catalog)) {
       const id = `\`${entry.id}\``;
       const projectRoot = `\`${projectRoots.get(entry.id)}\``;
-      const hostname = entry.publicHostname ? `\`${entry.publicHostname}\`` : null;
+      const entryHostname = publicHostnameFor(entry, documentedDomain);
+      const hostname = entryHostname ? `\`${entryHostname}\`` : null;
       for (const [index, line] of lines.entries()) {
         const cells = markdownTableCells(line);
         const copiedTableRow =
           cells.includes(entry.id) &&
           (cells.includes(projectRoots.get(entry.id)) ||
-            (entry.publicHostname && cells.includes(entry.publicHostname)));
+            (entryHostname && cells.includes(entryHostname)));
         const copiedInlineMapping =
           line.includes(id) && (line.includes(projectRoot) || (hostname && line.includes(hostname)));
         if (copiedTableRow || copiedInlineMapping) {

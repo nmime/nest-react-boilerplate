@@ -100,6 +100,48 @@ emit_url() {
   fi
 }
 
+# Free text (a product name) reaches a JavaScript string literal, and this image has no
+# JSON escaping tool. Rather than escape, drop any value carrying a character that could
+# end the literal or the statement; the build-time default then keeps applying.
+emit_text() {
+  name="$1"
+  raw="$2"
+  [ -n "${raw}" ] || return 0
+  [ "$(printf '%s' "${raw}" | tr -d '\000-\037')" = "${raw}" ] || return 0
+  case "${raw}" in
+    *'"'* | *\\* | *'<'* | *'>'*) return 0 ;;
+  esac
+  printf '  "%s": "%s",\n' "${name}" "${raw}"
+}
+
+# A CSS colour the browser writes into <meta name="theme-color">; only the hex forms the
+# brand contract documents are accepted.
+emit_color() {
+  name="$1"
+  raw="$2"
+  case "${raw}" in
+    '#'[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f] | '#'[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])
+      printf '  "%s": "%s",\n' "${name}" "${raw}"
+      ;;
+    *) : ;;
+  esac
+}
+
+# The icon type lands in a <link type="..."> attribute, so keep it to an image media type.
+emit_image_media_type() {
+  name="$1"
+  raw="$2"
+  case "${raw}" in
+    image/*)
+      case "${raw#image/}" in
+        '' | *[!A-Za-z0-9.+-]*) return 0 ;;
+      esac
+      printf '  "%s": "%s",\n' "${name}" "${raw}"
+      ;;
+    *) : ;;
+  esac
+}
+
 if [ ! -w "${TARGET}" ]; then
   echo "frontend-runtime-config: ${TARGET} is not writable; keeping build-time defaults" >&2
   exit 0
@@ -112,6 +154,10 @@ fi
   emit_flag discordAuthEnabled "${DISCORD_AUTH_ENABLED:-}"
   emit_url userAppUrl "${LANDING_USER_APP_URL:-}"
   emit_url adminAppUrl "${LANDING_ADMIN_APP_URL:-}"
+  emit_text productName "${PRODUCT_NAME:-}"
+  emit_url productIconHref "${PRODUCT_ICON_HREF:-}"
+  emit_image_media_type productIconType "${PRODUCT_ICON_TYPE:-}"
+  emit_color productThemeColor "${PRODUCT_THEME_COLOR:-}"
   echo '};'
 } >"${TARGET}"
 

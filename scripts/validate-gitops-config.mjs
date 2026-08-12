@@ -1,11 +1,23 @@
 #!/usr/bin/env node
+/**
+ * GitOps configuration is two things: the reconciler manifests, which are forge-neutral, and
+ * the release/promotion pipelines that feed them, which are not. The pipeline halves used to
+ * be read from `.github/workflows/...` by name, so this validator threw on a checkout that
+ * kept a different forge. It now asks scripts/ci/gates.json which forges exist and which
+ * pipelines each one declares, and the dialect-specific assertions run only for a forge whose
+ * jobStyle actually speaks that dialect.
+ */
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createJiti } from 'jiti';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
+const jiti = createJiti(import.meta.url);
+const { configuredForges } = await jiti.import('../packages/tooling/src/commands/ci/check-pipelines.ts');
+
 const read = (path) => {
   const absolutePath = join(rootDir, path);
   assert.ok(existsSync(absolutePath), `Missing GitOps file: ${path}`);
@@ -19,8 +31,6 @@ const argoKustomization = read('deploy/argocd/kustomization.yaml');
 const fluxSource = read('deploy/flux/source.yaml');
 const fluxRelease = read('deploy/flux/release.yaml');
 const fluxKustomization = read('deploy/flux/kustomization.yaml');
-const releaseWorkflow = read('.github/workflows/release-images.yml');
-const promotionWorkflow = read('.github/workflows/deploy.yml');
 const tagUpdater = read('scripts/update-deploy-tags.py');
 const releaseImagePlan = read('scripts/release-image-plan.mjs');
 
@@ -77,6 +87,36 @@ assert.match(
 );
 assert.ok(!/github\.com\/example\//u.test(argoRepo), 'GitOps repository must not use an example owner.');
 
+/**
+ * Everything above is a property of the reconciler manifests and runs on every checkout.
+ * Everything below reads pipeline text in GitHub Actions dialect — `GITHUB_SHA`, `gh pr create`,
+ * cosign's `--certificate-github-workflow-*` OIDC flags — so it runs only for a forge whose
+ * declared jobStyle is `github`. The cross-forge half is not lost: the `supplyChain` controls in
+ * scripts/ci/gates.json state the same signing, SBOM, scan, and digest requirements in
+ * forge-neutral terms, and `node scripts/ci/check-pipelines.mjs` evaluates them against every
+ * configured forge's release pipeline.
+ */
+const validatedForges = [];
+const skippedForges = [];
+
+for (const forge of configuredForges(rootDir)) {
+  if (forge.jobStyle !== 'github' || forge.releasePipeline === undefined) {
+    skippedForges.push(forge.id);
+    continue;
+  }
+  validatedForges.push(forge.id);
+  validateGithubPipelines(forge);
+}
+
+assert.ok(
+  validatedForges.length > 0 || skippedForges.length > 0,
+  'No CI forge is configured; scripts/ci/gates.json must declare the pipelines that build and promote images.',
+);
+
+function validateGithubPipelines(forge) {
+const releaseWorkflow = read(forge.releasePipeline);
+const promotionWorkflow = forge.promotionPipeline === undefined ? undefined : read(forge.promotionPipeline);
+
 has(releaseWorkflow, 'sha-${GITHUB_SHA}', 'release images use the full GitHub SHA');
 has(releaseWorkflow, 'image-plan', 'release workflow builds only selected images');
 has(releaseWorkflow, '[[ "$GITHUB_REF" == refs/tags/* ]]', 'tag releases build a promotable complete selected set');
@@ -108,6 +148,16 @@ assert.ok(
   !releaseWorkflow.includes('types: [published]'),
   'release image workflow must not duplicate tag builds on release publication',
 );
+assert.ok(
+  !releaseWorkflow.includes('--all-reference'),
+  'Product release must not use all-reference image planning.',
+);
+
+// A forge may ship releases without yet shipping a GitOps promotion lane. That gap is recorded
+// in scripts/ci/gates.json, which is where a reader can see it; asserting on a pipeline the
+// descriptor never declared would only report it as a missing file.
+if (promotionWorkflow === undefined) return;
+
 has(promotionWorkflow, '^[0-9a-f]{40}$', 'promotion accepts only a full 40-character SHA');
 has(promotionWorkflow, 'docker manifest inspect --verbose', 'promotion verifies candidate image digests');
 for (const expected of [
@@ -150,12 +200,14 @@ has(
   'promotion rejects missing required candidate digests',
 );
 assert.ok(
-  !releaseWorkflow.includes('--all-reference') && !promotionWorkflow.includes('--all-reference'),
-  'Product release and promotion workflows must not use all-reference image planning.',
+  !promotionWorkflow.includes('--all-reference'),
+  'Product promotion must not use all-reference image planning.',
 );
 has(promotionWorkflow, 'gh pr create', 'promotion opens a pull request');
 assert.ok(!promotionWorkflow.includes('workflow_run:'), 'promotion must not create a self-triggering main-commit loop');
 assert.ok(!promotionWorkflow.includes('HEAD:main'), 'promotion must never push directly to main');
+}
+
 has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', args.sha)", 'tag updater requires the release workflow full SHA');
 has(tagUpdater, "re.fullmatch(r'sha256:[0-9a-fA-F]{64}', digest)", 'tag updater requires immutable image digests');
 has(
@@ -186,7 +238,9 @@ if (!kubectlAvailable) {
     console.error('kubectl is required for GitOps kustomize validation but is unavailable.');
     process.exit(127);
   }
-  console.log('gitops static assertions passed; kubectl kustomize skipped because kubectl is unavailable');
+  console.log(
+    `gitops static assertions passed for forge(s) ${validatedForges.join(', ') || 'none'}; kubectl kustomize skipped because kubectl is unavailable`,
+  );
   process.exit(0);
 }
 
@@ -202,4 +256,13 @@ for (const directory of ['deploy/argocd', 'deploy/flux']) {
   assert.ok(result.stdout.trim(), `${directory} must render at least one GitOps resource.`);
 }
 
-console.log(JSON.stringify({ status: 'ok', controllers: ['argocd', 'flux'] }));
+console.log(
+  JSON.stringify({
+    status: 'ok',
+    controllers: ['argocd', 'flux'],
+    pipelinesValidated: validatedForges,
+    // Named, not hidden: a forge whose release supply chain is proved by the descriptor's
+    // supplyChain controls instead of by this validator should be visible in the output.
+    pipelinesDeferredToGateParity: skippedForges,
+  }),
+);

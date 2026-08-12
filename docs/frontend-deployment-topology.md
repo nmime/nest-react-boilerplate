@@ -174,6 +174,25 @@ a flag deliberately.
 | Kubernetes     | `frontendRuntimeConfig.TELEGRAM_AUTH_ENABLED: 'true'` in Helm values  |
 | Local dev      | `VITE_TELEGRAM_AUTH_ENABLED` (build-time default)                     |
 
+### Product identity
+
+Title, icon, and theme colour resolve from the same two-layer configuration, so
+renaming the product is never a source sweep. `VITE_PRODUCT_NAME`,
+`VITE_PRODUCT_ICON_HREF`, `VITE_PRODUCT_ICON_TYPE`, and
+`VITE_PRODUCT_THEME_COLOR` set the identity baked into an image; the matching
+`PRODUCT_*` container variables override it per deployment. Both are read by
+`resolveProductBrand` in `@app/frontend-api-support`, which every SPA entry point
+applies to the live document and the Vite build applies to the shipped
+`index.html` — so the tab shows the product's name before the bundle executes.
+An unset value falls through to the build default and then to the boilerplate
+identity, and the container generator drops a `PRODUCT_*` value that is not a
+plain string, a public icon URL/path, an `image/*` media type, or a
+`#rgb`/`#rrggbb` colour.
+
+The `<title>`, `theme-color`, and icon tags each app's `index.html` ships are
+pre-hydration defaults for that surface, not product identity; both branding
+passes replace them.
+
 Compose derives landing destinations from `PUBLIC_DOMAIN` and the declared
 public mode: `per-app-domains` uses the user/admin HTTPS origins, while
 `single-domain` uses same-origin `/app` and `/admin` paths. Helm derives the same

@@ -45,6 +45,16 @@ config:
   authTokenCleanupEnabled: 'true'
   authTokenCleanupIntervalMs: '3600000'
   authTokenCleanupRunOnStart: 'true'
+  # Demo mode serves every unauthenticated request as one synthetic principal, so an MVP is
+  # reachable without accounts. `authDemoAllowProduction` is a deliberate second switch: the
+  # backend refuses to serve demo traffic with NODE_ENV=production until both are 'true'.
+  authDemoMode: 'false'
+  authDemoAllowProduction: 'false'
+  authDemoRoles: ''
+  authDemoSubject: ''
+  authDemoTenantId: ''
+  authDemoEmail: ''
+  authDemoDisplayName: ''
   openApiEnabled: 'false'
   logLevel: info
   rateLimitEnabled: 'true'
@@ -139,6 +149,10 @@ frontendNginx:
   healthPath: /nginx-health
   listenPort: 8080
   cspConnectSrc: "'self'"
+  # The route table lives in .helm/frontend-routes.json so the Compose edge can be generated from
+  # the same rows. Set this only to override the shipped table for one release; a permanent route
+  # belongs in that file, where both edges see it.
+  routes: {}
 
 # The chart deploys Nest API services and the selected frontend renderers.
 # API probes should keep /live and /ready; nginx probes use
@@ -417,6 +431,10 @@ ingress:
       service: telegram-bot-api
       paths: ['/']
       enabled: false
+  # Used when `tls` is empty — one certificate covering every enabled host. `nrb setup`
+  # regenerates `hosts` for the product's own domain and clears `tls`, and it cannot know this
+  # release's secret name, so the chart derives the certificate from the hosts it serves.
+  tlsSecretName: nest-react-boilerplate-tls
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:

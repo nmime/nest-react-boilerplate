@@ -31,6 +31,7 @@
       "@app/backend-feature-auth-shared": ["libs/backend/feature/auth/shared/lib/src/index.ts"],
       "@app/backend-feature-auth-test": ["libs/backend/feature/auth/test/lib/src/index.ts"],
       "@app/backend-feature-fiat-currency-shared": ["libs/backend/feature/fiat-currency/shared/lib/src/index.ts"],
+      "@app/backend-feature-fiat-currency-main": ["libs/backend/feature/fiat-currency/main/lib/src/index.ts"],
       "@app/backend-common-analytics": ["libs/backend/common/analytics/lib/src/index.ts"],
       "@app/backend-common-bootstrap": ["libs/backend/common/bootstrap/lib/src/index.ts"],
       "@app/backend-common-component-test": ["libs/backend/common/component-test/lib/src/index.ts"],

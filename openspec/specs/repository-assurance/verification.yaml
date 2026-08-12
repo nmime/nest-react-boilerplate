@@ -103,9 +103,19 @@ requirements:
         lanes:
           - pr
           - main
+      # The workflow validator above proves GitHub Actions hardening and is GitHub-only by
+      # nature. The gate inventory below is what proves the release supply chain itself —
+      # signing, SBOM, scan, and immutable digests — on every forge the product configures,
+      # so this requirement keeps its evidence on a checkout that ships no GitHub workflow.
       - kind: operations
-        file: scripts/validate-github-workflows.mjs
-        script: ci:workflows:check
+        file: scripts/ci/check-pipelines.mjs
+        script: ci:pipelines:check
+        lanes:
+          - pr
+          - main
+      - kind: static
+        file: packages/tooling/src/commands/ci/pipeline-parity.test.ts
+        target: '@repo/tooling:test'
         lanes:
           - pr
           - main

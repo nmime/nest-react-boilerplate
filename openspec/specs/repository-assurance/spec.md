@@ -87,6 +87,11 @@ current main revision.
 
 - Release automation never creates an untested source-code commit.
 - A stale successful workflow cannot release a newer or replaced main revision.
+- Every merge-blocking gate — commit conventions, specification validation,
+  typecheck, and the repository-wide test sweep among them — is inventoried in
+  one forge-neutral descriptor, and every configured forge renders that
+  inventory. A forge that deliberately cannot run a gate records the exclusion
+  and its reason in the descriptor rather than dropping the gate silently.
 
 **Failure behavior:**
 

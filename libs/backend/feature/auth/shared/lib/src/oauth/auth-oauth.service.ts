@@ -284,7 +284,11 @@ function createOAuthState(): string {
   return randomBytes(32).toString('base64url');
 }
 
+// Only ever called on a `createOAuthState()` value: 256 bits of CSPRNG output, never a
+// human-chosen secret. A slow hash would buy nothing against that guess space and would charge
+// its cost on every callback. CodeQL reads the flow as a password reaching a fast hash.
 function hashOAuthValue(value: string): string {
+  // codeql[js/insufficient-password-hash]
   return createHash('sha256').update(value).digest('hex');
 }
 

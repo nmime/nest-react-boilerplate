@@ -16,6 +16,7 @@ import {
   safeParseNrbConfig,
   schemaVersion,
   appIds,
+  baseCapabilityIds,
   capabilityIds,
   presetIds,
   frontendAppIds,
@@ -187,7 +188,7 @@ describe('schema — constants', () => {
     assert.deepEqual([...appIds].sort(), [...expected].sort());
   });
 
-  it('exports all known capability IDs', () => {
+  it('ships exactly these capability IDs, and offers them all to a product that adds none', () => {
     const expected = [
       'i18n',
       'analytics',
@@ -209,6 +210,7 @@ describe('schema — constants', () => {
       'discord-bot',
       'tenancy',
     ] as const;
+    assert.deepEqual([...baseCapabilityIds].sort(), [...expected].sort());
     assert.deepEqual([...capabilityIds].sort(), [...expected].sort());
   });
 

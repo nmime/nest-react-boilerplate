@@ -41,7 +41,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": [
+        "examples": [
           "i18n",
           "analytics",
           "websockets",
@@ -95,7 +95,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": [
+        "examples": [
           "i18n",
           "analytics",
           "websockets",

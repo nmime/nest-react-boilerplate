@@ -5,7 +5,9 @@
  * Catalog of applications, capabilities, and their dependency / conflict
  * rules.  Pure data — no side-effects, no filesystem access.
  */
-import type { AppId, CapabilityId, FrontendAppId } from './schema.js';
+import { appIds, type AppId, type BaseCapabilityId, type CapabilityId, type FrontendAppId } from './schema.js';
+import { composeCapabilityCatalog } from './capability-registry.js';
+import { productCapabilities } from './product-capabilities.js';
 
 // ---------------------------------------------------------------------------
 // App metadata
@@ -430,11 +432,13 @@ export const backendCapabilityModuleCatalog: Readonly<Partial<Record<AppId, Read
   } as const;
 
 /**
- * Full catalog of supported capabilities.
+ * Full catalog of the capabilities this boilerplate ships.
  *
- * Indexed by capability ID for O(1) lookup.
+ * Indexed by capability ID for O(1) lookup. Closed on purpose — a product registers its own
+ * entries in `product-capabilities.ts`, which `capabilityCatalog` below composes over this one, so
+ * a boilerplate upgrade never conflicts with a product's domain.
  */
-export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<CapabilityEntry>>> = {
+export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<CapabilityEntry>>> = {
   i18n: {
     id: 'i18n',
     label: 'Internationalization',
@@ -968,6 +972,18 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
   },
 } as const;
 
+/**
+ * The capability catalog every selection resolves against: what this boilerplate ships, composed
+ * with whatever `product-capabilities.ts` registers. Composition validates at module load, so a
+ * product entry that names a capability or an app that does not exist fails here rather than
+ * producing a closure quietly missing a library.
+ */
+export const capabilityCatalog: Readonly<Record<string, Readonly<CapabilityEntry>>> = composeCapabilityCatalog(
+  baseCapabilityCatalog,
+  productCapabilities,
+  appIds,
+);
+
 // ---------------------------------------------------------------------------
 // Validation helpers
 // ---------------------------------------------------------------------------
@@ -1000,6 +1016,7 @@ export const durableDatabaseProviderIds = [
 export function validateSelection(
   apps: readonly AppId[],
   capabilities: readonly CapabilityId[],
+  catalog: Readonly<Record<string, Readonly<CapabilityEntry>>> = capabilityCatalog,
 ): readonly ValidationIssue[] {
   const capSet = new Set(capabilities);
   const appSet = new Set(apps);
@@ -1057,7 +1074,7 @@ export function validateSelection(
 
   // Capability-level checks
   for (const capId of capabilities) {
-    const cap = capabilityCatalog[capId];
+    const cap = catalog[capId];
     if (!cap) {
       issues.push({
         type: 'unknown_capability',
@@ -1125,6 +1142,7 @@ export function validateSelection(
 export function expandDependencies(
   apps: readonly AppId[],
   capabilities: readonly CapabilityId[],
+  catalog: Readonly<Record<string, Readonly<CapabilityEntry>>> = capabilityCatalog,
 ): { apps: AppId[]; capabilities: CapabilityId[] } {
   const capSet = new Set(capabilities);
   const appSet = new Set(apps);
@@ -1152,7 +1170,7 @@ export function expandDependencies(
       }
     }
     for (const capId of [...capSet]) {
-      const cap = capabilityCatalog[capId];
+      const cap = catalog[capId];
       if (!cap) {
         continue;
       }

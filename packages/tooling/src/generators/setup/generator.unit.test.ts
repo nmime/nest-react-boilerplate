@@ -80,7 +80,7 @@ describe('setup generator', () => {
       const schema = require('./schema.json');
       const {
         appIds,
-        capabilityIds,
+        baseCapabilityIds,
         ciModeIds,
         deploymentTargetIds,
         frontendApiModeIds,
@@ -92,14 +92,18 @@ describe('setup generator', () => {
       } = require('../../setup/schema.js');
 
       const arrayEnum = (property: string): string[] => schema.properties[property].items.enum as string[];
+      const arrayExamples = (property: string): string[] => schema.properties[property].items.examples as string[];
       const scalarEnum = (property: string): string[] => schema.properties[property].enum as string[];
 
       for (const [actual, expected] of [
         [scalarEnum('preset'), presetIds],
         [arrayEnum('apps'), appIds],
         [arrayEnum('removeApps'), appIds],
-        [arrayEnum('capabilities'), capabilityIds],
-        [arrayEnum('removeCapabilities'), capabilityIds],
+        // Capabilities are documented, not enumerated: a product registers its own ids in
+        // `product-capabilities.ts`, and an `enum` here would make Nx reject a selection the parser
+        // accepts. `schema.ts` is the layer that knows the composed set and rejects the rest.
+        [arrayExamples('capabilities'), baseCapabilityIds],
+        [arrayExamples('removeCapabilities'), baseCapabilityIds],
         [scalarEnum('ciMode'), ciModeIds],
         [scalarEnum('frontendApiMode'), frontendApiModeIds],
         [arrayEnum('mobileTargets'), mobileTargetIds],
@@ -111,6 +115,10 @@ describe('setup generator', () => {
         [scalarEnum('s3Ownership'), infrastructureOwnershipIds],
       ] as Array<[string[], readonly string[]]>) {
         assert.deepEqual([...actual].sort(), [...expected].sort());
+      }
+
+      for (const property of ['capabilities', 'removeCapabilities']) {
+        assert.equal(schema.properties[property].items.enum, undefined, property);
       }
     });
   });

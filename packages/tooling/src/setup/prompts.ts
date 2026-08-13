@@ -367,7 +367,7 @@ async function promptAppGroup(
 async function promptCapabilityGroup(io: PromptIo, selected: Set<CapabilityId>): Promise<void> {
   io.write('\nCapabilities:\n');
   for (const [capabilityId, entry] of Object.entries(capabilityCatalog)) {
-    const id = capabilityId as CapabilityId;
+    const id = capabilityId;
     if (durableDatabaseProviderIds.includes(id as (typeof durableDatabaseProviderIds)[number])) {
       continue;
     }
@@ -408,7 +408,7 @@ async function promptDatabaseProvider(
     selectedCapabilities.delete(provider);
   }
   if (selectedProvider !== 'none') {
-    selectedCapabilities.add(selectedProvider as (typeof durableDatabaseProviderIds)[number]);
+    selectedCapabilities.add(selectedProvider);
   }
 }
 

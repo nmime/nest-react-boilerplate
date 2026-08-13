@@ -5,5 +5,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["cucumber.config.ts", "src/**/*.ts"]
+  "include": ["cucumber.config.ts", "src/**/*.ts", "tests/**/*.ts"]
 }

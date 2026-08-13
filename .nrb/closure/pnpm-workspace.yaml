@@ -35,8 +35,8 @@ overrides:
   'axios': '1.18.0'
   'fast-uri': '3.1.5'
   'svgo@>=3.0.0 <4.0.0': '3.3.4'
-  'js-yaml@<4.0.0': '3.15.0'
-  'js-yaml@>=4.0.0 <5.0.0': '4.3.0'
+  'js-yaml@<4.0.0': '3.15.1'
+  'js-yaml@>=4.0.0 <5.0.0': '4.3.1'
   'js-yaml@>=5.0.0 <5.2.2': '5.2.2'
   'brace-expansion@>=4.0.0 <6.0.0': '5.0.9'
   'yaml': '2.9.0'
@@ -53,6 +53,8 @@ overrides:
   'http-proxy-middleware@>=3.0.0 <3.0.7': '3.0.7'
   '@opentelemetry/core@<2.8.0': '2.8.0'
   'multer@>=2.0.0-alpha.1 <2.2.0': '2.2.0'
+  'nanoid@<3.3.17': '3.3.17'
+  'dompurify@<=3.4.12': '3.4.13'
   'webpack-dev-server@<5.2.5': '5.2.5'
   'http-proxy-middleware@>=2.0.0 <2.0.10': '2.0.10'
   # The pinned shadcn CLI brings an MCP SDK range that still resolves the
@@ -107,10 +109,21 @@ packageExtensions:
     dependencies:
       'react-dom': '19.2.3'
 
-# Escape hatch for the hard audit:ci gate: when an advisory has no upstream
-# fix, list the CVE id here with a tracking issue instead of unblocking ad hoc.
+# Escape hatch for the hard audit:ci and audit:full gates: when an advisory has
+# no upstream fix, list its GHSA id here with a tracking issue instead of
+# unblocking ad hoc.
+#
+# GHSA, not CVE. `ignoreCves` matches nothing in this repo's audit payload —
+# measured against pnpm 11.15.1 with both image-size CVE ids listed, the gate
+# still exited 1 and still printed both advisories. Only `ignoreGhsas` suppresses
+# anything, so the previous comment pointed at a key that silently did nothing.
 auditConfig:
-  ignoreCves: []
+  # image-size has no patched release: pnpm prints "Patched versions >=2.0.3",
+  # but 2.0.3 does not exist on the registry and 2.0.2 is latest. It reaches this
+  # tree only through vitest -> vite -> less, which never parses untrusted images.
+  ignoreGhsas:
+    - 'GHSA-w3rx-r6r6-pgpr' # image-size: ICNS parser infinite loop
+    - 'GHSA-5p2g-fcmc-qvqq' # image-size: JXL and HEIF parser infinite loops
 
 # Supply-chain quarantine: reject versions published less than a day ago.
 # Raise toward 10080 (7 days) once the dependency set stops churning weekly;

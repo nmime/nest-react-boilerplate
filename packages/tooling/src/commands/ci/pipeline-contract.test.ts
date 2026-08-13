@@ -51,6 +51,30 @@ describe('CI gate contract', () => {
     );
   });
 
+  it('rejects a gate that names a toolchain the descriptor never declares', () => {
+    assert.throws(
+      () =>
+        parseCiContract({
+          ...minimalContract,
+          gates: [{ ...minimalContract.gates[0], toolchain: ['helm'] }],
+        }),
+      /unknown toolchain "helm"/u,
+    );
+  });
+
+  it('rejects a toolchain whose provisioning names a forge the descriptor never declares', () => {
+    assert.throws(
+      () =>
+        parseCiContract({
+          ...minimalContract,
+          toolchains: {
+            helm: { description: 'Helm CLI.', provisioning: { buildkite: 'setup-helm' } },
+          },
+        }),
+      /unknown forge "buildkite"/u,
+    );
+  });
+
   it('rejects a gate that names a forge the descriptor never declares', () => {
     assert.throws(
       () =>

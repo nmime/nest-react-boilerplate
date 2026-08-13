@@ -241,6 +241,56 @@ describe('cross-forge gate parity', () => {
     assert.deepEqual(report.problems, []);
   });
 
+  // A gate can be mapped to a job, run its command, and still fail on every run because the
+  // runner has no CLI the command shells out to. Mapping alone does not prove a gate can pass.
+  it('fails when the job that runs a gate never provisions the toolchain the gate needs', () => {
+    const toolchainAware = parseCiContract({
+      ...JSON.parse(JSON.stringify(contract)),
+      toolchains: {
+        helm: {
+          description: 'Helm CLI, which the chart renderer shells out to.',
+          provisioning: { github: 'azure/setup-helm', gitlab: 'get.helm.sh' },
+        },
+      },
+      gates: [{ ...JSON.parse(JSON.stringify(contract.gates[0])), toolchain: ['helm'] }],
+    });
+
+    const report = evaluateParity(toolchainAware, {
+      github: githubSourcesFor(githubPipeline.replace('    steps:', '    steps:\n      - uses: azure/setup-helm@v5')),
+      gitlab: gitlabSources,
+    });
+
+    assert.deepEqual(
+      report.problems.map(({ code, forge, gate }) => ({ code, forge, gate })),
+      [{ code: 'toolchain-missing', forge: 'gitlab', gate: 'static-check' }],
+    );
+    assert.match(report.problems[0]?.message ?? '', /helm/u);
+  });
+
+  // A toolchain nobody knows how to install on a forge is the same gap as one nobody installs.
+  it('fails when a toolchain declares no way to provision it on a forge that runs the gate', () => {
+    const partiallyProvisioned = parseCiContract({
+      ...JSON.parse(JSON.stringify(contract)),
+      toolchains: {
+        helm: {
+          description: 'Helm CLI, which the chart renderer shells out to.',
+          provisioning: { github: 'azure/setup-helm' },
+        },
+      },
+      gates: [{ ...JSON.parse(JSON.stringify(contract.gates[0])), toolchain: ['helm'] }],
+    });
+
+    const report = evaluateParity(partiallyProvisioned, {
+      github: githubSourcesFor(githubPipeline.replace('    steps:', '    steps:\n      - uses: azure/setup-helm@v5')),
+      gitlab: gitlabSources,
+    });
+
+    assert.deepEqual(
+      report.problems.map(({ code, forge, gate }) => ({ code, forge, gate })),
+      [{ code: 'toolchain-missing', forge: 'gitlab', gate: 'static-check' }],
+    );
+  });
+
   it('accepts a forge-restricted gate only on the forges it names', () => {
     const restricted = parseCiContract({
       ...JSON.parse(JSON.stringify(contract)),

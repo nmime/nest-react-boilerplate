@@ -227,6 +227,12 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
+      # The GitOps validator renders the selected chart, and scripts/validate-helm.sh refuses
+      # anything below Helm 4. The runner image ships Helm 3, so the gate needs its own.
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v4.2.3
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

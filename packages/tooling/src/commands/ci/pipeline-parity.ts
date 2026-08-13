@@ -6,6 +6,7 @@ export type ParityProblemCode =
   | 'pipeline-missing'
   | 'job-missing'
   | 'command-missing'
+  | 'toolchain-missing'
   | 'aggregate-missing'
   | 'aggregate-missing-job'
   | 'lane-without-executor'
@@ -124,6 +125,30 @@ export function evaluateParity(contract: CiContract, sources: Record<string, For
           gate: gate.id,
           message: `${pipelineFile} job "${jobId}" runs none of: ${gate.commands.join(', ')}`,
         });
+      }
+
+      // A mapped job that runs the command still fails every time when the runner has no CLI
+      // the command shells out to, and the forge image is not the descriptor's to assume.
+      for (const toolchainId of gate.toolchain ?? []) {
+        const provisioning = contract.toolchains[toolchainId]?.provisioning[forgeId];
+        if (provisioning === undefined) {
+          problems.push({
+            code: 'toolchain-missing',
+            forge: forgeId,
+            gate: gate.id,
+            message: `toolchain "${toolchainId}", which gate "${gate.id}" needs, declares no way to provision it on ${forgeId}`,
+          });
+          continue;
+        }
+
+        if (!block.includes(provisioning)) {
+          problems.push({
+            code: 'toolchain-missing',
+            forge: forgeId,
+            gate: gate.id,
+            message: `${pipelineFile} job "${jobId}" runs gate "${gate.id}" without provisioning toolchain "${toolchainId}" (expected ${provisioning})`,
+          });
+        }
       }
     }
 

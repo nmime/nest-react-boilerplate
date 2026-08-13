@@ -61,6 +61,12 @@
       }
     }
   },
+  "toolchains": {
+    "helm": {
+      "description": "Helm 4 CLI, which the chart renderer shells out to and whose major version it asserts.",
+      "provisioning": { "github": "azure/setup-helm", "gitlab": "get.helm.sh" }
+    }
+  },
   "gates": [
     {
       "id": "secret-scan-history",
@@ -76,6 +82,7 @@
       "commands": ["pnpm run deploy:validate:helm"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
+      "toolchain": ["helm"],
       "jobs": { "github": "helm-validation", "gitlab": "helm-validation" }
     },
     {
@@ -302,6 +309,7 @@
       "commands": ["pnpm run deploy:validate:gitops"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
+      "toolchain": ["helm"],
       "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
     },
     {

@@ -44,6 +44,14 @@ export interface CiGate {
   forges?: string[];
   /** Why the restriction above exists. Mandatory whenever `forges` is set. */
   reason?: string;
+  /** CLIs the gate's commands shell out to, which its job therefore has to install. */
+  toolchain?: string[];
+}
+
+export interface CiToolchain {
+  description: string;
+  /** Literal text proving a job installs this CLI, keyed by forge id. */
+  provisioning: Record<string, string>;
 }
 
 export interface CiLaneExecutor {
@@ -72,6 +80,7 @@ export interface SupplyChainControl {
 export interface CiContract {
   forges: Record<string, CiForge>;
   lanes: Record<string, CiLane>;
+  toolchains: Record<string, CiToolchain>;
   gates: CiGate[];
   supplyChain: SupplyChainControl[];
 }
@@ -197,7 +206,40 @@ function parseLanes(raw: unknown, forgeIds: Set<string>, problems: string[]): Re
   return lanes;
 }
 
-function parseGates(raw: unknown, forgeIds: Set<string>, laneIds: Set<string>, problems: string[]): CiGate[] {
+function parseToolchains(raw: unknown, forgeIds: Set<string>, problems: string[]): Record<string, CiToolchain> {
+  if (raw === undefined) return {};
+  if (!isRecord(raw)) {
+    problems.push('toolchains must be an object keyed by toolchain id');
+    return {};
+  }
+
+  const toolchains: Record<string, CiToolchain> = {};
+  for (const [id, value] of Object.entries(raw)) {
+    if (!isRecord(value) || typeof value.description !== 'string' || value.description.length === 0) {
+      problems.push(`toolchains.${id} must be an object with a description`);
+      continue;
+    }
+
+    const provisioning = readStringMap(value.provisioning, `toolchains.${id}.provisioning`, problems);
+    for (const forgeId of Object.keys(provisioning)) {
+      if (!forgeIds.has(forgeId)) {
+        problems.push(`toolchains.${id}.provisioning references unknown forge "${forgeId}"`);
+      }
+    }
+
+    toolchains[id] = { description: value.description, provisioning };
+  }
+
+  return toolchains;
+}
+
+function parseGates(
+  raw: unknown,
+  forgeIds: Set<string>,
+  laneIds: Set<string>,
+  toolchainIds: Set<string>,
+  problems: string[],
+): CiGate[] {
   if (!Array.isArray(raw)) {
     problems.push('gates must be an array');
     return [];
@@ -253,6 +295,16 @@ function parseGates(raw: unknown, forgeIds: Set<string>, laneIds: Set<string>, p
       }
     }
 
+    let toolchain: string[] | undefined;
+    if (value.toolchain !== undefined) {
+      toolchain = readStringArray(value.toolchain, `gates.${id}.toolchain`, problems);
+      for (const toolchainId of toolchain) {
+        if (!toolchainIds.has(toolchainId)) {
+          problems.push(`gates.${id} references unknown toolchain "${toolchainId}"`);
+        }
+      }
+    }
+
     gates.push({
       id,
       description: typeof value.description === 'string' ? value.description : '',
@@ -263,6 +315,7 @@ function parseGates(raw: unknown, forgeIds: Set<string>, laneIds: Set<string>, p
       jobs,
       ...(forges ? { forges } : {}),
       ...(typeof value.reason === 'string' ? { reason: value.reason } : {}),
+      ...(toolchain ? { toolchain } : {}),
     });
   }
 
@@ -322,12 +375,13 @@ export function parseCiContract(raw: unknown): CiContract {
   const forgeIds = new Set(Object.keys(forges));
   const lanes = parseLanes(raw.lanes, forgeIds, problems);
   const laneIds = new Set(Object.keys(lanes));
-  const gates = parseGates(raw.gates, forgeIds, laneIds, problems);
+  const toolchains = parseToolchains(raw.toolchains, forgeIds, problems);
+  const gates = parseGates(raw.gates, forgeIds, laneIds, new Set(Object.keys(toolchains)), problems);
   const supplyChain = parseSupplyChain(raw.supplyChain, forgeIds, problems);
 
   if (problems.length > 0) throw new CiContractError(problems);
 
-  return { forges, lanes, gates, supplyChain };
+  return { forges, lanes, toolchains, gates, supplyChain };
 }
 
 /**

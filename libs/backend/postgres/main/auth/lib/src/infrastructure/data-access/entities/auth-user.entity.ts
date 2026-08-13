@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
-import { defaultLocale, supportedLocales, type Locale } from '@app/backend-common-i18n';
+import { defaultLocale, type Locale } from '@app/backend-common-i18n';
+import { authUserLocaleCheckConstraint, checkConstraintSql } from '../check-constraint';
 import { NullableEpochDateType } from './type/nullable-epoch-date.type';
 
 export type AuthUserThemePreference = 'system' | 'light' | 'dark';
@@ -17,7 +18,6 @@ export type AuthUserStatus = 'active' | 'disabled' | 'invited';
 export type AuthUserAvatarStatus = 'none' | 'provider' | 'manual' | 'deleted';
 
 export const DefaultAuthTenantId = '00000000-0000-0000-0000-000000000000';
-const SupportedLocaleSqlValues = supportedLocales.map((locale) => `'${locale}'`).join(', ');
 
 export interface AuthUserAccessPolicyInput {
   permissions?: string[];
@@ -170,8 +170,8 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
   ],
   checks: [
     {
-      name: 'ck__auth_users__locale',
-      expression: `"locale" in (${SupportedLocaleSqlValues})`,
+      name: authUserLocaleCheckConstraint.name,
+      expression: checkConstraintSql(authUserLocaleCheckConstraint.column, authUserLocaleCheckConstraint.values),
     },
     {
       name: 'ck__auth_users__avatar_status',

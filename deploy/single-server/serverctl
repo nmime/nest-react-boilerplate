@@ -311,6 +311,11 @@ ensure_secret_material() {
   configure_secret DISCORD_CUSTOM_ID_SECRET_FILE discord_custom_id_secret.txt hex
   configure_secret RESEND_API_KEY_FILE resend_api_key.txt empty
   configure_secret MAILPACE_SERVER_TOKEN_FILE mailpace_server_token.txt empty
+  # Push signing material is issued by Google and Apple. The file has to exist even when the
+  # product sends no push at all: Compose mounts a declared secret as a bind, so a missing source
+  # file stops the notification containers from being created.
+  configure_secret NOTIFICATION_FCM_PRIVATE_KEY_FILE notification_fcm_private_key.txt empty
+  configure_secret NOTIFICATION_APNS_PRIVATE_KEY_FILE notification_apns_private_key.txt empty
 }
 
 initialize() {

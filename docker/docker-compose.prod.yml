@@ -6,6 +6,12 @@ x-default-logging: &default-logging
     max-size: '${DOCKER_LOG_MAX_SIZE:-10m}'
     max-file: '${DOCKER_LOG_MAX_FILES:-5}'
 
+# Backend configuration this product owns, merged underneath `environment` on every backend
+# service. It is the seam that keeps a product's own settings out of the closed map below, which
+# the boilerplate edits on most releases. See docker/backend.product.env.
+x-backend-product-env: &backend-product-env
+  - ./backend.product.env
+
 x-backend-env: &backend-env
   NODE_ENV: production
   PORT: 80
@@ -170,6 +176,7 @@ x-backend-service: &backend-service
   user: '0:0'
   networks: [app, database]
   secrets: [session_secret, better_auth_secret, notification_payload_encryption_key]
+  env_file: *backend-product-env
   environment: *backend-env
   command: *backend-command
   depends_on:
@@ -214,6 +221,7 @@ x-notification-scheduler-service: &notification-scheduler-service
       notification_fcm_private_key,
       notification_apns_private_key,
     ]
+  env_file: *backend-product-env
   environment: *backend-env
   command: *backend-command
   depends_on:
@@ -238,6 +246,7 @@ services:
     restart: 'no'
     user: '0:0'
     networks: [app, database]
+    env_file: *backend-product-env
     environment: *backend-env
     command: *migrate-command
 
@@ -332,6 +341,7 @@ services:
     profiles: [notification-consumer]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/notification-consumer:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     secrets: [notification_payload_encryption_key]
+    env_file: *backend-product-env
     environment: *backend-env
     command: *backend-command
     depends_on:

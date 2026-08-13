@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { parseDeclaredSecrets } from './declared-secrets.mjs';
 import {
   certificateDomains,
   expectedListeningPorts,
@@ -549,6 +550,24 @@ test('static frontend mode rejects an unsafe dist root', () => {
   assert.throws(() => fixture({ frontendMode: 'static', distRoot: '/srv/a b' }), /whitespace/u);
   assert.throws(() => fixture({ frontendMode: 'static', distRoot: '/srv/../etc' }), /\.\./u);
   assert.throws(() => fixture({ frontendMode: 'static', distRoot: 'relative/path' }), /absolute/u);
+});
+
+test('provisions a secret file for every secret the runtime image loads', () => {
+  // Compose secrets are bind mounts, so a declared secret whose file does not exist does not
+  // degrade -- the daemon refuses to create the container ("invalid mount config for type bind").
+  // serverctl is the only thing that creates those files on a single-server host, and its list was
+  // written out by hand, so the two push-notification signing keys the entrypoint declares were
+  // never provisioned and the notification workers could not start at all.
+  const controller = readFileSync(join(root, 'deploy/single-server/serverctl'), 'utf8');
+  const entrypoint = readFileSync(join(root, 'docker/secret-entrypoint.sh'), 'utf8');
+  const provisioned = new Set(
+    [...controller.matchAll(/^\s*configure_secret\s+([A-Z0-9_]+)/gmu)].map(([, key]) => key),
+  );
+
+  const missing = [...new Set(parseDeclaredSecrets(entrypoint).map(({ variable }) => variable))].filter(
+    (variable) => !provisioned.has(`${variable}_FILE`),
+  );
+  assert.deepEqual(missing, []);
 });
 
 test('corepack provisioning survives a host that already owns /usr/local/bin/corepack', () => {

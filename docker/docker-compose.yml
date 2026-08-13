@@ -11,6 +11,12 @@ x-nrb-build: &nrb-build
   additional_contexts:
     nrb-closure: ${NRB_CLOSURE_CONTEXT:?run pnpm nrb closure install before Docker source builds}
 
+# The same product-owned seam the production stack uses, so a product's own backend settings reach
+# the local and end-to-end stack without being added to the closed map below. See
+# docker/backend.product.env.
+x-backend-product-env: &backend-product-env
+  - ./backend.product.env
+
 x-backend-env: &backend-env
   NODE_ENV: ${NODE_ENV:-development}
   HOST: ${HOST:-0.0.0.0}
@@ -259,6 +265,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file: *backend-product-env
     environment: *backend-env
 
   mongodb-migrate:
@@ -272,6 +279,7 @@ services:
         condition: service_healthy
       mongodb-init:
         condition: service_completed_successfully
+    env_file: *backend-product-env
     environment: *backend-env
 
   admin-app-api:
@@ -283,6 +291,7 @@ services:
         NX_PROJECT: admin-app-api
         BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
     restart: unless-stopped
+    env_file: *backend-product-env
     environment: *backend-env
     ports:
       - target: 80
@@ -299,6 +308,7 @@ services:
         NX_PROJECT: user-app-api
         BUILD_OUTPUT: dist/apps/backend/user/user-app-api
     restart: unless-stopped
+    env_file: *backend-product-env
     environment: *backend-env
     ports:
       - target: 80
@@ -315,6 +325,7 @@ services:
         NX_PROJECT: auth-app-api
         BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
     restart: unless-stopped
+    env_file: *backend-product-env
     environment: *backend-env
     ports:
       - target: 80
@@ -331,6 +342,7 @@ services:
         NX_PROJECT: discord-app-api
         BUILD_OUTPUT: dist/apps/backend/discord/discord-app-api
     restart: unless-stopped
+    env_file: *backend-product-env
     environment:
       <<: *backend-env
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN:-}
@@ -357,6 +369,7 @@ services:
         NX_PROJECT: telegram-bot-api
         BUILD_OUTPUT: dist/apps/backend/telegram/telegram-bot-api
     restart: unless-stopped
+    env_file: *backend-product-env
     environment:
       <<: *backend-env
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
@@ -383,6 +396,7 @@ services:
         NX_PROJECT: notification-scheduler
         BUILD_OUTPUT: dist/apps/backend/notification/notification-scheduler
     restart: unless-stopped
+    env_file: *backend-product-env
     environment: *backend-env
 
   notification-consumer:
@@ -394,6 +408,7 @@ services:
         NX_PROJECT: notification-consumer
         BUILD_OUTPUT: dist/apps/backend/notification/notification-consumer
     restart: unless-stopped
+    env_file: *backend-product-env
     environment: *backend-env
 
   admin-app:

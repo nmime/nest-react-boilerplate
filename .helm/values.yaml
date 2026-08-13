@@ -95,6 +95,15 @@ config:
   notificationApnsKeyId: ''
   notificationApnsBundleId: ''
   notificationApnsSandbox: 'false'
+  # Backend configuration this product owns. Rendered into a separate
+  # `<fullname>-product-config` ConfigMap that every backend, background and migration workload
+  # reads *before* the chart's own one, so a key the boilerplate already sets keeps the value the
+  # rest of this block resolves - override those through the keys above, not from here. Keys are
+  # passed through verbatim as env vars. Never put secrets here; a ConfigMap is not encrypted at
+  # rest. Compose has the same seam in docker/backend.product.env.
+  extra: {}
+  # extra:
+  #   BILLING_LEDGER_URL: https://ledger.internal.example
 
 database:
   # This application chart references an externally managed database. It does

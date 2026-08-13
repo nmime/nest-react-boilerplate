@@ -25,6 +25,33 @@ Compose/Helm wiring, tests, and documentation together.
 
 Never commit a populated `.env` file or real secret material.
 
+## Settings this boilerplate does not know about
+
+A product built on this repository has its own backend settings, and the maps
+that carry configuration into the containers are closed: `x-backend-env` in both
+Compose files and the `data:` block of the Helm ConfigMap are edited on most
+boilerplate releases, so adding a key there guarantees a merge conflict. Each
+runtime has a seam that stays empty upstream instead:
+
+| Runtime                | Seam                                   |
+| ---------------------- | -------------------------------------- |
+| Compose (dev and prod) | `docker/backend.product.env`           |
+| Kubernetes             | `config.extra` in `.helm/values.yaml`  |
+| Single-host, native    | the deployment's own `.env.production` |
+| Single-host, compose   | inherits `docker/backend.product.env`  |
+
+Both seams are additive only: Compose merges the env file underneath each
+service's `environment`, and the chart lists the product ConfigMap _before_ its
+own in `envFrom`, so on a duplicate key the boilerplate's value wins. That is
+deliberate — every boilerplate key is already overridable, through the
+deployment's `.env` under Compose and through the `config` block under Helm, and
+overriding it there keeps one answer per key. Values are literal in both: Compose
+does not interpolate `${...}` inside an env file.
+
+Secrets do not belong in either seam; a ConfigMap is not encrypted at rest.
+Add them to the `declared_secrets` manifest in `docker/secret-entrypoint.sh`, as
+described under [Auth and sessions](#auth-and-sessions).
+
 ## Setup-generated selection
 
 `pnpm nrb setup` records selected apps and capabilities in `.nrb`. It also
@@ -116,6 +143,19 @@ Production Compose mounts `SESSION_SECRET_FILE` and `BETTER_AUTH_SECRET_FILE`;
 `docker/secret-entrypoint.sh` loads them into the
 canonical runtime variables before Node starts. The single-server bootstrap
 generates these secrets on first initialization and preserves them on reruns.
+
+That entrypoint's `declared_secrets` manifest is the workspace's one enumeration
+of application secrets, and the rest of the deployment surface derives from it:
+`scripts/native-runtime-env.mjs` builds the `_FILE` indirections a PM2 process
+tree resolves, and a spec asserts that `deploy/single-server/serverctl`
+provisions a file for every entry. Adding a secret therefore means adding one
+manifest line — with two exceptions the manifest cannot express, listed in
+`applicationResolvedSecretFiles`: `AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE` and
+`NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE` stay paths, because the application
+dereferences those two itself and refuses to start when both forms are set.
+Provision the file even for a secret the deployment leaves empty: Compose mounts
+a declared secret as a bind, so a missing source file stops the container from
+being created at all.
 
 ## Telegram and Discord
 

@@ -173,6 +173,50 @@ const serviceBlock = (compose, service) => {
   return end < 0 ? rest : rest.slice(0, end);
 };
 
+// `x-backend-env` is a closed map: every key it carries is one the boilerplate chose. A product's
+// own backend configuration has nowhere to go except into that anchor, in a file the boilerplate
+// edits on most releases, which turns each new setting into a standing merge conflict. The
+// product-owned env file is the seam -- Compose merges it under `environment`, so it adds product
+// keys without ever being able to shadow one the boilerplate owns (those are overridden through
+// the deployment's own `.env`, which is what interpolates them).
+test('every backend service reads the product-owned environment file', () => {
+  const seam = 'backend.product.env';
+  // Tracked and empty rather than ignored: Compose fails config outright on a missing env_file, so
+  // an untracked seam would break the first deployment that copies only what git tracks.
+  const shipped = readFileSync(resolve(root, `docker/${seam}`), 'utf8');
+  assert.ok(
+    shipped.split('\n').every((line) => line.trim() === '' || line.trimStart().startsWith('#')),
+    'the shipped product env file must declare nothing, so a product owns all of it',
+  );
+
+  for (const file of ['docker/docker-compose.prod.yml', 'docker/docker-compose.yml']) {
+    const compose = readFileSync(resolve(root, file), 'utf8');
+    assert.match(
+      compose,
+      new RegExp(`^x-backend-product-env: &backend-product-env\\n {2}- \\./${seam}$`, 'mu'),
+      `${file} must point the seam anchor at docker/${seam}`,
+    );
+
+    // Backend services are the ones taking the backend environment, however they take it: through
+    // the service anchor, by merging the map, or by naming it outright. Deriving the list from the
+    // file means a service added later is held to the same contract without editing this test.
+    const backendServices = [...compose.matchAll(/^ {2}([a-z0-9-]+):$/gmu)]
+      .map(([, service]) => service)
+      .filter((service) => /\*backend-env|\*backend-service|\*notification-scheduler-service/u.test(serviceBlock(compose, service)));
+
+    assert.ok(backendServices.length > 0, `${file} must define backend services`);
+    for (const service of backendServices) {
+      const block = serviceBlock(compose, service);
+      // A service that merges an anchor inherits the anchor's own `env_file`.
+      const inherits = /<<: \*(backend-service|notification-scheduler-service)$/mu.test(block);
+      assert.ok(
+        inherits || block.includes('env_file: *backend-product-env'),
+        `${service} in ${file} cannot receive product configuration`,
+      );
+    }
+  }
+});
+
 // Without these keys the one-image-many-brands claim is only half true: the build-time
 // VITE_PRODUCT_* values are baked into the image, so two deployments of the same image
 // cannot present different identities.

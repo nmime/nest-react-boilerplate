@@ -88,24 +88,22 @@ for (const requirement of [
   'check_compose_health',
   'current-image-tag',
   'previous-image-tag',
+  // Only the entries whose generator carries the meaning are pinned here: a session or webhook
+  // secret that stopped being generated material, or an encryption key that stopped being 32
+  // bytes, is a weakening this list has to catch. That every declared secret is provisioned at
+  // all is asserted in scripts/single-server-deployment.spec.mjs against the entrypoint manifest,
+  // so the presence half is derived instead of restated -- this list had already drifted ten
+  // secrets behind the manifest.
   'configure_secret SESSION_SECRET_FILE session_secret.txt hex',
   'configure_secret AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE auth_provider_token_encryption_key.txt base64-32',
   'configure_secret NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE notification_payload_encryption_key.txt base64-32',
-  'configure_secret RESEND_API_KEY_FILE resend_api_key.txt empty',
-  'configure_secret MAILPACE_SERVER_TOKEN_FILE mailpace_server_token.txt empty',
   'configure_secret REDIS_PASSWORD_FILE redis_password.txt hex',
-  'configure_secret MONGODB_ROOT_PASSWORD_FILE mongodb_root_password.txt base64',
-  'configure_secret MONGODB_PASSWORD_FILE mongodb_password.txt base64',
-  'configure_secret MONGODB_MIGRATION_PASSWORD_FILE mongodb_migration_password.txt base64',
-  'configure_secret MONGODB_BACKUP_RESTORE_PASSWORD_FILE mongodb_backup_restore_password.txt base64',
-  'configure_secret MONGODB_KEYFILE_FILE mongodb_keyfile.txt base64',
-  'configure_secret MONGODB_URI_FILE mongodb_uri.txt empty',
-  'configure_secret MONGODB_MIGRATION_URI_FILE mongodb_migration_uri.txt empty',
-  'configure_secret MONGODB_BACKUP_RESTORE_URI_FILE mongodb_backup_restore_uri.txt empty',
-  'MONGODB_DATABASE_TOOLS_DOCKER_NETWORK nest-react-boilerplate_database',
-  'single-node replica set and is not highly available',
   'configure_secret TELEGRAM_BOT_WEBHOOK_SECRET_FILE telegram_bot_webhook_secret.txt hex',
   'configure_secret DISCORD_CUSTOM_ID_SECRET_FILE discord_custom_id_secret.txt hex',
+  'configure_secret MONGODB_ROOT_PASSWORD_FILE mongodb_root_password.txt base64',
+  'configure_secret MONGODB_KEYFILE_FILE mongodb_keyfile.txt base64',
+  'MONGODB_DATABASE_TOOLS_DOCKER_NETWORK nest-react-boilerplate_database',
+  'single-node replica set and is not highly available',
 ]) {
   assert.ok(controller.includes(requirement), `controller missing safety contract: ${requirement}`);
 }

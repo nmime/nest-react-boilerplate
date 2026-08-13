@@ -116,6 +116,11 @@ spec:
             {{- end }}
           {{- if or (eq $app.kind "backend") (eq $app.kind "background") }}
           envFrom:
+            {{- if $root.Values.config.extra }}
+            {{- /* First, so the chart's own ConfigMap below wins on a duplicate key. */}}
+            - configMapRef:
+                name: {{ include "boilerplate.fullname" $root }}-product-config
+            {{- end }}
             - configMapRef:
                 name: {{ include "boilerplate.fullname" $root }}-config
           {{- end }}

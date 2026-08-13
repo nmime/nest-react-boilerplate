@@ -17,30 +17,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseEnvFile } from './compose-production.mjs';
+import { parseDeclaredSecrets } from './declared-secrets.mjs';
 import { buildPostgresUrl } from './native-datastores.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-
-/**
- * `<KEY>_FILE` indirections that must be dereferenced into a plain variable, because
- * the reading code only ever looks at the plain name.
- */
-export const secretFileEnvironmentKeys = {
-  SESSION_SECRET_FILE: 'SESSION_SECRET',
-  BETTER_AUTH_SECRET_FILE: 'BETTER_AUTH_SECRET',
-  REDIS_PASSWORD_FILE: 'REDIS_PASSWORD',
-  POSTGRES_PASSWORD_FILE: 'POSTGRES_PASSWORD',
-  DATABASE_URL_FILE: 'DATABASE_URL',
-  TELEGRAM_BOT_TOKEN_FILE: 'TELEGRAM_BOT_TOKEN',
-  TELEGRAM_OIDC_CLIENT_SECRET_FILE: 'TELEGRAM_OIDC_CLIENT_SECRET',
-  TELEGRAM_BOT_WEBHOOK_SECRET_FILE: 'TELEGRAM_BOT_WEBHOOK_SECRET',
-  DISCORD_BOT_TOKEN_FILE: 'DISCORD_BOT_TOKEN',
-  DISCORD_CLIENT_SECRET_FILE: 'DISCORD_CLIENT_SECRET',
-  DISCORD_PUBLIC_KEY_FILE: 'DISCORD_PUBLIC_KEY',
-  DISCORD_CUSTOM_ID_SECRET_FILE: 'DISCORD_CUSTOM_ID_SECRET',
-  RESEND_API_KEY_FILE: 'RESEND_API_KEY',
-  MAILPACE_SERVER_TOKEN_FILE: 'MAILPACE_SERVER_TOKEN',
-};
 
 /**
  * Keys the application dereferences itself, and which must therefore be passed
@@ -51,6 +31,26 @@ export const applicationResolvedSecretFiles = new Set([
   'AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE',
   'NOTIFICATION_PAYLOAD_ENCRYPTION_KEY_FILE',
 ]);
+
+/**
+ * `<KEY>_FILE` indirections that must be dereferenced into a plain variable, because the reading
+ * code only ever looks at the plain name.
+ *
+ * Derived from the entrypoint's manifest rather than restated, because that manifest is the
+ * workspace's one enumeration of application secrets and this is the container-free half of the
+ * same job. The list used to be written out here and had drifted four secrets short — MongoDB's
+ * URI and password, and the FCM and APNs signing keys — so a native deployment of a Mongo product
+ * booted without its database credentials and a push send failed at first use rather than at
+ * start-up. A secret added to the entrypoint now reaches both runtimes at once.
+ *
+ * Two manifest entries can alias onto one variable (the migration secrets do), which collapses to
+ * a single `_FILE` key here.
+ */
+export const secretFileEnvironmentKeys = Object.fromEntries(
+  [...new Set(parseDeclaredSecrets(readFileSync(resolve(repoRoot, 'docker/secret-entrypoint.sh'), 'utf8')).map(({ variable }) => variable))]
+    .map((variable) => [`${variable}_FILE`, variable])
+    .filter(([fileKey]) => !applicationResolvedSecretFiles.has(fileKey)),
+);
 
 const fail = (message) => {
   throw new Error(message);
@@ -115,9 +115,9 @@ export function assertNativeEndpoints(environment) {
 export function resolveNativeEnvironment({ production, readSecret, includeSecrets = true }) {
   const environment = {};
   for (const [key, value] of Object.entries(production)) {
-    // Resolved indirections are replaced by their plain sibling; the two the app
-    // reads itself stay as paths.
-    if (key in secretFileEnvironmentKeys && !applicationResolvedSecretFiles.has(key)) continue;
+    // Resolved indirections are replaced by their plain sibling. The keys the app reads itself are
+    // absent from the table by construction, so they fall through here and stay as paths.
+    if (key in secretFileEnvironmentKeys) continue;
     environment[key] = value;
   }
   if (!includeSecrets) return environment;

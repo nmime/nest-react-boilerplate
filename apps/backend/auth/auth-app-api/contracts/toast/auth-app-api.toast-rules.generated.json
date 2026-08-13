@@ -1602,6 +1602,303 @@
       "enabled": true
     },
     {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.200",
+          "default": "Auth confirm Email Verification completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:400",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.400",
+          "default": "Auth confirm Email Verification failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:401",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_401",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.401",
+          "default": "Auth confirm Email Verification failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:403",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_403",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.403",
+          "default": "Auth confirm Email Verification failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:409",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.409",
+          "default": "Auth confirm Email Verification failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:429",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_429",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.429",
+          "default": "Auth confirm Email Verification failed: Too Many Requests."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:500",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_500",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.500",
+          "default": "Auth confirm Email Verification failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.err",
+          "default": "Auth confirm Email Verification failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/email-verification/confirm",
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmemailverification.post.net",
+          "default": "Auth confirm Email Verification could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "auth-app-api:POST:/auth/link-tokens:200",
       "endpoint": {
         "app": "auth-app-api",
@@ -3966,6 +4263,303 @@
         "text": {
           "key": "api.toast.auth-app-api.authcontroller-requestpasswordreset.post.net",
           "default": "Auth request Password Reset could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:200",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.200",
+          "default": "Auth confirm Password Reset completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:400",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.400",
+          "default": "Auth confirm Password Reset failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:401",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_401",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.401",
+          "default": "Auth confirm Password Reset failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:403",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_403",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.403",
+          "default": "Auth confirm Password Reset failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:409",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.409",
+          "default": "Auth confirm Password Reset failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:429",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 429,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_429",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.429",
+          "default": "Auth confirm Password Reset failed: Too Many Requests."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:500",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_500",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.500",
+          "default": "Auth confirm Password Reset failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:ERR",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.err",
+          "default": "Auth confirm Password Reset failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:NET",
+      "endpoint": {
+        "app": "auth-app-api",
+        "method": "POST",
+        "path": "/auth/password-reset/confirm",
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.auth-app-api.authcontroller-confirmpasswordreset.post.net",
+          "default": "Auth confirm Password Reset could not reach the service."
         },
         "icon": "alert-triangle",
         "color": "amber",

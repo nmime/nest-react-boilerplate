@@ -67,7 +67,24 @@ describe("gitleaks invocation", () => {
     // gitleaks resolves `[extend] path` against the invocation directory, not against the config
     // file, so a container left in `/` would silently lose every base rule and allowlist.
     assert.equal(args[args.indexOf("-w") + 1], "/repo");
-    assert.equal(args[args.indexOf("--source") + 1], "/repo");
+  });
+
+  it("scans both branches from the same relative source so anchored allowlists match", () => {
+    const native = nativeGitleaksInvocation({ config: productGitleaksConfigPath, reportPath: summaryReport });
+    const docker = dockerGitleaksInvocation({
+      config: productGitleaksConfigPath,
+      image: "image",
+      reportPath: summaryReport,
+      workspace: "/host/repo",
+    });
+
+    // gitleaks reports a finding's path relative to `--source`, and every fixture allowlist in the
+    // base config anchors its path with `^`. Scanning the container from `/repo` reported
+    // `/repo/libs/...`, which no anchored pattern matches, so the container branch re-reported every
+    // allowlisted fixture as a leak while the host branch stayed clean. The working directory is
+    // already the workspace, so `.` names the same tree without moving the paths.
+    assert.equal(docker.args[docker.args.indexOf("--source") + 1], ".");
+    assert.equal(native.args[native.args.indexOf("--source") + 1], ".");
   });
 
   it("refuses a path it cannot rewrite into the container", () => {

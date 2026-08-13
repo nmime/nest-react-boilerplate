@@ -75,7 +75,11 @@ export function dockerGitleaksInvocation({ config, image, reportPath, workspace 
       "-w",
       containerWorkspace,
       image,
-      ...detectArgs(containerWorkspace, containerConfig, containerReport),
+      // `.`, not the mount point: gitleaks reports a finding's path relative to `--source`, and every
+      // fixture allowlist anchors its path with `^`. Scanning from `/repo` reported `/repo/libs/...`,
+      // which no anchored pattern matches, so the container branch re-reported every allowlisted
+      // fixture as a leak. The working directory is already the workspace.
+      ...detectArgs(".", containerConfig, containerReport),
     ],
   };
 }

@@ -37,6 +37,10 @@ describe('GitHub workflow hardening', () => {
   it('asserts against a checkout that configures the github forge', () => {
     const result = validate(rootDir);
 
+    // The exit code has to be asserted here, not only the disposition. Without it this case passed
+    // while the validator was crashing on a contract literal that had moved to another file, and
+    // the only thing that noticed was the merge-blocking gate itself.
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
     assert.doesNotMatch(result.stdout, /not-applicable/u, 'a configured forge must not be stood down from');
   });
 

@@ -78,6 +78,7 @@ const gitleaksConfig = readFileSync(new URL('.gitleaks.toml', workspaceUrl), 'ut
 const nxCacheAction = readFileSync(new URL('.github/actions/nx-cache/action.yml', workspaceUrl), 'utf8');
 const nxCacheDocs = readFileSync(new URL('docs/ci-cache.md', workspaceUrl), 'utf8');
 const fullstackCompose = readFileSync(new URL('apps/e2e/fullstack/src/compose.ts', workspaceUrl), 'utf8');
+const fullstackSelectionSource = readFileSync(new URL('apps/e2e/fullstack/src/selection.ts', workspaceUrl), 'utf8');
 const fullstackSpec = readFileSync(new URL('apps/e2e/fullstack/src/fullstack.spec.ts', workspaceUrl), 'utf8');
 const bunCompatibilityCommand = readFileSync(
   new URL('packages/tooling/src/commands/tooling/bun-compat.ts', workspaceUrl),
@@ -554,24 +555,29 @@ assert.ok(
 // start sequence in a single place is the fix for quality-presets and
 // spec-assurance-nightly having drifted away from ci.yml's retry and then
 // failing on every scheduled run for a month.
+// That action is an entry point, not an implementation: asserting its start
+// sequence literally is what froze the unsequenced `up -d --build` in place,
+// because the contract test enforced the very line that raced the migrator.
+// Assert the delegation and the inputs it forwards; scripts/ci/runtime-stack.spec.mjs
+// owns the behaviour of what it delegates to.
 const runtimeStackAction = readFileSync(new URL('.github/actions/runtime-stack/action.yml', workspaceUrl), 'utf8');
 for (const required of [
-  'docker compose -f "$COMPOSE_FILE_PATH" up -d --build',
-  'assert_ready',
-  'dump_diagnostics',
-  'docker logs --tail',
+  'node scripts/ci/runtime-stack.mjs',
+  'COMPOSE_FILE_PATH: ${{ inputs.compose-file }}',
+  'START_ATTEMPTS: ${{ inputs.attempts }}',
+  'READINESS_TIMEOUT: ${{ inputs.readiness-timeout }}',
 ]) {
   assert.ok(runtimeStackAction.includes(required), `runtime-stack action missing required contract: ${required}`);
 }
-// Checked against executable lines only: the action documents why `--wait` is
-// wrong, and that explanation must not trip its own guard.
+// Checked against executable lines only: the action documents why it delegates,
+// and that explanation must not trip its own guard.
 const runtimeStackCommands = runtimeStackAction
   .split('\n')
   .filter((line) => !/^\s*#/u.test(line))
   .join('\n');
 assert.ok(
-  !/docker compose[^\n]*--wait/u.test(runtimeStackCommands),
-  'runtime-stack action must not use `up --wait`: it treats the one-shot migrate service exiting 0 as a failed wait.',
+  !/docker compose/u.test(runtimeStackCommands),
+  'runtime-stack action must not run Compose itself; the shared driver owns the start sequence.',
 );
 
 const assertDirectComposeBuildContext = (workflowName, job) => {
@@ -694,10 +700,17 @@ for (const required of [
   '`mongodb://mongodb.localhost:${ports.mongodb}/${mongodbDatabase}?replicaSet=rs0&retryWrites=true`',
   "selectedEnvironment.MONGODB_REPLICA_SET ?? 'rs0'",
   "'--no-deps'",
-  "'mongodb-init'",
-  "'mongodb-migrate'",
 ]) {
   assert.ok(fullstackCompose.includes(required), `fullstack Compose helper missing provider contract: ${required}`);
+}
+// The MongoDB preparation services are named by the startup plan, not by the Compose helper that
+// executes it. Asserting them against the executor is what broke this gate when the plan was
+// extracted: the literals were still in the repository, just one file over.
+for (const required of ["'mongodb-init'", "'mongodb-migrate'"]) {
+  assert.ok(
+    fullstackSelectionSource.includes(required),
+    `fullstack startup plan missing provider contract: ${required}`,
+  );
 }
 assert.ok(
   !fullstackCompose.includes('mongoInitCommand') && !fullstackCompose.includes("'--entrypoint'"),

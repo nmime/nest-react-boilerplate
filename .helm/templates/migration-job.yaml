@@ -41,6 +41,11 @@ spec:
           {{- end }}
           command: {{ toJson .Values.migrations.command }}
           envFrom:
+            {{- if .Values.config.extra }}
+            {{- /* First, so the chart's own ConfigMap below wins on a duplicate key. */}}
+            - configMapRef:
+                name: {{ include "boilerplate.fullname" . }}-product-config
+            {{- end }}
             - configMapRef:
                 name: {{ include "boilerplate.fullname" . }}-config
             {{- if eq $databaseEngine "postgres" }}

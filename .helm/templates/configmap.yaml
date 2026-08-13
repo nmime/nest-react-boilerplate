@@ -101,6 +101,23 @@ data:
   OTEL_EXPORTER_OTLP_HEADERS: {{ default "" .Values.monitoring.otel.headers | quote }}
   OTEL_METRIC_EXPORT_INTERVAL: {{ default "60000" .Values.monitoring.otel.metricExportInterval | quote }}
   {{ end }}
+{{- if .Values.config.extra }}
+---
+# Backend configuration the product owns, kept out of the map above so a boilerplate release can
+# rewrite that map without touching product settings. Every workload lists this ConfigMap first in
+# `envFrom`, so on a duplicate key the chart's own value still wins.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-product-config
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: product-config
+data:
+  {{- range $key, $value := .Values.config.extra }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
 {{- if .Values.frontendNginx.enabled }}
 ---
 apiVersion: v1

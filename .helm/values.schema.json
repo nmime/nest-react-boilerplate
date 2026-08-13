@@ -2,6 +2,22 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "extra": {
+          "description": "Product-owned backend env vars. kubelet drops an envFrom key that is not a valid identifier without failing the pod, so reject those here instead.",
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "type": ["string", "number", "boolean"]
+          }
+        }
+      },
+      "additionalProperties": true
+    },
     "networkPolicy": {
       "type": "object",
       "properties": {

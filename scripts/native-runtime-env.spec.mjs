@@ -1,7 +1,9 @@
 // @requirements REQ-SCAFFOLD-SAFETY-008
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
+import { parseDeclaredSecrets } from './declared-secrets.mjs';
 import {
   applicationResolvedSecretFiles,
   assertNativeEndpoints,
@@ -31,6 +33,30 @@ const production = {
   AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE: '/etc/nrb/secrets/auth_key.txt',
   VITE_API_BASE_URL_MODE: 'same-origin',
 };
+
+test('carries every secret the container entrypoint loads', () => {
+  // docker/secret-entrypoint.sh is the workspace's one enumeration of application secrets, and
+  // every other consumer derives from it. A second list here means a native deployment silently
+  // starts without whatever the copy forgot -- the MongoDB credentials and the push-notification
+  // signing keys, when this was found -- and the process only fails much later, at first use.
+  const entrypoint = readFileSync(new URL('../docker/secret-entrypoint.sh', import.meta.url), 'utf8');
+  const declared = [...new Set(parseDeclaredSecrets(entrypoint).map(({ variable }) => variable))];
+
+  assert.deepEqual(
+    declared.filter(
+      (variable) =>
+        !(`${variable}_FILE` in secretFileEnvironmentKeys) &&
+        !applicationResolvedSecretFiles.has(`${variable}_FILE`),
+    ),
+    [],
+  );
+  // Nothing in the other direction either: a native-only entry would be a secret no container
+  // deployment ever receives.
+  assert.deepEqual(
+    Object.values(secretFileEnvironmentKeys).filter((variable) => !declared.includes(variable)),
+    [],
+  );
+});
 
 test('dereferences secret files into the plain variables the application reads', () => {
   const environment = resolveNativeEnvironment({ production, readSecret });

@@ -362,6 +362,56 @@ test('frontend runtime flags are absent when unconfigured', { skip: !HELM }, () 
   assert.doesNotMatch(out, /name: TELEGRAM_AUTH_ENABLED/, 'no flags must render when frontendRuntimeConfig is empty');
 });
 
+test('product-owned backend configuration reaches every workload the chart configures', { skip: !HELM }, () => {
+  const out = render('nrbtest', [
+    '--set-string',
+    'config.extra.PRODUCT_LEDGER_URL=https://ledger.internal.example',
+    '--set-string',
+    'config.extra.LOG_LEVEL=product-must-not-win',
+  ]);
+
+  const productConfig = docFor(out, 'ConfigMap', 'nrbtest-product-config');
+  assert.ok(productConfig, 'config.extra must render a ConfigMap the product owns');
+  assert.match(
+    productConfig,
+    /PRODUCT_LEDGER_URL: "https:\/\/ledger\.internal\.example"/u,
+    'a key only the product knows about must reach the workloads without editing the chart',
+  );
+
+  // The chart's own ConfigMap is listed last so it wins on a duplicate key, mirroring Compose
+  // where `environment` beats `env_file`: a boilerplate key is overridden through values.yaml,
+  // never by shadowing it from the product surface.
+  const workloads = out.split(/^---$/mu).filter((doc) => /^\s+envFrom:$/mu.test(doc));
+  assert.ok(workloads.length >= 2, 'expected the backend deployments and the migration Job to use envFrom');
+  for (const doc of workloads) {
+    const name = /^\s+name:\s*(\S+)/mu.exec(doc)?.[1] ?? '<unnamed>';
+    const product = doc.indexOf('name: nrbtest-product-config');
+    const own = doc.indexOf('name: nrbtest-config');
+    assert.ok(product >= 0, `${name} must read the product-owned ConfigMap`);
+    assert.ok(own >= 0, `${name} must still read the chart's own ConfigMap`);
+    assert.ok(product < own, `${name} must list the product ConfigMap first so the chart's values win`);
+  }
+});
+
+test('the product ConfigMap is absent until a product configures it', { skip: !HELM }, () => {
+  assert.equal(docFor(render('nrbtest'), 'ConfigMap', 'nrbtest-product-config'), '');
+});
+
+test('product configuration keys that cannot become env vars are rejected at render time', { skip: !HELM }, () => {
+  // kubelet silently drops an envFrom key that is not a valid identifier (it only files an
+  // InvalidVariableNames event), so the workload starts without the setting. Fail the render.
+  assert.throws(
+    () => render('nrbtest', ['--set-string', 'config.extra.billing-ledger-url=https://ledger.example']),
+    /config\.extra/u,
+    'a key that is not a shell identifier must fail the render',
+  );
+  assert.throws(
+    () => render('nrbtest', ['--set', 'config.extra.NESTED.KEY=value']),
+    /config\.extra/u,
+    'a nested map cannot be flattened into env vars and must fail the render',
+  );
+});
+
 test(
   'landing runtime destinations are derived from split ingress hosts without a baked-in domain',
   { skip: !HELM },

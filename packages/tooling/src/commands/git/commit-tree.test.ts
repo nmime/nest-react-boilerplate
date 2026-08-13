@@ -11,6 +11,7 @@ import {
   parseLockfileImporters,
   parseTsconfigPaths,
   readCommitTree,
+  resolveAliasTargets,
   validateCommitTree,
 } from "./commit-tree.ts";
 import { defaultGitConventionsConfig } from "./conventions-config.ts";
@@ -65,6 +66,22 @@ describe("commit tree checks", () => {
       "@app/backend-feature-auth-shared": ["libs/backend/feature/auth/shared/lib/src/index.ts"],
       "@app/i18n-en-common/*": ["i18n/en/common/*"],
     });
+  });
+
+  // TypeScript substitutes the captured tail into a target's `*` literally, and
+  // `String.prototype.replace` with a string pattern does not: it reads `$&` in the replacement as
+  // a back-reference to the match. A tail carrying `$&` therefore resolved to a path that does not
+  // exist, and this gate rejected a commit whose imports are fine — the failure mode a commit gate
+  // can least afford. A target carrying more than one `*` is deliberately not covered here: `tsc`
+  // rejects that config outright (TS5062), so no reachable tsconfig can produce one.
+  it("substitutes the captured tail literally rather than as a replacement pattern", () => {
+    assert.deepEqual(resolveAliasTargets("@app/gen/a$&b", { "@app/gen/*": ["libs/*/src"] }), [
+      "libs/a$&b/src",
+    ]);
+    assert.deepEqual(
+      resolveAliasTargets("@app/i18n-en-common/errors.json", parseTsconfigPaths(tsconfig)),
+      ["i18n/en/common/errors.json"],
+    );
   });
 
   it("fails a commit whose lockfile declares an importer with no package.json", () => {

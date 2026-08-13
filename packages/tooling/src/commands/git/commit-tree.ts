@@ -120,7 +120,10 @@ export function resolveAliasTargets(specifier: string, paths: Record<string, str
 
   if (!best) return null;
   const { targets, tail } = best;
-  return targets.map((target) => target.replace("*", tail));
+  // `split`/`join` rather than `replace` or `replaceAll`: a target may carry more than one `*`, and
+  // both replace forms read `$&` in the replacement as a back-reference, which would mangle a tail
+  // containing `$`.
+  return targets.map((target) => target.split("*").join(tail));
 }
 
 function checkLockfileImporters(tree: CommitTree, index: TreeIndex): string[] {

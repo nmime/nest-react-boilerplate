@@ -74,7 +74,10 @@ const deployWorkflow = workflows.find((workflow) => workflow.name === 'deploy.ym
 const nightlyAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-nightly.yml')?.text ?? '';
 const runtimeAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-runtime.yml')?.text ?? '';
 const githubReleaseNotes = readFileSync(new URL('.github/release.yml', workspaceUrl), 'utf8');
-const gitleaksConfig = readFileSync(new URL('.gitleaks.toml', workspaceUrl), 'utf8');
+const gitleaksBaseConfigPath = 'packages/tooling/config/gitleaks.base.toml';
+const gitleaksProductConfigPath = '.gitleaks.toml';
+const gitleaksBaseConfig = readFileSync(new URL(gitleaksBaseConfigPath, workspaceUrl), 'utf8');
+const gitleaksProductConfig = readFileSync(new URL(gitleaksProductConfigPath, workspaceUrl), 'utf8');
 const nxCacheAction = readFileSync(new URL('.github/actions/nx-cache/action.yml', workspaceUrl), 'utf8');
 const nxCacheDocs = readFileSync(new URL('docs/ci-cache.md', workspaceUrl), 'utf8');
 const fullstackCompose = readFileSync(new URL('apps/e2e/fullstack/src/compose.ts', workspaceUrl), 'utf8');
@@ -274,6 +277,10 @@ assert.ok(
 for (const required of ['pnpm run test:coverage:all', 'pnpm run test:e2e:coverage:all']) {
   assert.ok(ci.includes(required), `ci.yml missing explicit maintainer test command: ${required}`);
 }
+assert.ok(
+  ci.includes(`GITLEAKS_CONFIG: ${'.gitleaks.toml'}`),
+  'ci.yml must name the gitleaks config so both forges scan with the same one',
+);
 assert.match(
   scripts['test:e2e:coverage:all'] ?? '',
   /--all --exclude=fullstack-e2e -- --coverage/u,
@@ -298,8 +305,24 @@ for (const required of [
   'discord-config\\.spec\\.ts',
   '123456789012345678',
 ]) {
-  assert.ok(gitleaksConfig.includes(required), `.gitleaks.toml missing narrow fixture allowlist: ${required}`);
+  assert.ok(
+    gitleaksBaseConfig.includes(required),
+    `${gitleaksBaseConfigPath} missing narrow fixture allowlist: ${required}`,
+  );
 }
+// The split is only a seam while the product file composes over the base. A product config that
+// spends its one `[extend]` slot on `useDefault` still scans - with the default rules alone, and
+// with none of the boilerplate allowlists above - so every fixture in this repository starts
+// failing the gate and the pressure is to widen something.
+assert.ok(
+  gitleaksProductConfig.includes(`path = "${gitleaksBaseConfigPath}"`),
+  `${gitleaksProductConfigPath} must extend ${gitleaksBaseConfigPath} rather than replace it`,
+);
+assert.doesNotMatch(
+  gitleaksProductConfig,
+  /^\s*useDefault/mu,
+  `${gitleaksProductConfigPath} must reach the default rules through ${gitleaksBaseConfigPath}; a config declares either path or useDefault, never both`,
+);
 for (const section of ['Breaking Changes', 'Features', 'Bug Fixes', 'Performance', 'Security', 'Maintenance']) {
   assert.ok(githubReleaseNotes.includes(`title: ${section}`), `.github/release.yml missing ${section} category`);
 }
@@ -356,6 +379,9 @@ for (const forbidden of [
 for (const required of [
   'gitleaks:',
   'zricethezav/gitleaks:v8.28.0',
+  // Root auto-discovery finds the product config today, but nothing states it, so a config renamed
+  // or relocated downstream degrades the job to the bare default rule set without a word.
+  `--config ${gitleaksProductConfigPath}`,
   'node:24.18.0-alpine',
   'mcr.microsoft.com/playwright:v1.61.1-noble',
   'docker:27.5.1-dind',

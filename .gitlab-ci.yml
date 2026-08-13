@@ -527,7 +527,7 @@ ops-gates:
   script:
     - pnpm exec playwright install --with-deps chromium firefox webkit
     - pnpm nrb closure materialize --all-reference --provider postgres
-    # Same start-and-wait sequence as .github/actions/runtime-stack.
+    # Runs scripts/ci/runtime-stack.mjs, the same driver .github/actions/runtime-stack invokes.
     - bash scripts/ci/runtime-stack.sh
     - pnpm run test:world-class
     # A11Y_URLS is already set for this job and the stack is already up, so the

@@ -146,6 +146,7 @@ requirements:
     projects:
       - admin-app
       - user-app
+      - '@app/frontend-api-client'
       - '@app/frontend-api-support'
       - '@app/frontend-ui-web'
     risk: high

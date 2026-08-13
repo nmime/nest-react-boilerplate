@@ -2,7 +2,6 @@ export * from './api-client';
 export * from './auth-required-policy';
 export * from './error-normalization';
 export * from './frontend-env';
-export * from './openapi-runtime';
 export * from './product-brand';
 export * from './resilience-middleware';
 export * from './runtime-fetch';

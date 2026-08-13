@@ -36,21 +36,27 @@ describe('tenantScopedWhere', () => {
 
 describe('assertTenantScoped', () => {
   it('accepts a query filter carrying the discriminator', () => {
-    expect(() => assertTenantScoped({ [TenantDiscriminator]: tenantA }, 'orders.findActive')).not.toThrow();
+    expect(() => {
+      assertTenantScoped({ [TenantDiscriminator]: tenantA }, 'orders.findActive');
+    }).not.toThrow();
   });
 
   it('names the offending query when the discriminator is missing', () => {
-    expect(() => assertTenantScoped({ status: 'active' }, 'orders.findActive')).toThrow('orders.findActive');
+    expect(() => {
+      assertTenantScoped({ status: 'active' }, 'orders.findActive');
+    }).toThrow('orders.findActive');
   });
 
   it('rejects an undefined discriminator, which would match every row', () => {
-    expect(() => assertTenantScoped({ [TenantDiscriminator]: undefined }, 'orders.findActive')).toThrow(
-      'orders.findActive',
-    );
+    expect(() => {
+      assertTenantScoped({ [TenantDiscriminator]: undefined }, 'orders.findActive');
+    }).toThrow('orders.findActive');
   });
 
   it('rejects a filter that is not an object', () => {
-    expect(() => assertTenantScoped(undefined, 'orders.findActive')).toThrow('orders.findActive');
+    expect(() => {
+      assertTenantScoped(undefined, 'orders.findActive');
+    }).toThrow('orders.findActive');
   });
 });
 

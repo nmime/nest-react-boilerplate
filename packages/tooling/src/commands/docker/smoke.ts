@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { run, skipWhenDockerUnavailable } from "./runtime.ts";
+import { smokeProbes } from "./smoke-probes.ts";
 
 const composeParallelLimit = process.env.COMPOSE_PARALLEL_LIMIT ?? "2";
 const compose = [
@@ -88,29 +89,10 @@ const env = {
   SESSION_SECRET:
     process.env.SESSION_SECRET ?? "docker-smoke-session-secret-change-me",
 };
-const probes: [string, string, string, number][] = [
-  ["auth health", url(ports.authApi, "/health"), "auth-app-api", 200],
-  ["user health", url(ports.userApi, "/health"), "user-app-api", 200],
-  ["admin health", url(ports.adminApi, "/health"), "admin-app-api", 200],
-  ["admin frontend", url(ports.adminApp, "/"), "Admin App", 200],
-  ["user frontend", url(ports.userApp, "/"), "User App", 200],
-  ["user auth frontend", url(ports.userApp, "/auth"), "User App", 200],
-  ["landing frontend", url(ports.landingApp, "/"), "Nest React Boilerplate", 200],
-  ["site frontend", url(ports.siteApp, "/"), "A dependable home", 200],
-  ["mobile frontend", url(ports.mobileApp, "/"), "Nest React Boilerplate", 200],
-  [
-    "user proxy auth",
-    url(ports.userApp, "/auth/me"),
-    '"type":"about:blank"',
-    401,
-  ],
-  [
-    "admin proxy",
-    url(ports.adminApp, "/admin/profile/me"),
-    '"type":"about:blank"',
-    401,
-  ],
-];
+const probes = smokeProbes.map((probe) => ({
+  ...probe,
+  url: url(ports[probe.port], probe.path),
+}));
 
 async function logComposeDiagnostics(label: string): Promise<void> {
   console.warn(`${label}: docker compose diagnostics`);
@@ -177,12 +159,12 @@ async function composeUp() {
   await composeUpServices("backend", backendServices);
 }
 
-async function waitForProbe([name, probeUrl, contains, expectedStatus]: [
-  string,
-  string,
-  string,
-  number,
-]): Promise<void> {
+async function waitForProbe({
+  name,
+  url: probeUrl,
+  marker: contains,
+  status: expectedStatus,
+}: (typeof probes)[number]): Promise<void> {
   const started = Date.now();
   let lastError = "not attempted";
   while (Date.now() - started < 180_000) {
@@ -210,10 +192,9 @@ try {
   );
   await buildServices(stackServices);
   await composeUp();
-  const backendProbeCount = backendServices.length;
-  for (const probe of probes.slice(0, backendProbeCount)) await waitForProbe(probe);
+  for (const probe of probes.filter(({ tier }) => tier === "backend")) await waitForProbe(probe);
   await composeUpServices("frontend", frontendServices);
-  for (const probe of probes.slice(backendProbeCount)) await waitForProbe(probe);
+  for (const probe of probes.filter(({ tier }) => tier === "frontend")) await waitForProbe(probe);
   console.log(JSON.stringify({ status: "ok", probes: probes.length }));
 } catch (error) {
   exitCode = 1;

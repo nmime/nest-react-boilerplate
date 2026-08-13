@@ -106,6 +106,45 @@ export function fullstackStartupPlan(selection: FullstackSelection): FullstackSt
   ];
 }
 
+export interface FullstackReadinessProbe {
+  service: string;
+  /** Path appended to the service's base URL. */
+  path: string;
+  /** Text the response body must contain before the service counts as ready. */
+  marker: string;
+}
+
+/**
+ * How each service says it is ready, and the text that says so.
+ *
+ * Every marker is the Compose service name, because that is the one thing about a service a
+ * product does not rename. The gate used to read the shipped `<title>` instead -- 'User App',
+ * 'Admin App', 'Nest React Boilerplate' -- which the Vite brand transform rewrites from
+ * `VITE_PRODUCT_NAME`, so the suite would hang for three minutes and then blame the stack for a
+ * rebrand. The SPAs carry the name in `data-app` on the document element, which no brand pass
+ * touches; the HTTP services already echo it from their health payload.
+ *
+ * A service absent from here is started and awaited by Compose but never probed over HTTP, which
+ * is right for anything without an HTTP surface (the notification workers, the bots).
+ */
+const readinessEndpoints: Readonly<Record<string, Omit<FullstackReadinessProbe, 'service'>>> = {
+  'admin-app': { path: '/', marker: 'data-app="admin-app"' },
+  'admin-app-api': { path: '/health', marker: 'admin-app-api' },
+  'auth-app-api': { path: '/health', marker: 'auth-app-api' },
+  'landing-app': { path: '/', marker: 'data-app="landing-app"' },
+  'site-app': { path: '/ready', marker: 'site-app' },
+  'user-app': { path: '/', marker: 'data-app="user-app"' },
+  'user-app-api': { path: '/health', marker: 'user-app-api' },
+};
+
+export function readinessProbes(selection: FullstackSelection): FullstackReadinessProbe[] {
+  return selection.applicationServices.flatMap((service) => {
+    const endpoint = readinessEndpoints[service];
+
+    return endpoint ? [{ service, ...endpoint }] : [];
+  });
+}
+
 export function validateFullstackEnvironment(selection: FullstackSelection, environment: NodeJS.ProcessEnv): void {
   for (const name of ['DATABASE_ENGINE', 'AUTH_PERSISTENCE'] as const) {
     const value = environment[name]?.trim();

@@ -70,6 +70,17 @@ export const urls = {
   siteApp: configuredUrl(['FULLSTACK_SITE_APP_URL', 'SITE_APP_URL'], url(ports.siteApp)),
 };
 
+/** The same base URLs keyed by Compose service name, which is how the readiness probes name them. */
+export const serviceUrls: Readonly<Record<string, string>> = {
+  'admin-app': urls.adminApp,
+  'admin-app-api': urls.adminApi,
+  'auth-app-api': urls.authApi,
+  'landing-app': urls.landingApp,
+  'site-app': urls.siteApp,
+  'user-app': urls.userApp,
+  'user-app-api': urls.userApi,
+};
+
 const externalUrlGroups = [
   ['FULLSTACK_ADMIN_API_URL', 'ADMIN_APP_API_URL'],
   ['FULLSTACK_USER_API_URL', 'USER_APP_API_URL'],
@@ -100,7 +111,6 @@ if (fullstackSelection) {
   validateFullstackEnvironment(fullstackSelection, process.env);
 }
 export const databaseProvider = fullstackSelection?.provider;
-const applicationServices = fullstackSelection?.applicationServices ?? [];
 export const stackServices = fullstackSelection?.services ?? [];
 
 const writeStdoutLine = (message: string): void => {
@@ -181,8 +191,6 @@ export const composeEnv = {
   ADMIN_BOOTSTRAP_ENABLED: process.env.ADMIN_BOOTSTRAP_ENABLED ?? 'true',
 };
 
-export const stackIncludes = (service: string): boolean =>
-  fullstackSelection === undefined || applicationServices.includes(service);
 const stackUpArgs = [...composeArgs, 'up', '--no-build', '-d', ...stackServices];
 
 export function run(command: string, args: string[]): Promise<void> {

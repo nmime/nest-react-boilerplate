@@ -1,13 +1,5 @@
-import {
-  buildStackImages,
-  composeArgs,
-  fullstackSelection,
-  run,
-  stackIncludes,
-  upStack,
-  urls,
-  waitForText,
-} from './compose';
+import { buildStackImages, composeArgs, fullstackSelection, run, serviceUrls, upStack, waitForText } from './compose';
+import { readinessProbes } from './selection';
 
 export default async function globalSetup(): Promise<void> {
   if (!fullstackSelection) {
@@ -20,14 +12,9 @@ export default async function globalSetup(): Promise<void> {
     await buildStackImages();
   }
   await upStack();
-  const readinessChecks = [
-    ['auth-app-api', () => waitForText('auth api', `${urls.authApi}/health`, 'auth-app-api')],
-    ['user-app-api', () => waitForText('user api', `${urls.userApi}/health`, 'user-app-api')],
-    ['admin-app-api', () => waitForText('admin api', `${urls.adminApi}/health`, 'admin-app-api')],
-    ['user-app', () => waitForText('user app', `${urls.userApp}/`, 'User App')],
-    ['admin-app', () => waitForText('admin app', `${urls.adminApp}/`, 'Admin App')],
-    ['landing-app', () => waitForText('landing app', `${urls.landingApp}/`, 'Nest React Boilerplate')],
-    ['site-app', () => waitForText('site app', `${urls.siteApp}/ready`, 'site-app')],
-  ] as const;
-  await Promise.all(readinessChecks.filter(([service]) => stackIncludes(service)).map(([, check]) => check()));
+  await Promise.all(
+    readinessProbes(fullstackSelection).map((probe) =>
+      waitForText(probe.service, `${serviceUrls[probe.service]}${probe.path}`, probe.marker),
+    ),
+  );
 }

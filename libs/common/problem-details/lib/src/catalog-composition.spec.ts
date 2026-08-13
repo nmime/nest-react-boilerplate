@@ -130,11 +130,17 @@ describe('problem type registry', () => {
   });
 
   it('refuses a second registration under the same extension id', () => {
-    expect(() => registerProblemTypes(extension([productProblem], 'registry-test'))).toThrow('already registered');
+    expect(() => {
+      registerProblemTypes(extension([productProblem], 'registry-test'));
+    }).toThrow('already registered');
   });
 
   it('leaves the registry unchanged when an extension is rejected', () => {
-    expect(() => registerProblemTypes(extension([{ ...productProblem, code: 'rate-limited' }], 'broken'))).toThrow();
-    expect(() => registerProblemTypes(extension([productProblem], 'later'))).toThrow('redefines');
+    expect(() => {
+      registerProblemTypes(extension([{ ...productProblem, code: 'rate-limited' }], 'broken'));
+    }).toThrow();
+    expect(() => {
+      registerProblemTypes(extension([productProblem], 'later'));
+    }).toThrow('redefines');
   });
 });

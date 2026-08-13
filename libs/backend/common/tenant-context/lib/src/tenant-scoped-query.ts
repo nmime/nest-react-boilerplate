@@ -19,12 +19,15 @@ export function tenantScopedWhere<T extends Record<string, unknown>>(where?: T):
   const requested = where?.[TenantDiscriminator];
 
   if (requested !== undefined && requested !== tenantId) {
+    // The filter's discriminator is `unknown`, and the offending value is the whole point of the
+    // message, so it is serialized rather than coerced — `String({})` reports `[object Object]`.
     throw new Error(
-      `Refusing a cross-tenant query: the filter names tenant ${String(requested)} while the ambient tenant is ${tenantId}.`,
+      `Refusing a cross-tenant query: the filter names tenant ${JSON.stringify(requested)} while the ambient tenant is ${tenantId}.`,
     );
   }
 
-  return { ...(where ?? ({} as T)), [TenantDiscriminator]: tenantId };
+  const scoped = { ...where, [TenantDiscriminator]: tenantId };
+  return scoped as TenantScopedWhere<T>;
 }
 
 /**

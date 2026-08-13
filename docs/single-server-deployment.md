@@ -305,6 +305,35 @@ policies. On a native host that unit is absent; `pm2-<DEPLOY_USER>.service`
 resurrects the saved process list instead. Nginx and Certbot timers are
 independently enabled in both runtimes.
 
+## When a deployment fails
+
+The controller runs under `set -Eeuo pipefail`, so any failing step ends the run.
+Before it exits it prints the context an operator would otherwise collect by
+hand, because systemd answers a failed `start` with nothing but a pointer to two
+other commands — and after a multi-minute image build that pointer was the whole
+output of the failure.
+
+On `RUNTIME_MODE=compose` the report carries `systemctl status` and the journal
+for `nest-react-boilerplate.service`, then `compose ps` and container logs. The
+unit is a `Type=oneshot` wrapper around `compose up --wait`, so a failed start
+almost always means one container never became healthy, and only Compose names
+it. On `RUNTIME_MODE=native` the report carries the PM2 unit and `pm2 logs`
+instead.
+
+Read the report bottom-up: the last unhealthy container is the cause, and its
+logs are directly above the summary line. If the report is ever missing, collect
+the same evidence directly:
+
+```bash
+sudo journalctl -xeu nest-react-boilerplate.service --no-pager -n 100
+sudo -u nrb node /opt/nest-react-boilerplate/scripts/compose-production.mjs ps \
+  --env-file /etc/nest-react-boilerplate/.env.production
+```
+
+A failed deployment leaves the last healthy immutable tag in place as the
+rollback target, so diagnose first and roll back only if the cause is the new
+release itself.
+
 ## Rollback boundary
 
 The controller records the last and previous successfully healthy immutable

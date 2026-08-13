@@ -657,3 +657,46 @@ test('corepack provisioning survives a host that already owns /usr/local/bin/cor
     rmSync(sandbox, { force: true, recursive: true });
   }
 });
+
+test('a failed deployment prints the diagnostics an operator would otherwise gather by hand', () => {
+  // serverctl runs under `set -Eeuo pipefail` with no ERR trap, so a failing `systemctl restart`
+  // ended the deployment on systemd's own one-liner: "see systemctl status / journalctl for
+  // details". After a multi-minute image build that is the whole output an operator gets, and the
+  // context they need is gone the moment the shell exits. The controller has to collect it.
+  const controller = readFileSync(join(root, 'deploy/single-server/serverctl'), 'utf8');
+  assert.match(controller, /trap\s+'[^']*report_failure_context[^']*'\s+ERR/u, 'serverctl must trap ERR');
+
+  const reportFailure = /^report_failure_context\(\) \{$[\s\S]*?^\}$/mu.exec(controller)?.[0];
+  assert.ok(reportFailure, 'serverctl must expose report_failure_context() so diagnostics are testable');
+
+  const sandbox = mkdtempSync(join(tmpdir(), 'nrb-failure-'));
+  try {
+    const stubs = join(sandbox, 'stubs');
+    mkdirSync(stubs, { recursive: true });
+    writeFileSync(join(stubs, 'systemctl'), '#!/bin/sh\necho "STATUS $*"\n', { mode: 0o755 });
+    writeFileSync(join(stubs, 'journalctl'), '#!/bin/sh\necho "JOURNAL $*"\n', { mode: 0o755 });
+
+    const result = spawnSync(
+      'bash',
+      [
+        '-c',
+        [
+          'set -Eeuo pipefail',
+          'CONTROLLER_NAME=nrb-server RUNTIME_MODE=compose COMPOSE_UNIT=app.service',
+          'log() { printf \'[%s] %s\\n\' "${CONTROLLER_NAME}" "$*" >&2; }',
+          reportFailure,
+          'report_failure_context 148',
+        ].join('\n'),
+      ],
+      { encoding: 'utf8', env: { ...process.env, PATH: `${stubs}:${process.env.PATH}` } },
+    );
+
+    assert.equal(result.status, 0, `report_failure_context must not fail itself:\n${result.stderr}`);
+    const output = `${result.stdout}${result.stderr}`;
+    assert.match(output, /148/u, 'the report must name the line that failed');
+    assert.match(output, /STATUS .*app\.service/u, 'the report must include the unit status');
+    assert.match(output, /JOURNAL .*app\.service/u, 'the report must include the unit journal');
+  } finally {
+    rmSync(sandbox, { force: true, recursive: true });
+  }
+});

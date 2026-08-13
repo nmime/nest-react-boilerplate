@@ -2,9 +2,8 @@ import { Module } from '@nestjs/common';
 import { DiscordAccountExternalAuthInjectToken, DiscordBotModule } from '@app/backend-feature-discord-bot';
 import { AuthMainModule } from '@app/backend-feature-auth-main';
 import { BaseHealthController, HealthPrivateNetworkIpGuard } from '@app/backend-common-health';
-import { RedisModule } from '@app/backend-common-redis';
+import { InboundCallbackReplayGuard, RedisModule } from '@app/backend-common-redis';
 import { DiscordExternalAuthAdapter } from './discord-external-auth.adapter';
-import { DiscordInteractionReplayProtection } from './discord-interaction-replay-protection';
 import { DiscordInteractionsController } from './discord-interactions.controller';
 import { DiscordAppApiHealthServiceProvider } from './health.config';
 import { DiscordAppApiCapabilitiesModule } from './capabilities.generated';
@@ -32,6 +31,6 @@ const authMainModule = AuthMainModule.forRoot();
     }),
   ],
   controllers: [BaseHealthController, DiscordInteractionsController],
-  providers: [DiscordAppApiHealthServiceProvider, DiscordInteractionReplayProtection, HealthPrivateNetworkIpGuard],
+  providers: [DiscordAppApiHealthServiceProvider, InboundCallbackReplayGuard, HealthPrivateNetworkIpGuard],
 })
 export class DiscordAppApiModule {}

@@ -8,8 +8,9 @@ import {
   DiscordInteractionRouter,
   DiscordInteractionSecurity,
 } from '@app/backend-feature-discord-bot';
+import { InboundCallbackReplayGuard } from '@app/backend-common-redis';
+import { discordInteractionIngress } from './discord-interaction-ingress';
 import { DiscordInteractionsController } from './discord-interactions.controller';
-import { DiscordInteractionReplayProtection } from './discord-interaction-replay-protection';
 
 const snapshot = {
   applicationId: '123456789012345678',
@@ -34,7 +35,7 @@ async function controller(
     providers: [
       { provide: DiscordBotConfig, useValue: { snapshot: () => snapshot } },
       { provide: DiscordInteractionSecurity, useValue: { verify } },
-      { provide: DiscordInteractionReplayProtection, useValue: replay },
+      { provide: InboundCallbackReplayGuard, useValue: replay },
       { provide: DiscordInteractionRouter, useValue: { route } },
     ],
   }).compile();
@@ -78,7 +79,7 @@ describe('DiscordInteractionsController', () => {
       headers: { signature: 'sig', timestamp: 'ts' },
       publicKey: snapshot.publicKey,
     });
-    expect(setup.reserve).toHaveBeenCalledWith(pingBody.id);
+    expect(setup.reserve).toHaveBeenCalledWith(discordInteractionIngress, pingBody.id);
     expect(setup.complete).toHaveBeenCalledWith({ key: 'discord:1', ownerValue: 'processing:owner' });
     expect(setup.route).toHaveBeenCalledWith(pingBody, {
       customIdSecret: snapshot.customIdSecret,

@@ -10,6 +10,7 @@ requirements:
     projects:
       - telegram-bot-api
       - discord-app-api
+      - '@app/backend-common-redis'
     risk: critical
     profiles:
       - domain
@@ -30,6 +31,12 @@ requirements:
       - kind: security
         file: apps/backend/telegram/telegram-bot-api/src/telegram-webhook.controller.spec.ts
         target: telegram-bot-api:test
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/common/redis/lib/src/inbound-callback-replay.guard.spec.ts
+        target: '@app/backend-common-redis:test'
         lanes:
           - pr
           - main

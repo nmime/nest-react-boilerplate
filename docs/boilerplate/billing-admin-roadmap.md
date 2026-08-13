@@ -16,7 +16,11 @@ then generate or add the feature through the normal ownership flow. A complete
 slice should include:
 
 - a tenant-scoped customer/subscription model and explicit persistence owner;
-- signed webhook verification, replay protection, and idempotent processing;
+- signed webhook verification and idempotent processing; at-most-once delivery
+  is already available — declare an ingress descriptor for the provider and
+  reuse `InboundCallbackReplayGuard` as described in
+  [api-conventions.md](../api-conventions.md), rather than writing a third copy
+  of the reservation lifecycle;
 - checkout/session and entitlement interfaces that do not leak provider types
   into application code;
 - OpenAPI contracts, generated clients, authorization, migrations, and

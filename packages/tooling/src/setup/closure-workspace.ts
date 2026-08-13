@@ -10,7 +10,14 @@ import {
   renderSelectedClosure,
 } from './closure.js';
 import type { ProjectGraphLike, SelectedClosureManifest } from './closure.js';
-import { appCatalog, capabilityCatalog, type DurableDatabaseProviderId } from './catalog.js';
+import {
+  appCatalog,
+  capabilityCatalog,
+  expandDependencies,
+  validateSelection,
+  type DurableDatabaseProviderId,
+} from './catalog.js';
+import type { AppId, CapabilityId } from './schema.js';
 import { configHash, hashString } from './state.js';
 import { parseNrbConfig, schemaVersion } from './schema.js';
 import { resolveConfig } from './planner.js';
@@ -125,33 +132,116 @@ export function referenceClosureContextPath(provider: DurableDatabaseProviderId)
   return `.nrb/reference/${provider}`;
 }
 
+/** The shape of a capability entry this filter reads; injectable so tests can supply fixtures. */
+export interface ReferenceCatalogEntry {
+  conflictsWith: readonly string[];
+  requiresCapabilities: readonly string[];
+  ownedProjects?: readonly string[];
+  providerOwnedProjects?: Readonly<Partial<Record<DurableDatabaseProviderId, readonly string[]>>>;
+}
+
+/**
+ * Capabilities the "everything" selection can hold for one provider.
+ *
+ * Dropping only the opposite provider is not enough: a capability may legitimately conflict
+ * with THIS provider and still be in the catalog. `tenancy` is the first — it conflicts with
+ * `mongodb` because MongoDB has no row-level security.
+ *
+ * Nor is dropping direct conflicts enough. `expandDependencies` transitively re-adds anything a
+ * survivor requires, so a capability that merely *requires* a dropped one drags it back and the
+ * selection fails validation — which surfaced as an unbuildable migrator image rather than as a
+ * selection error. The filter is therefore a fixed point over `requiresCapabilities`, not a
+ * predicate: it keeps dropping until nothing left reaches the drop-set. `dropped` only ever
+ * grows, so a requirement cycle terminates.
+ */
+export function referenceCapabilities(
+  catalog: Readonly<Record<string, ReferenceCatalogEntry>>,
+  provider: DurableDatabaseProviderId,
+): string[] {
+  const dropped = new Set<string>([provider === 'postgres' ? 'mongodb' : 'postgres']);
+  for (const [capability, entry] of Object.entries(catalog)) {
+    if (entry.conflictsWith.includes(provider)) {
+      dropped.add(capability);
+    }
+  }
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [capability, entry] of Object.entries(catalog)) {
+      if (dropped.has(capability)) {
+        continue;
+      }
+      if (entry.requiresCapabilities.some((required) => dropped.has(required))) {
+        dropped.add(capability);
+        changed = true;
+      }
+    }
+  }
+
+  return Object.keys(catalog)
+    .filter((capability) => !dropped.has(capability))
+    .sort();
+}
+
+/**
+ * Projects that belong to no capability in the reference selection for one provider.
+ *
+ * A dropped capability is out of the selection entirely, so every project it owns is out too —
+ * including the ones it owns under the provider that *is* selected. Only pruning the opposite
+ * provider's projects left those reachable from an application, and the image built them.
+ */
+export function excludedReferenceProjects(
+  catalog: Readonly<Record<string, ReferenceCatalogEntry>>,
+  provider: DurableDatabaseProviderId,
+): string[] {
+  const selected = new Set(referenceCapabilities(catalog, provider));
+  const projects = new Set<string>();
+  for (const [capability, entry] of Object.entries(catalog)) {
+    if (selected.has(capability)) {
+      continue;
+    }
+    for (const project of [
+      ...(entry.ownedProjects ?? []),
+      ...Object.values(entry.providerOwnedProjects ?? {}).flat(),
+    ]) {
+      projects.add(project);
+    }
+  }
+  return [...projects].sort();
+}
+
+/**
+ * The invariant the reference selection exists to uphold, enforced rather than commented: it
+ * must still validate after `expandDependencies` has re-added everything it transitively pulls
+ * in. A catalog entry that defeats the filter above fails here, at the source.
+ */
+export function assertReferenceSelectionIsValid(
+  provider: DurableDatabaseProviderId,
+  apps: readonly AppId[],
+  capabilities: readonly CapabilityId[],
+): void {
+  const expanded = expandDependencies(apps, capabilities);
+  const issues = validateSelection(expanded.apps, expanded.capabilities);
+  if (issues.length > 0) {
+    throw new Error(
+      `The ${provider} reference selection is not valid: ${issues.map(({ message }) => message).join('; ')}`,
+    );
+  }
+}
+
 /**
  * The maintainer "everything" selection for one provider.
  *
  * Exported so tests can build their fixtures from it rather than restating the
  * filtering. A copy in `closure-workspace.test.ts` drifted the moment a
  * capability gained a `conflictsWith` entry, which is precisely the bug the
- * filter below exists to prevent.
+ * filter above exists to prevent.
  */
 export function allReferenceConfig(provider: DurableDatabaseProviderId) {
-  const oppositeProvider = provider === 'postgres' ? 'mongodb' : 'postgres';
   const apps = Object.keys(appCatalog).sort() as Array<keyof typeof appCatalog>;
-  const capabilities = Object.keys(capabilityCatalog)
-    .filter((capability) => {
-      if (capability === oppositeProvider) {
-        return false;
-      }
-      // Dropping only the opposite provider is not enough: a capability may
-      // legitimately conflict with THIS provider and still be in the catalog.
-      // `tenancy` is the first — it conflicts with `mongodb` because MongoDB has
-      // no row-level security — and including it made the mongodb reference
-      // closure fail validation with "tenancy conflicts with capability
-      // mongodb", which surfaced as an unbuildable migrator image rather than
-      // as a selection error.
-      const conflicts = capabilityCatalog[capability as keyof typeof capabilityCatalog].conflictsWith;
-      return !conflicts.includes(provider);
-    })
-    .sort() as Array<keyof typeof capabilityCatalog>;
+  const capabilities = referenceCapabilities(capabilityCatalog, provider);
+  assertReferenceSelectionIsValid(provider, apps, capabilities);
   const config = parseNrbConfig({
     schemaVersion,
     apps,
@@ -178,7 +268,14 @@ export async function buildAllReferenceClosure(
 }
 
 function referenceProviderGraph(graph: ProjectGraphLike, provider: DurableDatabaseProviderId): ProjectGraphLike {
-  const oppositeProviderProjects = new Set(providerProjects(provider === 'postgres' ? 'mongodb' : 'postgres'));
+  const opposite = provider === 'postgres' ? 'mongodb' : 'postgres';
+  // Two disjoint reasons to leave the graph: the opposite provider's own bindings, which every
+  // capability may carry, and everything the capability filter dropped. Pruning only the first
+  // left a dropped capability's libraries reachable from an application and back in the image.
+  const oppositeProviderProjects = new Set([
+    ...providerProjects(opposite),
+    ...excludedReferenceProjects(capabilityCatalog, provider),
+  ]);
   const applicationProjects = new Set(Object.keys(appCatalog));
   return {
     ...graph,

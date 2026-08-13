@@ -6,11 +6,14 @@ import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import type { ProjectGraphLike, SelectedClosureManifest } from './closure.js';
-import { type DurableDatabaseProviderId } from './catalog.js';
+import { expandDependencies, validateSelection, type DurableDatabaseProviderId } from './catalog.js';
 import {
   allReferenceConfig,
+  assertReferenceSelectionIsValid,
   configuredClosureGraph,
+  excludedReferenceProjects,
   materializeAllReferenceClosure,
+  referenceCapabilities,
   referenceLockInvocation,
   referenceClosureContextPath,
   validateCurrentClosure,
@@ -164,6 +167,99 @@ describe('all-reference closure context', () => {
     assert.ok(invocation.args.includes('--no-frozen-lockfile'));
     assert.ok(!invocation.args.includes('--offline'));
     assert.ok(invocation.args.includes('--ignore-scripts'));
+  });
+});
+
+describe('reference capability selection', () => {
+  for (const provider of ['postgres', 'mongodb'] as const) {
+    it(`the ${provider} reference selection survives expansion and validation`, () => {
+      const { apps, capabilities } = allReferenceConfig(provider);
+      const expanded = expandDependencies(apps, capabilities);
+
+      // Expansion transitively re-adds anything the filter dropped but a survivor still
+      // requires, which is how a selection that looked filtered became an unbuildable
+      // migrator image instead of a selection error.
+      assert.deepEqual(validateSelection(expanded.apps, expanded.capabilities), []);
+    });
+  }
+
+  it('drops a capability that only transitively reaches an excluded one', () => {
+    const catalog = {
+      mongodb: { conflictsWith: ['postgres'], requiresCapabilities: [] },
+      postgres: { conflictsWith: ['mongodb'], requiresCapabilities: [] },
+      restricted: { conflictsWith: ['mongodb'], requiresCapabilities: [] },
+      dependent: { conflictsWith: [], requiresCapabilities: ['restricted'] },
+      indirect: { conflictsWith: [], requiresCapabilities: ['dependent'] },
+      unrelated: { conflictsWith: [], requiresCapabilities: [] },
+    };
+
+    assert.deepEqual(referenceCapabilities(catalog, 'mongodb'), ['mongodb', 'unrelated']);
+    assert.deepEqual(referenceCapabilities(catalog, 'postgres'), [
+      'dependent',
+      'indirect',
+      'postgres',
+      'restricted',
+      'unrelated',
+    ]);
+  });
+
+  it('drops a capability that requires the provider this selection excludes', () => {
+    const catalog = {
+      mongodb: { conflictsWith: ['postgres'], requiresCapabilities: [] },
+      postgres: { conflictsWith: ['mongodb'], requiresCapabilities: [] },
+      relational: { conflictsWith: [], requiresCapabilities: ['postgres'] },
+    };
+
+    assert.deepEqual(referenceCapabilities(catalog, 'mongodb'), ['mongodb']);
+  });
+
+  it('terminates on a requirement cycle instead of looping', () => {
+    const catalog = {
+      mongodb: { conflictsWith: ['postgres'], requiresCapabilities: [] },
+      postgres: { conflictsWith: ['mongodb'], requiresCapabilities: [] },
+      left: { conflictsWith: [], requiresCapabilities: ['right'] },
+      right: { conflictsWith: [], requiresCapabilities: ['left', 'postgres'] },
+    };
+
+    assert.deepEqual(referenceCapabilities(catalog, 'mongodb'), ['mongodb']);
+  });
+
+  it('excludes every project a dropped capability owns, on either provider', () => {
+    const catalog = {
+      mongodb: { conflictsWith: ['postgres'], requiresCapabilities: [], ownedProjects: ['@app/mongodb'] },
+      postgres: { conflictsWith: ['mongodb'], requiresCapabilities: [], ownedProjects: ['@app/postgres'] },
+      relational: {
+        conflictsWith: [],
+        requiresCapabilities: ['postgres'],
+        ownedProjects: ['@app/relational'],
+        providerOwnedProjects: { postgres: ['@app/relational-postgres'], mongodb: ['@app/relational-mongodb'] },
+      },
+      kept: {
+        conflictsWith: [],
+        requiresCapabilities: [],
+        ownedProjects: ['@app/kept'],
+        providerOwnedProjects: { postgres: ['@app/kept-postgres'] },
+      },
+    };
+
+    // `relational` is out of the mongodb selection entirely, so its postgres-specific projects
+    // are out with it. Pruning the opposite provider's projects alone left them reachable from
+    // an application and back in the image, while `kept` survives and keeps its own.
+    assert.deepEqual(excludedReferenceProjects(catalog, 'mongodb'), [
+      '@app/postgres',
+      '@app/relational',
+      '@app/relational-mongodb',
+      '@app/relational-postgres',
+    ]);
+    assert.deepEqual(excludedReferenceProjects(catalog, 'postgres'), ['@app/mongodb']);
+  });
+
+  it('reports an unbuildable reference selection as a selection error', () => {
+    const { apps, capabilities } = allReferenceConfig('mongodb');
+
+    assert.throws(() => {
+      assertReferenceSelectionIsValid('mongodb', apps, [...capabilities, 'tenancy']);
+    }, /mongodb reference selection/u);
   });
 });
 

@@ -12,6 +12,8 @@
  */
 import { z } from 'zod';
 
+import { capabilityIds as knownCapabilityIds, type BaseCapabilityId } from './capability-registry.js';
+
 // ---------------------------------------------------------------------------
 // Public enums — derive IDs from the actual repo.
 // ---------------------------------------------------------------------------
@@ -36,29 +38,16 @@ export type BackendAppId = (typeof backendAppIds)[number];
 export const appIds = [...frontendAppIds, ...backendAppIds, 'fullstack-e2e', 'acceptance-e2e'] as const;
 export type AppId = (typeof appIds)[number];
 
-/** Cross-cutting capabilities that can be toggled. */
-export const capabilityIds = [
-  'i18n',
-  'analytics',
-  'websockets',
-  'feature-flags',
-  'fiat-currency',
-  'notifications',
-  'design-tokens',
-  'authz',
-  'postgres',
-  'mongodb',
-  'redis',
-  's3',
-  'static-data',
-  'nats',
-  'otel',
-  'swagger',
-  'telegram-bot',
-  'discord-bot',
-  'tenancy',
-] as const;
-export type CapabilityId = (typeof capabilityIds)[number];
+/**
+ * Cross-cutting capabilities that can be toggled.
+ *
+ * `baseCapabilityIds` is what this boilerplate ships and stays closed; `capabilityIds` also holds
+ * whatever `product-capabilities.ts` registers. `string & {}` keeps editor completion for the
+ * shipped ids while still accepting a product's own, which is what makes the axis extensible
+ * without a fork.
+ */
+export * from './capability-registry.js';
+export type CapabilityId = BaseCapabilityId | (string & {});
 
 export const ciModeIds = ['product', 'maintainer'] as const;
 export type CiMode = (typeof ciModeIds)[number];
@@ -125,83 +114,103 @@ export type PresetId = (typeof presetIds)[number];
 export const schemaVersion = '1.0.0' as const;
 
 /**
- * The root configuration schema.
+ * The root configuration schema, over a given capability id set.
  *
  * - `schemaVersion` MUST equal the current major version string.
  * - `preset` is an optional exact shortcut; the CLI materializes it into a
  *   custom selection before additive/removal updates.
  * - `apps` is a flat string[] restricted to known IDs.
- * - `capabilities` is a flat string[] restricted to known IDs.
+ * - `capabilities` is a flat string[] restricted to the ids passed in.
  * - `options` holds boolean toggles for generation behaviour.
  * - Passthrough is NOT used — unknown keys are rejected with a clear error.
+ *
+ * The capability set is a parameter rather than a closed enum because a product registers its own
+ * ids; `NrbConfigSchema` below binds it to what this checkout actually knows.
  */
-export const NrbConfigSchema = z
-  .object({
-    schemaVersion: z.literal(schemaVersion),
-    preset: z.enum(presetIds).optional(),
-    apps: z.array(z.enum(appIds)).default([]),
-    capabilities: z.array(z.enum(capabilityIds)).default([]),
-    /**
-     * Thresholds for `nrb git:conventions`. Held open rather than mirrored: the gate's own
-     * `resolveGitConventionsConfig` already validates this object key by key and reports which
-     * threshold is wrong, so restating the shape here would only give the two definitions a chance
-     * to drift. Setup neither reads nor writes it — it is passed through so a product can retune
-     * the gate without the strict schema above rejecting its own config file.
-     */
-    gitConventions: z.record(z.string(), z.unknown()).optional(),
-    product: z
-      .object({
-        ciMode: z.enum(ciModeIds).default(defaultProductConfig.ciMode),
-        frontendApiMode: z.enum(frontendApiModeIds).default(defaultProductConfig.frontendApiMode),
-        mobileTargets: z.array(z.enum(mobileTargetIds)).default([...defaultProductConfig.mobileTargets]),
-      })
-      .strict()
-      .default({ ...defaultProductConfig, mobileTargets: [...defaultProductConfig.mobileTargets] }),
-    deployment: z
-      .object({
-        targets: z
-          .array(z.enum(deploymentTargetIds))
-          .min(1)
-          .default([...defaultDeploymentConfig.targets]),
-        publicDomain: z
-          .string()
-          .refine(isPublicDomain, {
-            message: 'publicDomain must be a DNS base name without a protocol, port, path, or wildcard',
-          })
-          .default(defaultDeploymentConfig.publicDomain),
-        primaryApp: z.enum(frontendAppIds).nullable().default(defaultDeploymentConfig.primaryApp),
-        publicTopology: z.enum(publicTopologyIds).default(defaultDeploymentConfig.publicTopology),
-        kubernetesDelivery: z.enum(kubernetesDeliveryIds).default(defaultDeploymentConfig.kubernetesDelivery),
-        infrastructure: z
-          .object({
-            redis: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.redis),
-            nats: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.nats),
-            s3: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.s3),
-          })
-          .strict()
-          .default({ ...defaultDeploymentConfig.infrastructure }),
-      })
-      .strict()
-      .default({
-        ...defaultDeploymentConfig,
-        targets: [...defaultDeploymentConfig.targets],
-        infrastructure: { ...defaultDeploymentConfig.infrastructure },
-      }),
-    options: z
-      .object({
-        /** When true, prune files that are no longer needed after config change. */
-        prune: z.boolean().default(false),
-        /** When true, force overwrite generated files without conflict check. */
-        force: z.boolean().default(false),
-        /** When true, output the plan as JSON instead of executing. */
-        dryRun: z.boolean().default(false),
-        /** When true, do not prompt interactively (CI-friendly). */
-        nonInteractive: z.boolean().default(false),
-      })
-      .strict()
-      .default({ prune: false, force: false, dryRun: false, nonInteractive: false }),
-  })
-  .strict();
+export function createNrbConfigSchema(capabilityIdSet: readonly string[]) {
+  const known = new Set(capabilityIdSet);
+  return z
+    .object({
+      schemaVersion: z.literal(schemaVersion),
+      preset: z.enum(presetIds).optional(),
+      apps: z.array(z.enum(appIds)).default([]),
+      capabilities: z
+        .array(
+          z.string().superRefine((value, ctx) => {
+            if (!known.has(value)) {
+              ctx.addIssue({
+                code: 'custom',
+                message: `Unknown capability ID: ${value}. Known IDs: ${[...known].join(', ')}`,
+              });
+            }
+          }),
+        )
+        .default([]),
+      /**
+       * Thresholds for `nrb git:conventions`. Held open rather than mirrored: the gate's own
+       * `resolveGitConventionsConfig` already validates this object key by key and reports which
+       * threshold is wrong, so restating the shape here would only give the two definitions a chance
+       * to drift. Setup neither reads nor writes it — it is passed through so a product can retune
+       * the gate without the strict schema above rejecting its own config file.
+       */
+      gitConventions: z.record(z.string(), z.unknown()).optional(),
+      product: z
+        .object({
+          ciMode: z.enum(ciModeIds).default(defaultProductConfig.ciMode),
+          frontendApiMode: z.enum(frontendApiModeIds).default(defaultProductConfig.frontendApiMode),
+          mobileTargets: z.array(z.enum(mobileTargetIds)).default([...defaultProductConfig.mobileTargets]),
+        })
+        .strict()
+        .default({ ...defaultProductConfig, mobileTargets: [...defaultProductConfig.mobileTargets] }),
+      deployment: z
+        .object({
+          targets: z
+            .array(z.enum(deploymentTargetIds))
+            .min(1)
+            .default([...defaultDeploymentConfig.targets]),
+          publicDomain: z
+            .string()
+            .refine(isPublicDomain, {
+              message: 'publicDomain must be a DNS base name without a protocol, port, path, or wildcard',
+            })
+            .default(defaultDeploymentConfig.publicDomain),
+          primaryApp: z.enum(frontendAppIds).nullable().default(defaultDeploymentConfig.primaryApp),
+          publicTopology: z.enum(publicTopologyIds).default(defaultDeploymentConfig.publicTopology),
+          kubernetesDelivery: z.enum(kubernetesDeliveryIds).default(defaultDeploymentConfig.kubernetesDelivery),
+          infrastructure: z
+            .object({
+              redis: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.redis),
+              nats: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.nats),
+              s3: z.enum(infrastructureOwnershipIds).default(defaultDeploymentConfig.infrastructure.s3),
+            })
+            .strict()
+            .default({ ...defaultDeploymentConfig.infrastructure }),
+        })
+        .strict()
+        .default({
+          ...defaultDeploymentConfig,
+          targets: [...defaultDeploymentConfig.targets],
+          infrastructure: { ...defaultDeploymentConfig.infrastructure },
+        }),
+      options: z
+        .object({
+          /** When true, prune files that are no longer needed after config change. */
+          prune: z.boolean().default(false),
+          /** When true, force overwrite generated files without conflict check. */
+          force: z.boolean().default(false),
+          /** When true, output the plan as JSON instead of executing. */
+          dryRun: z.boolean().default(false),
+          /** When true, do not prompt interactively (CI-friendly). */
+          nonInteractive: z.boolean().default(false),
+        })
+        .strict()
+        .default({ prune: false, force: false, dryRun: false, nonInteractive: false }),
+    })
+    .strict();
+}
+
+/** The schema bound to the capability ids this checkout knows: shipped plus product-registered. */
+export const NrbConfigSchema = createNrbConfigSchema(knownCapabilityIds);
 
 export type NrbConfig = z.infer<typeof NrbConfigSchema>;
 

@@ -173,7 +173,7 @@ export function generateCapabilitiesManifest(summary: PlanSummary): { path: stri
     ? capabilityCatalog[provider].providerTelemetryInstrumentation
     : undefined;
   const capabilities = summary.capabilities.map((id) => {
-    const entry = capabilityCatalog[id as CapabilityId];
+    const entry = capabilityCatalog[id];
     const backendWiring = resolveCapabilityBackendWiring(entry, provider);
     const generatedFiles = new Set<string>();
     for (const wiring of backendWiring) {
@@ -233,7 +233,7 @@ export function generateCapabilitiesManifest(summary: PlanSummary): { path: stri
 export function generateComposeEnvironment(summary: PlanSummary): { path: string; content: string } {
   const profiles = new Set(summary.apps);
   for (const capabilityId of summary.capabilities) {
-    if (capabilityCatalog[capabilityId as CapabilityId].dockerServices.length > 0) {
+    if (capabilityCatalog[capabilityId].dockerServices.length > 0) {
       profiles.add(capabilityId);
     }
   }
@@ -284,7 +284,7 @@ export function generateCapabilityMigrationRegistry(summary: PlanSummary): { pat
   const provider = resolveDatabaseProvider(summary.capabilities);
   const migrations = provider
     ? summary.capabilities.flatMap(
-        (capabilityId) => capabilityCatalog[capabilityId as CapabilityId].providerMigrations?.[provider] ?? [],
+        (capabilityId) => capabilityCatalog[capabilityId].providerMigrations?.[provider] ?? [],
       )
     : [];
 
@@ -420,7 +420,7 @@ export function generateBackendCapabilityBootstrap(
 
 function resolveBackendTelemetryWiring(appId: AppId, capabilities: string[]) {
   const entry = capabilities
-    .map((capabilityId) => capabilityCatalog[capabilityId as CapabilityId])
+    .map((capabilityId) => capabilityCatalog[capabilityId])
     .find((capability) => {
       const hosts = capability.telemetryWiring?.hosts;
       return hosts === 'selected-backend' || hosts?.includes(appId);
@@ -441,7 +441,7 @@ function resolveBackendWiring(appId: AppId, capabilities: string[]): BackendModu
     throw new Error(`${appId} requires exactly one durable database provider.`);
   }
   return capabilities.flatMap((capabilityId) =>
-    resolveCapabilityBackendWiring(capabilityCatalog[capabilityId as CapabilityId], provider).filter(
+    resolveCapabilityBackendWiring(capabilityCatalog[capabilityId], provider).filter(
       (wiring) => wiring.hosts === 'selected-backend' || wiring.hosts.includes(appId),
     ),
   );

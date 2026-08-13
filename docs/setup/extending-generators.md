@@ -57,39 +57,45 @@ export const backendAppIds = [
 ] as const;
 ```
 
-## Adding a new capability to the catalog
+## Adding a capability of your own
 
-Edit `packages/tooling/src/setup/catalog.ts`:
-
-```typescript
-// In capabilityCatalog:
-"my-capability": {
-  id: "my-capability",
-  label: "My Capability",
-  activation: "nest-module",
-  requiresCapabilities: [],
-  requiresApps: [],
-  conflictsWith: [],
-  ownedProjects: ["@app/backend-common-my-capability"],
-  dockerServices: [],
-  environmentVariables: ["MY_CAPABILITY_ENABLED"],
-  backendWiring: [{
-    hosts: "selected-backend",
-    importName: "MyCapabilityModule",
-    importPath: "@app/backend-common-my-capability",
-    moduleExpression: "MyCapabilityModule.forRoot()",
-  }],
-},
-```
-
-Then add the ID to the enum in `schema.ts`:
+Register it in `packages/tooling/src/setup/product-capabilities.ts`. That file ships empty and stays
+product-owned, so a boilerplate upgrade never conflicts with it — do not add the entry to
+`baseCapabilityCatalog` or `baseCapabilityIds`, which are the shipped set:
 
 ```typescript
-export const capabilityIds = [
-  // ... existing ...
-  'my-capability',
-] as const;
+export const productCapabilities: readonly CapabilityEntry[] = [
+  {
+    id: 'my-capability',
+    label: 'My Capability',
+    activation: 'nest-module',
+    requiresCapabilities: ['authz'],
+    requiresApps: [],
+    conflictsWith: [],
+    ownedProjects: ['@product/backend-feature-my-capability'],
+    dockerServices: [],
+    environmentVariables: ['MY_CAPABILITY_ENABLED'],
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'MyCapabilityModule',
+        importPath: '@product/backend-feature-my-capability',
+        moduleExpression: 'MyCapabilityModule.forRoot()',
+      },
+    ],
+  },
+];
 ```
+
+The id is selectable through `pnpm nrb setup` and through the `setup` generator immediately, and it
+seeds the same closure, Compose profile, env surface, and backend wiring a shipped capability does.
+Composition validates when the module loads: a lower-case kebab-case id, not one the boilerplate
+already ships, and every `requiresCapabilities`, `conflictsWith`, and `requiresApps` reference must
+resolve. A registration that fails leaves the catalog exactly as it was, so a partially applied
+extension cannot make some selections resolve and others not.
+
+Applications remain a closed axis. A product's own deployable app is generated with
+`pnpm nrb add app`, not registered here.
 
 ## Adding a new preset
 

@@ -53,7 +53,7 @@ overrides:
   'http-proxy-middleware@>=3.0.0 <3.0.7': '3.0.7'
   '@opentelemetry/core@<2.8.0': '2.8.0'
   'multer@>=2.0.0-alpha.1 <2.2.0': '2.2.0'
-  'nanoid@<3.3.17': '3.3.17'
+  'nanoid@<3.3.18': '3.3.18'
   'dompurify@<=3.4.12': '3.4.13'
   'webpack-dev-server@<5.2.5': '5.2.5'
   'http-proxy-middleware@>=2.0.0 <2.0.10': '2.0.10'

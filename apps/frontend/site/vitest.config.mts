@@ -15,7 +15,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'happy-dom',
-    include: ['pages/**/*.spec.ts', 'pages/**/*.spec.tsx'],
+    include: ['pages/**/*.spec.ts', 'pages/**/*.spec.tsx', 'scripts/**/*.spec.mjs'],
     passWithNoTests: false,
     coverage: fullCoverage('coverage/apps/frontend/site', ['pages/**/*.{ts,tsx}'], ['pages/+config.ts']),
   },

@@ -39,10 +39,7 @@ describe(InboundCallbackReplayGuard.name, () => {
   it('admits a delivery id once while it is being processed', async () => {
     const guard = new InboundCallbackReplayGuard(new InMemoryRedisClient());
 
-    const results = await Promise.allSettled([
-      guard.reserve(skipIngress, '42'),
-      guard.reserve(skipIngress, '42'),
-    ]);
+    const results = await Promise.allSettled([guard.reserve(skipIngress, '42'), guard.reserve(skipIngress, '42')]);
 
     expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
     expect(results.find((result) => result.status === 'rejected')).toMatchObject({

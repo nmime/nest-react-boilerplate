@@ -45,8 +45,7 @@ test('carries every secret the container entrypoint loads', () => {
   assert.deepEqual(
     declared.filter(
       (variable) =>
-        !(`${variable}_FILE` in secretFileEnvironmentKeys) &&
-        !applicationResolvedSecretFiles.has(`${variable}_FILE`),
+        !(`${variable}_FILE` in secretFileEnvironmentKeys) && !applicationResolvedSecretFiles.has(`${variable}_FILE`),
     ),
     [],
   );

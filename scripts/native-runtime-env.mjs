@@ -47,7 +47,13 @@ export const applicationResolvedSecretFiles = new Set([
  * a single `_FILE` key here.
  */
 export const secretFileEnvironmentKeys = Object.fromEntries(
-  [...new Set(parseDeclaredSecrets(readFileSync(resolve(repoRoot, 'docker/secret-entrypoint.sh'), 'utf8')).map(({ variable }) => variable))]
+  [
+    ...new Set(
+      parseDeclaredSecrets(readFileSync(resolve(repoRoot, 'docker/secret-entrypoint.sh'), 'utf8')).map(
+        ({ variable }) => variable,
+      ),
+    ),
+  ]
     .map((variable) => [`${variable}_FILE`, variable])
     .filter(([fileKey]) => !applicationResolvedSecretFiles.has(fileKey)),
 );

@@ -38,6 +38,17 @@ const document = {
     },
     "/api/auth/{path}": {
       search: { operationId: "BetterAuthApiController_handle_search" },
+      get: { operationId: "BetterAuthApiController_handle_get" },
+    },
+    "/admin/notifications/broadcasts/{id}/send": {
+      post: {
+        operationId: "AdminNotificationsController_sendBroadcast",
+        parameters: [
+          { name: "id", in: "path", required: true },
+          { name: "idempotency-key", in: "header", required: true },
+          { name: "x-trace", in: "header", required: false },
+        ],
+      },
     },
   },
   components: { schemas: { RegisterDto: {}, AuthenticatedUserViewDto: {} } },
@@ -119,6 +130,35 @@ describe("api operations emitter", () => {
 
     assert.match(module, /Not emitted:\n \* - SEARCH \/api\/auth\/\{path\} \(unsupported by openapi-fetch\)/u);
     assert.equal(module.includes("betterAuthApiControllerHandleSearch"), false);
+  });
+
+  // A placeholder the document never declares is not a path parameter this emitter may invent: the
+  // generated `paths` type carries no `parameters` for it, so a callable passing one does not
+  // compile, and a callable omitting one requests the literal `{path}` URL. Both are worse than a
+  // documented gap. Better-Auth's catch-all is exactly this shape.
+  it("reports rather than emits an operation whose url declares an undocumented parameter", () => {
+    const module = render();
+
+    assert.match(
+      module,
+      /Not emitted:\n(?: \* - .*\n)* \* - GET \/api\/auth\/\{path\} \(\{path\} is not a declared parameter\)/u,
+    );
+    assert.equal(module.includes("betterAuthApiControllerHandleGet"), false);
+  });
+
+  // A header the document marks required is part of the call, not of its transport options: leaving
+  // it to `options.headers` makes an idempotency key silently omittable, and openapi-fetch's own
+  // types reject the call anyway. Optional headers stay in `options`, which is why `x-trace` is
+  // absent from the signature.
+  it("takes a required header parameter as an argument and passes it through params", () => {
+    const module = render();
+
+    assert.match(
+      module,
+      /export const adminNotificationsControllerSendBroadcast = \(id: string, idempotencyKey: string, options\?: ApiClientRequestOptions\) =>/u,
+    );
+    assert.match(module, /params: \{ path: \{ id \}, header: \{ 'idempotency-key': idempotencyKey \} \}/u);
+    assert.equal(module.includes("xTrace"), false);
   });
 
   it("refuses a document whose operation ids collide", () => {

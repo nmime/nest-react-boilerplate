@@ -1,67 +1,26 @@
-title = "Nest React Boilerplate Gitleaks configuration"
+title = "Product Gitleaks configuration"
 
+# Product-owned. Add this product's narrow fixture allowlists here; the boilerplate's own live in
+# the base config below and are rewritten on every upstream sync, so editing that file guarantees a
+# conflict in exactly the region upstream keeps touching.
+#
+# The chain is this file -> the base -> the gitleaks defaults. Do not add `useDefault` here: a
+# config may declare either `path` or `useDefault`, and replacing `path` would drop the base rules
+# and every boilerplate allowlist with them. `path` is resolved against the directory gitleaks was
+# invoked from, which is why the scan sets the container's working directory to the workspace.
 [extend]
-useDefault = true
+path = "packages/tooling/config/gitleaks.base.toml"
 
-[[rules]]
-id = "generic-api-key"
-
-[[rules.allowlists]]
-description = "Notification idempotency-key test fixtures"
-condition = "AND"
-paths = [
-  '''^libs/backend/feature/notification/main/lib/src/strategy/transport/providers/mailpace-email-notification\.provider\.spec\.ts$''',
-  '''^libs/backend/feature/notification/main/lib/src/strategy/transport/providers/resend-email-notification\.provider\.spec\.ts$''',
-]
-regexes = [
-  '''notification-delivery-1''',
-]
-
-[[rules.allowlists]]
-description = "Health sanitizer fake API-key fixtures"
-condition = "AND"
-paths = [
-  '''^libs/backend/common/health/lib/src/util/health-sanitize\.util\.spec\.ts$''',
-]
-regexes = [
-  '''sk-live-abc123''',
-]
-
-[[rules.allowlists]]
-description = "Authentication test secret placeholder"
-condition = "AND"
-paths = [
-  '''^libs/backend/feature/auth/main/lib/src/application/better-auth\.config\.spec\.ts$''',
-]
-regexes = [
-  '''test-secret-placeholder-min-32-chars-long''',
-]
-
-# Prose false positive: the default rule reads "…user/admin API,\nDiscord/Telegram selections"
-# as a key assignment and reports "Discord/Telegram" as the secret. No credential is present.
-[[rules.allowlists]]
-description = "Bun runtime research prose misread as an API key"
-condition = "AND"
-paths = [
-  '''^docs/bun-runtime-research\.md$''',
-]
-regexes = [
-  '''Discord/Telegram''',
-]
-
-[[rules]]
-id = "discord-client-id"
-
-[[rules.allowlists]]
-description = "Discord snowflake test fixtures"
-condition = "AND"
-paths = [
-  '''^apps/backend/discord/discord-app-api/src/discord-app-api\.module\.spec\.ts$''',
-  '''^libs/backend/feature/discord/bot/lib/src/service/discord-command-registration\.service\.spec\.ts$''',
-  '''^libs/backend/feature/discord/bot/lib/src/service/discord-config\.spec\.ts$''',
-  # Bun compatibility smoke fixture; the adjacent values are 'a'.repeat(64) and an empty token.
-  '''^packages/tooling/src/commands/tooling/bun-compat\.ts$''',
-]
-regexes = [
-  '''123456789012345678''',
-]
+# Narrow fixtures only. Every entry names both an anchored path and the literal value it admits:
+#
+#   [[rules]]
+#   id = "generic-api-key"
+#
+#   [[rules.allowlists]]
+#   description = "<why this value is not a credential>"
+#   condition = "AND"
+#   paths = ['''^libs/backend/feature/<domain>/.../<file>\.spec\.ts$''']
+#   regexes = ['''<the literal fixture value>''']
+#
+# A path exclusion without `regexes`, or a `paths` entry broad enough to cover a directory, disables
+# the gate for everything under it. Never allowlist a real credential — rotate it instead.

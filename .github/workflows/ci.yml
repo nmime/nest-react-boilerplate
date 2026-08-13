@@ -35,6 +35,9 @@ jobs:
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Named rather than discovered, so this job and the GitLab one scan with the same config:
+          # the product file, which extends packages/tooling/config/gitleaks.base.toml.
+          GITLEAKS_CONFIG: .gitleaks.toml
 
   helm-validation:
     name: Helm render validation (${{ matrix.selection }})

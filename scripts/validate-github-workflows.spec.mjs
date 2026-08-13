@@ -1,7 +1,7 @@
 // @requirements REQ-SCAFFOLD-QUALITY-006
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +22,39 @@ function checkoutWithout(name, omitted) {
     symlinkSync(join(rootDir, entry), join(root, entry));
   }
   return root;
+}
+
+/**
+ * The same checkout with some files rewritten, so a case can break one contract and keep the rest.
+ *
+ * Only the directories on the way to a rewritten file are materialized; everything else stays a
+ * link, which is what keeps a whole-repository fixture free.
+ */
+function checkoutWith(name, replacements) {
+  const root = join(temporaryRoot, name);
+  const replaced = new Map(Object.entries(replacements));
+  const shadowed = new Set();
+  for (const path of replaced.keys()) {
+    const segments = path.split('/');
+    for (let index = 1; index < segments.length; index += 1) shadowed.add(segments.slice(0, index).join('/'));
+  }
+
+  const materialize = (directory) => {
+    mkdirSync(join(root, directory), { recursive: true });
+    for (const entry of readdirSync(join(rootDir, directory))) {
+      if (entry === 'node_modules') continue;
+      const relative = directory ? `${directory}/${entry}` : entry;
+      if (replaced.has(relative)) writeFileSync(join(root, relative), replaced.get(relative));
+      else if (shadowed.has(relative)) materialize(relative);
+      else symlinkSync(join(rootDir, relative), join(root, relative));
+    }
+  };
+  materialize('');
+  return root;
+}
+
+function repositoryFile(path) {
+  return readFileSync(join(rootDir, path), 'utf8');
 }
 
 function validate(root) {
@@ -55,5 +88,48 @@ describe('GitHub workflow hardening', () => {
     const report = JSON.parse(result.stdout);
     assert.equal(report.status, 'not-applicable');
     assert.match(report.reason, /github/u, 'the forge that was not configured must be named');
+  });
+
+  // The secret-scanning config is split so a product can register its own fixtures without editing
+  // a file upstream rewrites. The three cases below are the ways that split can be undone silently:
+  // each one still scans, and each one scans with less than it claims to.
+  it('rejects a product gitleaks config that replaces the boilerplate base instead of extending it', () => {
+    const result = validate(
+      checkoutWith('gitleaks-detached-base', {
+        '.gitleaks.toml': 'title = "Product"\n\n[extend]\nuseDefault = true\n',
+      }),
+    );
+
+    assert.notEqual(result.status, 0, 'a product config that drops the base allowlists must fail');
+    assert.match(`${result.stdout}${result.stderr}`, /packages\/tooling\/config\/gitleaks\.base\.toml/u);
+  });
+
+  it('rejects a base gitleaks config that dropped a boilerplate fixture allowlist', () => {
+    const result = validate(
+      checkoutWith('gitleaks-base-without-fixture', {
+        'packages/tooling/config/gitleaks.base.toml': repositoryFile('packages/tooling/config/gitleaks.base.toml').replace(
+          'sk-live-abc123',
+          'unrelated-value',
+        ),
+      }),
+    );
+
+    assert.notEqual(result.status, 0, 'the base config must keep carrying the fixtures it exists for');
+    assert.match(`${result.stdout}${result.stderr}`, /sk-live-abc123/u);
+  });
+
+  it('rejects a pipeline that lets gitleaks discover its own configuration', () => {
+    const result = validate(
+      checkoutWith('gitleaks-implicit-config', {
+        '.gitlab-ci.yml': repositoryFile('.gitlab-ci.yml').replace(
+          `--config ${'.gitleaks.toml'}`,
+          '',
+        ),
+      }),
+    );
+
+    // Root auto-discovery happens to find the product config today, but it is not stated anywhere,
+    // so a config moved or renamed downstream degrades to the bare default rule set in silence.
+    assert.notEqual(result.status, 0, 'each pipeline must name the config it scans with');
   });
 });

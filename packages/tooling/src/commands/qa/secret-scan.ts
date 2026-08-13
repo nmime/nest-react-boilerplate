@@ -3,6 +3,12 @@ import { readFileSync } from "node:fs";
 import { relative } from "node:path";
 import { collectFiles, commandExists, defaultIgnore, parseArgs, run, textFileFilter, workspaceRoot, writeJson } from "./runtime-utils.ts";
 import {
+  dockerGitleaksInvocation,
+  gitleaksEngineReportPath,
+  nativeGitleaksInvocation,
+  productGitleaksConfigPath,
+} from "./gitleaks-invocation.ts";
+import {
   highEntropySecretPattern,
   isAllowedSecretScanValue,
   isSecretScanIgnoredPath,
@@ -16,6 +22,7 @@ const engine = args.options.get("engine") ?? process.env.SECRET_SCAN_ENGINE ?? "
 const failOnUnavailableExternal = (process.env.SECRET_SCAN_FAIL_ON_UNAVAILABLE_EXTERNAL ?? "true") !== "false";
 const reportPath = args.options.get("report") ?? "test-results/security-secrets/report.json";
 const gitleaksImage = args.options.get("gitleaks-image") ?? process.env.GITLEAKS_DOCKER_IMAGE ?? "zricethezav/gitleaks:v8.30.0";
+const gitleaksConfig = args.options.get("gitleaks-config") ?? process.env.GITLEAKS_CONFIG ?? productGitleaksConfigPath;
 const findings = [];
 const patterns = [
   { id: "private-key", severity: "critical", regex: /-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----/g },
@@ -29,10 +36,12 @@ const patterns = [
 
 if (engine === "gitleaks" && !dryRun) {
   if (commandExists("gitleaks")) {
-    const result = run("gitleaks", ["detect", "--source", ".", "--redact", "--no-git", "--report-format", "json", "--report-path", reportPath]);
+    const invocation = nativeGitleaksInvocation({ config: gitleaksConfig, reportPath });
+    const result = run(invocation.command, invocation.args);
     if (result.status !== 0) findings.push({ rule: "gitleaks", severity: "critical", message: "gitleaks reported findings", stderr: result.stderr.slice(-2000) });
   } else if (commandExists("docker")) {
-    const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/repo`, gitleaksImage, "detect", "--source", "/repo", "--redact", "--no-git"]);
+    const invocation = dockerGitleaksInvocation({ config: gitleaksConfig, image: gitleaksImage, reportPath, workspace: process.cwd() });
+    const result = run(invocation.command, invocation.args);
     if (result.status !== 0) findings.push({ rule: "gitleaks-docker", severity: "critical", message: "gitleaks reported findings", stderr: result.stderr.slice(-2000) });
   } else if (failOnUnavailableExternal) findings.push({ rule: "gitleaks", severity: "high", message: "SECRET_SCAN_ENGINE=gitleaks requested but gitleaks/Docker is unavailable" });
 }
@@ -63,7 +72,18 @@ if (engine !== "gitleaks" || findings.length === 0) {
   }
 }
 
-writeJson(reportPath, { status: findings.length ? "failed" : "ok", engine, dryRun, gitleaksImage, failOnUnavailableExternal, findings });
+writeJson(reportPath, {
+  status: findings.length ? "failed" : "ok",
+  engine,
+  dryRun,
+  gitleaksImage,
+  gitleaksConfig,
+  // Named so a reader of the summary can find the engine's own findings, which used to be written
+  // over this very file.
+  gitleaksReport: gitleaksEngineReportPath(reportPath),
+  failOnUnavailableExternal,
+  findings,
+});
 if (dryRun) {
   console.log(JSON.stringify({ status: "dry-run", engine, rules: patterns.map((pattern) => pattern.id), findings: findings.length, report: reportPath }));
   process.exit(0);

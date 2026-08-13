@@ -3,9 +3,9 @@
 import { ForbiddenException } from '@nestjs/common';
 // Security and domain evidence for REQ-SOCIAL-INGRESS-001.
 import { describe, expect, it, vi } from 'vitest';
+import { InboundCallbackReplayGuard } from '@app/backend-common-redis';
 import { TelegramWebhookController } from './telegram-webhook.controller';
 import { createTelegramBot, type TelegramBotConfig, type TelegramBotInstance } from '@app/backend-feature-telegram-bot';
-import { TelegramUpdateReplayProtection } from './telegram-update-replay-protection';
 
 const botInfo = {
   id: 42,
@@ -22,7 +22,7 @@ const botInfo = {
 const testValue = <T>(value: unknown): T => value as T;
 
 const replayProtection = () =>
-  testValue<TelegramUpdateReplayProtection>({
+  testValue<InboundCallbackReplayGuard>({
     reserve: vi.fn(() => Promise.resolve({ key: 'telegram:1', ownerValue: 'processing:owner' })),
     complete: vi.fn(() => Promise.resolve()),
     release: vi.fn(() => Promise.resolve()),
@@ -255,7 +255,7 @@ describe('TelegramWebhookController', () => {
 
   it('does not dispatch a replayed update', async () => {
     const { telegram, handleUpdate } = instance();
-    const replay = testValue<TelegramUpdateReplayProtection>({
+    const replay = testValue<InboundCallbackReplayGuard>({
       reserve: vi.fn().mockRejectedValue(new Error('replayed')),
     });
     const controller = new TelegramWebhookController(telegram, replay);
@@ -266,7 +266,7 @@ describe('TelegramWebhookController', () => {
 
   it('acknowledges a completed duplicate without dispatching it again', async () => {
     const { telegram, handleUpdate } = instance();
-    const replay = testValue<TelegramUpdateReplayProtection>({
+    const replay = testValue<InboundCallbackReplayGuard>({
       reserve: vi.fn().mockResolvedValue(null),
     });
     const controller = new TelegramWebhookController(telegram, replay);
@@ -289,7 +289,7 @@ describe('TelegramWebhookController', () => {
   it('does not release a handled update when completion storage fails', async () => {
     const { telegram, handleUpdate } = instance();
     const completionError = new Error('completion unavailable');
-    const replay = testValue<TelegramUpdateReplayProtection>({
+    const replay = testValue<InboundCallbackReplayGuard>({
       reserve: vi.fn().mockResolvedValue({ key: 'telegram:1', ownerValue: 'processing:owner' }),
       complete: vi.fn().mockRejectedValue(completionError),
       release: vi.fn(),

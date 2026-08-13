@@ -74,6 +74,55 @@ Probe policy:
 - production CORS that does not reflect arbitrary origins when no origin is configured
 - optional Swagger/OpenAPI docs from `libs/backend/common/swagger/lib`
 
+## Inbound provider callbacks
+
+Providers deliver at least once: a callback whose response they never receive is
+sent again, and a slow handler can be racing its own redelivery. Signature
+verification does not help — a replayed delivery carries a valid signature.
+
+`InboundCallbackReplayGuard` in `libs/backend/common/redis/lib` owns the
+at-most-once mechanism for every such surface: reserve a short processing lease
+keyed by the provider's delivery id, mark it completed with a long TTL on
+success, release it on failure so the provider's retry is not mistaken for a
+replay, and fail closed whenever Redis cannot answer. It refuses to start in
+production without configured Redis, because the in-memory fallback client is
+per-process and guarantees nothing across replicas. List it in the providers of
+the app that owns the ingress, not in `RedisModule.forRoot`, so shells with no
+callback surface are unaffected.
+
+A new ingress adds a descriptor rather than a copy of the mechanism:
+
+```ts
+export const paymentWebhookIngress = {
+  namespace: ['payment-ingress', 'acme'],
+  processingTtlMs: 30 * 1000,
+  completedTtlMs: 7 * 24 * 60 * 60 * 1000,
+  onCompleted: 'reject',
+  codes: {
+    replayed: 'acme_event_replayed',
+    unavailable: 'acme_replay_protection_unavailable',
+    reservationLost: 'acme_replay_reservation_lost',
+  },
+} satisfies InboundCallbackIngress;
+```
+
+`onCompleted` is the decision that differs per provider and must be deliberate.
+`telegram-bot-api` uses `skip`: Telegram resends any update whose response it did
+not receive, so a second `200` is the honest answer. `discord-app-api` uses
+`reject`: Discord expects the response in the same request and abandons the
+interaction token after three seconds, so a redelivery has nothing valid left to
+reply with. Declaring the descriptor with `satisfies` rather than an annotation
+keeps `onCompleted` at its literal type, which is what lets `reserve` promise a
+rejecting ingress a reservation and keeps the caller from growing an unreachable
+null branch.
+
+Delivery-id validation stays at the controller edge, where the provider payload
+is parsed and the right problem response is known — an id the provider never
+redelivers would key a reservation no retry can match and silently restore
+at-least-once. The problem codes travel on the descriptor for the same reason:
+they reach the provider and the product's own clients, so they belong to the
+ingress rather than to the mechanism.
+
 ## Result responses and RFC 9457 Problem Details
 
 `libs/backend/common/response/lib` exposes the response mapper layer for:

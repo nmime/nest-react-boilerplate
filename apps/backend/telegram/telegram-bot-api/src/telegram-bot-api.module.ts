@@ -1,12 +1,11 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { BaseHealthController, HealthPrivateNetworkIpGuard } from '@app/backend-common-health';
-import { RedisModule } from '@app/backend-common-redis';
+import { InboundCallbackReplayGuard, RedisModule } from '@app/backend-common-redis';
 import { resolveTelegramBotConfig, TelegramBotModule } from '@app/backend-feature-telegram-bot';
 import { TelegramBotApiHealthServiceProvider } from './health.config';
 import { TelegramBotApiCapabilitiesModule } from './capabilities.generated';
 import { TelegramWebhookController } from './telegram-webhook.controller';
 import { TelegramPollingService } from './telegram-polling.service';
-import { TelegramUpdateReplayProtection } from './telegram-update-replay-protection';
 
 @Module({})
 export class TelegramBotApiModule {
@@ -22,7 +21,7 @@ export class TelegramBotApiModule {
       providers: [
         TelegramBotApiHealthServiceProvider,
         HealthPrivateNetworkIpGuard,
-        ...(useWebhook ? [TelegramUpdateReplayProtection] : []),
+        ...(useWebhook ? [InboundCallbackReplayGuard] : []),
         ...(usePolling ? [TelegramPollingService] : []),
       ],
     };

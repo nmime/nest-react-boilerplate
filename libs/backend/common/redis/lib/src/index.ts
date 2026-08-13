@@ -3,6 +3,7 @@ export * from './const';
 export * from './decorator';
 export * from './exception';
 export * from './in-memory-redis.client';
+export * from './inbound-callback-replay.guard';
 export * from './redis-client.factory';
 export * from './redis-cache.service';
 export * from './redis-rate-limit.service';

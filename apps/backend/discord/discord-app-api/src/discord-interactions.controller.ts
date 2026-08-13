@@ -6,7 +6,8 @@ import {
   DiscordInteractionRouter,
   DiscordInteractionSecurity,
 } from '@app/backend-feature-discord-bot';
-import { DiscordInteractionReplayProtection } from './discord-interaction-replay-protection';
+import { InboundCallbackReplayGuard } from '@app/backend-common-redis';
+import { discordInteractionId, discordInteractionIngress } from './discord-interaction-ingress';
 
 interface RawBodyRequest extends FastifyRequest {
   rawBody?: Buffer | string;
@@ -17,7 +18,7 @@ export class DiscordInteractionsController {
   constructor(
     private readonly config: DiscordBotConfig,
     private readonly security: DiscordInteractionSecurity,
-    private readonly replayProtection: DiscordInteractionReplayProtection,
+    private readonly replayProtection: InboundCallbackReplayGuard,
     private readonly router: DiscordInteractionRouter,
   ) {}
 
@@ -40,7 +41,7 @@ export class DiscordInteractionsController {
       headers: { signature, timestamp },
       publicKey: snapshot.publicKey,
     });
-    const reservation = await this.replayProtection.reserve(body.id);
+    const reservation = await this.replayProtection.reserve(discordInteractionIngress, discordInteractionId(body.id));
     let response: Awaited<ReturnType<DiscordInteractionRouter['route']>>;
     try {
       response = await this.router.route(body, {

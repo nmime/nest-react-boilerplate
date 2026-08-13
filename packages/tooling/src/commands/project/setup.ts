@@ -37,6 +37,7 @@ import {
 } from "../../setup/schema.js";
 import { plan } from "../../setup/planner.js";
 import { apply, backupFiles, rollback, type ApplyOptions } from "../../setup/apply.js";
+import type { FileConflict } from "../../setup/adapters/filesystem.js";
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
 import { emptyState, migrateState, type SetupState } from "../../setup/state.js";
 import { runPrompts, buildConfig, formatConfigSummary, formatPlanSummary } from "../../setup/prompts.js";
@@ -440,6 +441,7 @@ async function executeSetup(
 
   if (result.failed > 0) {
     process.stderr.write(`Apply failed: ${result.applied} applied, ${result.failed} failed\n`);
+    process.stderr.write(formatConflicts(result.conflicts));
     if (result.rollbackError) {
       process.stderr.write(`Rollback: ${result.rollbackError}\n`);
     }
@@ -766,6 +768,26 @@ function printSelectionCatalog(existing: NrbConfig | null, json: boolean): void 
   process.stdout.write(
     "\nRerun `pnpm nrb setup` to edit interactively, or use `--app <id>` / `--remove-app <id>` for scripted updates.\n",
   );
+}
+
+/**
+ * Name the files a refused apply would have overwritten.
+ *
+ * A count on its own is unactionable: three CI jobs reported "11 failed" and named
+ * nothing, so one stale index in `.nrb/state.json` read as eleven broken generators.
+ * The paths are the diagnosis, and the remedy differs by reason — a tracked file whose
+ * recorded hash drifted is resynced, an untracked file in the way is removed.
+ */
+function formatConflicts(conflicts: readonly FileConflict[]): string {
+  if (conflicts.length === 0) return "";
+  const noun = conflicts.length === 1 ? "file" : "files";
+  const lines = conflicts.map((conflict) => `  ${conflict.path} (${conflict.reason})`);
+  return [
+    `Refused to overwrite ${conflicts.length} ${noun} whose content does not match the recorded state:`,
+    ...lines,
+    "Re-run `nrb setup` after resyncing `.nrb/state.json`, or pass --force to overwrite.",
+    "",
+  ].join("\n");
 }
 
 function reportConfigurationError(err: unknown, json: boolean): number {

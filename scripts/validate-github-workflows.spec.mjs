@@ -107,10 +107,9 @@ describe('GitHub workflow hardening', () => {
   it('rejects a base gitleaks config that dropped a boilerplate fixture allowlist', () => {
     const result = validate(
       checkoutWith('gitleaks-base-without-fixture', {
-        'packages/tooling/config/gitleaks.base.toml': repositoryFile('packages/tooling/config/gitleaks.base.toml').replace(
-          'sk-live-abc123',
-          'unrelated-value',
-        ),
+        'packages/tooling/config/gitleaks.base.toml': repositoryFile(
+          'packages/tooling/config/gitleaks.base.toml',
+        ).replace('sk-live-abc123', 'unrelated-value'),
       }),
     );
 
@@ -121,10 +120,7 @@ describe('GitHub workflow hardening', () => {
   it('rejects a pipeline that lets gitleaks discover its own configuration', () => {
     const result = validate(
       checkoutWith('gitleaks-implicit-config', {
-        '.gitlab-ci.yml': repositoryFile('.gitlab-ci.yml').replace(
-          `--config ${'.gitleaks.toml'}`,
-          '',
-        ),
+        '.gitlab-ci.yml': repositoryFile('.gitlab-ci.yml').replace('--config .gitleaks.toml', ''),
       }),
     );
 

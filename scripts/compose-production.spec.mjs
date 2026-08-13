@@ -202,7 +202,9 @@ test('every backend service reads the product-owned environment file', () => {
     // file means a service added later is held to the same contract without editing this test.
     const backendServices = [...compose.matchAll(/^ {2}([a-z0-9-]+):$/gmu)]
       .map(([, service]) => service)
-      .filter((service) => /\*backend-env|\*backend-service|\*notification-scheduler-service/u.test(serviceBlock(compose, service)));
+      .filter((service) =>
+        /\*backend-env|\*backend-service|\*notification-scheduler-service/u.test(serviceBlock(compose, service)),
+      );
 
     assert.ok(backendServices.length > 0, `${file} must define backend services`);
     for (const service of backendServices) {

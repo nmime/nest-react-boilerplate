@@ -560,9 +560,7 @@ test('provisions a secret file for every secret the runtime image loads', () => 
   // never provisioned and the notification workers could not start at all.
   const controller = readFileSync(join(root, 'deploy/single-server/serverctl'), 'utf8');
   const entrypoint = readFileSync(join(root, 'docker/secret-entrypoint.sh'), 'utf8');
-  const provisioned = new Set(
-    [...controller.matchAll(/^\s*configure_secret\s+([A-Z0-9_]+)/gmu)].map(([, key]) => key),
-  );
+  const provisioned = new Set([...controller.matchAll(/^\s*configure_secret\s+([A-Z0-9_]+)/gmu)].map(([, key]) => key));
 
   const missing = [...new Set(parseDeclaredSecrets(entrypoint).map(({ variable }) => variable))].filter(
     (variable) => !provisioned.has(`${variable}_FILE`),

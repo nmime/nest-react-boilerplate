@@ -135,6 +135,32 @@ dossier contains its source SHA and specification hash. A dry run is recorded as
 `planned`, never `ok`. A passing dossier is refused from a dirty worktree,
 because `HEAD` would not identify the source that actually executed.
 
+### Evidence that only exists on one forge
+
+A few checks are genuinely dialect-specific: action pinning and workflow
+permissions have no GitLab analogue. A product that keeps one forge deletes the
+validator and its script along with the pipelines, and the evidence entry would
+then fail on a file the checkout never had. Scope the entry instead, using the
+forge ids in `scripts/ci/gates.json`:
+
+```yaml
+- kind: security
+  file: scripts/validate-github-workflows.mjs
+  script: ci:workflows:check
+  forges: [github]
+  reason: Action pinning and workflow permissions are GitHub concepts with no GitLab analogue.
+  lanes: [pr, main]
+```
+
+`reason` is mandatory whenever `forges` is set, the same contract gates and
+supply-chain controls carry in the CI descriptor. A checkout that ships at least
+one of the named forges validates and runs the entry exactly as before. A
+checkout that ships none of them records it in the dossier as a `skipped` run
+naming the missing forge, so the omission is visible rather than silent — and
+scoping never removes a command another evidence entry still needs. Requirements
+therefore keep at least one unscoped entry: scoping is for the check, not for
+the behavior.
+
 ## Evidence lanes
 
 | Lane    | Invocation                                                            | Purpose                                                                      |

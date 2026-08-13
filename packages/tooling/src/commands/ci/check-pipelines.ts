@@ -52,6 +52,23 @@ export function declaredPipelineFiles(workspaceRoot: string): string[] {
   return [...files].sort();
 }
 
+/**
+ * Every forge id the descriptor names, whether or not this checkout ships its pipelines, or
+ * `null` when there is no descriptor to ask. Callers that police a forge id — "is `github` a
+ * thing here?" — need the declared set rather than the configured one, so removing a pipeline
+ * does not silently turn a valid id into an unknown one. `null` means "cannot tell", which
+ * leaves the id unchecked instead of rejecting it against an empty list.
+ */
+export function declaredForgeIds(workspaceRoot: string): Set<string> | null {
+  if (!existsSync(resolve(workspaceRoot, ciContractPath))) return null;
+
+  try {
+    return new Set(Object.keys(loadCiContract(workspaceRoot).forges));
+  } catch {
+    return null;
+  }
+}
+
 export interface ConfiguredForge {
   id: string;
   jobStyle: JobStyle;

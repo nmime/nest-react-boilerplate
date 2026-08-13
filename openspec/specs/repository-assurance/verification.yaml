@@ -100,6 +100,9 @@ requirements:
       - kind: security
         file: scripts/validate-github-workflows.mjs
         script: ci:workflows:check
+        forges:
+          - github
+        reason: Action pinning and workflow permissions are GitHub concepts with no GitLab analogue.
         lanes:
           - pr
           - main

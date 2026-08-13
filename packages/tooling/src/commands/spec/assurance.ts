@@ -12,6 +12,7 @@ import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
 import { parse as parseYaml } from 'yaml';
 import { ensureDir, writeJson } from '../../runtime/files';
 import { run, type RunResult } from '../../runtime/process';
+import { configuredForges, declaredForgeIds } from '../ci/check-pipelines';
 
 // Trace and exact-revision dossier implementation for
 // REQ-ASSURANCE-TRACE-001 and REQ-ASSURANCE-FRESHNESS-002.
@@ -70,6 +71,17 @@ export interface EvidenceReference {
   script?: string;
   scenario?: string;
   description?: string;
+  /**
+   * Present only when this evidence exists on some forges and not others, using the ids in
+   * `scripts/ci/gates.json`. Some checks are genuinely dialect-specific — GitHub Actions
+   * hardening has no GitLab analogue — and a product that drops a forge deletes the validator
+   * and the script along with the pipelines. Without this key the only way to keep
+   * `spec:verify` green was to edit a boilerplate-owned manifest, which then conflicts on
+   * every update.
+   */
+  forges?: string[];
+  /** Why the restriction above exists. Mandatory whenever `forges` is set. */
+  reason?: string;
 }
 
 export interface RequirementVerification {
@@ -131,6 +143,22 @@ export interface AssuranceModel {
   errors: string[];
   warnings: string[];
   hash: string;
+  /** Forge ids whose pipelines this checkout actually ships. See `EvidenceReference.forges`. */
+  forges: Set<string>;
+}
+
+/**
+ * Whether this checkout is expected to carry the evidence at all. Unscoped evidence always is;
+ * forge-scoped evidence only where one of its forges is configured.
+ */
+export function evidenceApplies(
+  evidence: EvidenceReference,
+  forges: Set<string>,
+): boolean {
+  return (
+    evidence.forges === undefined ||
+    evidence.forges.some((forge) => forges.has(forge))
+  );
 }
 
 export interface TraceReport {
@@ -180,7 +208,7 @@ export interface VerificationRun {
   key: string;
   kind: 'target' | 'script';
   command: string;
-  status: 'planned' | 'ok' | 'failed';
+  status: 'planned' | 'ok' | 'failed' | 'skipped';
   exitCode?: number;
   durationMs?: number;
   stdoutTail?: string;
@@ -256,6 +284,8 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
       .map(([name]) => name),
   );
   const requirements = new Map<string, RequirementRecord>();
+  const declaredForges = declaredForgeIds(workspaceRoot);
+  const forges = new Set(configuredForges(workspaceRoot).map(({ id }) => id));
   const evidenceFiles = new Set<string>();
   const coveredProjects = new Set<string>();
   const specificationSources: string[] = [];
@@ -340,6 +370,8 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
         errors,
         warnings,
         evidenceFiles,
+        declaredForges,
+        forges,
       });
       for (const projectName of mapping.projects) {
         if (!projects.has(projectName)) {
@@ -405,6 +437,7 @@ export function loadAssuranceModel(workspaceRoot: string): AssuranceModel {
     errors,
     warnings,
     hash,
+    forges,
   };
 }
 
@@ -639,6 +672,16 @@ export function verifyRequirements(options: {
     }
   }
 
+  for (const evidence of executables.skipped) {
+    runs.push({
+      key: `not-applicable:${evidence.command}`,
+      kind: evidence.kind,
+      command: evidence.command,
+      status: 'skipped',
+      stdoutTail: `forge ${evidence.forges.join(', ')} not configured: ${evidence.reason}`,
+    });
+  }
+
   const failed = trace.status === 'failed' || runs.some(({ status }) => status === 'failed');
   const report: VerificationReport = {
     status: dryRun ? 'planned' : failed ? 'failed' : 'ok',
@@ -737,6 +780,8 @@ function validateRequirementMapping(options: {
   errors: string[];
   warnings: string[];
   evidenceFiles: Set<string>;
+  declaredForges: Set<string> | null;
+  forges: Set<string>;
 }): void {
   const {
     workspaceRoot,
@@ -748,6 +793,8 @@ function validateRequirementMapping(options: {
     assuranceScripts,
     errors,
     evidenceFiles,
+    declaredForges,
+    forges,
   } = options;
   const prefix = `${verificationFile}: ${requirement.id}`;
 
@@ -843,6 +890,17 @@ function validateRequirementMapping(options: {
         errors.push(`${prefix}: invalid evidence lane ${String(lane)}`);
       }
     }
+    if (evidence.forges !== undefined && declaredForges !== null) {
+      for (const forge of evidence.forges) {
+        if (!declaredForges.has(forge)) {
+          errors.push(`${prefix}: evidence references unknown forge "${forge}"`);
+        }
+      }
+    }
+    // Everything below asserts that a file, a target or a script is present. A product that
+    // dropped this forge deleted all three along with its pipelines, and the evidence is
+    // recorded as not-applicable rather than missing. `verifyRequirements` reports the skip.
+    if (!evidenceApplies(evidence, forges)) continue;
     const absoluteEvidenceFile = safeWorkspacePath(
       workspaceRoot,
       evidence.file,
@@ -1193,6 +1251,12 @@ function parseVerificationDocument(
                   ...(typeof evidence.description === 'string'
                     ? { description: evidence.description }
                     : {}),
+                  ...(isStringArray(evidence.forges)
+                    ? { forges: evidence.forges }
+                    : {}),
+                  ...(typeof evidence.reason === 'string'
+                    ? { reason: evidence.reason }
+                    : {}),
                 }))
               : [],
           }))
@@ -1248,22 +1312,50 @@ function collectExecutables(
   model: AssuranceModel,
   requirementIds: Iterable<string>,
   lane?: EvidenceLane,
-): { targets: string[]; scripts: string[] } {
+): { targets: string[]; scripts: string[]; skipped: SkippedEvidence[] } {
   const targets = new Set<string>();
   const scripts = new Set<string>();
+  const skipped = new Map<string, SkippedEvidence>();
   for (const id of requirementIds) {
     const requirement = model.requirements.get(id);
     if (!requirement) continue;
     for (const evidence of requirement.evidence) {
       if (lane !== undefined && !evidence.lanes.includes(lane)) continue;
+      const command = evidence.target ?? evidence.script;
+      if (!evidenceApplies(evidence, model.forges)) {
+        if (command !== undefined && !skipped.has(command)) {
+          skipped.set(command, {
+            command,
+            kind: evidence.target ? 'target' : 'script',
+            forges: evidence.forges ?? [],
+            reason: evidence.reason ?? '',
+          });
+        }
+        continue;
+      }
       if (evidence.target) targets.add(evidence.target);
       if (evidence.script) scripts.add(evidence.script);
     }
   }
+  // A command shared with unscoped evidence still runs; only a command nothing else needs is
+  // reported as skipped, so a partially-scoped requirement never loses coverage.
+  for (const command of [...skipped.keys()]) {
+    if (targets.has(command) || scripts.has(command)) skipped.delete(command);
+  }
   return {
     targets: [...targets].sort(),
     scripts: [...scripts].sort(),
+    skipped: [...skipped.values()].sort((left, right) =>
+      left.command.localeCompare(right.command),
+    ),
   };
+}
+
+interface SkippedEvidence {
+  command: string;
+  kind: VerificationRun['kind'];
+  forges: string[];
+  reason: string;
 }
 
 function verificationWorkspaceState(

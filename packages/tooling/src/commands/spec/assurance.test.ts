@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, test } from 'node:test';
 import {
   calculateImpactFromChangedFiles,
@@ -672,6 +672,138 @@ test('rejects unknown evidence manifest fields through the canonical JSON Schema
         error.includes('verification.yaml') &&
         error.includes('additional properties'),
     ),
+  );
+});
+
+/**
+ * Declare two forges and ship only the pipelines named, so a test can put a checkout in the
+ * position a product reaches by dropping the forge it does not use.
+ */
+function writeForgeContract(workspace: string, shipped: string[]): void {
+  mkdirSync(join(workspace, 'scripts/ci'), { recursive: true });
+  const pipelines: Record<string, string> = {
+    github: '.github/workflows/ci.yml',
+    gitlab: '.gitlab-ci.yml',
+  };
+  writeFileSync(
+    join(workspace, 'scripts/ci/gates.json'),
+    JSON.stringify({
+      forges: {
+        github: {
+          pipeline: pipelines.github,
+          jobStyle: 'github',
+          aggregateJob: 'ci-status',
+        },
+        gitlab: {
+          pipeline: pipelines.gitlab,
+          jobStyle: 'gitlab',
+          aggregateJob: 'ci-status',
+        },
+      },
+      lanes: {},
+      gates: [],
+      supplyChain: [],
+    }),
+  );
+  for (const forge of shipped) {
+    const pipeline = pipelines[forge];
+    assert.ok(pipeline, `unknown fixture forge ${forge}`);
+    mkdirSync(join(workspace, dirname(pipeline)), { recursive: true });
+    writeFileSync(join(workspace, pipeline), 'jobs: {}\n');
+  }
+}
+
+/** Append a forge-scoped evidence entry naming a file and script the fixture does not have. */
+function appendForgeScopedEvidence(workspace: string, forges: string[]): void {
+  const verificationFile = join(workspace, 'openspec/specs/fixture/verification.yaml');
+  writeFileSync(
+    verificationFile,
+    `${readFileSync(verificationFile, 'utf8')}      - kind: security
+        file: scripts/validate-github-workflows.mjs
+        script: workflows:check
+        forges: [${forges.join(', ')}]
+        reason: Workflow hardening is a GitHub Actions concept with no GitLab analogue.
+        lanes: [pr]
+`,
+  );
+}
+
+test('forge-scoped evidence is skipped on a checkout that does not ship that forge', () => {
+  const workspace = fixtureWorkspace();
+  writeForgeContract(workspace, ['gitlab']);
+  appendForgeScopedEvidence(workspace, ['github']);
+
+  const model = loadAssuranceModel(workspace);
+
+  // Neither the evidence file nor the script exists here. A product that deletes its GitHub
+  // pipelines deletes those too, and it must not have to edit a boilerplate-owned manifest.
+  assert.deepEqual(model.errors, []);
+  const pr = verifyRequirements({
+    model,
+    requirementIds: ['REQ-FIXTURE-RULE-001'],
+    dryRun: true,
+    lane: 'pr',
+  });
+  assert.equal(
+    pr.runs.some(({ key }) => key === 'workflows:check'),
+    false,
+    'an unconfigured forge must not schedule its evidence command',
+  );
+  const skipped = pr.runs.find(({ key }) => key.startsWith('not-applicable:'));
+  assert.ok(skipped, 'a skipped evidence command must stay visible in the report');
+  assert.equal(skipped.status, 'skipped');
+  assert.match(skipped.command, /workflows:check/u);
+});
+
+test('forge-scoped evidence is still enforced where that forge is configured', () => {
+  const workspace = fixtureWorkspace();
+  writeForgeContract(workspace, ['github', 'gitlab']);
+  appendForgeScopedEvidence(workspace, ['github']);
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.some((error) =>
+      error.includes('evidence file does not exist: scripts/validate-github-workflows.mjs'),
+    ),
+    'scoping evidence to a forge must not weaken it on that forge',
+  );
+});
+
+test('rejects evidence scoped to a forge the CI descriptor does not declare', () => {
+  const workspace = fixtureWorkspace();
+  writeForgeContract(workspace, ['gitlab']);
+  appendForgeScopedEvidence(workspace, ['bitbucket']);
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.some((error) => error.includes('unknown forge "bitbucket"')),
+    `expected an unknown-forge error, got ${JSON.stringify(model.errors)}`,
+  );
+});
+
+test('rejects forge-scoped evidence that records no reason', () => {
+  const workspace = fixtureWorkspace();
+  writeForgeContract(workspace, ['gitlab']);
+  const verificationFile = join(workspace, 'openspec/specs/fixture/verification.yaml');
+  writeFileSync(
+    verificationFile,
+    `${readFileSync(verificationFile, 'utf8')}      - kind: security
+        file: apps/fixture/evidence.test.ts
+        target: fixture:test
+        forges: [github]
+        lanes: [pr]
+`,
+  );
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.some(
+      (error) => error.includes('verification.yaml') && error.includes('reason'),
+    ),
+    `expected a missing-reason error, got ${JSON.stringify(model.errors)}`,
   );
 });
 

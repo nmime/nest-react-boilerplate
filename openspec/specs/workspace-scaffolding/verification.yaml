@@ -225,6 +225,9 @@ requirements:
       - kind: static
         file: scripts/validate-github-workflows.mjs
         script: ci:workflows:check
+        forges:
+          - github
+        reason: The scaffolded workflow shape it checks only exists on a checkout that ships GitHub Actions.
         lanes:
           - pr
           - main

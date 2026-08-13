@@ -142,7 +142,23 @@
                   "type": "string",
                   "pattern": "^SCN-[A-Z0-9]+(?:-[A-Z0-9]+)+-[0-9]{2,3}$"
                 },
-                "description": { "type": "string", "minLength": 1 }
+                "description": { "type": "string", "minLength": 1 },
+                "forges": {
+                  "description": "Present only when this evidence exists on some forges and not others. A checkout that does not ship any of them records the evidence as not-applicable instead of failing on a file it never had.",
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 12,
+                  "maxLength": 240
+                }
+              },
+              "dependentRequired": {
+                "forges": ["reason"],
+                "reason": ["forges"]
               },
               "allOf": [
                 {

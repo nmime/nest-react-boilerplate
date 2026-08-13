@@ -78,6 +78,18 @@ describe('locale catalog surface', () => {
       ]),
     ).toThrow('Duplicate i18n key a while merging en/common/errors.json');
   });
+
+  // A bundler that rewrites a JSON import into a placeholder hands this a string, and
+  // `Object.entries` on a string yields character indices — so the merge used to fail on the
+  // second file with "Duplicate i18n key 0", which names neither the real cause nor the file that
+  // was never loaded. The catalog's shape is checked before its keys so the message points at it.
+  it('names the file whose catalog did not load as an object', () => {
+    expect(() =>
+      mergeLocaleCatalogFiles('en', [
+        ['common/shared.json', 'import:@app/i18n-en-common/shared.json:default' as never],
+      ]),
+    ).toThrow('i18n catalog en/common/shared.json is a string, not an object: it was not loaded as JSON');
+  });
 });
 
 describe('locale candidate expansion', () => {

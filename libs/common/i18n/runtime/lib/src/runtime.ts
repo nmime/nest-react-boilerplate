@@ -96,6 +96,14 @@ export function getLocalization<Value>(
   return undefined;
 }
 
+function describeCatalogShape(catalog: unknown): string {
+  if (catalog === null) {
+    return 'null';
+  }
+
+  return Array.isArray(catalog) ? 'array' : typeof catalog;
+}
+
 export function mergeLocaleCatalogFiles<FileName extends string>(
   locale: Locale,
   files: readonly RuntimeLocaleCatalogFileEntry<FileName>[],
@@ -103,6 +111,15 @@ export function mergeLocaleCatalogFiles<FileName extends string>(
   const merged: RuntimeLocaleCatalog = {};
 
   for (const [fileName, catalog] of files) {
+    // A bundler that rewrites JSON imports into placeholders (Vike does this for everything the
+    // page config graph reaches) hands us a string here. `Object.entries` on a string yields
+    // character indices, so the merge survived the first file and then failed on the second with
+    // "Duplicate i18n key 0" — a message about the wrong thing entirely.
+    const shape = describeCatalogShape(catalog);
+    if (shape !== 'object') {
+      throw new Error(`i18n catalog ${locale}/${fileName} is a ${shape}, not an object: it was not loaded as JSON`);
+    }
+
     for (const [key, value] of Object.entries(catalog)) {
       if (Object.hasOwn(merged, key)) {
         throw new Error(`Duplicate i18n key ${key} while merging ${locale}/${fileName}`);

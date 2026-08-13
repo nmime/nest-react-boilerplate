@@ -1,0 +1,9 @@
+name: JavaScript/TypeScript analysis
+
+# The workflow builds every project before analysing, so the checkout CodeQL sees also holds the
+# bundles that build wrote. Those bundles are copies of sources CodeQL already analysed, so every
+# finding is reported twice — once where it can be fixed and once inside generated output where it
+# cannot, under a path that changes with the bundler. Analyse the sources and skip their output.
+paths-ignore:
+  - dist
+  - .nx

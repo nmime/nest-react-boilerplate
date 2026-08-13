@@ -41,6 +41,13 @@ const fetchMethods = [
 
 type FetchMethod = (typeof fetchMethods)[number];
 
+interface HeaderArgument {
+  /** The header as the document spells it, which is rarely a valid identifier. */
+  name: string;
+  /** The parameter name the callable takes it under. */
+  argument: string;
+}
+
 interface EmittedOperation {
   method: FetchMethod;
   path: string;
@@ -48,6 +55,7 @@ interface EmittedOperation {
   camel: string;
   pathConstant: string;
   pathParameters: string[];
+  headerParameters: HeaderArgument[];
   hasBody: boolean;
   bodySchema?: string;
   bodyRequired: boolean;
@@ -74,8 +82,25 @@ function operationCamelCase(operationId: string): string {
 }
 
 /** `/auth/provider-identities/{identityId}` -> `["identityId"]`. */
-function pathParameterNames(path: string): string[] {
+function urlPlaceholderNames(path: string): string[] {
   return [...path.matchAll(/\{([^}]+)\}/gu)].map((match) => match[1] ?? "");
+}
+
+function declaredParameterNames(operation: OpenApiOperation, location: string): string[] {
+  return (operation.parameters ?? [])
+    .filter((parameter) => parameter.in === location && parameter.name !== undefined)
+    .map((parameter) => parameter.name ?? "");
+}
+
+/**
+ * The argument name a header is taken under.
+ *
+ * `idempotency-key` is not an identifier, and the callable's own path parameters already own their
+ * names, so a header that camel-cases onto one is suffixed rather than shadowing it.
+ */
+function headerArgumentName(name: string, taken: ReadonlySet<string>): string {
+  const camel = operationCamelCase(name);
+  return taken.has(camel) ? `${camel}Header` : camel;
 }
 
 function schemaRefName(operation: OpenApiOperation): string | undefined {
@@ -108,6 +133,20 @@ function collectOperations(document: OpenApiDocument): {
         continue;
       }
 
+      // A placeholder the document never declares cannot be emitted: `openapi-typescript` derives
+      // `parameters` from the declarations, so the generated `paths` type carries no `path` member
+      // for it. Passing one does not compile, and omitting one requests the literal `{name}` URL.
+      // Better-Auth's catch-all route is exactly this shape.
+      const declared = declaredParameterNames(operation, "path");
+      const placeholders = urlPlaceholderNames(path);
+      const undeclared = placeholders.filter((name) => !declared.includes(name));
+      if (undeclared.length > 0) {
+        const names = undeclared.map((name) => `{${name}}`).join(", ");
+        const verb = undeclared.length === 1 ? "is not a declared parameter" : "are not declared parameters";
+        skipped.push(`${method.toUpperCase()} ${path} (${names} ${verb})`);
+        continue;
+      }
+
       const pascal = operationPascalCase(operationId);
       const previous = seen.get(pascal);
       if (previous !== undefined) {
@@ -117,8 +156,29 @@ function collectOperations(document: OpenApiDocument): {
       }
       seen.set(pascal, `${method.toUpperCase()} ${path}`);
 
+      // Argument order follows the URL, so a document that declares its parameters out of order
+      // does not silently reorder an existing callable's arguments. A parameter declared without a
+      // placeholder is still part of the generated type, so it is appended rather than dropped.
+      const declaredPathParameters = [
+        ...placeholders,
+        ...declared.filter((name) => !placeholders.includes(name)),
+      ];
+
       const parameters = operation.parameters ?? [];
       const queryParameters = parameters.filter((parameter) => parameter.in === "query");
+
+      // Only required headers become arguments. An optional one is a transport concern the caller
+      // can set through `options.headers`, but a required one — an idempotency key, a tenant
+      // selector — is part of the call, and openapi-fetch's types reject a request that omits it.
+      const takenNames = new Set(declaredPathParameters);
+      const headerParameters = parameters
+        .filter((parameter) => parameter.in === "header" && parameter.required === true)
+        .map((parameter) => {
+          const name = parameter.name ?? "";
+          const argument = headerArgumentName(name, takenNames);
+          takenNames.add(argument);
+          return { name, argument };
+        });
 
       operations.push({
         method,
@@ -126,7 +186,8 @@ function collectOperations(document: OpenApiDocument): {
         pascal,
         camel: operationCamelCase(operationId),
         pathConstant: `${operationCamelCase(operationId)}Path`,
-        pathParameters: pathParameterNames(path),
+        pathParameters: declaredPathParameters,
+        headerParameters,
         hasBody: operation.requestBody !== undefined,
         ...(schemaRefName(operation) === undefined
           ? {}
@@ -142,7 +203,10 @@ function collectOperations(document: OpenApiDocument): {
 }
 
 function renderCallable(operation: EmittedOperation): string {
-  const args = operation.pathParameters.map((name) => `${name}: string`);
+  const args = [
+    ...operation.pathParameters.map((name) => `${name}: string`),
+    ...operation.headerParameters.map((header) => `${header.argument}: string`),
+  ];
   if (operation.hasBody) {
     const bodyType = operation.bodySchema ?? `${operation.pascal}Body`;
     args.push(`body${operation.bodyRequired ? "" : "?"}: ${bodyType}`);
@@ -158,6 +222,12 @@ function renderCallable(operation: EmittedOperation): string {
     params.push(`path: { ${operation.pathParameters.join(", ")} }`);
   }
   if (operation.hasQuery) params.push("query");
+  if (operation.headerParameters.length > 0) {
+    const entries = operation.headerParameters
+      .map((header) => `'${header.name}': ${header.argument}`)
+      .join(", ");
+    params.push(`header: { ${entries} }`);
+  }
   if (params.length > 0) init.push(`params: { ${params.join(", ")} }`);
   if (operation.hasBody) init.push("body");
 

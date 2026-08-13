@@ -1,20 +1,20 @@
 {
   "version": 1,
-  "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
+  "configHash": "1b6d389c68eebea09cb1606f62efbcafd7131b0c288a2dd8783e90550be42643",
   "files": {
-    "nrb.config.json": "384fd07a7da1344d004ef81e11425d299e1167f803ad30c641687bb3adbba0d9",
-    ".nrb/summary.md": "33b92a573c27e944c9dcc5c64d79c1b1e53bf4d0cbe72d38f0395b09dd23a891",
-    ".nrb/workspace.json": "7c8dd8240160fe01b6ac69a26d006f3e92860b3d49ed8b109693f62013601468",
-    ".nrb/capabilities.json": "86b7581317025c7b1726deedec89f940b8cfeb8d626d54529b3b6c5a45a51021",
+    "nrb.config.json": "6dff89f66afbc218697a06bbdc6ceeac122ca18dcc8e9fdf00e4d0853c12881b",
+    ".nrb/summary.md": "5d772382c2a90d951c8d4e62377076d9e94053ab27c4d9b7177f3506b753aefe",
+    ".nrb/workspace.json": "b9054868a30ae450e277083dc73089ba1f0d0c69a74512cd5343426bc075315b",
+    ".nrb/capabilities.json": "2b70ef95422c5bdf1afdc13d84bb475148674f738dec29df11446ae8fa05c59c",
     ".nrb/capabilities.env": "b7b9f3bd4261922a8af7667f49abdd23b9f9fa6dbdc3ce8b9035986973240a8c",
     "packages/tooling/src/commands/db/capability-migrations.generated.ts": "41f98d0a77a0e8681b651431e53408d1914faaf48eb57e1885648ecb8cef74fe",
-    "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "aaafd912b35e080fb6713e9db11e721b698d801269afc5cc9e7e79ae06cc44b6",
-    "apps/backend/user/user-app-api/src/capabilities.generated.ts": "8f3e8729c0c651ba1380918ffd00f5a0a7f2c7ce2c5b394cd0e75a0859761d01",
-    "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "2ca0c384b7ca094b81cf9df71b92d5d58a529c8eda21f15ab8e6e61984b96a2d",
-    "apps/backend/discord/discord-app-api/src/capabilities.generated.ts": "56fb95dc139bed5062f4f3676ebbee91daaaa1efa67a2ed3fe30aed508258358",
-    "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "54a6672d013f0556f9cbc5dca93889b37bb3c74fa3afb961453ff551b1e275f8",
-    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "1ae6b9c053b6e4984ad6fef363d1ea03746a6d9664fb7a2b7db5e7ec16cf4dbb",
-    "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "a48f9b5abe2d5bad76e02303efbbc9ea332afa05426562b73ea60872192b52f9",
+    "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "bb95faf78c53f63b6b17e494f06f242c39ab02b01e81c01faf143eda1e730618",
+    "apps/backend/user/user-app-api/src/capabilities.generated.ts": "d65d204206fe3f8ab47521a77c6976981fe729c1b596b25b037c0d5155939d90",
+    "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "89c1b2f445a457e06702875b065d037485ab09aecf5055aa06801860a2651703",
+    "apps/backend/discord/discord-app-api/src/capabilities.generated.ts": "5c828d016d45c1e6531d99465299a1e23f48bff2fc7702cb6ff499e188dc915e",
+    "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "93e8924cb3b0b67d190ad0d5655dfb49ed9998d77d50b3786919a3a22eb1fa09",
+    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "990e67d6ff79b5e0d0b92052900e511f2adbed233d367566bb8af88475221c2d",
+    "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "ae89648e21ea92c58de8b138eb2135e7ca180fb2d1d223c465885c1fbf3b91b5",
     "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/auth/auth-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
@@ -23,5 +23,5 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
   },
-  "digest": "6d0a69d14739ba008d751efe2e124ac947a6a2e451938123f327d441dfb0e516"
+  "digest": "d196fd9ff15808be3b6e9dd5f7dfb4887ec3dbe9b2a85e870358ea647ee25c67"
 }

@@ -220,6 +220,7 @@ non-runtime-validation:
   script:
     - pnpm run onboarding:verify
     - pnpm run db:migrations:check
+    - pnpm run test:scripts
     - pnpm run lib:configs:check
     - pnpm run frontend:fsd:check
     - pnpm run api:toast-config:check

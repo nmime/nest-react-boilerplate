@@ -193,6 +193,14 @@
       "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
     },
     {
+      "id": "repository-script-specs",
+      "description": "Every executable spec under scripts/ runs, discovered rather than listed.",
+      "commands": ["pnpm run test:scripts"],
+      "lanes": ["pr", "main"],
+      "requiredForMerge": true,
+      "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
+    },
+    {
       "id": "library-configs",
       "description": "Nx library configuration placement and standards.",
       "commands": ["pnpm run lib:configs:check"],

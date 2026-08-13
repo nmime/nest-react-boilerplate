@@ -1,7 +1,7 @@
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { isBuiltin } from "node:module";
 import { extname } from "node:path";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, matchesGlob, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createJiti } from "jiti";
 import {
@@ -459,6 +459,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkTranslationKeyDrift(workspaceRoot),
     ...checkEnvExampleConsistency(workspaceRoot),
     ...checkStaleReferences(workspaceRoot),
+    ...checkRepositoryScriptSpecCoverage(workspaceRoot),
     ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
   ];
 
@@ -2189,6 +2190,73 @@ function collectStaleReferenceTargets(workspaceRoot: string): string[] {
 
   visit(workspaceRoot);
   return files.sort((left, right) => left.localeCompare(right));
+}
+
+/**
+ * Every executable spec under `scripts/` must be run by some root package.json script.
+ *
+ * The enumerated `test:deploy` named eleven of the sixteen, and no CI lane invoked it, so five
+ * repository specs were dead weight -- among them the one guarding the runtime stack's start
+ * sequence. A hand-kept list is the failure mode, so a glob satisfies this rule and a list only
+ * satisfies it for exactly the files it happens to name.
+ */
+export function checkRepositoryScriptSpecCoverage(workspaceRoot: string): CheckFailure[] {
+  const commands = Object.values(rootPackageScripts(workspaceRoot));
+
+  return collectRepositoryScriptSpecs(workspaceRoot)
+    .filter((spec) => !commands.some((command) => commandRunsPath(command, spec)))
+    .map((spec) => ({
+      command: "repository script spec coverage",
+      file: spec,
+      status: 1,
+      stdout: "",
+      stderr: `Spec is never executed: no root package.json script runs it. Have a script discover it, for example \`node --test "scripts/**/*.spec.mjs"\`.`,
+    }));
+}
+
+function rootPackageScripts(workspaceRoot: string): Record<string, string> {
+  const manifestPath = join(workspaceRoot, "package.json");
+  if (!existsSync(manifestPath)) return {};
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { scripts?: Record<string, string> };
+  return manifest.scripts ?? {};
+}
+
+/** Whether a shell command names a workspace-relative path, either outright or through a glob. */
+function commandRunsPath(command: string, path: string): boolean {
+  return command
+    .split(/\s+/u)
+    .map((token) => token.replace(/^['"]|['"]$/gu, ""))
+    .some((token) => {
+      if (token === path) return true;
+      // A token is any argument, including flags: `--test-concurrency=2` is not a pattern, and
+      // matchesGlob rejects some of them outright rather than reporting no match.
+      try {
+        return matchesGlob(path, token);
+      } catch {
+        return false;
+      }
+    });
+}
+
+function collectRepositoryScriptSpecs(workspaceRoot: string): string[] {
+  const specs: string[] = [];
+
+  function visit(directory: string): void {
+    if (!existsSync(directory)) return;
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const entryPath = join(directory, entry.name);
+      if (entry.isDirectory()) {
+        visit(entryPath);
+        continue;
+      }
+      if (entry.isFile() && /\.spec\.m?js$/u.test(entry.name)) {
+        specs.push(relativeToWorkspace(workspaceRoot, entryPath));
+      }
+    }
+  }
+
+  visit(join(workspaceRoot, "scripts"));
+  return specs.sort((left, right) => left.localeCompare(right));
 }
 
 function toPackageScriptFailure(failure: ReferencedScript): CheckFailure {

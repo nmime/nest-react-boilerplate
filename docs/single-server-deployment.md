@@ -365,7 +365,7 @@ Agents extending this template must preserve these boundaries:
   test the renderer;
 - never replace full-SHA tags with `latest`, expose secrets in environment
   output, bypass `nginx -t`, or make Git updates non-fast-forward;
-- run `pnpm run test:deploy`, `pnpm run server:validate`, and
+- run `pnpm run test:scripts`, `pnpm run server:validate`, and
   `pnpm run deploy:validate:docker` after deployment-tool changes.
 
 Relevant source files are:

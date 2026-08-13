@@ -300,6 +300,8 @@ for (const required of [
   'sk-live-abc123',
   'better-auth\\.config\\.spec\\.ts',
   'test-secret-placeholder-min-32-chars-long',
+  'idempotency-key\\.decorator\\.spec\\.ts',
+  'charge-12345678',
   'discord-app-api\\.module\\.spec\\.ts',
   'discord-command-registration\\.service\\.spec\\.ts',
   'discord-config\\.spec\\.ts',

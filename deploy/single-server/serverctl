@@ -5,6 +5,9 @@ umask 027
 
 readonly CONTROLLER_NAME='nrb-server'
 readonly DEFAULT_CONFIG_ROOT='/etc/nest-react-boilerplate'
+# One definition, so the unit the deployment starts, the one it disables when the runtime axis
+# flips, and the one the failure report reads are provably the same name.
+readonly COMPOSE_UNIT='nest-react-boilerplate.service'
 SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
 readonly SCRIPT_PATH
 SCRIPT_DIR="$(cd -- "$(dirname -- "${SCRIPT_PATH}")" && pwd -P)"
@@ -25,6 +28,48 @@ LOG_SERVICE=''
 
 log() { printf '[%s] %s\n' "${CONTROLLER_NAME}" "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
+
+FAILURE_REPORTED=false
+
+# Everything an operator would otherwise SSH back in and collect by hand. systemd answers a
+# failed `start` with "see systemctl status / journalctl for details" and nothing else, so
+# after a multi-minute image build that one line was the entire output of a failed deployment
+# — and `set -e` tore down the shell before anyone could ask why.
+report_failure_context() {
+  local line="${1:-unknown}"
+  # Defaulted rather than read bare: a handler that dies on `set -u` before it prints anything
+  # would leave exactly the blank failure it exists to prevent.
+  "${FAILURE_REPORTED:-false}" && return 0
+  FAILURE_REPORTED=true
+
+  log "FAILED at line ${line}. Collecting diagnostics:"
+
+  if [[ "${RUNTIME_MODE:-compose}" == 'compose' ]]; then
+    local unit="${COMPOSE_UNIT:-}"
+    if [[ -n "${unit}" ]] && command -v systemctl >/dev/null 2>&1; then
+      systemctl --no-pager --full status "${unit}" 2>&1 | tail -n 30 || true
+    fi
+    if [[ -n "${unit}" ]] && command -v journalctl >/dev/null 2>&1; then
+      journalctl --no-pager --unit "${unit}" --lines 80 2>&1 || true
+    fi
+    # The unit is a oneshot wrapping `compose up --wait`, so the reason it failed is a
+    # container that never became healthy, and only Compose knows which one.
+    if [[ -n "${APP_ROOT:-}" && -f "${APP_ROOT}/scripts/compose-production.mjs" ]]; then
+      run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" ps \
+        --env-file "${PRODUCTION_ENV}" 2>&1 || true
+      run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" logs \
+        --env-file "${PRODUCTION_ENV}" --tail=80 --no-color 2>&1 | tail -n 200 || true
+    fi
+  else
+    command -v systemctl >/dev/null 2>&1 &&
+      systemctl --no-pager --full status "$(pm2_unit_name)" 2>&1 | tail -n 30 || true
+    [[ -z "${DEPLOY_USER:-}" ]] || run_as_deploy /usr/local/bin/pm2 logs --lines 80 --nostream 9>&- 2>&1 || true
+  fi
+
+  log "end of diagnostics for the failure at line ${line}"
+}
+
+trap 'report_failure_context "${LINENO}"' ERR
 
 usage() {
   cat <<'USAGE'
@@ -898,7 +943,7 @@ install_compose_unit() {
     pull_line="# COMPOSE_IMAGE_SOURCE=local builds images on this host; nothing to pull."
     no_build=''
   fi
-  cat >/etc/systemd/system/nest-react-boilerplate.service <<UNIT
+  cat >"/etc/systemd/system/${COMPOSE_UNIT}" <<UNIT
 [Unit]
 Description=Nest React Boilerplate production Compose application
 Requires=docker.service
@@ -921,15 +966,15 @@ TimeoutStartSec=600
 WantedBy=multi-user.target
 UNIT
   systemctl daemon-reload
-  systemctl enable nest-react-boilerplate.service
+  systemctl enable "${COMPOSE_UNIT}"
 }
 
 # A host that switches runtimes must not keep the other runtime's boot unit enabled,
 # or a reboot starts a stack this controller no longer manages.
 disable_foreign_runtime_unit() {
   if [[ "${RUNTIME_MODE}" == 'native' ]]; then
-    if systemctl list-unit-files nest-react-boilerplate.service >/dev/null 2>&1; then
-      systemctl disable --now nest-react-boilerplate.service >/dev/null 2>&1 || true
+    if systemctl list-unit-files "${COMPOSE_UNIT}" >/dev/null 2>&1; then
+      systemctl disable --now "${COMPOSE_UNIT}" >/dev/null 2>&1 || true
     fi
   else
     local unit
@@ -1063,7 +1108,7 @@ deploy() {
         --env-file "${PRODUCTION_ENV}"
     fi
     install_compose_unit
-    systemctl restart nest-react-boilerplate.service
+    systemctl restart "${COMPOSE_UNIT}"
   else
     release_native "${skip_migrations}"
   fi
@@ -1295,7 +1340,7 @@ status() {
     printf 'Docker: %s\n' "$(docker --version 2>/dev/null || printf missing)"
     printf 'Compose: %s\n' "$(docker compose version --short 2>/dev/null || printf missing)"
     printf 'Images: %s (%s)\n' "$(environment_value IMAGE_TAG)" "${IMAGE_SOURCE}"
-    systemctl --no-pager --full status docker nginx certbot.timer nest-react-boilerplate.service || true
+    systemctl --no-pager --full status docker nginx certbot.timer "${COMPOSE_UNIT}" || true
     run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" ps --env-file "${PRODUCTION_ENV}" || true
   else
     printf 'PM2: %s\n' "$(pm2 --version 2>/dev/null || printf missing)"

@@ -25,6 +25,16 @@ regexes = [
 ]
 
 [[rules.allowlists]]
+description = "Idempotency-key decorator test fixtures"
+condition = "AND"
+paths = [
+  '''^libs/backend/common/validation/lib/src/decorator/idempotency-key\.decorator\.spec\.ts$''',
+]
+regexes = [
+  '''charge-12345678''',
+]
+
+[[rules.allowlists]]
 description = "Health sanitizer fake API-key fixtures"
 condition = "AND"
 paths = [

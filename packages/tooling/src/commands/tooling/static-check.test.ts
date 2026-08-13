@@ -21,6 +21,7 @@ import {
   checkThinLocaleCatalogs,
   checkPackageProjectReferences,
   checkProviderScopedRuntimeImports,
+  checkRepositoryScriptSpecCoverage,
   checkStaleReferences,
   checkStaleSlashStyleAliasImports,
   checkTrackedSocialAuthSecrets,
@@ -1838,6 +1839,68 @@ ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(
         .join("\n");
 
       assert.match(stderr, /i18n\/ru\/lint\.json/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+describe("static-check repository script spec coverage", () => {
+  it("accepts specs a root script discovers by glob", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "package.json",
+        JSON.stringify({ scripts: { "test:scripts": 'node --test "scripts/**/*.spec.mjs"' } }),
+      );
+      writeText(workspaceRoot, "scripts/deploy.spec.mjs", "// spec\n");
+      writeText(workspaceRoot, "scripts/ci/runtime-stack.spec.mjs", "// spec\n");
+
+      assert.deepEqual(checkRepositoryScriptSpecCoverage(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("accepts a spec a root script names outright", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "package.json",
+        JSON.stringify({ scripts: { "docs:check": "node --test scripts/validate-doc-links.spec.mjs" } }),
+      );
+      writeText(workspaceRoot, "scripts/validate-doc-links.spec.mjs", "// spec\n");
+
+      assert.deepEqual(checkRepositoryScriptSpecCoverage(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // The enumerated `test:deploy` ran eleven of the sixteen repository specs and no lane ran it at
+  // all, so five specs -- including the one guarding the runtime stack's start sequence -- were
+  // dead weight nobody noticed. A list is the failure mode; this names what the list left out.
+  it("reports a spec no root script runs", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "package.json",
+        JSON.stringify({ scripts: { "test:deploy": "node --test scripts/deploy.spec.mjs" } }),
+      );
+      writeText(workspaceRoot, "scripts/deploy.spec.mjs", "// spec\n");
+      writeText(workspaceRoot, "scripts/check-licenses.spec.mjs", "// spec\n");
+
+      const failures = checkRepositoryScriptSpecCoverage(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.equal(failures[0]?.file, "scripts/check-licenses.spec.mjs");
+      assert.match(failures[0]?.stderr ?? "", /no root package\.json script runs it/u);
     } finally {
       removeWorkspace(workspaceRoot);
     }

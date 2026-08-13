@@ -238,6 +238,9 @@ jobs:
       - name: Check migration freshness
         run: pnpm run db:migrations:check
 
+      - name: Run repository script specs
+        run: pnpm run test:scripts
+
       - name: Check library configuration standards
         run: pnpm run lib:configs:check
 
@@ -286,6 +289,7 @@ jobs:
             echo "Commands:"
             echo "- pnpm run onboarding:verify"
             echo "- pnpm run db:migrations:check"
+            echo "- pnpm run test:scripts"
             echo "- pnpm run lib:configs:check"
             echo "- pnpm run api:contracts:check"
             echo "- pnpm run api:clients:check"

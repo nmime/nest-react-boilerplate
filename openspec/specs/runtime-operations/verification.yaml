@@ -268,13 +268,13 @@ requirements:
     evidence:
       - kind: operations
         file: scripts/deploy.spec.mjs
-        script: test:deploy
+        script: test:scripts
         lanes:
           - main
           - nightly
       - kind: security
         file: scripts/deploy.spec.mjs
-        script: test:deploy
+        script: test:scripts
         lanes:
           - main
           - nightly

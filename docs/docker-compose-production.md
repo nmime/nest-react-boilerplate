@@ -361,7 +361,7 @@ both Caddyfiles, and the merged Compose models:
 
 ```bash
 pnpm run deploy:validate:docker
-pnpm run test:deploy
+pnpm run test:scripts
 pnpm run docker:prod:config:check
 pnpm run docker:prod:config
 ```

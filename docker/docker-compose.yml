@@ -132,6 +132,21 @@ x-frontend-healthcheck: &frontend-healthcheck
   retries: 12
   start_period: 10s
 
+# Product identity, rendered into /runtime-config.js at container start exactly as production
+# does. Unset values leave whatever the image was built with, so an untouched checkout behaves
+# as before; the keys exist so a product can drive its own brand through the same local and
+# end-to-end stack that gates its merges, instead of discovering the difference in production.
+# Never place secrets here — the generated file is served to every browser.
+x-frontend-runtime-env: &frontend-runtime-env
+  PRODUCT_NAME: ${PRODUCT_NAME:-}
+  PRODUCT_ICON_HREF: ${PRODUCT_ICON_HREF:-}
+  PRODUCT_ICON_TYPE: ${PRODUCT_ICON_TYPE:-}
+  PRODUCT_THEME_COLOR: ${PRODUCT_THEME_COLOR:-}
+  # Chrome an embedding host paints for us (the Telegram mini app); no stylesheet reaches it.
+  PRODUCT_CHROME_BACKGROUND_COLOR: ${PRODUCT_CHROME_BACKGROUND_COLOR:-}
+  PRODUCT_CHROME_BOTTOM_BAR_COLOR: ${PRODUCT_CHROME_BOTTOM_BAR_COLOR:-}
+  PRODUCT_CHROME_HEADER_COLOR: ${PRODUCT_CHROME_HEADER_COLOR:-}
+
 services:
   redis:
     profiles: [redis]
@@ -392,6 +407,7 @@ services:
         VITE_API_BASE_URL_MODE: same-origin
         VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
     restart: unless-stopped
+    environment: *frontend-runtime-env
     depends_on:
       admin-app-api:
         condition: service_healthy
@@ -414,6 +430,7 @@ services:
         VITE_API_BASE_URL_MODE: same-origin
         VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
     restart: unless-stopped
+    environment: *frontend-runtime-env
     depends_on:
       auth-app-api:
         condition: service_healthy
@@ -436,6 +453,7 @@ services:
         VITE_API_BASE_URL_MODE: same-origin
     restart: unless-stopped
     environment:
+      <<: *frontend-runtime-env
       FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: ${FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP:-false}
       LANDING_USER_APP_URL: ${LANDING_USER_APP_URL:-}
       LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}

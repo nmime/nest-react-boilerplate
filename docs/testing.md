@@ -50,6 +50,18 @@ fresh selected closure. Its Compose graph, database provider, applications, and
 capability infrastructure come from that closure; environment profile overrides
 cannot reduce the selected service set or add stale applications.
 
+`test:fullstack` and `test:docker-smoke` both decide a service is up by matching
+text in its response, and that text is deliberately structural rather than page
+copy. Each SPA document element carries `data-app="<compose-service>"`; the HTTP
+services echo their own service name from `/health` (or `/ready` for the Vike
+site); the Expo export is recognised by its `/_expo/static/js/web/` bundle path.
+None of those move when a product rebrands, whereas the shipped `<title>` and
+every rendered heading do — `resolveProductBrand` rewrites the first from
+`VITE_PRODUCT_NAME` and the second comes from an i18n catalog. Keep the
+`data-app` attribute when you edit an `index.html`: it is what the gates hold
+onto, and a probe list that is out of step with the selected services fails the
+`fullstack readiness probes` suite rather than hanging for three minutes.
+
 ## Durable-provider proof
 
 PostgreSQL and MongoDB are separate persistence implementations behind shared

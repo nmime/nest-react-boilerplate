@@ -155,23 +155,96 @@ test('frontend runtime config emits only same-origin, HTTPS, or loopback HTTP la
 // cannot present different identities.
 // The emitter can only publish what the deployment hands it, so the shared frontend service
 // environment has to carry the brand for every SPA rather than one chosen app.
-test('compose passes the product brand to every frontend service', () => {
-  const compose = readFileSync(resolve(root, 'docker/docker-compose.prod.yml'), 'utf8');
-  const sharedEnv = compose.slice(
-    compose.indexOf('environment: &frontend-runtime-env'),
-    compose.indexOf('x-notification-scheduler-service'),
-  );
+const productBrandVariables = [
+  'PRODUCT_NAME',
+  'PRODUCT_ICON_HREF',
+  'PRODUCT_ICON_TYPE',
+  'PRODUCT_THEME_COLOR',
+  'PRODUCT_CHROME_BACKGROUND_COLOR',
+  'PRODUCT_CHROME_BOTTOM_BAR_COLOR',
+  'PRODUCT_CHROME_HEADER_COLOR',
+];
+const frontendServices = ['admin-app', 'landing-app', 'user-app'];
+const serviceBlock = (compose, service) => {
+  const start = compose.search(new RegExp(`^ {2}${service}:$`, 'mu'));
+  const rest = compose.slice(start + 1);
+  const end = rest.search(/^ {2}\S/mu);
 
-  for (const variable of [
-    'PRODUCT_NAME',
-    'PRODUCT_ICON_HREF',
-    'PRODUCT_ICON_TYPE',
-    'PRODUCT_THEME_COLOR',
-    'PRODUCT_CHROME_BACKGROUND_COLOR',
-    'PRODUCT_CHROME_BOTTOM_BAR_COLOR',
-    'PRODUCT_CHROME_HEADER_COLOR',
+  return end < 0 ? rest : rest.slice(0, end);
+};
+
+// Without these keys the one-image-many-brands claim is only half true: the build-time
+// VITE_PRODUCT_* values are baked into the image, so two deployments of the same image
+// cannot present different identities.
+// The emitter can only publish what the deployment hands it, so the shared frontend service
+// environment has to carry the brand for every SPA rather than one chosen app.
+// The local and end-to-end stack needs it for a different reason: a product cannot rehearse its
+// own identity through the suite that gates its merges if the only brandable stack is production.
+test('compose passes the product brand to every frontend service', () => {
+  for (const file of ['docker/docker-compose.prod.yml', 'docker/docker-compose.yml']) {
+    const compose = readFileSync(resolve(root, file), 'utf8');
+
+    for (const variable of productBrandVariables) {
+      assert.match(
+        compose,
+        new RegExp(`${variable}: \\$\\{${variable}`, 'u'),
+        `${variable} must reach every SPA in ${file}`,
+      );
+    }
+    for (const service of frontendServices) {
+      assert.match(
+        serviceBlock(compose, service),
+        /\*frontend-(runtime-env|service)/u,
+        `${service} in ${file} must take the shared frontend environment that carries the brand`,
+      );
+    }
+  }
+});
+
+// The runtime override can only ever change what the image already renders: nothing rewrites the
+// bundle. An image built without these arguments is permanently boilerplate-branded for the tab
+// title, the icon and the embedding chrome, whatever the deployment sets.
+test('the image bakes a build-time product brand for source builds', () => {
+  const dockerfile = readFileSync(resolve(root, 'Dockerfile'), 'utf8');
+  const overlay = readFileSync(resolve(root, 'docker/docker-compose.prod.build.yml'), 'utf8');
+
+  for (const variable of productBrandVariables.map((name) => `VITE_${name}`)) {
+    assert.match(dockerfile, new RegExp(`^ARG ${variable}$`, 'mu'), `the builder stage must accept ${variable}`);
+    assert.match(
+      dockerfile,
+      new RegExp(`${variable}=\\$\\{${variable}\\}`, 'u'),
+      `${variable} must reach the Vite build as an environment variable`,
+    );
+    assert.match(
+      overlay,
+      new RegExp(`${variable}: \\$\\{${variable}`, 'u'),
+      `the source-build overlay must forward ${variable}`,
+    );
+  }
+  // mobile-app ships the same SPA image, so a brand it cannot take is the same defect there.
+  for (const service of [...frontendServices, 'mobile-app']) {
+    assert.match(
+      serviceBlock(overlay, service),
+      /\*frontend-build-args/u,
+      `${service} must take the shared browser build arguments that carry the brand`,
+    );
+  }
+});
+
+// A runtime brand that never reaches the document is indistinguishable from no brand at all, and
+// the failure is silent: the deployment sets PRODUCT_NAME, the emitter writes it, and the tab
+// still says the boilerplate's name because nothing loaded the file.
+test('every branded SPA loads the per-deployment runtime config', () => {
+  for (const document of [
+    'apps/frontend/admin/index.html',
+    'apps/frontend/app/index.html',
+    'apps/frontend/landing/src/astro/pages/index.astro',
   ]) {
-    assert.match(sharedEnv, new RegExp(`${variable}: \\$\\{${variable}`, 'u'), `${variable} must reach every SPA`);
+    assert.match(
+      readFileSync(resolve(root, document), 'utf8'),
+      /src="\/runtime-config\.js"/u,
+      `${document} must load /runtime-config.js or a per-deployment rebrand cannot reach it`,
+    );
   }
 });
 

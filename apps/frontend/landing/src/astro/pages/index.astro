@@ -1,20 +1,35 @@
 ---
+import { resolveProductBrand } from "@app/frontend-api-support";
 import { LandingReactIsland } from "../../app/landing-react-island";
 import "../../app/styles/global.css";
 
-const title = "Nest React Boilerplate";
+// The SPAs get their shipped identity from a Vite `transformIndexHtml` pass; Astro renders its
+// own markup, so this page reads the same configuration itself. Without it the landing page is
+// the one surface that stays boilerplate-branded however a product sets VITE_PRODUCT_NAME, and
+// the only place the name could be corrected is this file -- a permanent merge conflict.
+// `main.tsx` re-applies the resolved brand once the island hydrates, which is what lets a
+// per-deployment runtime-config.js override the value baked in here.
+//
+// `process.env`, not `import.meta.env`: Astro's env prefix is PUBLIC_, so the VITE_ keys the rest
+// of the frontend builds on are absent from `import.meta.env` and a rebrand would silently do
+// nothing. Frontmatter runs in Node for both `astro dev` and the static build, so the build
+// environment is readable directly -- which is also how the SPAs' own brand pass reads it.
+const brand = resolveProductBrand(process.env, {});
 const description = "A focused foundation for your next product.";
 ---
 
 <!doctype html>
-<html lang="en">
+<!-- `data-app` names the Compose service, not the product. Deployment readiness probes match it
+     precisely because a rebrand cannot move it, unlike the title below. -->
+<html lang="en" data-app="landing-app">
   <head>
     <meta charset="utf-8" />
-    <title>{title}</title>
+    <title>{brand.name}</title>
     <base href="/" />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="theme-color" content={brand.themeColor} />
+    <link rel="icon" type={brand.iconType} href={brand.iconHref} />
     <script is:inline src="/runtime-config.js"></script>
   </head>
   <body>

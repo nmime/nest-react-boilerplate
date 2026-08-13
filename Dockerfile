@@ -79,11 +79,29 @@ ARG VITE_AUTH_API_BASE_URL
 ARG VITE_USER_API_BASE_URL
 ARG VITE_ADMIN_API_BASE_URL
 ARG VITE_TELEGRAM_AUTH_ENABLED=false
+# Product identity baked into the markup the image ships. The runtime override in
+# /runtime-config.js can only change what the bundle renders after it executes, so without these
+# the browser tab, the icon and every link preview stay boilerplate-branded no matter what the
+# deployment sets. Unset values keep the boilerplate's own defaults.
+ARG VITE_PRODUCT_NAME
+ARG VITE_PRODUCT_ICON_HREF
+ARG VITE_PRODUCT_ICON_TYPE
+ARG VITE_PRODUCT_THEME_COLOR
+ARG VITE_PRODUCT_CHROME_BACKGROUND_COLOR
+ARG VITE_PRODUCT_CHROME_BOTTOM_BAR_COLOR
+ARG VITE_PRODUCT_CHROME_HEADER_COLOR
 ENV VITE_API_BASE_URL_MODE=${VITE_API_BASE_URL_MODE} \
   VITE_AUTH_API_BASE_URL=${VITE_AUTH_API_BASE_URL} \
   VITE_USER_API_BASE_URL=${VITE_USER_API_BASE_URL} \
   VITE_ADMIN_API_BASE_URL=${VITE_ADMIN_API_BASE_URL} \
-  VITE_TELEGRAM_AUTH_ENABLED=${VITE_TELEGRAM_AUTH_ENABLED}
+  VITE_TELEGRAM_AUTH_ENABLED=${VITE_TELEGRAM_AUTH_ENABLED} \
+  VITE_PRODUCT_NAME=${VITE_PRODUCT_NAME} \
+  VITE_PRODUCT_ICON_HREF=${VITE_PRODUCT_ICON_HREF} \
+  VITE_PRODUCT_ICON_TYPE=${VITE_PRODUCT_ICON_TYPE} \
+  VITE_PRODUCT_THEME_COLOR=${VITE_PRODUCT_THEME_COLOR} \
+  VITE_PRODUCT_CHROME_BACKGROUND_COLOR=${VITE_PRODUCT_CHROME_BACKGROUND_COLOR} \
+  VITE_PRODUCT_CHROME_BOTTOM_BAR_COLOR=${VITE_PRODUCT_CHROME_BOTTOM_BAR_COLOR} \
+  VITE_PRODUCT_CHROME_HEADER_COLOR=${VITE_PRODUCT_CHROME_HEADER_COLOR}
 # Backend apps enable generatePackageJson + generateLockfile, so each build emits
 # a pruned package.json and pnpm-lock.yaml under its dist output describing only
 # the npm packages that app (and the workspace libs it inlines) actually imports.

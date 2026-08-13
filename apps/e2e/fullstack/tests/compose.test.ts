@@ -1,13 +1,21 @@
 // @requirements REQ-SCAFFOLD-SELECTION-002
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
 
-import { fullstackStartupPlan, resolveFullstackSelection, validateFullstackEnvironment } from '../src/selection.ts';
+import {
+  fullstackStartupPlan,
+  readinessProbes,
+  resolveFullstackSelection,
+  validateFullstackEnvironment,
+} from '../src/selection.ts';
 
 const roots: string[] = [];
+
+const workspaceRoot = new URL('../../../../', import.meta.url);
+const readWorkspaceFile = (path: string): string => readFileSync(new URL(path, workspaceRoot), 'utf8');
 
 afterEach(() => {
   for (const root of roots.splice(0)) {
@@ -183,6 +191,93 @@ void describe('fullstack startup order', () => {
         `${provider} must start each selected service exactly once`,
       );
     }
+  });
+});
+
+void describe('fullstack readiness probes', () => {
+  /** Entry documents the three SPA services serve at `/`, which is what a readiness probe reads. */
+  const frontendDocuments = [
+    { service: 'admin-app', path: 'apps/frontend/admin/index.html' },
+    { service: 'landing-app', path: 'apps/frontend/landing/src/astro/pages/index.astro' },
+    { service: 'user-app', path: 'apps/frontend/app/index.html' },
+  ] as const;
+  const selection = resolveFullstackSelection({
+    provider: 'postgres',
+    roots: [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'fullstack-e2e',
+      'landing-app',
+      'notification-consumer',
+      'site-app',
+      'user-app',
+      'user-app-api',
+    ],
+    services: [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'landing-app',
+      'migrate',
+      'notification-consumer',
+      'postgres',
+      'site-app',
+      'user-app',
+      'user-app-api',
+    ],
+  });
+
+  void it('probes every selected service that answers over HTTP', () => {
+    // notification-consumer is selected and has no HTTP surface at all, so it contributes no
+    // probe -- Compose readiness is the only thing that can speak for it.
+    assert.deepEqual(readinessProbes(selection), [
+      { service: 'admin-app', path: '/', marker: 'data-app="admin-app"' },
+      { service: 'admin-app-api', path: '/health', marker: 'admin-app-api' },
+      { service: 'auth-app-api', path: '/health', marker: 'auth-app-api' },
+      { service: 'landing-app', path: '/', marker: 'data-app="landing-app"' },
+      { service: 'site-app', path: '/ready', marker: 'site-app' },
+      { service: 'user-app', path: '/', marker: 'data-app="user-app"' },
+      { service: 'user-app-api', path: '/health', marker: 'user-app-api' },
+    ]);
+  });
+
+  void it('never gates readiness on copy the product owns', () => {
+    const markers = readinessProbes(selection).map((probe) => probe.marker);
+
+    for (const { path } of frontendDocuments) {
+      const source = readWorkspaceFile(path);
+      const title = /<title>([\s\S]*?)<\/title>/u.exec(source)?.[1] ?? '';
+
+      // The build rewrites every shipped title from VITE_PRODUCT_NAME, so a probe matching one
+      // asserts that nobody has renamed the product -- the first thing every product does.
+      assert.ok(!markers.includes(title), `${path}: readiness must not match the shipped title "${title}"`);
+      assert.ok(
+        !source.includes('Nest React Boilerplate'),
+        `${path} hardcodes the boilerplate product name instead of rendering the configured brand`,
+      );
+    }
+  });
+
+  void it('matches a marker the shipped document actually carries', () => {
+    const probes = readinessProbes(selection);
+
+    for (const { service, path } of frontendDocuments) {
+      const probe = probes.find((candidate) => candidate.service === service);
+
+      assert.ok(probe, `${service} must have a readiness probe`);
+      assert.ok(
+        readWorkspaceFile(path).includes(probe.marker),
+        `${path} must carry ${probe.marker} or the probe waits for text that is never served`,
+      );
+    }
+  });
+
+  void it('drives the managed stack from the derived probes', () => {
+    const globalSetup = readWorkspaceFile('apps/e2e/fullstack/src/global-setup.ts');
+
+    assert.match(globalSetup, /readinessProbes\(/u);
+    assert.doesNotMatch(globalSetup, /'User App'|'Admin App'|Nest React Boilerplate/u);
   });
 });
 

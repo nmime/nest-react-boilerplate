@@ -189,6 +189,19 @@ identity, and the container generator drops a `PRODUCT_*` value that is not a
 plain string, a public icon URL/path, an `image/*` media type, or a
 `#rgb`/`#rrggbb` colour.
 
+Two shells never see that Vite pass and read the configuration themselves.
+`landing-app` renders through Astro, so `src/astro/pages/index.astro` calls
+`resolveProductBrand` in its frontmatter — from `process.env`, because Astro's
+client env prefix is `PUBLIC_` and the `VITE_*` keys are absent from
+`import.meta.env` there. `mobile-app` is an Expo document with no markup of ours
+at all, so `app.config.ts` reads `VITE_PRODUCT_NAME` into the Expo `name` that
+becomes the exported web `<title>`; its config loader resolves outside the
+workspace TypeScript paths, so it restates the shared default instead of
+importing it and a spec pins the two together. Landing still picks up a
+per-deployment override, because its React island runs `applyProductBrand` on
+hydration; the Expo export has no such pass, so mobile identity comes from the
+image alone.
+
 An embedding host paints its own chrome around the app — the Telegram mini app
 supplies the header, background, and bottom bar — and that chrome is outside the
 document, so neither the stylesheet nor the branding passes above reach it.

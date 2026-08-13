@@ -8,6 +8,7 @@ import * as userApi from './user';
 export { adminApi, authApi, generatedAdminApi, generatedAuthApi, generatedUserApi, userApi };
 
 export * from './client-registry';
+export * from './openapi-runtime';
 export * from './service-options';
 export * from './toast-rules';
 

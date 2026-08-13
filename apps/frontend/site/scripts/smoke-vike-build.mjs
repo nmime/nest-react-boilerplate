@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
+import { collectRuntimePackages } from './runtime-imports.mjs';
+
 const appName = 'site-app';
 const distRoot = resolve(import.meta.dirname, '../../../../dist/apps/frontend/site');
 const runtimeDependenciesPath = resolve(import.meta.dirname, '../runtime-dependencies.json');
@@ -69,19 +71,8 @@ if (!existsSync(serverEntry)) {
 
 const declaredRuntimePackages = new Set(JSON.parse(readFileSync(runtimeDependenciesPath, 'utf8')));
 const serverOutput = readBuiltTextFiles(join(distRoot, 'server')).join('\n');
-const bareImports = [...serverOutput.matchAll(/(?:from\s+|import\s*\()(['"])([^'"]+)\1/gu)].map(
-  ([, , specifier]) => specifier,
-);
-const runtimeImports = new Set(
-  bareImports
-    .filter((specifier) => !specifier.startsWith('.') && !specifier.startsWith('node:'))
-    .map((specifier) =>
-      specifier.startsWith('@') ? specifier.split('/').slice(0, 2).join('/') : specifier.split('/')[0],
-    ),
-);
-const undeclaredRuntimePackages = [...runtimeImports].filter(
-  (packageName) => !declaredRuntimePackages.has(packageName),
-);
+const runtimePackages = collectRuntimePackages(serverOutput);
+const undeclaredRuntimePackages = runtimePackages.filter((packageName) => !declaredRuntimePackages.has(packageName));
 
 if (undeclaredRuntimePackages.length > 0) {
   throw new Error(
@@ -94,7 +85,7 @@ console.log(
     appName,
     distRoot: relative(process.cwd(), distRoot),
     expectedCopy,
-    runtimePackages: [...runtimeImports].sort(),
+    runtimePackages,
     status: 'ok',
   }),
 );

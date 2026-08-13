@@ -10,7 +10,8 @@
  */
 import assert from "node:assert/strict";
 import { describe, it, beforeEach, afterEach } from "node:test";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -340,6 +341,58 @@ describe("setup — repeatable command selection", () => {
 
       assert.equal(await runSetupCommand(context(["--app", "user-app", "--non-interactive"]), setupDependencies), 0);
       assert.equal(readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8"), afterAdd);
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("names every file it refused to overwrite", async () => {
+    const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-setup-conflict-"));
+    const context = (argv: string[]) => ({ argv, packageRoot: "/mock/packages/tooling", workspaceRoot });
+    const tampered = "apps/backend/user/user-app-api/src/capabilities.generated.ts";
+    try {
+      assert.equal(
+        await runSetupCommand(context(["--replace", "--app", "user-app-api", "--non-interactive"]), setupDependencies),
+        0,
+      );
+      // Drift the *recorded* hash, not the file. That is what a stale `.nrb/state.json`
+      // is, and it is the only drift that reaches the conflict check: a file whose
+      // recorded hash still matches its desired content is never planned, so tampering
+      // with it on disk is checked by nothing.
+      const statePath = join(workspaceRoot, ".nrb", "state.json");
+      const state = JSON.parse(readFileSync(statePath, "utf8")) as {
+        version: number;
+        configHash: string;
+        files: Record<string, string>;
+        digest: string;
+      };
+      state.files[tampered] = "0".repeat(64);
+      const ordered = Object.fromEntries(Object.entries(state.files).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+      state.digest = createHash("sha256").update(JSON.stringify(ordered), "utf8").digest("hex");
+      writeFileSync(statePath, JSON.stringify(state, null, 2) + "\n");
+
+      let status = 0;
+      const chunks: string[] = [];
+      const orig = process.stderr.write;
+      process.stderr.write = (chunk: string | Buffer) => {
+        chunks.push(typeof chunk === "string" ? chunk : chunk.toString());
+        return true;
+      };
+      try {
+        status = await runSetupCommand(context(["--app", "user-app-api", "--non-interactive"]), setupDependencies);
+      } finally {
+        process.stderr.write = orig;
+      }
+      const stderr = chunks.join("");
+
+      assert.equal(status, 1, "a conflicting tree must not apply");
+      // A count alone is unactionable: three CI jobs reported "11 failed" and named
+      // nothing, so the stale index read as eleven broken generators. The path is the
+      // whole diagnosis.
+      assert.ok(
+        stderr.includes(tampered),
+        `the conflict report must name the file it refused to overwrite; got:\n${stderr}`,
+      );
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
     }

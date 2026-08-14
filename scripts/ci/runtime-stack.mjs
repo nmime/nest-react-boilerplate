@@ -66,6 +66,18 @@ const isOneShot = (definition) => definition.restart === 'no';
 
 const dependencyNames = (definition) => Object.keys(definition.depends_on ?? {});
 
+/**
+ * Whether a one-shot needs its prerequisites *healthy*, as opposed to merely started.
+ *
+ * A one-shot that asks only for `service_started` is declaring that it does not need health -- and
+ * in MongoDB's case it is the reason health arrives at all, since a `--replSet` mongod is not a
+ * writable primary until `rs.initiate()` runs. Gating on health before running it would wait for a
+ * state only it can produce, so the condition each one-shot already declares is what decides which
+ * side of the health gate it belongs on. Nothing here names a service.
+ */
+const needsHealthyPrerequisites = (definition) =>
+  Object.values(definition.depends_on ?? {}).some((dependency) => dependency?.condition === 'service_healthy');
+
 /** One-shots in declared dependency order, so `mongodb-init` runs before `mongodb-migrate`. */
 function orderOneShots(services, oneShots) {
   const ordered = [];
@@ -91,8 +103,8 @@ function orderOneShots(services, oneShots) {
 }
 
 /**
- * The order the stack has to start in: whatever the one-shots depend on, held until healthy, then
- * each one-shot run to completion, then everything else.
+ * The order the stack has to start in: the one-shots' prerequisites, then any one-shot that does not
+ * need them healthy, then the health gate, then the rest of the one-shots, then everything else.
  *
  * This is the same shape `fullstackStartupPlan` derives from a selected closure in
  * apps/e2e/fullstack/src/selection.ts. The CI lanes have no fullstack selection -- they pin
@@ -112,13 +124,26 @@ export function composeStartupPlan(config) {
     !oneShots.includes(name) && oneShots.some((oneShot) => dependencyNames(services[oneShot]).includes(name));
   const prerequisites = names.filter(isPrerequisite);
   const remaining = names.filter((name) => !oneShots.includes(name) && !isPrerequisite(name));
+  const ordered = orderOneShots(services, oneShots).map((service) => ({ kind: 'run', services: [service] }));
+  const tail = remaining.length > 0 ? [{ kind: 'up', services: remaining }] : [];
+
+  if (prerequisites.length === 0) {
+    return [...ordered, ...tail];
+  }
+
+  const runsBeforeHealth = (step) => !needsHealthyPrerequisites(services[step.services[0]]);
+  const beforeGate = ordered.filter(runsBeforeHealth);
+  // `--wait` is safe here only because a prerequisite is by construction not a one-shot: it reads
+  // a one-shot exiting 0 as a failed wait, which is why the final step below never uses it.
+  const gate = { kind: 'up', services: prerequisites, waitForHealthy: true };
 
   return [
-    // `--wait` is safe here only because a prerequisite is by construction not a one-shot: it reads
-    // a one-shot exiting 0 as a failed wait, which is why the final step below never uses it.
-    ...(prerequisites.length > 0 ? [{ kind: 'up', services: prerequisites, waitForHealthy: true }] : []),
-    ...orderOneShots(services, oneShots).map((service) => ({ kind: 'run', services: [service] })),
-    ...(remaining.length > 0 ? [{ kind: 'up', services: remaining }] : []),
+    // With nothing to run first, the gate is the first start. Otherwise the prerequisites come up
+    // ungated so those one-shots can reach them, and the gate follows once health is reachable --
+    // Compose leaves an already-running container alone, so the second `up` only waits.
+    ...(beforeGate.length > 0 ? [{ kind: 'up', services: prerequisites }, ...beforeGate, gate] : [gate]),
+    ...ordered.filter((step) => !runsBeforeHealth(step)),
+    ...tail,
   ];
 }
 

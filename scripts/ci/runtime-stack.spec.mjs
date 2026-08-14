@@ -87,7 +87,7 @@ describe('compose startup plan', () => {
     ]);
   });
 
-  it('orders one-shots that depend on each other', () => {
+  it('orders one-shots that depend on each other, and gates on health only once it is reachable', () => {
     const mongodbLane = {
       services: {
         mongodb: { restart: 'unless-stopped' },
@@ -103,9 +103,13 @@ describe('compose startup plan', () => {
       },
     };
 
+    // mongodb-init asks only for `service_started`, which is how it declares that it is what *makes*
+    // its prerequisite healthy -- a `--replSet` mongod is not a writable primary until `rs.initiate()`
+    // has run. Waiting for health before it would wait for a state only it can produce.
     assert.deepEqual(composeStartupPlan(mongodbLane), [
-      { kind: 'up', services: ['mongodb'], waitForHealthy: true },
+      { kind: 'up', services: ['mongodb'] },
       { kind: 'run', services: ['mongodb-init'] },
+      { kind: 'up', services: ['mongodb'], waitForHealthy: true },
       { kind: 'run', services: ['mongodb-migrate'] },
       { kind: 'up', services: ['auth-app-api'] },
     ]);

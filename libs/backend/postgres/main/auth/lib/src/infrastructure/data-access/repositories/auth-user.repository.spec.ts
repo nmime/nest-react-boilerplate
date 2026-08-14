@@ -296,6 +296,159 @@ describe('AuthUserRepository', () => {
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
+  it('stores a manual avatar over whatever the profile carried before', async () => {
+    const entity = new AuthUserEntity({
+      email: 'user@example.com',
+      avatarStatus: 'provider',
+      avatarUrl: 'https://cdn.example.com/provider.png',
+      avatarHash: 'provider-hash',
+    });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setAvatar('user-id', {
+      url: 'https://cdn.example.com/manual.png',
+      hash: 'manual-hash',
+      status: 'manual',
+    });
+
+    expect(result._unsafeUnwrap()).toMatchObject({
+      avatarUrl: 'https://cdn.example.com/manual.png',
+      avatarHash: 'manual-hash',
+      avatarStatus: 'manual',
+    });
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  // "deleted" and "none" are distinct on purpose: only the former tells a later provider sync that
+  // the blank avatar is a decision rather than an absence.
+  it('clears the avatar to the deleted status rather than back to none', async () => {
+    const entity = new AuthUserEntity({
+      email: 'user@example.com',
+      avatarStatus: 'manual',
+      avatarUrl: 'https://cdn.example.com/manual.png',
+      avatarHash: 'manual-hash',
+    });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.deleteAvatar('user-id');
+
+    expect(result._unsafeUnwrap()).toMatchObject({
+      avatarUrl: '',
+      avatarHash: '',
+      avatarStatus: 'deleted',
+    });
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes a provider avatar onto a profile that has none', async () => {
+    const entity = new AuthUserEntity({ email: 'user@example.com' });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.syncProviderAvatar('user-id', {
+      url: 'https://cdn.example.com/telegram.png',
+      hash: 'telegram-hash',
+    });
+
+    expect(result._unsafeUnwrap()).toMatchObject({
+      avatarUrl: 'https://cdn.example.com/telegram.png',
+      avatarHash: 'telegram-hash',
+      avatarStatus: 'provider',
+    });
+    expect(flush).toHaveBeenCalledTimes(1);
+  });
+
+  // A provider that drops its picture sends null. Writing the empty URL back with a "provider"
+  // status would claim an avatar the provider no longer has, so the status falls to "none".
+  it('falls back to no avatar when the provider stops supplying one', async () => {
+    const entity = new AuthUserEntity({
+      email: 'user@example.com',
+      avatarStatus: 'provider',
+      avatarUrl: 'https://cdn.example.com/telegram.png',
+      avatarHash: 'telegram-hash',
+    });
+    const { findOne, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.syncProviderAvatar('user-id', { url: null, hash: null });
+
+    expect(result._unsafeUnwrap()).toMatchObject({
+      avatarUrl: '',
+      avatarHash: '',
+      avatarStatus: 'none',
+    });
+  });
+
+  it.each(['manual', 'deleted'] as const)('leaves a %s avatar untouched on a provider sync', async (avatarStatus) => {
+    const entity = new AuthUserEntity({
+      email: 'user@example.com',
+      avatarStatus,
+      avatarUrl: 'https://cdn.example.com/chosen.png',
+      avatarHash: 'chosen-hash',
+    });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.syncProviderAvatar('user-id', {
+      url: 'https://cdn.example.com/provider.png',
+      hash: 'provider-hash',
+    });
+
+    expect(result._unsafeUnwrap()).toMatchObject({
+      avatarUrl: 'https://cdn.example.com/chosen.png',
+      avatarHash: 'chosen-hash',
+      avatarStatus,
+    });
+    expect(flush).not.toHaveBeenCalled();
+  });
+
+  // Providers re-send the same picture on every login, so an unchanged hash must not cost a write.
+  it('skips the write when the provider avatar hash is unchanged', async () => {
+    const entity = new AuthUserEntity({
+      email: 'user@example.com',
+      avatarStatus: 'provider',
+      avatarUrl: 'https://cdn.example.com/telegram.png',
+      avatarHash: 'telegram-hash',
+    });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.syncProviderAvatar('user-id', {
+      url: 'https://cdn.example.com/moved.png',
+      hash: 'telegram-hash',
+    });
+
+    expect(result._unsafeUnwrap()?.avatarUrl).toBe('https://cdn.example.com/telegram.png');
+    expect(flush).not.toHaveBeenCalled();
+  });
+
+  it('maps repository errors raised while writing an avatar', async () => {
+    const entity = new AuthUserEntity({ email: 'user@example.com' });
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    flush.mockRejectedValue(new Error('avatar update failed'));
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const result = await authUsers.setAvatar('user-id', {
+      url: 'https://cdn.example.com/manual.png',
+      hash: 'manual-hash',
+      status: 'manual',
+    });
+
+    expect(result._unsafeUnwrapErr()).toEqual({
+      code: 'repository_error',
+      message: 'avatar update failed',
+    });
+  });
+
   it('returns null when an email or id is unknown', async () => {
     const { entityManager } = createEntityManagerMock();
     const authUsers = new AuthUserRepository(entityManager);
@@ -304,6 +457,24 @@ describe('AuthUserRepository', () => {
     expect((await authUsers.findById('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
     expect((await authUsers.setLocale('00000000-0000-4000-8000-000000000000', 'ru'))._unsafeUnwrap()).toBeNull();
     expect((await authUsers.recordLogin('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
+    expect(
+      (
+        await authUsers.setAvatar('00000000-0000-4000-8000-000000000000', {
+          url: 'https://cdn.example.com/manual.png',
+          hash: 'manual-hash',
+          status: 'manual',
+        })
+      )._unsafeUnwrap(),
+    ).toBeNull();
+    expect((await authUsers.deleteAvatar('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
+    expect(
+      (
+        await authUsers.syncProviderAvatar('00000000-0000-4000-8000-000000000000', {
+          url: null,
+          hash: null,
+        })
+      )._unsafeUnwrap(),
+    ).toBeNull();
   });
 
   it('maps repository errors when creating users', async () => {

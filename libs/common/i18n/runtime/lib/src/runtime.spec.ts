@@ -90,6 +90,23 @@ describe('locale catalog surface', () => {
       ]),
     ).toThrow('i18n catalog en/common/shared.json is a string, not an object: it was not loaded as JSON');
   });
+
+  // `typeof null` is `'object'`, so a null catalog is the one shape that walks past a bare typeof
+  // check and dies inside `Object.entries` instead — with a TypeError naming neither the locale nor
+  // the file. The shape description special-cases it so this failure reads like the others.
+  it('names a null catalog rather than failing inside the key walk', () => {
+    expect(() => mergeLocaleCatalogFiles('en', [['common/shared.json', null as never]])).toThrow(
+      'i18n catalog en/common/shared.json is a null, not an object: it was not loaded as JSON',
+    );
+  });
+
+  // An array is the other shape `typeof` calls an object, and `Object.entries` walks it happily —
+  // yielding numeric indices that merge as keys and collide across files.
+  it('names an array catalog rather than merging its indices', () => {
+    expect(() => mergeLocaleCatalogFiles('en', [['common/shared.json', [] as never]])).toThrow(
+      'i18n catalog en/common/shared.json is a array, not an object: it was not loaded as JSON',
+    );
+  });
 });
 
 describe('locale candidate expansion', () => {
@@ -333,6 +350,12 @@ describe('translation helpers', () => {
   it('falls back to other when the plural argument is absent or not a number', () => {
     expect(interpolate('{count, plural, one {one} other {many}}', {})).toBe('many');
     expect(interpolate('{count, plural, one {one} other {many}}', { count: 'lots' })).toBe('many');
+  });
+
+  // A catalog authored against English rules declares `one` and `other` and nothing else, but
+  // Russian sends 2 to `few`. The category lookup misses, and the message still has to render.
+  it('falls back to other when the locale needs a category the message never declared', () => {
+    expect(interpolate('{count, plural, one {файл} other {файлов}}', { count: 2 }, 'ru')).toBe('файлов');
   });
 
   it('falls back to other when the runtime cannot supply plural rules for the locale', () => {

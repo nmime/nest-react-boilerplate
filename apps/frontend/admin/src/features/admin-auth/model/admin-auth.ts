@@ -33,8 +33,7 @@ export const getBrowserPath = (): string => {
   return `${window.location.pathname}${window.location.search}`;
 };
 
-export const getFrontendEnv = (): FrontendEnv =>
-  import.meta.env as Readonly<Record<string, boolean | string | undefined>>;
+export const getFrontendEnv = (): FrontendEnv => import.meta.env;
 
 export const getConfiguredAdminApiBaseUrl = (): string => getAdminApiBaseUrl(getFrontendEnv());
 

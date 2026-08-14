@@ -5,12 +5,15 @@ import { telegramClient } from './telegram-client';
 
 const getRuntimeEnvironment = (): Readonly<Record<string, string | undefined>> => {
   const processEnvironment = typeof process === 'undefined' ? {} : process.env;
+  // `vite/client` declares `import.meta.env` as always present, so an intersection cannot make it
+  // optional again. Spreading it unguarded is still safe on a runtime that has no Vite: spreading
+  // `undefined` contributes nothing, which is exactly the intent a `?? {}` would have spelled out.
   const viteEnvironment = (
     import.meta as ImportMeta & {
-      env?: Readonly<Record<string, string | undefined>>;
+      env: Readonly<Record<string, string | undefined>>;
     }
   ).env;
-  return { ...processEnvironment, ...(viteEnvironment ?? {}) };
+  return { ...processEnvironment, ...viteEnvironment };
 };
 
 export const resolveBetterAuthBaseUrl = (

@@ -12,6 +12,7 @@ import {
   deriveComposeEnv,
   normalizeAnswers,
   parseDeployArgs,
+  resolveExecutionMode,
 } from './deploy.mjs';
 
 // Axis-neutral fixture: each target/edge derives its own compatible defaults.
@@ -353,4 +354,24 @@ test('parseDeployArgs maps CLI flags onto answers', () => {
 
 test('parseDeployArgs rejects unknown flags instead of ignoring them', () => {
   assert.throws(() => parseDeployArgs(['--taget=pm2']), /Unknown/u);
+});
+
+// A deployment is the one thing in this repo that mutates a production host, so "no terminal"
+// must never be the thing that grants consent. `--yes` is the opt-in; everything else refuses.
+test('resolveExecutionMode refuses to deploy unattended when nobody can confirm', () => {
+  assert.equal(resolveExecutionMode({ yes: false, dryRun: false, isTty: false }), 'refuse');
+});
+
+test('resolveExecutionMode lets an explicit --yes run without a terminal', () => {
+  assert.equal(resolveExecutionMode({ yes: true, dryRun: false, isTty: false }), 'execute');
+});
+
+test('resolveExecutionMode still asks a human at a terminal', () => {
+  assert.equal(resolveExecutionMode({ yes: false, dryRun: false, isTty: true }), 'interactive');
+});
+
+// --dry-run mutates nothing, so it stays available to pipes, CI, and agents.
+test('resolveExecutionMode plans without a terminal and without --yes', () => {
+  assert.equal(resolveExecutionMode({ yes: false, dryRun: true, isTty: false }), 'plan-only');
+  assert.equal(resolveExecutionMode({ yes: false, dryRun: true, isTty: true }), 'plan-only');
 });

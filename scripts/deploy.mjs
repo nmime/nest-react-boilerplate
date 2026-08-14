@@ -570,7 +570,7 @@ Other:
   --source-build                      alias for --images=local
   --skip-validate                     Skip the pre-flight validation gate
   --dry-run                           Print the plan; execute nothing
-  --yes, -y                           Do not prompt
+  --yes, -y                           Consent up front; required to execute without a terminal
   --help, -h`);
 }
 
@@ -690,17 +690,39 @@ function executePlan(plan) {
   console.log('\nDeployment complete.');
 }
 
+/**
+ * Decide what an invocation is allowed to do. Consent to mutate a production host comes from
+ * `--yes` or from a human answering the prompt — never from the absence of a terminal, which is
+ * what a pipe, a CI job, and an agent shell all look like.
+ */
+export function resolveExecutionMode({ yes = false, dryRun = false, isTty = false } = {}) {
+  if (dryRun) return 'plan-only';
+  if (yes) return 'execute';
+  return isTty ? 'interactive' : 'refuse';
+}
+
 async function main() {
   const parsed = parseDeployArgs(process.argv.slice(2));
   if (parsed.help) {
     usage();
     return;
   }
-  const interactive = !parsed.yes && !parsed.dryRun && process.stdin.isTTY;
-  const answers = interactive ? await runWizard(parsed) : parsed;
+  const mode = resolveExecutionMode({
+    yes: parsed.yes,
+    dryRun: parsed.dryRun,
+    isTty: Boolean(process.stdin.isTTY),
+  });
+  const answers = mode === 'interactive' ? await runWizard(parsed) : parsed;
   const plan = buildDeployPlan(answers);
   printPlan(plan, { dryRun: parsed.dryRun });
-  if (parsed.dryRun) return;
+  if (mode === 'plan-only') return;
+  if (mode === 'refuse') {
+    console.error(
+      '\nRefusing to deploy: stdin is not a terminal, so nothing here can confirm the plan above.' +
+        '\nRe-run with --dry-run to inspect it, or --yes to execute it unattended.',
+    );
+    process.exit(1);
+  }
 
   // Only block when a step actually needs the privileged host controller and it is
   // absent — the edge/TLS axes are usable without it.
@@ -712,7 +734,7 @@ async function main() {
     );
     process.exit(1);
   }
-  if (interactive) {
+  if (mode === 'interactive') {
     const { createInterface } = await import('node:readline/promises');
     const rl = createInterface({ input: process.stdin, output: process.stdout });
     const confirmed = (await rl.question('\nRun these steps now? [y/N] ')).trim().toLowerCase();

@@ -46,6 +46,8 @@ sessions MUST be rejected.
 
 - UI state is not authority.
 - Revocation takes effect at the protected backend boundary.
+- Every protected API decides this the same way; no API admits a session another
+  one would reject.
 
 **Failure behavior:**
 
@@ -55,6 +57,12 @@ sessions MUST be rejected.
 
 - **WHEN** a revoked session reaches a protected resource
 - **THEN** access is denied even if a client still holds prior session state
+
+#### Scenario: Session superseded by a credential change
+
+- **WHEN** a session minted before a credential change reaches any protected API
+- **THEN** access is denied on every one of them, not only where the credential
+  was changed
 
 ### Requirement: [REQ-AUTH-CREDENTIAL-003] Credential flows are fail-closed
 

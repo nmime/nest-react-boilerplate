@@ -13,6 +13,7 @@ import {
   isDemoPrincipal,
   PublicAuthMetadataKey,
   readSessionPrincipal,
+  requireActiveSessionAccount,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
 } from '@app/backend-feature-auth-shared';
@@ -63,20 +64,10 @@ export class PersistentSessionAccessGuard implements CanActivate {
       return true;
     }
 
-    const user = await this.users.findById(principal.subject, principal.tenantId);
-    if (user.isErr()) {
-      throw new InternalServerErrorException();
-    }
-    if (!user.value || user.value.status !== 'active') {
-      throw new UnauthorizedException();
-    }
-
-    // A credential change advances the account's revision, which strands every session minted
-    // against the previous one. Sessions predating the epoch carry no revision and read as zero,
-    // matching the column default, so this check only ever rejects a genuinely stale session.
-    if ((principal.credentialRevision ?? 0) !== user.value.credentialRevision) {
-      throw new UnauthorizedException();
-    }
+    const account = requireActiveSessionAccount(
+      principal,
+      await this.users.findById(principal.subject, principal.tenantId),
+    );
 
     const effectiveAccess = await this.roles.resolveEffectiveAccess(principal.subject, principal.tenantId);
     if (effectiveAccess.isErr()) {
@@ -89,7 +80,7 @@ export class PersistentSessionAccessGuard implements CanActivate {
       permissions: effectiveAccess.value.permissionKeys,
       // Read from the account, not the cookie, for the same reason grants are: a claim confirmed
       // after the session was minted must not need a re-login to take effect.
-      emailVerified: Boolean(user.value.emailVerifiedAt),
+      emailVerified: Boolean(account.emailVerifiedAt),
     };
     request.user = resolvedPrincipal;
     request.auth = resolvedPrincipal;

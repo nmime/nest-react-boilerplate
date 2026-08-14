@@ -14,6 +14,7 @@ import {
   AuthUserRoleRepositoryInjectToken,
   isDemoPrincipal,
   PublicAuthMetadataKey,
+  requireActiveSessionAccount,
   type AuthenticatedPrincipal,
   type AuthUserRepositoryPort,
   type AuthUserRoleRepositoryPort,
@@ -53,13 +54,7 @@ export class AdminDatabaseAccessGuard implements CanActivate {
       return true;
     }
 
-    const user = await this.users.findById(principal.subject, principal.tenantId);
-    if (user.isErr()) {
-      throw new InternalServerErrorException();
-    }
-    if (!user.value || user.value.status !== 'active') {
-      throw new UnauthorizedException();
-    }
+    requireActiveSessionAccount(principal, await this.users.findById(principal.subject, principal.tenantId));
 
     const effectiveAccess = await this.roles.resolveEffectiveAccess(principal.subject, principal.tenantId);
     if (effectiveAccess.isErr()) {

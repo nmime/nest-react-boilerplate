@@ -12,6 +12,11 @@ launch.
   the opaque session id, logout destroys it server-side, and protected requests
   reload active-account and effective RBAC state from the selected PostgreSQL or
   MongoDB provider.
+- Replacing a credential advances the account's `credentialRevision`, and every
+  protected API rejects a session stamped with an older one. All three
+  database-authoritative guards reach that verdict through the single
+  `requireActiveSessionAccount` helper, so a password reset revokes live
+  sessions everywhere rather than only where the reset was performed.
 - Email-verification and password-reset token issuance/consumption primitives
   have in-memory, PostgreSQL, and MongoDB stores, expiry indexes, and cleanup jobs.
 - Better Auth provides the provider-verification boundary, trusted-origin

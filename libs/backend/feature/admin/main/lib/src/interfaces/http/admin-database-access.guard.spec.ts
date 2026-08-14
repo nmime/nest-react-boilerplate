@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-TENANT-004
+// @requirements REQ-AUTH-TENANT-004 REQ-AUTH-SESSION-002
 import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
@@ -27,7 +27,7 @@ function contextFor(request: AuthenticatedRequest, health = false) {
 
 function dependencies(input?: {
   access?: { roleKeys: string[]; permissionKeys: string[] };
-  user?: { status: 'active' | 'disabled' } | null;
+  user?: { status: 'active' | 'disabled'; credentialRevision?: number } | null;
   userError?: boolean;
   accessError?: boolean;
   health?: boolean;
@@ -96,6 +96,28 @@ describe('AdminDatabaseAccessGuard', () => {
     await expect(
       missing.guard.canActivate(contextFor({ user: { subject: 'user-id', tenantId, roles: [], permissions: [] } })),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  // Admin is the boundary where a stranded session costs the most, so the credential epoch the
+  // account carries has to be checked here for exactly the same reason it is checked on login.
+  it('rejects an admin session minted before the account changed its credentials', async () => {
+    const { guard, roles } = dependencies({ user: { status: 'active', credentialRevision: 3 } });
+    const request: AdminAuthorizedRequest = {
+      user: { subject: 'user-id', tenantId, roles: [], permissions: [], credentialRevision: 2 },
+    };
+
+    await expect(guard.canActivate(contextFor(request))).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(roles.resolveEffectiveAccess).not.toHaveBeenCalled();
+    expect(request.adminAbility).toBeUndefined();
+  });
+
+  it('admits an admin session that carries the account current credential epoch', async () => {
+    const { guard } = dependencies({ user: { status: 'active', credentialRevision: 3 } });
+    const request: AdminAuthorizedRequest = {
+      user: { subject: 'user-id', tenantId, roles: [], permissions: [], credentialRevision: 3 },
+    };
+
+    await expect(guard.canActivate(contextFor(request))).resolves.toBe(true);
   });
 
   it('fails closed when the database cannot resolve identity or access', async () => {

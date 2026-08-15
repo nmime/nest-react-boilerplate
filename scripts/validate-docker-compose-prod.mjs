@@ -9,7 +9,7 @@ const has = (text, needle, label = needle) =>
 
 const prodCompose = read('docker/docker-compose.prod.yml');
 const dockerfile = read('Dockerfile');
-const prodBuildCompose = read('docker/docker-compose.prod.build.yml');
+
 const bundledDbCompose = read('docker/docker-compose.prod.bundled-db.yml');
 const externalDbCompose = read('docker/docker-compose.prod.external-db.yml');
 const bundledMongoCompose = read('docker/docker-compose.prod.mongodb-bundled-db.yml');
@@ -23,6 +23,7 @@ const discordAuthCompose = read('docker/docker-compose.prod.discord.yml');
 const singleDomainCaddyfile = read('docker/caddy/Caddyfile.single-domain');
 const perAppCaddyfile = read('docker/caddy/Caddyfile.per-app-domains');
 const composeWrapper = read('scripts/compose-production.mjs');
+const deliveryInventory = read('scripts/delivery-inventory.mjs');
 const productionEnvExample = read('.env.production.example');
 const productionEnv = existsSync(new URL('../.env.production', import.meta.url)) ? read('.env.production') : undefined;
 const composeDocs = read('docs/docker-compose-production.md');
@@ -178,12 +179,12 @@ has(singleDomainCaddyfile, '{$PUBLIC_DOMAIN}', 'single-domain public hostname');
 has(singleDomainCaddyfile, '{$PRIMARY_APP_UPSTREAM}', 'single-domain selected apex frontend');
 has(perAppCaddyfile, '{$AUTH_APP_API_DOMAIN}', 'per-app auth API hostname');
 has(perAppCaddyfile, 'auth-app-api:80', 'per-app auth API upstream');
-has(composeWrapper, "['auth-app-api', 'AUTH_APP_API_DOMAIN', 'auth-app-api:80']", 'app-id domain derivation');
+has(deliveryInventory, "['auth-app-api', 'AUTH_APP_API_DOMAIN', 'auth-app-api:80']", 'app-id domain derivation');
 // Every public app is a candidate apex owner; compose-production.spec.mjs holds this table to the
 // setup catalog, so here it only has to be a table rather than a two-entry allowlist.
-has(composeWrapper, "['landing-app', 'LANDING_APP_DOMAIN', 'landing-app:8080']", 'landing apex upstream');
-has(composeWrapper, "['site-app', 'SITE_APP_DOMAIN', 'site-app:80']", 'site apex upstream');
-has(composeWrapper, "['user-app', 'USER_APP_DOMAIN', 'user-app:8080']", 'product SPA apex upstream');
+has(deliveryInventory, "['landing-app', 'LANDING_APP_DOMAIN', 'landing-app:8080']", 'landing apex upstream');
+has(deliveryInventory, "['site-app', 'SITE_APP_DOMAIN', 'site-app:80']", 'site apex upstream');
+has(deliveryInventory, "['user-app', 'USER_APP_DOMAIN', 'user-app:8080']", 'product SPA apex upstream');
 for (const expected of [
   'AUTH_TELEGRAM_ENABLED:',
   'TELEGRAM_OIDC_ENABLED:',
@@ -223,8 +224,6 @@ for (const service of [
     `/${service}:${'${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}'}`,
     `${service} requires IMAGE_TAG instead of defaulting to latest`,
   );
-  const buildService = service === 'migrator' ? 'migrate' : service;
-  has(prodBuildCompose, `  ${buildService}:\n    build:`, `${service} has an explicit source-build overlay`);
 }
 assert.ok(!prodCompose.includes('\n    build:'), 'production Compose base must be image-only');
 
@@ -344,27 +343,8 @@ for (const profile of ['profiles: [discord]', 'profiles: [telegram]']) {
   has(prodCompose, profile, `production Compose optional workload ${profile}`);
 }
 
-for (const expected of [
-  'NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}',
-  'VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}',
-  'VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}',
-]) {
-  has(prodBuildCompose, expected, `production Compose source-build frontend arg ${expected}`);
-}
-has(
-  prodBuildCompose,
-  'nrb-closure: ${NRB_CLOSURE_CONTEXT:?',
-  'production source builds require the normalized named closure context',
-);
-const productionBuildCount = prodBuildCompose.match(/^    build:$/gmu)?.length ?? 0;
-assert.equal(
-  prodBuildCompose.match(/^      <<: \*nrb-build$/gmu)?.length ?? 0,
-  productionBuildCount,
-  'Every production Dockerfile build must merge the nrb-closure build anchor.',
-);
-has(composeWrapper, "'docker/docker-compose.prod.build.yml'", 'production wrapper source-build overlay');
+has(composeWrapper, 'planImageBuild', 'production wrapper compiles product images through Bake');
 has(composeWrapper, "composeArgs.push('--no-build')", 'production wrapper defaults up to no-build');
-has(composeWrapper, "composeArgs.push('--build')", 'production wrapper explicitly builds only on source-build');
 has(composeWrapper, "DOCKER_BUILDKIT: '1'", 'source-build wrapper enables BuildKit');
 has(
   composeWrapper,
@@ -376,11 +356,7 @@ has(
   "spawnSync('pnpm', ['nrb', 'closure', 'check']",
   'source-build wrapper validates selected closure freshness against setup and the live graph',
 );
-has(
-  composeModeSmoke,
-  "'docker/docker-compose.prod.build.yml'",
-  'production migration smoke explicitly opts into source builds',
-);
+has(composeModeSmoke, 'scripts/build-images.mjs', 'production migration smoke compiles the migrator through Bake');
 
 for (const expected of [
   'pnpm run docker:prod:config',

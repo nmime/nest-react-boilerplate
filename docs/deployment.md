@@ -4,13 +4,14 @@ The repository ships five independently selectable production paths. Run
 `pnpm nrb init` before any path so names, domains, registries, and Git sources
 belong to the generated product.
 
-| Mode                        | Entrypoint                                                               | Database                                                                 | Validation                        |
-| --------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------ | --------------------------------- |
-| Compose + bundled DB        | production wrapper + bundled DB and Compose Caddy or host Nginx edge     | PostgreSQL service or one-node MongoDB replica set inside Compose        | `pnpm run deploy:validate:docker` |
-| Compose + external DB       | production wrapper + external DB and Compose Caddy or host Nginx edge    | Secret-file URL to operator/cloud PostgreSQL or MongoDB; no Compose DB   | `pnpm run deploy:validate:docker` |
-| Direct Kubernetes           | `.helm/` + `.helm/values-production.yaml`                                | Platform-managed PostgreSQL or multi-node MongoDB replica set, and Redis | `pnpm run deploy:validate:helm`   |
-| Kubernetes GitOps           | Helm chart through `deploy/argocd/` or `deploy/flux/`                    | Same externally managed database contract as direct Helm                 | `pnpm run deploy:validate:gitops` |
-| PM2 (advanced, native Node) | Shipped `ecosystem.config.cjs`; build, migrate, and export secrets first | Product/platform-owned                                                   | `pnpm run deploy:validate:pm2`    |
+| Mode                        | Entrypoint                                                                                        | Database                                                                 | Validation                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------- |
+| One VPS / single-server     | `--preset=single-server`: pull published images + host nginx + Certbot. No bake or Nx on the host | bundled or external                                                      | `pnpm run deploy:validate:docker` |
+| Compose + bundled DB        | production wrapper + bundled DB and Compose Caddy or host Nginx edge                              | PostgreSQL service or one-node MongoDB replica set inside Compose        | `pnpm run deploy:validate:docker` |
+| Compose + external DB       | production wrapper + external DB and Compose Caddy or host Nginx edge                             | Secret-file URL to operator/cloud PostgreSQL or MongoDB; no Compose DB   | `pnpm run deploy:validate:docker` |
+| Direct Kubernetes           | `.helm/` + `.helm/values-production.yaml`                                                         | Platform-managed PostgreSQL or multi-node MongoDB replica set, and Redis | `pnpm run deploy:validate:helm`   |
+| Kubernetes GitOps           | Helm chart through `deploy/argocd/` or `deploy/flux/`                                             | Same externally managed database contract as direct Helm                 | `pnpm run deploy:validate:gitops` |
+| PM2 (advanced, native Node) | Shipped `ecosystem.config.cjs`; build, migrate, and export secrets first                          | Product/platform-owned                                                   | `pnpm run deploy:validate:pm2`    |
 
 ## One line: bare VM to live HTTPS
 

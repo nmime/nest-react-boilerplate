@@ -24,6 +24,13 @@ afterEach(() => {
 });
 
 void describe('fullstack selected closure', () => {
+  void it('does not forward selected-closure e2e extra args such as --coverage to Playwright', () => {
+    const project = JSON.parse(readWorkspaceFile('apps/e2e/fullstack/project.json')) as {
+      targets?: { e2e?: { options?: { forwardAllArgs?: boolean } } };
+    };
+    assert.equal(project.targets?.e2e?.options?.forwardAllArgs, false);
+  });
+
   void it('requires fullstack-e2e and an explicit provider without a PostgreSQL fallback', () => {
     assert.throws(
       () => resolveFullstackSelection({ provider: 'postgres', roots: ['user-app'], services: ['user-app'] }),

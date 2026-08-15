@@ -437,11 +437,12 @@ pnpm nrb closure install
 pnpm run docker:prod:build
 ```
 
-The production source-build overlay declares `nrb-closure` as an explicit
-additional BuildKit context for every service that builds `Dockerfile`. The
-wrapper validates freshness and supplies only the normalized `.nrb/closure`
-path. Setting the context to `.`, omitting it, or pointing it at an arbitrary
-directory cannot substitute the root workspace manifests.
+`pnpm run docker:prod:build` compiles through `node scripts/build-images.mjs`
+(Bake with one `NX_BUILD_PROJECTS` union, then `--load`). Compose then starts
+those images with `--no-build`. The wrapper validates freshness and supplies
+only the normalized `.nrb/closure` path. Setting the context to `.`, omitting
+it, or pointing it at an arbitrary directory cannot substitute the root
+workspace manifests.
 
 Backend and Vike runtime stages copy only the selected runtime's transitive
 built outputs into an isolated deployment directory; they do not copy the full

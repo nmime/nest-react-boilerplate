@@ -55,7 +55,7 @@ if (!runRuntimeSmoke) {
       }).compile();
 
       connection = moduleRef.get<NatsConnection>(NatsInjectToken);
-    }, 60_000);
+    }, 240_000);
 
     afterAll(async () => {
       // `moduleRef` stays unset if `beforeAll` throws before assignment; guard so
@@ -213,15 +213,24 @@ if (!runRuntimeSmoke) {
 async function startNatsContainer(options: { jetStream?: boolean } = {}): Promise<StartedNatsRuntimeContainer> {
   const clientPort = 4222;
   const monitoringPort = 8222;
-  const container = await new GenericContainer('nats:2.10-alpine')
-    .withExposedPorts(clientPort, monitoringPort)
-    .withCommand(options.jetStream ? ['-js', '-m', `${monitoringPort}`] : ['-m', `${monitoringPort}`])
-    .withWaitStrategy(Wait.forLogMessage(/Server is ready/))
-    .start();
-  return {
-    container,
-    server: `nats://${container.getHost()}:${container.getMappedPort(clientPort)}`,
+  const start = async (): Promise<StartedNatsRuntimeContainer> => {
+    const container = await new GenericContainer('nats:2.10-alpine')
+      .withExposedPorts(clientPort, monitoringPort)
+      .withCommand(options.jetStream ? ['-js', '-m', `${monitoringPort}`] : ['-m', `${monitoringPort}`])
+      .withWaitStrategy(Wait.forListeningPorts().withStartupTimeout(120_000))
+      .start();
+    return {
+      container,
+      // Testcontainers may advertise ::1; the Node NATS client then races IPv6.
+      server: `nats://127.0.0.1:${container.getMappedPort(clientPort)}`,
+    };
   };
+
+  try {
+    return await start();
+  } catch {
+    return start();
+  }
 }
 
 async function stopNatsContainer(started: StartedNatsRuntimeContainer | undefined): Promise<void> {

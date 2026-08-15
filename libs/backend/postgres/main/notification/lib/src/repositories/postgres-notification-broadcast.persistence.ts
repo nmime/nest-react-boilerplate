@@ -512,7 +512,9 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
       em.persist(broadcast);
       await em.flush();
       em.persist(
-        input.segmentIds.map((segmentId) => new NotificationBroadcastSegmentEntity({ broadcastId: broadcast.id, segmentId })),
+        input.segmentIds.map(
+          (segmentId) => new NotificationBroadcastSegmentEntity({ broadcastId: broadcast.id, segmentId }),
+        ),
       );
       await em.flush();
       return this.mapBroadcast(em, broadcast);

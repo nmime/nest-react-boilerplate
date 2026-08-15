@@ -121,12 +121,12 @@ has(
 before(
   dockerfile,
   'COPY --from=nrb-closure pnpm-lock.yaml ./pnpm-lock.yaml',
-  'RUN pnpm install --frozen-lockfile --offline',
+  'pnpm install --frozen-lockfile --offline',
   'Docker copies selected dependency metadata before installing source-build dependencies',
 );
 before(
   dockerfile,
-  'RUN pnpm install --frozen-lockfile --offline',
+  'pnpm install --frozen-lockfile --offline',
   'COPY apps ./apps',
   'Docker copies application source only after the selected dependency layer is cached',
 );
@@ -157,7 +157,7 @@ has(
 );
 has(
   dockerfile,
-  'RUN pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts',
+  'pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts',
   'site runtime installs only staged production dependencies',
 );
 has(
@@ -176,7 +176,12 @@ const landingAstroConfig = read('apps/frontend/landing/astro.config.mjs');
 has(landingAstroConfig, 'csp: true', 'Astro landing emits a hash-based hydration CSP');
 has(
   dockerfile,
-  'if [ "${NX_PROJECT}" = landing-app ]',
+  'PROJECT="${RUNTIME_PROJECT:-$NX_PROJECT}"',
+  'frontend landing CSP uses Bake RUNTIME_PROJECT with NX_PROJECT compose fallback',
+);
+has(
+  dockerfile,
+  'if [ "${PROJECT}" = landing-app ]',
   'frontend image scopes its CSP relaxation to the Astro landing project',
 );
 has(
@@ -205,7 +210,9 @@ for (const forge of configuredForges(rootDir)) {
   const jobId = opsGate.jobs[forge.id];
   // An unmapped gate is ci-pipeline-parity's finding to report, not this validator's.
   if (jobId === undefined) continue;
-  const runtimeOpsJob = extractJob(read(forge.pipeline), jobId, forge.jobStyle);
+  const pipelinePath =
+    forge.id === 'github' && jobId === 'presets' ? '.github/workflows/quality-presets.yml' : forge.pipeline;
+  const runtimeOpsJob = extractJob(read(pipelinePath), jobId, forge.jobStyle);
   assert.ok(runtimeOpsJob, `${forge.pipeline} declares no job "${jobId}" to carry the runtime QA fixture`);
   for (const expected of [
     "AUTH_TELEGRAM_ENABLED: 'true'",
@@ -252,6 +259,27 @@ has(
   migratorStage,
   'deployment-artifact.ts stage-migrator /migrator',
   'migrator stages only the selected provider dependency manifest',
+);
+has(
+  migratorStage,
+  'common.version!==core.version',
+  'migrator install fails closed when @nestjs/common and @nestjs/core resolve to different versions',
+);
+const workspacePackage = JSON.parse(read('package.json'));
+const migratorPackage = JSON.parse(read('docker/migrator-package.json'));
+const nestCommon = workspacePackage.dependencies?.['@nestjs/common'];
+const nestCore = workspacePackage.dependencies?.['@nestjs/core'];
+assert.equal(typeof nestCommon, 'string', 'workspace must pin @nestjs/common');
+assert.equal(nestCommon, nestCore, 'workspace @nestjs/common and @nestjs/core must share one version');
+assert.equal(
+  migratorPackage.dependencies?.['@nestjs/common'],
+  nestCommon,
+  'migrator @nestjs/common must match the workspace Nest version',
+);
+assert.equal(
+  migratorPackage.dependencies?.['@nestjs/core'],
+  nestCore,
+  'migrator @nestjs/core must match the workspace Nest version so @mikro-orm/nestjs cannot resolve a mismatched core',
 );
 has(migratorStage, 'USER 1000:1000', 'migrator image defaults to the numeric non-root node user');
 has(
@@ -439,8 +467,8 @@ has(devBackendEnv, 'NATS_SERVERS: ${NATS_SERVERS:-nats://nats:4222}', 'dev Compo
 const devLandingService = section(devCompose, '  landing-app:', '\n\n  site-app:');
 has(
   devLandingService,
-  'FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: ${FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP:-false}',
-  'dev landing requires an explicit opt-in before emitting loopback HTTP destinations',
+  'FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: ${FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP:-true}',
+  'dev landing defaults to loopback HTTP destinations for the multi-port Compose stack',
 );
 has(
   devLandingService,
@@ -551,8 +579,8 @@ has(devSiteService, "published: '${SITE_APP_PORT:-4203}'", 'site-app uses its ex
 has(devSiteService, 'target: site-runtime', 'site-app uses the Vike Docker runtime target');
 
 const prodCompose = read('docker/docker-compose.prod.yml');
-const prodBuildCompose = read('docker/docker-compose.prod.build.yml');
 const prodRedisCompose = read('docker/docker-compose.prod.redis.yml');
+const bakeDriver = read('scripts/build-images.mjs');
 
 const assertNamedClosureBuilds = (compose, label) => {
   has(compose, 'nrb-closure: ${NRB_CLOSURE_CONTEXT:?', `${label} required named closure context`);
@@ -562,15 +590,31 @@ const assertNamedClosureBuilds = (compose, label) => {
   assert.equal(namedBuildCount, buildCount, `${label} has a Dockerfile build without the nrb-closure anchor.`);
 };
 assertNamedClosureBuilds(devCompose, 'selected Compose');
-assertNamedClosureBuilds(prodBuildCompose, 'production source-build Compose');
+has(bakeDriver, 'NX_BUILD_PROJECTS', 'Bake compiles product images with one NX_BUILD_PROJECTS union');
+has(bakeDriver, "'--load'", 'Bake loads compiled images for Compose --no-build starts');
+const builderCompile = dockerfile.match(
+  /FROM workspace AS builder[\s\S]*?pnpm exec nx run-many -t build export --projects="\$\{PROJECTS\}"/u,
+)?.[0];
+assert.ok(builderCompile, 'Dockerfile builder compile RUN is present');
+assert.ok(
+  !builderCompile.includes('RUNTIME_PROJECT'),
+  'Builder compile must not take per-image RUNTIME_PROJECT or BuildKit will recompile every Bake target',
+);
+assert.match(
+  builderCompile,
+  /PROJECTS="\$\{NX_BUILD_PROJECTS:-(\$NX_PROJECT|\$\{NX_PROJECT\})\}"/u,
+  'Builder compile uses the shared union or the compose NX_PROJECT fallback only',
+);
 const prodBundledPostgresCompose = read('docker/docker-compose.prod.bundled-db.yml');
 const prodExternalPostgresCompose = read('docker/docker-compose.prod.external-db.yml');
 const prodBundledMongoCompose = read('docker/docker-compose.prod.mongodb-bundled-db.yml');
 const prodExternalMongoCompose = read('docker/docker-compose.prod.mongodb-external-db.yml');
 const prodMongoUsers = read('docker/mongodb/create-production-user.js');
 assert.ok(!prodCompose.includes('\n    build:'), 'Production Compose base must only reference published images.');
-has(prodBuildCompose, '  admin-app-api:\n    build:', 'production source-build overlay defines backend images');
-has(prodBuildCompose, '  mobile-app:\n    build:', 'production source-build overlay defines frontend images');
+assert.ok(
+  !existsSync(workspacePath('docker/docker-compose.prod.build.yml')),
+  'Production source-build overlay is gone; Bake compiles product images.',
+);
 for (const [service, variable, port, profile] of [
   ['discord-app-api', 'DISCORD_APP_API_PORT', 3007, 'discord'],
   ['telegram-bot-api', 'TELEGRAM_BOT_API_PORT', 3013, 'telegram'],
@@ -594,15 +638,11 @@ has(
   'LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}',
   'landing receives a runtime admin-app destination',
 );
+has(dockerfile, 'ARG NGINX_CONFIG=docker/nginx-fullstack.conf', 'frontend image accepts selectable nginx config');
 has(
-  prodBuildCompose,
-  'NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}',
-  'production source-build overlay passes selectable frontend nginx config',
-);
-has(
-  prodBuildCompose,
-  'VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}',
-  'production source-build overlay defaults frontend builds to same-origin API routing',
+  read('scripts/release-image-plan.mjs'),
+  'VITE_API_BASE_URL_MODE=same-origin',
+  'Bake preserves same-origin frontend routing from release image args',
 );
 const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
 has(prodBackendEnv, 'PORT: 80', 'production Compose explicitly assigns backend container port 80');
@@ -826,16 +866,14 @@ for (const [service, variable, port] of [
 const prodSiteService = section(prodCompose, '  site-app:', '\n\n  mobile-app:');
 has(prodSiteService, 'target: 80', 'site-app production target port 80');
 has(prodSiteService, "published: '${SITE_APP_PORT:-4203}'", 'site-app production uses explicit host port 4203');
-const prodSiteBuild = section(prodBuildCompose, '  site-app:', '\n\n  mobile-app:');
-has(prodSiteBuild, 'target: site-runtime', 'site-app production source-build uses the Vike Docker runtime target');
+has(dockerfile, 'AS site-runtime', 'site-app compiles through the Vike Docker runtime target');
 
 const dockerSmoke = read('packages/tooling/src/commands/docker/smoke.ts');
 has(dockerSmoke, 'COMPOSE_PROFILES:', 'Docker smoke explicitly selects Compose profiles');
 has(dockerSmoke, '...backendServices', 'Docker smoke activates its backend service profiles');
 has(dockerSmoke, '...frontendServices', 'Docker smoke activates its frontend service profiles');
 has(dockerSmoke, 'async function buildServices', 'Docker smoke retries transient image-build failures');
-has(dockerSmoke, '"--parallel",', 'Docker smoke batches image builds through Compose parallel mode');
-has(dockerSmoke, 'const composeParallelLimit', 'Docker smoke caps Compose build concurrency');
+has(dockerSmoke, 'scripts/build-images.mjs', 'Docker smoke compiles product images through Bake');
 const fullstackCompose = read('apps/e2e/fullstack/src/compose.ts');
 has(fullstackCompose, 'COMPOSE_PROFILES:', 'Full-stack e2e explicitly selects Compose profiles');
 has(
@@ -889,6 +927,15 @@ assert.equal(
   'Better Auth owns /api/auth and must never fall through to the SPA navigation fallback',
 );
 
+const nginxGenerator = read('scripts/generate-nginx-config.mjs');
+assert.ok(
+  nginxGenerator.includes("from './delivery-inventory.mjs'"),
+  'nginx generator must read public app upstreams from the dependency-free delivery inventory',
+);
+assert.ok(
+  !nginxGenerator.includes('compose-production.mjs'),
+  'nginx generator must not import compose-production; that module loads Mongo URI parsing',
+);
 assert.equal(
   read('docker/nginx-fullstack.conf'),
   renderNginxFullstackConfig(frontendRoutes),

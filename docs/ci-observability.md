@@ -35,7 +35,6 @@ flowchart TD
   quality[Nx quality gates<br/>format, lint, typecheck, unit coverage]
   browser[Static/browser e2e coverage<br/>Playwright Chromium]
   docker[Docker smoke stack<br/>pnpm run test:docker-smoke]
-  security[Native security gates<br/>secret scan and SAST]
   ops[Runtime QA/ops gates<br/>world-class QA against Compose runtime]
   fullstack[Fullstack Playwright e2e<br/>pnpm run test:fullstack]
   summary[CI status summary<br/>step summary and artifact]
@@ -45,7 +44,6 @@ flowchart TD
   fast --> quality
   quality --> browser
   quality --> docker
-  fast --> security
   docker --> ops
   docker --> fullstack
   helm --> summary
@@ -53,7 +51,6 @@ flowchart TD
   quality --> summary
   browser --> summary
   docker --> summary
-  security --> summary
   ops --> summary
   fullstack --> summary
 ```
@@ -67,8 +64,8 @@ release branch or a consolidator PR:
 | Surface                         | Workflow/job                                                    | Command or provider                                        | Evidence                                                                   |
 | ------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------- |
 | Supported lockfile audit        | `dependency-review.yml` / `Supported lockfile audit`            | `pnpm run audit:ci` after `pnpm install --frozen-lockfile` | Step summary and `dependency-review-summary` artifact                      |
-| Secret scan                     | `ci.yml` / `Native security gates`                              | `pnpm run test:security:secrets`                           | Security test artifacts under `test-results/security-secrets/**`           |
-| Native SAST                     | `ci.yml` / `Native security gates`                              | `pnpm run test:security:sast`                              | Same security job artifacts                                                |
+| Secret scan                     | `ci.yml` / `Fast PR gate (ci:pr)`                               | `pnpm run test:security:secrets`                           | Included in `ci:pr`; no separate native-security job                       |
+| Native SAST                     | `ci.yml` / `Fast PR gate (ci:pr)`                               | `pnpm run test:security:sast`                              | Included in `ci:pr`; no separate native-security job                       |
 | Onboarding/scaffold contract    | `ci.yml` / `Non-runtime validation gates`                       | `pnpm run onboarding:verify`                               | Exact preset closures plus generated app/library builds and tests          |
 | Docker smoke                    | `ci.yml` / `Docker smoke stack`                                 | `pnpm run test:docker-smoke`                               | Docker smoke job result and logs                                           |
 | Fullstack Playwright            | `ci.yml` / `Fullstack Playwright e2e`                           | `pnpm run test:fullstack`                                  | Playwright/fullstack artifacts                                             |

@@ -79,6 +79,7 @@ jobs:
       USER_APP_PORT: '8082'
       LANDING_APP_PORT: '8083'
       SITE_APP_PORT: '4203'
+      NRB_IMAGE_COMPILE: '1'
       NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
       FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true'
       LANDING_ADMIN_APP_URL: http://127.0.0.1:8081
@@ -126,6 +127,13 @@ jobs:
         uses: ./.github/actions/runtime-stack
       - name: Run quality presets
         run: pnpm run quality:presets
+      - name: Docker smoke and fullstack (compiled images)
+        env:
+          NRB_IMAGE_COMPILE: '1'
+        run: |
+          pnpm run test:docker-smoke
+          pnpm run test:compose-deployment-modes
+          pnpm run test:fullstack
       - name: Stop local runtime stack
         if: always()
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes

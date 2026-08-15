@@ -13,7 +13,7 @@ x-mongodb-env: &mongodb-env
 
 services:
   mongodb:
-    image: mongo:8.0.12-noble
+    image: mongo:8.0.28-noble
     restart: unless-stopped
     logging:
       driver: json-file
@@ -42,7 +42,7 @@ services:
       start_period: 20s
 
   mongodb-init:
-    image: mongo:8.0.12-noble
+    image: mongo:8.0.28-noble
     restart: 'no'
     environment:
       MONGODB_HOST: mongodb

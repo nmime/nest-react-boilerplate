@@ -5,8 +5,6 @@ import {
   TenantSharedTierTablesByDomain,
   tenantAppRoleUpSql,
   tenantRowLevelSecurityDownSql,
-  tenantRowLevelSecurityUpSql,
-  tenantSharedTierRowLevelSecurityUpSql,
 } from '@app/backend-common-tenant-policy';
 
 /**
@@ -54,20 +52,7 @@ export class Migration20260804120000RemoveNotificationTenantRowLevelSecurity ext
   }
 
   override down(): void {
-    // Rollback of the reversal = re-installing the fail-closed policies.
-    // Required by the repo's migration rollback gate (up → down({to:0}) → up):
-    // a migration whose down() throws breaks `migrator.down({ to: 0 })`.
-    // The role is re-created idempotently in up(); here it already exists.
-    for (const table of TenantScopedTablesByDomain.notification) {
-      for (const statement of tenantRowLevelSecurityUpSql(table)) {
-        this.addSql(statement);
-      }
-    }
-
-    for (const table of TenantSharedTierTablesByDomain.notification) {
-      for (const statement of tenantSharedTierRowLevelSecurityUpSql(table)) {
-        this.addSql(statement);
-      }
-    }
+    // Leave policies removed. Re-installing them here would block earlier
+    // migrations from dropping tenant_id during `migrator.down({ to: 0 })`.
   }
 }

@@ -1,12 +1,13 @@
 # Setup Plan Summary
 
-**Configuration hash:** `1b6d389c68eebea09cb1606f62efbcafd7131b0c288a2dd8783e90550be42643`
+**Configuration hash:** `aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b`
 
 ## Applications
 
 - admin-app
 - admin-app-api
 - auth-app-api
+- fullstack-e2e
 - landing-app
 - mobile-app
 - notification-consumer

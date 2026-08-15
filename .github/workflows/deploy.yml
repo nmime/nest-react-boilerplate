@@ -124,7 +124,7 @@ jobs:
           while IFS= read -r image; do
             if [ -n "$image" ]; then selected_args+=(--selected-image "$image"); fi
           done < /tmp/nrb-selected-release-images
-          required_images=$(python3 scripts/update-deploy-tags.py "$RELEASE_SHA" \
+          required_images=$(node scripts/update-deploy-tags.mjs "$RELEASE_SHA" \
             "${selected_args[@]}" --selection-values-file /tmp/nrb-helm-values.yaml --print-required)
           mapfile -t images <<< "$required_images"
           updates=()
@@ -202,7 +202,7 @@ jobs:
             echo "::error::Missing immutable candidate digests for selected and enabled images: ${missing[*]}"
             exit 1
           fi
-          python3 scripts/update-deploy-tags.py "$RELEASE_SHA" "${selected_args[@]}" \
+          node scripts/update-deploy-tags.mjs "$RELEASE_SHA" "${selected_args[@]}" \
             --selection-values-file /tmp/nrb-helm-values.yaml "${updates[@]}"
           (IFS=,; echo "images=${promoted[*]}") >> "$GITHUB_OUTPUT"
           echo "count=${#promoted[@]}" >> "$GITHUB_OUTPUT"

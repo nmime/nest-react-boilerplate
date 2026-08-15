@@ -131,4 +131,18 @@ describe('Notification delivery-claim migration', () => {
       notificationMigrations.indexOf(Migration20260726180000NotificationClaimTokens),
     );
   });
+
+  it('drops reinstalled tenant policies before dropping notification_templates.tenant_id', () => {
+    const migration = new Migration20260721160000AdminNotificationBroadcasts(undefined as never, undefined as never);
+    const sql = collectSql(migration, () => {
+      migration.down();
+    });
+
+    const policyDrop = sql.indexOf(
+      'drop policy if exists "notification_templates_tenant_isolation" on "notification_templates";',
+    );
+    const columnDrop = sql.indexOf('drop column if exists "tenant_id"');
+    expect(policyDrop).toBeGreaterThanOrEqual(0);
+    expect(columnDrop).toBeGreaterThan(policyDrop);
+  });
 });

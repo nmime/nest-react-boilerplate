@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import ConnectionString from 'mongodb-connection-string-url';
 import { resolveSelectedProductClosureContext } from './closure-build-context.mjs';
+import { planImageBuild } from './build-images.mjs';
+import { productionAppIds, publicApps } from './delivery-inventory.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const defaultEnvFile = '.env.production';
@@ -53,20 +55,7 @@ export function selectOptionalIntegrationOverlays(integrations, { services, prof
     .filter((integration) => integration.overlayFile && active(integration))
     .map((integration) => integration.overlayFile);
 }
-const productionApps = new Set([
-  'admin-app',
-  'admin-app-api',
-  'auth-app-api',
-  'discord-app-api',
-  'landing-app',
-  'mobile-app',
-  'notification-consumer',
-  'notification-scheduler',
-  'site-app',
-  'telegram-bot-api',
-  'user-app',
-  'user-app-api',
-]);
+const productionApps = new Set(productionAppIds);
 const productionComposeServices = new Set([
   ...productionApps,
   'alertmanager',
@@ -80,26 +69,6 @@ const productionComposeServices = new Set([
   'prometheus',
   'redis',
 ]);
-/**
- * Every app the edge can publish, as `[appId, domainEnvName, composeUpstream]`. Deploy hosts run
- * this file without dev dependencies, so the table is literal here rather than imported from the
- * TypeScript setup catalog; `compose-production.spec.mjs` asserts the two stay identical.
- *
- * Any entry may own the apex. The apex is a product decision, not a property of the marketing
- * shells, and hardcoding it to those two put every other product's front door on a subdomain.
- */
-const publicApps = [
-  ['landing-app', 'LANDING_APP_DOMAIN', 'landing-app:8080'],
-  ['site-app', 'SITE_APP_DOMAIN', 'site-app:80'],
-  ['user-app', 'USER_APP_DOMAIN', 'user-app:8080'],
-  ['admin-app', 'ADMIN_APP_DOMAIN', 'admin-app:8080'],
-  ['mobile-app', 'MOBILE_APP_DOMAIN', 'mobile-app:8080'],
-  ['auth-app-api', 'AUTH_APP_API_DOMAIN', 'auth-app-api:80'],
-  ['user-app-api', 'USER_APP_API_DOMAIN', 'user-app-api:80'],
-  ['admin-app-api', 'ADMIN_APP_API_DOMAIN', 'admin-app-api:80'],
-  ['discord-app-api', 'DISCORD_APP_API_DOMAIN', 'discord-app-api:80'],
-  ['telegram-bot-api', 'TELEGRAM_BOT_API_DOMAIN', 'telegram-bot-api:80'],
-];
 export const publicComposeApps = publicApps;
 const primaryUpstreams = Object.fromEntries(publicApps.map(([appId, , upstream]) => [appId, upstream]));
 
@@ -291,6 +260,7 @@ function parseArguments(argv) {
       options.profiles.push(...splitList(profile));
       continue;
     }
+    if (item === '--') continue;
     if (item === '--dry-run') {
       options.dryRun = true;
       continue;
@@ -304,11 +274,10 @@ function parseArguments(argv) {
   if (options.sourceBuild && !new Set(['build', 'config', 'up']).has(action)) {
     fail('--source-build is only valid with build, config, or up.');
   }
-  if (options.sourceBuild && action === 'up' && options.composeArguments.includes('--no-build')) {
-    fail('--source-build and --no-build cannot be used together.');
-  }
-  if (!options.sourceBuild && action === 'up' && options.composeArguments.includes('--build')) {
-    fail('Use --source-build instead of passing --build to a production image deployment.');
+  if (action === 'up' && options.composeArguments.includes('--build')) {
+    fail(
+      "Product images compile through `node scripts/build-images.mjs` (or this script's build action), not `compose --build`.",
+    );
   }
   return options;
 }
@@ -344,7 +313,24 @@ const requireAbsoluteHttpOrigin = (value, name) => {
   return url.origin;
 };
 
+function loadMongoConnectionString() {
+  try {
+    const loaded = createRequire(import.meta.url)('mongodb-connection-string-url');
+    const ConnectionString = loaded.ConnectionString ?? loaded.default ?? loaded;
+    if (typeof ConnectionString !== 'function') {
+      fail('mongodb-connection-string-url is required to validate MongoDB URIs.');
+    }
+    return ConnectionString;
+  } catch (error) {
+    if (error instanceof Error && /mongodb-connection-string-url is required/u.test(error.message)) {
+      throw error;
+    }
+    fail('mongodb-connection-string-url is required to validate MongoDB URIs.');
+  }
+}
+
 export function validateExternalMongoUri(value, { deploymentWide = false, label = 'MONGODB_URI_FILE' } = {}) {
+  const ConnectionString = loadMongoConnectionString();
   let url;
   try {
     url = new ConnectionString(value.trim());
@@ -652,7 +638,6 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
   );
   if (domainMode !== 'external-proxy') files.push('docker/docker-compose.prod.edge.yml');
   if (tlsMode === 'provided') files.push('docker/docker-compose.prod.edge-provided-tls.yml');
-  if (sourceBuild) files.push('docker/docker-compose.prod.build.yml');
 
   const selectedServices = [
     ...closure.selectedApps,
@@ -678,22 +663,28 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
   for (const file of files) composeArgs.push('-f', file);
   for (const profile of profiles) composeArgs.push('--profile', profile);
   composeArgs.push(options.action);
-  if (options.action === 'up') {
-    // The parse-time guard only sees the explicit --source-build flag. Local image
-    // provenance derived from COMPOSE_IMAGE_SOURCE reaches here too, and emitting
-    // both flags makes Compose reject the invocation, so fail with the real reason.
-    if (sourceBuild && options.composeArguments.includes('--no-build')) {
-      fail('COMPOSE_IMAGE_SOURCE=local builds images, so --no-build cannot be passed to up.');
-    }
-    if (sourceBuild) composeArgs.push('--build');
-    else if (!options.composeArguments.includes('--no-build')) composeArgs.push('--no-build');
+  if (options.action === 'up' && !options.composeArguments.includes('--no-build')) {
+    // Images come from the registry or from `build-images.mjs` / this script's
+    // build action. Compose never compiles product images.
+    composeArgs.push('--no-build');
   }
   composeArgs.push(...options.composeArguments);
-  if (options.action !== 'down') composeArgs.push(...actionServices);
+  if (options.action !== 'down' && options.action !== 'build') composeArgs.push(...actionServices);
+
+  const imageBuild =
+    options.action === 'build'
+      ? planImageBuild({
+          names: closure.releaseImages,
+          closureContext: closureContext ?? '.nrb/closure',
+          registry: effectiveEnvironment.IMAGE_REGISTRY,
+          tag: effectiveEnvironment.IMAGE_TAG,
+        })
+      : undefined;
 
   return {
     action: options.action,
-    args: composeArgs,
+    args: imageBuild ? imageBuild.args : composeArgs,
+    imageBuild,
     databaseMode,
     databaseEngine,
     domainMode,
@@ -728,6 +719,12 @@ function main() {
     }
     failureDiagnostic = productionComposeDiagnostics.configurationFailure;
     const invocation = buildComposeInvocation(process.argv.slice(2));
+    if (invocation.imageBuild) {
+      writeFileSync(
+        join(rootDir, invocation.imageBuild.bakeFile),
+        `${JSON.stringify(invocation.imageBuild.config, null, 2)}\n`,
+      );
+    }
     if (invocation.dryRun) {
       console.log(productionComposeDiagnostics.dryRun);
       return;

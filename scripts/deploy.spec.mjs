@@ -152,21 +152,48 @@ test('helm plan validates the chart then upgrades with production values', () =>
   const upgrade = commandLine(stepFor(plan, 'helm release'));
   assert.match(upgrade, /helm upgrade --install acme \.helm/u);
   assert.match(upgrade, /--namespace acme --create-namespace/u);
-  assert.match(upgrade, /-f \.helm\/values\.yaml -f \.helm\/values-production\.yaml/u);
+  assert.match(
+    upgrade,
+    /-f \.helm\/values\.yaml -f \.helm\/values-production\.yaml -f \.helm\/values-selection\.yaml/u,
+  );
   assert.match(upgrade, /--atomic --wait/u);
 });
 
-test('single-server is a preset over the compose target, not a runtime of its own', () => {
+test('single-server is the one-VPS path: pull images, never bake or compile', () => {
   const plan = buildDeployPlan({ ...presetBase, preset: 'single-server' });
   assert.equal(plan.target, 'compose', 'the preset resolves to a real runtime');
   assert.equal(plan.preset, 'single-server');
   assert.equal(plan.answers.edge, 'host-nginx');
   assert.equal(plan.answers.tls, 'certbot');
   assert.equal(plan.answers.domains, 'external-proxy');
+  assert.equal(plan.answers.images, 'registry');
   const provision = stepFor(plan, 'provision the host');
   assert.ok(provision?.sudo, 'host provisioning is privileged');
   assert.match(commandLine(stepFor(plan, 'start')), /compose-production\.mjs up -d/u);
+  assert.match(commandLine(stepFor(plan, 'pull')), /compose-production\.mjs pull/u);
+  assert.ok(titles(plan).includes('Pull release images'));
+  assert.ok(!titles(plan).includes('Build images from source'));
   assert.ok(stepFor(plan, 'render host nginx')?.sudo);
+});
+
+test('vps is only an alias for single-server', () => {
+  const fromPreset = buildDeployPlan({ ...presetBase, preset: 'vps' });
+  const fromTarget = buildDeployPlan({ ...base, target: 'vps' });
+  assert.equal(fromPreset.preset, 'single-server');
+  assert.equal(fromTarget.preset, 'single-server');
+  assert.ok(fromPreset.notices.some((notice) => /alias for --preset=single-server/u.test(notice)));
+  assert.ok(fromTarget.notices.some((notice) => /--preset=single-server/u.test(notice)));
+});
+
+test('the one-VPS path refuses a host-side image bake', () => {
+  assert.throws(
+    () => buildDeployPlan({ ...presetBase, preset: 'single-server', images: 'local' }),
+    /does not bake, compile, or run Nx on the host/u,
+  );
+  assert.throws(
+    () => buildDeployPlan({ ...base, provisionHost: true, images: 'local' }),
+    /does not bake, compile, or run Nx on the host/u,
+  );
 });
 
 test('--target=single-server still works as a deprecated alias', () => {
@@ -354,6 +381,13 @@ test('parseDeployArgs maps CLI flags onto answers', () => {
 
 test('parseDeployArgs rejects unknown flags instead of ignoring them', () => {
   assert.throws(() => parseDeployArgs(['--taget=pm2']), /Unknown/u);
+});
+
+test('parseDeployArgs ignores a leftover pnpm -- separator', () => {
+  const parsed = parseDeployArgs(['--', '--preset=single-server', '--domain=example.test', '--dry-run']);
+  assert.equal(parsed.preset, 'single-server');
+  assert.equal(parsed.domain, 'example.test');
+  assert.equal(parsed.dryRun, true);
 });
 
 // A deployment is the one thing in this repo that mutates a production host, so "no terminal"

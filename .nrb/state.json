@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "configHash": "1b6d389c68eebea09cb1606f62efbcafd7131b0c288a2dd8783e90550be42643",
+  "configHash": "aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b",
   "files": {
-    "nrb.config.json": "6dff89f66afbc218697a06bbdc6ceeac122ca18dcc8e9fdf00e4d0853c12881b",
-    ".nrb/summary.md": "5d772382c2a90d951c8d4e62377076d9e94053ab27c4d9b7177f3506b753aefe",
-    ".nrb/workspace.json": "b9054868a30ae450e277083dc73089ba1f0d0c69a74512cd5343426bc075315b",
-    ".nrb/capabilities.json": "2b70ef95422c5bdf1afdc13d84bb475148674f738dec29df11446ae8fa05c59c",
-    ".nrb/capabilities.env": "b7b9f3bd4261922a8af7667f49abdd23b9f9fa6dbdc3ce8b9035986973240a8c",
+    "nrb.config.json": "415e8d544477f5c46bcbcb2ba8f01c740daa37e56e4d2db321a3bcd8230d3c42",
+    ".nrb/summary.md": "3cb3a3a34f8b6df81840b211a006044c018ed3c95c8eaf0a59fadfae515a209b",
+    ".nrb/workspace.json": "f7cd7fdf5ba44edca47ddff51f575d14c951edc9e57a88efa4bf51e8475d1040",
+    ".nrb/capabilities.json": "268c3f2465f4fd184e45b8dda946ea8d9a4cfb81add30a82397ffbca547a5424",
+    ".nrb/capabilities.env": "7fa2ead580b7c47e9247027ff74d579ecfcd2564600c20842adf37bb99f0b022",
     "packages/tooling/src/commands/db/capability-migrations.generated.ts": "41f98d0a77a0e8681b651431e53408d1914faaf48eb57e1885648ecb8cef74fe",
     "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "bb95faf78c53f63b6b17e494f06f242c39ab02b01e81c01faf143eda1e730618",
     "apps/backend/user/user-app-api/src/capabilities.generated.ts": "d65d204206fe3f8ab47521a77c6976981fe729c1b596b25b037c0d5155939d90",
@@ -23,5 +23,5 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
   },
-  "digest": "d196fd9ff15808be3b6e9dd5f7dfb4887ec3dbe9b2a85e870358ea647ee25c67"
+  "digest": "25cfc650b5ac6ad675f0818d6881239eae0d27f50053be02512f8510265037e8"
 }

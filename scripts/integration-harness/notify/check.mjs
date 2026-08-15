@@ -33,7 +33,10 @@ const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@1
 const ADMIN_EMAIL = 'notify-admin@harness.test';
 const ADMIN_PASSWORD = 'Harness123!Notify';
 const TENANT_ID = '00000000-0000-0000-0000-000000000000';
-const RUN = new Date().toISOString().replace(/[^0-9]/gu, '').slice(0, 14);
+const RUN = new Date()
+  .toISOString()
+  .replace(/[^0-9]/gu, '')
+  .slice(0, 14);
 
 const evidence = [];
 let failed = false;
@@ -176,7 +179,10 @@ async function startMocks() {
 }
 
 async function verifyLiveApps() {
-  for (const [name, base] of [['auth-app-api', AUTH_API], ['admin-app-api', ADMIN_API]]) {
+  for (const [name, base] of [
+    ['auth-app-api', AUTH_API],
+    ['admin-app-api', ADMIN_API],
+  ]) {
     const response = await fetch(`${base}/health`, { signal: AbortSignal.timeout(5000) }).catch(() => null);
     if (!response || response.status !== 200) {
       throw new Error(`${name} health check failed (${base}/health)`);
@@ -245,7 +251,11 @@ async function createPublishedTemplate() {
       name: 'Notify lane template',
       variablesSchema: { name: { type: 'string', required: true } },
       channels: [
-        { channel: 'email', engine: 'string-format', content: { subject: { en: 'Notify lane: {name}' }, body: { en: 'Hello {name}, notify lane proof.' } } },
+        {
+          channel: 'email',
+          engine: 'string-format',
+          content: { subject: { en: 'Notify lane: {name}' }, body: { en: 'Hello {name}, notify lane proof.' } },
+        },
         { channel: 'bot', engine: 'string-format', content: { body: { en: 'Hello {name}, notify lane proof.' } } },
       ],
     },
@@ -275,7 +285,9 @@ async function createStaticSegmentWithCsv(name, csv) {
     uploadState = await adminRequest('GET', `/admin/notification-segment-uploads/${upload.id}`);
   }
   if (uploadState.status !== 'completed') {
-    throw new Error(`segment upload ${upload.id} ended ${uploadState.status}: ${JSON.stringify(uploadState).slice(0, 300)}`);
+    throw new Error(
+      `segment upload ${upload.id} ended ${uploadState.status}: ${JSON.stringify(uploadState).slice(0, 300)}`,
+    );
   }
   note(`admin: static segment ${name} (id=${segment.id}) CSV upload ${upload.id} completed via consumer`);
   return segment.id;
@@ -309,13 +321,19 @@ async function runBroadcast(name, versionId, segmentId, channel, provider) {
 async function waitForTransportEvidence(timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   const wanted = {
-    emailSend: (call) => call.service === 'email' && call.method === 'POST' && call.path === '/api/v1/send' && call.status === 200,
-    telegramSendMessage: (call) => call.service === 'telegram' && /\/sendMessage$/u.test(call.path) && call.status === 200,
+    emailSend: (call) =>
+      call.service === 'email' && call.method === 'POST' && call.path === '/api/v1/send' && call.status === 200,
+    telegramSendMessage: (call) =>
+      call.service === 'telegram' && /\/sendMessage$/u.test(call.path) && call.status === 200,
     discordOpenDm: (call) => call.service === 'discord' && call.path === '/users/@me/channels' && call.status === 200,
     discordMessage: (call) => call.service === 'discord' && /\/messages$/u.test(call.path) && call.status === 200,
     s3Put: (call) => call.service === 's3' && call.method === 'PUT' && call.status === 200 && call.path !== '/health',
     s3Get: (call) =>
-      call.service === 's3' && call.method === 'GET' && call.status === 200 && call.path !== '/health' && !call.query['list-type'],
+      call.service === 's3' &&
+      call.method === 'GET' &&
+      call.status === 200 &&
+      call.path !== '/health' &&
+      !call.query['list-type'],
   };
   const found = {};
   while (Date.now() < deadline) {
@@ -377,17 +395,23 @@ async function main() {
     const found = await waitForTransportEvidence(150_000);
 
     if (found.emailSend) {
-      note(`evidence: MailPace email mock hit POST /api/v1/send -> 200 at ${found.emailSend.ts} (authHeaders=[${found.emailSend.authHeaders}])`);
+      note(
+        `evidence: MailPace email mock hit POST /api/v1/send -> 200 at ${found.emailSend.ts} (authHeaders=[${found.emailSend.authHeaders}])`,
+      );
     } else {
       fail('no MailPace/Resend email send call reached the mock');
     }
     if (found.telegramSendMessage) {
-      note(`evidence: Telegram mock hit ${found.telegramSendMessage.path} -> 200 at ${found.telegramSendMessage.ts} (chat target ${telegramChatId})`);
+      note(
+        `evidence: Telegram mock hit ${found.telegramSendMessage.path} -> 200 at ${found.telegramSendMessage.ts} (chat target ${telegramChatId})`,
+      );
     } else {
       fail('no Telegram sendMessage call reached the mock');
     }
     if (found.discordOpenDm && found.discordMessage) {
-      note(`evidence: Discord mock hit POST /users/@me/channels and ${found.discordMessage.path} -> 200 at ${found.discordMessage.ts}`);
+      note(
+        `evidence: Discord mock hit POST /users/@me/channels and ${found.discordMessage.path} -> 200 at ${found.discordMessage.ts}`,
+      );
     } else {
       fail('no Discord DM/message calls reached the mock');
     }
@@ -401,7 +425,9 @@ async function main() {
       .split('\n')
       .filter(Boolean);
     if (storedObjects.length >= 3) {
-      note(`evidence: ${storedObjects.length} segment CSV objects persisted under s3-store/ (${storedObjects[0].replace(HARNESS_DIR, '')}, ...)`);
+      note(
+        `evidence: ${storedObjects.length} segment CSV objects persisted under s3-store/ (${storedObjects[0].replace(HARNESS_DIR, '')}, ...)`,
+      );
     } else {
       fail(`expected >=3 S3 objects under s3-store/, found ${storedObjects.length}`);
     }

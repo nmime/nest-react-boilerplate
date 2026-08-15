@@ -134,7 +134,10 @@ async function handleTelegram(request, response) {
     switch (botMatch.groups.method) {
       case 'getMe':
         status = 200;
-        payload = { ok: true, result: { id: 424242, is_bot: true, first_name: 'Notify Harness Bot', username: 'notify_harness_bot' } };
+        payload = {
+          ok: true,
+          result: { id: 424242, is_bot: true, first_name: 'Notify Harness Bot', username: 'notify_harness_bot' },
+        };
         break;
       case 'sendMessage':
       case 'sendPhoto':
@@ -173,7 +176,12 @@ async function handleDiscord(request, response) {
     // Open (or reuse) a DM channel for the recipient. The provider needs `id`.
     status = 200;
     const recipient = JSON.parse(body.toString('utf8') || '{}');
-    payload = { id: `mock-dm-${createHash('sha1').update(String(recipient.recipient_id ?? '')).digest('hex').slice(0, 16)}` };
+    payload = {
+      id: `mock-dm-${createHash('sha1')
+        .update(String(recipient.recipient_id ?? ''))
+        .digest('hex')
+        .slice(0, 16)}`,
+    };
   } else if (request.method === 'POST' && /^\/channels\/[^/]+\/messages$/u.test(pathname)) {
     status = 200;
     payload = { id: `mock-message-${Date.now()}`, channel_id: pathname.split('/')[2] };
@@ -270,8 +278,13 @@ async function handleS3(request, response) {
     response.end();
   } else if (request.method === 'GET' || request.method === 'HEAD') {
     try {
-      const [objectBody, metaRaw] = await Promise.all([readFile(filePath), readFile(metaPath, 'utf8').catch(() => null)]);
-      const meta = metaRaw ? JSON.parse(metaRaw) : { contentType: 'application/octet-stream', metadata: {}, updatedAt: new Date().toISOString() };
+      const [objectBody, metaRaw] = await Promise.all([
+        readFile(filePath),
+        readFile(metaPath, 'utf8').catch(() => null),
+      ]);
+      const meta = metaRaw
+        ? JSON.parse(metaRaw)
+        : { contentType: 'application/octet-stream', metadata: {}, updatedAt: new Date().toISOString() };
       status = 200;
       response.writeHead(200, {
         'content-type': meta.contentType,

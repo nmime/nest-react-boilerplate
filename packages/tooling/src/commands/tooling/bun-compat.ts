@@ -563,6 +563,20 @@ async function buildCanonicalDeploymentArtifacts(
   });
 }
 
+async function ensureMigratorImage(workspaceRoot: string, environment: NodeJS.ProcessEnv): Promise<void> {
+  await runBoundedCommand(
+    process.execPath,
+    ['scripts/build-images.mjs', '--only', 'migrator'],
+    'Bake the migrator image',
+    {
+      cwd: workspaceRoot,
+      env: environment,
+      stdio: 'inherit',
+      timeoutMs: DEPLOYMENT_BUILD_TIMEOUT_MS,
+    },
+  );
+}
+
 interface InfrastructureHandle {
   runtimeEnvironment: NodeJS.ProcessEnv;
   stop: () => Promise<void>;
@@ -636,12 +650,14 @@ async function startSelectedInfrastructure(
       await runCompose(['up', '-d', '--wait', 'redis'], COMPOSE_STARTUP_TIMEOUT_MS);
     }
     if (closure.provider === 'postgres') {
-      await runCompose(['up', '--build', '-d', '--wait', 'postgres'], COMPOSE_STARTUP_TIMEOUT_MS);
-      await runCompose(['run', '--build', '--rm', '--no-deps', 'migrate'], COMPOSE_MIGRATION_TIMEOUT_MS);
+      await runCompose(['up', '--no-build', '-d', '--wait', 'postgres'], COMPOSE_STARTUP_TIMEOUT_MS);
+      await ensureMigratorImage(workspaceRoot, selectedEnvironment);
+      await runCompose(['up', '--no-build', 'migrate'], COMPOSE_MIGRATION_TIMEOUT_MS);
     } else {
-      await runCompose(['up', '--build', '-d', 'mongodb'], COMPOSE_STARTUP_TIMEOUT_MS);
-      await runCompose(['run', '--rm', '--no-deps', 'mongodb-init'], COMPOSE_MIGRATION_TIMEOUT_MS);
-      await runCompose(['run', '--build', '--rm', '--no-deps', 'mongodb-migrate'], COMPOSE_MIGRATION_TIMEOUT_MS);
+      await runCompose(['up', '--no-build', '-d', 'mongodb'], COMPOSE_STARTUP_TIMEOUT_MS);
+      await runCompose(['up', '--no-build', 'mongodb-init'], COMPOSE_MIGRATION_TIMEOUT_MS);
+      await ensureMigratorImage(workspaceRoot, selectedEnvironment);
+      await runCompose(['up', '--no-build', 'mongodb-migrate'], COMPOSE_MIGRATION_TIMEOUT_MS);
     }
   } catch (error: unknown) {
     try {

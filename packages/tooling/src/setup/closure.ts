@@ -66,6 +66,7 @@ const closureToolchainPackages = [
   'typescript-eslint',
   'typescript-transform-paths',
   'vite-plugin-istanbul',
+  '@vitest/coverage-v8',
   'zod',
 ] as const;
 

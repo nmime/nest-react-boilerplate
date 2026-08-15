@@ -120,8 +120,17 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
         createdAt: now,
         updatedAt: now,
       });
+      // `notification_templates.current_version_id` and
+      // `notification_template_versions.template_id` form a circular FK pair, and
+      // the version channels FK into versions. The entities carry no relation
+      // metadata, so a single flush would order the inserts arbitrarily; stage
+      // them parent-first inside the same transaction.
+      em.persist(template);
+      await em.flush();
       template.currentVersionId = version.id;
-      em.persist([template, version, ...this.channelEntities(version.id, input.channels, now)]);
+      em.persist(version);
+      await em.flush();
+      em.persist(this.channelEntities(version.id, input.channels, now));
       await em.flush();
       return this.mapTemplate(em, template);
     });
@@ -157,9 +166,12 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
           variablesSchema: version.variablesSchema,
         });
         version = nextVersion;
-        em.persist([
-          nextVersion,
-          ...previousChannels.map(
+        // Stage parent-first: the entities have no relation metadata, so a single
+        // flush could insert the cloned channel rows before their version row.
+        em.persist(nextVersion);
+        await em.flush();
+        em.persist(
+          previousChannels.map(
             (channel) =>
               new NotificationTemplateVersionChannelEntity({
                 templateVersionId: nextVersion.id,
@@ -168,7 +180,8 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
                 content: channel.content,
               }),
           ),
-        ]);
+        );
+        await em.flush();
         template.currentVersionId = version.id;
         template.status = NotificationTemplateStatus.Draft;
       }
@@ -439,24 +452,28 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
   }
 
   async failSegmentUpload(uploadId: string, claimToken: string, errors: string[]): Promise<void> {
-    await this.entityManager.nativeUpdate(
-      NotificationSegmentUploadEntity,
-      { id: uploadId, claimToken, status: NotificationSegmentUploadStatus.Processing },
-      {
-        status: NotificationSegmentUploadStatus.Failed,
-        errors: errors.slice(0, 100),
-        claimedAt: new Date(0),
-        claimToken: UnclaimedNotificationSegmentUploadClaimId,
-        updatedAt: new Date(),
-      },
+    // The background consumer has no MikroORM request context, so the write runs
+    // in its own transaction instead of on the global EntityManager.
+    await this.entityManager.transactional((em) =>
+      em.nativeUpdate(
+        NotificationSegmentUploadEntity,
+        { id: uploadId, claimToken, status: NotificationSegmentUploadStatus.Processing },
+        {
+          status: NotificationSegmentUploadStatus.Failed,
+          errors: errors.slice(0, 100),
+          claimedAt: new Date(0),
+          claimToken: UnclaimedNotificationSegmentUploadClaimId,
+          updatedAt: new Date(),
+        },
+      ),
     );
   }
 
   async listStaticSegmentMembers(segmentId: string): Promise<NotificationAudienceMember[]> {
-    const members = await this.entityManager.find(
-      NotificationSegmentMemberEntity,
-      { segmentId },
-      { orderBy: { id: 'ASC' } },
+    // Reads run inside a transaction so the background consumer, which has no
+    // MikroORM request context, never touches the global EntityManager.
+    const members = await this.entityManager.transactional((em) =>
+      em.find(NotificationSegmentMemberEntity, { segmentId }, { orderBy: { id: 'ASC' } }),
     );
     return members.map(mapAudienceMember);
   }
@@ -490,12 +507,13 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
         globalVariables: input.globalVariables ?? {},
         createdBy: input.actorId,
       });
-      em.persist([
-        broadcast,
-        ...input.segmentIds.map(
-          (segmentId) => new NotificationBroadcastSegmentEntity({ broadcastId: broadcast.id, segmentId }),
-        ),
-      ]);
+      // Stage parent-first: segment links FK into the broadcast, and the
+      // entities carry no relation metadata to order a combined flush.
+      em.persist(broadcast);
+      await em.flush();
+      em.persist(
+        input.segmentIds.map((segmentId) => new NotificationBroadcastSegmentEntity({ broadcastId: broadcast.id, segmentId })),
+      );
       await em.flush();
       return this.mapBroadcast(em, broadcast);
     });
@@ -729,49 +747,53 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     if (!broadcast?.materializationClaimToken) {
       return null;
     }
-    const snapshot = await this.entityManager.findOne(NotificationAudienceSnapshotEntity, {
-      broadcastId: broadcast.id,
-      status: NotificationAudienceSnapshotStatus.Completed,
-    });
-    if (!snapshot) {
-      return null;
-    }
-    const members = await this.entityManager.find(
-      NotificationAudienceSnapshotMemberEntity,
-      { snapshotId: snapshot.id, materializedAt: null },
-      { limit, orderBy: { id: 'ASC' } },
-    );
-    if (members.length === 0) {
-      const materializedAt = new Date();
-      await this.entityManager.nativeUpdate(
-        NotificationBroadcastEntity,
-        { id: broadcast.id, materializationClaimToken: broadcast.materializationClaimToken },
-        {
-          materializedAt,
-          materializationClaimedAt: new Date(0),
-          materializationClaimToken: UnclaimedNotificationBroadcastClaimId,
-          updatedAt: materializedAt,
-        },
+    // Background consumers have no MikroORM request context, so every post-claim
+    // read and write runs inside a transaction instead of on the global EntityManager.
+    return this.entityManager.transactional(async (em) => {
+      const snapshot = await em.findOne(NotificationAudienceSnapshotEntity, {
+        broadcastId: broadcast.id,
+        status: NotificationAudienceSnapshotStatus.Completed,
+      });
+      if (!snapshot) {
+        return null;
+      }
+      const members = await em.find(
+        NotificationAudienceSnapshotMemberEntity,
+        { snapshotId: snapshot.id, materializedAt: null },
+        { limit, orderBy: { id: 'ASC' } },
       );
-      return null;
-    }
-    const version = await this.entityManager.findOne(NotificationTemplateVersionEntity, {
-      id: broadcast.templateVersionId,
+      if (members.length === 0) {
+        const materializedAt = new Date();
+        await em.nativeUpdate(
+          NotificationBroadcastEntity,
+          { id: broadcast.id, materializationClaimToken: broadcast.materializationClaimToken },
+          {
+            materializedAt,
+            materializationClaimedAt: new Date(0),
+            materializationClaimToken: UnclaimedNotificationBroadcastClaimId,
+            updatedAt: materializedAt,
+          },
+        );
+        return null;
+      }
+      const version = await em.findOne(NotificationTemplateVersionEntity, {
+        id: broadcast.templateVersionId,
+      });
+      if (!version) {
+        throw new Error('notification_template_version_missing');
+      }
+      const template = await em.findOne(NotificationTemplateEntity, { id: version.templateId });
+      if (!template) {
+        throw new Error('notification_template_missing');
+      }
+      return {
+        claimToken: broadcast.materializationClaimToken,
+        broadcast: await this.mapBroadcast(em, broadcast),
+        snapshotId: snapshot.id,
+        template: await this.mapTemplate(em, template),
+        members: members.map((member) => ({ id: member.id, ...mapAudienceMember(member) })),
+      };
     });
-    if (!version) {
-      throw new Error('notification_template_version_missing');
-    }
-    const template = await this.entityManager.findOne(NotificationTemplateEntity, { id: version.templateId });
-    if (!template) {
-      throw new Error('notification_template_missing');
-    }
-    return {
-      claimToken: broadcast.materializationClaimToken,
-      broadcast: await this.mapBroadcast(this.entityManager, broadcast),
-      snapshotId: snapshot.id,
-      template: await this.mapTemplate(this.entityManager, template),
-      members: members.map((member) => ({ id: member.id, ...mapAudienceMember(member) })),
-    };
   }
 
   async materializeBroadcastMembers(context: NotificationBroadcastMaterializationContext): Promise<number> {
@@ -962,17 +984,25 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
   }
 
   async activateDueBroadcasts(now: Date): Promise<number> {
-    return this.entityManager.nativeUpdate(
-      NotificationBroadcastEntity,
-      { status: NotificationBroadcastStatus.Scheduled, scheduledAt: { $lte: now } },
-      { status: NotificationBroadcastStatus.Sending, updatedAt: now },
+    // The cron scheduler has no MikroORM request context, so the write runs in
+    // its own transaction instead of on the global EntityManager.
+    return this.entityManager.transactional((em) =>
+      em.nativeUpdate(
+        NotificationBroadcastEntity,
+        { status: NotificationBroadcastStatus.Scheduled, scheduledAt: { $lte: now } },
+        { status: NotificationBroadcastStatus.Sending, updatedAt: now },
+      ),
     );
   }
 
   async refreshBroadcastStatistics(): Promise<number> {
-    const candidates = await this.entityManager.find(NotificationBroadcastEntity, {
-      status: { $in: [NotificationBroadcastStatus.Sending, NotificationBroadcastStatus.Paused] },
-    });
+    // Reads run inside a transaction so background cron iterations, which have
+    // no MikroORM request context, never touch the global EntityManager.
+    const candidates = await this.entityManager.transactional((em) =>
+      em.find(NotificationBroadcastEntity, {
+        status: { $in: [NotificationBroadcastStatus.Sending, NotificationBroadcastStatus.Paused] },
+      }),
+    );
     const refreshed = await Promise.all(
       candidates.map((candidate) =>
         this.entityManager.transactional(async (em) => {

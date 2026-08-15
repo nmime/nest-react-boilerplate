@@ -348,7 +348,10 @@ export class AuthUserRepository {
   }
 
   private async findOneWithAccess(where: Record<string, unknown>): Promise<AuthUserEntity | null> {
-    const entity = await this.entityManager.findOne(AuthUserEntity, where);
+    // Background callers (e.g. the notification delivery scheduler) have no
+    // MikroORM request context, so the read runs in its own transaction instead
+    // of on the global EntityManager. HTTP callers with an active context nest fine.
+    const entity = await this.entityManager.transactional((em) => em.findOne(AuthUserEntity, where));
     return entity ? this.hydrateAccess(entity) : null;
   }
 

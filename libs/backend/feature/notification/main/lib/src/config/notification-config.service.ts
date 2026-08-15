@@ -20,17 +20,27 @@ export class NotificationConfigService {
     return this.configService.get<string>('DISCORD_BOT_TOKEN', '');
   }
 
-  get resend(): { apiKey: string; from: string } {
+  get telegramApiBase(): string | undefined {
+    return this.configService.get<string>('TELEGRAM_API_BASE');
+  }
+
+  get discordApiBase(): string | undefined {
+    return this.configService.get<string>('DISCORD_API_BASE');
+  }
+
+  get resend(): { apiKey: string; from: string; apiBase: string | undefined } {
     return {
       apiKey: this.configService.get<string>('RESEND_API_KEY', ''),
       from: this.configService.get<string>('NOTIFICATION_EMAIL_FROM', ''),
+      apiBase: this.configService.get<string>('RESEND_API_BASE'),
     };
   }
 
-  get mailPace(): { serverToken: string; from: string } {
+  get mailPace(): { serverToken: string; from: string; apiBase: string | undefined } {
     return {
       serverToken: this.configService.get<string>('MAILPACE_SERVER_TOKEN', ''),
       from: this.configService.get<string>('NOTIFICATION_EMAIL_FROM', ''),
+      apiBase: this.configService.get<string>('MAILPACE_API_BASE'),
     };
   }
 

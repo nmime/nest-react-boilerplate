@@ -130,6 +130,10 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
           createdAt: now,
           updatedAt: now,
         });
+        // The template may have been persisted above in the same unit of work;
+        // flush it first, then stage the new version before its channel rows so
+        // FK order holds without relation metadata on the entities.
+        await em.flush();
         version = nextVersion;
         versionChannels = params.channels.map(
           (channel) =>
@@ -264,10 +268,14 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
   }
 
   async renewDeliveryClaim(claimToken: string, now: Date): Promise<boolean> {
-    const updated = await this.entityManager.nativeUpdate(
-      NotificationDeliveryEntity,
-      { claimToken, status: NotificationStatus.Pending },
-      { claimedAt: now },
+    // The cron scheduler has no MikroORM request context, so the write runs in
+    // its own transaction instead of on the global EntityManager.
+    const updated = await this.entityManager.transactional((em) =>
+      em.nativeUpdate(
+        NotificationDeliveryEntity,
+        { claimToken, status: NotificationStatus.Pending },
+        { claimedAt: now },
+      ),
     );
     return updated > 0;
   }
@@ -365,17 +373,21 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
   }
 
   async countRecentDeliveryErrors(params: FindRecentNotificationDeliveryErrorsParams): Promise<number> {
-    const count = await this.entityManager.count(NotificationDeliveryEntity, {
-      $or: [
-        { status: NotificationStatus.Error, updatedAt: { $gt: params.fromDate } },
-        {
-          status: NotificationStatus.Pending,
-          dispatchStartedAt: { $ne: EmptyNotificationDeliveryTimestamp },
-          updatedAt: { $gt: params.fromDate },
-        },
-      ],
-      ...(params.targetType ? { targetType: params.targetType } : {}),
-    });
+    // Background/health callers may lack a MikroORM request context, so the read
+    // runs in its own transaction instead of on the global EntityManager.
+    const count = await this.entityManager.transactional((em) =>
+      em.count(NotificationDeliveryEntity, {
+        $or: [
+          { status: NotificationStatus.Error, updatedAt: { $gt: params.fromDate } },
+          {
+            status: NotificationStatus.Pending,
+            dispatchStartedAt: { $ne: EmptyNotificationDeliveryTimestamp },
+            updatedAt: { $gt: params.fromDate },
+          },
+        ],
+        ...(params.targetType ? { targetType: params.targetType } : {}),
+      }),
+    );
     return Math.min(count, params.limit);
   }
 

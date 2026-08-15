@@ -12,6 +12,8 @@ import {
   NotificationProviderStrategy,
 } from '../notification-provider.strategy';
 
+const TelegramDefaultApiBase = 'https://api.telegram.org';
+
 @Injectable()
 export class TelegramBotNotificationProvider extends NotificationProviderStrategy {
   readonly provider = NotificationDeliveryProvider.TelegramBot;
@@ -19,6 +21,10 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
 
   constructor(private readonly config: NotificationConfigService) {
     super();
+  }
+
+  private apiBase(): string {
+    return this.config.telegramApiBase ?? TelegramDefaultApiBase;
   }
 
   override readiness() {
@@ -54,7 +60,7 @@ export class TelegramBotNotificationProvider extends NotificationProviderStrateg
 
     await this.beginDispatch(input);
     try {
-      const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      const response = await fetch(`${this.apiBase()}/bot${token}/${method}`, {
         method: 'POST',
         signal: input.signal,
         headers: { 'content-type': 'application/json' },

@@ -31,7 +31,7 @@ const argoKustomization = read('deploy/argocd/kustomization.yaml');
 const fluxSource = read('deploy/flux/source.yaml');
 const fluxRelease = read('deploy/flux/release.yaml');
 const fluxKustomization = read('deploy/flux/kustomization.yaml');
-const tagUpdater = read('scripts/update-deploy-tags.py');
+const tagUpdater = read('scripts/update-deploy-tags.mjs');
 const releaseImagePlan = read('scripts/release-image-plan.mjs');
 
 for (const expected of [
@@ -208,18 +208,14 @@ function validateGithubPipelines(forge) {
   assert.ok(!promotionWorkflow.includes('HEAD:main'), 'promotion must never push directly to main');
 }
 
-has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', args.sha)", 'tag updater requires the release workflow full SHA');
-has(tagUpdater, "re.fullmatch(r'sha256:[0-9a-fA-F]{64}', digest)", 'tag updater requires immutable image digests');
+has(tagUpdater, '/^[0-9a-fA-F]{40}$/u', 'tag updater requires the release workflow full SHA');
+has(tagUpdater, '/^sha256:[0-9a-fA-F]{64}$/u', 'tag updater requires immutable image digests');
 has(
   tagUpdater,
-  "default='.helm/values-selection.yaml'",
+  "defaultSelectionValuesFile = '.helm/values-selection.yaml'",
   'tag updater defaults to the tracked setup-generated Helm ownership overlay',
 );
-has(
-  tagUpdater,
-  'selected & enabled_deployment_images',
-  'tag updater derives selected and enabled deployment ownership',
-);
+has(tagUpdater, 'requiredPromotionImages', 'tag updater derives selected and enabled deployment ownership');
 has(
   tagUpdater,
   'missing immutable digests for selected and enabled images',

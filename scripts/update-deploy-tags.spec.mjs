@@ -39,7 +39,7 @@ const selectedArgs = (names) => names.flatMap((name) => ['--selected-image', nam
 const imageArgs = (names, value) => names.flatMap((name) => ['--image', `${name}=${value}`]);
 
 function execute(args) {
-  return spawnSync('python3', ['scripts/update-deploy-tags.py', ...args], {
+  return spawnSync(process.execPath, ['scripts/update-deploy-tags.mjs', ...args], {
     cwd: rootDir,
     encoding: 'utf8',
   });

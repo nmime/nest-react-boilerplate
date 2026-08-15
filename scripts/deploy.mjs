@@ -7,7 +7,7 @@
  *   pnpm run deploy --target=compose --domain=acme.example --yes
  *   pnpm run deploy --target=pm2 --domain=acme.example --yes
  *   pnpm run deploy --target=helm --release=acme --namespace=acme --yes
- *   pnpm run deploy --target=single-server --yes
+ *   pnpm run deploy --preset=single-server --domain=acme.example --yes
  *   pnpm run deploy --dry-run             # print the plan without executing anything
  *
  * Design: `buildDeployPlan()` is pure — it turns answers into an ordered list of
@@ -19,6 +19,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { helmValueFiles } from './delivery-inventory.mjs';
 import { buildNativeBuildPlan, buildNativeStartPlan, derivePm2Flags } from './native-release.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -57,14 +58,18 @@ const TARGET_SUMMARY = {
 /**
  * Named bundles of axis values. A preset is never a runtime of its own — it just
  * pre-selects axes. Explicit flags always override it.
+ *
+ * One VPS and single-server are the same path: pull published images, host
+ * nginx + Certbot. The host does not bake, compile, or run Nx.
  */
 export const deployPresets = {
   'single-server': {
     target: 'compose',
     edge: 'host-nginx',
     tls: 'certbot',
+    images: 'registry',
     provisionHost: true,
-    summary: 'Turnkey VM: Compose under systemd behind host nginx + Certbot',
+    summary: 'One VPS: pull published images under host nginx + Certbot. No bake, Nx, or compile on the host.',
   },
   native: {
     target: 'pm2',
@@ -72,9 +77,11 @@ export const deployPresets = {
     tls: 'certbot',
     database: 'native',
     provisionHost: true,
-    summary: 'Fully native: PostgreSQL/Redis + Node processes on this host, no Docker',
+    summary: 'Fully native: PostgreSQL/Redis + Node processes on this host, no Docker. Builds from the checkout.',
   },
 };
+
+export const thinHostPresets = Object.freeze(['single-server']);
 
 export const presetNames = Object.keys(deployPresets);
 
@@ -397,10 +404,7 @@ function helmPlan(answers) {
       '--namespace',
       namespace,
       '--create-namespace',
-      '-f',
-      '.helm/values.yaml',
-      '-f',
-      '.helm/values-production.yaml',
+      ...helmValueFiles.flatMap((file) => ['-f', file]),
       '--atomic',
       '--wait',
       '--timeout',
@@ -433,19 +437,32 @@ export function resolveHostController(answers = {}) {
 export function applyPreset(rawAnswers = {}) {
   const notices = [];
   let presetName = rawAnswers.preset;
-  // Back-compat: single-server used to be a target. Keep old runbooks working.
-  if (!presetName && rawAnswers.target === 'single-server') {
+  // One VPS is single-server. Accept the old target spelling and the vps alias.
+  if (!presetName && (rawAnswers.target === 'single-server' || rawAnswers.target === 'vps')) {
     presetName = 'single-server';
-    notices.push('--target=single-server is deprecated; it now resolves to --preset=single-server.');
+    notices.push(`--target=${rawAnswers.target} is deprecated; it now resolves to --preset=single-server.`);
+  }
+  if (presetName === 'vps') {
+    presetName = 'single-server';
+    notices.push('--preset=vps is an alias for --preset=single-server.');
   }
   if (!presetName) return { answers: rawAnswers, notices, preset: undefined };
   const preset = deployPresets[presetName];
   if (!preset) throw new Error(`Unknown preset "${presetName}". Available: ${presetNames.join(', ')}.`);
   const { summary, ...axes } = preset;
   const explicit = { ...rawAnswers };
-  if (explicit.target === 'single-server') delete explicit.target;
-  // Explicit flags win over the preset.
+  if (explicit.target === 'single-server' || explicit.target === 'vps') delete explicit.target;
+  // Explicit flags win over the preset, except the thin host path refuses a local bake.
   return { answers: { ...axes, ...explicit }, notices, preset: presetName };
+}
+
+export function assertThinHostImages(answers, preset) {
+  const thinHost = thinHostPresets.includes(preset) || answers.provisionHost;
+  if (thinHost && answers.images === 'local') {
+    throw new Error(
+      'The one-VPS path pulls published sha-<git-sha> images. It does not bake, compile, or run Nx on the host. Publish images from the release pipeline and omit --images=local.',
+    );
+  }
 }
 
 /** Turn answers into an ordered, executable plan. Pure. */
@@ -469,6 +486,7 @@ export function buildDeployPlan(rawAnswers = {}) {
       `--database=native installs PostgreSQL on this host and is only supported with --target=pm2 (received --target=${answers.target}). Use --database=external-db to point a container/cluster deployment at an existing server.`,
     );
   }
+  assertThinHostImages(answers, preset);
 
   const planners = { compose: composePlan, pm2: pm2Plan, helm: helmPlan };
   const { steps, warnings } = planners[answers.target](answers);
@@ -499,6 +517,7 @@ export function parseDeployArgs(argv = []) {
   const parsed = { profiles: undefined };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
+    if (item === '--') continue;
     if (item === '--yes' || item === '-y') {
       parsed.yes = true;
       continue;
@@ -546,7 +565,9 @@ Runs a full deployment for the selected runtime. With no options it asks.
 
 Runtime:
   --target=<${deployTargets.join('|')}>
-                                      single-server = compose + host-nginx + certbot + provisioning
+  --preset=<${presetNames.join('|')}>
+                                      single-server = one VPS, pull published images + host nginx + Certbot
+                                      native = PM2 + host PostgreSQL/Redis (builds on the host)
 
 Composable axes (all optional, all independent):
   --domains=<${publicModes.join('|')}>
@@ -596,7 +617,7 @@ async function runWizard(parsed) {
       answers.target = deployTargets[labels.indexOf(choice)];
     }
     // Every axis is asked independently: they compose freely.
-    if (answers.target === 'compose' || answers.target === 'single-server') {
+    if (answers.target === 'compose' || answers.target === 'single-server' || answers.target === 'vps') {
       answers.database ??= await ask(rl, 'Database:', databaseModes, 'bundled-db');
       answers.publicMode ??= await ask(rl, 'Domain style:', publicModes, 'per-app-domains');
       answers.edge ??= await ask(
@@ -642,7 +663,7 @@ function printPlan(plan, { dryRun }) {
   const { target, answers, steps, warnings } = plan;
   console.log(`\n=== Deployment plan: ${target} ===`);
   console.log(`  ${TARGET_SUMMARY[target]}`);
-  if (target === 'compose' || target === 'single-server') {
+  if (target === 'compose' || target === 'single-server' || target === 'vps') {
     console.log(
       `  database=${answers.database}  domains=${answers.publicMode}  edge=${answers.edge}  tls=${answers.tls}  images=${answers.images}`,
     );

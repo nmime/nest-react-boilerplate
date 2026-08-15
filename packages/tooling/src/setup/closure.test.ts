@@ -53,6 +53,7 @@ function graph(
     'typescript-eslint',
     'typescript-transform-paths',
     'vite-plugin-istanbul',
+    '@vitest/coverage-v8',
     'zod',
     ...(options.externalPackages ?? []),
     ...(options.toolingPackages ?? []),
@@ -141,6 +142,7 @@ describe('selected closure', () => {
       'typescript-eslint': '1.0.0',
       'typescript-transform-paths': '1.0.0',
       'vite-plugin-istanbul': '1.0.0',
+      '@vitest/coverage-v8': '1.0.0',
     });
     const serialized = JSON.parse(renderSelectedClosure(first)) as Record<string, unknown>;
     assert.equal(serialized.externalPackages, undefined);

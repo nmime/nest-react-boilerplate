@@ -13,26 +13,11 @@ import { randomBytes } from 'node:crypto';
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { generatableSecrets } from './delivery-inventory.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const repoRoot = resolve(here, '..');
-
-/**
- * Secrets we can safely generate locally, with the byte length fed to the
- * base64 encoder. Everything else declared by an overlay is treated as an
- * externally-issued secret and gets an empty placeholder file.
- */
-export const generatableSecrets = {
-  session_secret: 48,
-  better_auth_secret: 48,
-  auth_provider_token_encryption_key: 32,
-  notification_payload_encryption_key: 32,
-  redis_password: 32,
-  grafana_admin_password: 32,
-  postgres_password: 32,
-  telegram_bot_webhook_secret: 32,
-  discord_custom_id_secret: 32,
-};
+export { generatableSecrets };
 
 /** The overlay files contributing top-level `secrets:` for a given topology. */
 export function computeOverlayFiles({ database = 'bundled-db', profiles = [] } = {}) {

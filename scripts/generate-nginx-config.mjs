@@ -9,13 +9,13 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { publicComposeApps } from './compose-production.mjs';
+import { publicApps } from './delivery-inventory.mjs';
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 const routeTablePath = join(rootDir, '.helm/frontend-routes.json');
 const generatedPath = join(rootDir, 'docker/nginx-fullstack.conf');
 
-const composeUpstreams = Object.fromEntries(publicComposeApps.map(([appId, , upstream]) => [appId, upstream]));
+const composeUpstreams = Object.fromEntries(publicApps.map(([appId, , upstream]) => [appId, upstream]));
 
 export function readRouteTable(path = routeTablePath) {
   return JSON.parse(readFileSync(path, 'utf8'));

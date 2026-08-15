@@ -4,6 +4,7 @@
     "admin-app",
     "admin-app-api",
     "auth-app-api",
+    "fullstack-e2e",
     "landing-app",
     "mobile-app",
     "notification-consumer",

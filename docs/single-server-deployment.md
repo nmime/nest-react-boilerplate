@@ -1,9 +1,34 @@
 # Idempotent single-server deployment
 
-This is the supported turnkey path for one Ubuntu or Debian host. It installs
-and operates host Nginx + Certbot in front of the application, which stays in
-`external-proxy` mode so every application and API port is bound only to
-`127.0.0.1`; the host firewall exposes only SSH, HTTP, and HTTPS.
+This is the thin path for one Ubuntu or Debian VPS. One VPS and
+`--preset=single-server` are the same thing. The host **pulls published
+`sha-<git-sha>` images**. It does not bake, compile, run Nx, or warm a build
+cache. Build and sign images in the release pipeline; this machine only
+converges nginx, certificates, secrets, and `docker compose pull && up`.
+
+```bash
+pnpm run deploy --preset=single-server --domain=acme.example --registry=ghcr.io/acme/acme \
+  --image-tag=sha-<git-sha> --yes
+```
+
+`--images=local` is rejected here on purpose.
+
+Inspect an already-provisioned host without deploying:
+
+```bash
+pnpm run server:ssh-verify -- --host=203.0.113.10 --user=nrb --expect-arch=x86_64
+```
+
+The probe reports architecture and Docker. It fails if `IMAGE_TAG=local`.
+`COMPOSE_IMAGE_SOURCE=local` with a `sha-<git-sha>` pin is a warning (local
+Docker name, images already loaded). It does not bake, pull, or print secret
+values. After `ssh-add`, omit `--identity` if the private key has no `.pub`
+file. Set `NRB_SSH_HOST` / `NRB_SSH_USER` / `NRB_SSH_IDENTITY` instead of flags
+when running `pnpm test:scripts`.
+
+It installs and operates host Nginx + Certbot in front of the application, which
+stays in `external-proxy` mode so every application and API port is bound only
+to `127.0.0.1`; the host firewall exposes only SSH, HTTP, and HTTPS.
 
 ## Runtimes
 
@@ -11,10 +36,10 @@ and operates host Nginx + Certbot in front of the application, which stays in
 else in this document — Nginx, Certbot, DNS modes, secret handling, loopback
 binds, the rerun guarantees — is shared by both.
 
-| `RUNTIME_MODE`      | What runs                                                                   | Image/artifact source                                                                                  |
-| ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `compose` (default) | Docker Compose services under `nest-react-boilerplate.service`              | `COMPOSE_IMAGE_SOURCE=registry` pulls immutable `sha-<git-sha>` tags; `local` builds them on this host |
-| `native`            | PM2-supervised Node processes, host PostgreSQL/Redis, SPAs served from disk | built from the checkout on every deploy                                                                |
+| `RUNTIME_MODE`      | What runs                                                                   | Image/artifact source                                                                         |
+| ------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `compose` (default) | Docker Compose services under `nest-react-boilerplate.service`              | Pull published `sha-<git-sha>` tags. Host-side compile is refused; bake images in CI/release. |
+| `native`            | PM2-supervised Node processes, host PostgreSQL/Redis, SPAs served from disk | built from the checkout on every deploy                                                       |
 
 Select it at bootstrap time:
 

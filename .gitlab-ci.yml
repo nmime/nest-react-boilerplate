@@ -123,7 +123,7 @@ helm-validation:
     - docker:27.5.1-dind
   before_script:
     - apk add --no-cache curl git jq python3 make bash docker-cli docker-cli-compose
-    - curl -fsSL https://get.helm.sh/helm-v4.2.2-linux-amd64.tar.gz | tar xz
+    - curl -fsSL https://get.helm.sh/helm-v4.2.3-linux-amd64.tar.gz | tar xz
     - mv linux-amd64/helm /usr/local/bin/
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate
@@ -222,7 +222,7 @@ non-runtime-validation:
     # anything below Helm 4. `extends` would replace .node's before_script rather than append
     # to it, so the install belongs here, ahead of the gates that need it.
     - apk add --no-cache curl
-    - curl -fsSL https://get.helm.sh/helm-v4.2.2-linux-amd64.tar.gz | tar xz
+    - curl -fsSL https://get.helm.sh/helm-v4.2.3-linux-amd64.tar.gz | tar xz
     - mv linux-amd64/helm /usr/local/bin/
     - pnpm run onboarding:verify
     - pnpm run db:migrations:check
@@ -394,10 +394,8 @@ docker-smoke-test:
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile
   script:
-    - pnpm nrb closure materialize --all-reference --provider postgres
-    - pnpm nrb closure materialize --all-reference --provider mongodb
-    - pnpm run test:docker-smoke
-    - pnpm run test:compose-deployment-modes
+    - pnpm run docker:prod:config:check
+    - node scripts/validate-compose-modes.mjs
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ''
@@ -419,11 +417,11 @@ docker-fullstack:
     - pnpm nrb closure install
     - pnpm run test:fullstack
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ''
+    NRB_IMAGE_COMPILE: '1'
     NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/closure'
   timeout: 45m
 
@@ -442,11 +440,11 @@ docker-fullstack-mongodb:
     - pnpm nrb closure install
     - pnpm run test:fullstack
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ''
+    NRB_IMAGE_COMPILE: '1'
     NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/closure'
   timeout: 45m
 
@@ -526,6 +524,9 @@ ops-gates:
     QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
     QA_MIGRATION_ROLLBACK_COMMAND: '["pnpm","run","db:migrations:rollback-check"]'
     POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.6-alpine
+    NRB_IMAGE_COMPILE: '1'
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
   before_script:
     - apk add --no-cache bash curl git jq python3 make postgresql-client docker-cli docker-cli-compose
     - corepack enable pnpm

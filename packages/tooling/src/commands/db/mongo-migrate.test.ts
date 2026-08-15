@@ -2,7 +2,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { MongoClient } from "mongodb";
 import { sharedMongoMigrations } from "../../../../../libs/backend/mongodb/main/shared/lib/src/migrations/index.ts";
 import { authMongoMigrations } from "../../../../../libs/backend/mongodb/main/auth/lib/src/migrations/index.ts";
@@ -51,13 +50,25 @@ describe("MongoDB migration environment", () => {
   });
 
   it("keeps the pruned migrator dependency closure MongoDB-capable", () => {
-    const manifestUrl = new URL("../../../../../docker/migrator-package.json", import.meta.url);
-    const manifest = JSON.parse(readFileSync(fileURLToPath(manifestUrl), "utf8")) as {
+    const workspaceRoot = new URL("../../../../../", import.meta.url);
+    const manifest = JSON.parse(readFileSync(new URL("docker/migrator-package.json", workspaceRoot), "utf8")) as {
       dependencies?: Record<string, string>;
     };
+    const workspace = JSON.parse(readFileSync(new URL("package.json", workspaceRoot), "utf8")) as {
+      dependencies?: Record<string, string>;
+    };
+    const nestCommon = workspace.dependencies?.["@nestjs/common"];
+    const nestCore = workspace.dependencies?.["@nestjs/core"];
     assert.equal(manifest.dependencies?.mongodb, "7.0.0");
     assert.equal(manifest.dependencies?.["mongodb-connection-string-url"], "7.0.2");
-    assert.equal(manifest.dependencies?.["@nestjs/common"], "11.1.28");
+    assert.equal(typeof nestCommon, "string");
+    assert.equal(nestCommon, nestCore);
+    assert.equal(manifest.dependencies?.["@nestjs/common"], nestCommon);
+    assert.equal(
+      manifest.dependencies?.["@nestjs/core"],
+      nestCore,
+      "migrator must pin @nestjs/core with @nestjs/common so @mikro-orm/nestjs cannot resolve a mismatched core",
+    );
   });
 
   it("validates and resolves matching URI, database, and replica-set settings", () => {

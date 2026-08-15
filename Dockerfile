@@ -25,8 +25,16 @@ COPY --from=nrb-closure closure.json ./.nrb/closure.json
 COPY --from=nrb-closure nrb.config.json ./nrb.config.json
 COPY --from=nrb-closure workspace.json ./.nrb/workspace.json
 COPY .npmrc .nxignore nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
-RUN pnpm fetch --frozen-lockfile
-RUN pnpm install --frozen-lockfile --offline \
+# Frozen lockfile already pins tarball hashes. Workspace minimumReleaseAge
+# walks ~2400 registry metadata entries and, when that walk finishes, pnpm
+# aborts leftover tarball downloads. Disable the age check only in this
+# image layer; install stays --offline.
+RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
+  node -e "const fs=require('node:fs'); const p='pnpm-workspace.yaml'; fs.writeFileSync(p, fs.readFileSync(p,'utf8').replace(/^minimumReleaseAge:\\s*\\d+/mu, 'minimumReleaseAge: 0'));" \
+  && printf '%s\n' 'fetch-timeout=900000' 'fetch-retries=5' 'network-concurrency=8' >> .npmrc \
+  && pnpm fetch --frozen-lockfile
+RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
+  pnpm install --frozen-lockfile --offline \
   && chown -R node:node /workspace
 
 COPY config ./config
@@ -47,7 +55,9 @@ COPY docker/migrator-package.json ./docker/migrator-package.json
 RUN node packages/tooling/bin/run-ts-command.mjs \
       /workspace/packages/tooling/src/runtime/deployment-artifact.ts stage-migrator /migrator
 WORKDIR /migrator
-RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
+RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
+  pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
+  && node --input-type=commonjs -e "const common=require('@nestjs/common/package.json'); const core=require('@nestjs/core/package.json'); if (common.version!==core.version) { throw new Error('Nest version mismatch: @nestjs/common@'+common.version+' vs @nestjs/core@'+core.version); }"
 
 FROM node:${NODE_VERSION} AS migrator
 ENV CONTAINER=true \
@@ -73,7 +83,6 @@ CMD ["node", "docker/migrator-run.mjs"]
 FROM workspace AS builder
 ARG NX_BUILD_PROJECTS
 ARG NX_PROJECT
-ARG RUNTIME_PROJECT
 ARG VITE_API_BASE_URL_MODE=same-origin
 ARG VITE_AUTH_API_BASE_URL
 ARG VITE_USER_API_BASE_URL
@@ -107,8 +116,10 @@ ENV VITE_API_BASE_URL_MODE=${VITE_API_BASE_URL_MODE} \
 # the npm packages that app (and the workspace libs it inlines) actually imports.
 # Reuse Nx task outputs while BuildKit builds several application targets. The
 # cache mount never enters a runtime image and is safe to discard at any time.
+# Per-image slice args stay out of this stage so Bake reuses one builder layer
+# for the shared NX_BUILD_PROJECTS union.
 RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
-  PROJECTS="${NX_BUILD_PROJECTS:-${NX_PROJECT:-$RUNTIME_PROJECT}}" \
+  PROJECTS="${NX_BUILD_PROJECTS:-$NX_PROJECT}" \
   && test -n "${PROJECTS}" \
   && node packages/tooling/bin/run-ts-command.mjs \
        packages/tooling/src/runtime/deployment-artifact.ts validate-build "${PROJECTS}" \
@@ -144,7 +155,9 @@ WORKDIR /runtime
 # install. Without this file pnpm rejects a frozen install; allowing it to
 # re-resolve silently discards overrides and can reintroduce fixed CVEs.
 COPY --from=nrb-closure pnpm-workspace.yaml ./pnpm-workspace.yaml
-RUN pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
+RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
+  node -e "const fs=require('node:fs'); const p='pnpm-workspace.yaml'; fs.writeFileSync(p, fs.readFileSync(p,'utf8').replace(/^minimumReleaseAge:\\s*\\d+/mu, 'minimumReleaseAge: 0'));" \
+  && pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
   && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} +
 
 FROM node:${NODE_VERSION} AS backend
@@ -182,7 +195,11 @@ RUN PROJECT="${RUNTIME_PROJECT:-${NX_PROJECT:-site-app}}" \
   && node packages/tooling/bin/run-ts-command.mjs \
        packages/tooling/src/runtime/deployment-artifact.ts stage "${PROJECT}" /site-deploy
 WORKDIR /site-deploy
-RUN pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts \
+RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
+  if [ -f pnpm-workspace.yaml ]; then \
+    node -e "const fs=require('node:fs'); const p='pnpm-workspace.yaml'; fs.writeFileSync(p, fs.readFileSync(p,'utf8').replace(/^minimumReleaseAge:\\s*\\d+/mu, 'minimumReleaseAge: 0'));"; \
+  fi \
+  && pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts \
   && if [ -d node_modules/.pnpm ]; then \
        find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} +; \
      fi
@@ -207,6 +224,7 @@ CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
 FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:44e36330f74d4f3a1d4e222acca9e23b401fb87811a7597024502bb759c4dd49 AS frontend
 ARG NX_PROJECT
+ARG RUNTIME_PROJECT
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
 ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root
@@ -216,7 +234,9 @@ COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
 # Astro emits a hash-based meta CSP for its inline hydration bootstrap. Relax
 # only the landing image's outer nginx policy when that stricter generated
 # policy is present; browsers enforce both policies together.
-RUN if [ "${NX_PROJECT}" = landing-app ]; then \
+# Bake passes RUNTIME_PROJECT (NX_PROJECT is the shared-builder fallback).
+RUN PROJECT="${RUNTIME_PROJECT:-$NX_PROJECT}" \
+  && if [ "${PROJECT}" = landing-app ]; then \
       grep -Eq 'http-equiv="content-security-policy"[^>]+sha256-' /usr/share/nginx/html/index.html \
       && sed -i "s/script-src 'self';/script-src 'self' 'unsafe-inline';/g" /etc/nginx/conf.d/default.conf; \
     fi

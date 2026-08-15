@@ -130,10 +130,12 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
           createdAt: now,
           updatedAt: now,
         });
-        // The template may have been persisted above in the same unit of work;
-        // flush it first, then stage the new version before its channel rows so
-        // FK order holds without relation metadata on the entities.
-        await em.flush();
+        // Existing templates may have dirty identity fields from the branch
+        // above. Flush those before inserting a version that references
+        // template.id. A newly inserted template was already flushed.
+        if (currentVersion) {
+          await em.flush();
+        }
         version = nextVersion;
         versionChannels = params.channels.map(
           (channel) =>

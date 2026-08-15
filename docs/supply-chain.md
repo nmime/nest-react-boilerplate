@@ -159,7 +159,7 @@ Edit `.github/dependabot.yml` to add/remove groupings or change schedules. Keep 
 | Workflow                | Gate                            | What it checks                                      |
 | ----------------------- | ------------------------------- | --------------------------------------------------- |
 | `dependency-review.yml` | `Supported lockfile audit`      | `pnpm audit` on production deps; fails on moderate+ |
-| `ci.yml`                | `Native security gates`         | Secret scanning, SAST                               |
+| `ci.yml`                | `Fast PR gate (ci:pr)`          | Secret scanning, SAST (already inside `ci:pr`)      |
 | `codeql.yml`            | `Analyze JavaScript/TypeScript` | CodeQL semantic analysis                            |
 | `release-images.yml`    | `Trivy vulnerability scan`      | Container image vuln scan (CRITICAL, HIGH)          |
 | `release-images.yml`    | `Cosign keyless sign`           | Image signing attestation                           |

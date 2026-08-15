@@ -272,12 +272,42 @@ requirements:
         lanes:
           - main
           - nightly
+      - kind: operations
+        file: scripts/delivery-inventory.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/build-images.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/update-deploy-tags.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/verify-single-server-ssh.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
       - kind: security
         file: scripts/deploy.spec.mjs
         script: test:scripts
         lanes:
           - main
           - nightly
+      - kind: security
+        file: scripts/verify-single-server-ssh.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
   - id: REQ-RUNTIME-BOUNDARY-010
     projects:
       - '@app/backend-common-network'

@@ -45,4 +45,4 @@ conflicts; only the selected provider's dependency set is installed.
 `pnpm nrb doctor` plus the closure checks enforce provider pairing; the
 durable-provider proof matrix is documented in `docs/testing.md`, and the
 migrator fail-closed contract is covered by the deployment validation specs
-(`pnpm run test:deploy`).
+(`pnpm run deploy:validate`).

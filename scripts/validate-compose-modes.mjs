@@ -437,7 +437,15 @@ const assertResolvedNamedContexts = (model, label) => {
     );
   }
 };
-assertResolvedNamedContexts(productionSourceBuildModel, 'production source-build Compose');
+const productionSourceBuildServices = Object.values(productionSourceBuildModel.services);
+assert.ok(
+  productionSourceBuildServices.length > 0,
+  'production source-build Compose must still render product services.',
+);
+assert.ok(
+  productionSourceBuildServices.every((service) => !service.build && service.image),
+  'production source-build Compose must use already-baked image refs; Bake compiles, Compose does not.',
+);
 
 const renderSelected = (provider, environment = {}) => {
   const result = spawnSync(

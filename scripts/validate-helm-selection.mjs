@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { helmAppKeys } from './delivery-inventory.mjs';
 
 const rootDir = resolve(import.meta.dirname, '..');
 const chartDir = join(rootDir, '.helm');
@@ -14,20 +15,7 @@ if (outputOptionIndex >= 0 && !allReferenceOutputDirectory) {
   throw new Error('--write-all-reference-dir requires a directory.');
 }
 
-const appKeys = {
-  'admin-app': 'adminApp',
-  'admin-app-api': 'adminAppApi',
-  'auth-app-api': 'authAppApi',
-  'discord-app-api': 'discordAppApi',
-  'landing-app': 'landingApp',
-  'mobile-app': 'mobileApp',
-  'notification-consumer': 'notificationConsumer',
-  'notification-scheduler': 'notificationScheduler',
-  'site-app': 'siteApp',
-  'telegram-bot-api': 'telegramBotApi',
-  'user-app': 'userApp',
-  'user-app-api': 'userAppApi',
-};
+const appKeys = helmAppKeys;
 
 function selectionValues(name, apps, provider = '', directory = temporaryDirectory) {
   const selected = new Set(apps);

@@ -16,7 +16,8 @@
       "executor": "nx:run-commands",
       "cache": false,
       "options": {
-        "command": "playwright test --config apps/e2e/fullstack/playwright.config.ts"
+        "command": "playwright test --config apps/e2e/fullstack/playwright.config.ts",
+        "forwardAllArgs": false
       },
       "inputs": [
         "default",

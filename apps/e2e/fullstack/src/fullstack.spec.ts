@@ -273,7 +273,21 @@ test('landing journey exposes public destinations at the 320px viewport floor', 
   await expectPageQuality(page, 'landing app');
 
   const userAppLink = page.getByRole('link', { name: 'Preview user app' });
-  await expect(userAppLink).toHaveAttribute('href', urls.userApp);
+  // SSR emits same-origin `/app`; the container rewrites /runtime-config.js
+  // so the island can point at the isolated Docker user-app origin after hydrate.
+  await expect
+    .poll(async () => {
+      const runtimeConfig = await page.evaluate(async () => {
+        const response = await fetch('/runtime-config.js');
+        return { status: response.status, text: await response.text() };
+      });
+      expect(runtimeConfig.status, 'landing runtime-config.js must be served').toBe(200);
+      expect(runtimeConfig.text, 'landing runtime-config.js must publish the Docker user-app origin').toContain(
+        urls.userApp,
+      );
+      return userAppLink.getAttribute('href');
+    })
+    .toBe(urls.userApp);
   await focusWithKeyboard(page, userAppLink, 'landing user-app link', browserName);
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`${urls.userApp}/`);

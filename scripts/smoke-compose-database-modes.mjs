@@ -83,23 +83,10 @@ for (const [path, value] of [
 }
 
 const baseFiles = ['-f', 'docker/docker-compose.prod.yml'];
-// This smoke test intentionally builds the migration image from source. Normal
-// production invocations use the image-only base through compose-production.
-const sourceBuildFiles = ['-f', 'docker/docker-compose.prod.build.yml'];
-const bundledFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.bundled-db.yml', ...sourceBuildFiles];
-const externalFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.external-db.yml', ...sourceBuildFiles];
-const bundledMongoFiles = [
-  ...baseFiles,
-  '-f',
-  'docker/docker-compose.prod.mongodb-bundled-db.yml',
-  ...sourceBuildFiles,
-];
-const externalMongoFiles = [
-  ...baseFiles,
-  '-f',
-  'docker/docker-compose.prod.mongodb-external-db.yml',
-  ...sourceBuildFiles,
-];
+const bundledFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.bundled-db.yml'];
+const externalFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.external-db.yml'];
+const bundledMongoFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.mongodb-bundled-db.yml'];
+const externalMongoFiles = [...baseFiles, '-f', 'docker/docker-compose.prod.mongodb-external-db.yml'];
 const commonEnv = {
   ...process.env,
   SESSION_SECRET_FILE: sessionSecretPath,
@@ -156,6 +143,32 @@ const run = (args, options = {}) => {
 const compose = (project, files, args, options) =>
   run(['compose', '--project-name', project, ...files, ...args], options);
 
+const bakeMigrator = (provider) => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      'scripts/build-images.mjs',
+      '--only',
+      'migrator',
+      '--all-reference',
+      '--provider',
+      provider,
+      '--registry',
+      commonEnv.IMAGE_REGISTRY,
+      '--tag',
+      commonEnv.IMAGE_TAG,
+    ],
+    {
+      cwd: rootDir,
+      env: { ...commonEnv, NRB_CLOSURE_CONTEXT: activeClosureContext },
+      stdio: 'inherit',
+    },
+  );
+  if ((result.status ?? 1) !== 0) {
+    throw new Error(`Bake migrator (${provider}) exited with ${result.status ?? 'unknown status'}`);
+  }
+};
+
 const waitFor = async (label, check) => {
   const deadline = Date.now() + 120_000;
   let last = 'not ready';
@@ -175,8 +188,12 @@ const waitFor = async (label, check) => {
 let exitCode = 0;
 let bundledMongoStarted = false;
 try {
-  console.log('building production PostgreSQL migrator from its provider reference context');
-  compose(bundledProject, bundledFiles, ['build', 'migrate']);
+  if (process.env.NRB_IMAGE_COMPILE === '1' || process.env.NRB_IMAGE_COMPILE === 'true') {
+    console.log('building production PostgreSQL migrator from its provider reference context');
+    bakeMigrator('postgres');
+  } else {
+    console.log('compose-mode smoke: skipping migrator compile (set NRB_IMAGE_COMPILE=1 to bake)');
+  }
   const runtimeUid = compose(
     bundledProject,
     bundledFiles,
@@ -221,8 +238,12 @@ try {
   compose(externalProject, externalFiles, ['run', '--rm', '--no-deps', 'migrate']);
 
   activeClosureContext = mongodbClosureContext;
-  console.log('building production MongoDB migrator from its provider reference context');
-  compose(bundledMongoProject, bundledMongoFiles, ['build', 'migrate']);
+  if (process.env.NRB_IMAGE_COMPILE === '1' || process.env.NRB_IMAGE_COMPILE === 'true') {
+    console.log('building production MongoDB migrator from its provider reference context');
+    bakeMigrator('mongodb');
+  } else {
+    console.log('compose-mode smoke: skipping MongoDB migrator compile (set NRB_IMAGE_COMPILE=1 to bake)');
+  }
   console.log('smoke: bundled transaction-capable MongoDB topology');
   bundledMongoStarted = true;
   // Let MongoDB consume its full health retry budget before Compose evaluates mongodb-init.
@@ -265,7 +286,7 @@ try {
     externalMongoContainer,
     '--network',
     `${externalMongoProject}_app`,
-    'mongo:8.0.12-noble',
+    'mongo:8.0.28-noble',
     '--replSet',
     'rs0',
     '--bind_ip_all',

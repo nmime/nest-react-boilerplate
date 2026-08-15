@@ -1,4 +1,5 @@
 import { Migration } from '@mikro-orm/migrations';
+import { tenantRowLevelSecurityDownSql } from '@app/backend-common-tenant-policy';
 
 /** Versioned notification templates, audience segments, and durable broadcast orchestration. */
 export class Migration20260721160000AdminNotificationBroadcasts extends Migration {
@@ -304,6 +305,11 @@ export class Migration20260721160000AdminNotificationBroadcasts extends Migratio
     `);
     this.addSql('drop table if exists "notification_template_version_channels" cascade;');
     this.addSql('drop table if exists "notification_template_versions" cascade;');
+    // Rolling the later RLS-reversal migration back reinstalls policies that
+    // depend on tenant_id. Drop them before the column, or down({ to: 0 }) fails.
+    for (const statement of tenantRowLevelSecurityDownSql('notification_templates')) {
+      this.addSql(statement);
+    }
     this.addSql(`alter table "notification_templates"
       drop column if exists "tenant_id", drop column if exists "name", drop column if exists "source",
       drop column if exists "status", drop column if exists "current_version_id",

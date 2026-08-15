@@ -13,6 +13,7 @@
 // been taught to sequence; the CI lanes had not.
 
 import { spawnSync } from 'node:child_process';
+import { imageCompileRequested } from '../image-compile.mjs';
 
 const composeFile = process.env.COMPOSE_FILE_PATH ?? 'docker/docker-compose.yml';
 const startAttempts = Number.parseInt(process.env.START_ATTEMPTS ?? '3', 10);
@@ -154,13 +155,14 @@ export function composeStartupPlan(config) {
  * final `up` would rebuild everything it starts and undo the sequencing's whole point. With no plan
  * there is nothing to sequence against, so the whole-stack build-and-start is kept as it was.
  */
-export function startupCommands({ composeFile: file, plan }) {
+export function startupCommands({ composeFile: file, plan, compile = imageCompileRequested() }) {
+  const compileStep = compile ? [['scripts/build-images.mjs']] : [];
   if (plan === undefined) {
-    return [['compose', '-f', file, 'up', '-d', '--build']];
+    return [...compileStep, ['compose', '-f', file, 'up', '-d', '--no-build']];
   }
 
   return [
-    ['compose', '-f', file, 'build'],
+    ...compileStep,
     ...plan.map((step) =>
       step.kind === 'run'
         ? ['compose', '-f', file, 'run', '--rm', '--no-deps', ...step.services]
@@ -300,8 +302,10 @@ function startStack() {
   }
 
   for (const args of startupCommands({ composeFile, plan })) {
-    process.stdout.write(`+ docker ${args.join(' ')}\n`);
-    if (docker(args).status !== 0) {
+    const isBake = args[0] === 'scripts/build-images.mjs';
+    process.stdout.write(`+ ${isBake ? `${process.execPath} ` : 'docker '}${args.join(' ')}\n`);
+    const result = isBake ? spawnSync(process.execPath, args, { encoding: 'utf8', stdio: 'inherit' }) : docker(args);
+    if (result.status !== 0) {
       return false;
     }
   }

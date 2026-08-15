@@ -258,6 +258,7 @@ services:
 
   migrate:
     profiles: [postgres]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/migrator:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: migrator
@@ -270,6 +271,7 @@ services:
 
   mongodb-migrate:
     profiles: [mongodb]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/migrator:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: migrator
@@ -284,6 +286,7 @@ services:
 
   admin-app-api:
     profiles: [admin-app-api]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/admin-app-api:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: backend
@@ -301,6 +304,7 @@ services:
 
   user-app-api:
     profiles: [user-app-api]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/user-app-api:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: backend
@@ -318,6 +322,7 @@ services:
 
   auth-app-api:
     profiles: [auth-app-api]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/auth-app-api:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: backend
@@ -335,6 +340,7 @@ services:
 
   discord-app-api:
     profiles: [discord-app-api]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/discord-app-api:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: backend
@@ -362,6 +368,7 @@ services:
 
   telegram-bot-api:
     profiles: [telegram-bot-api]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/telegram-bot-api:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: backend
@@ -389,6 +396,7 @@ services:
 
   notification-scheduler:
     profiles: [notification-scheduler]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/notification-scheduler:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: backend
@@ -401,6 +409,7 @@ services:
 
   notification-consumer:
     profiles: [notification-consumer]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/notification-consumer:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: backend
@@ -413,6 +422,7 @@ services:
 
   admin-app:
     profiles: [admin-app]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/admin-app:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: frontend
@@ -436,6 +446,7 @@ services:
 
   user-app:
     profiles: [user-app]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/user-app:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: frontend
@@ -459,6 +470,7 @@ services:
 
   landing-app:
     profiles: [landing-app]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/landing-app:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: frontend
@@ -469,7 +481,7 @@ services:
     restart: unless-stopped
     environment:
       <<: *frontend-runtime-env
-      FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: ${FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP:-false}
+      FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: ${FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP:-true}
       LANDING_USER_APP_URL: ${LANDING_USER_APP_URL:-}
       LANDING_ADMIN_APP_URL: ${LANDING_ADMIN_APP_URL:-}
     ports:
@@ -480,6 +492,7 @@ services:
 
   site-app:
     profiles: [site-app]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/site-app:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: site-runtime
@@ -503,6 +516,7 @@ services:
 
   mobile-app:
     profiles: [mobile-app]
+    image: ${NRB_IMAGE_PREFIX:-nrb}/mobile-app:${NRB_IMAGE_TAG:-local}
     build:
       <<: *nrb-build
       target: frontend

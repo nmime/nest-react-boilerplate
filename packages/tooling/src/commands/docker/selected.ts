@@ -165,9 +165,23 @@ export async function runSelectedCompose(workspaceRoot = process.cwd(), composeA
     .filter(Boolean);
   validateSelectedComposeServices(provider, closure.services, services);
 
+  const compileRequested = process.env.NRB_IMAGE_COMPILE === '1' || process.env.NRB_IMAGE_COMPILE === 'true';
+  const requested = composeArgs.length > 0 ? [...composeArgs] : ['up', '--no-build'];
+  if (requested.includes('--build')) {
+    throw new Error(
+      'Product images compile through `NRB_IMAGE_COMPILE=1 node scripts/build-images.mjs`, not `docker compose --build`.',
+    );
+  }
+  if (compileRequested && (requested[0] === 'up' || requested.length === 0)) {
+    await run(process.execPath, ['scripts/build-images.mjs'], {
+      cwd: workspaceRoot,
+      env: commandEnvironment,
+      stdio: 'inherit',
+    });
+  }
   await run(
     'docker',
-    ['compose', '--env-file', environmentPath, '-f', composePath, ...(composeArgs.length > 0 ? composeArgs : ['up', '--build'])],
+    ['compose', '--env-file', environmentPath, '-f', composePath, ...requested],
     {
       cwd: workspaceRoot,
       env: commandEnvironment,

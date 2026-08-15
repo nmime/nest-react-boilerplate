@@ -396,16 +396,16 @@
     },
     {
       "id": "docker-smoke",
-      "description": "Docker smoke stack over the materialized reference build contexts.",
-      "commands": ["pnpm run test:docker-smoke"],
+      "description": "Production Compose renders without compiling product images.",
+      "commands": ["pnpm run docker:prod:config:check", "node scripts/validate-compose-modes.mjs"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
       "jobs": { "github": "docker-smoke", "gitlab": "docker-smoke-test" }
     },
     {
       "id": "compose-deployment-modes",
-      "description": "Production Compose database-mode matrix.",
-      "commands": ["pnpm run test:compose-deployment-modes"],
+      "description": "Production Compose database-mode matrix renders without compiling images.",
+      "commands": ["node scripts/validate-compose-modes.mjs"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
       "jobs": { "github": "docker-smoke", "gitlab": "docker-smoke-test" }
@@ -413,34 +413,34 @@
     {
       "id": "world-class-ops",
       "description": "Runtime-backed load, chaos, disaster-recovery, observability, and canary gates.",
-      "commands": ["pnpm run test:world-class"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
-      "jobs": { "github": "ops-gates", "gitlab": "ops-gates" }
+      "commands": ["pnpm run quality:presets", "pnpm run test:world-class"],
+      "lanes": ["nightly"],
+      "requiredForMerge": false,
+      "jobs": { "github": "presets", "gitlab": "ops-gates" }
     },
     {
       "id": "accessibility",
       "description": "Axe accessibility scan against the running frontends.",
-      "commands": ["pnpm run test:a11y"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
-      "jobs": { "github": "ops-gates", "gitlab": "ops-gates" }
+      "commands": ["pnpm run test:a11y", "pnpm run quality:presets"],
+      "lanes": ["nightly"],
+      "requiredForMerge": false,
+      "jobs": { "github": "presets", "gitlab": "ops-gates" }
     },
     {
       "id": "fullstack-e2e-postgres",
       "description": "Fullstack Playwright e2e against the PostgreSQL closure.",
       "commands": ["pnpm run test:fullstack"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
-      "jobs": { "github": "fullstack-e2e", "gitlab": "docker-fullstack" }
+      "lanes": ["nightly"],
+      "requiredForMerge": false,
+      "jobs": { "github": "presets", "gitlab": "docker-fullstack" }
     },
     {
       "id": "fullstack-e2e-mongodb",
       "description": "Fullstack Playwright e2e against the MongoDB closure.",
       "commands": ["pnpm run test:fullstack"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
-      "jobs": { "github": "fullstack-e2e", "gitlab": "docker-fullstack-mongodb" }
+      "lanes": ["nightly"],
+      "requiredForMerge": false,
+      "jobs": { "github": "presets", "gitlab": "docker-fullstack-mongodb" }
     },
     {
       "id": "release-image-build",

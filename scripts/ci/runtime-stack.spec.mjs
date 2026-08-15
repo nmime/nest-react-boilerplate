@@ -127,9 +127,16 @@ describe('runtime stack startup commands', () => {
 
   // Without a selection there is nothing to sequence against, so the whole-stack start is still
   // the right behaviour -- but it must build, which the per-step `up --no-build` does not.
-  it('builds and starts the whole stack when no selection is declared', () => {
+  it('starts without compiling images by default', () => {
     assert.deepEqual(startupCommands({ composeFile, plan: undefined }), [
-      ['compose', '-f', composeFile, 'up', '-d', '--build'],
+      ['compose', '-f', composeFile, 'up', '-d', '--no-build'],
+    ]);
+  });
+
+  it('compiles through Bake only when image compile is requested', () => {
+    assert.deepEqual(startupCommands({ composeFile, plan: undefined, compile: true }), [
+      ['scripts/build-images.mjs'],
+      ['compose', '-f', composeFile, 'up', '-d', '--no-build'],
     ]);
   });
 
@@ -141,7 +148,6 @@ describe('runtime stack startup commands', () => {
     ];
 
     assert.deepEqual(startupCommands({ composeFile, plan }), [
-      ['compose', '-f', composeFile, 'build'],
       ['compose', '-f', composeFile, 'up', '--no-build', '-d', '--wait', 'postgres'],
       ['compose', '-f', composeFile, 'run', '--rm', '--no-deps', 'migrate'],
       ['compose', '-f', composeFile, 'up', '--no-build', '-d', 'auth-app-api', 'user-app-api'],

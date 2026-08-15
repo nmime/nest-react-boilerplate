@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -22,6 +23,21 @@ import {
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dockerAvailable = spawnSync('docker', ['info'], { cwd: root, stdio: 'ignore' }).status === 0;
+const mongoUriParserAvailable = (() => {
+  try {
+    createRequire(import.meta.url).resolve('mongodb-connection-string-url');
+    return true;
+  } catch {
+    return false;
+  }
+})();
+const skipWithoutMongoUriParser = (context) => {
+  if (!mongoUriParserAvailable) {
+    context.skip('mongodb-connection-string-url is outside the selected PostgreSQL closure');
+    return true;
+  }
+  return false;
+};
 
 const allApps = [
   'admin-app',
@@ -252,7 +268,6 @@ test('compose passes the product brand to every frontend service', () => {
 // title, the icon and the embedding chrome, whatever the deployment sets.
 test('the image bakes a build-time product brand for source builds', () => {
   const dockerfile = readFileSync(resolve(root, 'Dockerfile'), 'utf8');
-  const overlay = readFileSync(resolve(root, 'docker/docker-compose.prod.build.yml'), 'utf8');
 
   for (const variable of productBrandVariables.map((name) => `VITE_${name}`)) {
     assert.match(dockerfile, new RegExp(`^ARG ${variable}$`, 'mu'), `the builder stage must accept ${variable}`);
@@ -260,19 +275,6 @@ test('the image bakes a build-time product brand for source builds', () => {
       dockerfile,
       new RegExp(`${variable}=\\$\\{${variable}\\}`, 'u'),
       `${variable} must reach the Vite build as an environment variable`,
-    );
-    assert.match(
-      overlay,
-      new RegExp(`${variable}: \\$\\{${variable}`, 'u'),
-      `the source-build overlay must forward ${variable}`,
-    );
-  }
-  // mobile-app ships the same SPA image, so a brand it cannot take is the same defect there.
-  for (const service of [...frontendServices, 'mobile-app']) {
-    assert.match(
-      serviceBlock(overlay, service),
-      /\*frontend-build-args/u,
-      `${service} must take the shared browser build arguments that carry the brand`,
     );
   }
 });
@@ -492,6 +494,7 @@ test('models database engine independently from bundled or external ownership', 
     ['mongodb', 'external-db', 'docker/docker-compose.prod.mongodb-external-db.yml'],
   ];
   for (const [engine, ownership, overlay] of combinations) {
+    if (engine === 'mongodb' && !mongoUriParserAvailable) continue;
     const invocation = buildComposeInvocation(
       ['config', '--env-file=.env.production.example', `--engine=${engine}`, `--database=${ownership}`],
       {
@@ -521,6 +524,7 @@ test('models database engine independently from bundled or external ownership', 
 });
 
 test('requires an explicit replica set in an external MongoDB secret URI', (context) => {
+  if (skipWithoutMongoUriParser(context)) return;
   assert.equal(
     validateExternalMongoUri('mongodb+srv://cluster.example/app?replicaSet=atlas-rs').protocol,
     'mongodb+srv:',
@@ -593,6 +597,7 @@ test('requires an explicit replica set in an external MongoDB secret URI', (cont
 });
 
 test('rejects reused MongoDB production principal identities', (context) => {
+  if (skipWithoutMongoUriParser(context)) return;
   assert.throws(
     () =>
       buildComposeInvocation(
@@ -773,10 +778,10 @@ test('edge routes fall back to default when only non-edge profiles are set', () 
   assert.equal(invocation.env.EDGE_OPTIONAL_ROUTES, 'default');
 });
 
-test('COMPOSE_IMAGE_SOURCE=local adds the build overlay and builds on up', () => {
+test('COMPOSE_IMAGE_SOURCE=local starts from already-baked images', () => {
   const invocation = buildComposeInvocation(['up', '--env-file=.env.production.example', '--images=local'], {});
-  assert.ok(invocation.files.includes('docker/docker-compose.prod.build.yml'));
-  assert.ok(invocation.args.includes('--build'));
+  assert.ok(!invocation.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(invocation.args.includes('--no-build'));
   assert.equal(invocation.imageSource, 'local');
 });
 
@@ -788,10 +793,12 @@ test('image source defaults to registry and never becomes a required env key', (
   assert.ok(invocation.args.includes('--no-build'));
 });
 
-test('the build action still loads the build overlay regardless of image source', () => {
-  // package.json docker:prod:build passes no flags and is a doc-pinned CI gate.
+test('the build action compiles through Bake, not Compose', () => {
   const invocation = buildComposeInvocation(['build', '--env-file=.env.production.example'], {});
-  assert.ok(invocation.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(invocation.imageBuild, 'build must return a Bake plan');
+  assert.deepEqual(invocation.args.slice(0, 4), ['buildx', 'bake', '-f', 'docker-bake.json']);
+  assert.ok(invocation.args.includes('--load'));
+  assert.ok(!invocation.files.includes('docker/docker-compose.prod.build.yml'));
 });
 
 test('env-provided image source is honoured without a CLI flag', () => {
@@ -799,7 +806,7 @@ test('env-provided image source is honoured without a CLI flag', () => {
     COMPOSE_IMAGE_SOURCE: 'local',
   });
   assert.equal(invocation.imageSource, 'local');
-  assert.ok(invocation.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(!invocation.files.includes('docker/docker-compose.prod.build.yml'));
 });
 
 test('rejects an unknown image source', () => {
@@ -855,7 +862,8 @@ test('uses immutable images by default and enables source builds only explicitly
 
   const build = buildComposeInvocation(['build', '--env-file=.env.production.example'], {}, sourceContextDependencies);
   assert.equal(build.sourceBuild, true);
-  assert.ok(build.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(build.imageBuild);
+  assert.ok(build.args.includes('--load'));
   assert.equal(build.env.NRB_CLOSURE_CONTEXT, '/tmp/nrb-selected-closure');
 
   const sourceUp = buildComposeInvocation(
@@ -864,17 +872,12 @@ test('uses immutable images by default and enables source builds only explicitly
     sourceContextDependencies,
   );
   assert.equal(sourceUp.sourceBuild, true);
-  assert.ok(sourceUp.files.includes('docker/docker-compose.prod.build.yml'));
-  assert.ok(sourceUp.args.includes('--build'));
-  assert.ok(!sourceUp.args.includes('--no-build'));
+  assert.ok(!sourceUp.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(sourceUp.args.includes('--no-build'));
 
   assert.throws(
-    () => buildComposeInvocation(['up', '--env-file=.env.production.example', '--source-build', '--no-build'], {}),
-    /cannot be used together/u,
-  );
-  assert.throws(
     () => buildComposeInvocation(['up', '--env-file=.env.production.example', '--build'], {}),
-    /--source-build/u,
+    /build-images/u,
   );
 });
 

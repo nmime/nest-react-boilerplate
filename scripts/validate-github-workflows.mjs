@@ -158,7 +158,7 @@ const enforcedJobs = new Set(
 );
 
 for (const job of ciJobNames) {
-  if (job === 'ci-status-summary') continue;
+  if (job === 'ci-status-summary' || job === 'presets') continue;
   assert.ok(awaitedJobs.has(job), `ci.yml ci-status-summary needs must include every gate job; missing: ${job}`);
   assert.ok(enforcedJobs.has(job), `ci.yml REQUIRED_RESULTS must enforce every gate job; missing: ${job}`);
 }
@@ -434,14 +434,9 @@ assert.ok(
 
 const gitlabDockerSmokeJob = gitlabJob('docker-smoke-test', 'docker-fullstack');
 assertOrderedCommands('docker-smoke-test', gitlabDockerSmokeJob, [
-  'pnpm nrb closure materialize --all-reference --provider postgres',
-  'pnpm nrb closure materialize --all-reference --provider mongodb',
-  'pnpm run test:docker-smoke',
+  'pnpm run docker:prod:config:check',
+  'node scripts/validate-compose-modes.mjs',
 ]);
-assert.ok(
-  gitlabDockerSmokeJob.includes("NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/reference/postgres'"),
-  '.gitlab-ci.yml Docker smoke must pass its explicit PostgreSQL all-reference context.',
-);
 
 const gitlabPostgresFullstackJob = gitlabJob('docker-fullstack', 'docker-fullstack-mongodb');
 assertOrderedCommands('docker-fullstack', gitlabPostgresFullstackJob, [
@@ -484,7 +479,7 @@ for (const staleOverride of [
 
 for (const [command, expectedCount] of [
   ['pnpm run deploy:validate:helm', 1],
-  ['pnpm run test:docker-smoke', 1],
+  ['pnpm run docker:prod:config:check', 1],
   ['pnpm run test:fullstack', 2],
 ]) {
   assert.equal(
@@ -632,13 +627,10 @@ const assertDirectComposeBuildContext = (workflowName, job) => {
     `${workflowName} must materialize its closure context before starting the stack.`,
   );
 };
-const opsGatesJob = ci.slice(ci.indexOf('  ops-gates:'), ci.indexOf('  fullstack-e2e:'));
 const qualityPresetsJob = qualityPresets.slice(qualityPresets.indexOf('  presets:'));
-assertDirectComposeBuildContext('ci.yml ops-gates', opsGatesJob);
 assertDirectComposeBuildContext('quality-presets.yml presets', qualityPresetsJob);
 assertDirectComposeBuildContext('spec-assurance-nightly.yml assurance', nightlyAssurance);
 for (const [workflowName, workflowText] of [
-  ['ci.yml', opsGatesJob],
   ['quality-presets.yml', qualityPresetsJob],
   ['spec-assurance-nightly.yml', nightlyAssurance],
 ]) {
@@ -683,10 +675,7 @@ assert.ok(
 );
 const runtimeComposeProfiles =
   'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app';
-for (const [workflowName, workflowText] of [
-  ['ci.yml', ci],
-  ['quality-presets.yml', qualityPresets],
-]) {
+for (const [workflowName, workflowText] of [['quality-presets.yml', qualityPresets]]) {
   assert.ok(
     /ADMIN_BOOTSTRAP_ENABLED:\s*['"]true['"]/u.test(workflowText),
     `${workflowName} runtime QA stack must enable the e2e bootstrap admin`,
@@ -754,13 +743,11 @@ for (const required of [
   'packages/tooling/src/commands/db/mongo-migrate.component.test.ts',
   '--projects=@app/backend-mongodb-main,@app/backend-mongodb-main-auth,@app/backend-mongodb-main-feature-flags,@app/backend-mongodb-main-notification',
   '--projects=@app/backend-feature-auth-main,@app/backend-feature-admin-main,@app/backend-feature-notification-main',
-  'database: postgres',
-  'database: mongodb',
-  'setup_args: --replace --app fullstack-e2e --capability postgres --non-interactive',
-  'setup_args: --replace --app fullstack-e2e --capability mongodb --non-interactive',
-  'Materialize clean selected fullstack closure',
 ]) {
   assert.ok(ci.includes(required), `ci.yml missing MongoDB validation contract: ${required}`);
+}
+for (const required of ['pnpm run test:fullstack', 'pnpm run test:docker-smoke', "NRB_IMAGE_COMPILE: '1'"]) {
+  assert.ok(qualityPresets.includes(required), `Nightly quality-presets missing compiled-image runtime: ${required}`);
 }
 assert.ok(
   ci.includes('pnpm exec nx run @app/backend-feature-auth-test:component-test'),
@@ -808,13 +795,8 @@ for (const required of [
 ]) {
   assert.ok(ci.includes(required), `ci.yml missing non-runtime validation gate: ${required}`);
 }
-for (const required of [
-  'Materialize explicit provider reference build contexts',
-  'pnpm nrb closure materialize --all-reference --provider postgres',
-  'pnpm nrb closure materialize --all-reference --provider mongodb',
-  'NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres',
-]) {
-  assert.ok(ci.includes(required), `Docker smoke CI missing explicit named closure context wiring: ${required}`);
+for (const required of ['pnpm run docker:prod:config:check', 'node scripts/validate-compose-modes.mjs']) {
+  assert.ok(ci.includes(required), `Docker validation CI missing render-only check: ${required}`);
 }
 for (const required of ['pnpm run tooling:install', 'Install clean product-selected closure']) {
   assert.ok(

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { resolve } from "node:path";
 import { run, skipWhenDockerUnavailable } from "./runtime.ts";
 import { smokeProbes } from "./smoke-probes.ts";
 
@@ -83,6 +84,9 @@ const env = {
   COMPOSE_PARALLEL_LIMIT: composeParallelLimit,
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? "false",
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? "1",
+  // Development Compose interpolates nrb-closure even for --no-build config.
+  NRB_CLOSURE_CONTEXT:
+    process.env.NRB_CLOSURE_CONTEXT ?? resolve(process.cwd(), ".nrb/closure"),
   NX_DAEMON: "false",
   NX_PARALLEL: process.env.NX_PARALLEL ?? "1",
   CORS_ORIGINS: process.env.CORS_ORIGINS ?? frontendOrigins,
@@ -133,17 +137,22 @@ async function composeUpServices(label: string, services: string[]): Promise<voi
 }
 
 async function buildServices(services: string[]): Promise<void> {
-  const args = [...compose, 'build', ...services];
+  const bakeNames = [
+    ...new Set(
+      services.map((service) => (service === 'migrate' || service === 'mongodb-migrate' ? 'migrator' : service)),
+    ),
+  ];
+  const args = ['scripts/build-images.mjs', '--only', bakeNames.join(',')];
   try {
-    await run('docker', args, { stdio: 'inherit', env });
+    await run(process.execPath, args, { stdio: 'inherit', env });
   } catch (error) {
     console.warn(
-      `docker compose parallel build reported a transient failure; retrying once: ${
+      `Bake image compile reported a transient failure; retrying once: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
     await new Promise((resolve) => setTimeout(resolve, 5000));
-    await run('docker', args, { stdio: 'inherit', env });
+    await run(process.execPath, args, { stdio: 'inherit', env });
   }
 }
 
@@ -190,7 +199,11 @@ try {
   console.log(
     `docker smoke project=${env.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`,
   );
-  await buildServices(stackServices);
+  if (process.env.NRB_IMAGE_COMPILE === "1" || process.env.NRB_IMAGE_COMPILE === "true") {
+    await buildServices(stackServices);
+  } else {
+    console.log("docker smoke: skipping image compile (set NRB_IMAGE_COMPILE=1 to bake)");
+  }
   await composeUp();
   for (const probe of probes.filter(({ tier }) => tier === "backend")) await waitForProbe(probe);
   await composeUpServices("frontend", frontendServices);

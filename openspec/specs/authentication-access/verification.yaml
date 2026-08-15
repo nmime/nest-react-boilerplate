@@ -51,7 +51,9 @@ requirements:
     projects:
       - auth-app-api
       - user-app-api
+      - '@app/backend-feature-admin-main'
       - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-auth-shared'
       - '@app/backend-feature-auth-test'
       - '@app/backend-postgres-main-auth'
     risk: critical
@@ -71,6 +73,26 @@ requirements:
       - kind: vitest
         file: libs/backend/feature/auth/main/lib/src/interfaces/http/persistent-session-access.guard.spec.ts
         target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
+      # One rule, three enforcement points. Each guard is listed on its own so a session admitted
+      # by one API and rejected by another fails the requirement rather than passing unnoticed.
+      - kind: vitest
+        file: libs/backend/feature/auth/shared/lib/src/session-account-access.spec.ts
+        target: '@app/backend-feature-auth-shared:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/backend/user/user-app-api/src/user-database-session-access.guard.spec.ts
+        target: 'user-app-api:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/admin/main/lib/src/interfaces/http/admin-database-access.guard.spec.ts
+        target: '@app/backend-feature-admin-main:test'
         lanes:
           - pr
           - main

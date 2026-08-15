@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-PROFILE-006
+// @requirements REQ-AUTH-PROFILE-006 REQ-AUTH-SESSION-002
 import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
@@ -23,7 +23,7 @@ function contextFor(request: AuthenticatedRequest) {
 }
 
 function dependencies(input?: {
-  user?: { status: string } | null;
+  user?: { status: string; credentialRevision?: number } | null;
   userError?: boolean;
   accessError?: boolean;
   public?: boolean;
@@ -65,6 +65,24 @@ describe(UserDatabaseSessionAccessGuard.name, () => {
     await expect(
       dependencies({ user: { status: 'disabled' } }).guard.canActivate(contextFor({ session: { user: principal } })),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  // A password reset advances the account's credential epoch. Every guard that reloads the account
+  // has to compare it, or the reset revokes the session on one API and leaves it live on this one.
+  it('rejects a session minted before the account changed its credentials', async () => {
+    const { guard, roles } = dependencies({ user: { status: 'active', credentialRevision: 2 } });
+
+    await expect(
+      guard.canActivate(contextFor({ session: { user: { ...principal, credentialRevision: 1 } } })),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(roles.resolveEffectiveAccess).not.toHaveBeenCalled();
+  });
+
+  it('admits a session that carries the account current credential epoch', async () => {
+    const { guard } = dependencies({ user: { status: 'active', credentialRevision: 2 } });
+    const request: AuthenticatedRequest = { session: { user: { ...principal, credentialRevision: 2 } } };
+
+    await expect(guard.canActivate(contextFor(request))).resolves.toBe(true);
   });
 
   it('fails closed when the identity or RBAC lookup fails', async () => {

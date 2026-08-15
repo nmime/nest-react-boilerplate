@@ -74,34 +74,53 @@ export interface FullstackStartupStep {
 }
 
 /**
- * One-shot services that must finish before anything else starts, in the order they must finish in.
+ * One-shot services the database's own healthcheck depends on.
  *
- * The replica-set bootstrap is MongoDB's alone; the migrator is named by the selection, so a
- * provider added later contributes its own without touching this list.
+ * MongoDB's healthcheck asks whether the node is a writable primary, and a `--replSet` mongod only
+ * becomes one once `rs.initiate()` has run. That makes the bootstrap a *precondition* of health
+ * rather than a consumer of it, which is why it cannot be lumped in with the migrator below: gating
+ * on health first would wait for a state only a later step can produce.
  */
-function preparationServices(selection: FullstackSelection): string[] {
+function bootstrapServices(selection: FullstackSelection): string[] {
   const bootstrap = selection.provider === 'mongodb' ? ['mongodb-init'] : [];
-  return [...bootstrap, selection.migrationService].filter((service) => selection.services.includes(service));
+  return bootstrap.filter((service) => selection.services.includes(service));
 }
 
 /**
- * The order the stack has to start in: the database, held until it is healthy, then each one-shot
- * preparation service in turn, then everything else.
+ * The order the stack has to start in: the database, whatever its health depends on, the health gate
+ * itself, then the migrator, then everything else.
  *
  * `docker compose up -d` honours `depends_on` ordering but does not wait for a one-shot container to
  * *exit*, so an application whose only declared dependency is the database boots against an
- * unmigrated schema and fails somewhere unrelated. Only the MongoDB lane used to be sequenced, and
- * it was sequenced by hand in the compose driver, which left PostgreSQL racing its own migrator.
- * Deriving the order from the selection covers both providers with one rule.
+ * unmigrated schema and fails somewhere unrelated. Deriving the order from the selection covers both
+ * providers with one rule.
  */
 export function fullstackStartupPlan(selection: FullstackSelection): FullstackStartupStep[] {
-  const oneShots = preparationServices(selection);
-  const sequenced = new Set([selection.databaseService, ...oneShots]);
+  const bootstrap = bootstrapServices(selection);
+  const migrations = [selection.migrationService].filter((service) => selection.services.includes(service));
+  const sequenced = new Set([selection.databaseService, ...bootstrap, ...migrations]);
   const remaining = selection.services.filter((service) => !sequenced.has(service));
+  const healthGate: FullstackStartupStep = {
+    kind: 'up',
+    services: [selection.databaseService],
+    waitForHealthy: true,
+  };
+
+  // With no bootstrap to run first, the health gate *is* the first start. With one, the database has
+  // to be up before the bootstrap can talk to it, so it starts ungated and is gated once after.
+  // Compose leaves an already-running container alone, so the second `up` only waits.
+  const start: FullstackStartupStep[] =
+    bootstrap.length > 0
+      ? [
+          { kind: 'up', services: [selection.databaseService] },
+          ...bootstrap.map((service) => ({ kind: 'run' as const, services: [service] })),
+          healthGate,
+        ]
+      : [healthGate];
 
   return [
-    { kind: 'up', services: [selection.databaseService], waitForHealthy: true },
-    ...oneShots.map((service) => ({ kind: 'run' as const, services: [service] })),
+    ...start,
+    ...migrations.map((service) => ({ kind: 'run' as const, services: [service] })),
     ...(remaining.length > 0 ? [{ kind: 'up' as const, services: remaining }] : []),
   ];
 }

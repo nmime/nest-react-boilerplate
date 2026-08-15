@@ -131,21 +131,42 @@ void describe('fullstack startup order', () => {
           : ['migrate', 'postgres', 'user-app', 'user-app-api'],
     });
 
-  void it('waits for the database before running any one-shot against it', () => {
+  void it('waits for the database to report healthy before running the migrator against it', () => {
     for (const provider of ['mongodb', 'postgres'] as const) {
       const selection = selectionFor(provider);
-      const [first, ...rest] = fullstackStartupPlan(selection);
+      const plan = fullstackStartupPlan(selection);
+      const healthGate = plan.findIndex(
+        (step) =>
+          step.kind === 'up' && step.waitForHealthy === true && step.services.includes(selection.databaseService),
+      );
+      const migrationStep = plan.findIndex(
+        (step) => step.kind === 'run' && step.services.includes(selection.migrationService),
+      );
 
       assert.deepEqual(
-        first,
-        { kind: 'up', services: [selection.databaseService], waitForHealthy: true },
-        `${provider} must start its database first and wait for it to report healthy`,
+        plan[0]?.services,
+        [selection.databaseService],
+        `${provider} must start its database before anything else`,
       );
+      assert.ok(healthGate >= 0, `${provider} must wait for ${selection.databaseService} to report healthy`);
       assert.ok(
-        rest.every((step) => !step.services.includes(selection.databaseService)),
-        `${provider} must not start its database twice`,
+        healthGate < migrationStep,
+        `${provider} must reach that gate before running ${selection.migrationService}`,
       );
     }
+  });
+
+  // A `--replSet` mongod answers `isWritablePrimary: false` until `rs.initiate()` has run, and running
+  // it is mongodb-init's job. Gating on health first waits for a condition only a later step can
+  // create, so the wait can only ever time out — a deadlock, not a slow start.
+  void it('never gates on database health before the bootstrap that makes health reachable', () => {
+    const selection = selectionFor('mongodb');
+    const plan = fullstackStartupPlan(selection);
+    const bootstrap = plan.findIndex((step) => step.kind === 'run' && step.services.includes('mongodb-init'));
+    const healthGate = plan.findIndex((step) => step.kind === 'up' && step.waitForHealthy === true);
+
+    assert.ok(bootstrap >= 0, 'mongodb must initiate its replica set');
+    assert.ok(bootstrap < healthGate, 'the replica set must be initiated before anything waits for health');
   });
 
   void it('runs the migrator to completion before any application service starts', () => {
@@ -179,16 +200,25 @@ void describe('fullstack startup order', () => {
     assert.deepEqual(oneShots, ['mongodb-init', 'mongodb-migrate']);
   });
 
-  void it('starts every remaining selected service exactly once, in one step', () => {
+  void it('starts every selected service, repeating only the database it has to gate on', () => {
+    const byName = (left: string, right: string) => left.localeCompare(right);
+
     for (const provider of ['mongodb', 'postgres'] as const) {
       const selection = selectionFor(provider);
       const plan = fullstackStartupPlan(selection);
       const started = plan.flatMap((step) => step.services);
 
       assert.deepEqual(
-        [...started].sort((left, right) => left.localeCompare(right)),
-        [...selection.services].sort((left, right) => left.localeCompare(right)),
-        `${provider} must start each selected service exactly once`,
+        [...new Set(started)].sort(byName),
+        [...selection.services].sort(byName),
+        `${provider} must start each selected service`,
+      );
+      // A second `up` of the database is the health gate, not a restart: Compose leaves a running
+      // container alone and only waits on it. Anything else appearing twice is a real duplicate.
+      assert.deepEqual(
+        started.filter((service, index) => started.indexOf(service) !== index),
+        provider === 'mongodb' ? [selection.databaseService] : [],
+        `${provider} must not start any other service twice`,
       );
     }
   });

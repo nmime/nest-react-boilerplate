@@ -300,4 +300,20 @@ describe('TelegramWebhookController', () => {
     expect(handleUpdate).toHaveBeenCalledOnce();
     expect(replay.release).not.toHaveBeenCalled();
   });
+
+  it('resets the cached init promise on failure so a later webhook can retry', async () => {
+    const { telegram, init, handleUpdate, setWebhook } = instance();
+    const controller = new TelegramWebhookController(telegram, replayProtection());
+
+    // First init attempt fails transiently.
+    init.mockRejectedValueOnce(new Error('transient init failure'));
+    await expect(controller.handleWebhook('secret', { update_id: 1 })).rejects.toThrow('transient init failure');
+
+    // The cached rejection must be cleared so the next webhook retries init.
+    await expect(controller.handleWebhook('secret', { update_id: 2 })).resolves.toEqual({ ok: true });
+
+    expect(init).toHaveBeenCalledTimes(2);
+    expect(setWebhook).toHaveBeenCalledTimes(1);
+    expect(handleUpdate).toHaveBeenCalledWith({ update_id: 2 });
+  });
 });

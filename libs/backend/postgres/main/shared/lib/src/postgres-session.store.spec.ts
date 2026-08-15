@@ -117,4 +117,39 @@ describe('PostgresSessionStore', () => {
 
     await expect(setSession(store, 'session-id', { cookie: {} } as Session)).resolves.toBe(failure);
   });
+
+  it('swallows sweep rejections without crashing and logs the error', async () => {
+    vi.useFakeTimers();
+    const errorSpy = vi.spyOn(PostgresSessionStore['log'], 'error').mockImplementation(() => undefined);
+    const store = new PostgresSessionStore('postgres://database/app', 3600, 1_000);
+    await store.init();
+    mocks.query.mockClear();
+    mocks.query.mockRejectedValueOnce(new Error('sweep connection lost'));
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.waitFor(() => {
+      expect(errorSpy).toHaveBeenCalled();
+    });
+    expect(errorSpy.mock.calls[0]?.[0]).toContain('Expired session sweep failed');
+
+    errorSpy.mockRestore();
+    await store.close();
+  });
+
+  it('logs non-Error rejections during sweep as-is', async () => {
+    vi.useFakeTimers();
+    const errorSpy = vi.spyOn(PostgresSessionStore['log'], 'error').mockImplementation(() => undefined);
+    const store = new PostgresSessionStore('postgres://database/app', 3600, 1_000);
+    await store.init();
+    mocks.query.mockClear();
+    mocks.query.mockRejectedValueOnce('string-rejection');
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.waitFor(() => {
+      expect(errorSpy).toHaveBeenCalled();
+    });
+
+    errorSpy.mockRestore();
+    await store.close();
+  });
 });

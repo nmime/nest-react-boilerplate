@@ -72,6 +72,13 @@ export enum NotificationErrorReason {
   InvalidRecipient = 'invalid-recipient',
   ProviderConfiguration = 'provider-configuration',
   ProviderRejected = 'provider-rejected',
+  /**
+   * Dispatch reached the provider and the outcome is unknown (timeout / network
+   * error on a non-idempotent provider). Automatic retry is suspended: the
+   * delivery is persisted as a terminal Error with this reason and is never
+   * re-claimed by the scheduler, because re-dispatch could duplicate the send.
+   */
+  Quarantined = 'quarantined',
   UnknownError = 'unknown-error',
 }
 

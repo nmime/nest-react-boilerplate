@@ -35,25 +35,30 @@ Run the workspace doctor to verify your environment:
 pnpm --filter @repo/tooling tooling doctor
 ```
 
-Expected output (clean install, no setup yet):
+Expected output (fresh clone with the committed reference selection):
 
 ```
   ✓ runtime-version      Node.js v24.18.0
   ✓ pnpm                 pnpm 11.15.1
-  ✓ docker               Docker version ...
+  ○ docker               Docker not available — optional for E2E tests
   ✓ manifests            package.json, tsconfig.base.json present
   ✓ lock-file            pnpm-lock.yaml present
   ✓ nx-graph             Nx project graph resolves
-  ○ nrb-config           nrb.config.json not found — run setup to create
-  ○ nrb-state            .nrb/state.json not found — no setup state
-  ○ capability-wiring    Run setup to activate capabilities
-  ○ compose-selection    Run setup to materialize the selected Compose profile
+  ✓ nrb-config           nrb.config.json valid (v1.0.0)
+  ✓ nrb-state            .nrb/state.json valid (19 tracked files)
+  ✓ capability-wiring    7 capabilities activated deterministically
+  ○ compose-selection    Docker not available — selected postgres Compose graph was not checked
   ✓ tooling-package      @repo/tooling v0.0.0 — repo-tooling + nrb bins present
+  ✓ selected-closure     75 projects, 119 product packages, and 39 tooling packages resolve
 
-Summary: 7 passed, 0 failed, 0 warnings, 4 skipped
+Summary: 10 passed, 0 failed, 0 warnings, 2 skipped
 ```
 
-The four `○ skipped` entries for `nrb-config`, `nrb-state`, `capability-wiring`, and `compose-selection` are expected on a fresh clone. They pass after you run setup (see below).
+The upstream template tracks a committed reference selection
+(`nrb.config.json` plus the generated `.nrb/` state), so `nrb-config`,
+`nrb-state`, and `capability-wiring` already pass on a fresh clone without any
+setup run. The two `○ skipped` entries (`docker`, `compose-selection`) are
+Docker-dependent and pass once Docker is available.
 
 ## 3. Initialize product identity
 
@@ -80,9 +85,11 @@ Skip this step only when evaluating the upstream template unchanged.
 
 ## 4. Select applications and capabilities
 
-No application is selected by default. Choose only the frontend and backend
-deployables this product needs. Profiles such as `web` and `fullstack` are
-optional shortcuts; every application remains individually selectable.
+The upstream template ships a committed reference selection (10 apps plus 7
+capabilities) so maintainers can run every surface; a product fork replaces it
+with its own explicit choice. Choose only the frontend and backend deployables
+this product needs. Profiles such as `web` and `fullstack` are optional
+shortcuts; every application remains individually selectable.
 
 ### Interactive setup (recommended)
 

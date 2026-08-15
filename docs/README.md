@@ -66,7 +66,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 ## Operations and deployment
 
 - [Operations Guide](operations.md) — release, runtime, and runbook overview.
-- [Production Deploy](production-deploy.md) — Kubernetes, Ansible, and Helm deployment.
+- [Production Deploy](production-deploy.md) — Kubernetes, Helm, and GitOps deployment.
 - [Deployment](deployment.md) — Docker Compose, Dockerfiles, and multi-stage builds.
 - [Production Readiness](production-readiness.md) — checklists for launch.
 - [Release Hardening](release-hardening.md) — pre-release audit and verification steps.

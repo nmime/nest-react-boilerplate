@@ -955,20 +955,16 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     // The migration modules themselves import only @mikro-orm/migrations and the
     // dependency-free @app/backend-common-tenant-policy. Matches the shape of
     // generated-mongo-migrations.ts, which is relative for the same reason.
-    providerMigrations: {
-      postgres: [
-        {
-          importName: 'Migration20260803120000TenantRowLevelSecurity',
-          importPath:
-            '../../../../../libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/Migration20260803120000TenantRowLevelSecurity.ts',
-        },
-        {
-          importName: 'Migration20260803121000NotificationTenantRowLevelSecurity',
-          importPath:
-            '../../../../../libs/backend/postgres/main/notification/lib/src/infrastructure/data-access/migrations/Migration20260803121000NotificationTenantRowLevelSecurity.ts',
-        },
-      ],
-    },
+    // No capability-owned migrations on purpose. The tenant row-level-security
+    // install migrations were removed and superseded by idempotent reversals in
+    // the base migration sets (Migration20260804120000RemoveTenantRowLevelSecurity,
+    // Migration20260804120000RemoveNotificationTenantRowLevelSecurity), which must
+    // run on every database — including projects that never selected tenancy — to
+    // undo policies a previous version installed unconditionally. Gating them
+    // behind the capability would strand them. Until a runtime engagement exists,
+    // selecting tenancy contributes no DDL at all; `capabilityMigrations` stays
+    // empty and the generated registry imports nothing.
+    providerMigrations: {},
   },
 } as const;
 

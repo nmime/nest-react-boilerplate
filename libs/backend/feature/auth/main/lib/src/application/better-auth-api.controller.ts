@@ -70,7 +70,13 @@ export class BetterAuthApiController {
       const baResponse = await handler(baRequest);
 
       if (baResponse.status >= 400) {
-        throw new HttpException('', baResponse.status);
+        // Forward Better-Auth's own error response — status, body (message /
+        // code), and cookies. Throwing an empty HttpException here would drop
+        // the error payload and the set-cookie headers Better-Auth uses to
+        // clear or rotate sessions.
+        await this.recordFailedSession(req);
+        await this.sendErrorResponse(res, baResponse);
+        return;
       }
 
       // Forward status
@@ -136,6 +142,45 @@ export class BetterAuthApiController {
 
       throw new InternalException({ source: 'better-auth' }, err);
     }
+  }
+
+  /**
+   * Forwards Better-Auth's own error response — status, JSON or text body
+   * (message/code), and cookies — instead of throwing an empty HttpException
+   * that would drop the payload and session-clearing set-cookie headers.
+   */
+  private async sendErrorResponse(res: FastifyReply, baResponse: Response): Promise<void> {
+    res.status(baResponse.status);
+
+    const setCookies = baResponse.headers.getSetCookie();
+    if (setCookies.length > 0) {
+      res.header('set-cookie', setCookies);
+    }
+
+    for (const [key, value] of baResponse.headers.entries()) {
+      if (key.toLowerCase() !== 'set-cookie' && !UnsafeForwardedResponseHeaders.has(key.toLowerCase())) {
+        try {
+          res.header(key, value);
+        } catch {
+          /* skip */
+        }
+      }
+    }
+
+    const contentType = baResponse.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      try {
+        const errorBody = await baResponse.json();
+        res.send(errorBody);
+        return;
+      } catch {
+        res.send({});
+        return;
+      }
+    }
+
+    const errorText = await baResponse.text();
+    res.type('text/plain').send(errorText);
   }
 
   /**

@@ -274,9 +274,10 @@ abort before any migration implementation is loaded.
 
 ## Development commands
 
-| Command         | Description                         |
-| --------------- | ----------------------------------- |
-| `dev:fullstack` | Run the local fullstack dev helper. |
+| Command         | Description                              |
+| --------------- | ---------------------------------------- |
+| `dev:database`  | Start the setup-selected local database. |
+| `dev:fullstack` | Run the local fullstack dev helper.      |
 
 Development selectors fail closed when setup configuration or the live Nx graph
 has changed since `.nrb/closure.json` was generated. Rerun `pnpm nrb setup`
@@ -339,22 +340,23 @@ Existing features must be modified in place; regeneration is rejected.
 
 ## QA commands
 
-| Command                 | Description                                          |
-| ----------------------- | ---------------------------------------------------- |
-| `qa:mutation`           | Run Stryker mutation testing or dry-run report.      |
-| `qa:test-aggregate`     | Run resource-aware aggregate unit or coverage tests. |
-| `qa:consumer-contracts` | Validate consumer contracts.                         |
-| `qa:openapi-lint`       | Lint OpenAPI contracts.                              |
-| `qa:openapi-fuzz`       | Generate OpenAPI fuzz cases.                         |
-| `qa:accessibility`      | Run accessibility checks.                            |
-| `qa:cross-browser-e2e`  | Run cross-browser e2e matrix.                        |
-| `qa:performance`        | Run performance checks.                              |
-| `qa:property`           | Run property-based checks.                           |
-| `qa:secret-scan`        | Run secret scanning checks.                          |
-| `qa:security-sast`      | Run SAST checks.                                     |
-| `qa:security-dast`      | Run DAST checks.                                     |
-| `qa:security-suite`     | Run the security suite.                              |
-| `qa:world-class-gates`  | Run world-class quality gates.                       |
+| Command                 | Description                                                          |
+| ----------------------- | -------------------------------------------------------------------- |
+| `qa:mutation`           | Run Stryker mutation testing or dry-run report.                      |
+| `qa:bundle-budget`      | Enforce per-app JS/CSS/single-chunk byte budgets on built frontends. |
+| `qa:test-aggregate`     | Run resource-aware aggregate unit or coverage tests.                 |
+| `qa:consumer-contracts` | Validate consumer contracts.                                         |
+| `qa:openapi-lint`       | Lint OpenAPI contracts.                                              |
+| `qa:openapi-fuzz`       | Generate OpenAPI fuzz cases.                                         |
+| `qa:accessibility`      | Run accessibility checks.                                            |
+| `qa:cross-browser-e2e`  | Run cross-browser e2e matrix.                                        |
+| `qa:performance`        | Run performance checks.                                              |
+| `qa:property`           | Run property-based checks.                                           |
+| `qa:secret-scan`        | Run secret scanning checks.                                          |
+| `qa:security-sast`      | Run SAST checks.                                                     |
+| `qa:security-dast`      | Run DAST checks.                                                     |
+| `qa:security-suite`     | Run the security suite.                                              |
+| `qa:world-class-gates`  | Run world-class quality gates.                                       |
 
 World-class command overrides use JSON argv arrays rather than shell strings.
 The real-user journey, observability, and concurrency gates require an
@@ -387,10 +389,11 @@ worktree.
 
 ## Tooling commands
 
-| Command                        | Description                                  |
-| ------------------------------ | -------------------------------------------- |
-| `tooling:static-check`         | TS-first static validation for repo tooling. |
-| `tooling:changed-format-check` | Run Prettier on changed files only.          |
+| Command                        | Description                                                             |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `tooling:static-check`         | TS-first static validation for repo tooling.                            |
+| `tooling:changed-format-check` | Run Prettier on changed files only.                                     |
+| `tooling:bun-compat`           | Run the pinned Bun compatibility contract across builds, tests, smokes. |
 
 ## Git commands
 

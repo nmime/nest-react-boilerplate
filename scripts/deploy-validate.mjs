@@ -216,7 +216,7 @@ const validatePm2 = () => {
   run('Native datastore provisioning tests', process.execPath, ['--test', 'scripts/native-datastores.spec.mjs']);
 };
 
-// The unified `pnpm deploy` planner spans every target, so its contract is
+// The unified `pnpm run deploy` planner spans every target, so its contract is
 // checked in all modes: a broken plan would misdeploy regardless of runtime.
 run('Unified deploy planner tests', process.execPath, ['--test', 'scripts/deploy.spec.mjs']);
 // The bake generator defines the release image set; keep it gated here rather than

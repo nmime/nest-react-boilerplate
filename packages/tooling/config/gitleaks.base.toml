@@ -61,6 +61,7 @@ description = "Bun runtime research prose misread as an API key"
 condition = "AND"
 paths = [
   '''^docs/bun-runtime-research\.md$''',
+  '''^docs/adr/0003-explicit-selection-model-no-default-deployable\.md$''',
 ]
 regexes = [
   '''Discord/Telegram''',

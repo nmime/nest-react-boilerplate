@@ -50,7 +50,10 @@ This repository is more than a framework starter. It is an executable platform c
 
 ## Choose your product surfaces
 
-There is no default application. Setup records an explicit selection in `.nrb/workspace.json`, and you can rerun it whenever the product grows.
+There is no hidden default application. Selections are always explicit in
+`.nrb/workspace.json`, and you can rerun setup whenever the product grows. The
+upstream template commits a 10-app reference selection so maintainers can run
+every surface; product forks replace it with `pnpm nrb setup`.
 
 | Surface              | Included choices                                                                 |
 | -------------------- | -------------------------------------------------------------------------------- |

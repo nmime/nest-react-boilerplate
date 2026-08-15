@@ -77,6 +77,22 @@ release branch or a consolidator PR:
 | Image release supply chain      | `release-images.yml` / `Build, scan, and sign *`                | Buildx, SBOM, Trivy SARIF, cosign                          | SBOM artifacts, uploaded SARIF, signed image digests                       |
 | GitGuardian external monitoring | External GitGuardian integration, when enabled for the org/repo | Provider-managed secret detection                          | GitGuardian dashboard/alerts; not a replacement for the native secret scan |
 
+### Scheduled and dispatch workflows
+
+These workflows run on schedules or manual dispatch instead of the PR path, so
+they never appear in PR gate order. Treat them as the durable background signal
+set for visual regression, assurance evidence, and supply-chain scoring:
+
+| Workflow                        | File                         | Trigger                            | What it proves                                                                  |
+| ------------------------------- | ---------------------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
+| Quality presets                 | `quality-presets.yml`        | nightly cron + `workflow_dispatch` | Storybook visual browser/mobile matrix drift against reviewed baselines.        |
+| OpenSSF Scorecard               | `scorecard.yml`              | weekly cron + `main` push          | Supply-chain posture score with results published to the Security tab.          |
+| Nightly specification assurance | `spec-assurance-nightly.yml` | nightly cron + `workflow_dispatch` | Fresh exact-SHA requirement evidence across nightly lanes with a runtime stack. |
+| Runtime specification assurance | `spec-assurance-runtime.yml` | `workflow_dispatch`                | On-demand runtime exact-SHA assurance dossier.                                  |
+
+Use the same [Workflow status pages](#workflow-status-pages) pattern to follow
+run history for these files.
+
 ## Status summaries
 
 The CI workflow has a final `CI status summary` job with `if: always()`. It writes a Markdown table of every CI job result to the GitHub step summary and uploads the same table as the `ci-status-summary` artifact.
@@ -90,6 +106,10 @@ Use the GitHub Actions workflow pages for current run history and badges when re
 - CI: `.github/workflows/ci.yml`
 - CodeQL: `.github/workflows/codeql.yml`
 - Dependency review: `.github/workflows/dependency-review.yml`
+- Quality presets: `.github/workflows/quality-presets.yml`
+- OpenSSF Scorecard: `.github/workflows/scorecard.yml`
+- Nightly specification assurance: `.github/workflows/spec-assurance-nightly.yml`
+- Runtime specification assurance: `.github/workflows/spec-assurance-runtime.yml`
 
 Workflow-level links are preferred so private-repository readers can click through to the authenticated run history.
 

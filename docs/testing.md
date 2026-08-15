@@ -99,6 +99,21 @@ proves command construction and redaction, not recoverability.
 
 For deterministic testing practices (fake timers, seed factories, quarantining), see [test reliability runbook](testing/test-reliability.md).
 
+## CI and test-only environment gates
+
+These variables gate opt-in test lanes. They are not part of any `.env*.example`
+runtime template because they are consumed only by executable test files, and
+unset means the guarded lane is skipped:
+
+| Variable              | Gate                                                                                          |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| `RUN_DATABASE_E2E`    | When `true`, enables database-backed API e2e suites (e.g. `admin-app-api` health e2e).        |
+| `S3_INTEGRATION_TEST` | When `true`, runs S3/MinIO integration specs against a live object store.                     |
+| `TEST_API_PORT`       | Overrides the ephemeral port used by `bootstrapNestApi` test servers in bootstrap unit tests. |
+
+Set them only in CI job environments or local verification runs that need the
+gated lane; the default skip keeps the fast matrix hermetic.
+
 ## Design-system and frontend tooling
 
 - `pnpm run storybook` uses the single configuration in

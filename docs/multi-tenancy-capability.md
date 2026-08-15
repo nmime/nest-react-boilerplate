@@ -4,16 +4,17 @@ Design for a setup-selectable multi-tenancy capability, derived from reviewing t
 production monorepos built on this template's lineage: `social-agents` (backend
 row-level-security enforcement) and `opwerf` (tenant switching in the frontend).
 
-Status: **the database half is built and proven; the application half is not
-wired, so tenancy is not usable yet.** It is an opt-in capability, and a project
-that does not select it is completely unaffected. See [Progress](#progress).
+Status: **stage 1 is implemented but deliberately not registered; stage 2 is
+partially implemented — the enforcement seam is proven, but the row-level-security
+policies were rolled back; stages 3–6 vary.** It is an opt-in capability, and a
+project that does not select it is completely unaffected. See [Progress](#progress).
 
 ## Progress
 
 | Stage                                                         | State                                                                                      |
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | 1. Ambient tenant scope + fail-closed interceptor             | **Partial** — lib and `TenantContextModule` exist but are NOT registered by the capability |
-| 2. PostgreSQL roles, RLS policies, isolation proof            | **Done** — proven against a non-superuser PostgreSQL                                       |
+| 2. PostgreSQL roles, RLS policies, isolation proof            | **Partially done** — seam + proof implemented; RLS policies rolled back                    |
 | 3. MongoDB repository-level guard                             | Not started — tenancy therefore conflicts with `mongodb`                                   |
 | 4. Tenant lifecycle workflows (CRUD, membership, invitations) | Not started                                                                                |
 | 5. Frontend tenant provider and switcher                      | Not started                                                                                |
@@ -30,17 +31,29 @@ come out of `tenantAppRoleUpSql()`, i.e. out of the migration.
 
 Selecting the capability is what installs any of it. With tenancy deselected,
 `capabilityMigrations` is empty and no policy, role or grant reaches the
-database.
+database. Note what changed: the row-level-security install migrations were
+removed and superseded by idempotent reversals
+(`Migration20260804120000RemoveTenantRowLevelSecurity`,
+`Migration20260804120000RemoveNotificationTenantRowLevelSecurity`) that run in
+the base migration sets — on every database, tenancy selected or not — because a
+previous version shipped the policies unconditionally. Selecting tenancy
+therefore contributes no DDL today; the capability owns the roles' creation SQL
+and the component proof, not policy installation.
 
 ### What is NOT true yet
 
-**No repository routes through `withTenantTransaction`.** The helpers, the
-interceptor and the policies all exist, and nothing in the request path calls
-them. So on a project that selects tenancy today, the policies are installed and
-the runtime never assumes `nrb_app` — which, on a non-superuser role, means
-every query returns zero rows. Stage 1 is deliberately marked Partial for this
-reason. Do not select `--capability tenancy` for a real product until the
-repository routing lands.
+**No repository routes through `withTenantTransaction`.** The helpers and the
+interceptor exist, and nothing in the request path calls them. The policies
+themselves are not installed: they were installed once and then rolled back
+because no runtime path engaged them — nothing set the `app.current_tenant` GUC
+or switched roles on the live request path, and every deployment connects as a
+`BYPASSRLS`/superuser pool role, so fail-closed policies protected nothing
+while making any future restricted-role connection return zero rows. Until a
+connection path actually runs tenant-scoped statements as the restricted role
+(and the pools stop using `BYPASSRLS` roles), isolation is application-enforced
+via tenant predicates, not a database guarantee. Stage 1 is deliberately marked
+Partial for this reason. Do not select `--capability tenancy` for a real product
+until the repository routing lands.
 
 **The capability therefore does not register `TenantContextModule`.** That was
 tried and reverted within this work: the module registers a fail-closed
@@ -203,7 +216,10 @@ The capability is large enough that it should land in stages, each independently
 green:
 
 1. `tenant-context` lib + CLS wiring + fail-closed interceptor (no RLS yet).
-2. Postgres roles, RLS policies, and the isolation component tests.
+2. Postgres roles, RLS policies, and the isolation component tests. The seam and
+   proof exist; the policies were rolled back and this stage re-opens once a
+   runtime path engages them (restricted-role connection path + non-`BYPASSRLS`
+   pools), at which point the component tests become the acceptance gate again.
 3. MongoDB repository-level guard and its tests.
 4. Tenant lifecycle workflows (CRUD, membership, invitations).
 5. Frontend tenant provider and switcher.

@@ -3,9 +3,12 @@ import type { RunOptions, RunResult } from '../../runtime/process';
 import { packageManagerInvocation, run } from '../../runtime/process';
 
 const bytesPerWorker = 2 * 1024 * 1024 * 1024;
-const defaultMaxWorkers = 2;
+// The hard cap only guards CI runners that lie about their limits; hardware
+// never permits more than its CPU/memory budget, so the CPU/memory heuristics
+// below must not be clamped to a fixed small number on every machine.
+const defaultMaxWorkers = 8;
 const bytesPerTestWorker = 1024 * 1024 * 1024;
-const defaultMaxTestWorkers = 2;
+const defaultMaxTestWorkers = 4;
 
 interface TestOrchestrationRuntime {
   availableParallelism: () => number;

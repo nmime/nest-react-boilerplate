@@ -9,25 +9,99 @@ release — see [CONTRIBUTING.md](CONTRIBUTING.md). A product forked from this
 repository should delete this file; see
 [Boilerplate-owned content](docs/boilerplate/README.md).
 
-## [1.20.0](https://github.com/[secure]/nest-react-boilerplate/compare/v1.19.2...v1.20.0) (2026-07-24)
+## [1.20.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.19.2...v1.20.0) (2026-07-24)
 
-## [1.19.2](https://github.com/[secure]/nest-react-boilerplate/compare/v1.19.1...v1.19.2) (2026-07-24)
+### Features
 
-## [1.19.1](https://github.com/[secure]/nest-react-boilerplate/compare/v1.19.0...v1.19.1) (2026-07-23)
+- **frontend:** TanStack Router migration and cross-app logic reuse ([f35a7c5](https://github.com/nmime/nest-react-boilerplate/commit/f35a7c5b4d9a201f6e11a881a59b27eaaaed17dd))
 
-## [1.19.0](https://github.com/[secure]/nest-react-boilerplate/compare/v1.18.0...v1.19.0) (2026-07-23)
+### Continuous Integration
 
-## [1.18.0](https://github.com/[secure]/nest-react-boilerplate/compare/v1.17.0...v1.18.0) (2026-07-23)
+- **release:** auto-dispatch release-images on new tag (fixes [skip ci] gap) ([bc161f4](https://github.com/nmime/nest-react-boilerplate/commit/bc161f4b4c04676f49b78177d9b222424333f44c))
 
-## [1.17.0](https://github.com/[secure]/nest-react-boilerplate/compare/v1.16.0...v1.17.0) (2026-07-23)
+## [1.19.2](https://github.com/nmime/nest-react-boilerplate/compare/v1.19.1...v1.19.2) (2026-07-24)
 
-## [1.16.0](https://github.com/[secure]/nest-react-boilerplate/compare/v1.15.3...v1.16.0) (2026-07-22)
+### Bug Fixes
 
-## [1.15.3](https://github.com/[secure]/nest-react-boilerplate/compare/v1.15.2...v1.15.3) (2026-07-22)
+- **images:** force find-my-way 9.7.0 in pruned backend install (CVE-2026-47219) ([2d9c460](https://github.com/nmime/nest-react-boilerplate/commit/2d9c4603603a07493b4fb6899823d018edb28d00))
+- **images:** overlay find-my-way 9.7.0 from workspace onto pruned install ([9bf694d](https://github.com/nmime/nest-react-boilerplate/commit/9bf694d0b7c68e0c2cfaea7566c50075a494d4e5))
+- **images:** strip esbuild/drizzle-kit dead weight, bump find-my-way ([e0b60af](https://github.com/nmime/nest-react-boilerplate/commit/e0b60af867310bd600e4a1e4ec00d8c63ca02fb2))
+- **migrator:** standalone pruned migration image (drops 86 dev-tool CVEs) ([5d4cd41](https://github.com/nmime/nest-react-boilerplate/commit/5d4cd41c7cb77598b2d03e1d5fcbbae4d44daef4))
 
-## [1.15.2](https://github.com/[secure]/nest-react-boilerplate/compare/v1.15.1...v1.15.2) (2026-07-22)
+### Continuous Integration
 
-## [1.15.1](https://github.com/[secure]/nest-react-boilerplate/compare/v1.15.0...v1.15.1) (2026-07-22)
+- **release:** bust bake cache scope + log per-image scan pass/fail ([ac3ad55](https://github.com/nmime/nest-react-boilerplate/commit/ac3ad550b6648127d63fbce3f9005722de93f0c4))
+- **release:** bust workspace cache scope so find-my-way 9.7.0 propagates ([8183e76](https://github.com/nmime/nest-react-boilerplate/commit/8183e76c2efd1c82c5815dd9b6e77b1a8a3892b5))
+
+## [1.19.1](https://github.com/nmime/nest-react-boilerplate/compare/v1.19.0...v1.19.1) (2026-07-23)
+
+### Bug Fixes
+
+- **docker:** strip npm/corepack from runtime images, pin nginx to patched base ([36434f9](https://github.com/nmime/nest-react-boilerplate/commit/36434f9ce53b04aed0709718639ae32ad6140c40))
+
+## [1.19.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.18.0...v1.19.0) (2026-07-23)
+
+### Features
+
+- **build:** affected-only bake filter (generate-bake-file --only) ([b13071c](https://github.com/nmime/nest-react-boilerplate/commit/b13071c8122bac906f6bad8c463127a082196ce7))
+- **build:** generate docker bake file from release image source ([d6e7d85](https://github.com/nmime/nest-react-boilerplate/commit/d6e7d859a85fa6e15b585f06ff10d1c64f1a0cfb))
+
+### Bug Fixes
+
+- **build:** order --only NX_BUILD_PROJECTS by selection order ([52fa6ce](https://github.com/nmime/nest-react-boilerplate/commit/52fa6ce71cf7294f712b88cb97af1fa63c4edee2))
+- **docker:** accept NX_PROJECT fallback in build-once builder for compose ([1d2ada4](https://github.com/nmime/nest-react-boilerplate/commit/1d2ada43f7284a50cbaf0dabf0046344529aa634))
+- **validate:** sync deployment validators to build-once bake pipeline ([7b0886e](https://github.com/nmime/nest-react-boilerplate/commit/7b0886e37ce711ce27d18adcc46f9c58cc6f4df1))
+
+### Code Refactoring
+
+- **docker:** build the workspace once in the shared builder stage ([7bf0668](https://github.com/nmime/nest-react-boilerplate/commit/7bf0668dc9bee1db766e9b9270fd2e7846689d80))
+
+### Continuous Integration
+
+- **release:** build affected images in one shared bake, loop scan/sign ([f0058c6](https://github.com/nmime/nest-react-boilerplate/commit/f0058c6689ad0390947d839e7e9c079bfad6fed1))
+- **release:** pin trivy, gate cosign on scan, drop dead matrix output ([db91f7e](https://github.com/nmime/nest-react-boilerplate/commit/db91f7e88cfd4fbe24b5e2a103a1b828fac0af5f))
+- **release:** stamp distinct CodeQL category per trivy SARIF ([99c4cc2](https://github.com/nmime/nest-react-boilerplate/commit/99c4cc24c66740970ddf14d653603fda77bce094))
+
+## [1.18.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.17.0...v1.18.0) (2026-07-23)
+
+### Features
+
+- **agents:** add design-from-reference skill ([6130876](https://github.com/nmime/nest-react-boilerplate/commit/613087640c42ff12bdb4731cfcac52c8dee297ce))
+
+### Bug Fixes
+
+- **agents:** make scaffold-feature read-first paths repository-relative ([6e20442](https://github.com/nmime/nest-react-boilerplate/commit/6e204429b2dba622535017a479f88d6776c77e47))
+- **tooling:** exempt superpowers working specs from documentation validation ([0912b7f](https://github.com/nmime/nest-react-boilerplate/commit/0912b7f19abf65fffeb9b9ade21e2a00559e982f))
+
+## [1.17.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.16.0...v1.17.0) (2026-07-23)
+
+### Features
+
+- add boilerplate base update skill ([fdbbfd5](https://github.com/nmime/nest-react-boilerplate/commit/fdbbfd5ad3d7c9c9a0bb9928481d2affcd0c423a))
+
+## [1.16.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.15.3...v1.16.0) (2026-07-22)
+
+### Features
+
+- **i18n:** localize bot interfaces ([cc698e0](https://github.com/nmime/nest-react-boilerplate/commit/cc698e0d0a260f760a90c305160db980d81bdba6))
+
+## [1.15.3](https://github.com/nmime/nest-react-boilerplate/compare/v1.15.2...v1.15.3) (2026-07-22)
+
+### Bug Fixes
+
+- **tooling:** resolve backend deps in Bun smoke ([817663c](https://github.com/nmime/nest-react-boilerplate/commit/817663cfe6fbe2150260808c6c5464dd6062fa37))
+
+## [1.15.2](https://github.com/nmime/nest-react-boilerplate/compare/v1.15.1...v1.15.2) (2026-07-22)
+
+### Bug Fixes
+
+- **tooling:** verify headless app selection ([444ab1b](https://github.com/nmime/nest-react-boilerplate/commit/444ab1b7d5b6501725193a3f903c37141f190277))
+
+## [1.15.1](https://github.com/nmime/nest-react-boilerplate/compare/v1.15.0...v1.15.1) (2026-07-22)
+
+### Bug Fixes
+
+- **tooling:** align onboarding runtime check ([6fd7879](https://github.com/nmime/nest-react-boilerplate/commit/6fd7879eb87cb2a00ac3f33126e0b0be120f6de0))
 
 ## [1.15.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.14.0...v1.15.0) (2026-07-22)
 
@@ -76,6 +150,58 @@ repository should delete this file; see
 ## [1.3.1](https://github.com/nmime/nest-react-boilerplate/compare/v1.3.0...v1.3.1) (2026-07-15)
 
 ## [1.3.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.2.0...v1.3.0) (2026-07-15)
+
+The following entries were originally drafted under `[Unreleased]` and never
+reconciled with the release headers; they are recorded here because commit
+[56d37a7](https://github.com/nmime/nest-react-boilerplate/commit/56d37a7d48d1539f7954473d5ca904c84ca0e7bf),
+which introduced them to the changelog, shipped in v1.3.0. Some items restate
+hardening work first released in 1.0.0.
+
+### Added
+
+- Explicit, repeatable application selection with reference frontend/API/E2E surfaces, optional Telegram and Discord APIs, and dependency-safe reruns ([56d37a7](https://github.com/nmime/nest-react-boilerplate/commit/56d37a7d48d1539f7954473d5ca904c84ca0e7bf))
+- Product initialization now rewrites tracked `.env*.example` domain templates while leaving real `.env` files untouched.
+- Database migration verification now allows cold Docker startup during the full repository test matrix.
+- Full GitOps CI/CD pipeline with ArgoCD Application
+- `deploy/k8s/argocd-application.yaml` — ArgoCD app with auto-sync, prune, selfHeal
+- `deploy/k8s/values.yaml` — LIVE production values managed by deploy workflow
+- `.github/workflows/deploy.yml` — CI-gated deployment workflow
+- `.github/workflows/argo-sync.yml` — manual ArgoCD force-sync
+- `scripts/update-deploy-tags.py` — image tag updater with SHA validation + dry-run
+- `GITOPS.md` — comprehensive GitOps documentation
+- 1,139-line production deployment runbook in ansible-k8s-full-setup
+- Dependabot assignees and reviewers configured
+
+### Changed
+
+- Updated `@types/supertest` to 7.2.1 after a registry and peer-compatibility audit; newer incompatible runtime/compiler majors remain documented and intentionally deferred.
+- Standardized public hostnames with `landing-app` on the apex domain and every other deployable on `<app-id>.<root-domain>`; for example, `auth-app-api.example.com` maps directly to `auth-app-api`.
+- Stabilized Node.js 24 tooling tests by isolating Docker migration coverage and running process-output setup tests in-process.
+
+### Fixed
+
+- Docker Node.js version corrected (26 → 24.11.0)
+- Site app Docker stage now uses proper build + runtime (no experimental TS stripping)
+- Deploy workflow now gated on CI success via `workflow_run` trigger
+- CodeQL now uses explicit pnpm build steps instead of `autobuild`
+- Added missing NetworkPolicy Helm template (production network segmentation)
+- Added startupProbe to all deployments
+- HPA scale-down stabilization window (300s)
+- PDB changed to `maxUnavailable: 1`
+- Migration job TTL for pod cleanup
+- Frontend services now have resource limits in production
+- Backups enabled in production
+- OTEL traces exported to OTLP (Tempo) instead of debug-only
+- Cosign `COSIGN_EXPERIMENTAL` removed (deprecated for v4+)
+- SSL redirect annotation added to ingress
+- Added `.prettierrc` configuration
+- Line ending normalization via `.gitattributes`
+- Dockerfile excludes docs, .github, .cursor, markdown files
+
+### Removed
+
+- `roles/brocoders-boilerplate-setup/` from ansible-k8s-full-setup
+- All brocoders references from platform documentation
 
 ## [1.2.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.1.5...v1.2.0) (2026-07-14)
 
@@ -248,58 +374,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
-Version bumps, changelog entries, and git tags are automated by semantic-release via Conventional Commits.
-
-## [Unreleased]
-
-### Added
-
-- Explicit, repeatable application selection with reference frontend/API/E2E surfaces, optional Telegram and Discord APIs, and dependency-safe reruns.
-- Product initialization now rewrites tracked `.env*.example` domain templates while leaving real `.env` files untouched.
-- Database migration verification now allows cold Docker startup during the full repository test matrix.
-
-### Changed
-
-- Updated `@types/supertest` to 7.2.1 after a registry and peer-compatibility audit; newer incompatible runtime/compiler majors remain documented and intentionally deferred.
-- Standardized public hostnames with `landing-app` on the apex domain and every other deployable on `<app-id>.<root-domain>`; for example, `auth-app-api.example.com` maps directly to `auth-app-api`.
-- Stabilized Node.js 24 tooling tests by isolating Docker migration coverage and running process-output setup tests in-process.
-
-### Fixed
-
-- Docker Node.js version corrected (26 → 24.11.0)
-- Site app Docker stage now uses proper build + runtime (no experimental TS stripping)
-- Deploy workflow now gated on CI success via `workflow_run` trigger
-- CodeQL now uses explicit pnpm build steps instead of `autobuild`
-- Added missing NetworkPolicy Helm template (production network segmentation)
-- Added startupProbe to all deployments
-- HPA scale-down stabilization window (300s)
-- PDB changed to `maxUnavailable: 1`
-- Migration job TTL for pod cleanup
-- Frontend services now have resource limits in production
-- Backups enabled in production
-- OTEL traces exported to OTLP (Tempo) instead of debug-only
-- Cosign `COSIGN_EXPERIMENTAL` removed (deprecated for v4+)
-- SSL redirect annotation added to ingress
-- Added `.prettierrc` configuration
-- Line ending normalization via `.gitattributes`
-- Dockerfile excludes docs, .github, .cursor, markdown files
-
-### Added
-
-- Full GitOps CI/CD pipeline with ArgoCD Application
-- `deploy/k8s/argocd-application.yaml` — ArgoCD app with auto-sync, prune, selfHeal
-- `deploy/k8s/values.yaml` — LIVE production values managed by deploy workflow
-- `.github/workflows/deploy.yml` — CI-gated deployment workflow
-- `.github/workflows/argo-sync.yml` — manual ArgoCD force-sync
-- `scripts/update-deploy-tags.py` — image tag updater with SHA validation + dry-run
-- `GITOPS.md` — comprehensive GitOps documentation
-- 1,139-line production deployment runbook in ansible-k8s-full-setup
-- Dependabot assignees and reviewers configured
-
-### Removed
-
-- `roles/brocoders-boilerplate-setup/` from ansible-k8s-full-setup
-- All brocoders references from platform documentation
+Version bumps and git tags are automated by semantic-release via Conventional
+Commits. `CHANGELOG.md` is maintained manually: release sections are backfilled
+from the tag ranges because the release pipeline intentionally writes no
+changelog plugin output (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## [0.1.0] - 2025-07-01
 

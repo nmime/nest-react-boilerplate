@@ -92,7 +92,7 @@ commands such as `bun install`, `bun add`, `bun update`, or `bunx`. `bun run
   publishes `esbuild` as an optional wildcard peer; the scoped
   `peerDependencyRules.allowedVersions` entry records the tested 0.28.1 edge
   after the vulnerable-esbuild override rewrites the lockfile peer snapshot.
-- `brace-expansion`: vulnerable 1.x/2.x/4.x/5.x resolutions are pinned to **5.0.8**
+- `brace-expansion`: vulnerable 1.x/2.x/4.x/5.x resolutions are pinned to **5.0.9**
   for CVE-2026-14257.
 - `js-yaml`: vulnerable 5.0.0–5.2.1 resolutions are pinned to **5.2.2** for
   GHSA-pm4m-ph32-ghv5; the existing 3.x/4.x pins remain separate.

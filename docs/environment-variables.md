@@ -175,7 +175,10 @@ Telegram auth and bot execution are separate switches:
 
 Discord uses `DISCORD_AUTH_ENABLED`, `DISCORD_APPLICATION_ID`,
 `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN`, `DISCORD_PUBLIC_KEY`, and
-`DISCORD_REDIRECT_URI`. Enable the `telegram` or `discord` Compose profile only
+`DISCORD_REDIRECT_URI`. OAuth state validation additionally reads
+`DISCORD_OAUTH_STATE_TTL_SECONDS` (state entry lifetime, default `600`) and
+`DISCORD_OAUTH_STATE_MAX_ENTRIES` (state cache cap, default `10000`).
+Enable the `telegram` or `discord` Compose profile only
 when its app was selected and provider-issued credentials are populated.
 
 The server bootstrap creates protected empty files for provider-issued secrets;

@@ -36,6 +36,7 @@ import { initOpenTelemetry, shutdownOpenTelemetry } from '@app/backend-common-ot
 import { normalizeRequestId, requestContext } from '@app/backend-common-request-context';
 import { problemInstanceForRequestId, problemTypeForCode } from '@app/common-problem-details';
 import { withOpenTelemetryLifecycle } from './open-telemetry-lifecycle';
+import { DefaultDevelopmentCorsOrigins } from './default-development-cors-origins';
 
 export interface BootstrapNestApiOptions {
   appName: string;
@@ -46,6 +47,10 @@ export interface BootstrapNestApiOptions {
   openApi?: BootstrapOpenApiOptions;
   rateLimit?: BootstrapRateLimitOptions;
   cookieSecret?: string;
+  /**
+   * Trust-proxy setting for Fastify: `true`/`false`, or a positive integer
+   * hop count to step through `x-forwarded-for`. Wins over `TRUST_PROXY`.
+   */
   trustProxy?: boolean | number | string;
   /** Maximum accepted request body in bytes. Overrides `HTTP_BODY_LIMIT_BYTES`. */
   bodyLimit?: number;
@@ -623,6 +628,33 @@ function resolveBodyLimit(options: BootstrapNestApiOptions, env: NodeJS.ProcessE
   return configured;
 }
 
+function resolveTrustProxyValue(value: string | undefined): boolean | number {
+  const trimmed = value?.trim();
+  const normalized = trimmed?.toLowerCase();
+  const hopCount = Number(trimmed);
+  let resolved: boolean | number = false;
+  if (normalized === 'true') {
+    resolved = true;
+  } else if (Number.isInteger(hopCount) && hopCount >= 1) {
+    // Fastify accepts a positive integer hop count for `trustProxy`; anything
+    // else (zero, negative, fractional, or non-numeric garbage) disables it.
+    resolved = hopCount;
+  }
+
+  return resolved;
+}
+
+export function resolveTrustProxy(
+  optionsValue: BootstrapNestApiOptions['trustProxy'],
+  envValue: string | undefined,
+): boolean | number {
+  if (typeof optionsValue === 'boolean' || typeof optionsValue === 'number') {
+    return optionsValue;
+  }
+
+  return resolveTrustProxyValue(typeof optionsValue === 'string' ? optionsValue : envValue);
+}
+
 export function resolveBackendEnvironmentConfig(
   options: BootstrapNestApiOptions,
   env: NodeJS.ProcessEnv = process.env,
@@ -658,7 +690,7 @@ export function resolveBackendEnvironmentConfig(
         DefaultSessionSweepIntervalMs,
       ),
     },
-    trustProxy: options.trustProxy ?? readBoolean('TRUST_PROXY', env.TRUST_PROXY) ?? false,
+    trustProxy: resolveTrustProxy(options.trustProxy, env.TRUST_PROXY),
   };
 }
 
@@ -886,8 +918,11 @@ async function createAndStartNestApi(
         credentials: true,
       });
     } else if (!config.isProduction) {
+      // Non-production fallback: allow the well-known local dev origins with
+      // credentials instead of reflecting any origin, so a misconfigured dev
+      // API cannot serve credentialed cross-origin reads to arbitrary hosts.
       app.enableCors({
-        origin: true,
+        origin: [...DefaultDevelopmentCorsOrigins],
         credentials: true,
       });
     }

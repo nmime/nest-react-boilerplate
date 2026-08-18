@@ -45,11 +45,14 @@ const AuthRequiredProbe = () => {
 describe('user app API client provider wiring', () => {
   beforeEach(() => {
     window.history.pushState({}, '', '/');
+    vi.stubEnv('VITE_AUTH_API_BASE_URL', '');
+    vi.stubEnv('VITE_USER_API_BASE_URL', '');
   });
 
   afterEach(() => {
     cleanup();
     resetApiRuntimeForOnline();
+    vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
   it('injects public generated clients with configured auth/user base URLs', async () => {

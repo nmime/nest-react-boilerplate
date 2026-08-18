@@ -15,7 +15,7 @@ x-backend-product-env: &backend-product-env
 x-backend-env: &backend-env
   NODE_ENV: production
   PORT: 80
-  TRUST_PROXY: ${TRUST_PROXY:-true}
+  TRUST_PROXY: ${TRUST_PROXY:-1}
   CORS_ORIGINS: ${CORS_ORIGINS:?set comma-separated production origins}
   AUTH_GEOIP_DATABASE_PATH: ${AUTH_GEOIP_DATABASE_PATH:-}
   AUTH_LOGIN_NETWORK_RETENTION_DAYS: ${AUTH_LOGIN_NETWORK_RETENTION_DAYS:-30}

@@ -5,6 +5,7 @@ import {
   DefaultRequestBodyLimitBytes,
   MaximumRequestBodyLimitBytes,
   resolveBackendEnvironmentConfig,
+  resolveTrustProxy,
 } from './bootstrap-nest-api';
 
 describe('resolveBackendEnvironmentConfig', () => {
@@ -262,5 +263,49 @@ describe('request body limits', () => {
         { SESSION_SECRET: 'x', HTTP_BODY_LIMIT_BYTES: String(MaximumRequestBodyLimitBytes + 1) },
       ),
     ).toThrow('HTTP_BODY_LIMIT_BYTES');
+  });
+});
+
+describe('resolveTrustProxy', () => {
+  it('lets an explicit option value win over the environment', () => {
+    expect(resolveTrustProxy(true, '42')).toBe(true);
+    expect(resolveTrustProxy(false, '1')).toBe(false);
+    expect(resolveTrustProxy(2, 'true')).toBe(2);
+    expect(resolveTrustProxy(1, undefined)).toBe(1);
+    expect(resolveTrustProxy(0, 'true')).toBe(0);
+  });
+
+  it('parses string option values like the environment', () => {
+    expect(resolveTrustProxy('42', 'true')).toBe(42);
+    expect(resolveTrustProxy('false', 'true')).toBe(false);
+    expect(resolveTrustProxy('banana', 'true')).toBe(false);
+  });
+
+  it('reads TRUST_PROXY from the environment', () => {
+    expect(resolveTrustProxy(undefined, 'true')).toBe(true);
+    expect(resolveTrustProxy(undefined, 'TRUE')).toBe(true);
+    expect(resolveTrustProxy(undefined, 'false')).toBe(false);
+    expect(resolveTrustProxy(undefined, '')).toBe(false);
+    expect(resolveTrustProxy(undefined, '   ')).toBe(false);
+    expect(resolveTrustProxy(undefined, undefined)).toBe(false);
+    expect(resolveTrustProxy(undefined, '1')).toBe(1);
+    expect(resolveTrustProxy(undefined, '42')).toBe(42);
+    expect(resolveTrustProxy(undefined, 'banana')).toBe(false);
+    expect(resolveTrustProxy(undefined, '0')).toBe(false);
+    expect(resolveTrustProxy(undefined, '-1')).toBe(false);
+    expect(resolveTrustProxy(undefined, '1.5')).toBe(false);
+  });
+
+  it('resolves the hop count through resolveBackendEnvironmentConfig', () => {
+    const config = resolveBackendEnvironmentConfig(
+      { appName: 'test-api', port: 3010 },
+      {
+        SESSION_SECRET: 'development-secret',
+        NODE_ENV: 'development',
+        TRUST_PROXY: '42',
+      },
+    );
+
+    expect(config.trustProxy).toBe(42);
   });
 });

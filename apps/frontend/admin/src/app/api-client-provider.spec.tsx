@@ -1,7 +1,7 @@
 // @requirements REQ-FRONTEND-SHELL-004
 import { useEffect } from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAdminApiClient, useAuthApiClient } from '@app/frontend-api-client';
 import { resetApiRuntimeForOnline } from '@app/frontend-api-support';
 import App from '../App';
@@ -42,9 +42,15 @@ const UnauthorizedProbe = () => {
 };
 
 describe('admin app API client provider wiring', () => {
+  beforeEach(() => {
+    vi.stubEnv('VITE_ADMIN_API_BASE_URL', '');
+    vi.stubEnv('VITE_AUTH_API_BASE_URL', '');
+  });
+
   afterEach(() => {
     cleanup();
     resetApiRuntimeForOnline();
+    vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
   it('injects public generated clients with configured admin/auth base URLs', () => {

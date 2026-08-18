@@ -463,6 +463,52 @@ describe('bootstrapNestApi', () => {
     });
   });
 
+  it('passes a TRUST_PROXY hop count through to Fastify', async () => {
+    process.env.TRUST_PROXY = '42';
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+    });
+
+    expect(mocks.fastifyAdapter).toHaveBeenCalledWith({
+      bodyLimit: DefaultRequestBodyLimitBytes,
+      logger: false,
+      trustProxy: 42,
+    });
+  });
+
+  it('disables trust proxy when TRUST_PROXY is non-numeric garbage', async () => {
+    process.env.TRUST_PROXY = 'banana';
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+    });
+
+    expect(mocks.fastifyAdapter).toHaveBeenCalledWith({
+      bodyLimit: DefaultRequestBodyLimitBytes,
+      logger: false,
+      trustProxy: false,
+    });
+  });
+
+  it('lets an explicit trustProxy option override TRUST_PROXY', async () => {
+    process.env.TRUST_PROXY = 'true';
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+      trustProxy: 2,
+    });
+
+    expect(mocks.fastifyAdapter).toHaveBeenCalledWith({
+      bodyLimit: DefaultRequestBodyLimitBytes,
+      logger: false,
+      trustProxy: 2,
+    });
+  });
+
   it('enables rate limiting by default in production', async () => {
     process.env.DATABASE_URL = 'postgres://postgres:postgres@localhost:5432/app';
     process.env.NODE_ENV = 'production';
@@ -742,6 +788,51 @@ describe('bootstrapNestApi', () => {
     rateLimitMiddleware(socketRequest, secondResponse, rateNext);
     rateLimitMiddleware({}, createResponse(), rateNext);
     expect(rateNext).toHaveBeenCalledTimes(3);
+  });
+
+  it('falls back to the default development CORS origins in non-production', async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+    });
+
+    expect(mocks.app.enableCors).toHaveBeenCalledWith({
+      origin: [
+        'http://localhost:4200',
+        'http://127.0.0.1:4200',
+        'http://localhost:4201',
+        'http://127.0.0.1:4201',
+        'http://localhost:4202',
+        'http://127.0.0.1:4202',
+      ],
+      credentials: true,
+    });
+  });
+
+  it('keeps explicit CORS origins winning over the development fallback', async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+      corsOrigins: ['https://direct.example'],
+    });
+
+    expect(mocks.app.enableCors).toHaveBeenCalledWith({
+      origin: ['https://direct.example'],
+      credentials: true,
+    });
+  });
+
+  it('leaves CORS disabled in production without configured origins', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RATE_LIMIT_IN_MEMORY_ALLOWED = 'true';
+    process.env.SESSION_SECRET = 'x'.repeat(32);
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      port: 3010,
+    });
+
+    expect(mocks.app.enableCors).not.toHaveBeenCalled();
   });
 
   it('increments through the redis store with an atomic window and stable reset time', async () => {

@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 const require = createRequire(import.meta.url);
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
 const tsconfigPath = resolve(workspaceRoot, "tsconfig.base.json");
-process.env.SWC_NODE_PROJECT ??= tsconfigPath;
+// `??=` is not enough: loadDotEnv() copies .env values including EMPTY ones,
+// so SWC_NODE_PROJECT="" survives nullish assignment and @swc-node/register
+// then compiles decorator-bearing files without their tsconfig ("Expression
+// expected" on @Injectable). Fall back on any falsy value.
+process.env.SWC_NODE_PROJECT = process.env.SWC_NODE_PROJECT || tsconfigPath;
 require("@swc-node/register");
 const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8"));
 require("tsconfig-paths").register({ baseUrl: workspaceRoot, paths: tsconfig.compilerOptions.paths });

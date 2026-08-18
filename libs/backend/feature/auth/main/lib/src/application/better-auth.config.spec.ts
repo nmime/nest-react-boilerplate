@@ -3,6 +3,16 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { DefaultBetterAuthSessionMaxAgeSeconds, getBetterAuthConfig } from './better-auth';
 
+type AuthInstanceLike = {
+  options?: {
+    plugins?: Array<{ id?: string; options?: { config?: Array<{ providerId?: string }> } }>;
+  };
+};
+
+/** Reads the generic-oauth plugin config array off a built Better-Auth instance. */
+const telegramOidcProviderConfigs = (auth: AuthInstanceLike): Array<{ providerId?: string }> =>
+  auth.options?.plugins?.find((plugin) => plugin?.id === 'generic-oauth')?.options?.config ?? [];
+
 describe('getBetterAuthConfig', () => {
   const originalEnv = process.env;
 
@@ -150,6 +160,38 @@ describe('getBetterAuthConfig', () => {
         telegramOidcClientSecret: 'telegram-client-secret',
       }),
     ).toThrow('TELEGRAM_OIDC_CLIENT_ID must be the numeric client ID');
+  });
+
+  it('keeps Telegram OIDC disabled when only a placeholder client ID is set', () => {
+    const auth = getBetterAuthConfig(null, {
+      telegramOidcClientId: '123456789',
+    }) as unknown as AuthInstanceLike;
+
+    expect(telegramOidcProviderConfigs(auth)).toEqual([]);
+  });
+
+  it('keeps Telegram OIDC disabled when only a client secret is set', () => {
+    const auth = getBetterAuthConfig(null, {
+      telegramOidcClientSecret: 'telegram-client-secret',
+    }) as unknown as AuthInstanceLike;
+
+    expect(telegramOidcProviderConfigs(auth)).toEqual([]);
+  });
+
+  it('auto-enables Telegram OIDC when both credentials are set', () => {
+    const auth = getBetterAuthConfig(null, {
+      telegramOidcClientId: '123456789',
+      telegramOidcClientSecret: 'telegram-client-secret',
+    }) as unknown as AuthInstanceLike;
+
+    expect(telegramOidcProviderConfigs(auth)).toEqual([expect.objectContaining({ providerId: 'telegram' })]);
+  });
+
+  it('keeps Telegram OIDC disabled for an env placeholder client ID without a secret', () => {
+    process.env.TELEGRAM_OIDC_CLIENT_ID = '123456789';
+    const auth = getBetterAuthConfig(null) as unknown as AuthInstanceLike;
+
+    expect(telegramOidcProviderConfigs(auth)).toEqual([]);
   });
 
   it('uses discord provider options', () => {

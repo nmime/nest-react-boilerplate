@@ -119,7 +119,11 @@ function resolveTelegramOidcConfig(options: BetterAuthConfigOptions) {
   const clientId = options.telegramOidcClientId ?? process.env.TELEGRAM_OIDC_CLIENT_ID ?? '';
   const clientSecret = options.telegramOidcClientSecret ?? process.env.TELEGRAM_OIDC_CLIENT_SECRET ?? '';
   const explicitlyEnabled = options.telegramOidcEnabled ?? readBoolean(process.env.TELEGRAM_OIDC_ENABLED) ?? false;
-  const enabled = explicitlyEnabled || Boolean(clientId || clientSecret);
+  // Auto-enable only when BOTH credentials are present: the shipped examples
+  // carried a placeholder CLIENT_ID, and `||` let that single placeholder flip
+  // the provider on with a fake secret. Explicit ENABLED=true below still
+  // demands both values and throws when either is missing.
+  const enabled = explicitlyEnabled || Boolean(clientId && clientSecret);
   if (!enabled) {
     return undefined;
   }

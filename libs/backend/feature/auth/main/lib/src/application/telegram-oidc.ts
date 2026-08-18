@@ -37,7 +37,7 @@ export async function verifyTelegramOidcIdToken(
   options: Pick<TelegramOidcOptions, 'clientId' | 'issuer' | 'jwksUrl' | 'keyResolver'>,
 ): Promise<TelegramOidcClaims> {
   const issuer = options.issuer ?? TelegramOidcIssuer;
-  const keyResolver = options.keyResolver ?? createRemoteJWKSet(new URL(options.jwksUrl ?? TelegramOidcJwksUrl));
+  const keyResolver = options.keyResolver ?? createRemoteJWKSet(new URL(optionalString(options.jwksUrl) ?? TelegramOidcJwksUrl));
   const { payload } = await jwtVerify(idToken, keyResolver, {
     algorithms: TelegramOidcAlgorithms,
     audience: options.clientId,
@@ -57,7 +57,7 @@ export async function verifyTelegramOidcIdToken(
 }
 
 export function createTelegramOidcConfig(options: TelegramOidcOptions): GenericOAuthConfig {
-  const keyResolver = options.keyResolver ?? createRemoteJWKSet(new URL(options.jwksUrl ?? TelegramOidcJwksUrl));
+  const keyResolver = options.keyResolver ?? createRemoteJWKSet(new URL(optionalString(options.jwksUrl) ?? TelegramOidcJwksUrl));
 
   return {
     providerId: TelegramOidcProviderId,

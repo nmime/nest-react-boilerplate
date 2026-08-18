@@ -3,7 +3,11 @@ import { availableParallelism, totalmem } from 'node:os';
 import { join, resolve } from 'node:path';
 
 import type { CommandContext } from '../../cli.js';
-import { resolveTestParallelism } from '../qa/test-orchestration.js';
+import {
+  effectiveMemoryBytes,
+  readCgroupMemoryLimit,
+  resolveTestParallelism,
+} from '../qa/test-orchestration.js';
 import { run, type RunResult } from '../../runtime/process.js';
 import {
   closureLockPath,
@@ -24,9 +28,16 @@ import type { DurableDatabaseProviderId } from '../../setup/catalog.js';
 
 type Execute = (command: string, args: string[], options: { cwd: string; stdio: 'inherit' }) => RunResult;
 
+export interface ClosureRuntime {
+  availableParallelism: () => number;
+  cgroupMemoryLimit: () => number | undefined;
+  totalMemory: () => number;
+}
+
 export interface ClosureCommandDependencies {
   buildExpected?: (workspaceRoot: string) => Promise<SelectedClosureManifest>;
   execute?: Execute;
+  runtime?: Partial<ClosureRuntime>;
 }
 
 export async function runClosureCommand(
@@ -173,6 +184,12 @@ async function runTargetCommand(
   const projects = closure.targets[target];
   if (!projects || projects.length === 0) throw new Error(`Target "${target}" is not available in the selected closure.`);
   const execute = dependencies.execute ?? run;
+  const runtime: ClosureRuntime = {
+    availableParallelism,
+    cgroupMemoryLimit: () => readCgroupMemoryLimit(),
+    totalMemory: totalmem,
+    ...dependencies.runtime,
+  };
   const result = execute(
     'pnpm',
     [
@@ -182,7 +199,7 @@ async function runTargetCommand(
       '-t',
       target,
       `--projects=${projects.join(',')}`,
-      ...resolveClosureConcurrencyArguments(target, forwarded),
+      ...resolveClosureConcurrencyArguments(target, forwarded, runtime),
       ...forwarded,
     ],
     { cwd: workspaceRoot, stdio: 'inherit' },
@@ -196,16 +213,30 @@ async function runTargetCommand(
  * each Vitest project spawning its own unbounded worker pool, which oversubscribes the
  * machine and is what makes timeout-sensitive specs flake locally. The aggregate
  * `test:all` path already derives both limits from CPU and memory; mirror it here.
+ *
+ * `test`/`component-test` keep deriving their limit from the host-reported memory, while
+ * `lint`/`typecheck` use the cgroup-aware effective memory so a container that reports the
+ * host's RAM does not spawn more workers than its memory budget allows. An explicitly
+ * forwarded `--parallel` always wins.
  */
-function resolveClosureConcurrencyArguments(target: string, forwarded: string[]): string[] {
-  if (target !== 'test' && target !== 'component-test') return [];
+function resolveClosureConcurrencyArguments(
+  target: string,
+  forwarded: string[],
+  runtime: ClosureRuntime,
+): string[] {
   if (forwarded.some((argument) => argument.startsWith('--parallel'))) return [];
+  if (target !== 'test' && target !== 'component-test' && target !== 'lint' && target !== 'typecheck') {
+    return [];
+  }
 
-  const parallel = resolveTestParallelism({
-    cpuCount: availableParallelism(),
-    memoryBytes: totalmem(),
-  });
-  return [`--parallel=${parallel}`];
+  const memoryBytes =
+    target === 'lint' || target === 'typecheck'
+      ? effectiveMemoryBytes({
+          totalMemory: runtime.totalMemory,
+          cgroupMemoryLimit: runtime.cgroupMemoryLimit,
+        })
+      : runtime.totalMemory();
+  return [`--parallel=${resolveTestParallelism({ cpuCount: runtime.availableParallelism(), memoryBytes })}`];
 }
 
 async function requireCurrentClosure(

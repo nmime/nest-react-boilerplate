@@ -29,7 +29,22 @@ function closure(): SelectedClosureManifest {
   });
 }
 
-function rootWithClosure(): string {
+function checkTargetsClosure(): SelectedClosureManifest {
+  return {
+    ...closure(),
+    // Target keys stay sorted to match parseSelectedClosure's normalization.
+    targets: {
+      build: ['landing-app'],
+      'component-test': ['landing-app'],
+      lint: ['landing-app'],
+      serve: ['landing-app'],
+      test: ['landing-app'],
+      typecheck: ['landing-app'],
+    },
+  };
+}
+
+function rootWithClosure(manifest: SelectedClosureManifest = closure()): string {
   const root = mkdtempSync(join(tmpdir(), 'nrb-closure-command-'));
   writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'pnpm@11.11.0', engines: {} }));
   writeFileSync(join(root, 'pnpm-workspace.yaml'), "packages:\n  - 'apps/*'\n\noverrides:\n  nx: 23.1.0\n");
@@ -42,7 +57,7 @@ function rootWithClosure(): string {
   mkdirSync(join(root, 'apps/landing-app/node_modules'), { recursive: true });
   writeFileSync(join(root, 'apps/landing-app/project.json'), JSON.stringify({ name: 'landing-app' }));
   writeFileSync(join(root, 'apps/landing-app/node_modules/stale-marker'), 'stale');
-  synchronizeClosureArtifacts(root, closure());
+  synchronizeClosureArtifacts(root, manifest);
   return root;
 }
 
@@ -120,6 +135,88 @@ describe('closure command', () => {
       process.stderr.write = original;
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  it('derives a cgroup-capped --parallel for lint and typecheck and lets a forwarded --parallel win', async () => {
+    const manifest = checkTargetsClosure();
+    const root = rootWithClosure(manifest);
+    const calls: Array<{ command: string; args: string[] }> = [];
+    const execute = (command: string, args: string[]) => {
+      calls.push({ command, args });
+      return { command, args, status: 0, stdout: '', stderr: '' } as never;
+    };
+    const runtime = {
+      availableParallelism: () => 12,
+      totalMemory: () => 128 * 1024 ** 3,
+      cgroupMemoryLimit: () => 4 * 1024 ** 3,
+    };
+    const original = process.stderr.write;
+    process.stderr.write = () => true;
+    try {
+      const lintStatus = await runClosureCommand(
+        { argv: ['run', 'lint'], packageRoot: '', workspaceRoot: root },
+        { buildExpected: async () => manifest, execute, runtime },
+      );
+      assert.equal(lintStatus, 0);
+      await runClosureCommand(
+        { argv: ['run', 'typecheck'], packageRoot: '', workspaceRoot: root },
+        { buildExpected: async () => manifest, execute, runtime },
+      );
+      await runClosureCommand(
+        { argv: ['run', 'lint', '--', '--parallel=3'], packageRoot: '', workspaceRoot: root },
+        { buildExpected: async () => manifest, execute, runtime },
+      );
+      await runClosureCommand(
+        { argv: ['run', 'test'], packageRoot: '', workspaceRoot: root },
+        { buildExpected: async () => manifest, execute, runtime },
+      );
+      await runClosureCommand(
+        { argv: ['run', 'component-test'], packageRoot: '', workspaceRoot: root },
+        { buildExpected: async () => manifest, execute, runtime },
+      );
+      await runClosureCommand(
+        { argv: ['run', 'lint'], packageRoot: '', workspaceRoot: root },
+        {
+          buildExpected: async () => manifest,
+          execute,
+          runtime: { ...runtime, cgroupMemoryLimit: () => undefined },
+        },
+      );
+    } finally {
+      process.stderr.write = original;
+      rmSync(root, { recursive: true, force: true });
+    }
+
+    const [lint, typecheck, forwarded, test, componentTest, unlimitedLint] = calls;
+    // lint/typecheck: effective memory = min(128 GB host, 4 GB cgroup) = 4 GB,
+    // so min(8, 12 cpus, floor(4 GB / 2 GB)) = 2.
+    assert.deepEqual(lint, {
+      command: 'pnpm',
+      args: ['exec', 'nx', 'run-many', '-t', 'lint', '--projects=landing-app', '--parallel=2'],
+    });
+    assert.deepEqual(typecheck, {
+      command: 'pnpm',
+      args: ['exec', 'nx', 'run-many', '-t', 'typecheck', '--projects=landing-app', '--parallel=2'],
+    });
+    // An explicitly forwarded --parallel always wins.
+    assert.deepEqual(forwarded, {
+      command: 'pnpm',
+      args: ['exec', 'nx', 'run-many', '-t', 'lint', '--projects=landing-app', '--parallel=3'],
+    });
+    // test/component-test keep the host-memory path: min(8, 12, floor(128 GB / 2 GB)) = 8.
+    assert.deepEqual(test, {
+      command: 'pnpm',
+      args: ['exec', 'nx', 'run-many', '-t', 'test', '--projects=landing-app', '--parallel=8'],
+    });
+    assert.deepEqual(componentTest, {
+      command: 'pnpm',
+      args: ['exec', 'nx', 'run-many', '-t', 'component-test', '--projects=landing-app', '--parallel=8'],
+    });
+    // Without a cgroup limit, lint derives from the full host memory: 8.
+    assert.deepEqual(unlimitedLint, {
+      command: 'pnpm',
+      args: ['exec', 'nx', 'run-many', '-t', 'lint', '--projects=landing-app', '--parallel=8'],
+    });
   });
 
   it('regenerates a stale selected lock and records current metadata', async () => {

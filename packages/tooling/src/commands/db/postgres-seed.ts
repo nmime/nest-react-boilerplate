@@ -13,6 +13,54 @@ import {
 
 export * from './postgres-environment.ts';
 
+export interface RbacKeyRow {
+  id: string;
+  key: string;
+}
+
+export interface ResolvedRbacIds {
+  roles: Record<string, string>;
+  permissions: Record<string, string>;
+}
+
+/**
+ * Resolves the ids the seed must target for the expected roles/permissions.
+ * The auth RBAC migration assigns gen_random_uuid() ids, so a freshly migrated
+ * database does not contain the canonical seed-data UUIDs: records the
+ * database already has are reused by key, and records that are still missing
+ * fall back to the canonical seed-data UUIDs that the seed's inserts use.
+ */
+export function resolveRbacIds(
+  existingRoleRows: readonly RbacKeyRow[],
+  existingPermissionRows: readonly RbacKeyRow[],
+  expectedRoles: readonly { readonly key: string }[],
+  expectedPermissions: readonly { readonly key: string }[],
+): ResolvedRbacIds {
+  const keyToId = (rows: readonly RbacKeyRow[]): Record<string, string> => {
+    const map: Record<string, string> = {};
+    for (const row of rows) {
+      if (row.key) map[row.key] = row.id;
+    }
+    return map;
+  };
+  const resolve = (
+    existing: Record<string, string>,
+    canonical: Record<string, string>,
+    expected: readonly { readonly key: string }[],
+  ): Record<string, string> => {
+    const resolved: Record<string, string> = {};
+    for (const item of expected) {
+      const id = existing[item.key] ?? canonical[item.key];
+      if (id) resolved[item.key] = id;
+    }
+    return resolved;
+  };
+  return {
+    roles: resolve(keyToId(existingRoleRows), roleUuids, expectedRoles),
+    permissions: resolve(keyToId(existingPermissionRows), permissionUuids, expectedPermissions),
+  };
+}
+
 export async function seedPostgresDatabase(
   connectionString: string,
   seedUsers: SeedUser[],
@@ -35,12 +83,25 @@ export async function seedPostgresDatabase(
   }
 }
 
-async function seed(client: pg.Client, seedUsers: SeedUser[]): Promise<Record<string, number>> {
+export async function seed(client: pg.Client, seedUsers: SeedUser[]): Promise<Record<string, number>> {
   await client.query('BEGIN');
   const counts = { permissions: 0, roles: 0, rolePermissions: 0, users: 0, userRoles: 0 };
   try {
+    const existingRoles = await client.query(
+      `SELECT "id"::text AS id, "key" FROM "auth_roles" WHERE "tenant_id" = $1`,
+      [DefaultTenantId],
+    );
+    const existingPermissions = await client.query(
+      `SELECT "id"::text AS id, "key" FROM "auth_permissions"`,
+    );
+    const resolved = resolveRbacIds(
+      existingRoles.rows as RbacKeyRow[],
+      existingPermissions.rows as RbacKeyRow[],
+      roles,
+      permissions,
+    );
     for (const permission of permissions) {
-      const uuid = permissionUuids[permission.key];
+      const uuid = resolved.permissions[permission.key];
       if (!uuid) continue;
       const { rowCount } = await client.query(
         `INSERT INTO "auth_permissions" ("id", "key", "resource", "action", "description", "created_at")
@@ -50,7 +111,7 @@ async function seed(client: pg.Client, seedUsers: SeedUser[]): Promise<Record<st
       if (rowCount) counts.permissions += rowCount;
     }
     for (const role of roles) {
-      const uuid = roleUuids[role.key];
+      const uuid = resolved.roles[role.key];
       if (!uuid) continue;
       const { rowCount } = await client.query(
         `INSERT INTO "auth_roles" ("id", "tenant_id", "key", "label", "description", "is_system", "created_at", "updated_at")
@@ -60,10 +121,10 @@ async function seed(client: pg.Client, seedUsers: SeedUser[]): Promise<Record<st
       if (rowCount) counts.roles += rowCount;
     }
     for (const role of roles) {
-      const roleUuid = roleUuids[role.key];
+      const roleUuid = resolved.roles[role.key];
       if (!roleUuid) continue;
       for (const permissionKey of rolePermissions[role.key] ?? []) {
-        const permissionUuid = permissionUuids[permissionKey];
+        const permissionUuid = resolved.permissions[permissionKey];
         if (!permissionUuid) continue;
         const { rowCount } = await client.query(
           `INSERT INTO "auth_role_permissions" ("role_id", "permission_id", "created_at")
@@ -73,36 +134,44 @@ async function seed(client: pg.Client, seedUsers: SeedUser[]): Promise<Record<st
         if (rowCount) counts.rolePermissions += rowCount;
       }
     }
+    const resolvedUserIds: Record<string, string> = {};
     for (const user of seedUsers) {
-      const userRoleKeys = [user.role];
-      const permissionKeys = userRoleKeys.flatMap((role) => rolePermissions[role] ?? []);
+      // The RBAC jsonb columns ("roles", "permissions") were removed from
+      // auth_users; grants are table-driven through auth_user_roles below.
       const { rowCount } = await client.query(
         `INSERT INTO "auth_users" (
-           "id", "tenant_id", "email", "display_name", "password_hash", "status", "roles", "permissions",
+           "id", "tenant_id", "email", "display_name", "password_hash", "status",
            "locale", "theme", "last_login_at", "avatar_url", "avatar_hash", "avatar_status", "created_at", "updated_at"
-         ) VALUES ($1, $2, $3, $4, $5, 'active', $6::jsonb, $7::jsonb, $8, $9,
-           'epoch'::timestamptz, '', '', 'none', now(), now()) ON CONFLICT DO NOTHING`,
+         ) VALUES ($1, $2, $3, $4, $5, 'active', $6, $7,
+           'epoch'::timestamptz, '', '', 'none', now(), now())
+         ON CONFLICT ("tenant_id", (lower("email"::text))) WHERE "email" IS NOT NULL DO NOTHING`,
         [
           user.id,
           DefaultTenantId,
           user.email,
           user.displayName,
           hashPassword(user.password),
-          JSON.stringify(userRoleKeys),
-          JSON.stringify(permissionKeys),
           user.locale,
           user.theme,
         ],
       );
       if (rowCount) counts.users += rowCount;
+      const match = await client.query(
+        `SELECT "id"::text AS id FROM "auth_users" WHERE "tenant_id" = $1 AND lower("email") = lower($2)`,
+        [DefaultTenantId, user.email],
+      );
+      const userId = match.rows[0]?.id as string | undefined;
+      if (!userId) throw new Error(`Could not resolve id for seeded user ${user.email}`);
+      resolvedUserIds[user.email] = userId;
     }
     for (const user of seedUsers) {
-      const roleUuid = roleUuids[user.role];
+      const userId = resolvedUserIds[user.email];
+      const roleUuid = resolved.roles[user.role];
       if (!roleUuid) continue;
       const { rowCount } = await client.query(
         `INSERT INTO "auth_user_roles" ("auth_user_id", "role_id", "tenant_id", "created_at")
          VALUES ($1, $2, $3, now()) ON CONFLICT DO NOTHING`,
-        [user.id, roleUuid, DefaultTenantId],
+        [userId, roleUuid, DefaultTenantId],
       );
       if (rowCount) counts.userRoles += rowCount;
     }

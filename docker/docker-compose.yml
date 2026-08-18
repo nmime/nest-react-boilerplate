@@ -159,7 +159,7 @@ services:
     image: redis:7.4.3-alpine
     restart: unless-stopped
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
       - redis-data:/data
     healthcheck:
@@ -173,8 +173,8 @@ services:
     image: nats:2.10.25-alpine
     restart: unless-stopped
     ports:
-      - '${NATS_PORT:-4222}:4222'
-      - '${NATS_MONITOR_PORT:-8222}:8222'
+      - '127.0.0.1:${NATS_PORT:-4222}:4222'
+      - '127.0.0.1:${NATS_MONITOR_PORT:-8222}:8222'
     healthcheck:
       test: ['CMD', 'nc', '-z', 'localhost', '4222']
       interval: 10s
@@ -187,8 +187,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     ports:
-      - '${MINIO_PORT:-9000}:9000'
-      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+      - '127.0.0.1:${MINIO_PORT:-9000}:9000'
+      - '127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001'
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
@@ -209,7 +209,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -224,7 +224,7 @@ services:
     restart: unless-stopped
     command: ['mongod', '--replSet', 'rs0', '--bind_ip_all', '--port', '${MONGODB_PORT:-27017}']
     ports:
-      - '${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}'
+      - '127.0.0.1:${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}'
     volumes:
       - mongodb-data:/data/db
     networks:

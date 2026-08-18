@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
     command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
     ports:
-      - '${MONGODB_PORT:-27017}:27017'
+      - '127.0.0.1:${MONGODB_PORT:-27017}:27017'
     volumes:
       - mongodb-data:/data/db
     healthcheck:

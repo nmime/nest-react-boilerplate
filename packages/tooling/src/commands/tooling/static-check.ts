@@ -2396,6 +2396,9 @@ function ensureFormatBaseRef(workspaceRoot: string, base: string): void {
 function collectToolingModuleScripts(workspaceRoot: string): string[] {
   return [
     ...walk(resolve(workspaceRoot, "packages/tooling/bin")),
+    // src/plugins holds directly executed .mjs entries (the typecheck plugin),
+    // which the CLI's lazy jiti loading never parses for unrelated commands.
+    ...walk(resolve(workspaceRoot, "packages/tooling/src/plugins")),
     ...walk(resolve(workspaceRoot, "scripts")),
   ]
     .filter((path) => path.endsWith(".mjs"))

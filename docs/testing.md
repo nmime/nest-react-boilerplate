@@ -24,6 +24,23 @@ default product selection. The static e2e coverage sweep excludes
 Docker-owned `fullstack-e2e`; its provider-specific browser proof runs through
 `test:fullstack`.
 
+Test and coverage sweeps size their concurrency from a cgroup-aware memory
+budget instead of a fixed worker count: the effective budget is the host RAM
+capped by the container limit (`/sys/fs/cgroup/memory.max`, with the v1
+`memory.limit_in_bytes` fallback; `os.totalmem()` alone would report the host
+inside a container). `test:all` and `test:coverage:all` derive the Nx worker
+count as the minimum of the CPU count, a hard cap of 8, and `floor(budget /
+1.5 GiB)`, and the per-target Vitest worker limit as the minimum of 4,
+`floor(CPU / Nx workers)`, and `floor(budget / Nx workers / 1.5 GiB)`, so a
+4 GB container derives 2 Nx workers. Every test child gets
+`--max-old-space-size=1536` appended to `NODE_OPTIONS` (an inherited value is
+preserved), so a single misbehaving project cannot grow past its budgeted slot
+even when the container's cgroup would let it. Closure-scoped `pnpm run test`,
+`test:coverage`, and `test:component` route through `nrb closure run` and
+derive the same cgroup-aware `--parallel` for `test`, `component-test`,
+`lint`, and `typecheck` targets, exporting the same child heap cap for the
+test targets; an explicitly forwarded `--parallel` always wins.
+
 Normative requirements, Cucumber acceptance examples, and independent evidence
 lanes are described in
 [Specification assurance](specification-assurance.md). Start with:

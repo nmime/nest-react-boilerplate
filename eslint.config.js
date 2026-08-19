@@ -536,14 +536,16 @@ module.exports = [
     // program (tsconfig.lint.json). Linting tooling through the project
     // service would switch it to its own tsconfig and surface findings the
     // code intentionally works around, so keep tooling on the historical
-    // whole-workspace lint program. `projectService: undefined` cancels the
-    // service block above for these files (flat config merges parserOptions
-    // key by key); every other project stays on the shared service.
+    // whole-workspace lint program. `projectService: false` cancels the
+    // service block above: ESLint's flat-config deep merge keeps the earlier
+    // value when a later config sets a key to `undefined`, so only an
+    // explicit `false` reaches the parser and switches it back to classic
+    // `project` mode. Every other project stays on the shared service.
     files: ['packages/tooling/**/*.ts', 'packages/tooling/**/*.tsx'],
     languageOptions: {
       parser: typescriptEslintParser,
       parserOptions: {
-        projectService: undefined,
+        projectService: false,
         project: 'tsconfig.lint.json',
         tsconfigRootDir: __dirname,
       },

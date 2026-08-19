@@ -7,6 +7,7 @@ import {
   effectiveMemoryBytes,
   readCgroupMemoryLimit,
   resolveTestParallelism,
+  workerNodeOptions,
 } from '../qa/test-orchestration.js';
 import { run, type RunResult } from '../../runtime/process.js';
 import {
@@ -26,7 +27,11 @@ import {
 } from '../../setup/closure-workspace.js';
 import type { DurableDatabaseProviderId } from '../../setup/catalog.js';
 
-type Execute = (command: string, args: string[], options: { cwd: string; stdio: 'inherit' }) => RunResult;
+type Execute = (
+  command: string,
+  args: string[],
+  options: { cwd: string; env?: NodeJS.ProcessEnv; stdio: 'inherit' },
+) => RunResult;
 
 export interface ClosureRuntime {
   availableParallelism: () => number;
@@ -202,7 +207,17 @@ async function runTargetCommand(
       ...resolveClosureConcurrencyArguments(target, forwarded, runtime),
       ...forwarded,
     ],
-    { cwd: workspaceRoot, stdio: 'inherit' },
+    {
+      cwd: workspaceRoot,
+      // Test children get the same per-worker old-space cap the aggregate
+      // orchestration exports, so a closure-scoped run cannot grow past its
+      // budgeted slot in a constrained container.
+      env:
+        target === 'test' || target === 'component-test'
+          ? { NODE_OPTIONS: workerNodeOptions(process.env.NODE_OPTIONS) }
+          : undefined,
+      stdio: 'inherit',
+    },
   );
   return result.status;
 }
@@ -214,9 +229,9 @@ async function runTargetCommand(
  * machine and is what makes timeout-sensitive specs flake locally. The aggregate
  * `test:all` path already derives both limits from CPU and memory; mirror it here.
  *
- * `test`/`component-test` keep deriving their limit from the host-reported memory, while
- * `lint`/`typecheck` use the cgroup-aware effective memory so a container that reports the
- * host's RAM does not spawn more workers than its memory budget allows. An explicitly
+ * Every target derives its limit from the cgroup-aware effective memory (the host
+ * budget capped by the container limit), so a container that reports the host's
+ * RAM does not spawn more workers than its memory budget allows. An explicitly
  * forwarded `--parallel` always wins.
  */
 function resolveClosureConcurrencyArguments(
@@ -229,13 +244,10 @@ function resolveClosureConcurrencyArguments(
     return [];
   }
 
-  const memoryBytes =
-    target === 'lint' || target === 'typecheck'
-      ? effectiveMemoryBytes({
-          totalMemory: runtime.totalMemory,
-          cgroupMemoryLimit: runtime.cgroupMemoryLimit,
-        })
-      : runtime.totalMemory();
+  const memoryBytes = effectiveMemoryBytes({
+    totalMemory: runtime.totalMemory,
+    cgroupMemoryLimit: runtime.cgroupMemoryLimit,
+  });
   return [`--parallel=${resolveTestParallelism({ cpuCount: runtime.availableParallelism(), memoryBytes })}`];
 }
 

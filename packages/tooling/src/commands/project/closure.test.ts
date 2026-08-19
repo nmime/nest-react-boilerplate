@@ -189,7 +189,7 @@ describe('closure command', () => {
 
     const [lint, typecheck, forwarded, test, componentTest, unlimitedLint] = calls;
     // lint/typecheck: effective memory = min(128 GB host, 4 GB cgroup) = 4 GB,
-    // so min(8, 12 cpus, floor(4 GB / 2 GB)) = 2.
+    // so min(8, 12 cpus, floor(4 GB / 1.5 GB budget)) = 2.
     assert.deepEqual(lint, {
       command: 'pnpm',
       args: ['exec', 'nx', 'run-many', '-t', 'lint', '--projects=landing-app', '--parallel=2'],
@@ -203,20 +203,62 @@ describe('closure command', () => {
       command: 'pnpm',
       args: ['exec', 'nx', 'run-many', '-t', 'lint', '--projects=landing-app', '--parallel=3'],
     });
-    // test/component-test keep the host-memory path: min(8, 12, floor(128 GB / 2 GB)) = 8.
+    // test/component-test derive from the same effective budget:
+    // min(8, 12, floor(4 GB / 1.5 GB)) = 2.
     assert.deepEqual(test, {
       command: 'pnpm',
-      args: ['exec', 'nx', 'run-many', '-t', 'test', '--projects=landing-app', '--parallel=8'],
+      args: ['exec', 'nx', 'run-many', '-t', 'test', '--projects=landing-app', '--parallel=2'],
     });
     assert.deepEqual(componentTest, {
       command: 'pnpm',
-      args: ['exec', 'nx', 'run-many', '-t', 'component-test', '--projects=landing-app', '--parallel=8'],
+      args: ['exec', 'nx', 'run-many', '-t', 'component-test', '--projects=landing-app', '--parallel=2'],
     });
     // Without a cgroup limit, lint derives from the full host memory: 8.
     assert.deepEqual(unlimitedLint, {
       command: 'pnpm',
       args: ['exec', 'nx', 'run-many', '-t', 'lint', '--projects=landing-app', '--parallel=8'],
     });
+  });
+
+  it('derives the test budget from the cgroup limit and exports the per-worker heap cap to test children', async () => {
+    const manifest = checkTargetsClosure();
+    const root = rootWithClosure(manifest);
+    const calls: Array<{ command: string; args: string[]; options: { cwd: string; env?: NodeJS.ProcessEnv; stdio: string } }> = [];
+    const execute = (command: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv; stdio: string }) => {
+      calls.push({ command, args, options });
+      return { command, args, status: 0, stdout: '', stderr: '' } as never;
+    };
+    const runtime = {
+      availableParallelism: () => 12,
+      totalMemory: () => 128 * 1024 ** 3,
+      cgroupMemoryLimit: () => 8 * 1024 ** 3,
+    };
+    const original = process.stderr.write;
+    const originalNodeOptions = process.env.NODE_OPTIONS;
+    delete process.env.NODE_OPTIONS;
+    process.stderr.write = () => true;
+    try {
+      await runClosureCommand(
+        { argv: ['run', 'test'], packageRoot: '', workspaceRoot: root },
+        { buildExpected: async () => manifest, execute, runtime },
+      );
+      await runClosureCommand(
+        { argv: ['run', 'lint'], packageRoot: '', workspaceRoot: root },
+        { buildExpected: async () => manifest, execute, runtime },
+      );
+    } finally {
+      process.stderr.write = original;
+      if (originalNodeOptions === undefined) delete process.env.NODE_OPTIONS;
+      else process.env.NODE_OPTIONS = originalNodeOptions;
+      rmSync(root, { recursive: true, force: true });
+    }
+
+    const [test, lint] = calls;
+    // 8 GB budget fits floor(8 GB / 1.5 GB) = 5 per-worker slots.
+    assert.deepEqual(test.args.slice(-1), ['--parallel=5']);
+    // The heap cap is exported for test children and never for lint children.
+    assert.equal(test.options.env?.NODE_OPTIONS, '--max-old-space-size=1536');
+    assert.equal(lint.options.env, undefined);
   });
 
   it('regenerates a stale selected lock and records current metadata', async () => {

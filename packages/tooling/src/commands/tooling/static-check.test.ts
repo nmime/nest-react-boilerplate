@@ -20,6 +20,7 @@ import {
   checkLocalBarrelExportConventions,
   checkThinLocaleCatalogs,
   checkPackageProjectReferences,
+  checkPackageScriptReferences,
   checkProviderScopedRuntimeImports,
   checkRepositoryScriptSpecCoverage,
   checkStaleReferences,
@@ -1443,6 +1444,87 @@ describe("static-check package project reference guard", () => {
       }
 
       assert.deepEqual(checkPackageProjectReferences(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+describe("static-check package script tooling command guard", () => {
+  it("rejects root scripts that reference unknown tooling commands", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "package.json",
+        JSON.stringify({
+          scripts: {
+            "api:client": "pnpm --filter @repo/tooling tooling api client",
+          },
+        }),
+      );
+      writeText(
+        workspaceRoot,
+        "packages/tooling/package.json",
+        JSON.stringify({ scripts: {} }),
+      );
+
+      const failures = checkPackageScriptReferences(workspaceRoot);
+
+      assert.equal(failures.length, 1);
+      assert.equal(
+        failures[0].command,
+        "package.json tooling command reference package.json#api:client",
+      );
+      assert.equal(failures[0].file, "package.json");
+      assert.match(failures[0].stderr, /Unknown tooling command: api client/);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("accepts tooling invocations that resolve against the CLI command table", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "package.json",
+        JSON.stringify({
+          scripts: {
+            "api:clients:check":
+              "pnpm --filter @repo/tooling tooling api clients check",
+            "format:changed":
+              "pnpm --filter @repo/tooling tooling tooling changed-format-check",
+            "check": "pnpm nrb closure run test -- --coverage",
+            "dev:db": "pnpm nrb dev database",
+            "bun:check":
+              "bun run --bun packages/tooling/bin/repo-tooling.mjs tooling bun-compat",
+            "docker:selected":
+              "pnpm --filter @repo/tooling tooling docker selected up --no-build",
+            "nrb": "pnpm --filter @repo/tooling tooling",
+          },
+        }),
+      );
+      writeText(
+        workspaceRoot,
+        "packages/tooling/package.json",
+        JSON.stringify({
+          scripts: {
+            "static-check":
+              "node --max-old-space-size=1024 ./bin/repo-tooling.mjs tooling static-check",
+            tooling: "node ./bin/repo-tooling.mjs",
+          },
+        }),
+      );
+      writeText(
+        workspaceRoot,
+        "packages/tooling/bin/repo-tooling.mjs",
+        "// CLI entry\n",
+      );
+
+      assert.deepEqual(checkPackageScriptReferences(workspaceRoot), []);
     } finally {
       removeWorkspace(workspaceRoot);
     }

@@ -52,6 +52,15 @@ const writeStderrLine = (message: string): void => {
 
 const commands = new Map<string, CommandDefinition>();
 
+/**
+ * Every registered CLI command name. Exported so `tooling:static-check` can
+ * resolve `tooling <cmd>` / `nrb <cmd>` invocations inside package.json
+ * scripts against the same table the CLI dispatches on, instead of a copy.
+ */
+export function registeredCommandNames(): ReadonlySet<string> {
+  return new Set(commands.keys());
+}
+
 register(
   'git:branch-cleanup',
   'Safely preview or delete local/remote branches already merged into the target branch.',

@@ -14,6 +14,7 @@ import {
   isLocaleMetadataFile,
 } from "../i18n/catalog-sources.ts";
 import { run } from "../../runtime/process.ts";
+import { registeredCommandNames } from "../../cli.ts";
 import { declaredPipelineFiles } from "../ci/check-pipelines.ts";
 
 export interface StaticCheckOptions {
@@ -2488,37 +2489,119 @@ function collectPackageScriptReferences(
 export function checkPackageScriptReferences(
   workspaceRoot: string,
 ): CheckFailure[] {
-  return collectPackageScriptReferences(workspaceRoot).flatMap((reference) => {
-    if (reference.kind === "path") {
-      const path = normalizeReference(reference.reference);
-      const absolutePath = resolve(
-        workspaceRoot,
-        reference.owner,
-        "..",
-        path,
-      );
-      if (statExists(absolutePath)) return [];
+  const knownToolingCommands = registeredCommandNames();
+  const failures = collectPackageScriptReferences(workspaceRoot).flatMap(
+    (reference) => {
+      if (reference.kind === "path") {
+        const path = normalizeReference(reference.reference);
+        const absolutePath = resolve(
+          workspaceRoot,
+          reference.owner,
+          "..",
+          path,
+        );
+        if (statExists(absolutePath)) return [];
+        return [
+          toPackageScriptFailure({
+            owner: reference.owner,
+            script: reference.script,
+            reference: reference.reference,
+            path: relativeToWorkspace(workspaceRoot, absolutePath),
+          }),
+        ];
+      }
+
+      const packageJson = readPackageJson(workspaceRoot, reference.owner);
+      if (Object.hasOwn(packageJson.scripts ?? {}, reference.reference)) return [];
       return [
         toPackageScriptFailure({
           owner: reference.owner,
           script: reference.script,
-          reference: reference.reference,
-          path: relativeToWorkspace(workspaceRoot, absolutePath),
+          reference: `pnpm run ${reference.reference}`,
+          path: `${reference.owner}#scripts.${reference.reference}`,
         }),
       ];
-    }
+    },
+  );
 
-    const packageJson = readPackageJson(workspaceRoot, reference.owner);
-    if (Object.hasOwn(packageJson.scripts ?? {}, reference.reference)) return [];
-    return [
-      toPackageScriptFailure({
-        owner: reference.owner,
-        script: reference.script,
-        reference: `pnpm run ${reference.reference}`,
-        path: `${reference.owner}#scripts.${reference.reference}`,
-      }),
-    ];
-  });
+  for (const owner of packageScriptReferenceOwners) {
+    const packageJson = readPackageJson(workspaceRoot, owner);
+    const scripts = packageJson.scripts ?? {};
+    for (const [script, command] of Object.entries(scripts)) {
+      for (const unknown of findUnknownToolingCommands(
+        owner,
+        script,
+        command,
+        knownToolingCommands,
+      )) {
+        failures.push(toToolingCommandFailure(unknown));
+      }
+    }
+  }
+
+  return failures;
+}
+
+interface UnknownToolingCommand {
+  owner: string;
+  script: string;
+  invocation: string;
+}
+
+function findUnknownToolingCommands(
+  owner: string,
+  script: string,
+  command: string,
+  knownCommands: ReadonlySet<string>,
+): UnknownToolingCommand[] {
+  const tokens = command.split(/\s+/).filter(Boolean);
+  const unknown: UnknownToolingCommand[] = [];
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index] ?? "";
+    const previous = tokens[index - 1] ?? "";
+    const isInvocationAnchor =
+      token === "nrb" ||
+      token.endsWith("repo-tooling.mjs") ||
+      (token === "tooling" && previous.endsWith("@repo/tooling"));
+    if (!isInvocationAnchor) continue;
+
+    // Like the CLI's resolveCommand, a command name spans at most the first
+    // three tokens after the anchor; anything after it is positional argv.
+    const commandTokens: string[] = [];
+    for (let offset = index + 1; offset < tokens.length; offset += 1) {
+      const next = tokens[offset] ?? "";
+      if (commandTokens.length >= 3) break;
+      if (next.startsWith("--") || next === "&&" || next === "||" || next === ";") {
+        break;
+      }
+      commandTokens.push(next);
+    }
+    if (commandTokens.length === 0) continue;
+
+    let resolved = false;
+    for (let tokenCount = commandTokens.length; tokenCount > 0; tokenCount -= 1) {
+      if (knownCommands.has(commandTokens.slice(0, tokenCount).join(":"))) {
+        resolved = true;
+        break;
+      }
+    }
+    if (!resolved) {
+      unknown.push({ owner, script, invocation: commandTokens.join(" ") });
+    }
+  }
+
+  return unknown;
+}
+
+function toToolingCommandFailure(failure: UnknownToolingCommand): CheckFailure {
+  return {
+    command: `package.json tooling command reference ${failure.owner}#${failure.script}`,
+    file: failure.owner,
+    status: 1,
+    stdout: "",
+    stderr: `Unknown tooling command: ${failure.invocation}. No 1-3 token prefix is a registered CLI command; run "pnpm --filter @repo/tooling tooling --help" for the current names.`,
+  };
 }
 
 function countPackageScriptReferences(workspaceRoot: string): number {

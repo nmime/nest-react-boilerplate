@@ -51,11 +51,15 @@ async function canBindLocalPort() {
 }
 
 const LOCAL_BIND_AVAILABLE = SKIP_BY_ENV ? false : await canBindLocalPort();
+const DOCKER_AVAILABLE =
+  !SKIP_BY_ENV && spawnSync("docker", ["info"], { encoding: "utf8", timeout: 10_000 }).status === 0;
 const SKIP = SKIP_BY_ENV
   ? "SKIP_INTEGRATION=1"
-  : LOCAL_BIND_AVAILABLE
-    ? false
-    : "local TCP port binding is unavailable in this execution environment";
+  : !LOCAL_BIND_AVAILABLE
+    ? "local TCP port binding is unavailable in this execution environment"
+    : DOCKER_AVAILABLE
+      ? false
+      : "Docker is unavailable";
 
 function runPostgresMigrations(databaseUrl, timeout) {
   const migrateTsPath = resolve(__dirname, "migrate.ts");

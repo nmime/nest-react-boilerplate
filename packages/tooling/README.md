@@ -56,7 +56,44 @@ TS-first command implementations live under `packages/tooling/src/commands` grou
 
 Do not add root-level `tools/` wrappers. New local commands should be routed through `repo-tooling`.
 
-`repo-tooling tooling static-check` is the safe static validation entrypoint for operational TypeScript tooling. It checks help-only CLI imports, command module presence, TypeScript typechecking, package-script references, generator regression tests, and stale architecture/version denylist terms, including retired Postgres shared-library path spellings, without executing deploy, Docker, destructive, or runtime-heavy scripts. Local `.claude/worktrees/**` storage is outside every repository inventory. Historical working specs under `docs/superpowers/**` are excluded only from the current architecture/version denylist and remain subject to applicable safety and structure rules. `repo-tooling db migrations rollback-check` is intentionally separate: it is the real Testcontainers/PostgreSQL rollback check and requires a Docker-capable environment.
+`repo-tooling tooling static-check` is the safe static validation entrypoint for operational TypeScript tooling. It checks command-module import graphs, help-only CLI smoke runs, TypeScript typechecking, package-script and tooling-command references, the tooling generator regression suite, and stale architecture/version denylist terms, including retired Postgres shared-library path spellings, without starting Docker, deploy, destructive, or runtime-stack work (the regression-suite child is hermetic). Local `.claude/worktrees/**` storage is outside every repository inventory. Historical working specs under `docs/superpowers/**` are excluded only from the current architecture/version denylist and remain subject to applicable safety and structure rules. `repo-tooling db migrations rollback-check` is intentionally separate: it is the real Testcontainers/PostgreSQL rollback check and requires a Docker-capable environment.
+
+## `tooling:static-check` output and memory model
+
+`pnpm run tooling:static-check` is the first gate of both `ci:pr` and `check:fast`. Its heavy checks run as a strictly sequential worker pool (`spawnSync`, one child at a time) with per-child heap caps appended last to the inherited `NODE_OPTIONS`, so an operator-set larger cap cannot override the gate cap:
+
+| Child                                                                                                 | Cap    |
+| ----------------------------------------------------------------------------------------------------- | ------ |
+| Syntax checks (`node --check`)                                                                        | 512 MB |
+| Tooling typecheck (`tsc --noEmit -p packages/tooling/tsconfig.json`)                                  | 1 GiB  |
+| Tooling generator regression suite (`run-tests.mjs`, `SKIP_INTEGRATION=1`, `NODE_TEST_CONCURRENCY=1`) | 1 GiB  |
+| CLI smoke commands (12 `repo-tooling ... --help` invocations)                                         | 512 MB |
+| Frontend FSD self/workspace checks                                                                    | 512 MB |
+
+The parent process is capped at 1 GiB by the `packages/tooling` npm script, so the worst-case footprint is the parent plus the single largest child, never their sum. Measured in a 4 GB cgroup, the gate completes in roughly 158 s at about a 1.4 GB tree peak.
+
+On success the command prints exactly one machine-readable JSON line on stdout (no `phases` array):
+
+```json
+{
+  "status": "ok",
+  "checkedSyntax": "<n>",
+  "toolingTypecheck": "ok",
+  "generatorRegressionTests": "ok",
+  "commandImportSmoke": "<n>",
+  "importSmoke": "<n>",
+  "frontendFsdSelfTest": "ok",
+  "frontendFsdWorkspaceCheck": "ok",
+  "workspaceMetadata": "ok",
+  "generatedContractImportPatterns": "<n>",
+  "staleReferenceDenylist": "<n>",
+  "packageScriptReferences": "<n>"
+}
+```
+
+The `<n>` counts describe the current tree (checked syntax files, import-smoked command modules, smoke commands, static guard table sizes, and extracted script references); the `"ok"` strings are phase-level booleans by name. On failure the command exits 1 and prints a human-readable per-check list (command, file, exit code, stderr/stdout tails) on stderr — there is no JSON failure contract.
+
+Related memory models: workspace typecheck runs one fresh tsc child process per tsconfig instead of one accumulated whole-workspace program, so peak memory is the largest single program and heap is released between programs (the `--child` runner it spawns is plain JavaScript). Root `eslint.config.js` uses typescript-eslint `projectService` — one shared incremental tsserver program per lint process — for type-aware rules, while `packages/tooling` keeps the historical whole-workspace program.
 
 All QA presets are designed to be useful locally without depending on GitHub Actions. Expensive presets support `--dry-run` and environment variables documented in `docs/testing/modern-qa.md` so CI can choose a different cadence later.
 

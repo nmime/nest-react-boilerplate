@@ -40,11 +40,14 @@ runs through `test:fullstack` after Docker smoke succeeds.
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
 
 The PR/push CI workflow exposes a focused `Non-runtime validation gates` job
-after `ci:pr` and dependency installation. It hard-gates onboarding and
-application scaffold generation, migration and library configuration standards,
-generated OpenAPI contract and client freshness, OpenAPI lint, consumer
-contracts, bounded OpenAPI fuzz case generation, and property-based invariants
-without adding deployed-service prerequisites to that job.
+after `ci:pr` and dependency installation. It hard-gates sixteen gates:
+onboarding and application scaffold generation, migration freshness,
+repository script spec coverage, library configuration standards, frontend FSD
+boundaries, generated toast configuration, dependency licences, the full
+dependency audit, generated OpenAPI contract and client freshness, OpenAPI
+lint, consumer contracts, bounded OpenAPI fuzz case generation, property-based
+invariants, and PM2/GitOps deployment configuration validation, without adding
+deployed-service prerequisites to that job.
 
 ## Current CI/local parity gates
 
@@ -86,11 +89,15 @@ pnpm run format:changed
 git diff --check
 ```
 
-The corresponding CI green surface includes supported lockfile audit, native
-secret scan, Docker smoke, Fullstack Playwright, Runtime QA/ops, CodeQL, and any
-external GitGuardian integration configured outside this repository. Keep local
-failures grouped by command and distinguish task-related failures from runner or
-optional-tool availability.
+The corresponding CI green surface includes the supported lockfile audit, the
+Gitleaks secret scan, the `Fast PR gate (ci:pr)` job, Exact-SHA specification
+evidence, the Non-runtime validation gates, the Bun compatibility contract,
+MongoDB validation, the Nx quality gates, Docker smoke, CodeQL, the nightly
+Quality presets workflow (visual matrix plus Modern QA presets, which own the
+world-class runtime/ops gates and fullstack e2e), and any external GitGuardian
+integration configured outside this repository. Keep local failures grouped by
+command and distinguish task-related failures from runner or optional-tool
+availability.
 
 ## Pass 3 targeted validation
 
@@ -138,7 +145,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 
 ## Tooling and migration rollback checks
 
-`pnpm run tooling:static-check` is the deterministic static gate for repo operational tooling. It runs `node --check` over `packages/tooling/bin/**/*.mjs` and `packages/tooling/src/commands/**/*.ts`, performs safe CLI import-smoke checks for help-only commands, and verifies root/package tooling script path references. Local `.claude/worktrees/**` storage is excluded from repository inventories. Historical working specs under `docs/superpowers/**` are archival only for the current architecture/version denylist; applicable safety and structure rules still scan them. The command does not execute destructive, deploy, Docker, or runtime-heavy scripts. The root `check:fast` and `check` aggregates include it before broader lint/typecheck/test gates.
+`pnpm run tooling:static-check` is the deterministic static gate for repo operational tooling. It runs as a strictly sequential worker pool (`spawnSync`, one child at a time) with per-child heap caps appended to `NODE_OPTIONS`: syntax checks and CLI smoke commands 512 MB, the tooling typecheck (`tsc --noEmit -p packages/tooling/tsconfig.json`) 1 GiB, the tooling generator regression suite 1 GiB, and the frontend FSD self/workspace checks 512 MB; the parent process is capped at 1 GiB by the `packages/tooling` npm script. The syntax phase runs `node --check` over `.mjs` files in `packages/tooling/bin/**`, `packages/tooling/src/plugins/**`, and `scripts/**`; TypeScript command modules are never `node --check`-ed — they are validated by a jiti transform plus static import resolution over every command module and by the capped typecheck child. The gate also runs the tooling generator regression suite (`run-tests.mjs` with `SKIP_INTEGRATION=1`, tests sequential) as a capped child, executes 12 help-only CLI smoke invocations, verifies root/package tooling script path references and tooling command names, and applies the repository-wide architecture, FSD, i18n, social-auth, secret, env-example, and workspace-metadata guards. On success it prints a single machine-readable JSON line (documented in `packages/tooling/README.md`); on failure it prints a per-check list on stderr. Local `.claude/worktrees/**` storage is excluded from repository inventories. Historical working specs under `docs/superpowers/**` are archival only for the current architecture/version denylist; applicable safety and structure rules still scan them. The command does not start Docker, deploy, destructive, or runtime-stack work; the regression-suite child is hermetic. The root `check:fast` and `check` aggregates include it before broader lint/typecheck/test gates.
 
 `pnpm run db:migrations:rollback-check` is the real rollback validation command. It starts disposable PostgreSQL through Testcontainers, runs auth migrations up/down/up, and requires Docker/Testcontainers. Keep it out of non-runtime PR jobs that cannot provide Docker, but run it from Docker-capable ops/scheduled CI or by configuring `QA_MIGRATION_ROLLBACK_COMMAND=pnpm run db:migrations:rollback-check` for the runtime ops gate. A synthetic world-class fallback must not be treated as real rollback evidence.
 
@@ -146,7 +153,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 
 - `pnpm run onboarding:verify`: non-deploying fresh-install proof that runs the doctor, resolves all five preset closures, and generates/builds/tests all application renderers and library runtimes.
 - `pnpm run check`: full aggregate for formatting, tooling static validation, migrations, contracts, QA presets, lint, typecheck, and unit tests.
-- CI `Non-runtime validation gates`: focused PR/push job that runs `onboarding:verify`, `db:migrations:check`, `lib:configs:check`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, and `test:property` after `ci:pr` and lockfile installation.
+- CI `Non-runtime validation gates`: focused PR/push job that runs `onboarding:verify`, `db:migrations:check`, `test:scripts`, `lib:configs:check`, `frontend:fsd:check`, `api:toast-config:check`, `audit:licenses`, `audit:full`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, `test:property`, `deploy:validate:pm2`, and `deploy:validate:gitops` after `ci:pr` and lockfile installation.
 - `pnpm run tooling:static-check`: deterministic static syntax/import/reference validation for repo tooling scripts without running destructive or runtime-heavy commands.
 - `pnpm run bun:check`: selected-closure Node/Bun deployment-artifact parity; durable provider selections require Docker Compose.
 - `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation.

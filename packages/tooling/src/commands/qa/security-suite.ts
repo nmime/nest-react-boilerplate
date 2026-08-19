@@ -9,4 +9,4 @@ for (const script of scripts) {
   const result = run(process.execPath, ["packages/tooling/bin/run-ts-command.mjs", scriptPath, ...passthrough], { stdio: "inherit" });
   if (result.status !== 0) process.exit(result.status);
 }
-console.log(JSON.stringify({ status: "ok", presets: scripts }));
+console.log(JSON.stringify({ status: "ok", suite: scripts }));

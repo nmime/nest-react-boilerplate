@@ -6,13 +6,6 @@ module.exports = [
   },
   ...baseConfig,
   {
-    languageOptions: {
-      parserOptions: {
-        project: 'tsconfig.*?.json',
-      },
-    },
-  },
-  {
     // Better Auth's adapter boundary exposes untyped records. Keep correctness
     // rules enabled while isolating unsafe-value checks to this boundary.
     files: [

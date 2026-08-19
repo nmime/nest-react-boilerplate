@@ -261,7 +261,26 @@ module.exports = [
     languageOptions: {
       parser: typescriptEslintParser,
       parserOptions: {
-        project: 'tsconfig.lint.json',
+        // The project service keeps one shared, incremental tsserver-based
+        // program per lint process that materializes only the files that
+        // process actually lints. The old `project: 'tsconfig.lint.json'`
+        // setting made every lint process build and hold a full-repo program
+        // (~2000 files) just to lint one app, which is what pushed a single
+        // eslint process past 1.6 GB RSS. `defaultProject` keeps the previous
+        // lint program as the fallback for the few files no project covers
+        // (e.g. the root Playwright config), so their findings are unchanged.
+        projectService: {
+          // Only files no project tsconfig covers may fall back to the
+          // default project; the globs must stay narrow (typescript-eslint
+          // rejects `**`) because the default program is whole-repo.
+          allowDefaultProject: [
+            'playwright.extended.config.ts',
+            'libs/frontend/ui-web/lib/.storybook/*.ts',
+            'libs/frontend/ui-web/lib/.storybook/*.tsx',
+          ],
+          defaultProject: 'tsconfig.lint.json',
+        },
+        tsconfigRootDir: __dirname,
       },
     },
     rules: {
@@ -508,6 +527,26 @@ module.exports = [
       '@typescript-eslint/no-unsafe-return': 'off',
       'no-await-in-loop': 'off',
       'no-console': 'off',
+    },
+  },
+  {
+    // The tooling package typechecks against its own relaxed tsconfig
+    // (noUncheckedIndexedAccess: false, module: esnext), while this codebase's
+    // type-aware lint rules were written and tuned against the workspace lint
+    // program (tsconfig.lint.json). Linting tooling through the project
+    // service would switch it to its own tsconfig and surface findings the
+    // code intentionally works around, so keep tooling on the historical
+    // whole-workspace lint program. `projectService: undefined` cancels the
+    // service block above for these files (flat config merges parserOptions
+    // key by key); every other project stays on the shared service.
+    files: ['packages/tooling/**/*.ts', 'packages/tooling/**/*.tsx'],
+    languageOptions: {
+      parser: typescriptEslintParser,
+      parserOptions: {
+        projectService: undefined,
+        project: 'tsconfig.lint.json',
+        tsconfigRootDir: __dirname,
+      },
     },
   },
 ];

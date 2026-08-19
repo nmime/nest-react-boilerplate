@@ -6,13 +6,6 @@ module.exports = [
   },
   ...baseConfig,
   {
-    languageOptions: {
-      parserOptions: {
-        project: 'tsconfig.*?.json',
-      },
-    },
-  },
-  {
     // Delivery chunks are intentionally serialized to preserve the configured
     // per-second rate limit.
     files: ['src/service/user-notification-scheduler.service.ts'],

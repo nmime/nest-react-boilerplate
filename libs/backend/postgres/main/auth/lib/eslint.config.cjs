@@ -11,11 +11,4 @@ module.exports = [
     ],
   },
   ...baseConfig,
-  {
-    languageOptions: {
-      parserOptions: {
-        project: 'tsconfig.*?.json',
-      },
-    },
-  },
 ];

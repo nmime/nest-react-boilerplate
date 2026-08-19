@@ -6,13 +6,6 @@ module.exports = [
   },
   ...baseConfig,
   {
-    languageOptions: {
-      parserOptions: {
-        project: 'tsconfig.*?.json',
-      },
-    },
-  },
-  {
     files: ['src/**/*spec.ts'],
     rules: {
       '@typescript-eslint/require-await': 'off',

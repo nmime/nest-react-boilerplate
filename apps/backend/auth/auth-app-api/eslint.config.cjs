@@ -6,13 +6,6 @@ module.exports = [
   },
   ...baseConfig,
   {
-    languageOptions: {
-      parserOptions: {
-        project: 'tsconfig.*?.json',
-      },
-    },
-  },
-  {
     // Nest and Better Auth test doubles expose intentionally untyped surfaces.
     files: ['src/**/*spec.ts'],
     rules: {

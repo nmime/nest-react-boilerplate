@@ -11,7 +11,7 @@
   "scripts": {
     "tooling": "node ./bin/repo-tooling.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "static-check": "node ./bin/repo-tooling.mjs tooling static-check",
+    "static-check": "node --max-old-space-size=1024 ./bin/repo-tooling.mjs tooling static-check",
     "check": "pnpm run typecheck && pnpm run static-check"
   },
   "files": [

@@ -138,7 +138,7 @@
     "mobile:export": "pnpm exec nx run mobile-app:export",
     "setup": "pnpm --filter @repo/tooling tooling project setup",
     "nrb": "pnpm --filter @repo/tooling tooling",
-    "tooling:static-check": "pnpm --filter @repo/tooling tooling tooling static-check",
+    "tooling:static-check": "pnpm --filter @repo/tooling run static-check",
     "images:webp": "pnpm --filter @repo/tooling tooling images webp",
     "images:webp:check": "pnpm --filter @repo/tooling tooling images webp --dry-run",
     "ci:workflows:check": "node scripts/validate-github-workflows.mjs",

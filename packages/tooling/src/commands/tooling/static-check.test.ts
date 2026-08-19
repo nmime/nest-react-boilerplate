@@ -28,7 +28,52 @@ import {
   checkVersionedMigrationAuthzBinding,
   checkWorkspaceMetadata,
   isWorkspaceMetadataFileName,
+  staticCheckChildEnv,
 } from "./static-check.ts";
+
+describe("static-check worker heap cap environment", () => {
+  const originalNodeOptions = process.env.NODE_OPTIONS;
+
+  function withNodeOptions(value: string | undefined, runCase: () => void): void {
+    if (value === undefined) delete process.env.NODE_OPTIONS;
+    else process.env.NODE_OPTIONS = value;
+    try {
+      runCase();
+    } finally {
+      if (originalNodeOptions === undefined) delete process.env.NODE_OPTIONS;
+      else process.env.NODE_OPTIONS = originalNodeOptions;
+    }
+  }
+
+  it("appends the per-worker old-space cap to a clean environment", () => {
+    withNodeOptions(undefined, () => {
+      assert.deepEqual(staticCheckChildEnv(512), {
+        NODE_OPTIONS: "--max-old-space-size=512",
+      });
+    });
+  });
+
+  it("preserves an inherited NODE_OPTIONS when appending the cap", () => {
+    withNodeOptions("--expose-gc", () => {
+      assert.deepEqual(staticCheckChildEnv(1024), {
+        NODE_OPTIONS: "--expose-gc --max-old-space-size=1024",
+      });
+    });
+  });
+
+  it("carries extra environment entries alongside the cap", () => {
+    withNodeOptions(undefined, () => {
+      assert.deepEqual(
+        staticCheckChildEnv(1024, { SKIP_INTEGRATION: "1", NODE_TEST_CONCURRENCY: "1" }),
+        {
+          NODE_OPTIONS: "--max-old-space-size=1024",
+          SKIP_INTEGRATION: "1",
+          NODE_TEST_CONCURRENCY: "1",
+        },
+      );
+    });
+  });
+});
 
 describe("static-check Bun and pnpm dependency parity", () => {
   it("accepts Bun runtime execution over pnpm-owned dependency state", () => {

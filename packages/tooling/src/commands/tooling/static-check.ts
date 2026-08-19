@@ -429,39 +429,68 @@ const staleReferenceExtensions = new Set([
   ".yml",
 ]);
 
+// Per-child heap caps for the static-check worker pool. The checks run strictly
+// sequentially (spawnSync, one child at a time), so the run's worst-case footprint
+// is the parent process plus the largest child group, never their sum. Caps turn a
+// misbehaving child from an unbounded cgroup OOM-kill candidate into a bounded,
+// diagnosable JS heap error, which keeps a 4 GB CI container able to finish the gate
+// while a 128 GB server simply never approaches its limit.
+const syntaxCheckHeapCapMb = 512;
+const toolingTypecheckHeapCapMb = 1024;
+const generatorTestHeapCapMb = 1024;
+const smokeCommandHeapCapMb = 512;
+const frontendFsdHeapCapMb = 512;
+
+/**
+ * Builds the child environment for a capped static-check worker: the inherited
+ * `NODE_OPTIONS` preserved with the per-worker `--max-old-space-size` cap
+ * appended, plus any extra environment (e.g. a reduced test concurrency).
+ */
+export function staticCheckChildEnv(capMb: number, extraEnv: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
+  const cap = `--max-old-space-size=${capMb}`;
+  const inherited = (process.env.NODE_OPTIONS ?? '').trim();
+  return {
+    NODE_OPTIONS: inherited ? `${inherited} ${cap}` : cap,
+    ...extraEnv,
+  };
+}
+
 export function runStaticCheck(options: StaticCheckOptions = {}): number {
   const workspaceRoot = options.workspaceRoot ?? process.cwd();
   const syntaxTargets = collectToolingModuleScripts(workspaceRoot);
   const smokeCommands = getSmokeCommands();
-  const failures = [
-    ...checkSyntaxTargets(workspaceRoot, syntaxTargets),
-    ...checkToolingTypecheck(workspaceRoot),
-    ...checkGeneratorRegressionTests(workspaceRoot),
-    ...checkCommandImportSmoke(workspaceRoot),
-    ...checkSmokeCommands(workspaceRoot, smokeCommands),
-    ...checkPackageProjectReferences(workspaceRoot),
-    ...checkFrontendFsd(workspaceRoot),
-    ...checkWorkspaceMetadata(workspaceRoot),
-    ...checkBunPackageManagerParity(workspaceRoot),
-    ...checkExportedAllCapsConstantConventions(workspaceRoot),
-    ...checkExportedSymbolTokenConventions(workspaceRoot),
-    ...checkLocalBarrelExportConventions(workspaceRoot),
-    ...checkDuplicatedLibrarySourceLibPaths(workspaceRoot),
-    ...checkFrontendUiOwnership(workspaceRoot),
-    ...checkGeneratedContractImports(workspaceRoot),
-    ...checkVersionedMigrationAuthzBinding(workspaceRoot),
-    ...checkStaleSlashStyleAliasImports(workspaceRoot),
-    ...checkForbiddenSocialAuthImports(workspaceRoot),
-    ...checkForbiddenSocialAuthDependencies(workspaceRoot),
-    ...checkProviderScopedRuntimeImports(workspaceRoot),
-    ...checkTrackedSocialAuthSecrets(workspaceRoot),
-    ...checkThinLocaleCatalogs(workspaceRoot),
-    ...checkTranslationKeyDrift(workspaceRoot),
-    ...checkEnvExampleConsistency(workspaceRoot),
-    ...checkStaleReferences(workspaceRoot),
-    ...checkRepositoryScriptSpecCoverage(workspaceRoot),
-    ...checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure),
-  ];
+  // Strictly sequential: each check (and each child it spawns) finishes before
+  // the next starts, so intermediate results are the only thing held and child
+  // heaps are released between checks.
+  const failures: CheckFailure[] = [];
+  const push = (value: CheckFailure[]) => failures.push(...value);
+  push(checkSyntaxTargets(workspaceRoot, syntaxTargets));
+  push(checkToolingTypecheck(workspaceRoot));
+  push(checkGeneratorRegressionTests(workspaceRoot));
+  push(checkCommandImportSmoke(workspaceRoot));
+  push(checkSmokeCommands(workspaceRoot, smokeCommands));
+  push(checkPackageProjectReferences(workspaceRoot));
+  push(checkFrontendFsd(workspaceRoot));
+  push(checkWorkspaceMetadata(workspaceRoot));
+  push(checkBunPackageManagerParity(workspaceRoot));
+  push(checkExportedAllCapsConstantConventions(workspaceRoot));
+  push(checkExportedSymbolTokenConventions(workspaceRoot));
+  push(checkLocalBarrelExportConventions(workspaceRoot));
+  push(checkDuplicatedLibrarySourceLibPaths(workspaceRoot));
+  push(checkFrontendUiOwnership(workspaceRoot));
+  push(checkGeneratedContractImports(workspaceRoot));
+  push(checkVersionedMigrationAuthzBinding(workspaceRoot));
+  push(checkStaleSlashStyleAliasImports(workspaceRoot));
+  push(checkForbiddenSocialAuthImports(workspaceRoot));
+  push(checkForbiddenSocialAuthDependencies(workspaceRoot));
+  push(checkProviderScopedRuntimeImports(workspaceRoot));
+  push(checkTrackedSocialAuthSecrets(workspaceRoot));
+  push(checkThinLocaleCatalogs(workspaceRoot));
+  push(checkTranslationKeyDrift(workspaceRoot));
+  push(checkEnvExampleConsistency(workspaceRoot));
+  push(checkStaleReferences(workspaceRoot));
+  push(checkRepositoryScriptSpecCoverage(workspaceRoot));
+  push(checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure));
 
   if (failures.length > 0) {
     reportFailures(failures);
@@ -552,6 +581,7 @@ function checkSyntaxTargets(
   return syntaxTargets.flatMap((script) => {
     const result = run(process.execPath, ["--check", script], {
       cwd: workspaceRoot,
+      env: staticCheckChildEnv(syntaxCheckHeapCapMb),
     });
 
     if (result.status === 0) return [];
@@ -576,6 +606,7 @@ function checkToolingTypecheck(workspaceRoot: string): CheckFailure[] {
     ],
     {
       cwd: workspaceRoot,
+      env: staticCheckChildEnv(toolingTypecheckHeapCapMb),
     },
   );
 
@@ -586,8 +617,13 @@ function checkGeneratorRegressionTests(workspaceRoot: string): CheckFailure[] {
   const result = run(process.execPath, ["packages/tooling/scripts/run-tests.mjs"], {
     cwd: workspaceRoot,
     // Static validation must stay hermetic; Docker/PostgreSQL integration is
-    // exercised by the dedicated integration and acceptance gates.
-    env: { SKIP_INTEGRATION: "1" },
+    // exercised by the dedicated integration and acceptance gates. The test
+    // files run one at a time so the suite's two test workers never overlap
+    // in memory on top of the already-capped runner.
+    env: staticCheckChildEnv(generatorTestHeapCapMb, {
+      SKIP_INTEGRATION: "1",
+      NODE_TEST_CONCURRENCY: "1",
+    }),
   });
 
   return result.status === 0 ? [] : [result];
@@ -755,7 +791,10 @@ function checkSmokeCommands(
   smokeCommands: string[][],
 ): CheckFailure[] {
   return smokeCommands.flatMap((args) => {
-    const result = run(process.execPath, args, { cwd: workspaceRoot });
+    const result = run(process.execPath, args, {
+      cwd: workspaceRoot,
+      env: staticCheckChildEnv(smokeCommandHeapCapMb),
+    });
     return result.status === 0 ? [] : [result];
   });
 }
@@ -770,12 +809,12 @@ function checkFrontendFsd(workspaceRoot: string): CheckFailure[] {
       "check",
       "--self-test",
     ],
-    { cwd: workspaceRoot },
+    { cwd: workspaceRoot, env: staticCheckChildEnv(frontendFsdHeapCapMb) },
   );
   const workspaceCheck = run(
     process.execPath,
     ["packages/tooling/bin/repo-tooling.mjs", "frontend", "fsd", "check"],
-    { cwd: workspaceRoot },
+    { cwd: workspaceRoot, env: staticCheckChildEnv(frontendFsdHeapCapMb) },
   );
 
   return [selfTest, workspaceCheck].filter((result) => result.status !== 0);

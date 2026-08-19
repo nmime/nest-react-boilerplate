@@ -38,14 +38,12 @@ interface ProjectMetadata {
   file: string;
   name: string;
   root: string;
-  sourceRoot?: string;
   tags: string[];
 }
 
 interface WorkspacePackageManifest {
   file: string;
   name?: string;
-  exports?: unknown;
   version?: unknown;
   scripts?: unknown;
   main?: unknown;
@@ -431,7 +429,7 @@ const staleReferenceExtensions = new Set([
 
 // Per-child heap caps for the static-check worker pool. The checks run strictly
 // sequentially (spawnSync, one child at a time), so the run's worst-case footprint
-// is the parent process plus the largest child group, never their sum. Caps turn a
+// is the parent process plus the largest child, never their sum. Caps turn a
 // misbehaving child from an unbounded cgroup OOM-kill candidate into a bounded,
 // diagnosable JS heap error, which keeps a 4 GB CI container able to finish the gate
 // while a 128 GB server simply never approaches its limit.
@@ -458,6 +456,7 @@ export function staticCheckChildEnv(capMb: number, extraEnv: NodeJS.ProcessEnv =
 export function runStaticCheck(options: StaticCheckOptions = {}): number {
   const workspaceRoot = options.workspaceRoot ?? process.cwd();
   const syntaxTargets = collectToolingModuleScripts(workspaceRoot);
+  const commandModules = collectCommandModules(workspaceRoot);
   const smokeCommands = getSmokeCommands();
   // Strictly sequential: each check (and each child it spawns) finishes before
   // the next starts, so intermediate results are the only thing held and child
@@ -467,7 +466,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   push(checkSyntaxTargets(workspaceRoot, syntaxTargets));
   push(checkToolingTypecheck(workspaceRoot));
   push(checkGeneratorRegressionTests(workspaceRoot));
-  push(checkCommandImportSmoke(workspaceRoot));
+  push(checkCommandImportSmoke(workspaceRoot, commandModules));
   push(checkSmokeCommands(workspaceRoot, smokeCommands));
   push(checkPackageProjectReferences(workspaceRoot));
   push(checkFrontendFsd(workspaceRoot));
@@ -490,7 +489,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   push(checkEnvExampleConsistency(workspaceRoot));
   push(checkStaleReferences(workspaceRoot));
   push(checkRepositoryScriptSpecCoverage(workspaceRoot));
-  push(checkPackageScriptReferences(workspaceRoot).map(toPackageScriptFailure));
+  push(checkPackageScriptReferences(workspaceRoot));
 
   if (failures.length > 0) {
     reportFailures(failures);
@@ -503,7 +502,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       checkedSyntax: syntaxTargets.length,
       toolingTypecheck: "ok",
       generatorRegressionTests: "ok",
-      commandImportSmoke: collectCommandModules(workspaceRoot).length,
+      commandImportSmoke: commandModules.length,
       importSmoke: smokeCommands.length,
       frontendFsdSelfTest: "ok",
       frontendFsdWorkspaceCheck: "ok",
@@ -643,9 +642,12 @@ export function collectCommandModules(workspaceRoot: string): string[] {
 // surfaces when that specific command is invoked. This step statically loads the
 // import graph of every command module with the same jiti loader (transform + resolve,
 // no evaluation) so unresolved imports fail fast during static-check instead.
-export function checkCommandImportSmoke(workspaceRoot: string): CheckFailure[] {
-  const modules = collectCommandModules(workspaceRoot);
-  if (modules.length === 0) return [];
+export function checkCommandImportSmoke(
+  workspaceRoot: string,
+  modules?: string[],
+): CheckFailure[] {
+  const commandModules = modules ?? collectCommandModules(workspaceRoot);
+  if (commandModules.length === 0) return [];
 
   const cliEntry = resolve(workspaceRoot, "packages/tooling/src/cli.ts");
   const jiti = createJiti(pathToFileURL(cliEntry).href, {
@@ -654,7 +656,7 @@ export function checkCommandImportSmoke(workspaceRoot: string): CheckFailure[] {
   const requirePattern = /require\(\s*["']([^"']+)["']\s*\)/gu;
   const failures: CheckFailure[] = [];
 
-  for (const modulePath of modules) {
+  for (const modulePath of commandModules) {
     const relativeFile = relativeToWorkspace(workspaceRoot, modulePath);
 
     let transformed: string;
@@ -799,6 +801,9 @@ function checkSmokeCommands(
   });
 }
 
+// Intentional overlap with the root `frontend:fsd:check` script (run again by the
+// `check`/`check:fast` aggregates): the gate is hermetic on purpose, so it re-runs
+// the same workspace FSD scan through the CLI instead of trusting the aggregate.
 function checkFrontendFsd(workspaceRoot: string): CheckFailure[] {
   const selfTest = run(
     process.execPath,
@@ -1004,7 +1009,6 @@ function collectProjectMetadata(workspaceRoot: string): ProjectMetadata[] {
       const relativeFile = relativeToWorkspace(workspaceRoot, file);
       const parsed = JSON.parse(readFileSync(file, "utf8")) as {
         name?: string;
-        sourceRoot?: string;
         tags?: string[];
       };
 
@@ -1012,7 +1016,6 @@ function collectProjectMetadata(workspaceRoot: string): ProjectMetadata[] {
         file: relativeFile,
         name: parsed.name ?? relativeFile,
         root: dirname(relativeFile),
-        sourceRoot: parsed.sourceRoot,
         tags: parsed.tags ?? [],
       };
     });
@@ -1036,7 +1039,6 @@ function collectWorkspacePackageManifests(
       const relativeFile = relativeToWorkspace(workspaceRoot, file);
       const parsed = JSON.parse(readFileSync(file, "utf8")) as {
         name?: string;
-        exports?: unknown;
         version?: unknown;
         scripts?: unknown;
         main?: unknown;
@@ -1047,7 +1049,6 @@ function collectWorkspacePackageManifests(
       return {
         file: relativeFile,
         name: parsed.name,
-        exports: parsed.exports,
         version: parsed.version,
         scripts: parsed.scripts,
         main: parsed.main,
@@ -1831,7 +1832,7 @@ function placeholderParityFailures(
 
     const expected = translationPlaceholders(fallbackValue);
     const actual = translationPlaceholders(value);
-    if (expected.join(" ") === actual.join(" ")) continue;
+    if (expected.join("\u0000") === actual.join("\u0000")) continue;
 
     failures.push(
       thinLocaleFailure(
@@ -1934,6 +1935,11 @@ const translationKeyUnionSource = "libs/common/i18n/keys/lib/src/index.ts";
 // the locale instead pulled locale-root metadata (`lint.json`, a review ledger) in as a catalog and
 // demanded its top-level keys join the union — which regenerating can never do, since the generator
 // excludes metadata, and hand-adding them makes the module report as stale.
+//
+// Key-set drift is a strict subset of the `i18n:catalogs:check` byte comparison
+// (both run in `check`/`check:fast`/`ci:pr`); the overlap is kept on purpose so
+// the hermetic gate reports key-level diagnostics even when the generated
+// union is byte-stale for a cosmetic reason.
 export function checkTranslationKeyDrift(workspaceRoot: string): CheckFailure[] {
   const localeDirectory = join(workspaceRoot, "i18n", defaultLocale);
   const keysSource = resolve(workspaceRoot, translationKeyUnionSource);
@@ -1999,28 +2005,25 @@ export function checkPackageProjectReferences(
   workspaceRoot: string,
 ): CheckFailure[] {
   const workspaceProjects = collectWorkspaceProjects(workspaceRoot);
+  const packageJson = readPackageJson(workspaceRoot, "package.json");
+  const scripts = packageJson.scripts ?? {};
 
-  return ["package.json"].flatMap((owner) => {
-    const packageJson = readPackageJson(workspaceRoot, owner);
-    const scripts = packageJson.scripts ?? {};
+  return Object.entries(scripts).flatMap(([script, command]) =>
+    projectReferencePatterns.flatMap((reference) => {
+      if (!reference.packageScriptPattern.test(command)) return [];
+      if (workspaceProjects.has(reference.projectName)) return [];
 
-    return Object.entries(scripts).flatMap(([script, command]) =>
-      projectReferencePatterns.flatMap((reference) => {
-        if (!reference.packageScriptPattern.test(command)) return [];
-        if (workspaceProjects.has(reference.projectName)) return [];
-
-        return [
-          {
-            command: `package.json project reference ${owner}#${script}`,
-            file: owner,
-            status: 1,
-            stdout: "",
-            stderr: `Missing Nx project for ${reference.label}: ${reference.projectName}`,
-          },
-        ];
-      }),
-    );
-  });
+      return [
+        {
+          command: `package.json project reference package.json#${script}`,
+          file: "package.json",
+          status: 1,
+          stdout: "",
+          stderr: `Missing Nx project for ${reference.label}: ${reference.projectName}`,
+        },
+      ];
+    }),
+  );
 }
 
 function collectWorkspaceProjects(workspaceRoot: string): Set<string> {
@@ -2433,18 +2436,93 @@ function walk(root: string): string[] {
   return files;
 }
 
-function checkPackageScriptReferences(
+const packageScriptReferenceOwners = [
+  "package.json",
+  "packages/tooling/package.json",
+];
+
+interface PackageScriptReference {
+  owner: string;
+  script: string;
+  reference: string;
+  kind: "path" | "script";
+}
+
+// Single extraction pass shared by the missing-reference check and the
+// `packageScriptReferences` count, so both always agree on which references a
+// script carries.
+function collectPackageScriptReferences(
   workspaceRoot: string,
-): ReferencedScript[] {
-  return ["package.json", "packages/tooling/package.json"].flatMap((owner) => {
+): PackageScriptReference[] {
+  return packageScriptReferenceOwners.flatMap((owner) => {
     const packageJson = readPackageJson(workspaceRoot, owner);
     const scripts = packageJson.scripts ?? {};
 
     return Object.entries(scripts).flatMap(([script, command]) => [
-      ...findMissingPathReferences(workspaceRoot, owner, script, command),
-      ...findMissingScriptReferences(owner, scripts, script, command),
+      ...extractPathReferences(command, nodeScriptReference).map(
+        (reference) => ({
+          owner,
+          script,
+          reference,
+          kind: "path" as const,
+        }),
+      ),
+      ...extractPathReferences(command, shellScriptReference).map(
+        (reference) => ({
+          owner,
+          script,
+          reference,
+          kind: "path" as const,
+        }),
+      ),
+      ...extractScriptReferences(command).map((reference) => ({
+        owner,
+        script,
+        reference,
+        kind: "script" as const,
+      })),
     ]);
   });
+}
+
+export function checkPackageScriptReferences(
+  workspaceRoot: string,
+): CheckFailure[] {
+  return collectPackageScriptReferences(workspaceRoot).flatMap((reference) => {
+    if (reference.kind === "path") {
+      const path = normalizeReference(reference.reference);
+      const absolutePath = resolve(
+        workspaceRoot,
+        reference.owner,
+        "..",
+        path,
+      );
+      if (statExists(absolutePath)) return [];
+      return [
+        toPackageScriptFailure({
+          owner: reference.owner,
+          script: reference.script,
+          reference: reference.reference,
+          path: relativeToWorkspace(workspaceRoot, absolutePath),
+        }),
+      ];
+    }
+
+    const packageJson = readPackageJson(workspaceRoot, reference.owner);
+    if (Object.hasOwn(packageJson.scripts ?? {}, reference.reference)) return [];
+    return [
+      toPackageScriptFailure({
+        owner: reference.owner,
+        script: reference.script,
+        reference: `pnpm run ${reference.reference}`,
+        path: `${reference.owner}#scripts.${reference.reference}`,
+      }),
+    ];
+  });
+}
+
+function countPackageScriptReferences(workspaceRoot: string): number {
+  return collectPackageScriptReferences(workspaceRoot).length;
 }
 
 function readPackageJson(
@@ -2454,74 +2532,6 @@ function readPackageJson(
   return JSON.parse(readFileSync(resolve(workspaceRoot, owner), "utf8")) as {
     scripts?: Record<string, string>;
   };
-}
-
-function findMissingPathReferences(
-  workspaceRoot: string,
-  owner: string,
-  script: string,
-  command: string,
-): ReferencedScript[] {
-  return [
-    ...extractPathReferences(command, nodeScriptReference),
-    ...extractPathReferences(command, shellScriptReference),
-  ].flatMap((reference) => {
-    const path = normalizeReference(reference);
-    const absolutePath = resolve(workspaceRoot, owner, "..", path);
-
-    if (statExists(absolutePath)) return [];
-
-    return [
-      {
-        owner,
-        script,
-        reference,
-        path: relativeToWorkspace(workspaceRoot, absolutePath),
-      },
-    ];
-  });
-}
-
-function findMissingScriptReferences(
-  owner: string,
-  scripts: Record<string, string>,
-  script: string,
-  command: string,
-): ReferencedScript[] {
-  return extractScriptReferences(command).flatMap((referencedScript) => {
-    if (Object.hasOwn(scripts, referencedScript)) return [];
-
-    return [
-      {
-        owner,
-        script,
-        reference: `pnpm run ${referencedScript}`,
-        path: `${owner}#scripts.${referencedScript}`,
-      },
-    ];
-  });
-}
-
-function countPackageScriptReferences(workspaceRoot: string): number {
-  return ["package.json", "packages/tooling/package.json"].reduce(
-    (count, packageJsonPath) => {
-      const packageJson = JSON.parse(
-        readFileSync(resolve(workspaceRoot, packageJsonPath), "utf8"),
-      ) as { scripts?: Record<string, string> };
-      return (
-        count +
-        Object.values(packageJson.scripts ?? {}).reduce(
-          (innerCount, command) =>
-            innerCount +
-            extractPathReferences(command, nodeScriptReference).length +
-            extractPathReferences(command, shellScriptReference).length +
-            extractScriptReferences(command).length,
-          0,
-        )
-      );
-    },
-    0,
-  );
 }
 
 function extractPathReferences(command: string, pattern: RegExp): string[] {
@@ -2584,10 +2594,8 @@ function isPrettierCandidate(file: string): boolean {
 }
 
 function parseArgs(argv: string[]): {
-  flags: Set<string>;
   options: Map<string, string>;
 } {
-  const flags = new Set<string>();
   const options = new Map<string, string>();
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index] ?? "";
@@ -2598,15 +2606,15 @@ function parseArgs(argv: string[]): {
       options.set(raw.slice(0, equals), raw.slice(equals + 1));
       continue;
     }
+    // Bare flags (e.g. `--help`) are not part of the changed-format-check
+    // contract; like the CLI, they are accepted and ignored.
     const next = argv[index + 1];
     if (next && !next.startsWith("--")) {
       options.set(raw, next);
       index += 1;
-    } else {
-      flags.add(raw);
     }
   }
-  return { flags, options };
+  return { options };
 }
 
 function tail(value: string, max = 2000): string {

@@ -27,6 +27,7 @@ import {
   checkTrackedSocialAuthSecrets,
   checkVersionedMigrationAuthzBinding,
   checkWorkspaceMetadata,
+  collectCommandModules,
   isWorkspaceMetadataFileName,
   staticCheckChildEnv,
 } from "./static-check.ts";
@@ -392,6 +393,26 @@ describe("static-check command import smoke guard", () => {
       );
 
       assert.deepEqual(checkCommandImportSmoke(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("reuses an explicitly provided command module list instead of re-walking", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeImportSmokeFixture(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "packages/tooling/src/commands/demo/entry.ts",
+        'import { readFileSync } from "node:fs";\nexport const value = Number(Boolean(readFileSync));\n',
+      );
+      const modules = collectCommandModules(workspaceRoot);
+
+      assert.ok(modules.length > 0);
+      assert.deepEqual(checkCommandImportSmoke(workspaceRoot, modules), []);
+      assert.deepEqual(checkCommandImportSmoke(workspaceRoot, []), []);
     } finally {
       removeWorkspace(workspaceRoot);
     }

@@ -18,6 +18,13 @@ export default defineConfig({
       'coverage/libs/backend/feature/payments/main/lib',
       ['src/**/*.ts'],
       ['src/**/index.ts', 'src/**/*.module.ts', 'src/**/*.dto.ts'],
+      {
+        // The one synthetic branch V8 attributes to the @Injectable() decorator can never be
+        // taken; the same budget the fiat-currency main lib carries.
+        branches: -1,
+        functions: 0,
+        lines: 0,
+      },
     ),
   },
 });

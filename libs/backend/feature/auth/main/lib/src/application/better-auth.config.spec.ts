@@ -11,7 +11,7 @@ type AuthInstanceLike = {
 
 /** Reads the generic-oauth plugin config array off a built Better-Auth instance. */
 const telegramOidcProviderConfigs = (auth: AuthInstanceLike): Array<{ providerId?: string }> =>
-  auth.options?.plugins?.find((plugin) => plugin?.id === 'generic-oauth')?.options?.config ?? [];
+  auth.options?.plugins?.find((plugin) => plugin.id === 'generic-oauth')?.options?.config ?? [];
 
 describe('getBetterAuthConfig', () => {
   const originalEnv = process.env;

@@ -1,0 +1,2783 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/audit",
+      "source": "libs/backend/feature/audit-log/admin/lib/src/audit-log-admin.controller.ts:31",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/audit-log/admin/lib/src/audit-log-admin.service.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/audit/:id",
+      "source": "libs/backend/feature/audit-log/admin/lib/src/audit-log-admin.controller.ts:46",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/audit-log/admin/lib/src/audit-log-admin.service.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx",
+          "404"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/audit/meta",
+      "source": "libs/backend/feature/audit-log/admin/lib/src/audit-log-admin.controller.ts:40",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/audit-log/admin/lib/src/audit-log-admin.service.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/auth/login-analytics",
+      "source": "libs/backend/feature/auth/admin/lib/src/auth-login-analytics-admin.controller.ts:24",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/admin/lib/src/auth-login-analytics-admin.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/auth/login-analytics/summary",
+      "source": "libs/backend/feature/auth/admin/lib/src/auth-login-analytics-admin.controller.ts:33",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/admin/lib/src/auth-login-analytics-admin.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/dashboard/summary",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.ts:89",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/feature-flags",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-feature-flags.controller.ts:27",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-feature-flags.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/health",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/health/private",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:19",
+      "authClassification": "private-network",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/live",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:26",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/notification-broadcasts",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:320",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/notification-broadcasts/:id",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:349",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx",
+          "404"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/notification-segment-resolvers",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:206",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/notification-segment-uploads/:id",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:300",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx",
+          "404"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/notification-segments",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:213",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/notification-segments/:id",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:244",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx",
+          "404"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/notification-templates",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:86",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/notification-templates/:id",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:113",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx",
+          "404"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/profile/me",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-profile.controller.ts:18",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-profile.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/ready",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/roles",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.ts:37",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/problem-presentations",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.ts:37",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/users",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.ts:37",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/users/:id",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.ts:47",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx",
+          "404"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health/private",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:19",
+      "authClassification": "private-network",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/live",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:26",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/ready",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/notification-broadcasts/:id",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:356",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/notification-segments/:id",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:251",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/notification-templates/:id",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:120",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/roles/:id",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.ts:57",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/users/:id/access-policy",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.ts:73",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/users/:id/status",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.ts:57",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-users.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-broadcasts",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:330",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-broadcasts/:id/approve",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:389",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-broadcasts/:id/cancel",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:450",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-broadcasts/:id/collect-audience",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:377",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-broadcasts/:id/pause",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:426",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-broadcasts/:id/resume",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:438",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-broadcasts/:id/schedule",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:413",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-broadcasts/:id/send",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:401",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-segments",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:225",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-segments/:id/archive",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:307",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-segments/:id/estimate",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:273",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-segments/:id/uploads",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:280",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-templates",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:93",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-templates/:id/archive",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:151",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-templates/:id/preview",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:158",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-templates/:id/publish",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:144",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/notification-templates/:id/test-send",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:179",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/roles",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.ts:44",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/feature-flags/:key",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-feature-flags.controller.ts:34",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-feature-flags.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/roles/:id/permissions",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.ts:73",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/settings/problem-presentations",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.ts:44",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/settings/problem-presentations/reset",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.ts:57",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/users/:id/roles",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.ts:89",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "lifecycle",
+      "method": "N/A",
+      "path": "auth:expired-token-cleanup",
+      "source": "libs/backend/postgres/main/auth/lib/src/endpoint-registry.ts:1",
+      "authClassification": "background",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/postgres/main/auth/lib/src/auth-token-cleanup.service.spec.ts"
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "openapi-json",
+      "method": "GET",
+      "path": "/docs/openapi.json",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "swagger-ui",
+      "method": "GET",
+      "path": "/docs",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:45",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/audit",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:110",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/audit/$",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:110",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/auth/login-analytics",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:67",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/dashboard",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:45",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/notifications/broadcasts",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:88",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/notifications/segments",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:81",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/notifications/templates",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:74",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/profile",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:117",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/roles",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:60",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/settings/errors",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:102",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/settings/feature-flags",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:95",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/users",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:53",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/admin/users/$userId",
+      "source": "apps/frontend/admin/src/shared/admin-route-registry.ts:53",
+      "authClassification": "browser-session-rbac",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "ALL",
+      "path": "/api/auth/*",
+      "source": "libs/backend/feature/auth/main/lib/src/application/better-auth-api.controller.ts:31",
+      "authClassification": "delegated-public-provider",
+      "coverageClassification": "covered-runtime-contract",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/application/better-auth-runtime-contract.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "delegated-runtime",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "DELETE",
+      "path": "/auth/provider-identities/:identityId",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:290",
+      "authClassification": "session",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/auth/discord/callback",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:250",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/auth/locales",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:410",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/auth/me",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:364",
+      "authClassification": "session",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/auth/problem-presentations",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/problem-presentations.controller.ts:21",
+      "authClassification": "session",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/problem-presentations.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/auth/provider-identities",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:278",
+      "authClassification": "session",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health/private",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:19",
+      "authClassification": "private-network",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/live",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:26",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/ready",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/auth/me/locale",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:380",
+      "authClassification": "session",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/auth/me/preferences",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:395",
+      "authClassification": "session",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/discord/authorization-request",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:235",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/email-verification-token",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:323",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/email-verification/confirm",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:341",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/link-tokens",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:302",
+      "authClassification": "session",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/login",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:143",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/logout",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:417",
+      "authClassification": "session",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/password-reset-token",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:333",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/password-reset/confirm",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:355",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/register",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:106",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/telegram/bot-link",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:228",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/telegram/oidc/session",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:203",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/telegram/tma",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:178",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "lifecycle",
+      "method": "N/A",
+      "path": "auth:expired-token-cleanup",
+      "source": "libs/backend/postgres/main/auth/lib/src/endpoint-registry.ts:5",
+      "authClassification": "background",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/postgres/main/auth/lib/src/auth-token-cleanup.service.spec.ts"
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "openapi-json",
+      "method": "GET",
+      "path": "/docs/openapi.json",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "swagger-ui",
+      "method": "GET",
+      "path": "/docs",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "discord:command:/account link",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:1",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "discord:command:/account status",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:2",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "discord:command:/help",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:3",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-component",
+      "method": "N/A",
+      "path": "discord:component:back",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:4",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-component",
+      "method": "N/A",
+      "path": "discord:component:cancel",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:5",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-component",
+      "method": "N/A",
+      "path": "discord:component:confirm",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:6",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-component",
+      "method": "N/A",
+      "path": "discord:component:home",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:7",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-component",
+      "method": "N/A",
+      "path": "discord:component:link",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:8",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-component",
+      "method": "N/A",
+      "path": "discord:component:open_app",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:9",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-component",
+      "method": "N/A",
+      "path": "discord:component:unlink",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:10",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "bot-modal",
+      "method": "N/A",
+      "path": "discord:modal:*",
+      "source": "libs/backend/feature/discord/bot/lib/src/endpoint-registry.ts:11",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/discord/bot/lib/src/handler/discord-interaction-router.spec.ts"
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "DISCORD_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health/private",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:19",
+      "authClassification": "private-network",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "DISCORD_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/live",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:26",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "DISCORD_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/ready",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "DISCORD_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/discord/interactions",
+      "source": "apps/backend/discord/discord-app-api/src/discord-interactions.controller.ts:25",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "apps/backend/discord/discord-app-api/src/discord-interactions.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "DISCORD_API_BASE_URL",
+        "classification": "signed-provider",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "openapi-json",
+      "method": "GET",
+      "path": "/docs/openapi.json",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "DISCORD_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "discord-app-api",
+      "kind": "swagger-ui",
+      "method": "GET",
+      "path": "/docs",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "DISCORD_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "landing-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/",
+      "source": "apps/frontend/landing/src/astro/pages/index.astro:1",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "apps/frontend/landing/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "LANDING_APP_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "landing-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/problems",
+      "source": "apps/frontend/landing/src/astro/pages/problems.astro:1",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "apps/frontend/landing/src/astro/pages/problems.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "LANDING_APP_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "mobile-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/",
+      "source": "apps/frontend/mobile/src/app/index.tsx:1",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "apps/frontend/mobile/src/pages/home/ui/mobile-home-screen.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "MOBILE_APP_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "notification-consumer",
+      "kind": "lifecycle",
+      "method": "N/A",
+      "path": "auth:expired-token-cleanup",
+      "source": "libs/backend/postgres/main/auth/lib/src/endpoint-registry.ts:11",
+      "authClassification": "background",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/postgres/main/auth/lib/src/auth-token-cleanup.service.spec.ts"
+    },
+    {
+      "project": "notification-consumer",
+      "kind": "lifecycle",
+      "method": "N/A",
+      "path": "notification:consumer-loop",
+      "source": "libs/backend/feature/notification/main/lib/src/endpoint-registry.ts:1",
+      "authClassification": "background",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-consumer.service.spec.ts"
+    },
+    {
+      "project": "notification-scheduler",
+      "kind": "cron",
+      "method": "N/A",
+      "path": "notification:cron:broadcast-activation",
+      "source": "libs/backend/feature/notification/main/lib/src/endpoint-registry.ts:6",
+      "authClassification": "background",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-broadcast-scheduler.service.spec.ts"
+    },
+    {
+      "project": "notification-scheduler",
+      "kind": "cron",
+      "method": "N/A",
+      "path": "notification:cron:delivery-dispatch",
+      "source": "libs/backend/feature/notification/main/lib/src/endpoint-registry.ts:12",
+      "authClassification": "background",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-delivery-scheduler.service.spec.ts"
+    },
+    {
+      "project": "notification-scheduler",
+      "kind": "cron",
+      "method": "N/A",
+      "path": "notification:cron:partition-maintenance",
+      "source": "libs/backend/feature/notification/main/lib/src/endpoint-registry.ts:18",
+      "authClassification": "background",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-delivery-partition.service.spec.ts"
+    },
+    {
+      "project": "notification-scheduler",
+      "kind": "lifecycle",
+      "method": "N/A",
+      "path": "auth:expired-token-cleanup",
+      "source": "libs/backend/postgres/main/auth/lib/src/endpoint-registry.ts:17",
+      "authClassification": "background",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/postgres/main/auth/lib/src/auth-token-cleanup.service.spec.ts"
+    },
+    {
+      "project": "notification-scheduler",
+      "kind": "lifecycle",
+      "method": "N/A",
+      "path": "notification:provider-readiness",
+      "source": "libs/backend/feature/notification/main/lib/src/endpoint-registry.ts:24",
+      "authClassification": "background",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-provider-readiness.service.spec.ts"
+    },
+    {
+      "project": "site-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/",
+      "source": "apps/frontend/site/pages/index/+Page.tsx:1",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "apps/frontend/site/pages/index/+Page.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "SITE_APP_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "site-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/problems",
+      "source": "apps/frontend/site/pages/problems/+Page.tsx:1",
+      "authClassification": "public",
+      "coverageClassification": "covered-component",
+      "testEvidence": "apps/frontend/site/pages/index/+Page.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "SITE_APP_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-callback",
+      "method": "N/A",
+      "path": "telegram:menu:language:*",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:7",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-callback",
+      "method": "N/A",
+      "path": "telegram:menu:link/instructions",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:8",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-callback",
+      "method": "N/A",
+      "path": "telegram:menu:main",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:9",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-callback",
+      "method": "N/A",
+      "path": "telegram:menu:profile",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:10",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-callback",
+      "method": "N/A",
+      "path": "telegram:menu:settings",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:11",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-callback",
+      "method": "N/A",
+      "path": "telegram:menu:support/contact",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:12",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-callback",
+      "method": "N/A",
+      "path": "telegram:menu:unknown-callback",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:13",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "telegram:command:/app",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:1",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "telegram:command:/language",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:2",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "telegram:command:/link",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:3",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "telegram:command:/profile",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:4",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "telegram:command:/start",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:5",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "bot-command",
+      "method": "N/A",
+      "path": "telegram:command:/support",
+      "source": "libs/backend/feature/telegram/bot/lib/src/endpoint-registry.ts:6",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "TELEGRAM_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health/private",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:19",
+      "authClassification": "private-network",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "TELEGRAM_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/live",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:26",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "TELEGRAM_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/ready",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "TELEGRAM_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/telegram/webhook",
+      "source": "apps/backend/telegram/telegram-bot-api/src/telegram-webhook.controller.ts:32",
+      "authClassification": "signed-provider",
+      "coverageClassification": "covered-component",
+      "testEvidence": "apps/backend/telegram/telegram-bot-api/src/telegram-webhook.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "TELEGRAM_API_BASE_URL",
+        "classification": "signed-provider",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "lifecycle",
+      "method": "N/A",
+      "path": "telegram:polling-runner",
+      "source": "apps/backend/telegram/telegram-bot-api/src/endpoint-registry.ts:1",
+      "authClassification": "background",
+      "coverageClassification": "covered-component",
+      "testEvidence": "apps/backend/telegram/telegram-bot-api/src/telegram-polling.service.spec.ts"
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "openapi-json",
+      "method": "GET",
+      "path": "/docs/openapi.json",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "TELEGRAM_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "telegram-bot-api",
+      "kind": "swagger-ui",
+      "method": "GET",
+      "path": "/docs",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "TELEGRAM_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "USER_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/health/private",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:19",
+      "authClassification": "private-network",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "USER_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/live",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:26",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "USER_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/profile/me",
+      "source": "libs/backend/feature/user/main/lib/src/interfaces/http/profile.controller.ts:27",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/user/main/lib/src/interfaces/http/profile.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "USER_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/ready",
+      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
+      "authClassification": "public",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "USER_API_BASE_URL",
+        "classification": "automatic",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app-api",
+      "kind": "lifecycle",
+      "method": "N/A",
+      "path": "auth:expired-token-cleanup",
+      "source": "libs/backend/postgres/main/auth/lib/src/endpoint-registry.ts:23",
+      "authClassification": "background",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/postgres/main/auth/lib/src/auth-token-cleanup.service.spec.ts"
+    },
+    {
+      "project": "user-app-api",
+      "kind": "openapi-json",
+      "method": "GET",
+      "path": "/docs/openapi.json",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "USER_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app-api",
+      "kind": "swagger-ui",
+      "method": "GET",
+      "path": "/docs",
+      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
+      "authClassification": "public",
+      "coverageClassification": "covered-unit",
+      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "USER_API_BASE_URL",
+        "classification": "public-conditional",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:61",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/auth",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:63",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/auth/discord/callback",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:67",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/auth/telegram/callback",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:72",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/link/discord",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:95",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/link/telegram",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:93",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/profile",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:77",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/settings",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:82",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/telegram-mini-app",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:92",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/tma",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:89",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    },
+    {
+      "project": "user-app",
+      "kind": "frontend-route",
+      "method": "N/A",
+      "path": "/tma/auth",
+      "source": "apps/frontend/app/src/app/router/user-routes.tsx:91",
+      "authClassification": "browser-session",
+      "coverageClassification": "covered-integration",
+      "testEvidence": "apps/frontend/app/src/app/app.spec.tsx",
+      "smoke": {
+        "baseUrlEnv": "USER_APP_BASE_URL",
+        "classification": "cookie-session",
+        "expectedStatusClasses": [
+          "2xx",
+          "3xx"
+        ]
+      }
+    }
+  ]
+}

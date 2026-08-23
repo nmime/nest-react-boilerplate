@@ -172,6 +172,16 @@ register(
   'Run Prettier only on changed files for PR memory-safe formatting validation.',
   ({ argv, workspaceRoot }) => runChangedFormatCheck({ argv, workspaceRoot }),
 );
+registerScript(
+  'endpoints:manifest',
+  'Regenerate the canonical endpoint manifest; --check diffs source discovery against the checked-in baseline.',
+  'release/generate-endpoint-manifest.ts',
+);
+registerScript(
+  'release:smoke',
+  'Run the classified release smoke matrix from the canonical endpoint manifest against configured base URLs.',
+  'release/run-release-smoke.ts',
+);
 
 registerScript('testing:storybook', 'Run Storybook interaction tests.', 'testing/storybook-test.ts');
 registerScript(

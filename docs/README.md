@@ -120,6 +120,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Command Matrix](command-matrix.md) — supported local and CI commands.
 - [Feature Flags](feature-flags.md)
 - [Fiat Currency Catalogue](fiat-currency-catalogue.md)
+- [Payments](features/payments/index.md)
 - [i18n](i18n.md)
 - [NATS](nats.md)
 - [Notifications](notifications.md)

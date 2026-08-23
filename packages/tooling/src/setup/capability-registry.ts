@@ -16,6 +16,7 @@ export const baseCapabilityIds = [
   'websockets',
   'feature-flags',
   'fiat-currency',
+  'payments',
   'notifications',
   'design-tokens',
   'authz',

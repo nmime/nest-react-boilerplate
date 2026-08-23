@@ -124,6 +124,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
       'websockets',
       'feature-flags',
       'fiat-currency',
+      'payments',
       'notifications',
       'design-tokens',
       'authz',

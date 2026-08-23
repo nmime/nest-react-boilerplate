@@ -195,6 +195,7 @@ describe('schema — constants', () => {
       'websockets',
       'feature-flags',
       'fiat-currency',
+      'payments',
       'notifications',
       'design-tokens',
       'authz',

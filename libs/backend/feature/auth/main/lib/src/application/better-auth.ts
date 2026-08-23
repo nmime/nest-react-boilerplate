@@ -28,7 +28,7 @@ export interface BetterAuthConfigOptions {
    * tune that behavior — including the runtime contract spec, which re-enables
    * the check to pin the production semantics — set `disableOriginCheck` here.
    */
-  advanced?: BetterAuthOptions['advanced'];
+  advanced?: NonNullable<BetterAuthOptions['advanced']>;
 }
 
 /**

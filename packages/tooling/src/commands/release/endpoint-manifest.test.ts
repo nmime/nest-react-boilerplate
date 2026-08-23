@@ -61,7 +61,7 @@ describe("canonical endpoint manifest", () => {
 
   it("fails the check on a newly discovered endpoint that has no baseline row", () => {
     const baseline = row("GET", "/example");
-    const generated = {
+    const generated: EndpointManifest = {
       schemaVersion: 1,
       rows: [baseline, row("GET", "/example/new")],
     };

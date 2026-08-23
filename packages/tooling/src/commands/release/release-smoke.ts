@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { createServer } from "node:http";
+import { createServer, type RequestListener } from "node:http";
 import { resolve } from "node:path";
 import type {
   EndpointManifest,
@@ -218,7 +218,7 @@ function validateManifestRow(index: number, row: EndpointManifestRow): void {
     "coverageClassification",
     "testEvidence",
   ] as const) {
-    const value = (row as Record<string, unknown>)?.[field];
+    const value = (row as unknown as Record<string, unknown>)?.[field];
     if (typeof value !== "string" || value.trim() === "") {
       throw new Error(`Malformed endpoint manifest row ${index} (${describe(row)}): ${field} must be a non-empty string.`);
     }
@@ -312,7 +312,7 @@ export function cookieHeaders(session: SmokeSession): Headers {
 }
 
 export async function withEphemeralSmokeServer<T>(
-  handler: Parameters<typeof createServer>[0],
+  handler: RequestListener,
   run: (baseUrl: string) => Promise<T>,
 ): Promise<T> {
   const server = createServer(handler);

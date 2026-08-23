@@ -1,5 +1,94 @@
 # Release and Kubernetes hardening
 
+## Endpoint manifest and release smoke harness
+
+`packages/tooling/baselines/endpoint-manifest.generated.json` is the canonical
+endpoint inventory of the release: every HTTP route (Nest controller decorators
+discovered statically), every committed non-HTTP endpoint (bot commands, cron
+wrappers, consumer loops, from the feature `*EndpointRegistry` modules), and
+every frontend route (admin/user route registries, Astro pages, site pages).
+Each row carries an auth classification, a coverage classification with test
+evidence, and — for every externally reachable row — a smoke classification.
+The Better Auth `/api/auth/*` surface is an honestly delegated row: its source
+is the static catch-all controller, its evidence is
+`libs/backend/feature/auth/main/lib/src/application/better-auth-runtime-contract.spec.ts`
+(which pins the child-route behavior the handler forwards to), and its smoke
+classification is `delegated-runtime`, so the HTTP smoke reports it explicitly
+instead of invoking it.
+
+### Commands
+
+```bash
+# regenerate the baseline from source and rewrite the checked-in manifest
+pnpm run endpoints:manifest:generate
+
+# gate: fail on any new, removed, re-classified, duplicate, unclassified,
+# malformed, or missing source/evidence row
+pnpm run endpoints:manifest:check
+
+# deployment instrument: run the classified HTTP smoke matrix against live
+# base URLs (requires the base URL env vars below; refuses to pass otherwise)
+pnpm run release:smoke
+```
+
+### Release smoke: what it invokes and what it expects
+
+`release:smoke` consumes the checked-in manifest and issues GET-only probes
+against each row's `baseUrlEnv` (missing base URL is a hard failure that names
+the variable). Per-origin cookie jars persist `Set-Cookie` across a run, and a
+seeded session comes from `<BASE_URL_ENV with _BASE_URL replaced by
+_SESSION_COOKIE>` (e.g. `ADMIN_API_BASE_URL` + `ADMIN_API_SESSION_COOKIE`),
+taking a cookie-header value. Cookie values are used in requests only and
+never appear in output.
+
+| Classification        | Probed as                                       | Expected                                                                                                                                                                                                                              |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `automatic`           | one anonymous GET                               | 2xx (health/live/ready, public pages)                                                                                                                                                                                                 |
+| `cookie-session`      | one GET with the per-origin jar                 | 2xx or 3xx (SPA shells)                                                                                                                                                                                                               |
+| `public-conditional`  | one anonymous GET                               | 2xx when enabled/reachable, 4xx when disabled or off-network (`/docs`, `/docs/openapi.json`, `/health/private`)                                                                                                                       |
+| `rbac-allowed-denied` | anonymous GET, then GET with the session cookie | denied half must be 401/403 (the guard runs before any lookup); allowed half must match the row's `expectedStatusClasses` — 2xx, plus 404 for parameterized routes probed with the sentinel id `00000000-0000-0000-0000-000000000000` |
+| `delegated-runtime`   | not invoked                                     | reported explicitly; pinned by the runtime-contract spec                                                                                                                                                                              |
+| `manual-fixture`      | never invoked (state-changing methods)          | reported explicitly                                                                                                                                                                                                                   |
+| `signed-provider`     | not invoked (needs provider signatures)         | reported explicitly                                                                                                                                                                                                                   |
+
+Refusal semantics, all before any probe when applicable:
+
+- An externally reachable row without a smoke classification is a hard
+  refusal that lists the offending rows.
+- A malformed manifest (invalid JSON, `schemaVersion` other than 1,
+  non-array `rows`, missing or invalid fields/classifications) is a hard
+  failure that names the row and field.
+- An anonymous probe to a session-gated route that is not denied (401/403)
+  fails the run and prints the unexpected status.
+- An `rbac-allowed-denied` row whose allowed half cannot be verified because
+  no session cookie was seeded is counted in `rbacAllowedUnverified` and
+  reported per row — the harness never shrinks its evidence silently.
+- Sensitive query values (`token`, `secret`, `password`, `code`, `key`,
+  `cookie`, `session`) are replaced with `[REDACTED]` in all output.
+
+### Gate wiring (exact)
+
+- Root `package.json` chains: `check:fast` and `ci:pr` run
+  `pnpm run endpoints:manifest:check` immediately after
+  `pnpm run tooling:static-check`. The check is a standalone tooling command
+  (`nrb endpoints:manifest --check`); `tooling:static-check`'s JSON output
+  keys are unchanged.
+- The `packages/tooling` unit suite (`node --test` via
+  `packages/tooling/scripts/run-tests.mjs`) runs
+  `packages/tooling/src/commands/release/endpoint-manifest.test.ts`, which
+  re-discovers every source and diffs it against the checked-in baseline —
+  the same gate also runs inside the unit lane.
+- `release-smoke.test.ts` in the same suite pins the harness against an
+  ephemeral local HTTP server: cookie jar, redaction, status matching,
+  rbac denied/allowed halves, refusal, and malformed-manifest hard failures.
+
+Deployment-time consumer: section E of the release acceptance matrix at
+`/home/daytona/release-audit/release-acceptance-matrix.md` (boot every
+backend from built dist, request every endpoint family, authenticated
+session/RBAC flows and negative cases). The harness above is the executable
+form of that section's HTTP matrix; the matrix file is an audit artifact and
+is referenced, not edited, by this repository.
+
 ## Image immutability
 
 Release images are built by `.github/workflows/release-images.yml` and pushed to

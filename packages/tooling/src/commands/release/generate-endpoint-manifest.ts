@@ -28,3 +28,7 @@ export function runGenerateEndpointManifest(
   process.stdout.write(`Wrote canonical endpoint manifest: ${output}\n`);
   return 0;
 }
+
+// Executed directly by `pnpm nrb endpoints:manifest` (registerScript) with
+// process.argv[2..] as command argv; imported lazily, never by tests.
+process.exitCode = runGenerateEndpointManifest({ argv: process.argv.slice(2) });

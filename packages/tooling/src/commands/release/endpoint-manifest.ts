@@ -82,6 +82,7 @@ export interface EndpointManifest {
 
 export interface EndpointManifestIssue {
   code:
+    | "changed-endpoint"
     | "duplicate"
     | "invalid-auth"
     | "invalid-coverage"
@@ -89,7 +90,9 @@ export interface EndpointManifestIssue {
     | "invalid-smoke"
     | "missing-field"
     | "missing-source"
-    | "missing-test-evidence";
+    | "missing-test-evidence"
+    | "new-endpoint"
+    | "removed-endpoint";
   key: string;
   message: string;
 }
@@ -383,17 +386,110 @@ export function checkEndpointManifest(workspaceRoot: string): EndpointManifestIs
     });
     return issues;
   }
-  const checkedIn = readFileSync(output, "utf8");
-  const expected = endpointManifestText(generated);
-  if (checkedIn !== expected) {
+  const checkedIn = parseCheckedInManifest(readFileSync(output, "utf8"));
+  if (checkedIn === null) {
     issues.push({
-      code: "missing-source",
+      code: "invalid-smoke",
+      key: EndpointManifestRelativePath,
+      message: `Checked-in endpoint manifest ${EndpointManifestRelativePath} is malformed; regenerate it with pnpm run endpoints:manifest:generate.`,
+    });
+    return issues;
+  }
+  const diff = diffEndpointManifests(checkedIn, generated);
+  issues.push(...diff);
+  if (diff.length === 0 && readFileSync(output, "utf8") !== endpointManifestText(generated)) {
+    issues.push({
+      code: "changed-endpoint",
       key: EndpointManifestRelativePath,
       message:
-        "Generated endpoint manifest is stale; run pnpm run endpoints:manifest:generate and review the classified endpoint diff.",
+        "Generated endpoint manifest differs from the checked-in baseline without a row-level diff (formatting or schema drift); run pnpm run endpoints:manifest:generate and review the classified endpoint diff.",
     });
   }
   return issues;
+}
+
+function parseCheckedInManifest(text: string): EndpointManifest | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const candidate = parsed as EndpointManifest;
+  if (candidate.schemaVersion !== 1 || !Array.isArray(candidate.rows)) return null;
+  for (const row of candidate.rows) {
+    if (
+      typeof row?.project !== "string" ||
+      typeof row?.kind !== "string" ||
+      typeof row?.method !== "string" ||
+      typeof row?.path !== "string" ||
+      typeof row?.source !== "string" ||
+      typeof row?.authClassification !== "string" ||
+      typeof row?.coverageClassification !== "string" ||
+      typeof row?.testEvidence !== "string"
+    ) {
+      return null;
+    }
+  }
+  return candidate;
+}
+
+/**
+ * Row-level diff between the checked-in baseline and fresh generation. This is
+ * the precise failure surface of the regenerate-and-diff gate: every new,
+ * removed or re-classified endpoint row surfaces individually instead of a
+ * single opaque "stale" flag.
+ */
+export function diffEndpointManifests(
+  checkedIn: EndpointManifest,
+  generated: EndpointManifest,
+): EndpointManifestIssue[] {
+  const issues: EndpointManifestIssue[] = [];
+  const checkedByKey = new Map(checkedIn.rows.map((row) => [endpointKey(row), row]));
+  const generatedByKey = new Map(generated.rows.map((row) => [endpointKey(row), row]));
+  for (const [key, row] of generatedByKey) {
+    const baseline = checkedByKey.get(key);
+    if (!baseline) {
+      issues.push({
+        code: "new-endpoint",
+        key,
+        message: `${key} was discovered from source but has no checked-in classification row; classify it (coverage + smoke) and regenerate the manifest.`,
+      });
+      continue;
+    }
+    const changes = rowFieldsChanged(baseline, row);
+    if (changes.length > 0) {
+      issues.push({
+        code: "changed-endpoint",
+        key,
+        message: `${key} changed between source and the checked-in manifest: ${changes.join(", ")}; regenerate the manifest and review the diff.`,
+      });
+    }
+  }
+  for (const key of checkedByKey.keys()) {
+    if (!generatedByKey.has(key)) {
+      issues.push({
+        code: "removed-endpoint",
+        key,
+        message: `${key} is checked in but no longer discovered from source; remove the row (or restore the source) and regenerate the manifest.`,
+      });
+    }
+  }
+  return issues;
+}
+
+function rowFieldsChanged(
+  baseline: EndpointManifestRow,
+  current: EndpointManifestRow,
+): string[] {
+  const changed: string[] = [];
+  for (const field of ["source", "authClassification", "coverageClassification", "testEvidence"] as const) {
+    if (baseline[field] !== current[field]) changed.push(field);
+  }
+  if (JSON.stringify(baseline.smoke ?? null) !== JSON.stringify(current.smoke ?? null)) {
+    changed.push("smoke");
+  }
+  return changed;
 }
 
 export function validateEndpointManifest(
@@ -524,10 +620,6 @@ function discoverHttpEndpoints(workspaceRoot: string): DiscoveredEndpoint[] {
   }
 
   for (const project of httpApiProjects) {
-    if (project === "admin-app-api") {
-      endpoints.push(...healthEndpoints(workspaceRoot, project, ""));
-      continue;
-    }
     endpoints.push(...healthEndpoints(workspaceRoot, project, ""));
   }
   return uniqueDiscovered(endpoints);
@@ -735,10 +827,62 @@ function classifyAuth(endpoint: DiscoveredEndpoint): EndpointAuthClassification 
   return "public";
 }
 
+export const ProbedSmokeClassifications = [
+  "automatic",
+  "cookie-session",
+  "public-conditional",
+  "rbac-allowed-denied",
+] as const;
+
+/**
+ * Methods the release smoke never invokes, whatever the row's classification:
+ * the harness only issues GET, so an explicit state-changing verb is refused
+ * up front with its own message instead of being probed as a GET that would
+ * 405. The delegated `ALL` catch-all is deliberately not listed: its behavior
+ * is reported through its classification (delegated-runtime).
+ */
+export const StateChangingMethods = ["DELETE", "PATCH", "POST", "PUT"] as const;
+
+export type ProbedSmokeClassification = (typeof ProbedSmokeClassifications)[number];
+
+/**
+ * Maps each externally reachable row to exactly one smoke behavior. The
+ * release smoke harness (`release-smoke.ts`) executes these rules verbatim:
+ *
+ * - `rbac-allowed-denied` (session-gated HTTP routes, GET/N-A): an anonymous
+ *   probe must be denied (401/403 — fixed by the classification, the guard
+ *   runs before any resource lookup), and when a session cookie is available
+ *   the same route must answer within `expectedStatusClasses` (2xx, plus 404
+ *   for parameterized routes probed with the sentinel id). State-changing
+ *   methods are never probed by the smoke: they stay `manual-fixture`.
+ * - `cookie-session` (SPA pages driven by a browser session): one probe with
+ *   the per-origin cookie jar (seeded or captured); the shell must load
+ *   (2xx) or redirect (3xx).
+ * - `automatic` (public HTTP GETs such as /health, /live, /ready and public
+ *   static pages): one probe; 2xx.
+ * - `public-conditional` (/docs, /docs/openapi.json, /health/private): one
+ *   probe; 2xx when enabled/reachable, 4xx when disabled/off-network.
+ * - `delegated-runtime`, `manual-fixture`, `signed-provider`: not invoked by
+ *   the HTTP smoke (delegated child routes are pinned by the runtime-contract
+ *   spec, fixtures are state-changing, signed ingress needs provider
+ *   signatures). The harness reports every one of them explicitly instead of
+ *   skipping silently.
+ */
 function classifySmoke(
   row: EndpointManifestRow,
 ): EndpointSmokeClassificationRecord {
   const baseUrlEnv = baseUrlEnvironment(row.project);
+  const isGet = row.method === "GET" || row.method === "N/A";
+  if (row.kind === "frontend-route") {
+    return {
+      baseUrlEnv,
+      classification:
+        row.project === "admin-app" || row.project === "user-app"
+          ? "cookie-session"
+          : "automatic",
+      expectedStatusClasses: ["2xx", "3xx"],
+    };
+  }
   if (row.kind === "openapi-json" || row.kind === "swagger-ui") {
     return {
       baseUrlEnv,
@@ -760,26 +904,6 @@ function classifySmoke(
       expectedStatusClasses: ["2xx", "4xx"],
     };
   }
-  if (row.authClassification === "browser-session-rbac" || row.authClassification === "session-rbac") {
-    return {
-      baseUrlEnv,
-      classification:
-        row.method === "GET" || row.method === "N/A"
-          ? "rbac-allowed-denied"
-          : "manual-fixture",
-      expectedStatusClasses: ["2xx", "4xx"],
-    };
-  }
-  if (row.authClassification === "browser-session" || row.authClassification === "session") {
-    return {
-      baseUrlEnv,
-      classification:
-        row.method === "GET" || row.method === "N/A"
-          ? "cookie-session"
-          : "manual-fixture",
-      expectedStatusClasses: ["2xx", "3xx", "4xx"],
-    };
-  }
   if (row.authClassification === "private-network") {
     return {
       baseUrlEnv,
@@ -787,12 +911,42 @@ function classifySmoke(
       expectedStatusClasses: ["2xx", "4xx"],
     };
   }
+  if (
+    row.authClassification === "session-rbac" ||
+    row.authClassification === "browser-session-rbac" ||
+    row.authClassification === "session"
+  ) {
+    if (!isGet) {
+      return {
+        baseUrlEnv,
+        classification: "manual-fixture",
+        expectedStatusClasses: ["2xx", "4xx"],
+      };
+    }
+    return {
+      baseUrlEnv,
+      classification: "rbac-allowed-denied",
+      expectedStatusClasses: hasPathParameter(row.path) ? ["2xx", "404"] : ["2xx"],
+    };
+  }
+  if (!isGet) {
+    return {
+      baseUrlEnv,
+      classification: "manual-fixture",
+      expectedStatusClasses: ["2xx", "4xx"],
+    };
+  }
   return {
     baseUrlEnv,
-    classification:
-      row.method === "GET" || row.method === "N/A" ? "automatic" : "manual-fixture",
-    expectedStatusClasses: ["2xx", "3xx", "4xx"],
+    classification: "automatic",
+    expectedStatusClasses: ["2xx"],
   };
+}
+
+const PathParameterPattern = /:[A-Za-z_][A-Za-z0-9_]*/u;
+
+export function hasPathParameter(path: string): boolean {
+  return PathParameterPattern.test(path);
 }
 
 function baseUrlEnvironment(project: string): string {

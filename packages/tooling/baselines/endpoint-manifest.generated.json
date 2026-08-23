@@ -14,8 +14,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -33,7 +32,7 @@
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "404"
         ]
       }
     },
@@ -50,8 +49,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -68,8 +66,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -86,8 +83,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -104,8 +100,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -122,8 +117,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -140,9 +134,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -177,9 +169,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -196,8 +186,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -215,7 +204,7 @@
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "404"
         ]
       }
     },
@@ -232,8 +221,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -251,7 +239,7 @@
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "404"
         ]
       }
     },
@@ -268,8 +256,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -287,7 +274,7 @@
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "404"
         ]
       }
     },
@@ -304,8 +291,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -323,7 +309,7 @@
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "404"
         ]
       }
     },
@@ -340,8 +326,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -358,9 +343,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -377,8 +360,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -395,8 +377,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -413,8 +394,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -432,7 +412,7 @@
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "404"
         ]
       }
     },
@@ -449,9 +429,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -486,9 +464,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -505,9 +481,7 @@
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1090,10 +1064,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1108,10 +1082,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1126,10 +1100,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1144,10 +1118,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1162,10 +1136,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1180,10 +1154,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1198,10 +1172,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1216,10 +1190,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1234,10 +1208,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1252,10 +1226,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1270,10 +1244,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1288,10 +1262,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1306,10 +1280,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1324,10 +1298,10 @@
       "testEvidence": "apps/frontend/admin/src/app/admin-route-registry.spec.tsx",
       "smoke": {
         "baseUrlEnv": "ADMIN_APP_BASE_URL",
-        "classification": "rbac-allowed-denied",
+        "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -1363,7 +1337,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1381,9 +1354,7 @@
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1400,9 +1371,7 @@
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1417,11 +1386,9 @@
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "cookie-session",
+        "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1436,11 +1403,9 @@
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/problem-presentations.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "cookie-session",
+        "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1455,11 +1420,9 @@
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "cookie-session",
+        "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1476,9 +1439,7 @@
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1513,9 +1474,7 @@
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1532,9 +1491,7 @@
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -1552,7 +1509,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1571,7 +1527,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1590,7 +1545,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1609,7 +1563,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1628,7 +1581,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1647,7 +1599,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1666,7 +1617,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1685,7 +1635,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1704,7 +1653,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1723,7 +1671,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1742,7 +1689,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1761,7 +1707,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1780,7 +1725,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1799,7 +1743,6 @@
         "classification": "manual-fixture",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
           "4xx"
         ]
       }
@@ -1973,9 +1916,7 @@
         "baseUrlEnv": "DISCORD_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2010,9 +1951,7 @@
         "baseUrlEnv": "DISCORD_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2029,9 +1968,7 @@
         "baseUrlEnv": "DISCORD_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2103,8 +2040,7 @@
         "classification": "automatic",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2122,8 +2058,7 @@
         "classification": "automatic",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2141,8 +2076,7 @@
         "classification": "automatic",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2230,8 +2164,7 @@
         "classification": "automatic",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2249,8 +2182,7 @@
         "classification": "automatic",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2397,9 +2329,7 @@
         "baseUrlEnv": "TELEGRAM_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2434,9 +2364,7 @@
         "baseUrlEnv": "TELEGRAM_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2453,9 +2381,7 @@
         "baseUrlEnv": "TELEGRAM_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2536,9 +2462,7 @@
         "baseUrlEnv": "USER_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2573,9 +2497,7 @@
         "baseUrlEnv": "USER_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2592,8 +2514,7 @@
         "baseUrlEnv": "USER_API_BASE_URL",
         "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
-          "2xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2610,9 +2531,7 @@
         "baseUrlEnv": "USER_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx",
-          "3xx",
-          "4xx"
+          "2xx"
         ]
       }
     },
@@ -2676,8 +2595,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2695,8 +2613,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2714,8 +2631,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2733,8 +2649,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2752,8 +2667,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2771,8 +2685,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2790,8 +2703,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2809,8 +2721,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2828,8 +2739,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2847,8 +2757,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     },
@@ -2866,8 +2775,7 @@
         "classification": "cookie-session",
         "expectedStatusClasses": [
           "2xx",
-          "3xx",
-          "4xx"
+          "3xx"
         ]
       }
     }

@@ -22,7 +22,7 @@ export async function runReleaseSmokeCommand(
     return 0;
   } catch (error) {
     process.stderr.write(
-      `${error instanceof Error ? error.message : String(error)}\n`,
+      `release smoke failed: ${error instanceof Error ? error.message : String(error)}\n`,
     );
     return 1;
   }
@@ -37,3 +37,7 @@ function readOption(argv: string[], name: string): string | undefined {
   }
   return undefined;
 }
+
+// Executed directly by `pnpm nrb release:smoke` (registerScript) with
+// process.argv[2..] as command argv; imported lazily, never by tests.
+process.exitCode = await runReleaseSmokeCommand({ argv: process.argv.slice(2) });

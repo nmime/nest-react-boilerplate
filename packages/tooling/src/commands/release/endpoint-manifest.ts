@@ -825,31 +825,40 @@ function parseControllers(text: string): Array<{
     extendsBaseHealth: boolean;
     routes: Array<{ method: string; path: string; line: number; decoratorText: string }>;
   }> = [];
-  const controllerPattern = /@Controller\(\s*(?:(["'`])([^"'`]*)\1\s*)?\)\s*(?:export\s+)?class\s+(\w+)(?:\s+extends\s+(\w+))?/gu;
-  const matches = [...text.matchAll(controllerPattern)];
-  for (let index = 0; index < matches.length; index += 1) {
-    const match = matches[index];
-    const start = match.index ?? 0;
-    const bodyStart = start + match[0].length;
-    const bodyEnd = matches[index + 1]?.index ?? text.length;
-    const body = text.slice(bodyStart, bodyEnd);
-    const routePattern = /@(Get|Post|Put|Patch|Delete|All)\(\s*(?:(["'`])([^"'`]*)\2\s*)?\)/gu;
+  // Locate every @Controller( marker first, then resolve the class declaration
+  // after it. Controllers legally carry extra decorators and comments between
+  // @Controller(...) and `class` (e.g. @Public(), @UseGuards(new Guard()),
+  // /* v8 ignore */ notes); a regex that demands `class` right after the
+  // decorator silently dropped those routes, so anchor on the marker and scan
+  // forward to the first class declaration before the next controller.
+  const starts = [...text.matchAll(/@Controller\(/gu)].map((match) => match.index ?? 0);
+  for (let index = 0; index < starts.length; index += 1) {
+    const start = starts[index];
+    const nextStart = starts[index + 1] ?? text.length;
+    const window = text.slice(start, nextStart);
+    const pathMatch = /@Controller\(\s*(?:(['"`])([^'"`]*)\1\s*)?\)/u.exec(window);
+    const classMatch = /class\s+(\w+)(?:\s+extends\s+([\w.]+))?/u.exec(window);
+    if (!pathMatch || !classMatch) continue;
+    const bodyStart = start + (classMatch.index ?? 0) + classMatch[0].length;
+    const body = text.slice(bodyStart, nextStart);
+    const routePattern = /@(Get|Post|Put|Patch|Delete|All)\(\s*(?:(['"`])([^'"`]*)\2\s*)?\)/gu;
     const routeMatches = [...body.matchAll(routePattern)];
     const routes = routeMatches.map((routeMatch, routeIndex) => {
       const routeStart = routeMatch.index ?? 0;
       const nextRoute = routeMatches[routeIndex + 1]?.index ?? body.length;
       const routeBlock = body.slice(routeStart, nextRoute);
       return {
-        method: (routeMatch[1] ?? "").toUpperCase(),
-        path: routeMatch[3] ?? "",
+        method: (routeMatch[1] ?? '').toUpperCase(),
+        path: routeMatch[3] ?? '',
         line: lineAt(text, bodyStart + routeStart),
         decoratorText: routeBlock.slice(0, Math.min(routeBlock.length, 2_000)),
       };
     });
     controllers.push({
-      path: match[2] ?? "",
+      path: pathMatch[2] ?? '',
       decoratorText: text.slice(Math.max(0, start - 1_500), bodyStart),
-      extendsBaseHealth: match[4] === "BaseHealthController",
+      extendsBaseHealth: (classMatch[2] ?? '') === 'BaseHealthController' ||
+        (classMatch[2] ?? '').endsWith('.BaseHealthController'),
       routes,
     });
   }

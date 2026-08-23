@@ -21,6 +21,14 @@ export interface BetterAuthConfigOptions {
   discordRedirectUri?: string;
   sessionCookieName?: string;
   sessionMaxAge?: number;
+  /**
+   * Verbatim Better Auth `advanced` passthrough. Notably, Better Auth silently
+   * disables its origin (CSRF) check whenever NODE_ENV is `test`
+   * (`skipOriginCheck` defaults to `isTest()`); deployments that must prove or
+   * tune that behavior — including the runtime contract spec, which re-enables
+   * the check to pin the production semantics — set `disableOriginCheck` here.
+   */
+  advanced?: BetterAuthOptions['advanced'];
 }
 
 /**
@@ -76,6 +84,8 @@ export function getBetterAuthConfig(database: unknown, options: BetterAuthConfig
       window: 10,
       max: 100,
     },
+
+    advanced: options.advanced,
 
     plugins: [
       genericOAuth({ config: telegramOidc ? [telegramOidc] : [] }),

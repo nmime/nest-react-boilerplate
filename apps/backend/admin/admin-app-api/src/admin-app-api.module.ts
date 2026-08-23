@@ -6,6 +6,7 @@ import { AdminAuthenticationGuard } from '@app/backend-feature-admin-shared';
 import { AuthAdminModule } from '@app/backend-feature-auth-admin';
 import { AdminAccessAuditInterceptor, AuditLogAdminApiModule } from '@app/backend-feature-audit-log-admin';
 import { NotificationAdminApiModule } from '@app/backend-feature-notification-admin';
+import { PaymentsAdminModule } from '@app/backend-feature-payments-admin';
 import { AdminAppHealthServiceProvider } from './health.config';
 import { AdminAppApiCapabilitiesModule } from './capabilities.generated';
 import { AdminHealthController } from './admin-health.controller';
@@ -16,6 +17,7 @@ import { AdminHealthController } from './admin-health.controller';
     AuthAdminModule,
     AuditLogAdminApiModule,
     NotificationAdminApiModule,
+    PaymentsAdminModule,
     AdminAppApiCapabilitiesModule,
   ],
   controllers: [BaseHealthController, AdminHealthController],

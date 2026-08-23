@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "configHash": "aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b",
+  "configHash": "fb2597bd18a10d9424f7d5309d38dced332783cd3a7efc76289abfd7cd751e5f",
   "capabilities": [
     {
       "id": "authz",
@@ -178,6 +178,43 @@
             {
               "importName": "NotificationPostgresModule",
               "importPath": "@app/backend-postgres-main-notification"
+            }
+          ]
+        }
+      ],
+      "telemetryWiring": null,
+      "providerTelemetryInstrumentation": null,
+      "deploymentOwnership": null
+    },
+    {
+      "id": "payments",
+      "activation": "nest-module",
+      "projects": [
+        "@app/backend-feature-payments-main",
+        "@app/backend-feature-payments-shared",
+        "@app/backend-postgres-main-payments"
+      ],
+      "dockerServices": [],
+      "environmentVariables": [],
+      "generatedFiles": [
+        "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
+        "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/user/user-app-api/src/capabilities.generated.ts"
+      ],
+      "backendWiring": [
+        {
+          "hosts": "selected-backend",
+          "moduleExpression": "PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })",
+          "imports": [
+            {
+              "importName": "PaymentsMainModule",
+              "importPath": "@app/backend-feature-payments-main"
+            },
+            {
+              "importName": "PaymentsPostgresModule",
+              "importPath": "@app/backend-postgres-main-payments"
             }
           ]
         }

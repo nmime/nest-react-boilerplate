@@ -6,9 +6,11 @@
 import type { MigrationObject } from '@mikro-orm/core';
 
 // <nrb-generated-capability-migration-imports>
+import { Migration20260823100000CreatePayments } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePayments.ts';
 // </nrb-generated-capability-migration-imports>
 
 export const capabilityMigrations: readonly MigrationObject[] = [
   // <nrb-generated-capability-migration-entries>
+  { class: Migration20260823100000CreatePayments, name: 'Migration20260823100000CreatePayments' },
   // </nrb-generated-capability-migration-entries>
 ];

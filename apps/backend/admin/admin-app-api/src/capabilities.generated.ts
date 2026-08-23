@@ -5,10 +5,12 @@
 // root module that imports it, which setup never rewrites.
 import { Global, Module } from '@nestjs/common';
 import { S3Module } from '@app/backend-common-s3';
+import { PaymentsMainModule } from '@app/backend-feature-payments-main';
 import { PostgresMainModule } from '@app/backend-postgres-main';
 import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
 import { FeatureFlagsPostgresModule } from '@app/backend-postgres-main-feature-flags';
 import { NotificationPostgresModule } from '@app/backend-postgres-main-notification';
+import { PaymentsPostgresModule } from '@app/backend-postgres-main-payments';
 
 @Global()
 @Module({
@@ -16,9 +18,17 @@ import { NotificationPostgresModule } from '@app/backend-postgres-main-notificat
     AuthPostgresModule,
     FeatureFlagsPostgresModule,
     NotificationPostgresModule,
+    PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } }),
     PostgresMainModule.forRoot(),
     S3Module.forRoot(),
   ],
-  exports: [AuthPostgresModule, FeatureFlagsPostgresModule, NotificationPostgresModule, PostgresMainModule, S3Module],
+  exports: [
+    AuthPostgresModule,
+    FeatureFlagsPostgresModule,
+    NotificationPostgresModule,
+    PaymentsMainModule,
+    PostgresMainModule,
+    S3Module,
+  ],
 })
 export class AdminAppApiCapabilitiesModule {}

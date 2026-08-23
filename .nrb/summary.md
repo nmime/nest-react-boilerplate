@@ -1,6 +1,6 @@
 # Setup Plan Summary
 
-**Configuration hash:** `aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b`
+**Configuration hash:** `fb2597bd18a10d9424f7d5309d38dced332783cd3a7efc76289abfd7cd751e5f`
 
 ## Applications
 
@@ -23,6 +23,7 @@
 - feature-flags
 - i18n
 - notifications
+- payments
 - postgres
 - s3
 

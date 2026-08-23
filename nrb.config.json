@@ -19,6 +19,7 @@
     "feature-flags",
     "i18n",
     "notifications",
+    "payments",
     "postgres",
     "s3"
   ],

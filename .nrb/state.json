@@ -1,20 +1,20 @@
 {
   "version": 1,
-  "configHash": "aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b",
+  "configHash": "fb2597bd18a10d9424f7d5309d38dced332783cd3a7efc76289abfd7cd751e5f",
   "files": {
-    "nrb.config.json": "415e8d544477f5c46bcbcb2ba8f01c740daa37e56e4d2db321a3bcd8230d3c42",
-    ".nrb/summary.md": "3cb3a3a34f8b6df81840b211a006044c018ed3c95c8eaf0a59fadfae515a209b",
-    ".nrb/workspace.json": "f7cd7fdf5ba44edca47ddff51f575d14c951edc9e57a88efa4bf51e8475d1040",
-    ".nrb/capabilities.json": "268c3f2465f4fd184e45b8dda946ea8d9a4cfb81add30a82397ffbca547a5424",
-    ".nrb/capabilities.env": "7fa2ead580b7c47e9247027ff74d579ecfcd2564600c20842adf37bb99f0b022",
-    "packages/tooling/src/commands/db/capability-migrations.generated.ts": "41f98d0a77a0e8681b651431e53408d1914faaf48eb57e1885648ecb8cef74fe",
-    "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "bb95faf78c53f63b6b17e494f06f242c39ab02b01e81c01faf143eda1e730618",
-    "apps/backend/user/user-app-api/src/capabilities.generated.ts": "d65d204206fe3f8ab47521a77c6976981fe729c1b596b25b037c0d5155939d90",
-    "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "89c1b2f445a457e06702875b065d037485ab09aecf5055aa06801860a2651703",
+    "nrb.config.json": "c7214ffe61887c0cf3313a0b2bf2a67118157e2f287b594221b6ce404ba558ae",
+    ".nrb/summary.md": "e1ed18419a3913c2a36e2f9d60c89132a244a62ea1003d37cbd5b7993a15e8c2",
+    ".nrb/workspace.json": "0fdcd52f1bba6f52f71d5301abcd633a10398bcf8412b5b6a5b57f0f612e431b",
+    ".nrb/capabilities.json": "186a51f55c7770397c7d64d0e1cad112e1ffe0b785b3202741774db73cde9506",
+    ".nrb/capabilities.env": "a507b393c0cd13dad3636762f8abed3c8747c84c0817437a50048cc36e45c07c",
+    "packages/tooling/src/commands/db/capability-migrations.generated.ts": "a30582b8e01e96f3dd5b5562c63fd045e534a7abe9f9fa3d713d1aa6e8d502cf",
+    "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "e5e1511ff47727c89af5beb920f4ca68551449c72d5c4f9d1f48d4d3bbd8f858",
+    "apps/backend/user/user-app-api/src/capabilities.generated.ts": "43360d30776b78cd9c9648784c8f5aa004e7ccff4a59741c35cbb0020ef767c0",
+    "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "38879898942067feded5d6f919a826701ba1b78950ea9267add13440a42b4383",
     "apps/backend/discord/discord-app-api/src/capabilities.generated.ts": "5c828d016d45c1e6531d99465299a1e23f48bff2fc7702cb6ff499e188dc915e",
     "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "93e8924cb3b0b67d190ad0d5655dfb49ed9998d77d50b3786919a3a22eb1fa09",
-    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "990e67d6ff79b5e0d0b92052900e511f2adbed233d367566bb8af88475221c2d",
-    "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "ae89648e21ea92c58de8b138eb2135e7ca180fb2d1d223c465885c1fbf3b91b5",
+    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "20ca4d4572c691b5b3bfbccef5a48cf35c8437ebe36412df34cf985d1a353fa1",
+    "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "dc26c1fe0c3e1d76c214f63cb712bdd898edc02312ed718a82677d2665110181",
     "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/auth/auth-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
@@ -23,5 +23,5 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
   },
-  "digest": "25cfc650b5ac6ad675f0818d6881239eae0d27f50053be02512f8510265037e8"
+  "digest": "16d82e9c5e40480cadc87c40a4b5b8406c21b151073cc8833f1ff628ec4434ab"
 }

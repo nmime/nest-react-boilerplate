@@ -192,7 +192,7 @@ describe('payments capability — committed workspace wiring list', () => {
   it('hand-imports PaymentsAdminModule only in admin-app-api, where the admin guard and audit interceptor live', () => {
     const admin = readFileSync(new URL(ROOT_MODULE_PATHS['admin-app-api'], workspaceRoot), 'utf8');
     assert.match(admin, /import \{ PaymentsAdminModule \} from '@app\/backend-feature-payments-admin';/u);
-    assert.match(admin, /\n    PaymentsAdminModule,\n/u);
+    assert.match(admin, /\n {4}PaymentsAdminModule,\n/u);
     assert.match(admin, /APP_GUARD/u);
     assert.match(admin, /APP_INTERCEPTOR/u);
     for (const appId of [...SELECTED_BACKENDS.filter((id) => id !== 'admin-app-api'), ...UNSELECTED_BACKENDS]) {

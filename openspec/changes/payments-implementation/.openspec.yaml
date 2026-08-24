@@ -1,0 +1,6 @@
+schema: nrb-verifiable
+created: 2026-08-22
+goal: Ship the payments capability — provider-agnostic payment ordering,
+  eight verified provider adapters behind one port, receipt-first webhook
+  ingress with idempotent redelivery, and an admin provider lifecycle on
+  the postgres persistence axis.

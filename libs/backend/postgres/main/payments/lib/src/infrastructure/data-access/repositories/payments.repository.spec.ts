@@ -1,53 +1,60 @@
 // @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-001
 import { describe, expect, it } from 'vitest';
 import { PaymentsEntity } from '../entities';
-import { PaymentsRepository } from './payments.repository';
+import { PaymentsPostgresPersistence } from './payments.repository';
 
-function repositoryWith(entityManager: unknown): PaymentsRepository {
-  return new PaymentsRepository(entityManager as never);
+function persistenceWith(entityManager: unknown): PaymentsPostgresPersistence {
+  return new PaymentsPostgresPersistence(entityManager as never);
 }
 
-describe('PaymentsRepository', () => {
-  it('lists newest first', async () => {
+describe('PaymentsPostgresPersistence', () => {
+  it('lists newest first and maps rows to the port DTO', async () => {
     const entity = new PaymentsEntity({ name: 'Example' });
-    const repository = repositoryWith({ find: async () => [entity] });
-
-    const result = await repository.list();
-
-    expect(result._unsafeUnwrap()).toEqual([entity]);
-  });
-
-  it('reports a repository error when the read fails', async () => {
-    const repository = repositoryWith({
-      find: async () => {
-        throw new Error('unavailable');
+    const entityManager = {
+      find: async (_entity: unknown, _where: unknown, options: { orderBy: { createdAt: 'ASC' | 'DESC' } }) => {
+        expect(options.orderBy).toEqual({ createdAt: 'DESC' });
+        return [entity];
       },
-    });
+    };
 
-    expect((await repository.list())._unsafeUnwrapErr()).toEqual({ code: 'repository_error' });
+    await expect(persistenceWith(entityManager).listPayments()).resolves.toEqual([
+      { id: entity.id, name: 'Example', createdAt: entity.createdAt.toISOString() },
+    ]);
   });
 
-  it('persists and flushes a new payments', async () => {
+  it('persists and flushes a new payment and returns the port DTO', async () => {
     const persisted: unknown[] = [];
-    const repository = repositoryWith({
+    const entityManager = {
       persist: (entity: unknown) => persisted.push(entity),
       flush: async () => undefined,
-    });
+    };
 
-    const result = await repository.create('Example');
+    const created = await persistenceWith(entityManager).createPayment({ name: 'Example' });
 
-    expect(result._unsafeUnwrap().name).toBe('Example');
     expect(persisted).toHaveLength(1);
+    expect(created).toMatchObject({ name: 'Example' });
+    expect(created.id).toBe((persisted[0] as PaymentsEntity).id);
   });
 
-  it('reports a repository error when the flush fails', async () => {
-    const repository = repositoryWith({
-      persist: () => undefined,
-      flush: async () => {
-        throw new Error('unavailable');
+  it('finds a stored payment by id', async () => {
+    const entity = new PaymentsEntity({ name: 'Example' });
+    const entityManager = {
+      findOne: async (_entity: unknown, where: { id: string }) => {
+        expect(where).toEqual({ id: entity.id });
+        return entity;
       },
-    });
+    };
 
-    expect((await repository.create('Example'))._unsafeUnwrapErr()).toEqual({ code: 'repository_error' });
+    await expect(persistenceWith(entityManager).findPayment(entity.id)).resolves.toEqual({
+      id: entity.id,
+      name: 'Example',
+      createdAt: entity.createdAt.toISOString(),
+    });
+  });
+
+  it('returns null when no payment matches the id', async () => {
+    const entityManager = { findOne: async () => null };
+
+    await expect(persistenceWith(entityManager).findPayment('missing')).resolves.toBeNull();
   });
 });

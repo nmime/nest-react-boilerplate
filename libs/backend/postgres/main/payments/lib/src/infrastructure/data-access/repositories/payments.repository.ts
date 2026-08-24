@@ -1,34 +1,44 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
-import { ResultAsync } from 'neverthrow';
+import { PaymentsPersistence, type CreatePaymentsDto, type PaymentsDto } from '@app/backend-feature-payments-shared';
 import { PaymentsEntity } from '../entities';
 
-export interface PaymentsRepositoryError {
-  code: 'repository_error';
+function toPaymentsDto(entity: PaymentsEntity): PaymentsDto {
+  return { id: entity.id, name: entity.name, createdAt: entity.createdAt.toISOString() };
 }
 
+/**
+ * The Postgres side of {@link PaymentsPersistence} (scaffold shape).
+ *
+ * U3 grows the contract with the real domain — provider registry, events/outbox, webhook
+ * receipts, refunds, and provider health — and rebinds this class under the same port.
+ */
 @Injectable()
-export class PaymentsRepository {
+export class PaymentsPostgresPersistence extends PaymentsPersistence {
   constructor(
     @Inject(EntityManager)
     private readonly entityManager: EntityManager,
-  ) {}
-
-  list(): ResultAsync<PaymentsEntity[], PaymentsRepositoryError> {
-    return ResultAsync.fromPromise(
-      this.entityManager.find(PaymentsEntity, {}, { orderBy: { createdAt: 'DESC' } }),
-      () => ({ code: 'repository_error' as const }),
-    );
+  ) {
+    super();
   }
 
-  create(name: string): ResultAsync<PaymentsEntity, PaymentsRepositoryError> {
-    return ResultAsync.fromPromise(this.persist(name), () => ({ code: 'repository_error' as const }));
+  async listPayments(): Promise<PaymentsDto[]> {
+    const rows = await this.entityManager.find(PaymentsEntity, {}, { orderBy: { createdAt: 'DESC' } });
+
+    return rows.map(toPaymentsDto);
   }
 
-  private async persist(name: string): Promise<PaymentsEntity> {
-    const entity = new PaymentsEntity({ name });
+  async createPayment(input: CreatePaymentsDto): Promise<PaymentsDto> {
+    const entity = new PaymentsEntity({ name: input.name });
     this.entityManager.persist(entity);
     await this.entityManager.flush();
-    return entity;
+
+    return toPaymentsDto(entity);
+  }
+
+  async findPayment(id: string): Promise<PaymentsDto | null> {
+    const row = await this.entityManager.findOne(PaymentsEntity, { id });
+
+    return row ? toPaymentsDto(row) : null;
   }
 }

@@ -115,7 +115,7 @@ Each provider adapter SHALL implement the shared `PaymentProviderPort`
 (`createPayment`, `getStatus`, `verifyWebhook`, plus optional
 `refund`, `closePayment`, `resolvePaymentAddress`) and MUST use only the
 provider's documented endpoints, auth scheme, and signature algorithm —
-nothing assumed: bearer JWT (xRocket), `Crypto-Pay-API-Token` with
+nothing assumed: bearer JWT (X-Rocket), `Crypto-Pay-API-Token` with
 HMAC-SHA256 keyed by `sha256(token)` (CryptoBot),
 `MD5(base64(json) + key)` with the documented slash-escape serialization
 (Heleket), `x-api-key` with sorted-JSON HMAC-SHA512 (NOWPayments), no
@@ -242,7 +242,7 @@ row — and the mongodb axis MUST use the documented ordered-write pattern
   of them, and NOWPayments is polled to terminal because it sends no
   expiry IPN.
 - Outbox publication is at-least-once; consumers MUST be idempotent.
-- Provider-specific polling notes are honored: xRocket every tick
+- Provider-specific polling notes are honored: X-Rocket every tick
   (unsigned webhooks), cryptobot `getMe` liveness every 5 minutes with a
   24 h silence alert, YooKassa/CP/Stripe/Adyen only stuck rows.
 

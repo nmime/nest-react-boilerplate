@@ -12,9 +12,9 @@
 
 ## Sources (authority ladder, highest wins)
 
-1. `xrocket-new-openapi.json` — "xRocket Pay API" v1.0.0, OpenAPI 3.0, saved
-   2026-08-22 from `https://pay.api.xrocket.exchange/api/docs-json`. For the
-   xRocket adapter it is the single source of truth; every older xRocket doc
+1. `x-rocket-new-openapi.json` — "X-Rocket Pay API" v1.0.0, OpenAPI 3.0, saved
+   2026-08-22 from `https://pay.api.x-rocket.exchange/api/docs-json`. For the
+   X-Rocket adapter it is the single source of truth; every older X-Rocket doc
    generation is superseded for endpoint/payload/auth/webhook/error facts.
 2. `repo-conventions.md` — how a backend feature is built in this repository
    (one `@app/backend` package, fiat-currency as the reference capability,
@@ -42,7 +42,7 @@
   provider-API re-verification precedes every paid transition; for signed
   fiat webhooks the re-fetch must match the webhook amount.
 - Unknown provider statuses are in-progress (`processing`), never `paid` —
-  the xRocket spec says it verbatim: statuses "may be extended in the
+  the X-Rocket spec says it verbatim: statuses "may be extended in the
   future… handle unknown statuses gracefully" and "treat unknown statuses as
   'in progress'".
 - Amounts are decimal strings on the wire and exact `@app/common-money`
@@ -64,7 +64,7 @@
 
 ## Examples
 
-- A xRocket `payment_status_changed` webhook with
+- A X-Rocket `payment_status_changed` webhook with
   `payment.status = 'paid'` and `finalizedAt != null` re-fetches
   `GET /api/v1/invoice?invoiceId=…` and transitions to `paid` with the
   realized `receiveAmount` captured in the event evidence.
@@ -92,7 +92,7 @@
   (double-spend / refund-owed guard).
 - A disabled provider still accepts webhooks: disablement fail-closes new
   payments only; in-flight payments must settle.
-- xRocket's spec documents no signature scheme (zero occurrences of
+- X-Rocket's spec documents no signature scheme (zero occurrences of
   "signature" or "secret"), so its webhooks verify as `none` and the
   double-check rule is mandatory for it — not an optimization.
 - The mongodb axis ships but is not wired in this workspace; its
@@ -128,19 +128,19 @@
 
 ## Unresolved Questions
 
-- xRocket base URL: the spec's `servers` array is empty — operator
+- X-Rocket base URL: the spec's `servers` array is empty — operator
   configured per row; the docs UI host is verified live but not pinned by
   the spec.
-- Where the xRocket application-wide webhook URL is registered: xRocket app
+- Where the X-Rocket application-wide webhook URL is registered: X-Rocket app
   settings (OPERATOR-CONFIGURED, location not in spec); per-invoice
   `callback.callbackUrl` overrides it.
-- Rate-limit numbers for xRocket, CryptoBot, Heleket, NOWPayments, Adyen:
+- Rate-limit numbers for X-Rocket, CryptoBot, Heleket, NOWPayments, Adyen:
   429 exists where documented but values are absent — client token buckets
   use conservative defaults.
-- xRocket testnet: host lives in docs, not spec; the legacy
+- X-Rocket testnet: host lives in docs, not spec; the legacy
   `PUT /api/v1/invoices/pay` test trigger is absent from this spec and must
   be confirmed live on testnet before use.
 - Adyen `GET /v72/payments/{pspReference}` as the reconciliation query:
   standard Checkout endpoint, verify at onboarding (flagged in research).
-- xRocket refunds for paid invoices: not in the spec; capability
+- X-Rocket refunds for paid invoices: not in the spec; capability
   `refund = false`, manual path only.

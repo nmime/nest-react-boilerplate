@@ -1,7 +1,7 @@
 ## Why
 
 The product needs to accept crypto and fiat payments through eight verified
-providers (xRocket, CryptoBot, Heleket, NOWPayments, YooKassa, CloudPayments,
+providers (X-Rocket, CryptoBot, Heleket, NOWPayments, YooKassa, CloudPayments,
 Stripe, Adyen) without a code deploy to add, disable, or rotate a provider,
 and without a single unsigned or un-rechecked webhook being able to credit a
 payment. The repository has no payments capability: no ordering lifecycle, no
@@ -24,7 +24,7 @@ provider registry, no webhook receipt wall, no credential envelope.
   (AES-256-GCM, key rotation, admin redaction).
 - Add one `PaymentProviderPort` with eight adapters conformed to each
   provider's documented endpoints, auth, and signature scheme — including
-  xRocket verified against its new OpenAPI spec (no signature scheme:
+  X-Rocket verified against its new OpenAPI spec (no signature scheme:
   double-check is mandatory).
 - Add public webhook ingress with raw-body signature verification, a
   receipt-first unique-index idempotency wall, the 400/409/410/502 rejection
@@ -78,7 +78,7 @@ hoisted `@mikroorm/*` and `mongodb`. The lockfile does not move.
 ## Risk, Rollout, and Rollback
 
 Risk is high: the feature handles real money across eight external
-contracts, one of which (xRocket) was just re-specified, and three fiat
+contracts, one of which (X-Rocket) was just re-specified, and three fiat
 webhook schemes must be byte-exact. Rollout is incremental by unit (U1
 scaffold + OpenSpec shell → U2 shared domain → U3 postgres → U4 mongo →
 U5 provider framework → U6 webhook ingress → U7/U8 adapters → U9 API/admin →

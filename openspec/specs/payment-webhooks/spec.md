@@ -15,7 +15,7 @@ land.
 ### Requirement: [REQ-PAYMENT-WEBHOOK-001] Each provider's webhook is verified before it is trusted
 
 Webhook ingress SHALL expose one public route per provider
-(`POST /api/v1/webhooks/{xrocket|cryptobot|heleket|nowpayments|yookassa|cloudpayments|stripe|adyen}`,
+(`POST /api/v1/webhooks/{x-rocket|cryptobot|heleket|nowpayments|yookassa|cloudpayments|stripe|adyen}`,
 plus `GET /api/v1/webhooks/cloudpayments` for its GET-format IPN) with no
 session or RBAC guard — the signature is the gate. A raw-body hook SHALL
 stash the exact request bytes before any JSON parsing, and verification
@@ -28,7 +28,7 @@ sorted-parameters compact JSON under HMAC-SHA512 (NOWPayments);
 slash-escaped serialized body under `MD5(base64(body) + key)` (Heleket);
 HMAC-SHA256 over the raw body keyed by `sha256(token)` (CryptoBot);
 dual HMAC headers (CloudPayments); no documented scheme → result `none`
-(xRocket, YooKassa v3). An invalid signature MUST answer 400
+(X-Rocket, YooKassa v3). An invalid signature MUST answer 400
 `webhook-signature-invalid` with a best-effort receipt row
 (`signature_valid='invalid'`) and a P1 alert.
 
@@ -61,9 +61,9 @@ dual HMAC headers (CloudPayments); no documented scheme → result `none`
 - **AND** a receipt row with `signature_valid='invalid'` is recorded and
   a P1 alert fires
 
-#### Scenario: An xRocket callback arrives
+#### Scenario: An X-Rocket callback arrives
 
-- **WHEN** a xRocket webhook arrives with the documented
+- **WHEN** a X-Rocket webhook arrives with the documented
   `{ id, timestamp, type, data }` envelope
 - **THEN** verification returns `none` (the spec documents no signature
   scheme) and processing continues under the double-check rule
@@ -97,7 +97,7 @@ provider redelivers. A disabled provider MUST still accept its webhooks.
 - The response is sent right after the receipt commits (target < 200 ms);
   a provider re-fetch over its 3 s budget leaves the receipt `pending`
   for the reconciler, and the provider's retry still gets 200.
-- Idempotency keys are provider-specific composites (xRocket body `id`;
+- Idempotency keys are provider-specific composites (X-Rocket body `id`;
   CryptoBot `invoice_id:paid_at`; Heleket `uuid:status:txid`;
   NOWPayments `payment_id:payment_status:purchase_id`; YooKassa
   `event:object.id:status`; CloudPayments `TransactionId:Type:Status`;
@@ -148,7 +148,7 @@ re-verify through the provider API (`getStatus` re-fetch) before the
 transition applies. For the signed fiat webhooks (Stripe, Adyen,
 CloudPayments) the signature is proof of origin only: the re-fetch amount
 MUST match the webhook amount, and a mismatch MUST produce no transition,
-a P1 alert, and a manual-queue entry. xRocket — which documents no
+a P1 alert, and a manual-queue entry. X-Rocket — which documents no
 signature — MUST always re-fetch, accepting finality only on
 `payment.status = 'paid'` AND `payment.finalizedAt != null`.
 
@@ -178,9 +178,9 @@ signature — MUST always re-fetch, accepting finality only on
 - **THEN** no transition to `paid` occurs
 - **AND** a P1 alert fires and the payment goes to the manual queue
 
-#### Scenario: An unsigned xRocket webhook claims paid
+#### Scenario: An unsigned X-Rocket webhook claims paid
 
-- **WHEN** a xRocket `payment_status_changed` reports
+- **WHEN** a X-Rocket `payment_status_changed` reports
   `payment.status = 'paid'`
 - **THEN** the system re-fetches the invoice and its payments
 - **AND** the transition applies only if the re-fetch shows `paid` with

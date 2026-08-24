@@ -61,7 +61,7 @@
 
 ## 7. Crypto adapters (U7)
 
-- [ ] 7.1 xRocket against the committed `xrocket-new-openapi.json` fixture
+- [ ] 7.1 X-Rocket against the committed `x-rocket-new-openapi.json` fixture
       (contract-asserted), CryptoBot, Heleket (serializer golden test),
       NOWPayments (sorted-JSON golden + `case` sandbox param).
 - [ ] 7.2 Every error class, unknown status, and retry path at 100%;

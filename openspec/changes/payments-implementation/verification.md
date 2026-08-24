@@ -26,7 +26,7 @@ operations); every evidence `file` must exist at merge time.
 | `REQ-PAYMENT-ORDER-004`    | normal | main service suite, postgres entity suite + spec.md                                  | reconciler/expiry vitest + component                                                |
 | `REQ-PAYMENT-PROVIDER-001` | normal | admin + postgres scaffold suites + spec.md                                           | resolver vitest (main), registry component                                          |
 | `REQ-PAYMENT-PROVIDER-002` | high   | admin module suite, postgres alias suite + spec.md                                   | envelope crypto vitest (main), redaction security spec (admin)                      |
-| `REQ-PAYMENT-PROVIDER-003` | normal | main alias suite + spec.md                                                           | 8 adapter contract vitest + xRocket spec-fixture contract test                      |
+| `REQ-PAYMENT-PROVIDER-003` | normal | main alias suite + spec.md                                                           | 8 adapter contract vitest + X-Rocket spec-fixture contract test                     |
 | `REQ-PAYMENT-PROVIDER-004` | normal | postgres alias suite + spec.md                                                       | health-state vitest (main)                                                          |
 | `REQ-PAYMENT-PROVIDER-005` | normal | main service suite, postgres migration suite, mongo module/index suites + spec.md    | outbox component (postgres `component-test`), ordered-write component (mongo)       |
 | `REQ-PAYMENT-WEBHOOK-001`  | normal | main controller suite + spec.md                                                      | per-provider signature vitest incl. Heleket/NOWPayments/Stripe/Adyen golden samples |
@@ -73,11 +73,11 @@ source-code result.
 ## Residual Risk
 
 - Provider details absent from the verified sources (rate-limit numbers,
-  xRocket testnet trigger, Adyen reconciliation GET) are handled as
+  X-Rocket testnet trigger, Adyen reconciliation GET) are handled as
   operator onboarding tasks with golden tests pinned from staging captures
   before enablement — never assumed in code.
 - RU compliance decisions are operator-owned; the repository encodes only
-  the verified exclusions as row defaults and keeps xRocket disabled until
+  the verified exclusions as row defaults and keeps X-Rocket disabled until
   written support confirmation.
 
 ## Independent Verification Reviewer

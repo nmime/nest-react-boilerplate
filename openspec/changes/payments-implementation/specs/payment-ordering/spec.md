@@ -130,13 +130,13 @@ provider-realized net amounts MUST land only in the `paid` event evidence.
 ### Requirement: [REQ-PAYMENT-ORDER-003] Creation is idempotent through one payment identity
 
 The system SHALL use one payment identity as the idempotency anchor with
-every provider: `clientInvoiceId` (xRocket), `order_id` (Heleket,
+every provider: `clientInvoiceId` (X-Rocket), `order_id` (Heleket,
 NOWPayments), `Idempotence-Key` (YooKassa), and `reference`
 (Stripe/Adyen) MUST all equal the payment's UUID. A create request
 reusing an `orderRef` for the same tenant SHALL return the existing
 payment without creating a second provider invoice, and the persistence
 axis MUST enforce this with a unique constraint; a provider duplicate
-error (xRocket `client_id_already_taken`) MUST be resolved as "already
+error (X-Rocket `client_id_already_taken`) MUST be resolved as "already
 created" — fetch the invoice, do not error.
 
 **Evidence profile:** domain, documentation
@@ -144,7 +144,7 @@ created" — fetch the invoice, do not error.
 **Invariants:**
 
 - Our payment UUID fits every provider's identifier bound (≤ 100 chars
-  for xRocket, 1..128 for Heleket, ≤ 64 for YooKassa).
+  for X-Rocket, 1..128 for Heleket, ≤ 64 for YooKassa).
 - The unique index `(provider_code, id)` (postgres `uq_payments_provider_client`,
   the mongo unique collection key) is the database-level replay wall for
   creation.
@@ -166,7 +166,7 @@ created" — fetch the invoice, do not error.
 
 #### Scenario: The provider says the client id is already taken
 
-- **WHEN** xRocket answers a create with `client_id_already_taken` for our
+- **WHEN** X-Rocket answers a create with `client_id_already_taken` for our
   own payment id
 - **THEN** the system fetches the existing invoice and treats the create
   as already created

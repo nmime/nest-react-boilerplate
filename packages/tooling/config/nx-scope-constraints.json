@@ -8,6 +8,7 @@
       "scope:feature-flags",
       "scope:mongodb",
       "scope:notification",
+      "scope:payments",
       "scope:postgres",
       "scope:shared"
     ]
@@ -20,6 +21,7 @@
       "scope:feature-flags",
       "scope:mongodb",
       "scope:notification",
+      "scope:payments",
       "scope:postgres",
       "scope:shared"
     ]
@@ -31,6 +33,7 @@
       "scope:auth",
       "scope:feature-flags",
       "scope:notification",
+      "scope:payments",
       "scope:postgres",
       "scope:shared"
     ]
@@ -57,6 +60,7 @@
       "scope:auth",
       "scope:feature-flags",
       "scope:mongodb",
+      "scope:payments",
       "scope:postgres",
       "scope:shared"
     ]
@@ -81,6 +85,7 @@
       "scope:auth",
       "scope:feature-flags",
       "scope:mongodb",
+      "scope:payments",
       "scope:postgres",
       "scope:bots",
       "scope:shared"
@@ -93,6 +98,7 @@
       "scope:notification",
       "scope:auth",
       "scope:feature-flags",
+      "scope:payments",
       "scope:postgres",
       "scope:bots",
       "scope:shared"

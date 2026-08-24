@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-WEBHOOK-001
 import { describe, expect, it } from 'vitest';
 import type { PaymentsDto } from '@app/backend-feature-payments-shared';
 import { PaymentsController } from './payments.controller';

@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-002
 import { describe, expect, it } from 'vitest';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { PaymentsReadPermission } from '@app/backend-feature-payments-shared';

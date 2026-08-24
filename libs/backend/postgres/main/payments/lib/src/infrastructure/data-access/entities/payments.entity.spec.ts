@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-004 REQ-PAYMENT-WEBHOOK-002
 import { describe, expect, it } from 'vitest';
 import { PaymentsEntity, PaymentsEntitySchema } from './payments.entity';
 

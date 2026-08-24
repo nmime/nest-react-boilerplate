@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-PROVIDER-005
 import { describe, expect, it } from 'vitest';
 import { PaymentsMongoModule } from './payments-mongo.module';
 import { PaymentsRepository } from './payments-mongo.repository';

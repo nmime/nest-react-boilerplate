@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-PROVIDER-002 REQ-PAYMENT-PROVIDER-004
 import { describe, expect, it } from 'vitest';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { PaymentsPostgresModule } from '@app/backend-postgres-main-payments';

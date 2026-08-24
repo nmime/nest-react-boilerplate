@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-PROVIDER-005
 import { describe, expect, it } from 'vitest';
 import * as paymentsMongo from './index';
 

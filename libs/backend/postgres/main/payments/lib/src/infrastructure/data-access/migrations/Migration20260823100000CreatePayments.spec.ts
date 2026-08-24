@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005
 import { describe, expect, it } from 'vitest';
 import { Migration20260823100000CreatePayments } from './Migration20260823100000CreatePayments';
 

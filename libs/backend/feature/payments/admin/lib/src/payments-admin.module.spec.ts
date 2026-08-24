@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-001 REQ-PAYMENT-PROVIDER-002
 import { describe, expect, it } from 'vitest';
 import { PaymentsAdminModule } from './payments-admin.module';
 

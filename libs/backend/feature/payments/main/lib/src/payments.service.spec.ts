@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-004 REQ-PAYMENT-PROVIDER-005
 import { describe, expect, it } from 'vitest';
 import type { PaymentsDto } from '@app/backend-feature-payments-shared';
 import { PaymentsService } from './payments.service';

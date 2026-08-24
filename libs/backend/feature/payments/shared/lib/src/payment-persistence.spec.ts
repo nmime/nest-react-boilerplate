@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-001 REQ-PAYMENT-ORDER-003
 import { describe, expect, it } from 'vitest';
 import { PaymentsPersistence } from './payment-persistence';
 import type { CreatePaymentsDto, PaymentsDto } from './payment.types';

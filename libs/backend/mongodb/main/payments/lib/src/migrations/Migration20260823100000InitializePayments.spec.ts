@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-003
 import { describe, expect, it, vi } from 'vitest';
 import { Migration20260823100000InitializePayments } from './Migration20260823100000InitializePayments';
 import { paymentsMongoMigrations } from './index';

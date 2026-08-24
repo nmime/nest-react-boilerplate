@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-001
 import { describe, expect, it } from 'vitest';
 import { type CreatePaymentsDto, type PaymentsDto, PaymentsReadPermission, PaymentsWritePermission } from './index';
 

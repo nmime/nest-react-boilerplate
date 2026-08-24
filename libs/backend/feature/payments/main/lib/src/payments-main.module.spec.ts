@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-001 REQ-PAYMENT-WEBHOOK-003
 import { Module } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { PaymentsController } from './payments.controller';

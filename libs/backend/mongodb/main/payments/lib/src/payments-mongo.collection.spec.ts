@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-WEBHOOK-002
 import { describe, expect, it, vi } from 'vitest';
 import {
   PaymentsCollectionName,

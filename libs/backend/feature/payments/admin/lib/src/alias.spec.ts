@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-PROVIDER-001
 import { describe, expect, it } from 'vitest';
 // eslint-disable-next-line @nx/enforce-module-boundaries
 import { PaymentsAdminModule } from '@app/backend-feature-payments-admin';

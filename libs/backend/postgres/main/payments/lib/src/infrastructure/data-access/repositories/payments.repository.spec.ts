@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENTS-SCAFFOLD-001
+// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-001
 import { describe, expect, it } from 'vitest';
 import { PaymentsEntity } from '../entities';
 import { PaymentsRepository } from './payments.repository';

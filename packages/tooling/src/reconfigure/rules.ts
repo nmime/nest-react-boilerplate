@@ -109,6 +109,10 @@ function buildPortReplacements(previous: NrbConfig['runtime'], next: NrbConfig['
       to: String(next.containerPort),
       label: 'containerPort',
       family: 'port',
+      anchor: new RegExp(
+        `(?:\\bPORT\\s*[:=]\\s*|\\bENV\\s+PORT=|\\btarget:\\s*|\\b(?:containerPort|servicePort|port):\\s*|:\\s*)${previous.containerPort}\\b`,
+        'u',
+      ),
     });
   }
   if (previous.stagingOffset !== next.stagingOffset) {
@@ -117,6 +121,7 @@ function buildPortReplacements(previous: NrbConfig['runtime'], next: NrbConfig['
       to: String(next.stagingOffset),
       label: 'stagingOffset',
       family: 'port',
+      anchor: new RegExp(`(?:stagingOffset\\s*[:=]\\s*|offset\\s*\\*?\\*?\\+?)${previous.stagingOffset}\\b`, 'u'),
     });
   }
   return out;

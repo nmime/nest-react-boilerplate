@@ -176,4 +176,42 @@ describe('reconfigure engine state and rollback', () => {
     const manifest = JSON.parse((await fs.read(identityManifestPath)) ?? '{}') as { gate?: string };
     assert.equal(manifest.gate, 'green');
   });
+
+  it('rewrites container and staging ports only in anchored deployment contexts', async () => {
+    const previous = config();
+    const desired = parseNrbConfig({
+      ...previous,
+      runtime: { ...previous.runtime, containerPort: 8088, stagingOffset: 200 },
+    });
+    const fs = memoryFilesystem({
+      Dockerfile: 'ENV PORT=80\n',
+      'docker/docker-compose.yml': 'environment:\n  PORT: 80\nports:\n  - target: 80\n',
+      'docker/caddy/routes/core/auth.caddy': 'reverse_proxy auth-app-api:80\n',
+      '.helm/values.yaml': 'app:\n  port: 80\n  servicePort: 80\n',
+      'notes.md': 'staging offset +100; CPU usage 80%\n',
+    });
+    const result = await runReconfigure({
+      fs,
+      desired,
+      previous,
+      manifest: null,
+      state: emptyState,
+      templateBase: 'abc123',
+      force: true,
+      includeMetadata: false,
+      targetPaths: [
+        'Dockerfile',
+        'docker/docker-compose.yml',
+        'docker/caddy/routes/core/auth.caddy',
+        '.helm/values.yaml',
+        'notes.md',
+      ],
+    });
+    assert.equal(result.status, 'updated');
+    assert.equal(await fs.read('Dockerfile'), 'ENV PORT=8088\n');
+    assert.equal(await fs.read('docker/docker-compose.yml'), 'environment:\n  PORT: 8088\nports:\n  - target: 8088\n');
+    assert.equal(await fs.read('docker/caddy/routes/core/auth.caddy'), 'reverse_proxy auth-app-api:8088\n');
+    assert.equal(await fs.read('.helm/values.yaml'), 'app:\n  port: 8088\n  servicePort: 8088\n');
+    assert.equal(await fs.read('notes.md'), 'staging offset +200; CPU usage 80%\n');
+  });
 });

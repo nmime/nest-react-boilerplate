@@ -330,11 +330,26 @@ function applyRules(
 
 function applyAnchoredPortReplacement(content: string, replacement: AnchoredReplacement): string {
   if (replacement.from === replacement.to) return content;
-  if (replacement.label === 'containerPort' || replacement.label === 'stagingOffset') {
-    return content;
-  }
   const escaped = replacement.from.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
   let result = content;
+  if (replacement.label === 'containerPort') {
+    result = result.replace(new RegExp(`(\\bENV\\s+PORT=)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+    result = result.replace(new RegExp(`(\\bPORT\\s*:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+    result = result.replace(new RegExp(`(\\btarget:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+    result = result.replace(new RegExp(`(\\bcontainerPort:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+    result = result.replace(new RegExp(`(\\bservicePort:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+    result = result.replace(new RegExp(`(\\bport:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+    result = result.replace(
+      new RegExp(`((?:https?://127\\.0\\.0\\.1|[a-z][a-z0-9-]*):)${escaped}\\b`, 'gu'),
+      `$1${replacement.to}`,
+    );
+    return result;
+  }
+  if (replacement.label === 'stagingOffset') {
+    result = result.replace(new RegExp(`(\\bstagingOffset\\s*:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+    result = result.replace(new RegExp(`(\\boffset\\s*\\*?\\*?\\+\\s*)${escaped}\\b`, 'giu'), `$1${replacement.to}`);
+    return result;
+  }
   result = result.replace(new RegExp(`(\\b[A-Z][A-Z0-9_]*_PORT\\s*=\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
   result = result.replace(new RegExp(`(\\bport\\s*:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
   result = result.replace(new RegExp(`(["'])${escaped}(:\\d+)(["'])`, 'gu'), `$1${replacement.to}$2$3`);

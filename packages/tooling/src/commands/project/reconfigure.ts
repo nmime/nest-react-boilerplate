@@ -10,9 +10,11 @@ import {
   templateBase,
 } from '../../reconfigure/io.js';
 import { runReconfigure } from '../../reconfigure/run.js';
+import type { ReconfigureGateMode } from '../../reconfigure/verify.js';
 
 export interface ReconfigureArgs {
   config?: string;
+  gate: ReconfigureGateMode;
   dryRun: boolean;
   force: boolean;
   json: boolean;
@@ -20,11 +22,13 @@ export interface ReconfigureArgs {
 }
 
 export function parseReconfigureArgs(argv: string[]): ReconfigureArgs {
-  const result: ReconfigureArgs = { dryRun: false, force: false, json: false, help: false };
+  const result: ReconfigureArgs = { gate: 'auto', dryRun: false, force: false, json: false, help: false };
   for (let i = 0; i < argv.length; i += 1) {
     const argument = argv[i];
     if (argument === '--') break;
     if (argument === '--help' || argument === '-h') result.help = true;
+    else if (argument === '--gate') result.gate = parseGate(requireValue(argv, ++i, '--gate'));
+    else if (argument.startsWith('--gate=')) result.gate = parseGate(inlineValue(argument, '--gate'));
     else if (argument === '--dry-run' || argument === '--dryRun') result.dryRun = true;
     else if (argument === '--force') result.force = true;
     else if (argument === '--json') result.json = true;
@@ -60,6 +64,8 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
       manifest,
       state,
       templateBase: manifest?.templateBase ?? templateBase(context.workspaceRoot),
+      workspaceRoot: context.workspaceRoot,
+      gate: args.gate,
       dryRun: args.dryRun,
       force: args.force,
     });
@@ -72,6 +78,8 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
             config: desired,
             filesChanged: result.plan.rewriteOperations.length,
             files: result.plan.files,
+            gate: result.gate,
+            failedGate: result.failedGate,
           },
           null,
           2,
@@ -80,10 +88,10 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
     } else if (result.status === 'dry-run') {
       printPlan(result.plan.rewriteOperations);
     } else if (result.status === 'already-up-to-date') {
-      process.stdout.write('✓ Workspace identity is already up to date.\n');
+      process.stdout.write('✓ Workspace identity is already up to date (gate: ${result.gate}).\n');
     } else if (result.status === 'updated') {
       process.stdout.write(
-        `✓ Reconfigure complete: ${result.plan.rewriteOperations.length} files updated and manifests recorded.\n`,
+        `✓ Reconfigure complete: ${result.plan.rewriteOperations.length} files updated (gate: ${result.gate}).\n`,
       );
     }
 
@@ -92,7 +100,7 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
       return 1;
     }
     if (result.status === 'rolled-back') {
-      process.stderr.write(`Reconfigure failed and all files were rolled back: ${result.error ?? 'unknown error'}\n`);
+      process.stderr.write(`Reconfigure failed${result.failedGate ? ` at gate \"${result.failedGate}\"` : ''} and all files were rolled back: ${result.error ?? 'unknown error'}\n`);
       return 1;
     }
     return 0;
@@ -116,6 +124,11 @@ function formatConflicts(paths: readonly string[]): string {
     'Restore the file or pass --force to overwrite.',
     '',
   ].join('\n');
+}
+
+function parseGate(value: string): ReconfigureGateMode {
+  if (value !== 'auto' && value !== 'off') throw new Error('--gate must be either auto or off.');
+  return value;
 }
 
 function requireValue(argv: string[], index: number, option: string): string {
@@ -142,6 +155,7 @@ Apply the identity/runtime state in nrb.config.json to this checkout.
 
 Options:
   --config <path>  Read desired state from another JSON config (default: ${defaultConfigPath})
+  --gate auto|off  Run ordered verification (default: auto)
   --dry-run        Print the ordered file plan without writing
   --force          Overwrite drifted tracked files and permit a dirty worktree
   --json           Emit the stable {status, config, filesChanged, files} result

@@ -10,6 +10,7 @@ export interface ReconfigureGeneratorOptions {
   config?: string;
   dryRun?: boolean;
   force?: boolean;
+  gate?: 'auto' | 'off';
 }
 
 export async function reconfigureGenerator(tree: Tree, options: ReconfigureGeneratorOptions): Promise<void> {
@@ -31,6 +32,7 @@ export async function reconfigureGenerator(tree: Tree, options: ReconfigureGener
     manifest,
     state,
     templateBase: manifest?.templateBase ?? 'nx-tree',
+    gate: options.gate ?? 'off',
     dryRun: options.dryRun,
     force: options.force,
   });

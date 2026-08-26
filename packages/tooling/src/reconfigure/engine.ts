@@ -49,6 +49,7 @@ export interface IdentityManifest {
   tenant: NrbConfig['tenant'];
   appRenames: NrbConfig['appRenames'];
   configHash: string;
+  gate: 'green' | 'skipped';
   appliedFiles: Record<string, AppliedFileManifest>;
 }
 
@@ -135,6 +136,7 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     tenant: options.desired.tenant,
     appRenames: options.desired.appRenames,
     configHash: desiredConfigHash,
+    gate: 'skipped',
     appliedFiles,
   };
 
@@ -235,6 +237,7 @@ export function isIdentityManifest(raw: unknown): raw is IdentityManifest {
     value.version !== 1 ||
     typeof value.templateBase !== 'string' ||
     typeof value.configHash !== 'string' ||
+    (value.gate !== undefined && value.gate !== 'green' && value.gate !== 'skipped') ||
     !value.identity ||
     !value.runtime ||
     !value.session ||
@@ -253,6 +256,7 @@ export function isIdentityManifest(raw: unknown): raw is IdentityManifest {
       return false;
     }
   }
+  if (value.gate === undefined) value.gate = 'skipped';
   return true;
 }
 

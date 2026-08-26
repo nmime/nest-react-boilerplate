@@ -88,7 +88,7 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
     } else if (result.status === 'dry-run') {
       printPlan(result.plan.rewriteOperations);
     } else if (result.status === 'already-up-to-date') {
-      process.stdout.write('✓ Workspace identity is already up to date (gate: ${result.gate}).\n');
+      process.stdout.write(`✓ Workspace identity is already up to date (gate: ${result.gate}).\n`);
     } else if (result.status === 'updated') {
       process.stdout.write(
         `✓ Reconfigure complete: ${result.plan.rewriteOperations.length} files updated (gate: ${result.gate}).\n`,

@@ -6,11 +6,17 @@
 import type { MigrationObject } from '@mikro-orm/core';
 
 // <nrb-generated-capability-migration-imports>
-import { Migration20260823100000CreatePayments } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePayments.ts';
+import { Migration20260823100000CreatePaymentProviders } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePaymentProviders.ts';
+import { Migration20260823100100CreatePayments } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100100CreatePayments.ts';
+import { Migration20260823100200CreatePaymentEvents } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100200CreatePaymentEvents.ts';
+import { Migration20260823100300CreatePaymentWebhookReceipts } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100300CreatePaymentWebhookReceipts.ts';
 // </nrb-generated-capability-migration-imports>
 
 export const capabilityMigrations: readonly MigrationObject[] = [
   // <nrb-generated-capability-migration-entries>
-  { class: Migration20260823100000CreatePayments, name: 'Migration20260823100000CreatePayments' },
+  { class: Migration20260823100000CreatePaymentProviders, name: 'Migration20260823100000CreatePaymentProviders' },
+  { class: Migration20260823100100CreatePayments, name: 'Migration20260823100100CreatePayments' },
+  { class: Migration20260823100200CreatePaymentEvents, name: 'Migration20260823100200CreatePaymentEvents' },
+  { class: Migration20260823100300CreatePaymentWebhookReceipts, name: 'Migration20260823100300CreatePaymentWebhookReceipts' },
   // </nrb-generated-capability-migration-entries>
 ];

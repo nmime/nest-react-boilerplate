@@ -97,7 +97,7 @@ requirements:
           - pr
           - main
       - kind: vitest
-        file: libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePayments.spec.ts
+        file: libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/payments-schema.migration.spec.ts
         target: '@app/backend-postgres-main-payments:test'
         lanes:
           - pr

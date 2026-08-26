@@ -613,9 +613,24 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     providerMigrations: {
       postgres: [
         {
-          importName: 'Migration20260823100000CreatePayments',
+          importName: 'Migration20260823100000CreatePaymentProviders',
           importPath:
-            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePayments.ts',
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePaymentProviders.ts',
+        },
+        {
+          importName: 'Migration20260823100100CreatePayments',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100100CreatePayments.ts',
+        },
+        {
+          importName: 'Migration20260823100200CreatePaymentEvents',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100200CreatePaymentEvents.ts',
+        },
+        {
+          importName: 'Migration20260823100300CreatePaymentWebhookReceipts',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100300CreatePaymentWebhookReceipts.ts',
         },
       ],
     },

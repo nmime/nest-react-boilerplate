@@ -99,9 +99,24 @@ describe('payments capability — catalog entry', () => {
     assert.deepEqual(capabilityCatalog['payments'].providerMigrations, {
       postgres: [
         {
-          importName: 'Migration20260823100000CreatePayments',
+          importName: 'Migration20260823100000CreatePaymentProviders',
           importPath:
-            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePayments.ts',
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePaymentProviders.ts',
+        },
+        {
+          importName: 'Migration20260823100100CreatePayments',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100100CreatePayments.ts',
+        },
+        {
+          importName: 'Migration20260823100200CreatePaymentEvents',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100200CreatePaymentEvents.ts',
+        },
+        {
+          importName: 'Migration20260823100300CreatePaymentWebhookReceipts',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100300CreatePaymentWebhookReceipts.ts',
         },
       ],
     });
@@ -206,11 +221,15 @@ describe('payments capability — committed workspace wiring list', () => {
       new URL('packages/tooling/src/commands/db/capability-migrations.generated.ts', workspaceRoot),
       'utf8',
     );
-    assert.match(content, /import \{ Migration20260823100000CreatePayments \} from/u);
-    assert.match(
-      content,
-      /\{ class: Migration20260823100000CreatePayments, name: 'Migration20260823100000CreatePayments' \}/u,
-    );
+    for (const name of [
+      'Migration20260823100000CreatePaymentProviders',
+      'Migration20260823100100CreatePayments',
+      'Migration20260823100200CreatePaymentEvents',
+      'Migration20260823100300CreatePaymentWebhookReceipts',
+    ]) {
+      assert.match(content, new RegExp(`import \\{ ${name} \\} from`, 'u'));
+      assert.match(content, new RegExp(`\\{ class: ${name}, name: '${name}' \\}`, 'u'));
+    }
   });
 
   it('replans the committed selection to zero operations (repeatable selection converges)', () => {

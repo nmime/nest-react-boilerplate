@@ -115,7 +115,7 @@ describe('payments postgres migrations against PostgreSQL', () => {
       await stopPostgresContainer(container);
     }
     if (localAdminOrm && localDatabaseName) {
-      await localAdminOrm.em.getConnection().execute(`drop database if exists "${localDatabaseName}" with (force)`);
+      await localAdminOrm.em.getConnection().execute(`drop database if exists "${localDatabaseName}"`);
       await localAdminOrm.close(true);
     }
   });

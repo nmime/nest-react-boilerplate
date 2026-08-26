@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-INIT-004 REQ-SCAFFOLD-GENERATORS-003
+// @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { runVerificationGate, verificationCommands } from './verify.js';

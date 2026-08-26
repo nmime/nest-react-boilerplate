@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-INIT-004
+// @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { parseReconfigureArgs } from './reconfigure.js';

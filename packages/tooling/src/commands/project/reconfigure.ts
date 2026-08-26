@@ -75,7 +75,10 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
       templateBase: manifest?.templateBase ?? templateBase(context.workspaceRoot),
       workspaceRoot: context.workspaceRoot,
       gate: args.gate,
-      audit: async () => { const a = await auditWorkspace(fs, desired); return { ok: a.ok, report: a.report }; },
+      audit: async () => {
+        const audit = await auditWorkspace(fs, desired);
+        return { ok: audit.ok, report: audit.report };
+      },
       dryRun: args.dryRun,
       force: args.force,
     });
@@ -110,7 +113,9 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
       return 1;
     }
     if (result.status === 'rolled-back') {
-      process.stderr.write(`Reconfigure failed${result.failedGate ? ` at gate \"${result.failedGate}\"` : ''} and all files were rolled back: ${result.error ?? 'unknown error'}\n`);
+      process.stderr.write(
+        `Reconfigure failed${result.failedGate ? ` at gate "${result.failedGate}"` : ''} and all files were rolled back: ${result.error ?? 'unknown error'}\n`,
+      );
       return 1;
     }
     return 0;

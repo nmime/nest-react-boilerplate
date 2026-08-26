@@ -1,7 +1,7 @@
 // @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { createHash } from 'node:crypto';
-import { MikroORM } from '@mikro-orm/core';
+import { createHash, randomUUID } from 'node:crypto';
+import { EntitySchema, MikroORM, type Options } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -34,7 +34,8 @@ describe('payments postgres migrations against PostgreSQL', () => {
   const dockerAvailable = hasDockerRuntime();
   let container: StartedPostgreSqlContainer | undefined;
   let orm: MikroORM<PostgreSqlDriver> | undefined;
-  let localOrm: MikroORM<PostgreSqlDriver> | undefined;
+  let localAdminOrm: MikroORM<PostgreSqlDriver> | undefined;
+  let localDatabaseName: string | undefined;
 
   // Ledger checksums captured per spec: up SQL sha256 per migration
   const ledgerChecksums = collectUpSql().map((sql, idx) => ({
@@ -43,43 +44,50 @@ describe('payments postgres migrations against PostgreSQL', () => {
   }));
 
   beforeAll(async () => {
+    const migrationsConfig: NonNullable<Options<PostgreSqlDriver>['migrations']> = {
+      tableName: 'mikro_orm_migrations',
+      transactional: true,
+      allOrNothing: true,
+      snapshot: false,
+      migrationsList: [...paymentsMigrations],
+    };
+
+    class DummyForMigrations {}
+    const DummySchema = new EntitySchema({
+      class: DummyForMigrations,
+      tableName: 'dummy_for_migrations',
+      properties: { id: { type: 'string', primary: true } },
+    });
+
     const initLocal = async (): Promise<MikroORM<PostgreSqlDriver>> => {
-      const { EntitySchema } = await import('@mikro-orm/core');
-      class DummyForMigrations {}
-      const DummySchema = new EntitySchema({
-        class: DummyForMigrations,
-        tableName: 'dummy_for_migrations',
-        properties: {
-          id: { type: 'string', primary: true },
-        },
-      });
-      process.stderr.write('Payments component test: using local PostgreSQL.\n');
-      const clientUrl =
+      process.stderr.write('Payments component test: using a fresh local PostgreSQL database.\n');
+      const sourceUrl =
         process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/nest_react_boilerplate';
-      const local = await MikroORM.init<PostgreSqlDriver>({
+      const adminUrl = new URL(sourceUrl);
+      adminUrl.pathname = '/postgres';
+      localDatabaseName = `payments_component_${randomUUID().replaceAll('-', '')}`;
+      const localUrl = new URL(sourceUrl);
+      localUrl.pathname = `/${localDatabaseName}`;
+
+      localAdminOrm = await MikroORM.init<PostgreSqlDriver>({
         driver: PostgreSqlDriver,
-        clientUrl,
+        clientUrl: adminUrl.toString(),
         entities: [DummySchema],
-        extensions: [Migrator],
-        migrations: {
-          tableName: 'mikro_orm_migrations',
-          transactional: true,
-          allOrNothing: true,
-          snapshot: false,
-          migrationsList: [...paymentsMigrations],
-        },
         allowGlobalContext: true,
         debug: false,
       });
-      const conn = local.em.getConnection();
-      await conn.execute('drop table if exists "payment_webhook_receipts" cascade');
-      await conn.execute('drop table if exists "payment_events" cascade');
-      await conn.execute('drop table if exists "payment_refunds" cascade');
-      await conn.execute('drop table if exists "payments" cascade');
-      await conn.execute('drop table if exists "payment_provider_health" cascade');
-      await conn.execute('drop table if exists "payment_providers" cascade');
-      await conn.execute('drop table if exists "mikro_orm_migrations" cascade');
-      return local;
+      await localAdminOrm.em.getConnection().execute(`create database "${localDatabaseName}"`);
+
+      const localOptions: Partial<Options<PostgreSqlDriver>> = {
+        driver: PostgreSqlDriver,
+        clientUrl: localUrl.toString(),
+        entities: [DummySchema],
+        extensions: [Migrator],
+        migrations: migrationsConfig,
+        allowGlobalContext: true,
+        debug: false,
+      };
+      return MikroORM.init<PostgreSqlDriver>(localOptions);
     };
 
     if (dockerAvailable) {
@@ -88,25 +96,17 @@ describe('payments postgres migrations against PostgreSQL', () => {
         orm = await MikroORM.init<PostgreSqlDriver>(
           createPostgresContainerMikroOrmOptions(container, [], {
             extensions: [Migrator],
-            migrations: {
-              tableName: 'mikro_orm_migrations',
-              transactional: true,
-              allOrNothing: true,
-              snapshot: false,
-              migrationsList: [...paymentsMigrations],
-            },
+            migrations: migrationsConfig,
           }),
         );
       } catch (error) {
         process.stderr.write(
           `Payments component test: Testcontainers unavailable (${String(error)}), falling back to local PostgreSQL.\n`,
         );
-        localOrm = await initLocal();
-        orm = localOrm;
+        orm = await initLocal();
       }
     } else {
-      localOrm = await initLocal();
-      orm = localOrm;
+      orm = await initLocal();
     }
   });
 
@@ -117,8 +117,9 @@ describe('payments postgres migrations against PostgreSQL', () => {
     if (container) {
       await stopPostgresContainer(container);
     }
-    if (localOrm) {
-      await localOrm.close(true);
+    if (localAdminOrm && localDatabaseName) {
+      await localAdminOrm.em.getConnection().execute(`drop database if exists "${localDatabaseName}" with (force)`);
+      await localAdminOrm.close(true);
     }
   });
 
@@ -246,7 +247,7 @@ describe('payments postgres migrations against PostgreSQL', () => {
       conn.execute(
         `insert into "payment_providers" ("code","kind","base_url","version") values ('${providerCode}','crypto','https://pay.example','${providerVersion}')`,
       ),
-    ).rejects.toThrow(/uq__payment_providers__code_tenant_id/);
+    ).rejects.toThrow(/uq__payment_providers__code/);
   });
 
   it('enforces replay-wall unique on webhook receipts', async () => {

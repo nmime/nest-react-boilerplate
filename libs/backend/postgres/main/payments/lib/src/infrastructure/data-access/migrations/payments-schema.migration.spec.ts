@@ -31,6 +31,7 @@ const rendersDdl: Array<[behaviour: string, fragments: string[]]> = [
       'create table "payment_providers"',
       'constraint "pk__payment_providers" primary key ("id")',
       'constraint "uq__payment_providers__code_tenant_id" unique ("code", "tenant_id")',
+      'constraint "uq__payment_providers__code" unique ("code")',
       'constraint "ck__payment_providers__kind"',
       'constraint "ck__payment_providers__enabled_credentials"',
     ],

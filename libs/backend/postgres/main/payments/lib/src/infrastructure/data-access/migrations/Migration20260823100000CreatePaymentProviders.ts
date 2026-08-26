@@ -23,6 +23,7 @@ export class Migration20260823100000CreatePaymentProviders extends Migration {
         "updated_by" uuid null,
         constraint "pk__payment_providers" primary key ("id"),
         constraint "uq__payment_providers__code_tenant_id" unique ("code", "tenant_id"),
+        constraint "uq__payment_providers__code" unique ("code"),
         constraint "ck__payment_providers__kind" check ("kind" in ('crypto','fiat')),
         constraint "ck__payment_providers__enabled_credentials" check (NOT "enabled" OR "credentials_encrypted" IS NOT NULL)
       );

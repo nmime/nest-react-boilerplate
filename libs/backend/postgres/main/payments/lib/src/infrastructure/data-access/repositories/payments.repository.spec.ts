@@ -1,60 +1,284 @@
-// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-001
-import { describe, expect, it } from 'vitest';
-import { PaymentsEntity } from '../entities';
+// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-001 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002
+import { LockMode } from '@mikro-orm/core';
+import type { EntityManager } from '@mikro-orm/postgresql';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  PaymentEntity,
+  PaymentEventEntity,
+  PaymentProviderEntity,
+  PaymentProviderHealthEntity,
+  PaymentRefundEntity,
+  PaymentWebhookReceiptEntity,
+} from '../entities';
 import { PaymentsPostgresPersistence } from './payments.repository';
 
+const paymentId = '123e4567-e89b-12d3-a456-426614174000';
+const tenantId = '123e4567-e89b-12d3-a456-426614174001';
+
+function payment(overrides: Partial<PaymentEntity> = {}): PaymentEntity {
+  return Object.assign(
+    new PaymentEntity({
+      id: paymentId,
+      tenantId,
+      providerCode: 'stripe',
+      amount: '10.00',
+      currency: 'USD',
+      meta: { name: 'Example' },
+    }),
+    overrides,
+  );
+}
+
 function persistenceWith(entityManager: unknown): PaymentsPostgresPersistence {
-  return new PaymentsPostgresPersistence(entityManager as never);
+  return new PaymentsPostgresPersistence(entityManager as EntityManager);
 }
 
 describe('PaymentsPostgresPersistence', () => {
-  it('lists newest first and maps rows to the port DTO', async () => {
-    const entity = new PaymentsEntity({ name: 'Example' });
-    const entityManager = {
-      find: async (_entity: unknown, _where: unknown, options: { orderBy: { createdAt: 'ASC' | 'DESC' } }) => {
-        expect(options.orderBy).toEqual({ createdAt: 'DESC' });
-        return [entity];
-      },
-    };
-
-    await expect(persistenceWith(entityManager).listPayments()).resolves.toEqual([
-      { id: entity.id, name: 'Example', createdAt: entity.createdAt.toISOString() },
-    ]);
-  });
-
-  it('persists and flushes a new payment and returns the port DTO', async () => {
+  it('keeps the scaffold list/create/find surface mapped onto the real payment entity', async () => {
+    const rows = [payment()];
     const persisted: unknown[] = [];
-    const entityManager = {
-      persist: (entity: unknown) => persisted.push(entity),
-      flush: async () => undefined,
+    const transaction = {
+      persist: vi.fn((entity: unknown) => persisted.push(entity)),
+      flush: vi.fn().mockResolvedValue(undefined),
     };
+    const entityManager = {
+      find: vi.fn().mockResolvedValue(rows),
+      findOne: vi.fn().mockResolvedValue(rows[0]),
+      transactional: vi.fn(async (callback: (em: typeof transaction) => Promise<unknown>) => callback(transaction)),
+    };
+    const persistence = persistenceWith(entityManager);
 
-    const created = await persistenceWith(entityManager).createPayment({ name: 'Example' });
-
-    expect(persisted).toHaveLength(1);
-    expect(created).toMatchObject({ name: 'Example' });
-    expect(created.id).toBe((persisted[0] as PaymentsEntity).id);
+    await expect(persistence.listPayments()).resolves.toEqual([
+      { id: paymentId, name: 'Example', createdAt: rows[0]?.createdAt.toISOString() },
+    ]);
+    const created = await persistence.createPayment({ name: 'Created' });
+    expect(created).toMatchObject({ name: 'Created' });
+    expect(persisted).toEqual([expect.any(PaymentEntity), expect.any(PaymentEventEntity)]);
+    await expect(persistence.findPayment(paymentId)).resolves.toMatchObject({ id: paymentId, name: 'Example' });
+    entityManager.findOne.mockResolvedValueOnce(null);
+    await expect(persistence.findPayment('missing')).resolves.toBeNull();
   });
 
-  it('finds a stored payment by id', async () => {
-    const entity = new PaymentsEntity({ name: 'Example' });
+  it('creates a payment and its created event atomically, then lists full records and events', async () => {
+    const persisted: unknown[] = [];
+    const created = payment();
+    const event = new PaymentEventEntity({
+      paymentId,
+      type: 'created',
+      toStatus: 'pending',
+      actor: 'system',
+    });
+    event.id = '1';
+    const transaction = {
+      persist: vi.fn((entity: unknown) => persisted.push(entity)),
+      flush: vi.fn().mockResolvedValue(undefined),
+    };
     const entityManager = {
-      findOne: async (_entity: unknown, where: { id: string }) => {
-        expect(where).toEqual({ id: entity.id });
-        return entity;
-      },
+      transactional: vi.fn(async (callback: (em: typeof transaction) => Promise<unknown>) => callback(transaction)),
+      find: vi.fn().mockImplementation((entity: unknown) => {
+        if (entity === PaymentEntity) {
+          return Promise.resolve([created]);
+        }
+        if (entity === PaymentEventEntity) {
+          return Promise.resolve([event]);
+        }
+        return Promise.resolve([]);
+      }),
+      findOne: vi.fn().mockResolvedValue(created),
+    };
+    const persistence = persistenceWith(entityManager);
+
+    await expect(
+      persistence.createPaymentRecord({
+        id: paymentId,
+        tenantId,
+        providerCode: 'stripe',
+        amount: '10.00',
+        currency: 'USD',
+      }),
+    ).resolves.toMatchObject({ id: paymentId, status: 'pending', amount: '10.00' });
+    expect(persisted).toEqual([expect.any(PaymentEntity), expect.any(PaymentEventEntity)]);
+    expect(transaction.flush).toHaveBeenCalledTimes(2);
+    await expect(persistence.listPaymentRecords(tenantId)).resolves.toHaveLength(1);
+    await expect(persistence.findPaymentRecord(paymentId)).resolves.toMatchObject({ id: paymentId });
+    await expect(persistence.listPaymentEvents(paymentId)).resolves.toMatchObject([{ id: 1, paymentId }]);
+    entityManager.findOne.mockResolvedValueOnce(null);
+    await expect(persistence.findPaymentRecord('missing')).resolves.toBeNull();
+  });
+
+  it('appends events and creates/lists refunds', async () => {
+    const persisted: unknown[] = [];
+    const refund = new PaymentRefundEntity({
+      paymentId,
+      amount: '10.00',
+      currency: 'USD',
+      status: 'confirmed',
+      confirmedAt: new Date('2026-08-26T00:00:00.000Z'),
+    });
+    const entityManager = {
+      persist: vi.fn((entity: unknown) => {
+        persisted.push(entity);
+        if (entity instanceof PaymentEventEntity) {
+          entity.id = '2';
+        }
+      }),
+      flush: vi.fn().mockResolvedValue(undefined),
+      find: vi.fn().mockResolvedValue([refund]),
+    };
+    const persistence = persistenceWith(entityManager);
+
+    await expect(
+      persistence.appendPaymentEvent({ paymentId, type: 'provider_call', actor: 'system' }),
+    ).resolves.toMatchObject({ id: 2, paymentId, type: 'provider_call' });
+    await expect(
+      persistence.createPaymentRefund({ paymentId, amount: '10.00', currency: 'USD', status: 'confirmed' }),
+    ).resolves.toMatchObject({ paymentId, status: 'confirmed' });
+    await expect(persistence.listPaymentRefunds(paymentId)).resolves.toHaveLength(1);
+    expect(persisted).toEqual([expect.any(PaymentEventEntity), expect.any(PaymentRefundEntity)]);
+  });
+
+  it('upserts provider registry rows, applies tenant preference, and persists health', async () => {
+    const platform = new PaymentProviderEntity({
+      code: 'stripe',
+      kind: 'fiat',
+      baseUrl: 'https://platform.example',
+      version: 'stripe-v1',
+    });
+    const tenant = new PaymentProviderEntity({
+      code: 'stripe',
+      kind: 'fiat',
+      tenantId,
+      baseUrl: 'https://tenant.example',
+      version: 'stripe-v1',
+    });
+    const health = new PaymentProviderHealthEntity({ providerCode: 'stripe', state: 'unknown', consecutiveErrors: 0 });
+    const findOne = vi.fn().mockImplementation((entity: unknown, where: { tenantId?: string | null }) => {
+      if (entity === PaymentProviderEntity) {
+        return Promise.resolve(where.tenantId === tenantId ? tenant : platform);
+      }
+      if (entity === PaymentProviderHealthEntity) {
+        return Promise.resolve(health);
+      }
+      return Promise.resolve(null);
+    });
+    const entityManager = {
+      find: vi.fn().mockResolvedValue([tenant, platform]),
+      findOne,
+      persist: vi.fn(),
+      flush: vi.fn().mockResolvedValue(undefined),
+    };
+    const persistence = persistenceWith(entityManager);
+
+    await expect(persistence.listPaymentProviders(tenantId)).resolves.toHaveLength(2);
+    await expect(persistence.findPaymentProvider('stripe', tenantId)).resolves.toMatchObject({
+      tenantId,
+      baseUrl: 'https://tenant.example',
+    });
+    await expect(
+      persistence.upsertPaymentProvider({
+        code: 'stripe',
+        kind: 'fiat',
+        baseUrl: 'https://updated.example',
+        version: 'stripe-v1',
+        priority: 10,
+      }),
+    ).resolves.toMatchObject({ baseUrl: 'https://updated.example', priority: 10 });
+    await expect(persistence.findPaymentProviderHealth('stripe')).resolves.toMatchObject({ state: 'unknown' });
+    await expect(
+      persistence.upsertPaymentProviderHealth({
+        providerCode: 'stripe',
+        state: 'up',
+        consecutiveErrors: 0,
+        lastSuccessAt: new Date('2026-08-26T00:00:00.000Z'),
+      }),
+    ).resolves.toMatchObject({ state: 'up' });
+  });
+
+  it('inserts receipts and commits receipt-event-transition in one locked transaction', async () => {
+    const row = payment({ status: 'processing' });
+    const persisted: unknown[] = [];
+    const transaction = {
+      persist: vi.fn((entity: unknown) => {
+        persisted.push(entity);
+        if (entity instanceof PaymentEventEntity) {
+          entity.id = '3';
+        }
+      }),
+      flush: vi.fn().mockResolvedValue(undefined),
+      findOne: vi.fn().mockResolvedValue(row),
+    };
+    const entityManager = {
+      persist: vi.fn(),
+      flush: vi.fn().mockResolvedValue(undefined),
+      transactional: vi.fn(async (callback: (em: typeof transaction) => Promise<unknown>) => callback(transaction)),
+    };
+    const persistence = persistenceWith(entityManager);
+    const receipt = {
+      providerCode: 'stripe',
+      idempotencyKey: 'evt_1',
+      rawBody: '{}',
+      signatureValid: 'valid' as const,
     };
 
-    await expect(persistenceWith(entityManager).findPayment(entity.id)).resolves.toEqual({
-      id: entity.id,
-      name: 'Example',
-      createdAt: entity.createdAt.toISOString(),
+    await expect(persistence.insertWebhookReceipt(receipt)).resolves.toMatchObject({ processingStatus: 'pending' });
+    const committed = await persistence.commitWebhookPaymentTransition({
+      receipt,
+      paymentId,
+      toStatus: 'paid',
+      actor: 'webhook',
+      providerStatusRaw: 'succeeded',
+      paidAmount: '10.00',
+      paidCurrency: 'USD',
+      providerEvidence: { providerStatusRaw: 'succeeded' },
+      transitionedAt: new Date('2026-08-26T00:00:00.000Z'),
+    });
+
+    expect(transaction.findOne).toHaveBeenCalledWith(
+      PaymentEntity,
+      { id: paymentId },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+    expect(transaction.flush).toHaveBeenCalledTimes(2);
+    expect(persisted).toEqual([expect.any(PaymentWebhookReceiptEntity), expect.any(PaymentEventEntity)]);
+    expect(committed).toMatchObject({
+      receipt: { processingStatus: 'applied', statusCode: 200 },
+      payment: { status: 'paid', paidAmount: '10.00', version: 2 },
+      event: { id: 3, fromStatus: 'processing', toStatus: 'paid' },
     });
   });
 
-  it('returns null when no payment matches the id', async () => {
-    const entityManager = { findOne: async () => null };
+  it('claims only terminal-money state changes with SKIP LOCKED and marks after publish', async () => {
+    const event = new PaymentEventEntity({
+      paymentId,
+      type: 'state_change',
+      fromStatus: 'processing',
+      toStatus: 'paid',
+      actor: 'webhook',
+    });
+    event.id = '4';
+    const transaction = {
+      find: vi.fn().mockResolvedValue([event]),
+      flush: vi.fn().mockResolvedValue(undefined),
+    };
+    const entityManager = {
+      transactional: vi.fn(async (callback: (em: typeof transaction) => Promise<unknown>) => callback(transaction)),
+    };
+    const persistence = persistenceWith(entityManager);
+    const publishedAt = new Date('2026-08-26T00:00:05.000Z');
+    const publish = vi.fn().mockResolvedValue(undefined);
 
-    await expect(persistenceWith(entityManager).findPayment('missing')).resolves.toBeNull();
+    await expect(persistence.claimPaymentOutbox({ count: 10, publishedAt }, publish)).resolves.toBe(1);
+    expect(transaction.find).toHaveBeenCalledWith(
+      PaymentEventEntity,
+      {
+        type: 'state_change',
+        toStatus: { $in: ['paid', 'refunded'] },
+        outboxPublishedAt: null,
+      },
+      expect.objectContaining({ lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE, limit: 10 }),
+    );
+    expect(publish).toHaveBeenCalledWith([expect.objectContaining({ id: 4, toStatus: 'paid' })]);
+    expect(event.outboxPublishedAt).toEqual(publishedAt);
+    expect(transaction.flush).toHaveBeenCalledOnce();
   });
 });

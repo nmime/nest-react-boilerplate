@@ -1,17 +1,28 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Module } from '@nestjs/common';
 import { PaymentsPersistence } from '@app/backend-feature-payments-shared';
-import { PaymentsEntitySchema } from './infrastructure/data-access/entities';
+import {
+  PaymentEntitySchema,
+  PaymentEventEntitySchema,
+  PaymentProviderEntitySchema,
+  PaymentProviderHealthEntitySchema,
+  PaymentRefundEntitySchema,
+  PaymentWebhookReceiptEntitySchema,
+} from './infrastructure/data-access/entities';
 import { PaymentsPostgresPersistence } from './infrastructure/data-access/repositories';
 
-/**
- * Registers the payments tables and binds the persistence port.
- *
- * The feature module consumes {@link PaymentsPersistence}, never this class, which is what lets
- * the same service run unchanged on the MongoDB axis.
- */
+export const PaymentsPostgresEntitySchemas = [
+  PaymentProviderEntitySchema,
+  PaymentEntitySchema,
+  PaymentEventEntitySchema,
+  PaymentWebhookReceiptEntitySchema,
+  PaymentRefundEntitySchema,
+  PaymentProviderHealthEntitySchema,
+] as const;
+
+/** Registers all payments tables and binds the storage-neutral persistence port. */
 @Module({
-  imports: [MikroOrmModule.forFeature([PaymentsEntitySchema])],
+  imports: [MikroOrmModule.forFeature([...PaymentsPostgresEntitySchemas])],
   providers: [PaymentsPostgresPersistence, { provide: PaymentsPersistence, useExisting: PaymentsPostgresPersistence }],
   exports: [MikroOrmModule, PaymentsPersistence, PaymentsPostgresPersistence],
 })

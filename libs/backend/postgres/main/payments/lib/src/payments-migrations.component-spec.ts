@@ -1,10 +1,10 @@
 // @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createHash, randomUUID } from 'node:crypto';
-import { EntitySchema, MikroORM, type Options } from '@mikro-orm/core';
+import { MikroORM, type Options } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   createPostgresContainerMikroOrmOptions,
   hasDockerRuntime,
@@ -12,7 +12,11 @@ import {
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { PaymentsPersistence } from '@app/backend-feature-payments-shared';
+import { PaymentsPostgresEntitySchemas, PaymentsPostgresModule } from './payments-postgres.module';
+import { PaymentEventEntity } from './infrastructure/data-access/entities';
 import { paymentsMigrations } from './infrastructure/data-access/migrations';
+import { PaymentsPostgresPersistence } from './infrastructure/data-access/repositories';
 
 function checksum(sql: string): string {
   return createHash('sha256').update(sql).digest('hex').slice(0, 16);
@@ -52,13 +56,6 @@ describe('payments postgres migrations against PostgreSQL', () => {
       migrationsList: [...paymentsMigrations],
     };
 
-    class DummyForMigrations {}
-    const DummySchema = new EntitySchema({
-      class: DummyForMigrations,
-      tableName: 'dummy_for_migrations',
-      properties: { id: { type: 'string', primary: true } },
-    });
-
     const initLocal = async (): Promise<MikroORM<PostgreSqlDriver>> => {
       process.stderr.write('Payments component test: using a fresh local PostgreSQL database.\n');
       const sourceUrl =
@@ -72,7 +69,7 @@ describe('payments postgres migrations against PostgreSQL', () => {
       localAdminOrm = await MikroORM.init<PostgreSqlDriver>({
         driver: PostgreSqlDriver,
         clientUrl: adminUrl.toString(),
-        entities: [DummySchema],
+        entities: [...PaymentsPostgresEntitySchemas],
         allowGlobalContext: true,
         debug: false,
       });
@@ -81,7 +78,7 @@ describe('payments postgres migrations against PostgreSQL', () => {
       const localOptions: Partial<Options<PostgreSqlDriver>> = {
         driver: PostgreSqlDriver,
         clientUrl: localUrl.toString(),
-        entities: [DummySchema],
+        entities: [...PaymentsPostgresEntitySchemas],
         extensions: [Migrator],
         migrations: migrationsConfig,
         allowGlobalContext: true,
@@ -94,7 +91,7 @@ describe('payments postgres migrations against PostgreSQL', () => {
       try {
         container = await startPostgresContainer();
         orm = await MikroORM.init<PostgreSqlDriver>(
-          createPostgresContainerMikroOrmOptions(container, [], {
+          createPostgresContainerMikroOrmOptions(container, [...PaymentsPostgresEntitySchemas], {
             extensions: [Migrator],
             migrations: migrationsConfig,
           }),
@@ -261,5 +258,174 @@ describe('payments postgres migrations against PostgreSQL', () => {
         `insert into "payment_webhook_receipts" ("provider_code","idempotency_key","raw_body","signature_valid") values ('stripe','evt_123','{}','valid')`,
       ),
     ).rejects.toThrow(/uq__payment_webhook_receipts__provider_code_idempotency_key/);
+  });
+
+  it('binds the shared port to the real repository and persists provider, payment, event, refund, and health rows', async () => {
+    const current = orm!;
+    const repository: PaymentsPersistence = new PaymentsPostgresPersistence(current.em.fork());
+    expect(repository).toBeInstanceOf(PaymentsPostgresPersistence);
+    expect(PaymentsPostgresModule).toBeDefined();
+
+    await repository.upsertPaymentProvider({
+      code: 'adyen',
+      kind: 'fiat',
+      enabled: true,
+      baseUrl: 'https://checkout-test.example',
+      version: 'adyen-checkout-v72',
+      credentialsEncrypted: { keyId: 'k1', ct: 'redacted' },
+    });
+    await repository.upsertPaymentProviderHealth({
+      providerCode: 'adyen',
+      state: 'up',
+      consecutiveErrors: 0,
+      lastSuccessAt: new Date('2026-08-26T00:00:00.000Z'),
+    });
+    const paymentId = randomUUID();
+    await repository.createPaymentRecord({
+      id: paymentId,
+      tenantId: randomUUID(),
+      providerCode: 'adyen',
+      providerPaymentId: 'psp-1',
+      amount: '10.00',
+      currency: 'USD',
+    });
+    await repository.createPaymentRefund({
+      paymentId,
+      providerRefundId: 'refund-1',
+      amount: '10.00',
+      currency: 'USD',
+      status: 'requested',
+    });
+
+    await expect(repository.findPaymentRecord(paymentId)).resolves.toMatchObject({
+      id: paymentId,
+      status: 'pending',
+      amount: '10.00',
+    });
+    await expect(repository.listPaymentEvents(paymentId)).resolves.toMatchObject([
+      { paymentId, type: 'created', toStatus: 'pending' },
+    ]);
+    await expect(repository.listPaymentRefunds(paymentId)).resolves.toMatchObject([
+      { paymentId, providerRefundId: 'refund-1' },
+    ]);
+    await expect(repository.findPaymentProviderHealth('adyen')).resolves.toMatchObject({ state: 'up' });
+  });
+
+  it('rolls back receipt, event, and payment transition together when the atomic commit fails', async () => {
+    const current = orm!;
+    const repository = new PaymentsPostgresPersistence(current.em.fork());
+    const paymentId = randomUUID();
+    const receiptKey = `atomic-${randomUUID()}`;
+    await repository.createPaymentRecord({
+      id: paymentId,
+      tenantId: randomUUID(),
+      providerCode: 'adyen',
+      amount: '25.00',
+      currency: 'USD',
+      status: 'processing',
+    });
+
+    await expect(
+      repository.commitWebhookPaymentTransition({
+        receipt: {
+          providerCode: 'adyen',
+          idempotencyKey: receiptKey,
+          rawBody: '{}',
+          signatureValid: 'valid',
+        },
+        paymentId,
+        toStatus: 'not-a-status' as never,
+        actor: 'webhook',
+      }),
+    ).rejects.toThrow();
+
+    const conn = current.em.getConnection();
+    const [receiptCount] = await conn.execute<{ count: number }[]>(
+      'select count(*)::int as count from payment_webhook_receipts where idempotency_key = ?',
+      [receiptKey],
+      'all',
+    );
+    const [eventCount] = await conn.execute<{ count: number }[]>(
+      "select count(*)::int as count from payment_events where payment_id = ? and type = 'state_change'",
+      [paymentId],
+      'all',
+    );
+    const [paymentRow] = await conn.execute<{ status: string; version: number }[]>(
+      'select status, version from payments where id = ?',
+      [paymentId],
+      'all',
+    );
+    expect(receiptCount?.count).toBe(0);
+    expect(eventCount?.count).toBe(0);
+    expect(paymentRow).toEqual({ status: 'processing', version: 1 });
+  });
+
+  it('proves concurrent outbox workers claim disjoint rows with FOR UPDATE SKIP LOCKED', async () => {
+    const current = orm!;
+    const repository = new PaymentsPostgresPersistence(current.em.fork());
+    const paymentIds = [randomUUID(), randomUUID()];
+    await Promise.all(
+      paymentIds.map(async (paymentId) => {
+        await repository.createPaymentRecord({
+          id: paymentId,
+          tenantId: randomUUID(),
+          providerCode: 'adyen',
+          amount: '5.00',
+          currency: 'USD',
+          status: 'processing',
+        });
+        await repository.appendPaymentEvent({
+          paymentId,
+          type: 'state_change',
+          fromStatus: 'processing',
+          toStatus: 'paid',
+          actor: 'webhook',
+        });
+      }),
+    );
+
+    const workerA = new PaymentsPostgresPersistence(current.em.fork());
+    const workerB = new PaymentsPostgresPersistence(current.em.fork());
+    let releaseA: (() => void) | undefined;
+    const holdA = new Promise<void>((resolve) => {
+      releaseA = resolve;
+    });
+    let workerAClaimed: (() => void) | undefined;
+    const claimedByA = new Promise<void>((resolve) => {
+      workerAClaimed = resolve;
+    });
+    const claimedIdsA: Array<number | undefined> = [];
+    const claimedIdsB: Array<number | undefined> = [];
+    const publishA = vi.fn(async (events: readonly { id?: number }[]) => {
+      claimedIdsA.push(events[0]?.id);
+      workerAClaimed?.();
+      await holdA;
+    });
+    const publishB = vi.fn((events: readonly { id?: number }[]) => {
+      claimedIdsB.push(events[0]?.id);
+      return Promise.resolve();
+    });
+
+    const claimA = workerA.claimPaymentOutbox(
+      { count: 1, publishedAt: new Date('2026-08-26T00:00:10.000Z') },
+      publishA,
+    );
+    await claimedByA;
+    const claimB = workerB.claimPaymentOutbox(
+      { count: 1, publishedAt: new Date('2026-08-26T00:00:11.000Z') },
+      publishB,
+    );
+    await expect(claimB).resolves.toBe(1);
+    releaseA?.();
+    await expect(claimA).resolves.toBe(1);
+
+    expect(claimedIdsA[0]).toBeDefined();
+    expect(claimedIdsB[0]).toBeDefined();
+    expect(claimedIdsA[0]).not.toBe(claimedIdsB[0]);
+    const publishedRows = await current.em.find(PaymentEventEntity, {
+      paymentId: { $in: paymentIds },
+      type: 'state_change',
+    });
+    expect(publishedRows.map((event) => event.outboxPublishedAt)).toEqual([expect.any(Date), expect.any(Date)]);
   });
 });

@@ -8,7 +8,16 @@
 import type { FilesystemAdapter } from '../setup/adapters/filesystem.js';
 import { sortOperations, updateFile, type SetupOperation } from '../setup/operations.js';
 import { buildState, configHash, hashString, type SetupState } from '../setup/state.js';
-import type { NrbConfig } from '../setup/schema.js';
+import {
+  defaultDeploymentConfig,
+  defaultIdentityBrandConfig,
+  defaultIdentityConfig,
+  defaultRuntimeConfig,
+  defaultRuntimePorts,
+  defaultSessionConfig,
+  defaultTenantConfig,
+  type NrbConfig,
+} from '../setup/schema.js';
 import targetManifest from './identity-targets.json' with { type: 'json' };
 import {
   applyApexHostSelection,
@@ -168,7 +177,7 @@ export function createIdentityManifestConfig(
   desired: NrbConfig,
   manifest: IdentityManifest | null | undefined,
 ): NrbConfig {
-  if (!manifest) return desired;
+  if (!manifest) return createTemplateDefaultConfig(desired);
   return {
     ...desired,
     identity: manifest.identity,
@@ -180,6 +189,39 @@ export function createIdentityManifestConfig(
       ...desired.deployment,
       publicDomain: manifest.identity.domain,
       primaryApp: manifest.identity.apexApp,
+    },
+  };
+}
+
+export function createTemplateDefaultConfig(desired: NrbConfig): NrbConfig {
+  return {
+    ...desired,
+    identity: {
+      ...defaultIdentityConfig,
+      brand: { ...defaultIdentityBrandConfig },
+    },
+    appRenames: {},
+    deployment: {
+      ...desired.deployment,
+      publicDomain: defaultDeploymentConfig.publicDomain,
+      primaryApp: defaultDeploymentConfig.primaryApp,
+      imageRegistry: defaultDeploymentConfig.imageRegistry,
+    },
+    runtime: {
+      ports: { ...defaultRuntimePorts },
+      stagingOffset: defaultRuntimeConfig.stagingOffset,
+      containerPort: defaultRuntimeConfig.containerPort,
+      postgres: { ...defaultRuntimeConfig.postgres },
+      minio: { ...defaultRuntimeConfig.minio },
+      localSecrets: { ...defaultRuntimeConfig.localSecrets },
+    },
+    session: { ...defaultSessionConfig },
+    tenant: {
+      defaultTenantId: defaultTenantConfig.defaultTenantId,
+      seed: {
+        admin: { ...defaultTenantConfig.seed.admin },
+        users: defaultTenantConfig.seed.users.map((user) => ({ ...user })),
+      },
     },
   };
 }

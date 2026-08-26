@@ -271,7 +271,7 @@ async function runInitProject(argv: string[]): Promise<void> {
     state: emptyState,
     templateBase: templateBase(workspaceRoot),
     workspaceRoot,
-    gate: args.dryRun ? 'off' : 'auto',
+    gate: args.dryRun || args.force ? 'off' : 'auto',
     dryRun: args.dryRun,
     force: args.force,
     targetPaths: listInitTargets(workspaceRoot),

@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../../../../dist/out-tsc/libs/frontend/feature/user/social-auth-spec",
-    "types": ["vitest/globals", "vite/client"]
+    "types": ["node", "vitest/globals", "vite/client"]
   },
   "include": ["src/**/*.spec.ts", "src/**/*.spec.tsx", "src/**/*.test.ts", "src/**/*.test.tsx"]
 }

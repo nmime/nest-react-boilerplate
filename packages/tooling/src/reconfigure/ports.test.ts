@@ -13,8 +13,8 @@ describe('port registry', () => {
     });
     assert.equal(portOrder.length, 24);
     const rendered = await renderPortsDocument(config);
-    assert.match(rendered, /`admin-app-api` \| 3001/u);
-    assert.match(rendered, /`admin-app-api` \| 3101 \| 3001/u);
+    assert.match(rendered, /`admin-app-api`\s+\|\s+3001/u);
+    assert.match(rendered, /`admin-app-api`\s+\|\s+3101\s+\|\s+3001/u);
     assert.match(rendered, /containers listen on `80`/u);
   });
 });

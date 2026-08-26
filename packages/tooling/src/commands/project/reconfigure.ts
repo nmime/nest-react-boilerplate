@@ -16,6 +16,7 @@ import type { ReconfigureGateMode } from '../../reconfigure/verify.js';
 export interface ReconfigureArgs {
   config?: string;
   gate: ReconfigureGateMode;
+  audit: boolean;
   dryRun: boolean;
   force: boolean;
   json: boolean;
@@ -23,11 +24,12 @@ export interface ReconfigureArgs {
 }
 
 export function parseReconfigureArgs(argv: string[]): ReconfigureArgs {
-  const result: ReconfigureArgs = { gate: 'auto', dryRun: false, force: false, json: false, help: false };
+  const result: ReconfigureArgs = { gate: 'auto', audit: false, dryRun: false, force: false, json: false, help: false };
   for (let i = 0; i < argv.length; i += 1) {
     const argument = argv[i];
     if (argument === '--') break;
     if (argument === '--help' || argument === '-h') result.help = true;
+    else if (argument === '--audit') result.audit = true;
     else if (argument === '--gate') result.gate = parseGate(requireValue(argv, ++i, '--gate'));
     else if (argument.startsWith('--gate=')) result.gate = parseGate(inlineValue(argument, '--gate'));
     else if (argument === '--dry-run' || argument === '--dryRun') result.dryRun = true;
@@ -37,6 +39,7 @@ export function parseReconfigureArgs(argv: string[]): ReconfigureArgs {
     else if (argument.startsWith('--config=')) result.config = inlineValue(argument, '--config');
     else throw new Error(`Unknown option: ${argument}`);
   }
+  if (result.audit && result.dryRun) throw new Error('--audit cannot be combined with --dry-run.');
   return result;
 }
 
@@ -53,11 +56,16 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
   }
 
   try {
-    assertCleanGitWorkspace(context.workspaceRoot, args.force || args.dryRun);
+    assertCleanGitWorkspace(context.workspaceRoot, args.force || args.dryRun || args.audit);
     const fs = createNodeFilesystem(context.workspaceRoot);
     const desired = loadDesiredConfig(context.workspaceRoot, args.config);
     const manifest = await loadIdentityManifest(fs);
     const state = await loadSetupState(fs);
+    if (args.audit) {
+      const audit = await auditWorkspace(fs, desired);
+      process[audit.ok ? 'stdout' : 'stderr'].write(`${audit.report}\n`);
+      return audit.ok ? 0 : 1;
+    }
     const result = await runReconfigure({
       fs,
       desired,
@@ -158,6 +166,7 @@ Apply the identity/runtime state in nrb.config.json to this checkout.
 Options:
   --config <path>  Read desired state from another JSON config (default: ${defaultConfigPath})
   --gate auto|off  Run ordered verification (default: auto)
+  --audit          Check cross-artifact consistency without writing
   --dry-run        Print the ordered file plan without writing
   --force          Overwrite drifted tracked files and permit a dirty worktree
   --json           Emit the stable {status, config, filesChanged, files} result

@@ -1,3 +1,4 @@
+// @requirements REQ-SCAFFOLD-INIT-004 REQ-SCAFFOLD-GENERATORS-003
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { FilesystemAdapter } from '../setup/adapters/filesystem.js';

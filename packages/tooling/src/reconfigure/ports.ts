@@ -1,3 +1,4 @@
+import { format as formatPrettier } from 'prettier';
 import type { NrbConfig } from '../setup/schema.ts';
 export const portOrder = [
   'admin-app-api',
@@ -61,7 +62,7 @@ export const portDefinitions: Record<RuntimePortName, PortDefinition> = {
   loki: { role: 'Loki logs', environment: 'LOKI_PORT', scope: 'observability' },
   tempo: { role: 'Tempo traces', environment: 'TEMPO_PORT', scope: 'observability' },
 };
-export function renderPortsDocument(config: NrbConfig): string {
+export async function renderPortsDocument(config: NrbConfig): Promise<string> {
   const rows = (scope: PortDefinition['scope']) =>
     portOrder
       .filter((name) => portDefinitions[name].scope === scope)
@@ -76,5 +77,8 @@ export function renderPortsDocument(config: NrbConfig): string {
         `| \`${name}\` | ${config.runtime.ports[name] + config.runtime.stagingOffset} | ${config.runtime.ports[name]} | ${portDefinitions[name].role} |`,
     )
     .join('\n');
-  return `# Service Port Registry\n\nGenerated from \`nrb.config.json\` by \`nrb reconfigure\`. Do not edit by hand.\n\n## Application ports\n\n| Service | Port | Environment | Role |\n| --- | ---: | --- | --- |\n${rows('application')}\n\n## Infrastructure ports\n\n| Service | Port | Environment | Role |\n| --- | ---: | --- | --- |\n${rows('infrastructure')}\n\n## Observability ports\n\n| Service | Port | Environment | Role |\n| --- | ---: | --- | --- |\n${rows('observability')}\n\n## Staging matrix\n\nStaging uses the configured offset **+${config.runtime.stagingOffset}**.\n\n| Service | Staging port | Base port | Role |\n| --- | ---: | ---: | --- |\n${staging}\n\n## Container and proxy ports\n\n- Backend and SSR containers listen on \`${config.runtime.containerPort}\`.\n- SPA nginx containers and the Compose edge listen on \`${config.runtime.ports.edge}\`.\n- Caddy, nginx, Helm and smoke probes derive their targets from this matrix.\n`;
+  return formatPrettier(
+    `# Service Port Registry\n\nGenerated from \`nrb.config.json\` by \`nrb reconfigure\`. Do not edit by hand.\n\n## Application ports\n\n| Service | Port | Environment | Role |\n| --- | ---: | --- | --- |\n${rows('application')}\n\n## Infrastructure ports\n\n| Service | Port | Environment | Role |\n| --- | ---: | --- | --- |\n${rows('infrastructure')}\n\n## Observability ports\n\n| Service | Port | Environment | Role |\n| --- | ---: | --- | --- |\n${rows('observability')}\n\n## Staging matrix\n\nStaging uses the configured offset **+${config.runtime.stagingOffset}**.\n\n| Service | Staging port | Base port | Role |\n| --- | ---: | ---: | --- |\n${staging}\n\n## Container and proxy ports\n\n- Backend and SSR containers listen on \`${config.runtime.containerPort}\`.\n- SPA nginx containers and the Compose edge listen on \`${config.runtime.ports.edge}\`.\n- Caddy, nginx, Helm and smoke probes derive their targets from this matrix.\n`,
+    { parser: 'markdown' },
+  );
 }

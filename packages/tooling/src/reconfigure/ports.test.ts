@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import { defaultRuntimeConfig, defaultRuntimePorts, parseNrbConfig } from '../setup/schema.js';
 import { portOrder, renderPortsDocument } from './ports.js';
 describe('port registry', () => {
-  it('covers all 24 ports and renders the staging/container matrix', () => {
+  it('covers all 24 ports and renders the staging/container matrix', async () => {
     const config = parseNrbConfig({
       schemaVersion: '2.0.0',
       apps: [],
@@ -12,7 +12,7 @@ describe('port registry', () => {
       runtime: { ...defaultRuntimeConfig, ports: defaultRuntimePorts },
     });
     assert.equal(portOrder.length, 24);
-    const rendered = renderPortsDocument(config);
+    const rendered = await renderPortsDocument(config);
     assert.match(rendered, /`admin-app-api` \| 3001/u);
     assert.match(rendered, /`admin-app-api` \| 3101 \| 3001/u);
     assert.match(rendered, /containers listen on `80`/u);

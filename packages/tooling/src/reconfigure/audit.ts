@@ -17,7 +17,7 @@ export async function auditWorkspace(fs: FilesystemAdapter, config: NrbConfig): 
   const compose = `${await read('docker/docker-compose.yml')}\n${await read('docker/docker-compose.prod.yml')}`;
   const helm = await read('.helm/values.yaml');
   const pm2 = await read('ecosystem.config.cjs');
-  if ((await read('docs/PORTS.md')) !== renderPortsDocument(config))
+  if ((await read('docs/PORTS.md')) !== (await renderPortsDocument(config)))
     violations.push({ file: 'docs/PORTS.md', rule: 'generated-ports', repair: 'run nrb reconfigure' });
   for (const name of portOrder) {
     const port = config.runtime.ports[name];

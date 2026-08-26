@@ -94,7 +94,7 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   for (const path of candidates) {
     const before = await options.fs.read(path);
     if (before === null) continue;
-    const generated = path === 'docs/PORTS.md' ? renderPortsDocument(options.desired) : null;
+    const generated = path === 'docs/PORTS.md' ? await renderPortsDocument(options.desired) : null;
     const { content: after, rules } =
       generated === null
         ? applyRules(before, options.previous, options.desired, replacements, portReplacements)

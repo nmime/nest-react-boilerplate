@@ -1,4 +1,5 @@
 import type { Tree } from 'nx/src/generators/tree';
+import { logger } from '@nx/devkit';
 import { createNxTreeAdapter, readJsonFile } from '../../setup/adapters/nx-tree.ts';
 import { parseNrbConfig, type NrbConfig } from '../../setup/schema.ts';
 import { emptyState, migrateState } from '../../setup/state.ts';
@@ -44,10 +45,10 @@ export async function reconfigureGenerator(tree: Tree, options: ReconfigureGener
 function printPlan(operations: readonly { path: string }[], _config: NrbConfig, status: string): void {
   if (status === 'dry-run') {
     if (operations.length === 0) {
-      console.log('Already up to date — zero file operations.');
+      logger.info('Already up to date — zero file operations.');
       return;
     }
-    for (const operation of operations) console.log(`UPDATE ${operation.path}`);
+    for (const operation of operations) logger.info(`UPDATE ${operation.path}`);
   }
 }
 

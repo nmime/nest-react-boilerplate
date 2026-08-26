@@ -15,6 +15,7 @@ export interface RunReconfigureOptions {
   force?: boolean;
   includeMetadata?: boolean;
   failOnPaths?: string[];
+  targetPaths?: readonly string[];
 }
 
 export interface RunReconfigureResult {
@@ -25,18 +26,19 @@ export interface RunReconfigureResult {
 }
 
 export async function runReconfigure(options: RunReconfigureOptions): Promise<RunReconfigureResult> {
+  const planOptions = { ...options, includeMetadata: options.includeMetadata };
   if (options.manifest && !options.force) {
     const drifted = await verifyIdentityManifest(options.manifest, options.fs);
     if (drifted.length > 0) {
       return {
-        plan: await planReconfigure(options),
+        plan: await planReconfigure(planOptions),
         status: 'conflict',
         conflicts: drifted.map((path) => ({ path, reason: 'content_changed' as const })),
       };
     }
   }
 
-  const plan = await planReconfigure(options);
+  const plan = await planReconfigure(planOptions);
   if (options.dryRun) return { plan, status: 'dry-run', conflicts: [] };
   if (plan.operations.length === 0) return { plan, status: 'already-up-to-date', conflicts: [] };
 

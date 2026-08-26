@@ -63,15 +63,22 @@ export interface ReconfigurePlanOptions {
   state?: SetupState;
   templateBase: string;
   includeMetadata?: boolean;
+  /** Explicit init-compatible target set. Reconfigure otherwise uses identity-targets.json. */
+  targetPaths?: readonly string[];
 }
 
 export async function planReconfigure(options: ReconfigurePlanOptions): Promise<ReconfigurePlan> {
   const replacements = buildOrderedReplacements(options.previous, options.desired);
   const portReplacements = buildAnchoredPortReplacements(options.previous.runtime, options.desired.runtime);
-  const candidates = selectTargetPaths(
-    replacements.map((replacement) => replacement.label),
-    portReplacements,
-  );
+  const candidates = (
+    options.targetPaths ??
+    selectTargetPaths(
+      replacements.map((replacement) => replacement.label),
+      portReplacements,
+    )
+  )
+    .filter((path) => ![defaultConfigPath, identityManifestPath, setupStatePath].includes(path))
+    .sort();
   const rewriteOperations: SetupOperation[] = [];
   const rulesByFile: Record<string, string[]> = {};
 
@@ -106,6 +113,11 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
       rules: rulesByFile[path] ?? priorApplied[path]?.rules ?? [],
     };
   }
+  if (priorApplied[defaultConfigPath] !== undefined || rewrittenContent.has(defaultConfigPath)) {
+    delete appliedFiles[defaultConfigPath];
+  }
+  if (priorApplied[identityManifestPath] !== undefined) delete appliedFiles[identityManifestPath];
+  if (priorApplied[setupStatePath] !== undefined) delete appliedFiles[setupStatePath];
 
   const manifest: IdentityManifest = {
     version: 1,

@@ -293,24 +293,32 @@ export function applyApexHostSelection(
   previous: NrbConfig['identity'],
   next: NrbConfig['identity'],
 ): string {
-  // Only when apexApp changes from landing-app to site-app (or vice versa)
-  const prevApex = previous.apexApp ?? 'landing-app';
+  const previousApex = previous.apexApp ?? 'landing-app';
   const nextApex = next.apexApp ?? 'landing-app';
-  if (prevApex === nextApex) return content;
-  if (nextApex === 'landing-app') return content;
+  if (previousApex === nextApex) return content;
 
   const domain = next.domain;
-  const marker = '__NRB_SELECTED_SITE_APEX__';
-  const siteHostname = `site-app.${domain}`;
-  const landingHostname = `landing-app.${domain}`;
+  const marker = '__NRB_SELECTED_APEX__';
   const escapedDomain = domain.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-  return content
-    .replace(/^PRIMARY_APP=landing-app$/gmu, 'PRIMARY_APP=site-app')
-    .split(siteHostname)
-    .join(marker)
-    .replace(new RegExp(`(?<![@\\w.-])${escapedDomain}(?![\\w.-])`, 'gu'), landingHostname)
-    .split(marker)
-    .join(domain);
+  if (nextApex === 'site-app') {
+    return content
+      .replace(/^PRIMARY_APP=landing-app$/gmu, 'PRIMARY_APP=site-app')
+      .split(`site-app.${domain}`)
+      .join(marker)
+      .replace(new RegExp(`(?<![@\\w.-])${escapedDomain}(?![\\w.-])`, 'gu'), `landing-app.${domain}`)
+      .split(marker)
+      .join(domain);
+  }
+  if (nextApex === 'landing-app') {
+    return content
+      .replace(/^PRIMARY_APP=site-app$/gmu, 'PRIMARY_APP=landing-app')
+      .split(`landing-app.${domain}`)
+      .join(marker)
+      .replace(new RegExp(`(?<![@\\w.-])${escapedDomain}(?![\\w.-])`, 'gu'), `site-app.${domain}`)
+      .split(marker)
+      .join(domain);
+  }
+  return content;
 }
 
 // ---------------------------------------------------------------------------

@@ -47,7 +47,11 @@ export function resolvePreviousConfig(desired: NrbConfig, manifest: IdentityMani
 
 export function templateBase(workspaceRoot: string): string {
   try {
-    return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceRoot, encoding: 'utf8' }).trim();
+    return execFileSync('git', ['rev-parse', 'HEAD'], {
+      cwd: workspaceRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
   } catch {
     return 'unknown';
   }

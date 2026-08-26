@@ -51,6 +51,7 @@ function closure(provider: 'postgres' | 'mongodb' | null): SelectedClosureManife
       publicTopology: 'single-domain',
       kubernetesDelivery: 'direct',
       infrastructure: { redis: 'bundled', nats: 'bundled', s3: 'bundled' },
+      imageRegistry: 'ghcr.io/your-github-org/nest-react-boilerplate',
     },
   };
 }

@@ -509,7 +509,7 @@ describe('planner — generateConfigFile', () => {
     assert.equal(result.path, 'nrb.config.json');
     assert.ok(result.content.endsWith('\n'));
     const parsed = JSON.parse(result.content);
-    assert.equal(parsed.schemaVersion, '1.0.0');
+    assert.equal(parsed.schemaVersion, '2.0.0');
   });
 
   it('content is deterministic', () => {

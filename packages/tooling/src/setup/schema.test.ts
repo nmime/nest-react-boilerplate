@@ -68,7 +68,7 @@ describe('schema — public domain ownership', () => {
 describe('schema — parseNrbConfig', () => {
   it('accepts minimal valid config with just schemaVersion', () => {
     const c = parseNrbConfig({ schemaVersion });
-    assert.equal(c.schemaVersion, '1.0.0');
+    assert.equal(c.schemaVersion, '2.0.0');
     assert.deepEqual(c.apps, []);
     assert.deepEqual(c.capabilities, []);
     assert.deepEqual(c.options, { prune: false, force: false, dryRun: false, nonInteractive: false });
@@ -895,6 +895,6 @@ describe('e2e — edge cases', () => {
   });
 
   it('schema version constant matches expected', () => {
-    assert.equal(schemaVersion, '1.0.0');
+    assert.equal(schemaVersion, '2.0.0');
   });
 });

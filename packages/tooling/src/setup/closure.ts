@@ -132,6 +132,7 @@ export function buildSelectedClosure(graph: ProjectGraphLike, input: ClosureInpu
     ...defaultDeploymentConfig,
     targets: [...defaultDeploymentConfig.targets],
     infrastructure: { ...defaultDeploymentConfig.infrastructure },
+    imageRegistry: defaultDeploymentConfig.imageRegistry,
   };
   const seedProjects = new Set<string>(roots);
 

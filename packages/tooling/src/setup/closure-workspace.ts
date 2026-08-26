@@ -34,6 +34,10 @@ export interface ConfiguredSelection {
   configHash: string;
   product: ReturnType<typeof parseNrbConfig>['product'];
   deployment: ReturnType<typeof parseNrbConfig>['deployment'];
+  identity: ReturnType<typeof parseNrbConfig>['identity'];
+  runtime: ReturnType<typeof parseNrbConfig>['runtime'];
+  session: ReturnType<typeof parseNrbConfig>['session'];
+  tenant: ReturnType<typeof parseNrbConfig>['tenant'];
 }
 
 export function readConfiguredSelection(workspaceRoot: string): ConfiguredSelection {
@@ -49,6 +53,10 @@ export function readConfiguredSelection(workspaceRoot: string): ConfiguredSelect
     configHash: configHash(config),
     product: config.product,
     deployment: config.deployment,
+    identity: config.identity,
+    runtime: config.runtime,
+    session: config.session,
+    tenant: config.tenant,
   };
 }
 
@@ -64,6 +72,10 @@ export async function buildConfiguredClosure(
     configHash: selection.configHash,
     product: selection.product,
     deployment: selection.deployment,
+    identity: selection.identity,
+    runtime: selection.runtime,
+    session: selection.session,
+    tenant: selection.tenant,
   });
 }
 

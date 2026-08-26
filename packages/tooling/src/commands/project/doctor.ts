@@ -258,14 +258,18 @@ export function checkCapabilityActivation(workspaceRoot: string): DoctorCheck {
       return { name: "capability-wiring", status: "fail", message: "Cannot verify an invalid nrb.config.json" };
     }
     const resolved = resolveConfig(parsed.data);
-    const summary = {
+    const summary: PlanSummary = {
       apps: resolved.apps,
       capabilities: resolved.capabilities,
       product: parsed.data.product,
       deployment: parsed.data.deployment,
+      identity: parsed.data.identity,
+      runtime: parsed.data.runtime,
+      session: parsed.data.session,
+      tenant: parsed.data.tenant,
       preset: resolved.preset,
       configHash: configHash(parsed.data),
-    } satisfies PlanSummary;
+    };
     const expected = [
       generateCapabilitiesManifest(summary),
       generateComposeEnvironment(summary),

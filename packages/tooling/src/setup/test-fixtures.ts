@@ -1,7 +1,22 @@
 import type { PlanSummary } from './planner.js';
-import { defaultDeploymentConfig, defaultProductConfig, type NrbConfig } from './schema.js';
+import {
+  defaultDeploymentConfig,
+  defaultIdentityConfig,
+  defaultIdentityBrandConfig,
+  defaultProductConfig,
+  defaultRuntimeConfig,
+  defaultRuntimePorts,
+  defaultSessionConfig,
+  defaultTenantConfig,
+  defaultTenantSeedAdmin,
+  defaultTenantSeedUsers,
+  type NrbConfig,
+} from './schema.js';
 
-export function defaultOperationalFields(): Pick<NrbConfig, 'product' | 'deployment'> {
+export function defaultOperationalFields(): Pick<
+  NrbConfig,
+  'product' | 'deployment' | 'identity' | 'runtime' | 'session' | 'tenant'
+> {
   return {
     product: {
       ...defaultProductConfig,
@@ -11,6 +26,27 @@ export function defaultOperationalFields(): Pick<NrbConfig, 'product' | 'deploym
       ...defaultDeploymentConfig,
       targets: [...defaultDeploymentConfig.targets],
       infrastructure: { ...defaultDeploymentConfig.infrastructure },
+      imageRegistry: defaultDeploymentConfig.imageRegistry,
+    },
+    identity: {
+      ...defaultIdentityConfig,
+      brand: { ...defaultIdentityBrandConfig },
+    },
+    runtime: {
+      ports: { ...defaultRuntimePorts },
+      stagingOffset: defaultRuntimeConfig.stagingOffset,
+      containerPort: defaultRuntimeConfig.containerPort,
+      postgres: { ...defaultRuntimeConfig.postgres },
+      minio: { ...defaultRuntimeConfig.minio },
+      localSecrets: { ...defaultRuntimeConfig.localSecrets },
+    },
+    session: { ...defaultSessionConfig },
+    tenant: {
+      defaultTenantId: defaultTenantConfig.defaultTenantId,
+      seed: {
+        admin: { ...defaultTenantSeedAdmin },
+        users: [...defaultTenantSeedUsers],
+      },
     },
   };
 }

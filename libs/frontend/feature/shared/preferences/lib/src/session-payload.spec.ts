@@ -1,21 +1,38 @@
 // @requirements REQ-NOTIFY-PREFERENCE-006
 import { describe, expect, it } from 'vitest';
+import type { LocalePayload } from './session-preferences-model';
 import { getPayloadLocale, getPayloadTheme, readAuthPayloadField } from './session-payload';
 
 const asBoolean = (value: unknown): boolean | undefined => (typeof value === 'boolean' ? value : undefined);
 
 describe('readAuthPayloadField', () => {
   it('reads a field the shared payload types do not model, newest scope first', () => {
-    expect(readAuthPayloadField({ emailVerified: true }, 'emailVerified', asBoolean)).toBe(true);
-    expect(readAuthPayloadField({ user: { emailVerified: true } }, 'emailVerified', asBoolean)).toBe(true);
-    expect(readAuthPayloadField({ profile: { emailVerified: false } }, 'emailVerified', asBoolean)).toBe(false);
-    expect(readAuthPayloadField({ principal: { emailVerified: true } }, 'emailVerified', asBoolean)).toBe(true);
+    expect(readAuthPayloadField({ emailVerified: true } as unknown as LocalePayload, 'emailVerified', asBoolean)).toBe(
+      true,
+    );
+    expect(
+      readAuthPayloadField({ user: { emailVerified: true } } as unknown as LocalePayload, 'emailVerified', asBoolean),
+    ).toBe(true);
+    expect(
+      readAuthPayloadField(
+        { profile: { emailVerified: false } } as unknown as LocalePayload,
+        'emailVerified',
+        asBoolean,
+      ),
+    ).toBe(false);
+    expect(
+      readAuthPayloadField(
+        { principal: { emailVerified: true } } as unknown as LocalePayload,
+        'emailVerified',
+        asBoolean,
+      ),
+    ).toBe(true);
   });
 
   it('prefers the outermost scope that parses', () => {
     expect(
       readAuthPayloadField(
-        { user: { emailVerified: true }, profile: { emailVerified: false } },
+        { user: { emailVerified: true }, profile: { emailVerified: false } } as unknown as LocalePayload,
         'emailVerified',
         asBoolean,
       ),
@@ -25,9 +42,13 @@ describe('readAuthPayloadField', () => {
   it('returns undefined when no scope carries a value the parser accepts', () => {
     expect(readAuthPayloadField(undefined, 'emailVerified', asBoolean)).toBeUndefined();
     expect(readAuthPayloadField(null, 'emailVerified', asBoolean)).toBeUndefined();
-    expect(readAuthPayloadField({}, 'emailVerified', asBoolean)).toBeUndefined();
-    expect(readAuthPayloadField({ user: null }, 'emailVerified', asBoolean)).toBeUndefined();
-    expect(readAuthPayloadField({ emailVerified: 'yes' }, 'emailVerified', asBoolean)).toBeUndefined();
+    expect(readAuthPayloadField({} as LocalePayload, 'emailVerified', asBoolean)).toBeUndefined();
+    expect(
+      readAuthPayloadField({ user: null } as unknown as LocalePayload, 'emailVerified', asBoolean),
+    ).toBeUndefined();
+    expect(
+      readAuthPayloadField({ emailVerified: 'yes' } as unknown as LocalePayload, 'emailVerified', asBoolean),
+    ).toBeUndefined();
   });
 });
 
@@ -42,7 +63,7 @@ describe('getPayloadLocale', () => {
   it('returns undefined for empty or missing payloads', () => {
     expect(getPayloadLocale()).toBeUndefined();
     expect(getPayloadLocale(null)).toBeUndefined();
-    expect(getPayloadLocale({})).toBeUndefined();
+    expect(getPayloadLocale({} as LocalePayload)).toBeUndefined();
   });
 });
 
@@ -56,7 +77,7 @@ describe('getPayloadTheme', () => {
 
   it('returns undefined for missing or non-string themes', () => {
     expect(getPayloadTheme()).toBeUndefined();
-    expect(getPayloadTheme({})).toBeUndefined();
-    expect(getPayloadTheme({ theme: 123 as unknown as string })).toBeUndefined();
+    expect(getPayloadTheme({} as LocalePayload)).toBeUndefined();
+    expect(getPayloadTheme({ theme: 123 as unknown as string } as unknown as LocalePayload)).toBeUndefined();
   });
 });

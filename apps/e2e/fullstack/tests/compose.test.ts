@@ -10,7 +10,7 @@ import {
   readinessProbes,
   resolveFullstackSelection,
   validateFullstackEnvironment,
-} from '../src/selection.ts';
+} from '../src/selection';
 
 const roots: string[] = [];
 

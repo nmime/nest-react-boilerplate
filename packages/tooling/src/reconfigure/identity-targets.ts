@@ -7,8 +7,8 @@
  * identity config and produces deterministic file operations.
  */
 
-import type { NrbConfig } from '../setup/schema.js';
-import { defaultIdentityConfig, defaultIdentityBrandConfig } from '../setup/schema.js';
+import type { NrbConfig } from '../setup/schema.ts';
+import { defaultIdentityConfig, defaultIdentityBrandConfig } from '../setup/schema.ts';
 
 export interface IdentityReplacement {
   from: string;

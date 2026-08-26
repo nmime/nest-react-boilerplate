@@ -6,8 +6,8 @@
  * registration throws while composing and can never leave a half-applied catalog behind — the same
  * guarantee the RBAC catalog composition gives.
  */
-import type { CapabilityEntry } from './catalog.js';
-import { productCapabilities } from './product-capabilities.js';
+import type { CapabilityEntry } from './catalog.ts';
+import { productCapabilities } from './product-capabilities.ts';
 
 /** Cross-cutting capabilities this boilerplate ships. Products register their own instead. */
 export const baseCapabilityIds = [

@@ -12,7 +12,7 @@
  */
 import { z } from 'zod';
 
-import { capabilityIds as knownCapabilityIds, type BaseCapabilityId } from './capability-registry.js';
+import { capabilityIds as knownCapabilityIds, type BaseCapabilityId } from './capability-registry.ts';
 
 // ---------------------------------------------------------------------------
 // Public enums — derive IDs from the actual repo.
@@ -46,7 +46,7 @@ export type AppId = (typeof appIds)[number];
  * shipped ids while still accepting a product's own, which is what makes the axis extensible
  * without a fork.
  */
-export * from './capability-registry.js';
+export * from './capability-registry.ts';
 export type CapabilityId = BaseCapabilityId | (string & {});
 
 export const ciModeIds = ['product', 'maintainer'] as const;

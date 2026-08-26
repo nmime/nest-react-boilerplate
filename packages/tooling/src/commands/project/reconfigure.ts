@@ -106,7 +106,6 @@ function printPlan(operations: readonly { path: string }[]): void {
     process.stdout.write('Already up to date — zero file operations.\n');
     return;
   }
-  process.stdout.write(`Dry run — ${operations.length} file operations; no files were modified.\n`);
   for (const operation of operations) process.stdout.write(`UPDATE ${operation.path}\n`);
 }
 

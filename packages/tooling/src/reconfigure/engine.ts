@@ -5,9 +5,9 @@
  * update operations plus the manifest/state payloads that the caller must
  * persist in the same atomic transaction. It performs no writes itself.
  */
-import type { FilesystemAdapter } from '../setup/adapters/filesystem.js';
-import { sortOperations, updateFile, type SetupOperation } from '../setup/operations.js';
-import { buildState, configHash, hashString, type SetupState } from '../setup/state.js';
+import type { FilesystemAdapter } from '../setup/adapters/filesystem.ts';
+import { sortOperations, updateFile, type SetupOperation } from '../setup/operations.ts';
+import { buildState, configHash, hashString, type SetupState } from '../setup/state.ts';
 import {
   defaultDeploymentConfig,
   defaultIdentityBrandConfig,
@@ -17,14 +17,14 @@ import {
   defaultSessionConfig,
   defaultTenantConfig,
   type NrbConfig,
-} from '../setup/schema.js';
+} from '../setup/schema.ts';
 import targetManifest from './identity-targets.json' with { type: 'json' };
 import {
   applyApexHostSelection,
   buildAnchoredPortReplacements,
   buildOrderedReplacements,
   type AnchoredReplacement,
-} from './rules.js';
+} from './rules.ts';
 
 export const identityManifestPath = '.nrb/identity.json';
 export const setupStatePath = '.nrb/state.json';
@@ -259,6 +259,7 @@ export function isIdentityManifest(raw: unknown): raw is IdentityManifest {
 export async function verifyIdentityManifest(manifest: IdentityManifest, fs: FilesystemAdapter): Promise<string[]> {
   const drifted: string[] = [];
   for (const [path, entry] of Object.entries(manifest.appliedFiles)) {
+    if ([defaultConfigPath, identityManifestPath, setupStatePath].includes(path)) continue;
     const current = await fs.read(path);
     if (current === null || hashString(current) !== entry.hash) drifted.push(path);
   }

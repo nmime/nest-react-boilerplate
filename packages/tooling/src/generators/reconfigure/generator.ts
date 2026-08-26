@@ -1,9 +1,9 @@
 import type { Tree } from 'nx/src/generators/tree';
-import { createNxTreeAdapter, readJsonFile } from '../../setup/adapters/nx-tree.js';
-import { parseNrbConfig, type NrbConfig } from '../../setup/schema.js';
-import { emptyState, migrateState } from '../../setup/state.js';
-import { createIdentityManifestConfig, isIdentityManifest, type IdentityManifest } from '../../reconfigure/engine.js';
-import { runReconfigure } from '../../reconfigure/run.js';
+import { createNxTreeAdapter, readJsonFile } from '../../setup/adapters/nx-tree.ts';
+import { parseNrbConfig, type NrbConfig } from '../../setup/schema.ts';
+import { emptyState, migrateState } from '../../setup/state.ts';
+import { createIdentityManifestConfig, isIdentityManifest, type IdentityManifest } from '../../reconfigure/engine.ts';
+import { runReconfigure } from '../../reconfigure/run.ts';
 
 export interface ReconfigureGeneratorOptions {
   config?: string;
@@ -47,7 +47,6 @@ function printPlan(operations: readonly { path: string }[], _config: NrbConfig, 
       console.log('Already up to date — zero file operations.');
       return;
     }
-    console.log(`Dry run — ${operations.length} file operations; no files were modified.`);
     for (const operation of operations) console.log(`UPDATE ${operation.path}`);
   }
 }

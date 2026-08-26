@@ -1,8 +1,8 @@
-import type { FilesystemAdapter, FileConflict } from '../setup/adapters/filesystem.js';
-import { apply, type ApplyOptions } from '../setup/apply.js';
-import type { NrbConfig } from '../setup/schema.js';
-import type { SetupState } from '../setup/state.js';
-import { planReconfigure, verifyIdentityManifest, type IdentityManifest, type ReconfigurePlan } from './engine.js';
+import type { FilesystemAdapter, FileConflict } from '../setup/adapters/filesystem.ts';
+import { apply, type ApplyOptions } from '../setup/apply.ts';
+import type { NrbConfig } from '../setup/schema.ts';
+import type { SetupState } from '../setup/state.ts';
+import { planReconfigure, verifyIdentityManifest, type IdentityManifest, type ReconfigurePlan } from './engine.ts';
 
 export interface RunReconfigureOptions {
   fs: FilesystemAdapter;

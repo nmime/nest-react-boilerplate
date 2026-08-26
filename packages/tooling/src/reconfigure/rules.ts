@@ -14,8 +14,8 @@
  * The table is data-driven and unit-tested per rule family.
  */
 
-import type { NrbConfig } from '../setup/schema.js';
-import { buildIdentityReplacements, type IdentityReplacement } from './identity-targets.js';
+import type { NrbConfig } from '../setup/schema.ts';
+import { buildIdentityReplacements, type IdentityReplacement } from './identity-targets.ts';
 
 // ---------------------------------------------------------------------------
 // Family priority — lower number = earlier family in the ordered table.

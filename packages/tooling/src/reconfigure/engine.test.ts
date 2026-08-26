@@ -130,4 +130,50 @@ describe('reconfigure engine state and rollback', () => {
     assert.equal(result.status, 'rolled-back');
     assert.deepEqual(fs.snapshot(), before);
   });
+
+  it('rolls back the complete tree when the verification gate fails and records green/skipped outcomes', async () => {
+    const previous = config();
+    const desired = config({ domain: 'broken.example' });
+    const fs = memoryFilesystem({ 'spec.md': 'example.com\n' });
+    const before = fs.snapshot();
+    const failed = await runReconfigure({
+      fs,
+      desired,
+      previous,
+      manifest: null,
+      state: emptyState,
+      templateBase: 'abc123',
+      workspaceRoot: '.',
+      gate: 'auto',
+      force: true,
+      targetPaths: ['spec.md'],
+      verify: async () => ({
+        outcome: 'skipped',
+        commands: ['static-check'],
+        failedGate: 'spec-validate',
+        exitCode: 1,
+        error: 'spec literal failed',
+      }),
+    });
+    assert.equal(failed.status, 'rolled-back');
+    assert.equal(failed.failedGate, 'spec-validate');
+    assert.deepEqual(fs.snapshot(), before);
+
+    const green = await runReconfigure({
+      fs,
+      desired,
+      previous,
+      manifest: null,
+      state: emptyState,
+      templateBase: 'abc123',
+      workspaceRoot: '.',
+      gate: 'auto',
+      force: true,
+      targetPaths: ['spec.md'],
+      verify: async () => ({ outcome: 'green', commands: [], exitCode: 0 }),
+    });
+    assert.equal(green.gate, 'green');
+    const manifest = JSON.parse((await fs.read(identityManifestPath)) ?? '{}') as { gate?: string };
+    assert.equal(manifest.gate, 'green');
+  });
 });

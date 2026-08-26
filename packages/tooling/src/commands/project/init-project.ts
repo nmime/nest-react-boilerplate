@@ -241,7 +241,7 @@ function listInitTargets(root: string): string[] {
     }
   };
   walk(root);
-  return targets.sort();
+  return targets;
 }
 
 async function runInitProject(argv: string[]): Promise<void> {

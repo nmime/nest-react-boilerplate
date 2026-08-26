@@ -263,6 +263,14 @@ describe('state — buildState', () => {
     assert.equal(s.files['f.txt'], 'h1');
     assert.equal(s.digest, computeStateDigest({ 'f.txt': 'h1' }));
   });
+
+  it('tracks reconfigure-owned file hashes without changing the existing digest contract', () => {
+    const files = { 'f.txt': hashString('configured') };
+    const s = buildState(hashString('config'), files, files);
+    assert.deepEqual(s.reconfiguredFiles, files);
+    assert.equal(s.digest, computeStateDigest(files));
+    assert.equal(migrateState(s), s);
+  });
 });
 
 describe('state — computeStateDigest is order-independent', () => {

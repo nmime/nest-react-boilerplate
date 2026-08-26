@@ -60,6 +60,8 @@ export interface SetupState {
   configHash: string;
   /** Per-file hashes indexed by POSIX relative path. */
   files: Record<string, string>;
+  /** Engine-rewritten file hashes. Optional for backward-compatible v1 state. */
+  reconfiguredFiles?: Record<string, string>;
   /** Global digest computed from all file hashes. */
   digest: string;
 }
@@ -96,6 +98,22 @@ export function isValidSetupState(raw: unknown): raw is SetupState {
   }
 
   const files = state.files as Record<string, unknown>;
+  if (!isValidFileHashMap(files)) return false;
+  if (state.reconfiguredFiles !== undefined) {
+    if (
+      typeof state.reconfiguredFiles !== 'object' ||
+      state.reconfiguredFiles === null ||
+      Array.isArray(state.reconfiguredFiles) ||
+      !isValidFileHashMap(state.reconfiguredFiles as Record<string, unknown>)
+    ) {
+      return false;
+    }
+  }
+
+  return state.digest === computeStateDigest(files as Record<string, string>);
+}
+
+function isValidFileHashMap(files: Record<string, unknown>): boolean {
   for (const [path, contentHash] of Object.entries(files)) {
     if (
       path.length === 0 ||
@@ -107,8 +125,7 @@ export function isValidSetupState(raw: unknown): raw is SetupState {
       return false;
     }
   }
-
-  return state.digest === computeStateDigest(files as Record<string, string>);
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -132,11 +149,16 @@ export function computeStateDigest(files: Record<string, string>): string {
 /**
  * Build a SetupState from a config hash and a map of file paths → content hashes.
  */
-export function buildState(configHash: string, files: Record<string, string>): SetupState {
+export function buildState(
+  configHash: string,
+  files: Record<string, string>,
+  reconfiguredFiles?: Record<string, string>,
+): SetupState {
   return {
     version: 1,
     configHash,
     files,
+    ...(reconfiguredFiles && Object.keys(reconfiguredFiles).length > 0 ? { reconfiguredFiles } : {}),
     digest: computeStateDigest(files),
   };
 }
@@ -147,7 +169,7 @@ export function buildState(configHash: string, files: Record<string, string>): S
  */
 export function addFileToState(state: SetupState, path: string, contentHash: string): SetupState {
   const newFiles = { ...state.files, [path]: contentHash };
-  return buildState(state.configHash, newFiles);
+  return buildState(state.configHash, newFiles, state.reconfiguredFiles);
 }
 
 /**
@@ -156,7 +178,7 @@ export function addFileToState(state: SetupState, path: string, contentHash: str
 export function removeFileFromState(state: SetupState, path: string): SetupState {
   const newFiles = { ...state.files };
   delete newFiles[path];
-  return buildState(state.configHash, newFiles);
+  return buildState(state.configHash, newFiles, state.reconfiguredFiles);
 }
 
 // ---------------------------------------------------------------------------

@@ -85,9 +85,7 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
       replacements.map((replacement) => replacement.label),
       portReplacements,
     )
-  )
-    .filter((path) => ![defaultConfigPath, identityManifestPath, setupStatePath].includes(path))
-    .sort();
+  ).filter((path) => ![defaultConfigPath, identityManifestPath, setupStatePath].includes(path));
   const rewriteOperations: SetupOperation[] = [];
   const rulesByFile: Record<string, string[]> = {};
 
@@ -149,7 +147,11 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     [identityManifestPath, serializeJson(manifest)],
   ]);
   for (const [path, content] of metadataContent) files[path] = hashString(content);
-  const state = buildState(desiredConfigHash, files);
+  const state = buildState(
+    desiredConfigHash,
+    files,
+    Object.fromEntries(Object.entries(appliedFiles).map(([path, entry]) => [path, entry.hash])),
+  );
   metadataContent.set(setupStatePath, serializeJson(state));
 
   const operations = [...rewriteOperations];
@@ -167,7 +169,7 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     configHash: desiredConfigHash,
     manifest,
     state,
-    files: rewriteOperations.map((operation) => operation.path).sort(),
+    files: candidates.filter((path) => rewrittenContent.has(path)),
     rulesByFile,
     alreadyUpToDate: rewriteOperations.length === 0,
   };

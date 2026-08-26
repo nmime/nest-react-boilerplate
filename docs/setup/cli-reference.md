@@ -47,21 +47,53 @@ pnpm nrb init \
   --owner acme-org
 ```
 
-| Flag                  | Type    | Description                                                    |
-| --------------------- | ------- | -------------------------------------------------------------- |
-| `--name <title>`      | string  | Required product display name.                                 |
-| `--domain <base>`     | string  | Required DNS base without protocol, port, path, or wildcard.   |
-| `--package-name <id>` | string  | Root package name; defaults to the product slug.               |
-| `--app-slug <id>`     | string  | Product/application slug.                                      |
-| `--db-name <name>`    | string  | Durable database name used by PostgreSQL and MongoDB examples. |
-| `--apex-app <id>`     | string  | Apex owner: `landing-app` (default) or `site-app`.             |
-| `--owner <org>`       | string  | Repository/image owner replacing `your-github-org`.            |
-| `--dry-run`           | boolean | Print the file plan without writing.                           |
-| `--force`             | boolean | Allow a dirty/non-Git workspace and overwrite conflicts.       |
-| `--non-interactive`   | boolean | Compatibility flag; required values must still be explicit.    |
+| Flag                  | Type    | Description                                                       |
+| --------------------- | ------- | ----------------------------------------------------------------- |
+| `--config <path>`     | string  | Schema-v2 JSON source; identity flags merge into it before apply. |
+| `--name <title>`      | string  | Required product display name without `--config`.                 |
+| `--domain <base>`     | string  | Required DNS base without `--config`; no protocol/path/wildcard.  |
+| `--package-name <id>` | string  | Root package name; defaults to the product slug.                  |
+| `--app-slug <id>`     | string  | Product/application slug.                                         |
+| `--db-name <name>`    | string  | Durable database name used by PostgreSQL and MongoDB examples.    |
+| `--apex-app <id>`     | string  | Apex owner: `landing-app` (default) or `site-app`.                |
+| `--owner <org>`       | string  | Repository/image owner replacing `your-github-org`.               |
+| `--dry-run`           | boolean | Print the file plan without writing.                              |
+| `--force`             | boolean | Allow a dirty/non-Git workspace and overwrite conflicts.          |
+| `--non-interactive`   | boolean | Compatibility flag; required values must still be explicit.       |
 
 The old `pnpm init:project -- ...` root script calls the same implementation.
+Init validates and persists the resolved schema-v2 identity in
+`nrb.config.json`, records `.nrb/identity.json`, and applies the same engine as
+`reconfigure`. Its JSON output remains `{ status, config, filesChanged, files }`.
 Run initialization before `pnpm nrb setup`.
+
+### `reconfigure`
+
+Re-apply the identity/runtime axis from the checked-in config without changing
+the setup app/capability selection.
+
+```bash
+pnpm nrb reconfigure --dry-run
+pnpm nrb reconfigure
+pnpm nrb reconfigure --config product.nrb.json --dry-run
+pnpm exec nx generate @repo/tooling:reconfigure --dryRun
+```
+
+| Flag              | Type    | Description                                                      |
+| ----------------- | ------- | ---------------------------------------------------------------- |
+| `--config <path>` | string  | Desired schema-v2 config; defaults to `nrb.config.json`.         |
+| `--dry-run`       | boolean | Print the ordered file plan without writing.                     |
+| `--force`         | boolean | Overwrite drifted tracked files and permit a dirty Git worktree. |
+| `--json`          | boolean | Emit `{ status, config, filesChanged, files }`.                  |
+| `--help`, `-h`    | boolean | Show command usage.                                              |
+
+The CLI and Nx generator call one planner through Node-FS and Nx `Tree`
+adapters. Successful apply records engine-touched hashes in `.nrb/state.json`
+and writes `.nrb/identity.json` with `templateBase`, resolved identity,
+`configHash`, and `appliedFiles`. An unchanged re-run reports already up to date
+with zero operations. A drifted tracked file is refused and named unless
+`--force` is explicit. All targets are backed up before the first write and a
+mid-apply failure restores every touched file.
 
 ### `setup` / `project:setup`
 

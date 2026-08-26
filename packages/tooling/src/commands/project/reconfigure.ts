@@ -9,6 +9,7 @@ import {
   resolvePreviousConfig,
   templateBase,
 } from '../../reconfigure/io.js';
+import { auditWorkspace } from '../../reconfigure/audit.js';
 import { runReconfigure } from '../../reconfigure/run.js';
 import type { ReconfigureGateMode } from '../../reconfigure/verify.js';
 
@@ -66,6 +67,7 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
       templateBase: manifest?.templateBase ?? templateBase(context.workspaceRoot),
       workspaceRoot: context.workspaceRoot,
       gate: args.gate,
+      audit: async () => { const a = await auditWorkspace(fs, desired); return { ok: a.ok, report: a.report }; },
       dryRun: args.dryRun,
       force: args.force,
     });

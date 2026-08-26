@@ -19,6 +19,7 @@ import {
   type NrbConfig,
 } from '../setup/schema.ts';
 import targetManifest from './identity-targets.json' with { type: 'json' };
+import { renderPortsDocument } from './ports.ts';
 import {
   applyApexHostSelection,
   buildAnchoredPortReplacements,
@@ -93,13 +94,11 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   for (const path of candidates) {
     const before = await options.fs.read(path);
     if (before === null) continue;
-    const { content: after, rules } = applyRules(
-      before,
-      options.previous,
-      options.desired,
-      replacements,
-      portReplacements,
-    );
+    const generated = path === 'docs/PORTS.md' ? renderPortsDocument(options.desired) : null;
+    const { content: after, rules } =
+      generated === null
+        ? applyRules(before, options.previous, options.desired, replacements, portReplacements)
+        : { content: generated, rules: ['runtime:ports-document'] };
     if (after === before) continue;
     rewriteOperations.push(updateFile(path, after, `Reconfigure ${path}: ${rules.join(', ')}`));
     rulesByFile[path] = rules;

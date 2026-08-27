@@ -42,6 +42,7 @@ const targetManifestShape = targetManifest as {
 export interface AppliedFileManifest {
   hash: string;
   rules: string[];
+  originalContent?: string;
 }
 
 export interface IdentityManifest {
@@ -101,14 +102,20 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   ].filter((path) => ![defaultConfigPath, identityManifestPath, setupStatePath].includes(path));
   const rewriteOperations: SetupOperation[] = [];
   const rulesByFile: Record<string, string[]> = {};
+  const beforeByFile = new Map<string, string>();
 
   for (const path of candidates) {
     const before = await options.fs.read(path);
     if (before === null) continue;
+    beforeByFile.set(path, before);
+    const restored =
+      replacements.length === 0 && portReplacements.length === 0
+        ? before
+        : restoreOriginalContent(before, options.manifest?.appliedFiles[path]);
     const generated = path === 'docs/PORTS.md' ? await renderPortsDocument(options.desired) : null;
     const { content: after, rules } =
       generated === null
-        ? applyRules(before, options.previous, options.desired, replacements, portReplacements)
+        ? applyRules(restored, options.previous, options.desired, replacements, portReplacements)
         : { content: generated, rules: ['runtime:ports-document'] };
     if (after === before) continue;
     rewriteOperations.push(updateFile(path, after, `Reconfigure ${path}: ${rules.join(', ')}`));
@@ -122,9 +129,6 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   }
 
   const priorApplied = options.manifest?.appliedFiles ?? {};
-  const templateDefaults = createTemplateDefaultConfig(options.desired);
-  const reverseReplacements = buildOrderedReplacements(options.desired, templateDefaults);
-  const reversePortReplacements = buildAnchoredPortReplacements(options.desired.runtime, templateDefaults.runtime);
   const appliedFiles: Record<string, AppliedFileManifest> = {};
   for (const path of [...new Set([...Object.keys(priorApplied), ...rewrittenContent.keys()])].sort()) {
     const content = rewrittenContent.get(path) ?? (await options.fs.read(path));
@@ -133,17 +137,12 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     const changed = rewrittenContent.has(path);
     if (!changed && prior && hashString(content) !== prior.hash) continue;
     const rules = rulesByFile[path] ?? prior?.rules ?? [];
-    const defaultContent = applyRules(
-      content,
-      options.desired,
-      templateDefaults,
-      reverseReplacements,
-      reversePortReplacements,
-    ).content;
-    if (defaultContent === content) continue;
+    const originalContent = prior?.originalContent ?? beforeByFile.get(path);
+    if (originalContent === content) continue;
     appliedFiles[path] = {
       hash: hashString(content),
       rules,
+      ...(originalContent !== undefined ? { originalContent } : {}),
     };
   }
   if (priorApplied[defaultConfigPath] !== undefined || rewrittenContent.has(defaultConfigPath)) {
@@ -287,7 +286,12 @@ export function isIdentityManifest(raw: unknown): raw is IdentityManifest {
   for (const [path, entry] of Object.entries(value.appliedFiles as Record<string, unknown>)) {
     if (!isSafeRelativePath(path) || !entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
     const file = entry as Record<string, unknown>;
-    if (typeof file.hash !== 'string' || !/^[a-f0-9]{64}$/u.test(file.hash) || !Array.isArray(file.rules)) {
+    if (
+      typeof file.hash !== 'string' ||
+      !/^[a-f0-9]{64}$/u.test(file.hash) ||
+      !Array.isArray(file.rules) ||
+      (file.originalContent !== undefined && typeof file.originalContent !== 'string')
+    ) {
       return false;
     }
   }
@@ -338,6 +342,11 @@ function isBrandLabel(label: string): boolean {
     'natsClientName',
     's3Bucket',
   ].includes(label);
+}
+
+function restoreOriginalContent(content: string, entry: AppliedFileManifest | undefined): string {
+  if (!entry?.originalContent || hashString(content) !== entry.hash) return content;
+  return entry.originalContent;
 }
 
 function applyRules(

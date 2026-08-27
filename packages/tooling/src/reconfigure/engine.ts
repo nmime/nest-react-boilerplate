@@ -89,6 +89,9 @@ export interface ReconfigurePlanOptions {
 export async function planReconfigure(options: ReconfigurePlanOptions): Promise<ReconfigurePlan> {
   const replacements = buildOrderedReplacements(options.previous, options.desired);
   const portReplacements = buildAnchoredPortReplacements(options.previous.runtime, options.desired.runtime);
+  const templateDefaults = createTemplateDefaultConfig(options.desired);
+  const templateReplacements = buildOrderedReplacements(templateDefaults, options.desired);
+  const templatePortReplacements = buildAnchoredPortReplacements(templateDefaults.runtime, options.desired.runtime);
   const previousTargets = new Set(Object.keys(options.manifest?.appliedFiles ?? {}));
   const candidates = [
     ...new Set([
@@ -113,9 +116,12 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
         ? before
         : restoreOriginalContent(before, options.manifest?.appliedFiles[path], options.desired);
     const generated = path === 'docs/PORTS.md' ? await renderPortsDocument(options.desired) : null;
+    const hasOriginalContent = options.manifest?.appliedFiles[path]?.originalContent !== undefined;
+    const effectiveReplacements = hasOriginalContent ? templateReplacements : replacements;
+    const effectivePortReplacements = hasOriginalContent ? templatePortReplacements : portReplacements;
     const { content: after, rules } =
       generated === null
-        ? applyRules(restored, options.previous, options.desired, replacements, portReplacements)
+        ? applyRules(restored, templateDefaults, options.desired, effectiveReplacements, effectivePortReplacements)
         : { content: generated, rules: ['runtime:ports-document'] };
     if (after === before) continue;
     rewriteOperations.push(updateFile(path, after, `Reconfigure ${path}: ${rules.join(', ')}`));
@@ -138,7 +144,7 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     if (!changed && prior && hashString(content) !== prior.hash) continue;
     const rules = rulesByFile[path] ?? prior?.rules ?? [];
     const originalContent = prior?.originalContent ?? beforeByFile.get(path);
-    if (originalContent === content) continue;
+    if (originalContent !== undefined && originalContent === content) continue;
     appliedFiles[path] = {
       hash: hashString(content),
       rules,

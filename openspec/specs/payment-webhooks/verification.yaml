@@ -51,9 +51,9 @@ requirements:
         lanes:
           - pr
           - main
-      - kind: vitest
-        file: libs/backend/mongodb/main/payments/lib/src/payments-mongo.repository.component-spec.ts
-        target: '@app/backend-mongodb-main-payments:test'
+      - kind: component
+        file: libs/backend/mongodb/main/payments/lib/src/payments-mongo.component-spec.ts
+        target: '@app/backend-mongodb-main-payments:component-test'
         lanes:
           - pr
           - main

@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-001 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002
+// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002
 import type { CurrencyCode } from '@app/common-money';
 import { describe, expect, it, vi } from 'vitest';
 import { PaymentsMongoPersistence } from './payments-mongo.repository';

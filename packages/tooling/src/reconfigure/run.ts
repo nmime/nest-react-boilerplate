@@ -201,10 +201,14 @@ export async function runReconfigure(options: RunReconfigureOptions): Promise<Ru
     const reconfiguredFiles = Object.fromEntries(
       Object.entries(plan.manifest.appliedFiles).map(([path, entry]) => [path, entry.hash]),
     );
+    const priorReconfiguredPaths = Object.keys(options.state.reconfiguredFiles ?? {});
+    const baseStateFiles = Object.fromEntries(
+      Object.entries(options.state.files).filter(([path]) => !priorReconfiguredPaths.includes(path)),
+    );
     plan.state = buildState(
       plan.state.configHash,
       {
-        ...options.state.files,
+        ...baseStateFiles,
         ...appliedFileHashes,
         ...derivedFileHashes,
         [defaultConfigPath]: hashString(configContent),

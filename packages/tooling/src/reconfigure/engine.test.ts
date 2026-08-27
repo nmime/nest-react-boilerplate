@@ -430,6 +430,7 @@ describe('reconfigure engine state and rollback', () => {
 
     assert.deepEqual(reverse.plan.manifest.appliedFiles, {});
     assert.deepEqual(reverse.plan.state.reconfiguredFiles, undefined);
+    assert.equal(reverse.plan.state.files['fixture.txt'], undefined);
   });
 
   it('rewrites the edge port in Helm listenPort values', async () => {

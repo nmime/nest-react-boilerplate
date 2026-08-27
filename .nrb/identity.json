@@ -1,7 +1,6 @@
 {
-  "schemaVersion": 1,
-  "configHash": "7174e8c6c43fb781f49657c3d9af29b8b49b0b993a9ce59e159df46a7403d73f",
-  "preset": null,
+  "version": 1,
+  "templateBase": "903d72c0dab4321feb621242ad95e48346eda3fe",
   "apps": [
     "admin-app",
     "admin-app-api",
@@ -24,28 +23,6 @@
     "postgres",
     "s3"
   ],
-  "product": {
-    "ciMode": "product",
-    "frontendApiMode": "same-origin",
-    "mobileTargets": [
-      "web"
-    ]
-  },
-  "deployment": {
-    "targets": [
-      "docker"
-    ],
-    "publicDomain": "example.com",
-    "primaryApp": "landing-app",
-    "publicTopology": "single-domain",
-    "kubernetesDelivery": "direct",
-    "infrastructure": {
-      "redis": "bundled",
-      "nats": "bundled",
-      "s3": "bundled"
-    },
-    "imageRegistry": "ghcr.io/your-github-org/nest-react-boilerplate"
-  },
   "identity": {
     "name": "Nest React Boilerplate",
     "slug": "nest-react-boilerplate",
@@ -69,6 +46,28 @@
       "natsClientName": "nest-react-boilerplate-local",
       "s3Bucket": "nest-react-boilerplate"
     }
+  },
+  "product": {
+    "ciMode": "product",
+    "frontendApiMode": "same-origin",
+    "mobileTargets": [
+      "web"
+    ]
+  },
+  "deployment": {
+    "targets": [
+      "docker"
+    ],
+    "publicDomain": "example.com",
+    "primaryApp": "landing-app",
+    "publicTopology": "single-domain",
+    "kubernetesDelivery": "direct",
+    "infrastructure": {
+      "redis": "bundled",
+      "nats": "bundled",
+      "s3": "bundled"
+    },
+    "imageRegistry": "ghcr.io/your-github-org/nest-react-boilerplate"
   },
   "runtime": {
     "ports": {
@@ -142,23 +141,8 @@
       ]
     }
   },
-  "byPlatform": {
-    "backend": [
-      "admin-app-api",
-      "auth-app-api",
-      "notification-consumer",
-      "notification-scheduler",
-      "user-app-api"
-    ],
-    "e2e": [
-      "fullstack-e2e"
-    ],
-    "frontend": [
-      "admin-app",
-      "landing-app",
-      "mobile-app",
-      "site-app",
-      "user-app"
-    ]
-  }
+  "appRenames": {},
+  "configHash": "7174e8c6c43fb781f49657c3d9af29b8b49b0b993a9ce59e159df46a7403d73f",
+  "gate": "skipped",
+  "appliedFiles": {}
 }

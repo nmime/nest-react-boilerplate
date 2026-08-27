@@ -1,6 +1,6 @@
 # Setup Plan Summary
 
-**Configuration hash:** `aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b`
+**Configuration hash:** `7174e8c6c43fb781f49657c3d9af29b8b49b0b993a9ce59e159df46a7403d73f`
 
 ## Applications
 
@@ -40,3 +40,11 @@
 - Redis ownership: bundled
 - NATS ownership: bundled
 - S3 ownership: bundled
+
+## Identity
+
+- Name: Nest React Boilerplate
+- Slug: nest-react-boilerplate
+- Domain: example.com
+- Owner: your-github-org
+- Brand slug: nest-react-boilerplate

@@ -1,5 +1,27 @@
 {
   "schemaVersion": "2.0.0",
+  "apps": [
+    "admin-app",
+    "admin-app-api",
+    "auth-app-api",
+    "fullstack-e2e",
+    "landing-app",
+    "mobile-app",
+    "notification-consumer",
+    "notification-scheduler",
+    "site-app",
+    "user-app",
+    "user-app-api"
+  ],
+  "capabilities": [
+    "authz",
+    "design-tokens",
+    "feature-flags",
+    "i18n",
+    "notifications",
+    "postgres",
+    "s3"
+  ],
   "identity": {
     "name": "Nest React Boilerplate",
     "slug": "nest-react-boilerplate",
@@ -24,28 +46,18 @@
       "s3Bucket": "nest-react-boilerplate"
     }
   },
-  "apps": [
-    "admin-app",
-    "admin-app-api",
-    "auth-app-api",
-    "fullstack-e2e",
-    "landing-app",
-    "mobile-app",
-    "notification-consumer",
-    "notification-scheduler",
-    "site-app",
-    "user-app",
-    "user-app-api"
-  ],
   "appRenames": {},
-  "capabilities": ["authz", "design-tokens", "feature-flags", "i18n", "notifications", "postgres", "s3"],
   "product": {
     "ciMode": "product",
     "frontendApiMode": "same-origin",
-    "mobileTargets": ["web"]
+    "mobileTargets": [
+      "web"
+    ]
   },
   "deployment": {
-    "targets": ["docker"],
+    "targets": [
+      "docker"
+    ],
     "publicDomain": "example.com",
     "primaryApp": "landing-app",
     "publicTopology": "single-domain",

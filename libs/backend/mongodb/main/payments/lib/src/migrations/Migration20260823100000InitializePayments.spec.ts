@@ -4,35 +4,35 @@ import { Migration20260823100000InitializePayments } from './Migration2026082310
 import { paymentsMongoMigrations } from './index';
 
 const collectionMocks = vi.hoisted(() => ({
-  initializePaymentsCollection: vi.fn(() => Promise.resolve()),
-  verifyPaymentsCollection: vi.fn(() => Promise.resolve()),
+  initializePaymentsCollections: vi.fn(() => Promise.resolve()),
+  verifyPaymentsCollections: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock('../payments-mongo.collection', async (importOriginal) => {
   const original = await importOriginal<typeof import('../payments-mongo.collection')>();
   return {
     ...original,
-    initializePaymentsCollection: collectionMocks.initializePaymentsCollection,
-    verifyPaymentsCollection: collectionMocks.verifyPaymentsCollection,
+    initializePaymentsCollections: collectionMocks.initializePaymentsCollections,
+    verifyPaymentsCollections: collectionMocks.verifyPaymentsCollections,
   };
 });
 
 describe('Migration20260823100000InitializePayments', () => {
-  it('declares the stable migration id and name', () => {
+  it('declares the stable migration id, name, and exported ordering', () => {
     expect(Migration20260823100000InitializePayments.id).toBe('20260823100000_initialize_payments');
     expect(Migration20260823100000InitializePayments.name).toBe('InitializePayments');
     expect(paymentsMongoMigrations).toEqual([Migration20260823100000InitializePayments]);
   });
 
-  it('up() initializes the collection', async () => {
+  it('up() initializes all payment collections', async () => {
     await Migration20260823100000InitializePayments.up({} as never);
 
-    expect(collectionMocks.initializePaymentsCollection).toHaveBeenCalledOnce();
+    expect(collectionMocks.initializePaymentsCollections).toHaveBeenCalledOnce();
   });
 
-  it('verify() asserts the collection definition', async () => {
+  it('verify() asserts all collection definitions', async () => {
     await Migration20260823100000InitializePayments.verify({} as never);
 
-    expect(collectionMocks.verifyPaymentsCollection).toHaveBeenCalledOnce();
+    expect(collectionMocks.verifyPaymentsCollections).toHaveBeenCalledOnce();
   });
 });

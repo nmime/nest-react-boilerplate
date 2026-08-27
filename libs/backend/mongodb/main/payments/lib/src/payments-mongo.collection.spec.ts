@@ -1,16 +1,22 @@
 // @requirements REQ-PAYMENT-WEBHOOK-002
 import { describe, expect, it, vi } from 'vitest';
 import {
+  PaymentEventsCollectionName,
+  PaymentEventsOutboxIndexName,
+  PaymentProviderHealthCollectionName,
+  PaymentProvidersCollectionName,
+  PaymentRefundsCollectionName,
   PaymentsCollectionName,
-  PaymentsCreatedAtIndexName,
-  PaymentsIndexes,
   PaymentsCollectionValidator,
-  initializePaymentsCollection,
-  verifyPaymentsCollection,
+  PaymentsMongoCollectionDefinitions,
+  PaymentWebhookReceiptsCollectionName,
+  PaymentWebhookReplayIndexName,
+  initializePaymentsCollections,
+  verifyPaymentsCollections,
 } from './payments-mongo.collection';
 
 const migrationMocks = vi.hoisted(() => ({
-  assertCollectionDefinition: vi.fn(() => Promise.resolve()),
+  assertCollectionDefinition: vi.fn((_database: unknown, _definition: { name: string }) => Promise.resolve()),
 }));
 
 vi.mock('../../../shared/lib/src/migrations/mongo-migration', async (importOriginal) => {
@@ -18,82 +24,99 @@ vi.mock('../../../shared/lib/src/migrations/mongo-migration', async (importOrigi
   return { ...original, assertCollectionDefinition: migrationMocks.assertCollectionDefinition };
 });
 
-describe('initializePaymentsCollection', () => {
-  it('creates a new collection and its named index', async () => {
-    const createIndexes = vi.fn().mockResolvedValue([]);
-    const database = {
-      createCollection: vi.fn().mockResolvedValue(undefined),
-      command: vi.fn(),
-      collection: vi.fn(() => ({ createIndexes })),
-    };
+function createDatabase(createCollection = vi.fn().mockResolvedValue(undefined)) {
+  const createIndexes = vi.fn().mockResolvedValue([]);
+  const database = {
+    createCollection,
+    command: vi.fn().mockResolvedValue({ ok: 1 }),
+    collection: vi.fn((name: string) => ({ name, createIndexes })),
+  };
+  return { createIndexes, database };
+}
 
-    await initializePaymentsCollection(database as never);
+describe('payments MongoDB collections', () => {
+  it('declares all six strict collections and the replay/outbox indexes', () => {
+    expect(PaymentsMongoCollectionDefinitions.map(({ name }) => name)).toEqual([
+      PaymentsCollectionName,
+      PaymentEventsCollectionName,
+      PaymentWebhookReceiptsCollectionName,
+      PaymentProvidersCollectionName,
+      PaymentRefundsCollectionName,
+      PaymentProviderHealthCollectionName,
+    ]);
+    expect(PaymentsCollectionValidator).toMatchObject({
+      $jsonSchema: {
+        required: expect.arrayContaining(['status', 'amount', 'tenantId', 'providerCode']),
+        properties: {
+          status: { enum: ['pending', 'processing', 'paid', 'failed', 'cancelled', 'expired', 'refunded'] },
+          amount: { pattern: '^\\d+(\\.\\d+)?$' },
+        },
+      },
+    });
+    expect(
+      PaymentsMongoCollectionDefinitions.find(({ name }) => name === PaymentWebhookReceiptsCollectionName)?.indexes,
+    ).toContainEqual(
+      expect.objectContaining({
+        name: PaymentWebhookReplayIndexName,
+        key: { providerCode: 1, idempotencyKey: 1 },
+        unique: true,
+      }),
+    );
+    expect(
+      PaymentsMongoCollectionDefinitions.find(({ name }) => name === PaymentEventsCollectionName)?.indexes,
+    ).toContainEqual(expect.objectContaining({ name: PaymentEventsOutboxIndexName }));
+  });
 
-    expect(database.createCollection).toHaveBeenCalledWith(
+  it('creates every collection and its indexes in design order', async () => {
+    const { createIndexes, database } = createDatabase();
+
+    await initializePaymentsCollections(database as never);
+
+    expect(database.createCollection).toHaveBeenCalledTimes(6);
+    expect(database.createCollection).toHaveBeenNthCalledWith(
+      1,
       PaymentsCollectionName,
       expect.objectContaining({ validator: PaymentsCollectionValidator, validationLevel: 'strict' }),
     );
-    expect(database.command).not.toHaveBeenCalled();
-    expect(createIndexes).toHaveBeenCalledWith(PaymentsIndexes);
+    expect(database.collection.mock.calls.map(([name]) => name)).toEqual([
+      PaymentsCollectionName,
+      PaymentEventsCollectionName,
+      PaymentWebhookReceiptsCollectionName,
+      PaymentProvidersCollectionName,
+      PaymentRefundsCollectionName,
+    ]);
+    expect(createIndexes).toHaveBeenCalledTimes(5);
   });
 
-  it('reconciles an existing collection and creates the named index idempotently', async () => {
-    const createIndexes = vi.fn().mockResolvedValue([]);
-    const database = {
-      createCollection: vi.fn().mockRejectedValue({ code: 48 }),
-      command: vi.fn().mockResolvedValue({ ok: 1 }),
-      collection: vi.fn(() => ({ createIndexes })),
-    };
+  it('reconciles an existing collection validator and continues', async () => {
+    const createCollection = vi.fn().mockRejectedValueOnce({ code: 48 }).mockResolvedValue(undefined);
+    const { database } = createDatabase(createCollection);
 
-    await initializePaymentsCollection(database as never);
+    await initializePaymentsCollections(database as never);
 
     expect(database.command).toHaveBeenCalledWith(
       expect.objectContaining({ collMod: PaymentsCollectionName, validator: PaymentsCollectionValidator }),
     );
-    expect(createIndexes).toHaveBeenCalledWith([expect.objectContaining({ name: PaymentsCreatedAtIndexName })]);
   });
 
-  it('rethrows a namespace error that is not namespace-exists', async () => {
-    const database = {
-      createCollection: vi.fn().mockRejectedValue('boom'),
-      command: vi.fn(),
-      collection: vi.fn(),
-    };
+  it.each([
+    ['string error', 'boom'],
+    ['object without code', new Error('locked')],
+    ['other code', { code: 1 }],
+  ])('rethrows %s during collection creation', async (_label, error) => {
+    const { database } = createDatabase(vi.fn().mockRejectedValue(error));
 
-    await expect(initializePaymentsCollection(database as never)).rejects.toBe('boom');
-    expect(database.command).not.toHaveBeenCalled();
+    await expect(initializePaymentsCollections(database as never)).rejects.toBe(error);
   });
 
-  it('rethrows an object error without a code', async () => {
-    const error = Object.assign(new Error('locked'), {});
-    const database = {
-      createCollection: vi.fn().mockRejectedValue(error),
-      command: vi.fn(),
-      collection: vi.fn(),
-    };
+  it('verifies every live collection definition', async () => {
+    const database = {} as never;
 
-    await expect(initializePaymentsCollection(database as never)).rejects.toBe(error);
-  });
+    await verifyPaymentsCollections(database);
 
-  it('rethrows an object error whose code is not namespace-exists', async () => {
-    const error = { code: 1, message: 'unavailable' };
-    const database = {
-      createCollection: vi.fn().mockRejectedValue(error),
-      command: vi.fn(),
-      collection: vi.fn(),
-    };
-
-    await expect(initializePaymentsCollection(database as never)).rejects.toBe(error);
-  });
-});
-
-describe('verifyPaymentsCollection', () => {
-  it('asserts the collection definition against the live database', async () => {
-    await verifyPaymentsCollection({} as never);
-
-    expect(migrationMocks.assertCollectionDefinition).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ name: PaymentsCollectionName, indexes: PaymentsIndexes }),
+    expect(migrationMocks.assertCollectionDefinition).toHaveBeenCalledTimes(6);
+    expect(migrationMocks.assertCollectionDefinition.mock.calls.map(([, definition]) => definition.name)).toEqual(
+      PaymentsMongoCollectionDefinitions.map(({ name }) => name),
     );
   });
 });

@@ -38,7 +38,6 @@ export async function reconfigureGenerator(tree: Tree, options: ReconfigureGener
     dryRun,
     force: options.force,
     includeMetadata: !dryRun,
-    targetPaths: dryRun ? await fs.list() : undefined,
     assertTenantChangeAllowed: async () => {
       for (const marker of ['.nrb/seeded', '.nrb/seed.json', '.nrb/seed-state.json']) {
         if (tree.exists(marker)) {

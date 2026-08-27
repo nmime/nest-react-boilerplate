@@ -15,6 +15,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Presets and Technologies](setup/presets-and-technologies.md) — preset matrix, supported apps/capabilities, dependency rules.
 - [CLI Reference](setup/cli-reference.md) — every `nrb` / `repo-tooling` command with flags and examples.
 - [Nx Generators](setup/nx-generators.md) — repository generators, generated contracts, and verification.
+- [Reconfigure Workflow](boilerplate/reconfigure.md) — schema-v2 identity/runtime round trips, audit, no-op, drift, and rollback contracts.
 - [Discord Bot Setup](setup/discord-bot.md) — select, configure, and validate the Discord bot integration.
 
 ## Day-to-day usage

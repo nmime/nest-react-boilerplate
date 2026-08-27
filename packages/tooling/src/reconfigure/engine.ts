@@ -90,7 +90,8 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   const replacements = buildOrderedReplacements(options.previous, options.desired);
   const portReplacements = buildAnchoredPortReplacements(options.previous.runtime, options.desired.runtime);
   const templateDefaults = createTemplateDefaultConfig(options.desired);
-  const restoringTemplateDefaults = configHash(options.desired) === configHash(templateDefaults);
+  const restoringTemplateDefaults =
+    options.manifest !== undefined && configHash(options.desired) === configHash(templateDefaults);
   const templateReplacements = buildOrderedReplacements(templateDefaults, options.desired);
   const templatePortReplacements = buildAnchoredPortReplacements(templateDefaults.runtime, options.desired.runtime);
   const previousTargets = new Set(Object.keys(options.manifest?.appliedFiles ?? {}));
@@ -123,7 +124,10 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
       hasOriginalContent && !isNoopTransition ? templatePortReplacements : portReplacements;
     const { content: after, rules } =
       restoringTemplateDefaults && hasOriginalContent
-        ? { content: restored, rules: options.manifest?.appliedFiles[path]?.rules ?? [] }
+        ? {
+            content: options.manifest?.appliedFiles[path]?.originalContent ?? restored,
+            rules: options.manifest?.appliedFiles[path]?.rules ?? [],
+          }
         : generated === null
           ? applyRules(restored, templateDefaults, options.desired, effectiveReplacements, effectivePortReplacements)
           : { content: generated, rules: ['runtime:ports-document'] };

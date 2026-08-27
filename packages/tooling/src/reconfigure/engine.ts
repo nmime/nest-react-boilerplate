@@ -111,7 +111,7 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     const restored =
       replacements.length === 0 && portReplacements.length === 0
         ? before
-        : restoreOriginalContent(before, options.manifest?.appliedFiles[path]);
+        : restoreOriginalContent(before, options.manifest?.appliedFiles[path], options.desired);
     const generated = path === 'docs/PORTS.md' ? await renderPortsDocument(options.desired) : null;
     const { content: after, rules } =
       generated === null
@@ -344,9 +344,13 @@ function isBrandLabel(label: string): boolean {
   ].includes(label);
 }
 
-function restoreOriginalContent(content: string, entry: AppliedFileManifest | undefined): string {
-  if (!entry?.originalContent || hashString(content) !== entry.hash) return content;
-  return entry.originalContent;
+function restoreOriginalContent(content: string, entry: AppliedFileManifest | undefined, desired: NrbConfig): string {
+  if (!entry || hashString(content) !== entry.hash) return content;
+  if (entry.originalContent !== undefined) return entry.originalContent;
+  const templateDefaults = createTemplateDefaultConfig(desired);
+  const replacements = buildOrderedReplacements(desired, templateDefaults);
+  const ports = buildAnchoredPortReplacements(desired.runtime, templateDefaults.runtime);
+  return applyRules(content, desired, templateDefaults, replacements, ports).content;
 }
 
 function applyRules(

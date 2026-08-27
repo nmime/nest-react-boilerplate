@@ -3,17 +3,6 @@ import { apply, backupFiles, rollback, type ApplyOptions } from '../setup/apply.
 import { updateFile, type SetupOperation } from '../setup/operations.ts';
 import type { NrbConfig } from '../setup/schema.ts';
 import { buildState, hashString, type SetupState } from '../setup/state.ts';
-import { configuredClosureGraph } from '../setup/closure-workspace.ts';
-import { readClosureArtifactInputs, renderClosureArtifacts } from '../setup/closure-materializer.ts';
-import { buildSelectedClosure, createLiveProjectGraph } from '../setup/closure.ts';
-import {
-  generateCapabilitiesManifest,
-  generateComposeEnvironment,
-  generateSummaryMd,
-  generateWorkspaceManifest,
-  resolveConfig,
-  type PlanSummary,
-} from '../setup/planner.ts';
 import {
   defaultConfigPath,
   identityManifestPath,
@@ -251,8 +240,14 @@ export async function runReconfigure(options: RunReconfigureOptions): Promise<Ru
 
   async function deriveClosureOperations(desired: NrbConfig): Promise<SetupOperation[]> {
     if (!options.workspaceRoot) return [];
-    const selection = resolveConfig(desired);
-    const summary: PlanSummary = {
+    const [closureWorkspace, closureMaterializer, closureModule, planner] = await Promise.all([
+      import('../setup/closure-workspace.ts'),
+      import('../setup/closure-materializer.ts'),
+      import('../setup/closure.ts'),
+      import('../setup/planner.ts'),
+    ]);
+    const selection = planner.resolveConfig(desired);
+    const summary: import('../setup/planner.ts').PlanSummary = {
       apps: [...selection.apps].sort(),
       capabilities: [...selection.capabilities].sort(),
       product: desired.product,
@@ -264,29 +259,32 @@ export async function runReconfigure(options: RunReconfigureOptions): Promise<Ru
       preset: desired.preset,
       configHash: plan.configHash,
     };
-    const liveGraph = await createLiveProjectGraph();
-    const closure = buildSelectedClosure(configuredClosureGraph(options.workspaceRoot, liveGraph), {
-      apps: selection.apps,
-      capabilities: selection.capabilities,
-      configHash: plan.configHash,
-      product: desired.product,
-      deployment: desired.deployment,
-      identity: desired.identity,
-      runtime: desired.runtime,
-      session: desired.session,
-      tenant: desired.tenant,
-    });
-    const artifactInputs = readClosureArtifactInputs(options.workspaceRoot);
-    const artifacts = renderClosureArtifacts(options.workspaceRoot, closure, {
+    const liveGraph = await closureModule.createLiveProjectGraph();
+    const closure = closureModule.buildSelectedClosure(
+      closureWorkspace.configuredClosureGraph(options.workspaceRoot, liveGraph),
+      {
+        apps: selection.apps,
+        capabilities: selection.capabilities,
+        configHash: plan.configHash,
+        product: desired.product,
+        deployment: desired.deployment,
+        identity: desired.identity,
+        runtime: desired.runtime,
+        session: desired.session,
+        tenant: desired.tenant,
+      },
+    );
+    const artifactInputs = closureMaterializer.readClosureArtifactInputs(options.workspaceRoot);
+    const artifacts = closureMaterializer.renderClosureArtifacts(options.workspaceRoot, closure, {
       ...artifactInputs,
       configContent: serializeJson(desired),
     });
     const operations: SetupOperation[] = [];
     const generated = [
-      generateSummaryMd(summary),
-      generateWorkspaceManifest(summary),
-      generateCapabilitiesManifest(summary),
-      generateComposeEnvironment(summary),
+      planner.generateSummaryMd(summary),
+      planner.generateWorkspaceManifest(summary),
+      planner.generateCapabilitiesManifest(summary),
+      planner.generateComposeEnvironment(summary),
     ];
     for (const { path, content } of [...Object.values(artifacts), ...generated]) {
       if ((await options.fs.read(path)) !== content) {

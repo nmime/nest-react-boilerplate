@@ -100,7 +100,7 @@ unchanged repeat is a zero-operation "already up to date" result. The command
 refuses and names any engine-tracked file whose recorded hash drifted; use
 `--force` only after reviewing that file. Every write target is backed up before
 apply, and any mid-apply error restores the pre-run bytes. The equivalent CI/Nx
-surface is `pnpm exec nx generate @repo/tooling:reconfigure --dryRun`.
+surface is `pnpm exec nx generate @repo/tooling:reconfigure --plan --dryRun`.
 
 `pnpm run onboarding:verify` is a non-deploying proof after installation. It
 runs the workspace doctor, resolves all five presets as dry runs with exact app

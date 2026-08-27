@@ -76,7 +76,7 @@ the setup app/capability selection.
 pnpm nrb reconfigure --dry-run
 pnpm nrb reconfigure
 pnpm nrb reconfigure --config product.nrb.json --dry-run
-pnpm exec nx generate @repo/tooling:reconfigure --dryRun
+pnpm exec nx generate @repo/tooling:reconfigure --plan --dryRun
 ```
 
 | Flag              | Type    | Description                                                      |

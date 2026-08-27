@@ -8,13 +8,13 @@
   "properties": {
     "config": {
       "type": "string",
-      "description": "Workspace-relative JSON config path",
+      "description": "JSON config path inside the Nx workspace (relative or absolute)",
       "default": "nrb.config.json",
       "x-priority": "important"
     },
-    "dryRun": {
+    "plan": {
       "type": "boolean",
-      "description": "Print the ordered file plan without modifying the Nx Tree",
+      "description": "Print the shared rewrite-only plan; combine with Nx --dryRun to avoid flushing the Tree",
       "default": false
     },
     "force": {

@@ -1,5 +1,6 @@
+import { isAbsolute, relative, resolve } from 'node:path';
 import type { Tree } from 'nx/src/generators/tree';
-import { logger } from '@nx/devkit';
+import { logger, workspaceRoot } from '@nx/devkit';
 import { createNxTreeAdapter, readJsonFile } from '../../setup/adapters/nx-tree.ts';
 import { parseNrbConfig, type NrbConfig } from '../../setup/schema.ts';
 import { emptyState, migrateState } from '../../setup/state.ts';
@@ -8,14 +9,15 @@ import { runReconfigure } from '../../reconfigure/run.ts';
 
 export interface ReconfigureGeneratorOptions {
   config?: string;
-  dryRun?: boolean;
+  plan?: boolean;
   force?: boolean;
 }
 
 export async function reconfigureGenerator(tree: Tree, options: ReconfigureGeneratorOptions): Promise<void> {
-  const configPath = options.config ?? 'nrb.config.json';
+  const dryRun = options.plan ?? false;
+  const configPath = normalizeConfigPath(options.config ?? 'nrb.config.json');
   const rawConfig = readJsonFile(tree, configPath);
-  if (!rawConfig) throw new Error(`Configuration file not found: ${configPath}`);
+  if (!rawConfig) throw new Error(`Configuration file not found: ${options.config ?? configPath}`);
   const desired = parseNrbConfig(rawConfig);
   const rawManifest = readJsonFile<unknown>(tree, '.nrb/identity.json');
   if (rawManifest !== null && !isIdentityManifest(rawManifest)) {
@@ -24,16 +26,19 @@ export async function reconfigureGenerator(tree: Tree, options: ReconfigureGener
   const manifest: IdentityManifest | null = rawManifest;
   const rawState = readJsonFile<unknown>(tree, '.nrb/state.json');
   const state = rawState === null ? emptyState : migrateState(rawState);
+  const fs = createNxTreeAdapter(tree);
   const result = await runReconfigure({
-    fs: createNxTreeAdapter(tree),
+    fs,
     desired,
     previous: createIdentityManifestConfig(desired, manifest),
     manifest,
     state,
     templateBase: manifest?.templateBase ?? 'nx-tree',
     gate: 'off',
-    dryRun: options.dryRun,
+    dryRun,
     force: options.force,
+    includeMetadata: !dryRun,
+    targetPaths: dryRun ? await fs.list() : undefined,
     assertTenantChangeAllowed: async () => {
       for (const marker of ['.nrb/seeded', '.nrb/seed.json', '.nrb/seed-state.json']) {
         if (tree.exists(marker)) {
@@ -52,6 +57,15 @@ export async function reconfigureGenerator(tree: Tree, options: ReconfigureGener
   }
   if (result.status === 'rolled-back') throw new Error(result.error ?? 'Reconfigure failed and was rolled back.');
   printPlan(result.plan.rewriteOperations, desired, result.status);
+}
+
+function normalizeConfigPath(configPath: string): string {
+  if (!isAbsolute(configPath)) return configPath;
+  const relativePath = relative(workspaceRoot, resolve(configPath)).replaceAll('\\', '/');
+  if (!relativePath || relativePath.startsWith('../') || relativePath === '..') {
+    throw new Error(`Configuration file must be inside the Nx workspace: ${configPath}`);
+  }
+  return relativePath;
 }
 
 function printPlan(operations: readonly { path: string }[], _config: NrbConfig, status: string): void {

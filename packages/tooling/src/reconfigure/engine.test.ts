@@ -429,6 +429,30 @@ describe('reconfigure engine state and rollback', () => {
     assert.equal(final['nrb.config.json'], original['nrb.config.json']);
   });
 
+  it('rewrites the edge port in Helm listenPort values', async () => {
+    const previous = config();
+    const desired = parseNrbConfig({
+      ...previous,
+      runtime: { ...previous.runtime, ports: { ...previous.runtime.ports, edge: 8180 } },
+    });
+    const fs = memoryFilesystem({ '.helm/values.yaml': 'frontendNginx:\n  listenPort: 8080\n' });
+
+    const result = await runReconfigure({
+      fs,
+      desired,
+      previous,
+      manifest: null,
+      state: emptyState,
+      templateBase: 'abc123',
+      force: true,
+      includeMetadata: false,
+      targetPaths: ['.helm/values.yaml'],
+    });
+
+    assert.equal(result.status, 'updated');
+    assert.equal(await fs.read('.helm/values.yaml'), 'frontendNginx:\n  listenPort: 8180\n');
+  });
+
   it('rewrites container and staging ports only in anchored deployment contexts', async () => {
     const previous = config();
     const desired = parseNrbConfig({

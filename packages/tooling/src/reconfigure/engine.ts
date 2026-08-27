@@ -381,6 +381,9 @@ function applyAnchoredPortReplacement(content: string, replacement: AnchoredRepl
   );
   result = result.replace(new RegExp(`(\\$\\{[A-Z][A-Z0-9_]*_PORT:-)${escaped}(?=\\})`, 'gu'), `$1${replacement.to}`);
   result = result.replace(new RegExp(`(\\bport\\s*:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+  if (replacement.label === 'port:edge') {
+    result = result.replace(new RegExp(`(\\blistenPort\\s*:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+  }
   result = result.replace(new RegExp(`(["'])${escaped}(:\\d+)(["'])`, 'gu'), `$1${replacement.to}$2$3`);
   result = result.replace(new RegExp(`(\\|\\|\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
   result = result.replace(new RegExp(`(\\?\\?\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);

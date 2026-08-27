@@ -10,6 +10,7 @@ import { PaymentsPersistence, type CreatePaymentsDto, type PaymentsDto } from '@
  * real customer orchestration (create with FX snapshot + orderRef idempotency, query, cancel,
  * refund, manual-status).
  */
+/* v8 ignore next -- Nest's bare class-decorator helper has one synthetic branch. */
 @Injectable()
 export class PaymentsService {
   constructor(private readonly persistence: PaymentsPersistence) {}

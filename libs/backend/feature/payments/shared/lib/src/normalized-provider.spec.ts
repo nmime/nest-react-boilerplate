@@ -75,15 +75,17 @@ describe('ProviderHttpError (design §4.0 error wrapper)', () => {
     expect(error.providerStatus).toBe(401);
     expect(error.problemType).toBe('payment-provider-credential-invalid');
     expect(error.retryable).toBe(false);
+    expect(error.retryAfterSeconds).toBeUndefined();
   });
 
   it('leaves optional fields absent when the caller has none', () => {
-    const error = new ProviderHttpError('network', 'socket hang up', { retryable: true });
+    const error = new ProviderHttpError('network', 'socket hang up', { retryable: true, retryAfterSeconds: 3 });
 
     expect(error.class).toBe('network');
     expect(error.providerStatus).toBeUndefined();
     expect(error.problemType).toBeUndefined();
     expect(error.retryable).toBe(true);
+    expect(error.retryAfterSeconds).toBe(3);
   });
 
   it('rejects values that are not provider HTTP errors', () => {

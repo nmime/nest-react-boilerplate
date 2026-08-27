@@ -42,13 +42,13 @@
 
 ## 5. Provider framework (U5)
 
-- [ ] 5.1 Symbol-token `useFactory` registry + `PaymentProviderResolver`
+- [x] 5.1 Symbol-token `useFactory` registry + `PaymentProviderResolver`
       (TTL cache, shadow, region, priority, health exclusion).
-- [ ] 5.2 `ProviderHealthService` (up/degraded/down/disabled, §5.4
+- [x] 5.2 `ProviderHealthService` (up/degraded/down/disabled, §5.4
       thresholds).
-- [ ] 5.3 `ProviderHttpError` + `provider-http.ts` (retry/backoff/token
+- [x] 5.3 `ProviderHttpError` + `provider-http.ts` (retry/backoff/token
       bucket/semaphore) + provider problem exceptions.
-- [ ] 5.4 Fail-closed proven: disabled → 503, down → 503, region-denied →
+- [x] 5.4 Fail-closed proven: disabled → 503, down → 503, region-denied →
       503, no-provider → 503, degraded → allowed.
 
 ## 6. Webhook ingress (U6)

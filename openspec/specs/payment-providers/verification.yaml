@@ -28,6 +28,12 @@ requirements:
           - pr
           - main
       - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/service/payment-provider-resolver.service.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
         file: libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/repositories/payments.repository.spec.ts
         target: '@app/backend-postgres-main-payments:test'
         lanes:
@@ -89,6 +95,18 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/providers/provider-http.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/providers/provider-errors.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
       - kind: documentation
         file: openspec/specs/payment-providers/spec.md
         lanes:
@@ -109,6 +127,18 @@ requirements:
       alternativeEvidence:
         - vitest
     evidence:
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/service/provider-health.service.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/service/payment-provider-resolver.service.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/backend/postgres/main/payments/lib/src/alias.spec.ts
         target: '@app/backend-postgres-main-payments:test'

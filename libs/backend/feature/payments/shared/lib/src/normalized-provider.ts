@@ -65,11 +65,12 @@ export class ProviderHttpError extends Error {
   readonly providerStatus?: number;
   readonly problemType?: string;
   readonly retryable: boolean;
+  readonly retryAfterSeconds?: number;
 
   constructor(
     errorClass: ProviderHttpErrorClass,
     detail: string,
-    extras: { providerStatus?: number; problemType?: string; retryable: boolean },
+    extras: { providerStatus?: number; problemType?: string; retryable: boolean; retryAfterSeconds?: number },
   ) {
     super(detail);
     this.name = 'ProviderHttpError';
@@ -78,6 +79,7 @@ export class ProviderHttpError extends Error {
     this.providerStatus = extras.providerStatus;
     this.problemType = extras.problemType;
     this.retryable = extras.retryable;
+    this.retryAfterSeconds = extras.retryAfterSeconds;
   }
 }
 

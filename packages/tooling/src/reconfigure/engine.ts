@@ -111,14 +111,15 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     const before = await options.fs.read(path);
     if (before === null) continue;
     beforeByFile.set(path, before);
-    const restored =
-      replacements.length === 0 && portReplacements.length === 0
-        ? before
-        : restoreOriginalContent(before, options.manifest?.appliedFiles[path], options.desired);
+    const isNoopTransition = replacements.length === 0 && portReplacements.length === 0;
+    const restored = isNoopTransition
+      ? before
+      : restoreOriginalContent(before, options.manifest?.appliedFiles[path], options.desired);
     const generated = path === 'docs/PORTS.md' ? await renderPortsDocument(options.desired) : null;
     const hasOriginalContent = options.manifest?.appliedFiles[path]?.originalContent !== undefined;
-    const effectiveReplacements = hasOriginalContent ? templateReplacements : replacements;
-    const effectivePortReplacements = hasOriginalContent ? templatePortReplacements : portReplacements;
+    const effectiveReplacements = hasOriginalContent && !isNoopTransition ? templateReplacements : replacements;
+    const effectivePortReplacements =
+      hasOriginalContent && !isNoopTransition ? templatePortReplacements : portReplacements;
     const { content: after, rules } =
       generated === null
         ? applyRules(restored, templateDefaults, options.desired, effectiveReplacements, effectivePortReplacements)

@@ -61,7 +61,20 @@ const FAMILY_ORDER: Record<string, number> = {
 };
 
 function familyPriority(label: string): number {
-  return FAMILY_ORDER[label] ?? 99;
+  const family = label.startsWith('appRename:')
+    ? 'appRename'
+    : label.startsWith('port:')
+      ? 'port'
+      : label.startsWith('session:')
+        ? 'session'
+        : label.startsWith('tenant:')
+          ? 'tenant'
+          : label.startsWith('runtime:')
+            ? 'port'
+            : label.startsWith('deployment:')
+              ? 'domain'
+              : label;
+  return FAMILY_ORDER[family] ?? 99;
 }
 
 // ---------------------------------------------------------------------------
@@ -184,6 +197,9 @@ function buildAppRenameReplacements(
       if (from !== prevTo) {
         out.push({ from, to: nextTo, label: `appRename:${from}:key` });
       }
+    } else if (prevTo !== undefined && nextTo === undefined) {
+      // Rename removed — restore the canonical application ID.
+      out.push({ from: prevTo, to: from, label: `appRename:${from}` });
     } else if (prevTo === undefined && nextTo !== undefined) {
       // New rename added — rewrite the original app id to the new name
       out.push({ from, to: nextTo, label: `appRename:${from}` });

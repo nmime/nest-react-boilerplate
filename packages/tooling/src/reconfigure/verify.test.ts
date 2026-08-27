@@ -3,6 +3,23 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { runVerificationGate, verificationCommands } from './verify.js';
 describe('reconfigure verification gate', () => {
+  it('pins the design gate commands and order', () => {
+    assert.deepEqual(
+      verificationCommands.map(({ name, args }) => [name, args.join(' ')]),
+      [
+        ['static-check', 'run tooling:static-check'],
+        ['format', 'run format:check'],
+        ['docs', 'run docs:check'],
+        ['lint', 'run lint'],
+        ['typecheck', 'run typecheck'],
+        ['tests', 'run test'],
+        ['spec-validate', 'run spec:validate'],
+        ['i18n-catalogs', 'run i18n:catalogs:check'],
+        ['frontend-fsd', 'run frontend:fsd:check'],
+      ],
+    );
+  });
+
   it('runs the ordered gate and audit', async () => {
     const seen: string[] = [];
     const result = await runVerificationGate({

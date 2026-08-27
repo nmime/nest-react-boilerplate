@@ -108,6 +108,9 @@ export function isValidSetupState(raw: unknown): raw is SetupState {
     ) {
       return false;
     }
+    for (const [path, contentHash] of Object.entries(state.reconfiguredFiles as Record<string, string>)) {
+      if (files[path] !== contentHash) return false;
+    }
   }
 
   return state.digest === computeStateDigest(files as Record<string, string>);

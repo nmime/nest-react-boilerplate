@@ -597,8 +597,15 @@ export function plan(config: NrbConfig, currentState: SetupState = emptyState): 
     desiredFiles[filePath] = hashString(content);
   }
 
-  // Diff against current state
-  const diff = diffState(currentState, desiredFiles);
+  // Diff setup-owned files only. Reconfigure-owned hashes share state.json but
+  // are not setup prune/update candidates.
+  const setupState = buildState(
+    currentState.configHash,
+    Object.fromEntries(
+      Object.entries(currentState.files).filter(([path]) => currentState.reconfiguredFiles?.[path] === undefined),
+    ),
+  );
+  const diff = diffState(setupState, desiredFiles);
 
   // Prunable files (only when prune option is set)
   const prunableFiles = config.options.prune ? diff.toPrune : [];
@@ -636,8 +643,9 @@ export function plan(config: NrbConfig, currentState: SetupState = emptyState): 
 
   const sortedOps = sortOperations(operations);
 
-  // Build expected state — after applying, files will match desiredFiles
-  const expectedState = buildState(cfgHash, desiredFiles);
+  // Build expected state while preserving reconfigure-owned hashes.
+  const reconfiguredFiles = currentState.reconfiguredFiles ?? {};
+  const expectedState = buildState(cfgHash, { ...desiredFiles, ...reconfiguredFiles }, reconfiguredFiles);
 
   return {
     operations: sortedOps,

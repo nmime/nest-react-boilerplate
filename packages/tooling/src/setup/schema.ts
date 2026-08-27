@@ -49,6 +49,32 @@ export type AppId = (typeof appIds)[number];
 export * from './capability-registry.ts';
 export type CapabilityId = BaseCapabilityId | (string & {});
 
+/** The selection shipped by a fresh checkout before any product reconfiguration. */
+export const defaultTemplateApps = [
+  'admin-app',
+  'admin-app-api',
+  'auth-app-api',
+  'fullstack-e2e',
+  'landing-app',
+  'mobile-app',
+  'notification-consumer',
+  'notification-scheduler',
+  'site-app',
+  'user-app',
+  'user-app-api',
+] as const satisfies readonly AppId[];
+
+/** The capabilities shipped by a fresh checkout before any product reconfiguration. */
+export const defaultTemplateCapabilities = [
+  'authz',
+  'design-tokens',
+  'feature-flags',
+  'i18n',
+  'notifications',
+  'postgres',
+  's3',
+] as const satisfies readonly CapabilityId[];
+
 export const ciModeIds = ['product', 'maintainer'] as const;
 export type CiMode = (typeof ciModeIds)[number];
 export const frontendApiModeIds = ['same-origin', 'split-origin'] as const;
@@ -344,7 +370,18 @@ const appRenamesSchema = z
     }
   });
 
-const runtimePortsSchema = z.record(z.string(), z.number().int().min(1).max(65535)).default({ ...defaultRuntimePorts });
+const runtimePortNames = Object.keys(defaultRuntimePorts) as Array<keyof typeof defaultRuntimePorts>;
+const runtimePortsSchema = z
+  .record(z.string(), z.number().int().min(1).max(65535))
+  .default({})
+  .superRefine((value, ctx) => {
+    for (const name of Object.keys(value)) {
+      if (!runtimePortNames.includes(name as keyof typeof defaultRuntimePorts)) {
+        ctx.addIssue({ code: 'custom', message: `Unknown runtime port: ${name}` });
+      }
+    }
+  })
+  .transform((value) => ({ ...defaultRuntimePorts, ...value }));
 
 const runtimeSchema = z
   .object({
@@ -540,6 +577,61 @@ export function createNrbConfigSchema(capabilityIdSet: readonly string[]) {
           code: 'custom',
           path: ['deployment', 'publicDomain'],
           message: `deployment.publicDomain (${value.deployment.publicDomain}) must equal identity.domain (${value.identity.domain})`,
+        });
+      }
+      const renameTargets = new Map<string, string>();
+      for (const [source, target] of Object.entries(value.appRenames)) {
+        const prior = renameTargets.get(target);
+        if (prior && prior !== source) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['appRenames', source],
+            message: `appRenames target ${target} is already used by ${prior}`,
+          });
+        }
+        renameTargets.set(target, source);
+        if (target !== source && (appIds as readonly string[]).includes(target) && !(target in value.appRenames)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['appRenames', source],
+            message: `appRenames target ${target} collides with an existing project name`,
+          });
+        }
+      }
+      const usedPorts = new Map<number, string>();
+      for (const name of runtimePortNames) {
+        const port = value.runtime.ports[name];
+        const prior = usedPorts.get(port);
+        if (prior) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['runtime', 'ports', name],
+            message: `runtime port ${port} is already assigned to ${prior}`,
+          });
+        }
+        usedPorts.set(port, name);
+        const stagingPort = port + value.runtime.stagingOffset;
+        if (stagingPort > 65535) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['runtime', 'stagingOffset'],
+            message: `staging port for ${name} exceeds 65535`,
+          });
+        }
+      }
+      if (value.session.sameSite === 'none' && !value.session.secure) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['session', 'secure'],
+          message: 'session.secure must be true when sameSite is none',
+        });
+      }
+      const seedEmails = [value.tenant.seed.admin.email, ...value.tenant.seed.users.map(({ email }) => email)];
+      if (new Set(seedEmails.map((email) => email.toLowerCase())).size !== seedEmails.length) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['tenant', 'seed'],
+          message: 'tenant seed email addresses must be unique',
         });
       }
     });

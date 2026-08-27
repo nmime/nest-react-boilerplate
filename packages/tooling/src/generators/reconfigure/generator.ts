@@ -10,7 +10,6 @@ export interface ReconfigureGeneratorOptions {
   config?: string;
   dryRun?: boolean;
   force?: boolean;
-  gate?: 'auto' | 'off';
 }
 
 export async function reconfigureGenerator(tree: Tree, options: ReconfigureGeneratorOptions): Promise<void> {
@@ -22,7 +21,7 @@ export async function reconfigureGenerator(tree: Tree, options: ReconfigureGener
   if (rawManifest !== null && !isIdentityManifest(rawManifest)) {
     throw new Error('.nrb/identity.json is malformed; restore it or pass --force.');
   }
-  const manifest = rawManifest as IdentityManifest | null;
+  const manifest: IdentityManifest | null = rawManifest;
   const rawState = readJsonFile<unknown>(tree, '.nrb/state.json');
   const state = rawState === null ? emptyState : migrateState(rawState);
   const result = await runReconfigure({
@@ -32,13 +31,24 @@ export async function reconfigureGenerator(tree: Tree, options: ReconfigureGener
     manifest,
     state,
     templateBase: manifest?.templateBase ?? 'nx-tree',
-    gate: options.gate ?? 'off',
+    gate: 'off',
     dryRun: options.dryRun,
     force: options.force,
+    assertTenantChangeAllowed: async () => {
+      for (const marker of ['.nrb/seeded', '.nrb/seed.json', '.nrb/seed-state.json']) {
+        if (tree.exists(marker)) {
+          throw new Error(
+            `Refusing tenant.defaultTenantId rewrite because ${marker} records seeded state. Apply the tenant id with a data migration.`,
+          );
+        }
+      }
+    },
   });
 
   if (result.status === 'conflict') {
-    throw new Error(`Refused drifted files: ${result.conflicts.map((conflict) => conflict.path).join(', ')}`);
+    throw new Error(
+      result.error ?? `Refused drifted files: ${result.conflicts.map((conflict) => conflict.path).join(', ')}`,
+    );
   }
   if (result.status === 'rolled-back') throw new Error(result.error ?? 'Reconfigure failed and was rolled back.');
   printPlan(result.plan.rewriteOperations, desired, result.status);

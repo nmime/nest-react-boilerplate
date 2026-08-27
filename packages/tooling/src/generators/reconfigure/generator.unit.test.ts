@@ -25,4 +25,18 @@ describe('@repo/tooling:reconfigure generator', () => {
     assert.ok(tree.exists('.nrb/identity.json'));
     assert.ok(tree.exists('.nrb/state.json'));
   });
+
+  it('does not let virtual-tree tenant changes bypass the durable seed marker', async () => {
+    const tree = createTreeWithEmptyWorkspace();
+    const desired = parseNrbConfig({
+      schemaVersion: '2.0.0',
+      apps: [],
+      capabilities: [],
+      tenant: { defaultTenantId: '11111111-1111-1111-1111-111111111111' },
+    });
+    tree.write('nrb.config.json', `${JSON.stringify(desired, null, 2)}\n`);
+    tree.write('.nrb/seed-state.json', '{"seeded":true}\n');
+
+    await assert.rejects(reconfigureGenerator(tree, {}), /seed-state\.json records seeded state/u);
+  });
 });

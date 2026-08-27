@@ -97,6 +97,7 @@ storybook-static
 
 .nx/
 .nrb/reference/
+.nrb/seed-state.json
 
 # Local database backups
 backups/

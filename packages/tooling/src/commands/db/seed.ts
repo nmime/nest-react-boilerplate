@@ -6,6 +6,7 @@ import { resolveDatabaseMigrationProvider } from './migration-provider.ts';
 import { loadProviderCommandModule } from './provider-command.ts';
 import { buildSeedUsers, permissions, roles, type SeedUser } from './seed-data.ts';
 import { assertSeedSafety, DefaultAdminEmail, DefaultAdminPassword, resolvePassword } from './seed-safety.ts';
+import { recordSeedState } from './seed-state.ts';
 
 interface SeedArgs {
   dryRun: boolean;
@@ -118,6 +119,7 @@ export async function runSeedCommand(argv: string[] = process.argv.slice(2)): Pr
           ) => Promise<{ inserted: Record<string, number> }>
         )(seedUsers)
       ).inserted;
+  recordSeedState(provider);
   console.log(
     JSON.stringify(
       {

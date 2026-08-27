@@ -83,6 +83,7 @@ const setupDependencies: SetupCommandDependencies = {
       helmValues: { path: ".helm/values-selection.yaml", content: "deployment: {}\n" },
       packageManifest: { path: ".nrb/closure/package.json", content: "{}\n" },
       workspaceManifest: { path: ".nrb/closure/pnpm-workspace.yaml", content: "packages: []\n" },
+      closureConfig: { path: ".nrb/closure/nrb.config.json", content: "{}\n" },
     },
   }),
 };

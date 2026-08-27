@@ -1027,18 +1027,27 @@ describe('planner — prune protection', () => {
     assert.equal(result.operations.filter((o) => o.kind === 'delete_file').length, 0);
   });
 
-  it('with prune option, stale files are listed as prunable', () => {
+  it('with prune option, stale setup files are listed but reconfigure-owned files are preserved', () => {
     const config = parseNrbConfig({
       schemaVersion,
       options: { prune: true, force: false, dryRun: false, nonInteractive: false },
     });
-    const state = buildState('old', {
-      'nrb.config.json': 'h1',
-      '.nrb/summary.md': 'h2',
-      'stale.txt': 'h3',
-    });
+    const identityHash = 'a'.repeat(64);
+    const state = buildState(
+      'old',
+      {
+        'nrb.config.json': 'h1',
+        '.nrb/summary.md': 'h2',
+        'stale.txt': 'h3',
+        'README.md': identityHash,
+      },
+      { 'README.md': identityHash },
+    );
     const result = plan(config, state);
     assert.ok(result.prunableFiles.includes('stale.txt'), 'stale.txt should be prunable');
+    assert.ok(!result.prunableFiles.includes('README.md'), 'identity targets are not setup prune candidates');
+    assert.equal(result.expectedState.reconfiguredFiles?.['README.md'], identityHash);
+    assert.equal(result.expectedState.files['README.md'], identityHash);
   });
 });
 

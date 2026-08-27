@@ -21,6 +21,7 @@ function fixtureRoot(): string {
     JSON.stringify({ packageManager: 'pnpm@11.11.0', engines: { node: '>=24 <25', pnpm: '11.11.0' } }),
   );
   writeFileSync(join(root, 'pnpm-workspace.yaml'), "packages:\n  - 'apps/*'\n\noverrides:\n  typescript: 6.0.3\n");
+  writeFileSync(join(root, 'nrb.config.json'), '{\n  "schemaVersion": "2.0.0"\n}\n');
   return root;
 }
 
@@ -179,18 +180,20 @@ describe('closure materializer', () => {
     assert.match(values, /monitoring:\n {2}enabled: false/u);
   });
 
-  it('renders only selected public Caddy sites and API routes', () => {
+  it('renders only selected public Caddy sites and derives backend targets from containerPort', () => {
     const selected = closure('postgres');
     selected.roots = ['auth-app-api', 'user-app', 'user-app-api'];
     selected.releaseImages = ['auth-app-api', 'migrator', 'user-app', 'user-app-api'];
+    selected.runtime.containerPort = 8088;
     const caddyfile = renderClosureCaddyfile(selected);
-    assert.match(caddyfile, /AUTH_APP_API_DOMAIN[\s\S]*auth-app-api:80/u);
+    assert.match(caddyfile, /AUTH_APP_API_DOMAIN[\s\S]*auth-app-api:8088/u);
     assert.match(caddyfile, /USER_APP_DOMAIN[\s\S]*user-app:8080/u);
     assert.doesNotMatch(caddyfile, /ADMIN_APP_DOMAIN|LANDING_APP_DOMAIN/u);
     const singleDomainCaddyfile = renderClosureSingleDomainCaddyfile(selected);
+    assert.match(singleDomainCaddyfile, /auth-app-api:8088/u);
     assert.match(singleDomainCaddyfile, /routes\/core\/auth\.caddy/u);
     assert.match(singleDomainCaddyfile, /routes\/core\/user\.caddy/u);
-    assert.doesNotMatch(singleDomainCaddyfile, /routes\/core\/admin\.caddy|admin-app-api:80/u);
+    assert.doesNotMatch(singleDomainCaddyfile, /routes\/core\/admin\.caddy|admin-app-api:8088/u);
   });
 
   it('disables ingress for a background-only selected closure', () => {

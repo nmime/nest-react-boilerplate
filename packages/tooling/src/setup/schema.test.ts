@@ -35,6 +35,54 @@ import { presets, findPreset, listPresetIds, listPresets, expandPreset } from '.
 /* ==================================================================
  * UNIT: Schema validation
  * ================================================================== */
+describe('schema v2 identity/runtime cross-field validation', () => {
+  it('migrates v1 configs with complete v2 defaults and keeps partial runtime port overrides complete', () => {
+    const migrated = parseNrbConfig({ schemaVersion: '1.0.0', apps: [], capabilities: [] });
+    assert.equal(migrated.schemaVersion, '2.0.0');
+    assert.equal(migrated.identity.slug, 'nest-react-boilerplate');
+    assert.equal(migrated.runtime.ports['admin-app-api'], 3001);
+    assert.equal(migrated.session.cookieNameProd, '__Host-nrb.sid');
+    assert.equal(migrated.tenant.defaultTenantId, '00000000-0000-0000-0000-000000000000');
+
+    const partialPorts = parseNrbConfig({ schemaVersion, runtime: { ports: { 'admin-app-api': 3101 } } });
+    assert.equal(partialPorts.runtime.ports['admin-app-api'], 3101);
+    assert.equal(partialPorts.runtime.ports['user-app-api'], 3002);
+  });
+
+  it('rejects unknown or colliding runtime ports and overflowing staging ports', () => {
+    assert.equal(safeParseNrbConfig({ schemaVersion, runtime: { ports: { unknown: 1234 } } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, runtime: { ports: { 'admin-app-api': 3002 } } }).success, false);
+    assert.equal(
+      safeParseNrbConfig({ schemaVersion, runtime: { ports: { 'admin-app-api': 65535 }, stagingOffset: 1 } }).success,
+      false,
+    );
+  });
+
+  it('rejects app rename collisions, insecure SameSite=None cookies, and duplicate seed emails', () => {
+    assert.equal(
+      safeParseNrbConfig({
+        schemaVersion,
+        appRenames: { 'admin-app': 'portal-app', 'user-app': 'portal-app' },
+      }).success,
+      false,
+    );
+    assert.equal(safeParseNrbConfig({ schemaVersion, appRenames: { 'admin-app': 'user-app' } }).success, false);
+    assert.equal(safeParseNrbConfig({ schemaVersion, session: { sameSite: 'none', secure: false } }).success, false);
+    assert.equal(
+      safeParseNrbConfig({
+        schemaVersion,
+        tenant: {
+          seed: {
+            admin: { name: 'Admin', email: 'same@example.com', password: 'password' },
+            users: [{ name: 'User', email: 'same@example.com', password: 'password' }],
+          },
+        },
+      }).success,
+      false,
+    );
+  });
+});
+
 describe('schema — public domain ownership', () => {
   it('defaults to the example domain with the landing page on the apex', () => {
     const config = parseNrbConfig({ schemaVersion });

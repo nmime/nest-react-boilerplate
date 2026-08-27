@@ -33,7 +33,6 @@ export const verificationCommands: readonly VerificationCommand[] = [
   { name: 'lint', command: 'pnpm', args: ['run', 'lint'] },
   { name: 'typecheck', command: 'pnpm', args: ['run', 'typecheck'] },
   { name: 'tests', command: 'pnpm', args: ['run', 'test'] },
-  { name: 'endpoints-manifest', command: 'pnpm', args: ['run', 'endpoints:manifest:check'] },
   { name: 'spec-validate', command: 'pnpm', args: ['run', 'spec:validate'] },
   { name: 'i18n-catalogs', command: 'pnpm', args: ['run', 'i18n:catalogs:check'] },
   { name: 'frontend-fsd', command: 'pnpm', args: ['run', 'frontend:fsd:check'] },

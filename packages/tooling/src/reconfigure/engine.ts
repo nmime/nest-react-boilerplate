@@ -15,7 +15,10 @@ import {
   defaultRuntimeConfig,
   defaultRuntimePorts,
   defaultSessionConfig,
+  defaultTemplateApps,
+  defaultTemplateCapabilities,
   defaultTenantConfig,
+  defaultProductConfig,
   type NrbConfig,
 } from '../setup/schema.ts';
 import targetManifest from './identity-targets.json' with { type: 'json' };
@@ -44,7 +47,11 @@ export interface AppliedFileManifest {
 export interface IdentityManifest {
   version: 1;
   templateBase: string;
+  apps: NrbConfig['apps'];
+  capabilities: NrbConfig['capabilities'];
   identity: NrbConfig['identity'];
+  product: NrbConfig['product'];
+  deployment: NrbConfig['deployment'];
   runtime: NrbConfig['runtime'];
   session: NrbConfig['session'];
   tenant: NrbConfig['tenant'];
@@ -81,13 +88,17 @@ export interface ReconfigurePlanOptions {
 export async function planReconfigure(options: ReconfigurePlanOptions): Promise<ReconfigurePlan> {
   const replacements = buildOrderedReplacements(options.previous, options.desired);
   const portReplacements = buildAnchoredPortReplacements(options.previous.runtime, options.desired.runtime);
-  const candidates = (
-    options.targetPaths ??
-    selectTargetPaths(
-      replacements.map((replacement) => replacement.label),
-      portReplacements,
-    )
-  ).filter((path) => ![defaultConfigPath, identityManifestPath, setupStatePath].includes(path));
+  const previousTargets = new Set(Object.keys(options.manifest?.appliedFiles ?? {}));
+  const candidates = [
+    ...new Set([
+      ...(options.targetPaths ??
+        selectTargetPaths(
+          replacements.map((replacement) => replacement.label),
+          portReplacements,
+        )),
+      ...previousTargets,
+    ]),
+  ].filter((path) => ![defaultConfigPath, identityManifestPath, setupStatePath].includes(path));
   const rewriteOperations: SetupOperation[] = [];
   const rulesByFile: Record<string, string[]> = {};
 
@@ -104,7 +115,7 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     rulesByFile[path] = rules;
   }
 
-  const desiredConfigHash = configHash(options.desired as unknown as Record<string, unknown>);
+  const desiredConfigHash = configHash(options.desired);
   const rewrittenContent = new Map<string, string>();
   for (const operation of rewriteOperations) {
     if (operation.kind === 'update_file') rewrittenContent.set(operation.path, operation.content);
@@ -115,9 +126,12 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   for (const path of [...new Set([...Object.keys(priorApplied), ...rewrittenContent.keys()])].sort()) {
     const content = rewrittenContent.get(path) ?? (await options.fs.read(path));
     if (content === null) continue;
+    const prior = priorApplied[path];
+    const changed = rewrittenContent.has(path);
+    if (!changed && prior && hashString(content) !== prior.hash) continue;
     appliedFiles[path] = {
       hash: hashString(content),
-      rules: rulesByFile[path] ?? priorApplied[path]?.rules ?? [],
+      rules: rulesByFile[path] ?? prior?.rules ?? [],
     };
   }
   if (priorApplied[defaultConfigPath] !== undefined || rewrittenContent.has(defaultConfigPath)) {
@@ -129,7 +143,11 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   const manifest: IdentityManifest = {
     version: 1,
     templateBase: options.templateBase,
+    apps: options.desired.apps,
+    capabilities: options.desired.capabilities,
     identity: options.desired.identity,
+    product: options.desired.product,
+    deployment: options.desired.deployment,
     runtime: options.desired.runtime,
     session: options.desired.session,
     tenant: options.desired.tenant,
@@ -183,27 +201,29 @@ export function createIdentityManifestConfig(
   if (!manifest) return createTemplateDefaultConfig(desired);
   return {
     ...desired,
+    apps: manifest.apps,
+    capabilities: manifest.capabilities,
     identity: manifest.identity,
+    product: manifest.product,
     runtime: manifest.runtime,
     session: manifest.session,
     tenant: manifest.tenant,
     appRenames: manifest.appRenames,
-    deployment: {
-      ...desired.deployment,
-      publicDomain: manifest.identity.domain,
-      primaryApp: manifest.identity.apexApp,
-    },
+    deployment: manifest.deployment,
   };
 }
 
 export function createTemplateDefaultConfig(desired: NrbConfig): NrbConfig {
   return {
     ...desired,
+    apps: [...defaultTemplateApps],
+    capabilities: [...defaultTemplateCapabilities],
     identity: {
       ...defaultIdentityConfig,
       brand: { ...defaultIdentityBrandConfig },
     },
     appRenames: {},
+    product: { ...defaultProductConfig, mobileTargets: [...defaultProductConfig.mobileTargets] },
     deployment: {
       ...desired.deployment,
       publicDomain: defaultDeploymentConfig.publicDomain,
@@ -237,7 +257,11 @@ export function isIdentityManifest(raw: unknown): raw is IdentityManifest {
     typeof value.templateBase !== 'string' ||
     typeof value.configHash !== 'string' ||
     (value.gate !== undefined && value.gate !== 'green' && value.gate !== 'skipped') ||
+    !Array.isArray(value.apps) ||
+    !Array.isArray(value.capabilities) ||
     !value.identity ||
+    !value.product ||
+    !value.deployment ||
     !value.runtime ||
     !value.session ||
     !value.tenant ||
@@ -333,7 +357,7 @@ function applyAnchoredPortReplacement(content: string, replacement: AnchoredRepl
   const escaped = replacement.from.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
   let result = content;
   if (replacement.label === 'containerPort') {
-    result = result.replace(new RegExp(`(\\bENV\\s+PORT=)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+    result = result.replace(new RegExp(`(\\bPORT=)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
     result = result.replace(new RegExp(`(\\bPORT\\s*:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
     result = result.replace(new RegExp(`(\\btarget:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
     result = result.replace(new RegExp(`(\\bcontainerPort:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
@@ -351,6 +375,11 @@ function applyAnchoredPortReplacement(content: string, replacement: AnchoredRepl
     return result;
   }
   result = result.replace(new RegExp(`(\\b[A-Z][A-Z0-9_]*_PORT\\s*=\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
+  result = result.replace(
+    new RegExp(`(\\b[A-Z][A-Z0-9_]*_PORT\\s*['"]?\\s*,\\s*)${escaped}\\b`, 'gu'),
+    `$1${replacement.to}`,
+  );
+  result = result.replace(new RegExp(`(\\$\\{[A-Z][A-Z0-9_]*_PORT:-)${escaped}(?=\\})`, 'gu'), `$1${replacement.to}`);
   result = result.replace(new RegExp(`(\\bport\\s*:\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);
   result = result.replace(new RegExp(`(["'])${escaped}(:\\d+)(["'])`, 'gu'), `$1${replacement.to}$2$3`);
   result = result.replace(new RegExp(`(\\|\\|\\s*)${escaped}\\b`, 'gu'), `$1${replacement.to}`);

@@ -91,6 +91,10 @@ export interface SetupCommandDependencies {
       configHash: string;
       product: NrbConfig['product'];
       deployment: NrbConfig['deployment'];
+      identity: NrbConfig['identity'];
+      runtime: NrbConfig['runtime'];
+      session: NrbConfig['session'];
+      tenant: NrbConfig['tenant'];
     },
   ) => Promise<ClosureSyncResult>;
 }
@@ -456,6 +460,10 @@ async function executeSetup(
       configHash: planResult.configHash,
       product: config.product,
       deployment: config.deployment,
+      identity: config.identity,
+      runtime: config.runtime,
+      session: config.session,
+      tenant: config.tenant,
     });
   } catch (err: unknown) {
     if (backups.length > 0) await rollback(backups, fs);
@@ -463,7 +471,7 @@ async function executeSetup(
     return 1;
   }
 
-  // Save state
+  // Save state without discarding identity-rewrite ownership recorded by reconfigure.
   saveState(workspaceRoot, planResult.expectedState);
 
   if (result.applied === 0 && !closureResult.changed) {
@@ -487,6 +495,10 @@ async function synchronizeLiveClosure(
     configHash: string;
     product: NrbConfig['product'];
     deployment: NrbConfig['deployment'];
+    identity: NrbConfig['identity'];
+    runtime: NrbConfig['runtime'];
+    session: NrbConfig['session'];
+    tenant: NrbConfig['tenant'];
   },
 ): Promise<ClosureSyncResult> {
   const graph = await createLiveProjectGraph();
@@ -496,6 +508,10 @@ async function synchronizeLiveClosure(
     configHash: selection.configHash,
     product: selection.product,
     deployment: selection.deployment,
+    identity: selection.identity,
+    runtime: selection.runtime,
+    session: selection.session,
+    tenant: selection.tenant,
   });
   return synchronizeClosureArtifacts(workspaceRoot, closure);
 }

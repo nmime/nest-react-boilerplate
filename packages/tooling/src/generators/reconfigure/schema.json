@@ -21,12 +21,6 @@
       "type": "boolean",
       "description": "Overwrite tracked files whose content drifted",
       "default": false
-    },
-    "gate": {
-      "type": "string",
-      "enum": ["auto", "off"],
-      "description": "Verification gate mode; virtual Nx trees default to off",
-      "default": "off"
     }
   },
   "required": []

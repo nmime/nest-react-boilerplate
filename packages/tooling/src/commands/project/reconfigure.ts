@@ -3,6 +3,7 @@ import { createNodeFilesystem } from '../../setup/adapters/node-filesystem.js';
 import { defaultConfigPath } from '../../reconfigure/engine.js';
 import {
   assertCleanGitWorkspace,
+  assertTenantChangeAllowed,
   loadDesiredConfig,
   loadIdentityManifest,
   loadSetupState,
@@ -10,7 +11,8 @@ import {
   templateBase,
 } from '../../reconfigure/io.js';
 import { auditWorkspace } from '../../reconfigure/audit.js';
-import { runReconfigure } from '../../reconfigure/run.js';
+import { runReconfigure, type RunReconfigureResult } from '../../reconfigure/run.js';
+import type { NrbConfig } from '../../setup/schema.js';
 import type { ReconfigureGateMode } from '../../reconfigure/verify.js';
 
 export interface ReconfigureArgs {
@@ -81,23 +83,11 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
       },
       dryRun: args.dryRun,
       force: args.force,
+      assertTenantChangeAllowed: () => assertTenantChangeAllowed(context.workspaceRoot, fs),
     });
 
     if (args.json) {
-      process.stdout.write(
-        `${JSON.stringify(
-          {
-            status: result.status,
-            config: desired,
-            filesChanged: result.plan.rewriteOperations.length,
-            files: result.plan.files,
-            gate: result.gate,
-            failedGate: result.failedGate,
-          },
-          null,
-          2,
-        )}\n`,
-      );
+      process.stdout.write(`${JSON.stringify(buildReconfigureJsonResult(result, desired), null, 2)}\n`);
     } else if (result.status === 'dry-run') {
       printPlan(result.plan.rewriteOperations);
     } else if (result.status === 'already-up-to-date') {
@@ -109,7 +99,11 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
     }
 
     if (result.status === 'conflict') {
-      process.stderr.write(formatConflicts(result.conflicts.map((conflict) => conflict.path)));
+      if (result.conflicts.length > 0) {
+        process.stderr.write(formatConflicts(result.conflicts.map((conflict) => conflict.path)));
+      } else {
+        process.stderr.write(`${result.error ?? 'Reconfigure refused by a safety guard.'}\n`);
+      }
       return 1;
     }
     if (result.status === 'rolled-back') {
@@ -122,6 +116,15 @@ export async function runReconfigureFromContext(context: CommandContext): Promis
   } catch (error) {
     return reportError(error);
   }
+}
+
+export function buildReconfigureJsonResult(result: RunReconfigureResult, desired: NrbConfig) {
+  return {
+    status: result.status,
+    config: desired,
+    filesChanged: result.plan.rewriteOperations.length,
+    files: result.plan.files,
+  };
 }
 
 function printPlan(operations: readonly { path: string }[]): void {

@@ -274,6 +274,8 @@ async function runInitProject(argv: string[]): Promise<void> {
     gate: args.dryRun || args.force ? 'off' : 'auto',
     dryRun: args.dryRun,
     force: args.force,
+    deriveOperations: async () => [],
+    assertTenantChangeAllowed: async () => undefined,
     targetPaths: listInitTargets(workspaceRoot),
   });
   if (result.status === 'conflict' || result.status === 'rolled-back') {

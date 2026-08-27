@@ -133,9 +133,13 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     const changed = rewrittenContent.has(path);
     if (!changed && prior && hashString(content) !== prior.hash) continue;
     const rules = rulesByFile[path] ?? prior?.rules ?? [];
-    const defaultContent = changed
-      ? applyRules(content, options.desired, templateDefaults, reverseReplacements, reversePortReplacements).content
-      : content;
+    const defaultContent = applyRules(
+      content,
+      options.desired,
+      templateDefaults,
+      reverseReplacements,
+      reversePortReplacements,
+    ).content;
     if (defaultContent === content) continue;
     appliedFiles[path] = {
       hash: hashString(content),

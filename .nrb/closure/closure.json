@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "configHash": "fb2597bd18a10d9424f7d5309d38dced332783cd3a7efc76289abfd7cd751e5f",
-  "graphDigest": "a6961e1c291e2452d331014e52b69a2694fe9ce1d94a0cd3baa94eebcffe63a6",
+  "graphDigest": "7adf7c236d7b9d4d80e052b6b70dd0097742e88a9ee82e5719f77343d8722372",
   "provider": "postgres",
   "roots": [
     "admin-app",
@@ -59,6 +59,7 @@
     "@app/common-feature-flags",
     "@app/common-i18n-keys",
     "@app/common-i18n-runtime",
+    "@app/common-money",
     "@app/common-notifications",
     "@app/common-problem-details",
     "@app/frontend-api-client",
@@ -121,7 +122,8 @@
     ],
     "component-test": [
       "@app/backend-postgres-main",
-      "@app/backend-postgres-main-notification"
+      "@app/backend-postgres-main-notification",
+      "@app/backend-postgres-main-payments"
     ],
     "dev": [
       "admin-app",
@@ -191,6 +193,7 @@
       "@app/common-feature-flags",
       "@app/common-i18n-keys",
       "@app/common-i18n-runtime",
+      "@app/common-money",
       "@app/common-notifications",
       "@app/common-problem-details",
       "@app/frontend-api-client",
@@ -289,6 +292,7 @@
       "@app/common-config",
       "@app/common-feature-flags",
       "@app/common-i18n-runtime",
+      "@app/common-money",
       "@app/common-notifications",
       "@app/common-problem-details",
       "@app/frontend-api-client",
@@ -359,6 +363,7 @@
       "@app/common-feature-flags",
       "@app/common-i18n-keys",
       "@app/common-i18n-runtime",
+      "@app/common-money",
       "@app/common-notifications",
       "@app/common-problem-details",
       "@app/frontend-api-client",

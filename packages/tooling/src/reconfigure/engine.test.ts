@@ -3,15 +3,8 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { FilesystemAdapter } from '../setup/adapters/filesystem.js';
 import { parseNrbConfig, type NrbConfig } from '../setup/schema.js';
-import { buildState, emptyState, hashString } from '../setup/state.js';
-import {
-  createIdentityManifestConfig,
-  defaultConfigPath,
-  identityManifestPath,
-  isIdentityManifest,
-  serializeJson,
-  setupStatePath,
-} from './engine.js';
+import { emptyState } from '../setup/state.js';
+import { createIdentityManifestConfig, identityManifestPath, isIdentityManifest, setupStatePath } from './engine.js';
 import { buildOrderedReplacements } from './rules.js';
 import { runReconfigure } from './run.js';
 
@@ -435,29 +428,8 @@ describe('reconfigure engine state and rollback', () => {
     assert.equal(final['.nrb/workspace.json'], original['.nrb/workspace.json']);
     assert.equal(final['nrb.config.json'], original['nrb.config.json']);
 
-    const baselineManifest = {
-      ...reverse.plan.manifest,
-      appliedFiles: {},
-    };
-    const baselineManifestContent = serializeJson(baselineManifest);
-    const baselineState = buildState(
-      reverse.plan.state.configHash,
-      {
-        ...emptyState.files,
-        [defaultConfigPath]: hashString(original['nrb.config.json']),
-        [identityManifestPath]: hashString(baselineManifestContent),
-        '.nrb/workspace.json': hashString(original['.nrb/workspace.json']),
-      },
-      {},
-    );
-    await fs.write(identityManifestPath, baselineManifestContent);
-    await fs.write(setupStatePath, serializeJson(baselineState));
-    await fs.write('.nrb/workspace.json', original['.nrb/workspace.json']);
-    assert.deepEqual(fs.snapshot(), {
-      ...original,
-      [identityManifestPath]: baselineManifestContent,
-      [setupStatePath]: serializeJson(baselineState),
-    });
+    assert.deepEqual(reverse.plan.manifest.appliedFiles, {});
+    assert.deepEqual(reverse.plan.state.reconfiguredFiles, undefined);
   });
 
   it('rewrites the edge port in Helm listenPort values', async () => {

@@ -122,6 +122,9 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   }
 
   const priorApplied = options.manifest?.appliedFiles ?? {};
+  const templateDefaults = createTemplateDefaultConfig(options.desired);
+  const reverseReplacements = buildOrderedReplacements(options.desired, templateDefaults);
+  const reversePortReplacements = buildAnchoredPortReplacements(options.desired.runtime, templateDefaults.runtime);
   const appliedFiles: Record<string, AppliedFileManifest> = {};
   for (const path of [...new Set([...Object.keys(priorApplied), ...rewrittenContent.keys()])].sort()) {
     const content = rewrittenContent.get(path) ?? (await options.fs.read(path));
@@ -129,9 +132,14 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     const prior = priorApplied[path];
     const changed = rewrittenContent.has(path);
     if (!changed && prior && hashString(content) !== prior.hash) continue;
+    const rules = rulesByFile[path] ?? prior?.rules ?? [];
+    const defaultContent = changed
+      ? applyRules(content, options.desired, templateDefaults, reverseReplacements, reversePortReplacements).content
+      : content;
+    if (defaultContent === content) continue;
     appliedFiles[path] = {
       hash: hashString(content),
-      rules: rulesByFile[path] ?? prior?.rules ?? [],
+      rules,
     };
   }
   if (priorApplied[defaultConfigPath] !== undefined || rewrittenContent.has(defaultConfigPath)) {

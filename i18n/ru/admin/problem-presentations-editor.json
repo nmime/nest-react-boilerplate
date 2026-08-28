@@ -1,0 +1,19 @@
+{
+  "admin.apiResponseStudio.editor.title": "Изменить {{method}} {{path}} · {{status}}",
+  "admin.apiResponseStudio.editor.description": "Поля отображения сохраняются вместе с текущей ревизией.",
+  "admin.apiResponseStudio.editor.display": "Режим отображения",
+  "admin.apiResponseStudio.editor.severity": "Важность",
+  "admin.apiResponseStudio.editor.support": "Показывать подсказку поддержки",
+  "admin.apiResponseStudio.editor.figmaOnly": "Спецификация только в Figma",
+  "admin.apiResponseStudio.editor.customDescription": "Особое описание",
+  "admin.apiResponseStudio.editor.comments": "Внутренние комментарии",
+  "admin.apiResponseStudio.editor.texts.en": "Сообщения на английском",
+  "admin.apiResponseStudio.editor.texts.ru": "Сообщения на русском",
+  "admin.apiResponseStudio.editor.texts.zh": "Сообщения на китайском",
+  "admin.apiResponseStudio.editor.textsHint": "Одно сообщение на строку, не более восьми.",
+  "admin.apiResponseStudio.bulk.title": "Массовое изменение выбранных ответов",
+  "admin.apiResponseStudio.bulk.description": "Все {{count}} ответов обновляются атомарно. Устаревшая ревизия отменит все изменения.",
+  "admin.apiResponseStudio.reset.title": "Сбросить отображение ответа?",
+  "admin.apiResponseStudio.reset.description": "Особые поля будут заменены последними значениями синхронизированного источника.",
+  "admin.apiResponseStudio.editor.enums": "Разрешённые значения enum"
+}

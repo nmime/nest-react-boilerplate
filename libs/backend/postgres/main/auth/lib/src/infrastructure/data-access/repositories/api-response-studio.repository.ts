@@ -244,6 +244,11 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
           figmaOnly: input.figmaOnly,
           comments: input.comments,
           texts: { en: [...input.texts.en], ru: [...input.texts.ru], zh: [...input.texts.zh] },
+          enumChoices: (input.enumChoices ?? entity.enumChoices).map((choice) => ({
+            property: choice.property,
+            values: [...choice.values],
+            enabledValues: choice.enabledValues.filter((value) => choice.values.includes(value)),
+          })),
           updatedByUserId: input.actorUserId,
           updatedAt: new Date(),
           revision: entity.revision + 1,

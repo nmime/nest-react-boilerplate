@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-ERROR-005 REQ-API-RESPONSE-STUDIO-001
+// @requirements REQ-API-RESPONSE-STUDIO-001 REQ-FRONTEND-ERROR-005
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { configureApiLocale } from './api-locale';
@@ -354,8 +354,9 @@ describe('ApiToastRuntime defaults', () => {
     const runtime = new ApiToastRuntime({
       eventHub: {
         clearAuthRequired: () => undefined,
+        clearPresentation: () => undefined,
         emit: (event) => emitted.push(event),
-        getState: () => ({ authRequired: false, lastError: null, redirectTo: null, status: 'online' }),
+        getState: () => ({ authRequired: false, lastError: null, presentation: null, redirectTo: null, status: 'online' }),
         reset: () => undefined,
         subscribe: () => () => undefined,
       },
@@ -363,7 +364,20 @@ describe('ApiToastRuntime defaults', () => {
 
     expect(runtime.showForApiResult({ status: 500 }, rules)).toBeNull();
     expect(runtime.visible).toHaveLength(0);
-    expect(emitted).toEqual([]);
+    expect(emitted).toEqual([
+      {
+        type: 'presentation',
+        presentation: {
+          display,
+          ruleId: `${display}-rule`,
+          severity: 'warning',
+          support: true,
+          figmaOnly: display === 'custom',
+          ...(display === 'custom' ? { customDescription: 'https://www.figma.com/file/design' } : {}),
+          lines: ['中文第一行', '中文第二行'],
+        },
+      },
+    ]);
     expect(resolveApiProblemPresentation({ status: 500 }, rules)).toEqual({
       display,
       ruleId: `${display}-rule`,

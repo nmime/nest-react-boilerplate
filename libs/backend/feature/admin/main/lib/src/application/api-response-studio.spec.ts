@@ -8,8 +8,8 @@ import type {
   ApiResponseStudioDnsPort,
 } from './api-response-studio/safe-openapi-fetcher';
 import { ApiResponseStudioService } from './api-response-studio/api-response-studio.service';
-import { parseOpenApiResponses } from './api-response-studio/openapi-parser';
-import { SafeOpenApiFetcher, isPublicAddress } from './api-response-studio/safe-openapi-fetcher';
+import { collectExternalOpenApiRefs, parseOpenApiResponses } from './api-response-studio/openapi-parser';
+import { SafeOpenApiFetcher, createPinnedLookup, isPublicAddress } from './api-response-studio/safe-openapi-fetcher';
 import {
   ApiResponseStudioValidationError,
   normalizeAndValidatePresentation,
@@ -172,6 +172,73 @@ describe('parseOpenApiResponses', () => {
     ]);
   });
 
+  it('resolves relative and transitive external references against each document URL', () => {
+    const rootUrl = 'https://api.example.com/spec/openapi.json';
+    const schemasUrl = 'https://api.example.com/spec/schemas/common.json';
+    const problemUrl = 'https://api.example.com/models/problem.json';
+    const document = {
+      openapi: '3.1.0',
+      paths: {
+        '/v1/widgets': {
+          get: {
+            responses: {
+              400: {
+                description: 'Invalid widget',
+                content: {
+                  'application/problem+json': {
+                    schema: { $ref: './schemas/common.json#/Problem' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const commonDocument = { Problem: { $ref: '../../models/problem.json#/Problem' } };
+    const problemDocument = {
+      Problem: {
+        type: 'object',
+        properties: { code: { const: 'external-problem' } },
+      },
+    };
+
+    expect(collectExternalOpenApiRefs(document, rootUrl)).toEqual([schemasUrl]);
+    expect(collectExternalOpenApiRefs(commonDocument, schemasUrl)).toEqual([problemUrl]);
+    const variants = parseOpenApiResponses(document, {
+      baseUrl: rootUrl,
+      externalDocuments: {
+        [schemasUrl]: commonDocument,
+        [problemUrl]: problemDocument,
+      },
+    });
+
+    expect(variants.some((variant) => variant.stableKey === 'GET:/v1/widgets:400:external-problem')).toBe(true);
+  });
+
+  it('rejects relative external references without a document URL and missing fetched external documents', () => {
+    const document = {
+      openapi: '3.1.0',
+      paths: {
+        '/v1/widgets': {
+          get: {
+            responses: {
+              400: {
+                description: 'Invalid widget',
+                content: { 'application/json': { schema: { $ref: './problem.json#/Problem' } } },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    expect(() => collectExternalOpenApiRefs(document)).toThrow('cannot be resolved');
+    expect(() => parseOpenApiResponses(document, { baseUrl: 'https://api.example.com/openapi.json' })).toThrow(
+      'was not fetched',
+    );
+  });
+
   it('truncates depth, node, and snapshot limits deterministically and rejects non-3.x documents', () => {
     const document = apiDocument();
     const first = parseOpenApiResponses(document, { maxDepth: 1, maxNodes: 3, maxSnapshotBytes: 20 });
@@ -239,6 +306,24 @@ describe('normalizeAndValidatePresentation', () => {
 });
 
 describe('SafeOpenApiFetcher', () => {
+  it('implements both DNS lookup callback forms while preserving all validated addresses', () => {
+    const lookup = createPinnedLookup(['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946']);
+    const allCallback = vi.fn();
+    const oneCallback = vi.fn();
+    const v6Callback = vi.fn();
+
+    lookup('api.example.com', { all: true }, allCallback);
+    lookup('api.example.com', {}, oneCallback);
+    lookup('api.example.com', { family: 6 }, v6Callback);
+
+    expect(allCallback).toHaveBeenCalledWith(null, [
+      { address: '93.184.216.34', family: 4 },
+      { address: '2606:2800:220:1:248:1893:25c8:1946', family: 6 },
+    ]);
+    expect(oneCallback).toHaveBeenCalledWith(null, '93.184.216.34', 4);
+    expect(v6Callback).toHaveBeenCalledWith(null, '2606:2800:220:1:248:1893:25c8:1946', 6);
+  });
+
   it('classifies private, reserved, mapped, and public addresses fail-closed', () => {
     expect(isPublicAddress('93.184.216.34')).toBe(true);
     expect(isPublicAddress('2606:2800:220:1:248:1893:25c8:1946')).toBe(true);
@@ -247,11 +332,22 @@ describe('SafeOpenApiFetcher', () => {
       '10.0.0.1',
       '169.254.169.254',
       '192.168.1.1',
+      '192.0.2.1',
       '198.18.0.1',
+      '198.51.100.1',
+      '203.0.113.1',
       '224.0.0.1',
       '::1',
+      '64:ff9b:1::1',
+      '2001::1',
+      '2001:2::1',
+      '2001:10::1',
+      '2001:db8::1',
+      '2002::1',
+      '3fff::1',
       'fc00::1',
       'fe80::1',
+      'ff02::1',
       '::ffff:127.0.0.1',
       'not-an-ip',
     ]) {
@@ -303,7 +399,7 @@ describe('SafeOpenApiFetcher', () => {
     const { fetcher, http } = createFetcher({
       addresses: {
         'api.example.com': ['93.184.216.34'],
-        'cdn.example.com': ['203.0.113.8'],
+        'cdn.example.com': ['8.8.8.8'],
       },
       responses: [
         response(null, { status: 307, headers: { location: 'https://cdn.example.com/openapi.json' } }),
@@ -376,6 +472,7 @@ describe('ApiResponseStudioService executable boundaries', () => {
   it('does not persist sync variants when fetch/parsing fails', async () => {
     const repository = {
       findSource: vi.fn(() => okAsync({ jsonUrl: 'https://api.example.com/openapi.json' })),
+      listResponses: vi.fn(() => okAsync([])),
       sync: vi.fn(() => okAsync({ source: {}, summary: {} })),
     };
     const fetcher = {
@@ -397,6 +494,94 @@ describe('ApiResponseStudioService executable boundaries', () => {
     expect(repository.sync).not.toHaveBeenCalled();
   });
 
+  it('loads all saved rows and applies the latest persisted enum choices to capped synchronization', async () => {
+    const updatedAt = new Date('2026-08-28T10:00:00.000Z');
+    const persisted = (revision: number, enabledValues: readonly string[]) => ({
+      id: `row-${revision}`,
+      tenantId: 'tenant-1',
+      sourceId: 'source-1',
+      stableKey: `GET:/v1/widgets:400:example-problem:${revision}`,
+      tag: 'Widgets',
+      method: 'GET' as const,
+      path: '/v1/widgets',
+      operationId: 'listWidgets',
+      summary: 'List widgets',
+      status: '400' as const,
+      errorType: 'example-problem',
+      description: 'Invalid widget',
+      schemaSnapshot: '{}',
+      exampleSnapshot: '{}',
+      enumChoices: [
+        { property: 'code', values: ['a', 'b', 'c'], enabledValues },
+        { property: 'kind', values: ['hard', 'soft'], enabledValues: ['hard', 'soft'] },
+      ],
+      changeState: 'unchanged' as const,
+      changeDismissed: false,
+      deleted: false,
+      sourceFingerprint: 'fingerprint',
+      display: 'toast' as const,
+      severity: 'error' as const,
+      support: false,
+      customDescription: '',
+      figmaOnly: false,
+      comments: '',
+      texts: { en: [], ru: [], zh: [] },
+      revision,
+      updatedByUserId: 'actor-1',
+      createdAt: updatedAt,
+      updatedAt,
+    });
+    const older = persisted(1, ['a', 'b']);
+    const latest = persisted(2, ['c']);
+    const filler = { ...persisted(1, []), stableKey: 'GET:/v1/other:ERR:-', path: '/v1/other', errorType: '' };
+    const firstPage = Array.from({ length: 500 }, (_, index) => (index === 0 ? older : { ...filler, id: `f-${index}` }));
+    const repository = {
+      findSource: vi.fn(() => okAsync({ jsonUrl: 'https://api.example.com/openapi.json' })),
+      listResponses: vi
+        .fn()
+        .mockReturnValueOnce(okAsync(firstPage))
+        .mockReturnValueOnce(okAsync([latest])),
+      sync: vi.fn((input) => okAsync(input)),
+    };
+    const fetcher = {
+      fetchJson: vi.fn(async () => apiDocument()),
+      fetchJsonReference: vi.fn(),
+    };
+    const service = new ApiResponseStudioService(repository as never, fetcher as never);
+
+    const result = await service.sync({
+      tenantId: 'tenant-1',
+      sourceId: 'source-1',
+      expectedRevision: 3,
+      actorUserId: 'actor-1',
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(repository.listResponses).toHaveBeenNthCalledWith(1, 'tenant-1', {
+      sourceId: 'source-1',
+      includeDeleted: true,
+      limit: 500,
+      offset: 0,
+    });
+    expect(repository.listResponses).toHaveBeenNthCalledWith(2, 'tenant-1', {
+      sourceId: 'source-1',
+      includeDeleted: true,
+      limit: 500,
+      offset: 500,
+    });
+    const variants = repository.sync.mock.calls[0]?.[0].variants ?? [];
+    expect(
+      variants
+        .filter((variant: { status: string; enumChoices: readonly unknown[] }) =>
+          variant.status === '400' && variant.enumChoices.length > 0,
+        )
+        .map((variant: { stableKey: string }) => variant.stableKey),
+    ).toEqual([
+      'GET:/v1/widgets:400:example-problem:c~hard',
+      'GET:/v1/widgets:400:example-problem:c~soft',
+    ]);
+  });
+
   it('normalizes valid response updates and rejects invalid updates before persistence', async () => {
     const repository = {
       updateResponse: vi.fn((input) => okAsync(input)),
@@ -410,6 +595,7 @@ describe('ApiResponseStudioService executable boundaries', () => {
       expectedRevision: 2,
       actorUserId: 'actor-1',
       presentation: valid,
+      enumChoices: [],
     });
     expect(accepted._unsafeUnwrap()).toMatchObject({ comments: 'reviewed', tenantId: 'tenant-1' });
 
@@ -419,6 +605,7 @@ describe('ApiResponseStudioService executable boundaries', () => {
       expectedRevision: 2,
       actorUserId: 'actor-1',
       presentation: { ...valid, texts: { en: ['Hello {name}'], ru: ['Привет {user}'], zh: [] } },
+      enumChoices: [],
     });
     expect(rejected._unsafeUnwrapErr()).toMatchObject({ code: 'validation_error' });
     expect(repository.updateResponse).toHaveBeenCalledOnce();

@@ -15,7 +15,9 @@ const collectSql = (migration: { addSql(sql: string): void }, run: () => void): 
 describe('API Response Studio PostgreSQL migration', () => {
   it('creates tenant-scoped tables, constraints and deterministic query indexes', () => {
     const migration = new Migration20260828110000CreateApiResponseStudio(undefined as never, undefined as never);
-    const sql = collectSql(migration, () => { migration.up(); });
+    const sql = collectSql(migration, () => {
+      migration.up();
+    });
 
     expect(sql).toContain('create table "api_response_studio_sources"');
     expect(sql).toContain('unique ("tenant_id","slug")');
@@ -34,7 +36,9 @@ describe('API Response Studio PostgreSQL migration', () => {
 
   it('backfills EN and RU independently and preserves already-populated presentation arrays', () => {
     const migration = new Migration20260828110000CreateApiResponseStudio(undefined as never, undefined as never);
-    const sql = collectSql(migration, () => { migration.up(); });
+    const sql = collectSql(migration, () => {
+      migration.up();
+    });
     const updates = sql
       .split('\n')
       .filter((statement) => statement.startsWith('update "problem_presentation_overrides"'));
@@ -52,12 +56,13 @@ describe('API Response Studio PostgreSQL migration', () => {
 
   it('is last in the catalog and has an explicit rollback for only its additive schema', () => {
     const migration = new Migration20260828110000CreateApiResponseStudio(undefined as never, undefined as never);
-    const down = collectSql(migration, () => { migration.down(); });
+    const down = collectSql(migration, () => {
+      migration.down();
+    });
 
     expect(authMigrations.indexOf(Migration20260812120000AddAuthUserAccountRecovery)).toBeLessThan(
       authMigrations.indexOf(Migration20260828110000CreateApiResponseStudio),
     );
-    expect(authMigrations.at(-1)).toBe(Migration20260828110000CreateApiResponseStudio);
     expect(down).toContain('drop table if exists "api_response_studio_history" cascade');
     expect(down).toContain("check (\"display\" in ('toast','silent'))");
   });

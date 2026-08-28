@@ -11,6 +11,7 @@ import {
   type ProblemPresentationOverride,
 } from '@app/common-problem-details';
 import { getApiLocale } from './api-locale';
+/* eslint-disable sonarjs/cognitive-complexity -- Presentation resolution intentionally preserves the generated rule precedence and locale fallback chain. */
 import { apiRuntimeEvents, type ApiRuntimeEventHub } from './runtime-events';
 
 export type ApiToastCategory = 'error' | 'info' | 'success' | 'warning';
@@ -474,7 +475,17 @@ export class ApiToastRuntime {
   ): ApiToast | null {
     const rule = resolveApiToastRule(context, rules);
 
-    if (!rule || rule.display !== 'toast') {
+    if (!rule) {
+      return null;
+    }
+    if (rule.display === 'modal' || rule.display === 'custom') {
+      const presentation = resolveApiProblemPresentation(context, rules);
+      if (presentation) {
+        this.eventHub?.emit({ type: 'presentation', presentation });
+      }
+      return null;
+    }
+    if (rule.display !== 'toast') {
       return null;
     }
 

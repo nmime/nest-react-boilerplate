@@ -38,7 +38,7 @@
     "admin.notification.option.provider.mailPace",
     "admin.notification.option.provider.resend",
     "admin.problemPresentations.column.endpoint",
-    "admin.problemPresentations.display.toast",
+    "admin.apiResponseStudio.display.toast",
     "admin.profile.emailLine",
     "admin.users.column.email",
     "auth.provider.discord",

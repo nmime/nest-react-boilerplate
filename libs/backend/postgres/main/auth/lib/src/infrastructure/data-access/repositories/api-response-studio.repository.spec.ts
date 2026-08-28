@@ -109,7 +109,7 @@ const createEntityManager = (options: ManagerOptions = {}) => {
   });
   const flush = vi.fn(() => (options.failFlush ? Promise.reject(new Error('flush failed')) : Promise.resolve()));
   const transaction = { find, findOne, persist, flush };
-  const transactional = vi.fn((callback: (em: typeof transaction) => Promise<unknown>) => callback(transaction));
+  const transactional = vi.fn(<T>(callback: (em: typeof transaction) => Promise<T>): Promise<T> => callback(transaction));
   const entityManager = { find, findOne, transactional } as unknown as EntityManager;
   return { entityManager, find, findOne, flush, persisted, transactional };
 };
@@ -160,7 +160,7 @@ describe('ApiResponseStudioRepository', () => {
     const manager = createEntityManager({ responses: [current] });
     const repository = new ApiResponseStudioRepository(manager.entityManager);
 
-    const result = await sync(repository, [variant('ERR-key', 'ERR')]).then((value) => value._unsafeUnwrap());
+    const result = await unwrap(sync(repository, [variant('ERR-key', 'ERR')]));
 
     expect(result.summary).toEqual({ created: 0, modified: 0, deleted: 0, unchanged: 1 });
     expect(result.source.revision).toBe(1);
@@ -182,9 +182,7 @@ describe('ApiResponseStudioRepository', () => {
     const manager = createEntityManager({ responses: [err, net] });
     const repository = new ApiResponseStudioRepository(manager.entityManager);
 
-    const result = await sync(repository, [variant('NET-key', 'NET', 'fingerprint-NET-v2')]).then((value) =>
-      value._unsafeUnwrap(),
-    );
+    const result = await unwrap(sync(repository, [variant('NET-key', 'NET', 'fingerprint-NET-v2')]));
 
     expect(result.summary).toEqual({ created: 0, modified: 1, deleted: 1, unchanged: 0 });
     expect(err).toMatchObject({ deleted: true, changeState: 'deleted', revision: 5 });
@@ -227,6 +225,38 @@ describe('ApiResponseStudioRepository', () => {
     expect(manager.persisted).toHaveLength(0);
     expect(manager.flush).not.toHaveBeenCalled();
     expect(row.revision).toBe(4);
+  });
+
+  it('updates persisted enum choices atomically and preserves them when an older client omits the field', async () => {
+    const row = response('00000000-0000-4000-8000-000000000029', variant('enum-choice', '400'));
+    const manager = createEntityManager({ responses: [row] });
+    const repository = new ApiResponseStudioRepository(manager.entityManager);
+    const presentation = {
+      tenantId: tenantA,
+      id: row.id,
+      actorUserId,
+      display: 'toast' as const,
+      severity: 'warning' as const,
+      support: false,
+      customDescription: '',
+      figmaOnly: false,
+      comments: 'enum selection',
+      texts: { en: ['English'], ru: ['Русский'], zh: ['中文'] },
+    };
+
+    const updated = await unwrap(
+      repository.updateResponse({
+        ...presentation,
+        expectedRevision: row.revision,
+        enumChoices: [{ property: 'reason', values: ['A', 'B'], enabledValues: ['B', 'unknown'] }],
+      }),
+    );
+    expect(updated.enumChoices).toEqual([{ property: 'reason', values: ['A', 'B'], enabledValues: ['B'] }]);
+
+    const preserved = await unwrap(
+      repository.updateResponse({ ...presentation, expectedRevision: updated.revision }),
+    );
+    expect(preserved.enumChoices).toEqual(updated.enumChoices);
   });
 
   it('validates bounded bulk input before opening a transaction and rejects duplicate or stale rows atomically', async () => {

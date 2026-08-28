@@ -1,7 +1,9 @@
+/* eslint-disable sonarjs/no-nested-functions -- Sync composes bounded external-reference traversal inside neverthrow result chains. */
 import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync, errAsync } from 'neverthrow';
 import {
   ApiResponseStudioRepositoryInjectToken,
+  type ApiResponseStudioEnumChoice,
   type ApiResponseStudioHistoryQuery,
   type ApiResponseStudioPresentation,
   type ApiResponseStudioRepositoryError,
@@ -59,10 +61,31 @@ export class ApiResponseStudioService {
     actorUserId: string;
     metadata?: Record<string, unknown>;
     presentation: ApiResponseStudioPresentation;
+    enumChoices?: readonly ApiResponseStudioEnumChoice[];
   }) {
     try {
+      const enumChoices = input.enumChoices?.map((choice) => {
+        const property = choice.property.trim();
+        const values = [...new Set(choice.values.map((value) => value.trim()))]
+          .filter(Boolean)
+          .sort((left, right) => left.localeCompare(right));
+        if (!property || values.length === 0) {
+          throw new ApiResponseStudioValidationError('Enum choices require a property and at least one value.');
+        }
+        return {
+          property,
+          values,
+          enabledValues: [...new Set(choice.enabledValues.map((value) => value.trim()))]
+            .filter((value) => values.includes(value))
+            .sort((left, right) => left.localeCompare(right)),
+        };
+      });
+      if (enumChoices && new Set(enumChoices.map((choice) => choice.property)).size !== enumChoices.length) {
+        throw new ApiResponseStudioValidationError('Enum choice properties must be unique.');
+      }
       return this.repository.updateResponse({
         ...normalizeAndValidatePresentation(input.presentation),
+        ...(enumChoices ? { enumChoices } : {}),
         tenantId: input.tenantId,
         id: input.id,
         expectedRevision: input.expectedRevision,
@@ -131,19 +154,65 @@ export class ApiResponseStudioService {
       if (!source) {
         return errAsync<never, ApiResponseStudioRepositoryError>(validationError('OpenAPI source was not found.'));
       }
-      return ResultAsync.fromPromise(
-        this.fetcher.fetchJson(source.jsonUrl).then(async (document) => {
-          const externalDocuments = Object.fromEntries(
-            await Promise.all(
-              collectExternalOpenApiRefs(document).map(
-                async (url) => [url, await this.fetcher.fetchJsonReference(url)] as const,
-              ),
-            ),
-          );
-          return parseOpenApiResponses(document, { externalDocuments });
-        }),
-        normalizeError,
-      ).andThen((variants) => this.repository.sync({ ...input, variants }));
+      const existingRows: ApiResponseStudioResponseRecord[] = [];
+      const loadExistingRows = (offset = 0): ResultAsync<void, ApiResponseStudioRepositoryError> =>
+        offset >= 10_000
+          ? errAsync(validationError('OpenAPI source exceeds the 10000-row synchronization limit.'))
+          : this.repository
+              .listResponses(input.tenantId, {
+                sourceId: input.sourceId,
+                includeDeleted: true,
+                limit: 500,
+                offset,
+              })
+              .andThen((page) => {
+                existingRows.push(...page);
+                return page.length < 500
+                  ? ResultAsync.fromSafePromise(Promise.resolve())
+                  : loadExistingRows(offset + 500);
+              });
+      return loadExistingRows()
+        .andThen(() =>
+          ResultAsync.fromPromise(
+            this.fetcher.fetchJson(source.jsonUrl).then(async (document) => {
+              const externalDocuments: Record<string, Record<string, unknown>> = {};
+              let frontier = collectExternalOpenApiRefs(document, source.jsonUrl);
+              const maxExternalDocuments = 32;
+              while (frontier.length > 0) {
+                const next = frontier.filter((url) => !(url in externalDocuments));
+                if (Object.keys(externalDocuments).length + next.length > maxExternalDocuments) {
+                  throw new Error(`OpenAPI external references exceed the ${maxExternalDocuments}-document limit.`);
+                }
+                for (const url of next) {
+                  // Fetching is intentionally ordered: every hop is independently URL/DNS/size validated.
+                  // eslint-disable-next-line no-await-in-loop
+                  const external = await this.fetcher.fetchJsonReference(url);
+                  externalDocuments[url] = external;
+                }
+                frontier = next.flatMap((url) =>
+                  collectExternalOpenApiRefs(externalDocuments[url] ?? {}, url).filter(
+                    (candidate) => !(candidate in externalDocuments),
+                  ),
+                );
+              }
+              const enumChoicesByBaseKey = Object.fromEntries(
+                [...existingRows]
+                  .sort((left, right) => {
+                    const updated = left.updatedAt.getTime() - right.updatedAt.getTime();
+                    return updated || left.revision - right.revision || left.stableKey.localeCompare(right.stableKey);
+                  })
+                  .map((row) => [`${row.method}:${row.path}:${row.status}:${row.errorType || '-'}`, row.enumChoices]),
+              );
+              return parseOpenApiResponses(document, {
+                externalDocuments,
+                enumChoicesByBaseKey,
+                baseUrl: source.jsonUrl,
+              });
+            }),
+            normalizeError,
+          ),
+        )
+        .andThen((variants) => this.repository.sync({ ...input, variants }));
     });
   }
 
@@ -162,10 +231,10 @@ export class ApiResponseStudioService {
           }
           rows.push(...page.value);
           if (page.value.length < pageSize) {
-            break;
+            return rows;
           }
         }
-        return rows;
+        throw new Error(`Export exceeds the ${maxRows}-row limit.`);
       })(),
       normalizeError,
     ).andThen((rows) => {

@@ -29,6 +29,7 @@ interface ParseOptions {
   readonly maxSnapshotBytes?: number;
   readonly enumExpansionCap?: number;
   readonly enumChoicesByBaseKey?: Readonly<Record<string, readonly ApiResponseStudioEnumChoice[]>>;
+  readonly baseUrl?: string;
   readonly externalDocuments?: Readonly<Record<string, Record<string, unknown>>>;
 }
 
@@ -75,27 +76,49 @@ const getAtSegments = (document: Record<string, unknown>, segments: readonly str
   return value;
 };
 
+const absoluteExternalRef = (ref: string, baseUrl?: string): string => {
+  const hashAt = ref.indexOf('#');
+  const external = hashAt >= 0 ? ref.slice(0, hashAt) : ref;
+  if (!external) {
+    return '';
+  }
+  try {
+    return new URL(external, baseUrl).toString();
+  } catch {
+    throw new Error(`OpenAPI external reference cannot be resolved: ${ref}`);
+  }
+};
+
 const getAtRef = (
   document: Record<string, unknown>,
   ref: string,
   externalDocuments: Readonly<Record<string, Record<string, unknown>>>,
-): unknown => {
+  baseUrl?: string,
+): { document: Record<string, unknown>; value: unknown; baseUrl?: string; identity: string } => {
   const localSegments = localRefSegments(ref);
   if (localSegments) {
-    return getAtSegments(document, localSegments, ref);
+    return { document, value: getAtSegments(document, localSegments, ref), baseUrl, identity: `${baseUrl ?? 'root'}${ref}` };
   }
   const hashAt = ref.indexOf('#');
-  const url = hashAt >= 0 ? ref.slice(0, hashAt) : ref;
+  const externalUrl = absoluteExternalRef(ref, baseUrl);
   const fragment = hashAt >= 0 ? ref.slice(hashAt) : '';
-  const external = externalDocuments[url];
+  const external = externalDocuments[externalUrl];
   if (!external) {
-    return { $externalRef: ref };
+    throw new Error(`OpenAPI external reference was not fetched: ${externalUrl}`);
   }
   if (!fragment) {
-    return external;
+    return { document: external, value: external, baseUrl: externalUrl, identity: externalUrl };
   }
   const externalSegments = localRefSegments(fragment);
-  return externalSegments ? getAtSegments(external, externalSegments, ref) : { $externalRef: ref };
+  if (!externalSegments) {
+    throw new Error(`OpenAPI external reference fragment is invalid: ${ref}`);
+  }
+  return {
+    document: external,
+    value: getAtSegments(external, externalSegments, ref),
+    baseUrl: externalUrl,
+    identity: `${externalUrl}${fragment}`,
+  };
 };
 
 const resolveSchema = (
@@ -104,6 +127,7 @@ const resolveSchema = (
   limits: Required<Pick<ParseOptions, 'maxDepth' | 'maxNodes'>>,
   state: { nodes: number; refs: Set<string> },
   externalDocuments: Readonly<Record<string, Record<string, unknown>>>,
+  baseUrl?: string,
   depth = 0,
 ): unknown => {
   if (depth > limits.maxDepth || state.nodes >= limits.maxNodes) {
@@ -111,32 +135,34 @@ const resolveSchema = (
   }
   state.nodes += 1;
   if (Array.isArray(value)) {
-    return value.map((item) => resolveSchema(document, item, limits, state, externalDocuments, depth + 1));
+    return value.map((item) => resolveSchema(document, item, limits, state, externalDocuments, baseUrl, depth + 1));
   }
   if (!isRecord(value)) {
     return value;
   }
   const ref = typeof value.$ref === 'string' ? value.$ref : undefined;
   if (ref) {
-    if (state.refs.has(ref)) {
+    const resolvedRef = getAtRef(document, ref, externalDocuments, baseUrl);
+    if (state.refs.has(resolvedRef.identity)) {
       return { $circular: ref };
     }
-    state.refs.add(ref);
+    state.refs.add(resolvedRef.identity);
     const resolved = resolveSchema(
-      document,
-      getAtRef(document, ref, externalDocuments),
+      resolvedRef.document,
+      resolvedRef.value,
       limits,
       state,
       externalDocuments,
+      resolvedRef.baseUrl,
       depth + 1,
     );
-    state.refs.delete(ref);
+    state.refs.delete(resolvedRef.identity);
     return isRecord(resolved) ? { ...resolved, $name: ref.split('/').at(-1) } : resolved;
   }
   return Object.fromEntries(
     Object.keys(value)
       .sort((a, b) => a.localeCompare(b))
-      .map((key) => [key, resolveSchema(document, value[key], limits, state, externalDocuments, depth + 1)]),
+      .map((key) => [key, resolveSchema(document, value[key], limits, state, externalDocuments, baseUrl, depth + 1)]),
   );
 };
 
@@ -264,6 +290,15 @@ const expansionSuffixes = (
   if (axes.length === 0) {
     return [{ suffix: '', choices: choices.map((choice) => ({ ...choice })) }];
   }
+  for (const choice of axes) {
+    if (choice.enabledValues.length > cap) {
+      throw new Error(`OpenAPI enum ${choice.property} exceeds the ${cap}-value expansion limit.`);
+    }
+  }
+  const combinations = axes.reduce((product, choice) => product * choice.enabledValues.length, 1);
+  if (!Number.isSafeInteger(combinations)) {
+    throw new Error('OpenAPI enum expansion product exceeds the safe integer limit.');
+  }
   const results: Array<{ suffix: string; choices: ApiResponseStudioEnumChoice[] }> = [];
   const walk = (index: number, values: string[]) => {
     if (results.length >= cap) {
@@ -278,13 +313,19 @@ const expansionSuffixes = (
     }
     for (const value of axes[index]?.enabledValues ?? []) {
       walk(index + 1, [...values, value]);
+      if (results.length >= cap) {
+        return;
+      }
     }
   };
   walk(0, []);
   return results;
 };
 
-export const collectExternalOpenApiRefs = (document: Record<string, unknown>): string[] => {
+export const collectExternalOpenApiRefs = (
+  document: Record<string, unknown>,
+  baseUrl?: string,
+): string[] => {
   const refs = new Set<string>();
   const walk = (value: unknown, seen: Set<object>): void => {
     if (!value || typeof value !== 'object' || seen.has(value)) {
@@ -299,14 +340,17 @@ export const collectExternalOpenApiRefs = (document: Record<string, unknown>): s
     }
     const record = value as Record<string, unknown>;
     if (typeof record.$ref === 'string' && !record.$ref.startsWith('#/')) {
-      refs.add(record.$ref.split('#')[0] ?? record.$ref);
+      const absolute = absoluteExternalRef(record.$ref, baseUrl);
+      if (absolute) {
+        refs.add(absolute);
+      }
     }
     Object.values(record).forEach((item) => {
       walk(item, seen);
     });
   };
   walk(document, new Set());
-  return [...refs].filter(Boolean).sort((a, b) => a.localeCompare(b));
+  return [...refs].sort((a, b) => a.localeCompare(b));
 };
 
 export const parseOpenApiResponses = (
@@ -374,6 +418,7 @@ export const parseOpenApiResponses = (
           { maxDepth, maxNodes },
           { nodes: 0, refs: new Set() },
           options.externalDocuments ?? {},
+          options.baseUrl,
         );
         const resolvedVariants = schemaVariants(resolved);
         for (const schema of resolvedVariants) {

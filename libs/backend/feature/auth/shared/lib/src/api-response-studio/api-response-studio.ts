@@ -17,6 +17,12 @@ export interface ApiResponseStudioTexts {
   readonly zh: readonly string[];
 }
 
+export interface ApiResponseStudioEnumChoice {
+  readonly property: string;
+  readonly values: readonly string[];
+  readonly enabledValues: readonly string[];
+}
+
 export interface ApiResponseStudioPresentation {
   readonly display: ProblemPresentationDisplay;
   readonly severity: ProblemPresentationSeverity;
@@ -25,12 +31,6 @@ export interface ApiResponseStudioPresentation {
   readonly figmaOnly: boolean;
   readonly comments: string;
   readonly texts: ApiResponseStudioTexts;
-}
-
-export interface ApiResponseStudioEnumChoice {
-  readonly property: string;
-  readonly values: readonly string[];
-  readonly enabledValues: readonly string[];
 }
 
 export interface ApiResponseStudioSourceRecord {
@@ -172,6 +172,7 @@ export interface UpdateApiResponseStudioSourceInput {
 }
 
 export interface UpdateApiResponseStudioResponseInput extends ApiResponseStudioPresentation {
+  readonly enumChoices?: readonly ApiResponseStudioEnumChoice[];
   readonly tenantId: string;
   readonly id: string;
   readonly expectedRevision: number;

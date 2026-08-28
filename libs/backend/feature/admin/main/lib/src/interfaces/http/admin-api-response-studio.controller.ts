@@ -162,13 +162,14 @@ export class AdminApiResponseStudioController {
     @Body() input: UpdateApiResponseStudioResponseDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<unknown>> {
-    const { expectedRevision, ...presentation } = input;
+    const { expectedRevision, enumChoices, ...presentation } = input;
     return createOkResponse(
       unwrap(
         await this.studio.updateResponse({
           id,
           expectedRevision,
           presentation,
+          enumChoices,
           tenantId: resolveTenantId(principal),
           actorUserId: principal.subject,
           metadata: { ...requestContextFromRequest(request) },

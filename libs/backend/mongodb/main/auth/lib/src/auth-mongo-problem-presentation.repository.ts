@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity -- Legacy-compatible presentation mapping intentionally handles additive EN/RU/ZH fields in one adapter. */
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import {

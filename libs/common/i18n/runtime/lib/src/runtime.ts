@@ -3,7 +3,7 @@ export type RuntimeLocaleCatalogFileEntry<FileName extends string = string> = re
 
 export type TranslationParams = Record<string, string | number | boolean | null | undefined>;
 
-export const supportedLocales = ['en', 'ru'] as const;
+export const supportedLocales = ['en', 'ru', 'zh'] as const;
 export type Locale = (typeof supportedLocales)[number];
 // eslint-disable-next-line sonarjs/redundant-type-aliases -- Public domain name retained alongside the locale representation.
 export type Language = Locale;

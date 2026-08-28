@@ -13,6 +13,7 @@ import {
   type ApiResponseStudioResponse,
   type ApiResponseStudioSource,
 } from '../../features/api-response-studio';
+import { ApiError } from '@app/frontend-api-support';
 import { ProblemPresentationsPage } from './problem-presentations-page';
 
 const source: ApiResponseStudioSource = {
@@ -38,8 +39,8 @@ const response = (id: string, path: string, status: string, tag = 'Accounts'): A
   deleted: false,
   description: 'Generated detail',
   display: 'toast',
-  enumChoices: [{ value: 'locked' }],
-  errorType: 'urn:problem:locked',
+  enumChoices: [{ property: 'code', values: ['locked'], enabledValues: [] }],
+  errorType: 'https://example.test/problems#locked',
   exampleSnapshot: '{"code":"locked"}',
   figmaOnly: false,
   id,
@@ -173,6 +174,7 @@ describe('API Response Studio', () => {
     fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
     let dialog = screen.getByRole('alertdialog');
     fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Show support guidance' }));
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'locked' }));
     fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Figma-only specification' }));
     fireEvent.change(within(dialog).getByLabelText('Custom description'), { target: { value: 'Updated detail' } });
     fireEvent.change(within(dialog).getByLabelText('Internal comments'), { target: { value: 'Updated comment' } });
@@ -188,6 +190,7 @@ describe('API Response Studio', () => {
           support: false,
           texts: expect.objectContaining({ zh: ['重试', '联系支持'] }),
         }),
+        [{ enabledValues: ['locked'], property: 'code', values: ['locked'] }],
         undefined,
       ),
     );
@@ -229,13 +232,19 @@ describe('API Response Studio', () => {
 
   it('renders loading, empty, request error, conflict and recoverable mutation errors', async () => {
     installApi();
-    vi.spyOn(apiResponseStudioApi, 'listResponses').mockRejectedValue(new Error('offline'));
+    const failedResponses = vi
+      .spyOn(apiResponseStudioApi, 'listResponses')
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue({ items: rows, total: rows.length });
     render(
       <Providers>
         <ProblemPresentationsPage access={writeAccess} />
       </Providers>,
     );
     expect(await screen.findByText('The API response inventory could not be loaded.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(failedResponses).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('GET 409')).toBeTruthy();
     cleanup();
     vi.restoreAllMocks();
     installApi();
@@ -249,9 +258,7 @@ describe('API Response Studio', () => {
     cleanup();
     vi.restoreAllMocks();
     installApi();
-    vi.spyOn(apiResponseStudioApi, 'updateResponse').mockRejectedValue(
-      Object.assign(new Error('conflict'), { status: 409 }),
-    );
+    vi.spyOn(apiResponseStudioApi, 'updateResponse').mockRejectedValue(new ApiError('conflict', 409));
     render(
       <Providers>
         <ProblemPresentationsPage access={writeAccess} />
@@ -260,6 +267,11 @@ describe('API Response Studio', () => {
     const row = (await screen.findByText('GET 409')).closest('article')!;
     fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
     fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Save response' }));
-    expect(await screen.findByText(/could not be saved/)).toBeTruthy();
+    expect(await screen.findByText(/changed after it was opened/)).toBeTruthy();
+    const listResponses = vi.mocked(apiResponseStudioApi.listResponses);
+    const callsBeforeReload = listResponses.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Reload latest data' }));
+    await waitFor(() => expect(listResponses.mock.calls.length).toBeGreaterThan(callsBeforeReload));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });

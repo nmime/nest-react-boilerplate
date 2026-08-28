@@ -24,7 +24,9 @@
   "ui.runtime.serverUnavailable.title": "Service temporarily unavailable",
   "ui.runtime.serverUnavailable.description": "The API is not responding right now. You can retry without leaving this page.",
   "ui.runtime.requestFailed.title": "Request failed",
+  "ui.runtime.presentation.support": "Contact support if this problem continues.",
   "ui.runtime.notifications.label": "API notifications",
   "ui.runtime.retry": "Retry",
-  "ui.runtime.dismissToast": "Dismiss"
+  "ui.runtime.dismissToast": "Dismiss",
+  "common.language.zh": "Chinese"
 }

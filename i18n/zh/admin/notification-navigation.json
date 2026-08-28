@@ -1,0 +1,11 @@
+{
+  "admin.action.notificationTemplates": "消息模板",
+  "admin.action.notificationSegments": "定向培训",
+  "admin.action.notificationBroadcasts": "广播",
+  "admin.notification.description": "创建本地化消息，选择可重复使用的受众，并在电子邮件、机器人和推送中运行持久的广播。",
+  "admin.notification.common.success": "通知操作已完成。",
+  "admin.notification.common.failed": "通知操作失败。",
+  "admin.permission.notificationTemplatesMissing": "缺少通知模板读取权限。",
+  "admin.permission.notificationSegmentsMissing": "缺少通知段读取权限。",
+  "admin.permission.notificationBroadcastsMissing": "缺少通知广播读取权限。"
+}

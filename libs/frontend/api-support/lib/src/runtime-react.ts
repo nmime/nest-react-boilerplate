@@ -60,6 +60,11 @@ export function useApiRuntimeOverlayModel({
     };
   }, [eventHub, rerender]);
 
+  const dismissPresentation = useCallback(() => {
+    eventHub.clearPresentation();
+    rerender();
+  }, [eventHub, rerender]);
+
   const dismissToast = useCallback(
     (id: string) => {
       toastRuntime.dismiss(id);
@@ -69,6 +74,7 @@ export function useApiRuntimeOverlayModel({
   );
 
   return {
+    dismissPresentation,
     dismissToast,
     state: eventHub.getState(),
     toasts: toastRuntime.visible,

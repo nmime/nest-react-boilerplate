@@ -52,6 +52,11 @@ requirements:
       - '@app/i18n-ru-common'
       - '@app/i18n-ru-landing'
       - '@app/i18n-ru-user'
+      - '@app/i18n-zh-admin'
+      - '@app/i18n-zh-bots'
+      - '@app/i18n-zh-common'
+      - '@app/i18n-zh-landing'
+      - '@app/i18n-zh-user'
     risk: normal
     profiles:
       - domain

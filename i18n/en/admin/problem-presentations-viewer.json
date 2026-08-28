@@ -1,0 +1,19 @@
+{
+  "admin.apiResponseStudio.viewer.description": "A bounded, read-only view of the synchronized response contract.",
+  "admin.apiResponseStudio.viewer.schema": "Schema snapshot",
+  "admin.apiResponseStudio.viewer.example": "Example snapshot",
+  "admin.apiResponseStudio.viewer.enums": "Enum choices",
+  "admin.apiResponseStudio.viewer.none": "No snapshot is available.",
+  "admin.apiResponseStudio.display.toast": "Toast",
+  "admin.apiResponseStudio.display.modal": "Modal",
+  "admin.apiResponseStudio.display.custom": "Custom",
+  "admin.apiResponseStudio.display.silent": "Silent",
+  "admin.apiResponseStudio.severity.error": "Error",
+  "admin.apiResponseStudio.severity.warning": "Warning",
+  "admin.apiResponseStudio.severity.info": "Info",
+  "admin.apiResponseStudio.severity.success": "Success",
+  "admin.apiResponseStudio.change.unchanged": "Unchanged",
+  "admin.apiResponseStudio.change.new": "New",
+  "admin.apiResponseStudio.change.modified": "Modified",
+  "admin.apiResponseStudio.change.deleted": "Deleted"
+}

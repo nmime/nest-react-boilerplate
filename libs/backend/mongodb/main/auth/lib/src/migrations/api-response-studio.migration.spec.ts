@@ -86,7 +86,10 @@ describe('API Response Studio MongoDB migration', () => {
       ]),
     );
     expect(updateMany).toHaveBeenCalledTimes(1);
-    const [filter, pipeline] = updateMany.mock.calls[0] as [Record<string, unknown>, Array<Record<string, unknown>>];
+    const [filter, pipeline] = updateMany.mock.calls[0] as unknown as [
+      Record<string, unknown>,
+      Array<Record<string, unknown>>,
+    ];
     expect(filter).toEqual({});
     expect(pipeline).toEqual([
       {

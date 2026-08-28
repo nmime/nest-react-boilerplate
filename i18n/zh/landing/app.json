@@ -1,0 +1,20 @@
+{
+  "landing.appName": "登陆应用",
+  "landing.eyebrow": "互联产品体验",
+  "landing.title": "为您的下一个产品奠定坚实的基础。",
+  "landing.description": "从完善的公共网站和关联的帐户体验开始，然后塑造您域名周围的每个应用程序。",
+  "landing.action.user": "预览用户",
+  "landing.action.admin": "预览管理员应用",
+  "landing.action.docs": "开发人员文档",
+  "landing.productName": "Nest React样板",
+  "landing.section.title": "从第一个屏幕清除所有权。",
+  "landing.section.eyebrow": "公开、账号和管理员",
+  "landing.section.description": "引导访客从清晰的公开介绍进入一致的帐户和管理体验。",
+  "landing.surface.public.title": "公众存在",
+  "landing.surface.public.description": "简洁的营销表面，具有可替换的身份、信息和主要操作。",
+  "landing.surface.account.title": "客户账户",
+  "landing.surface.account.description": "可用于产品功能的工作登录、配置文件、首选项和关联帐户流程。",
+  "landing.surface.admin.title": "管理工作区",
+  "landing.surface.admin.description": "单独的受保护表面，用于操作工作流程和角色感知访问。",
+  "landing.statGrid.label": "互联产品体验"
+}

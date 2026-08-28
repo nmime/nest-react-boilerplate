@@ -124,18 +124,19 @@ requirements:
       - '@app/frontend-ui-web'
       - '@app/i18n-en-admin'
       - '@app/i18n-ru-admin'
+      - '@app/i18n-zh-admin'
     risk: high
-    profiles: [domain, journey]
+    profiles: [domain]
     cucumber:
       disposition: not-applicable
-      reason: Generated-client integration, filters, selection, paging, dialogs, responsive behavior, and accessible states require rendered UI tests.
-      alternativeEvidence: [vitest, playwright]
+      reason: Generated-client integration, filters, selection, paging, dialogs, retry behavior, and accessible states are covered by rendered component tests; real-browser responsive and focus journeys remain a separate browser gate.
+      alternativeEvidence: [vitest]
     evidence:
       - kind: vitest
         file: apps/frontend/admin/src/pages/problem-presentations/problem-presentations-page.spec.tsx
         target: admin-app:test
         lanes: [pr, main]
-      - kind: playwright
-        file: apps/frontend/admin/src/pages/problem-presentations/problem-presentations-page.spec.tsx
-        target: admin-app:test
+      - kind: vitest
+        file: libs/frontend/ui-web/lib/src/component/api-runtime-overlay.spec.tsx
+        target: '@app/frontend-ui-web:test'
         lanes: [pr, main]

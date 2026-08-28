@@ -6,6 +6,16 @@ import { UiToast } from './feedback';
 import { UiNotification } from './notification';
 import { cn } from '../util/cn';
 
+export interface UiRuntimeProblemPresentation {
+  customDescription?: string;
+  display: 'custom' | 'modal';
+  figmaOnly: boolean;
+  lines: readonly string[];
+  ruleId: string;
+  severity: 'error' | 'info' | 'success' | 'warning';
+  support: boolean;
+}
+
 export interface UiRuntimeToast {
   category: 'error' | 'info' | 'success' | 'warning';
   id: string;
@@ -20,10 +30,12 @@ export interface UiApiRuntimeOverlayCopy {
   continueToSignInLabel: string;
   defaultAuthDescription: string;
   defaultOfflineMessage: string;
+  defaultPresentationTitle: string;
   defaultServerErrorMessage: string;
   dismissLabel: string;
   offlineTitle: string;
   serverErrorTitle: string;
+  supportGuidance: string;
 }
 
 export interface UiApiRuntimeOverlayProps {
@@ -33,7 +45,9 @@ export interface UiApiRuntimeOverlayProps {
   copy?: Partial<UiApiRuntimeOverlayCopy>;
   lastError?: { message: string } | null;
   onAuthDismiss?: () => void;
+  onDismissPresentation?: () => void;
   onDismissToast?: (id: string) => void;
+  presentation?: UiRuntimeProblemPresentation | null;
   redirectTo?: string | null;
   status?: 'online' | 'offline' | 'server-error';
   toasts?: readonly UiRuntimeToast[];
@@ -59,10 +73,12 @@ const defaultOverlayCopy: UiApiRuntimeOverlayCopy = {
   continueToSignInLabel: 'Continue to sign in',
   defaultAuthDescription: 'Your session must be refreshed before this route can load protected data.',
   defaultOfflineMessage: 'You are offline. We will keep this route mounted while the connection recovers.',
+  defaultPresentationTitle: 'Request failed',
   defaultServerErrorMessage: 'The API is temporarily unavailable. Please retry in a moment.',
   dismissLabel: 'Dismiss',
   offlineTitle: 'Offline mode',
   serverErrorTitle: 'Service interruption',
+  supportGuidance: 'Contact support if this problem continues.',
 };
 
 export const UiApiRuntimeOverlay = ({
@@ -71,7 +87,9 @@ export const UiApiRuntimeOverlay = ({
   className,
   copy,
   onAuthDismiss,
+  onDismissPresentation,
   onDismissToast,
+  presentation,
   redirectTo,
   status = 'online',
   toasts = [],
@@ -118,6 +136,30 @@ export const UiApiRuntimeOverlay = ({
           </div>
         ))}
       </div>
+      <UiDialog
+        className={`xr-api-runtime-dialog xr-api-runtime-dialog--${presentation?.display ?? 'modal'}`}
+        description={presentation?.customDescription ?? ''}
+        onOpenChange={
+          onDismissPresentation
+            ? (next) => {
+                if (!next) {
+                  onDismissPresentation();
+                }
+              }
+            : undefined
+        }
+        open={Boolean(presentation)}
+        title={presentation?.lines[0] ?? presentation?.customDescription ?? overlayCopy.defaultPresentationTitle}
+      >
+        {presentation ? (
+          <div data-presentation-mode={presentation.display} data-rule-id={presentation.ruleId}>
+            {presentation.lines.slice(1).map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            {presentation.support ? <p>{overlayCopy.supportGuidance}</p> : null}
+          </div>
+        ) : null}
+      </UiDialog>
       <UiDialog
         className="xr-api-runtime-dialog"
         description={overlayCopy.defaultAuthDescription}

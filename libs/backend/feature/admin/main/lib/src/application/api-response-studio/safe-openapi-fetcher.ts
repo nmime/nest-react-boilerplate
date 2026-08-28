@@ -1,5 +1,7 @@
-/* eslint-disable sonarjs/cognitive-complexity, no-await-in-loop -- Redirect and DNS revalidation is deliberately sequential and fail-closed. */
+/* eslint-disable sonarjs/cognitive-complexity, sonarjs/no-hardcoded-ip, no-await-in-loop -- Redirect/DNS validation and explicit non-global CIDR policy are deliberately sequential and fail-closed. */
 import { isIP } from 'node:net';
+import type { LookupAddress, LookupOptions } from 'node:dns';
+import ipaddr from 'ipaddr.js';
 import { Injectable } from '@nestjs/common';
 
 export interface ApiResponseStudioDnsPort {
@@ -25,41 +27,32 @@ export interface SafeOpenApiFetcherOptions {
   readonly maxRedirects?: number;
 }
 
-const blockedIpv4 = (value: string): boolean => {
-  const parts = value.split('.').map(Number);
-  const [a = -1, b = -1] = parts;
-  return (
-    a === 0 ||
-    a === 10 ||
-    a === 127 ||
-    (a === 100 && b >= 64 && b <= 127) ||
-    (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) ||
-    (a === 192 && b === 168) ||
-    (a === 198 && (b === 18 || b === 19)) ||
-    a >= 224
-  );
-};
-const blockedIpv6 = (value: string): boolean => {
-  const address = value.toLowerCase().split('%')[0] ?? '';
-  if (address === '::' || address === '::1') {
-    return true;
-  }
-  if (address.startsWith('fc') || address.startsWith('fd') || /^fe[89ab]/u.test(address)) {
-    return true;
-  }
-  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/u.exec(address)?.[1];
-  return mapped ? blockedIpv4(mapped) : false;
-};
+const PublicAddressRanges = new Set(['unicast']);
+const ExplicitlyNonGlobalCidrs = [
+  '192.0.0.0/24',
+  '192.0.2.0/24',
+  '198.51.100.0/24',
+  '203.0.113.0/24',
+  '2001::/32',
+  '2001:2::/48',
+  '2001:10::/28',
+  '2001:db8::/32',
+  '64:ff9b:1::/48',
+  '2002::/16',
+  '3fff::/20',
+].map((cidr) => ipaddr.parseCIDR(cidr));
 export const isPublicAddress = (value: string): boolean => {
-  const kind = isIP(value);
-  if (kind === 4) {
-    return !blockedIpv4(value);
+  try {
+    const address = ipaddr.process(value.split('%')[0] ?? '');
+    return (
+      PublicAddressRanges.has(address.range()) &&
+      !ExplicitlyNonGlobalCidrs.some(([network, prefixLength]) =>
+        address.kind() === network.kind() ? address.match(network, prefixLength) : false,
+      )
+    );
+  } catch {
+    return false;
   }
-  if (kind === 6) {
-    return !blockedIpv6(value);
-  }
-  return false;
 };
 
 @Injectable()
@@ -70,6 +63,35 @@ export class NodeDnsPort implements ApiResponseStudioDnsPort {
   }
 }
 
+type PinnedLookupCallback = (
+  error: NodeJS.ErrnoException | null,
+  addressOrAddresses: string | LookupAddress[],
+  family?: number,
+) => void;
+
+export const createPinnedLookup =
+  (addresses: readonly string[]) =>
+  (_hostname: string, options: LookupOptions, callback: PinnedLookupCallback): void => {
+    const resolved = addresses.map((address) => ({ address, family: isIP(address) }));
+    const requestedFamily = options.family === 4 || options.family === 6 ? options.family : undefined;
+    const matching = requestedFamily ? resolved.filter((entry) => entry.family === requestedFamily) : resolved;
+    if (matching.length === 0) {
+      const error = new Error('No validated source address is available for the requested family.') as NodeJS.ErrnoException;
+      error.code = 'ENOTFOUND';
+      callback(error, options.all ? [] : '', requestedFamily);
+      return;
+    }
+    if (options.all) {
+      callback(null, matching);
+      return;
+    }
+    const first = matching[0];
+    if (!first) {
+      return;
+    }
+    callback(null, first.address, first.family);
+  };
+
 @Injectable()
 export class UndiciHttpPort implements ApiResponseStudioHttpPort {
   async request(input: {
@@ -78,16 +100,13 @@ export class UndiciHttpPort implements ApiResponseStudioHttpPort {
     signal: AbortSignal;
     headers: Readonly<Record<string, string>>;
   }): Promise<ApiResponseStudioHttpResponse> {
-    const address = input.addresses[0];
-    if (!address) {
+    if (input.addresses.length === 0) {
       throw new Error('No validated source address is available.');
     }
     const { Agent, request } = await import('undici');
     const dispatcher = new Agent({
       connect: {
-        lookup: (_hostname, _options, callback) => {
-          callback(null, address, isIP(address));
-        },
+        lookup: createPinnedLookup(input.addresses),
       },
     });
     try {

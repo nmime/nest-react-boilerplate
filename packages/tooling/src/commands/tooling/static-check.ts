@@ -376,6 +376,7 @@ const staleReferenceIgnoredDirectories = new Set([
 ]);
 
 const staleReferenceIgnoredFiles = new Set([
+  ".git",
   "packages/tooling/src/commands/tooling/static-check.ts",
   "pnpm-lock.yaml",
 ]);

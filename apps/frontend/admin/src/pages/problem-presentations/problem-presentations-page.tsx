@@ -26,6 +26,7 @@ import {
   apiResponseStudioQueryKeys,
   emptyPresentation,
   PresentationEditor,
+  type ApiResponseStudioEnumChoice,
   type ApiResponseStudioHistoryQuery,
   type ApiResponseStudioPresentation,
   type ApiResponseStudioPresentationPatch,
@@ -78,31 +79,15 @@ const percent = (translated: number, total: number): string => `${total ? Math.r
 const presentationPatch = (
   before: ApiResponseStudioPresentation,
   after: ApiResponseStudioPresentation,
-): ApiResponseStudioPresentationPatch => {
-  const patch: ApiResponseStudioPresentationPatch = {};
-  if (before.display !== after.display) {
-    patch.display = after.display;
-  }
-  if (before.severity !== after.severity) {
-    patch.severity = after.severity;
-  }
-  if (before.support !== after.support) {
-    patch.support = after.support;
-  }
-  if (before.customDescription !== after.customDescription) {
-    patch.customDescription = after.customDescription;
-  }
-  if (before.figmaOnly !== after.figmaOnly) {
-    patch.figmaOnly = after.figmaOnly;
-  }
-  if (before.comments !== after.comments) {
-    patch.comments = after.comments;
-  }
-  if (JSON.stringify(before.texts) !== JSON.stringify(after.texts)) {
-    patch.texts = after.texts;
-  }
-  return patch;
-};
+): ApiResponseStudioPresentationPatch => ({
+  ...(before.display !== after.display ? { display: after.display } : {}),
+  ...(before.severity !== after.severity ? { severity: after.severity } : {}),
+  ...(before.support !== after.support ? { support: after.support } : {}),
+  ...(before.customDescription !== after.customDescription ? { customDescription: after.customDescription } : {}),
+  ...(before.figmaOnly !== after.figmaOnly ? { figmaOnly: after.figmaOnly } : {}),
+  ...(before.comments !== after.comments ? { comments: after.comments } : {}),
+  ...(JSON.stringify(before.texts) !== JSON.stringify(after.texts) ? { texts: after.texts } : {}),
+});
 
 export const ProblemPresentationsPage = ({
   access,
@@ -118,6 +103,7 @@ export const ProblemPresentationsPage = ({
   const [historyQuery, setHistoryQuery] = useState<ApiResponseStudioHistoryQuery>({ limit: 100, offset: 0 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<Notice>();
+  const [conflictReload, setConflictReload] = useState(false);
   const [sourceTarget, setSourceTarget] = useState<ApiResponseStudioSource>();
   const [sourceDraft, setSourceDraft] = useState<SourceDraft>(newSource);
   const [sourceError, setSourceError] = useState('');
@@ -125,6 +111,7 @@ export const ProblemPresentationsPage = ({
   const [resetTarget, setResetTarget] = useState<ApiResponseStudioResponse>();
   const [viewerTarget, setViewerTarget] = useState<ApiResponseStudioResponse>();
   const [editorDraft, setEditorDraft] = useState<ApiResponseStudioPresentation>(emptyPresentation);
+  const [editorEnumChoices, setEditorEnumChoices] = useState<ApiResponseStudioEnumChoice[]>([]);
   const [bulkDraft, setBulkDraft] = useState<ApiResponseStudioPresentation>(emptyPresentation);
   const [bulkBaseline, setBulkBaseline] = useState<ApiResponseStudioPresentation>(emptyPresentation);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -174,8 +161,15 @@ export const ProblemPresentationsPage = ({
           : errorText(error, fallback, t),
       tone: 'warning',
     });
+    if (error instanceof ApiError && error.status === 409) {
+      setConflictReload(true);
+      setEditTarget(undefined);
+      setResetTarget(undefined);
+      setBulkOpen(false);
+    }
   };
   const success = async (message: string) => {
+    setConflictReload(false);
     setNotice({ message, tone: 'success' });
     setSelected(new Set());
     await invalidate();
@@ -206,10 +200,12 @@ export const ProblemPresentationsPage = ({
     mutationFn: ({
       response,
       presentation,
+      enumChoices,
     }: {
       response: ApiResponseStudioResponse;
       presentation: ApiResponseStudioPresentation;
-    }) => apiResponseStudioApi.updateResponse(response, presentation, requestOptions),
+      enumChoices: ApiResponseStudioEnumChoice[];
+    }) => apiResponseStudioApi.updateResponse(response, presentation, enumChoices, requestOptions),
     onError: (error) => {
       mutationError(error, 'admin.apiResponseStudio.error.update');
     },
@@ -446,10 +442,15 @@ export const ProblemPresentationsPage = ({
         </div>
         {responses.isLoading ? <p role="status">{t('admin.apiResponseStudio.loading.inventory')}</p> : null}
         {responses.error ? (
-          <UiNotification
-            message={errorText(responses.error, 'admin.apiResponseStudio.error.inventory', t)}
-            tone="warning"
-          />
+          <div className="admin-studio-error">
+            <UiNotification
+              message={errorText(responses.error, 'admin.apiResponseStudio.error.inventory', t)}
+              tone="warning"
+            />
+            <UiButton onClick={() => void responses.refetch()} size="sm" variant="secondary">
+              {t('ui.runtime.retry')}
+            </UiButton>
+          </div>
         ) : null}
         {!responses.isLoading && !responses.error && rows.length === 0 ? (
           <div className="admin-studio-empty">
@@ -564,6 +565,11 @@ export const ProblemPresentationsPage = ({
                                   onClick={() => {
                                     setEditTarget(row);
                                     setEditorDraft(presentationOf(row));
+                                    setEditorEnumChoices(row.enumChoices.map((choice) => ({
+                                      ...choice,
+                                      values: [...choice.values],
+                                      enabledValues: [...choice.enabledValues],
+                                    })));
                                   }}
                                   size="sm"
                                   variant="secondary"
@@ -611,7 +617,12 @@ export const ProblemPresentationsPage = ({
       </div>
       {sources.isLoading ? <p role="status">{t('admin.apiResponseStudio.loading.sources')}</p> : null}
       {sources.error ? (
-        <UiNotification message={errorText(sources.error, 'admin.apiResponseStudio.error.sources', t)} tone="warning" />
+        <div className="admin-studio-error">
+          <UiNotification message={errorText(sources.error, 'admin.apiResponseStudio.error.sources', t)} tone="warning" />
+          <UiButton onClick={() => void sources.refetch()} size="sm" variant="secondary">
+            {t('ui.runtime.retry')}
+          </UiButton>
+        </div>
       ) : null}
       <div className="admin-studio-source-grid">
         {(sources.data?.items ?? []).map((source) => (
@@ -690,7 +701,12 @@ export const ProblemPresentationsPage = ({
     <div className="admin-studio-tab">
       {history.isLoading ? <p role="status">{t('admin.apiResponseStudio.loading.history')}</p> : null}
       {history.error ? (
-        <UiNotification message={errorText(history.error, 'admin.apiResponseStudio.error.history', t)} tone="warning" />
+        <div className="admin-studio-error">
+          <UiNotification message={errorText(history.error, 'admin.apiResponseStudio.error.history', t)} tone="warning" />
+          <UiButton onClick={() => void history.refetch()} size="sm" variant="secondary">
+            {t('ui.runtime.retry')}
+          </UiButton>
+        </div>
       ) : null}
       <ol className="admin-studio-history">
         {(history.data?.items ?? []).map((entry) => (
@@ -751,12 +767,33 @@ export const ProblemPresentationsPage = ({
         <p className="admin-page-description">{t('admin.apiResponseStudio.description')}</p>
         {!canWrite ? <UiStatusTag label={t('admin.apiResponseStudio.readOnly')} tone="info" /> : null}
       </div>
-      {notice ? <UiNotification message={notice.message} tone={notice.tone} /> : null}
+      {notice ? (
+        <div className="admin-studio-error">
+          <UiNotification message={notice.message} tone={notice.tone} />
+          {conflictReload ? (
+            <UiButton
+              onClick={() => {
+                setConflictReload(false);
+                void invalidate();
+              }}
+              size="sm"
+              variant="secondary"
+            >
+              {t('admin.apiResponseStudio.action.reload')}
+            </UiButton>
+          ) : null}
+        </div>
+      ) : null}
       {dashboard.error ? (
-        <UiNotification
-          message={errorText(dashboard.error, 'admin.apiResponseStudio.error.dashboard', t)}
-          tone="warning"
-        />
+        <div className="admin-studio-error">
+          <UiNotification
+            message={errorText(dashboard.error, 'admin.apiResponseStudio.error.dashboard', t)}
+            tone="warning"
+          />
+          <UiButton onClick={() => void dashboard.refetch()} size="sm" variant="secondary">
+            {t('ui.runtime.retry')}
+          </UiButton>
+        </div>
       ) : null}
       <div className="admin-stat-grid xr-stat-grid admin-studio-stats" aria-busy={dashboard.isLoading}>
         <UiStatCard
@@ -866,7 +903,11 @@ export const ProblemPresentationsPage = ({
           confirmLabel={t('admin.apiResponseStudio.action.save')}
           description={t('admin.apiResponseStudio.editor.description')}
           onConfirm={() => {
-            responseMutation.mutate({ response: editTarget, presentation: editorDraft });
+            responseMutation.mutate({
+              response: editTarget,
+              presentation: editorDraft,
+              enumChoices: editorEnumChoices,
+            });
           }}
           onOpenChange={(open) => {
             if (!open) {
@@ -880,7 +921,13 @@ export const ProblemPresentationsPage = ({
             status: editTarget.status,
           })}
         >
-          <PresentationEditor key={editTarget.id} initial={editorDraft} onChange={setEditorDraft} />
+          <PresentationEditor
+            enumChoices={editorEnumChoices}
+            key={editTarget.id}
+            initial={editorDraft}
+            onChange={setEditorDraft}
+            onEnumChoicesChange={setEditorEnumChoices}
+          />
         </UiConfirmDialog>
       ) : null}
       {bulkOpen ? (

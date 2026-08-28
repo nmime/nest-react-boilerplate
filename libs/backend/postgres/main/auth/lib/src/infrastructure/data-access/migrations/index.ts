@@ -28,6 +28,7 @@ import { Migration20260722100000GrantFeatureFlagPermissions } from './Migration2
 import { Migration20260804120000RemoveTenantRowLevelSecurity } from './Migration20260804120000RemoveTenantRowLevelSecurity';
 import { Migration20260812120000AddAuthUserAccountRecovery } from './Migration20260812120000AddAuthUserAccountRecovery';
 import { Migration20260828110000CreateApiResponseStudio } from './Migration20260828110000CreateApiResponseStudio';
+import { Migration20260828120000AddZhAuthUserLocale } from './Migration20260828120000AddZhAuthUserLocale';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
 
@@ -61,6 +62,7 @@ export const authMigrations = [
   Migration20260804120000RemoveTenantRowLevelSecurity,
   Migration20260812120000AddAuthUserAccountRecovery,
   Migration20260828110000CreateApiResponseStudio,
+  Migration20260828120000AddZhAuthUserLocale,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -102,3 +104,4 @@ export * from './Migration20260804120000RemoveTenantRowLevelSecurity';
 export * from './Migration20260812120000AddAuthUserAccountRecovery';
 
 export * from './Migration20260828110000CreateApiResponseStudio';
+export * from './Migration20260828120000AddZhAuthUserLocale';

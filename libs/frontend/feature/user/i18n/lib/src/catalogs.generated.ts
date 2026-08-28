@@ -15,6 +15,14 @@ import ruUserShellCatalog from '@app/i18n-ru-user/shell.json';
 import ruUserSiteCatalog from '@app/i18n-ru-user/site.json';
 import ruUserSocialAuthCatalog from '@app/i18n-ru-user/social-auth.json';
 import ruUserTmaCatalog from '@app/i18n-ru-user/tma.json';
+import zhCommonErrorsCatalog from '@app/i18n-zh-common/errors.json';
+import zhCommonSharedCatalog from '@app/i18n-zh-common/shared.json';
+import zhUserAuthCatalog from '@app/i18n-zh-user/auth.json';
+import zhUserMobileCatalog from '@app/i18n-zh-user/mobile.json';
+import zhUserShellCatalog from '@app/i18n-zh-user/shell.json';
+import zhUserSiteCatalog from '@app/i18n-zh-user/site.json';
+import zhUserSocialAuthCatalog from '@app/i18n-zh-user/social-auth.json';
+import zhUserTmaCatalog from '@app/i18n-zh-user/tma.json';
 import type { Locale, RuntimeLocaleCatalogFileEntry } from '@app/common-i18n-runtime';
 
 export const catalogFileNames = [
@@ -48,5 +56,15 @@ export const localeCatalogFiles = {
     ['user/site.json', ruUserSiteCatalog],
     ['user/social-auth.json', ruUserSocialAuthCatalog],
     ['user/tma.json', ruUserTmaCatalog],
+  ],
+  zh: [
+    ['common/errors.json', zhCommonErrorsCatalog],
+    ['common/shared.json', zhCommonSharedCatalog],
+    ['user/auth.json', zhUserAuthCatalog],
+    ['user/mobile.json', zhUserMobileCatalog],
+    ['user/shell.json', zhUserShellCatalog],
+    ['user/site.json', zhUserSiteCatalog],
+    ['user/social-auth.json', zhUserSocialAuthCatalog],
+    ['user/tma.json', zhUserTmaCatalog],
   ],
 } as const satisfies Record<Locale, readonly RuntimeLocaleCatalogFileEntry[]>;

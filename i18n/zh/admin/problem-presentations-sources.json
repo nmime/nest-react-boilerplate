@@ -1,0 +1,17 @@
+{
+  "admin.apiResponseStudio.sources.description": "源是手动同步的。URL必须使用HTTPS ，并由服务器在导入前进行验证。",
+  "admin.apiResponseStudio.sources.empty": "尚未配置OpenAPI源。",
+  "admin.apiResponseStudio.source.url": "OpenAPI JSON",
+  "admin.apiResponseStudio.source.status": "最后状态",
+  "admin.apiResponseStudio.source.lastSync": "上次同步",
+  "admin.apiResponseStudio.source.dialogDescription": "配置产品中立的OpenAPI源。同步保持手动。",
+  "admin.apiResponseStudio.source.createTitle": "添加OpenAPI源",
+  "admin.apiResponseStudio.source.editTitle": "编辑OpenAPI源",
+  "admin.apiResponseStudio.source.name": "数据来源名称",
+  "admin.apiResponseStudio.source.slug": "源slug",
+  "admin.apiResponseStudio.source.jsonUrl": "OpenAPI JSON HTTPS 地址",
+  "admin.apiResponseStudio.source.docsUrl": "文档HTTPS URL",
+  "admin.apiResponseStudio.source.enabled": "源已启用",
+  "admin.apiResponseStudio.validation.source": "输入以字母开头的名称和小写别名。",
+  "admin.apiResponseStudio.validation.https": "OpenAPI JSON URL必须是有效的HTTPS地址。"
+}

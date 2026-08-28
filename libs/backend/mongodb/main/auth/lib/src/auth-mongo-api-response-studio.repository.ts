@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/naming-convention, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, sonarjs/no-nested-conditional, no-await-in-loop -- MongoDB transaction mappings intentionally preserve persisted field shapes and execute ordered writes. */
+/* eslint-disable @typescript-eslint/naming-convention, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, sonarjs/no-nested-conditional, no-await-in-loop -- MongoDB transaction mappings intentionally preserve persisted field shapes and execute ordered writes. */
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync } from 'neverthrow';
@@ -6,6 +6,7 @@ import type { ClientSession, Db, Document, MongoClient } from 'mongodb';
 import type {
   AdminAuditAction,
   ApiResponseStudioDashboard,
+  ApiResponseStudioEnumChoice,
   ApiResponseStudioHistoryQuery,
   ApiResponseStudioHistoryRecord,
   ApiResponseStudioRepositoryError,
@@ -239,6 +240,13 @@ export class MongoApiResponseStudioRepository implements ApiResponseStudioReposi
               figmaOnly: input.figmaOnly,
               comments: input.comments,
               texts: input.texts,
+              enumChoices: (input.enumChoices ?? before.enumChoices ?? []).map(
+                (choice: ApiResponseStudioEnumChoice) => ({
+                  property: choice.property,
+                  values: [...choice.values],
+                  enabledValues: choice.enabledValues.filter((value: string) => choice.values.includes(value)),
+                }),
+              ),
               updatedByUserId: input.actorUserId,
               updatedAt: new Date(),
             },

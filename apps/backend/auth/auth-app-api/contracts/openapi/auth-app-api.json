@@ -5950,7 +5950,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "theme": {
             "type": "string",
@@ -6040,7 +6040,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           }
         },
         "required": ["email", "password"]
@@ -6416,7 +6416,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "theme": {
             "type": "string",
@@ -6463,7 +6463,7 @@
         "properties": {
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           }
         },
         "required": ["locale"]
@@ -6473,7 +6473,7 @@
         "properties": {
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "theme": {
             "type": "string",
@@ -6488,7 +6488,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["en", "ru"]
+              "enum": ["en", "ru", "zh"]
             }
           }
         },

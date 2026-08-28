@@ -1,0 +1,26 @@
+{
+  "name": "@app/i18n-zh-common",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "i18n/zh/common",
+  "projectType": "library",
+  "tags": [
+    "platform:shared",
+    "type:asset",
+    "scope:shared",
+    "boundary:i18n-assets"
+  ],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "i18n/zh/common",
+        "command": "node -e \"void 0\""
+      },
+      "inputs": [
+        "default"
+      ],
+      "outputs": []
+    }
+  }
+}

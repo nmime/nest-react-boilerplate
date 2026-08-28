@@ -1,0 +1,23 @@
+{
+  "site.title": "为用户经常访问的页面提供可靠入口。",
+  "site.description": "使用服务端渲染页面承载持久内容，并将访客连接到产品中统一的账号体验。",
+  "site.actionGroup.label": "站点操作",
+  "site.action.app": "打开账号",
+  "site.action.docs": "查看公开落地页",
+  "site.metricGroup.label": "站点原则",
+  "site.metric.apis.label": "快速首屏",
+  "site.metric.apis.detail": "重要内容随初始响应提供，即使不依赖纯客户端能力也可访问。",
+  "site.metric.frontends.label": "账号衔接",
+  "site.metric.frontends.detail": "公开内容会引导至与用户应用一致的登录和个人资料流程。",
+  "site.metric.runtime.label": "灵活结构",
+  "site.metric.runtime.detail": "添加产品专属页面，同时避免与落地页、账号或管理职责混杂。",
+  "site.problems.kicker": "RFC 9457 注册表",
+  "site.problems.title": "API 问题类型",
+  "site.problems.intro": "本文档是以下根路径下问题类型 URI 的可读目标：",
+  "site.problems.instanceDetail": "片段标识稳定类型；实例 URI 标识一次具体发生。",
+  "site.problems.aboutBlank": "通用 HTTP 错误使用状态短语作为标题，不定义自定义语义。",
+  "site.problems.status": "状态",
+  "site.problems.meaning": "含义",
+  "site.problems.resolution": "解决方法",
+  "site.problems.extensions": "扩展"
+}

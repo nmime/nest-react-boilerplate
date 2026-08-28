@@ -51,7 +51,7 @@ The system SHALL manage tenant-scoped OpenAPI source records and SHALL synchroni
 
 ### Requirement: [REQ-API-RESPONSE-STUDIO-003] OpenAPI parsing and synchronization are bounded and idempotent
 
-The system SHALL parse non-health OpenAPI paths, methods, tags, operation identifiers, summaries, responses, local component references, schema unions, circular references, examples, enum variants, and synthetic ERR/NET variants within explicit depth, size, and Cartesian-product caps.
+The system SHALL parse non-health OpenAPI paths, methods, tags, operation identifiers, summaries, responses, local and transitive external component references, schema unions, circular references, examples, enum variants, and synthetic ERR/NET variants within explicit depth, size, per-enum, and deterministic expansion caps.
 
 **Evidence profile:** domain, persistence
 
@@ -64,7 +64,7 @@ The system SHALL parse non-health OpenAPI paths, methods, tags, operation identi
 
 **Failure behavior:**
 
-- Cap exhaustion truncates bounded snapshots/expansion deterministically rather than exhausting the process.
+- Snapshot exhaustion truncates deterministically; an oversized enabled enum fails before writes, while a larger safe Cartesian product is expanded in stable order only up to the configured output cap.
 
 #### Scenario: Repeated unchanged sync
 

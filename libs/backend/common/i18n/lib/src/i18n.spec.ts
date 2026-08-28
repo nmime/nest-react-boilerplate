@@ -45,6 +45,7 @@ describe('@app/backend-common-i18n', () => {
     expect(resolveLocale('ru-RU')).toBe('ru');
     expect(Language.En).toBe('en');
     expect(Language.Ru).toBe('ru');
+    expect(Language.Zh).toBe('zh');
     expect(getLocalization({ en: 'Hello', ru: 'Привет' }, Language.Ru)).toBe('Привет');
     expect(getLocalization({ en: 'Hello' }, 'fr')).toBe('Hello');
     expect(getLocalization({ ru: 'Привет' }, Language.En)).toBe('Привет');

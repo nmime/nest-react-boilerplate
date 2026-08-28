@@ -94,7 +94,7 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru';
+      locale?: 'en' | 'ru' | 'zh';
       roles: string[];
       permissions: string[];
     };
@@ -104,7 +104,7 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru';
+      locale?: 'en' | 'ru' | 'zh';
       roles: string[];
       permissions: string[];
     };

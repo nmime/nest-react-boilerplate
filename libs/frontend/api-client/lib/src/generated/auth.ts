@@ -416,7 +416,7 @@ export interface components {
       email: string | null;
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru';
+      locale?: 'en' | 'ru' | 'zh';
       /** @enum {string} */
       theme: 'system' | 'light' | 'dark';
       roles: string[];
@@ -451,7 +451,7 @@ export interface components {
       /** @example Ada Lovelace */
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru';
+      locale?: 'en' | 'ru' | 'zh';
     };
     LoginDto: {
       /** Format: uuid */
@@ -604,7 +604,7 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru';
+      locale?: 'en' | 'ru' | 'zh';
       /** @enum {string} */
       theme?: 'system' | 'light' | 'dark';
       roles: string[];
@@ -617,16 +617,16 @@ export interface components {
     };
     UpdateLocaleDto: {
       /** @enum {string} */
-      locale: 'en' | 'ru';
+      locale: 'en' | 'ru' | 'zh';
     };
     UpdatePreferencesDto: {
       /** @enum {string} */
-      locale?: 'en' | 'ru';
+      locale?: 'en' | 'ru' | 'zh';
       /** @enum {string} */
       theme?: 'system' | 'light' | 'dark';
     };
     SupportedLocalesPayloadDto: {
-      supportedLocales: ('en' | 'ru')[];
+      supportedLocales: ('en' | 'ru' | 'zh')[];
     };
     LogoutPayloadDto: {
       /** @enum {boolean} */

@@ -1,0 +1,19 @@
+{
+  "admin.apiResponseStudio.viewer.description": "Ограниченный режим чтения синхронизированного контракта ответа.",
+  "admin.apiResponseStudio.viewer.schema": "Снимок схемы",
+  "admin.apiResponseStudio.viewer.example": "Снимок примера",
+  "admin.apiResponseStudio.viewer.enums": "Варианты enum",
+  "admin.apiResponseStudio.viewer.none": "Снимок отсутствует.",
+  "admin.apiResponseStudio.display.toast": "Toast",
+  "admin.apiResponseStudio.display.modal": "Модальное окно",
+  "admin.apiResponseStudio.display.custom": "Особое",
+  "admin.apiResponseStudio.display.silent": "Без уведомления",
+  "admin.apiResponseStudio.severity.error": "Ошибка",
+  "admin.apiResponseStudio.severity.warning": "Предупреждение",
+  "admin.apiResponseStudio.severity.info": "Информация",
+  "admin.apiResponseStudio.severity.success": "Успех",
+  "admin.apiResponseStudio.change.unchanged": "Без изменений",
+  "admin.apiResponseStudio.change.new": "Новое",
+  "admin.apiResponseStudio.change.modified": "Изменено",
+  "admin.apiResponseStudio.change.deleted": "Удалено"
+}

@@ -66,10 +66,12 @@ export const apiResponseStudioApi = {
   updateResponse: (
     response: ApiResponseStudioResponse,
     presentation: ApiResponseStudioPresentation,
+    enumChoices: ApiResponseStudioResponse['enumChoices'],
     requestOptions?: ApiClientRequestOptions,
   ) => {
     const body: generatedAdminApi.UpdateApiResponseStudioResponseDto = {
       ...presentation,
+      enumChoices,
       expectedRevision: response.revision,
     };
     return data<ApiResponseStudioResponse>(

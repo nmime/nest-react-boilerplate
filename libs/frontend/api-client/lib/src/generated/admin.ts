@@ -1030,6 +1030,11 @@ export interface components {
       ru: string[];
       zh: string[];
     };
+    ApiResponseStudioEnumChoiceDto: {
+      property: string;
+      values: string[];
+      enabledValues: string[];
+    };
     ApiResponseStudioResponseViewDto: {
       /** @enum {string} */
       display: 'toast' | 'modal' | 'custom' | 'silent';
@@ -1054,7 +1059,7 @@ export interface components {
       description: string;
       schemaSnapshot: string;
       exampleSnapshot: string;
-      enumChoices: Record<string, never>[];
+      enumChoices: components['schemas']['ApiResponseStudioEnumChoiceDto'][];
       changeState: string;
       changeDismissed: boolean;
       deleted: boolean;
@@ -1080,6 +1085,7 @@ export interface components {
       figmaOnly: boolean;
       comments: string;
       texts: components['schemas']['ApiResponseStudioTextsDto'];
+      enumChoices: components['schemas']['ApiResponseStudioEnumChoiceDto'][];
       expectedRevision: number;
     };
     ResetApiResponseStudioResponseDto: {
@@ -1156,7 +1162,7 @@ export interface components {
       /** Format: uri */
       avatarUrl?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru';
+      locale?: 'en' | 'ru' | 'zh';
       roles: string[];
       permissions: string[];
     };
@@ -1168,7 +1174,7 @@ export interface components {
       /** Format: uri */
       avatarUrl?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru';
+      locale?: 'en' | 'ru' | 'zh';
       roles: string[];
       permissions: string[];
     };
@@ -1719,6 +1725,7 @@ export type UpdateApiResponseStudioSourceDto = components['schemas']['UpdateApiR
 export type ApiResponseStudioSyncResultDto = components['schemas']['ApiResponseStudioSyncResultDto'];
 export type SyncApiResponseStudioSourceDto = components['schemas']['SyncApiResponseStudioSourceDto'];
 export type ApiResponseStudioTextsDto = components['schemas']['ApiResponseStudioTextsDto'];
+export type ApiResponseStudioEnumChoiceDto = components['schemas']['ApiResponseStudioEnumChoiceDto'];
 export type ApiResponseStudioResponseViewDto = components['schemas']['ApiResponseStudioResponseViewDto'];
 export type ApiResponseStudioResponseListDto = components['schemas']['ApiResponseStudioResponseListDto'];
 export type UpdateApiResponseStudioResponseDto = components['schemas']['UpdateApiResponseStudioResponseDto'];

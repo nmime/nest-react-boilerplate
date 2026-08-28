@@ -21348,6 +21348,27 @@
         },
         "required": ["en", "ru", "zh"]
       },
+      "ApiResponseStudioEnumChoiceDto": {
+        "type": "object",
+        "properties": {
+          "property": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabledValues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["property", "values", "enabledValues"]
+      },
       "ApiResponseStudioResponseViewDto": {
         "type": "object",
         "properties": {
@@ -21419,7 +21440,7 @@
           "enumChoices": {
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ApiResponseStudioEnumChoiceDto"
             }
           },
           "changeState": {
@@ -21523,6 +21544,12 @@
           "texts": {
             "$ref": "#/components/schemas/ApiResponseStudioTextsDto"
           },
+          "enumChoices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiResponseStudioEnumChoiceDto"
+            }
+          },
           "expectedRevision": {
             "type": "number"
           }
@@ -21535,6 +21562,7 @@
           "figmaOnly",
           "comments",
           "texts",
+          "enumChoices",
           "expectedRevision"
         ]
       },
@@ -21775,7 +21803,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "roles": {
             "type": "array",
@@ -21811,7 +21839,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "roles": {
             "type": "array",

@@ -9,6 +9,12 @@ export interface LocalizedTextArrays {
   readonly zh: string[];
 }
 
+export interface ApiResponseStudioEnumChoice {
+  readonly property: string;
+  readonly values: string[];
+  readonly enabledValues: string[];
+}
+
 export interface ApiResponseStudioPresentation {
   readonly display: ProblemPresentationDisplay;
   readonly severity: ProblemPresentationSeverity;
@@ -53,7 +59,7 @@ export interface ApiResponseStudioResponse extends ApiResponseStudioPresentation
   readonly description: string;
   readonly schemaSnapshot: string;
   readonly exampleSnapshot: string;
-  readonly enumChoices: Array<Record<string, unknown>>;
+  readonly enumChoices: ApiResponseStudioEnumChoice[];
   readonly changeState: StudioChangeState;
   readonly changeDismissed: boolean;
   readonly deleted: boolean;
@@ -126,7 +132,7 @@ export interface ApiResponseStudioResponseQuery {
   readonly search?: string;
   readonly exact?: string;
   readonly status?: string;
-  readonly method?: string;
+  readonly method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'TRACE';
   readonly display?: ProblemPresentationDisplay;
   readonly changeState?: StudioChangeState;
   readonly missingLanguage?: StudioLanguage;

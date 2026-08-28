@@ -48,6 +48,21 @@ export class ApiResponseStudioTextsDto {
   @MaxLength(500, { each: true })
   zh!: string[];
 }
+export class ApiResponseStudioEnumChoiceDto {
+  @ApiProperty() @IsString() @MinLength(1) @MaxLength(500) property!: string;
+  @ApiProperty({ type: String, isArray: true })
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  @MaxLength(500, { each: true })
+  values!: string[];
+  @ApiProperty({ type: String, isArray: true })
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  @MaxLength(500, { each: true })
+  enabledValues!: string[];
+}
 export class ApiResponseStudioPresentationDto {
   @ApiProperty({ enum: ProblemPresentationDisplays })
   @IsIn(ProblemPresentationDisplays)
@@ -98,6 +113,12 @@ export class SyncApiResponseStudioSourceDto {
   @ApiProperty() @IsInt() @Min(1) expectedRevision!: number;
 }
 export class UpdateApiResponseStudioResponseDto extends ApiResponseStudioPresentationDto {
+  @ApiProperty({ type: () => ApiResponseStudioEnumChoiceDto, isArray: true })
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
+  @Type(() => ApiResponseStudioEnumChoiceDto)
+  enumChoices?: ApiResponseStudioEnumChoiceDto[];
   @ApiProperty() @IsInt() @Min(1) expectedRevision!: number;
 }
 export class ApiResponseStudioRevisionItemDto {
@@ -215,7 +236,8 @@ export class ApiResponseStudioResponseViewDto extends ApiResponseStudioPresentat
   @ApiProperty() description!: string;
   @ApiProperty() schemaSnapshot!: string;
   @ApiProperty() exampleSnapshot!: string;
-  @ApiProperty({ type: Object, isArray: true }) enumChoices!: Array<Record<string, unknown>>;
+  @ApiProperty({ type: () => ApiResponseStudioEnumChoiceDto, isArray: true })
+  enumChoices!: ApiResponseStudioEnumChoiceDto[];
   @ApiProperty() changeState!: string;
   @ApiProperty() changeDismissed!: boolean;
   @ApiProperty() deleted!: boolean;

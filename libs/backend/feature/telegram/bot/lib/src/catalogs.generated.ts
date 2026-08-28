@@ -7,6 +7,10 @@ import ruBotsSharedCatalog from '@app/i18n-ru-bots/shared.json';
 import ruBotsTelegramCatalog from '@app/i18n-ru-bots/telegram.json';
 import ruCommonErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonSharedCatalog from '@app/i18n-ru-common/shared.json';
+import zhBotsSharedCatalog from '@app/i18n-zh-bots/shared.json';
+import zhBotsTelegramCatalog from '@app/i18n-zh-bots/telegram.json';
+import zhCommonErrorsCatalog from '@app/i18n-zh-common/errors.json';
+import zhCommonSharedCatalog from '@app/i18n-zh-common/shared.json';
 import type { Locale, RuntimeLocaleCatalogFileEntry } from '@app/common-i18n-runtime';
 
 export const catalogFileNames = [
@@ -28,5 +32,11 @@ export const localeCatalogFiles = {
     ['bots/telegram.json', ruBotsTelegramCatalog],
     ['common/errors.json', ruCommonErrorsCatalog],
     ['common/shared.json', ruCommonSharedCatalog],
+  ],
+  zh: [
+    ['bots/shared.json', zhBotsSharedCatalog],
+    ['bots/telegram.json', zhBotsTelegramCatalog],
+    ['common/errors.json', zhCommonErrorsCatalog],
+    ['common/shared.json', zhCommonSharedCatalog],
   ],
 } as const satisfies Record<Locale, readonly RuntimeLocaleCatalogFileEntry[]>;

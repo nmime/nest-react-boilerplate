@@ -1,4 +1,4 @@
-/* eslint-disable sonarjs/no-nested-conditional, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, no-await-in-loop -- Docker-backed component fixtures validate transaction rollback and tenant isolation. */
+/* eslint-disable sonarjs/no-nested-conditional, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, no-await-in-loop -- Replica-set component fixtures validate transaction rollback and tenant isolation. */
 // @requirements REQ-API-RESPONSE-STUDIO-003
 // @requirements REQ-API-RESPONSE-STUDIO-004
 import { randomUUID } from 'node:crypto';
@@ -43,36 +43,49 @@ async function unwrap<T, E extends { message: string }>(result: ResultAsync<T, E
   return settled.value;
 }
 
+const externalMongoUri = process.env.API_RESPONSE_STUDIO_MONGODB_URI;
 const dockerAvailable = Boolean(process.env.DOCKER_HOST || process.env.TESTCONTAINERS_HOST_OVERRIDE || process.env.CI);
-const describeIfDocker = dockerAvailable ? describe : describe.skip;
-if (!dockerAvailable) {
-  process.stderr.write('API Response Studio Mongo component tests: skipped because Docker is not configured.\n');
+const componentAvailable = Boolean(externalMongoUri || dockerAvailable);
+const describeIfAvailable = componentAvailable ? describe : describe.skip;
+if (!componentAvailable) {
+  process.stderr.write(
+    'API Response Studio Mongo component tests: skipped because neither API_RESPONSE_STUDIO_MONGODB_URI nor Docker is configured.\n',
+  );
 }
 
-describeIfDocker('MongoApiResponseStudioRepository on a replica set', () => {
-  let container: StartedMongoDBContainer;
+describeIfAvailable('MongoApiResponseStudioRepository on a replica set', () => {
+  let container: StartedMongoDBContainer | undefined;
   let client: MongoClient;
+  let databaseName = '';
+  const databaseNames = new Set<string>();
 
   beforeAll(async () => {
-    container = await new MongoDBContainer('mongo:7.0.26-jammy').start();
-    const separator = container.getConnectionString().includes('?') ? '&' : '?';
-    client = new MongoClient(`${container.getConnectionString()}${separator}directConnection=true&replicaSet=rs0`);
+    if (externalMongoUri) {
+      client = new MongoClient(externalMongoUri);
+    } else {
+      container = await new MongoDBContainer('mongo:7.0.26-jammy').start();
+      const separator = container.getConnectionString().includes('?') ? '&' : '?';
+      client = new MongoClient(`${container.getConnectionString()}${separator}directConnection=true&replicaSet=rs0`);
+    }
     await client.connect();
   });
 
   beforeEach(async () => {
-    const database = client.db('api_response_studio_component');
-    await database.dropDatabase();
-    await initializeMongoAuthPersistence(database);
+    databaseName = `api_response_studio_component_${randomUUID().replaceAll('-', '')}`;
+    databaseNames.add(databaseName);
+    await initializeMongoAuthPersistence(client.db(databaseName));
   });
 
   afterAll(async () => {
+    for (const name of databaseNames) {
+      await client.db(name).dropDatabase();
+    }
     await client.close();
-    await container.stop();
+    await container?.stop();
   });
 
   const context = () => {
-    const database = client.db('api_response_studio_component');
+    const database = client.db(databaseName);
     return { database, repository: new MongoApiResponseStudioRepository(database, client) };
   };
 
@@ -198,6 +211,46 @@ describeIfDocker('MongoApiResponseStudioRepository on a replica set', () => {
         texts: edited.texts,
       }),
     );
+  });
+
+  it('updates persisted enum choices and preserves them when an older client omits the field', async () => {
+    const { repository } = context();
+    const source = await createSource(repository, tenantA, 'enum-choices');
+    await unwrap(
+      repository.sync({
+        tenantId: tenantA,
+        sourceId: source.id,
+        expectedRevision: source.revision,
+        variants: [variant('enum-choice', '400')],
+        actorUserId,
+        syncedAt,
+      }),
+    );
+    const row = (await unwrap(repository.listResponses(tenantA)))[0]!;
+    const presentation = {
+      tenantId: tenantA,
+      id: row.id,
+      actorUserId,
+      display: 'toast' as const,
+      severity: 'warning' as const,
+      support: false,
+      customDescription: '',
+      figmaOnly: false,
+      comments: 'enum selection',
+      texts: { en: ['English'], ru: ['Русский'], zh: ['中文'] },
+    };
+
+    const updated = await unwrap(
+      repository.updateResponse({
+        ...presentation,
+        expectedRevision: row.revision,
+        enumChoices: [{ property: 'reason', values: ['A', 'B'], enabledValues: ['B', 'unknown'] }],
+      }),
+    );
+    expect(updated.enumChoices).toEqual([{ property: 'reason', values: ['A', 'B'], enabledValues: ['B'] }]);
+
+    const preserved = await unwrap(repository.updateResponse({ ...presentation, expectedRevision: updated.revision }));
+    expect(preserved.enumChoices).toEqual(updated.enumChoices);
   });
 
   it('uses optimistic revisions and rolls back stale atomic bulk changes with history/audit/outbox', async () => {

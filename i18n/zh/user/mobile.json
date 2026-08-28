@@ -1,0 +1,16 @@
+{
+  "mobile.appName": "Nest React样板",
+  "mobile.status": "手机账号",
+  "mobile.subtitle": "为您的产品在移动设备上所需的客户旅程提供一个平静的起点。",
+  "mobile.api.label": "我的空间",
+  "mobile.api.value": "账号必需品近在咫尺。",
+  "mobile.card.account.label": "账户",
+  "mobile.card.account.value": "个人资料和偏好",
+  "mobile.card.account.detail": "将身份、语言、外观和关联账号保存在一个熟悉的地方。",
+  "mobile.card.native.label": "经验值",
+  "mobile.card.native.value": "专为移动平台设计",
+  "mobile.card.native.detail": "安全区域、触摸目标和可读状态为产品功能提供了实用基础。",
+  "mobile.card.delivery.label": "延续性",
+  "mobile.card.delivery.value": "Web和Telegram",
+  "mobile.card.delivery.detail": "当人们在选定的客户端界面之间移动时，保持熟悉的帐户体验。"
+}

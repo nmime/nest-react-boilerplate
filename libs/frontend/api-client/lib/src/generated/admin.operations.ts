@@ -48,6 +48,7 @@ export type AdminRoleViewDto = components['schemas']['AdminRoleViewDto'];
 export type AdminUserListPayloadDto = components['schemas']['AdminUserListPayloadDto'];
 export type AdminUserViewDto = components['schemas']['AdminUserViewDto'];
 export type ApiResponseStudioDashboardDto = components['schemas']['ApiResponseStudioDashboardDto'];
+export type ApiResponseStudioEnumChoiceDto = components['schemas']['ApiResponseStudioEnumChoiceDto'];
 export type ApiResponseStudioExportDto = components['schemas']['ApiResponseStudioExportDto'];
 export type ApiResponseStudioHistoryListDto = components['schemas']['ApiResponseStudioHistoryListDto'];
 export type ApiResponseStudioHistoryViewDto = components['schemas']['ApiResponseStudioHistoryViewDto'];

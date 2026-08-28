@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-nested-functions -- Enum checkbox handlers are scoped to their rendered property/value pair. */
 import { useState } from 'react';
 import {
   ProblemPresentationDisplays,
@@ -7,7 +8,7 @@ import {
 } from '@app/common-problem-details';
 import { useI18n } from '@app/frontend-runtime';
 import { UiCheckbox, UiSelect, UiTextareaField } from '@app/frontend-ui-web';
-import type { ApiResponseStudioPresentation, StudioLanguage } from '../model/types';
+import type { ApiResponseStudioEnumChoice, ApiResponseStudioPresentation, StudioLanguage } from '../model/types';
 
 const arraysToText = (values: readonly string[]): string => values.join('\n');
 const textToArrays = (value: string): string[] =>
@@ -19,12 +20,16 @@ const textToArrays = (value: string): string[] =>
 
 export const PresentationEditor = ({
   disabled = false,
+  enumChoices = [],
   initial,
   onChange,
+  onEnumChoicesChange,
 }: Readonly<{
   disabled?: boolean;
+  enumChoices?: readonly ApiResponseStudioEnumChoice[];
   initial: ApiResponseStudioPresentation;
   onChange: (value: ApiResponseStudioPresentation) => void;
+  onEnumChoicesChange?: (value: ApiResponseStudioEnumChoice[]) => void;
 }>) => {
   const { t } = useI18n();
   const [draft, setDraft] = useState(initial);
@@ -101,6 +106,37 @@ export const PresentationEditor = ({
         }}
         value={draft.comments}
       />
+      {enumChoices.length > 0 ? (
+        <fieldset className="admin-studio-enum-editor">
+          <legend>{t('admin.apiResponseStudio.editor.enums')}</legend>
+          {enumChoices.map((choice) => (
+            <div className="admin-studio-enum-editor__choice" key={choice.property}>
+              <strong>{choice.property}</strong>
+              <div className="admin-studio-enum-editor__values">
+                {choice.values.map((value) => (
+                  <UiCheckbox
+                    checked={choice.enabledValues.includes(value)}
+                    disabled={disabled}
+                    key={value}
+                    label={value}
+                    onCheckedChange={(checked) => {
+                      const enabledValues =
+                        checked === true
+                          ? [...new Set([...choice.enabledValues, value])]
+                          : choice.enabledValues.filter((item) => item !== value);
+                      onEnumChoicesChange?.(
+                        enumChoices.map((item) =>
+                          item.property === choice.property ? { ...item, enabledValues } : { ...item },
+                        ),
+                      );
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </fieldset>
+      ) : null}
       <div className="admin-studio-editor__languages">
         {(['en', 'ru', 'zh'] as const).map((language) => (
           <UiTextareaField

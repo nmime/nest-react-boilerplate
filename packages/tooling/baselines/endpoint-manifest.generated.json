@@ -1354,7 +1354,8 @@
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx"
+          "2xx",
+          "4xx"
         ]
       }
     },

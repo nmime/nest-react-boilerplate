@@ -128,8 +128,8 @@ assert.ok(mongoEntrypoint.includes('--replSet'), 'Bundled MongoDB must use a rep
 assert.ok(bundledMongo.includes('mongodb_keyfile'), 'Bundled MongoDB must use keyfile authentication.');
 assert.ok(bundledMongo.includes('mongodb-init:'), 'Bundled MongoDB must define idempotent preparation.');
 assert.ok(
-  developmentCompose.includes("'${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}'"),
-  'Development MongoDB must publish the selected port to the same container port.',
+  developmentCompose.includes("'127.0.0.1:${MONGODB_PORT:-27017}:${MONGODB_PORT:-27017}'"),
+  'Development MongoDB must publish the selected port to the same container port on loopback.',
 );
 assert.ok(
   developmentCompose.includes("'--port', '${MONGODB_PORT:-27017}'"),

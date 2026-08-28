@@ -16,7 +16,7 @@ const HttpMethods = new Set<ApiResponseStudioMethod>([
   'HEAD',
   'TRACE',
 ]);
-const HealthPattern = /(?:^|\/)(?:health|healthz|live|liveness|ready|readiness|metrics)(?:\/|$)/iu;
+const HealthPattern = /(?:^|\/)(?:health|healthz|live|liveness|ready|readiness|metrics|version)(?:\/|$)/iu;
 const DefaultMaxDepth = 10;
 const DefaultMaxNodes = 2000;
 const DefaultMaxSnapshotBytes = 64 * 1024;
@@ -32,7 +32,7 @@ interface ParseOptions {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-const stableStringify = (value: unknown): string => JSON.stringify(sortValue(value));
+const stableStringify = (value: unknown): string => JSON.stringify(sortValue(value)) ?? 'null';
 const sortValue = (value: unknown): unknown => {
   if (Array.isArray(value)) {
     return value.map(sortValue);
@@ -121,16 +121,37 @@ const schemaVariants = (schema: unknown): unknown[] => {
   return [schema];
 };
 
-const errorTypeFor = (schema: unknown, example: unknown): string => {
-  for (const value of [example, schema]) {
-    if (!isRecord(value)) continue;
-    for (const key of ['error_type', 'errorType', 'code', 'type']) {
-      const candidate = value[key];
-      if (typeof candidate === 'string' && candidate.trim()) return candidate.trim().slice(0, 200);
+const DiscriminatorKeys = ['error_type', 'errorType', 'code', 'type'] as const;
+
+const schemaDiscriminator = (schema: unknown): string => {
+  if (!isRecord(schema) || !isRecord(schema.properties)) return '';
+  for (const key of DiscriminatorKeys) {
+    const property = isRecord(schema.properties[key]) ? schema.properties[key] : undefined;
+    if (!property) continue;
+    for (const keyword of ['const', 'default', 'example']) {
+      const discriminator = property[keyword];
+      if (typeof discriminator === 'string' && discriminator.trim()) return discriminator.trim().slice(0, 200);
+    }
+    if (Array.isArray(property.enum) && property.enum.length === 1) {
+      const discriminator = property.enum[0];
+      if (typeof discriminator === 'string' && discriminator.trim()) return discriminator.trim().slice(0, 200);
     }
   }
   return '';
 };
+
+const recordDiscriminator = (value: unknown, includeType: boolean): string => {
+  if (!isRecord(value)) return '';
+  for (const key of DiscriminatorKeys) {
+    if (key === 'type' && !includeType) continue;
+    const candidate = value[key];
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim().slice(0, 200);
+  }
+  return '';
+};
+
+const errorTypeFor = (schema: unknown, example: unknown): string =>
+  schemaDiscriminator(schema) || recordDiscriminator(example, true) || recordDiscriminator(schema, false);
 
 const collectEnums = (
   schema: unknown,

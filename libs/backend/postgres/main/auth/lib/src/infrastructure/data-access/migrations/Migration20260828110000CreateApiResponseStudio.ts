@@ -12,7 +12,10 @@ export class Migration20260828110000CreateApiResponseStudio extends Migration {
       `alter table "problem_presentation_overrides" add column if not exists "message_zh" text not null default '', add column if not exists "texts_en" jsonb not null default '[]'::jsonb, add column if not exists "texts_ru" jsonb not null default '[]'::jsonb, add column if not exists "texts_zh" jsonb not null default '[]'::jsonb, add column if not exists "support" boolean not null default false, add column if not exists "custom_description" text not null default '', add column if not exists "figma_only" boolean not null default false;`,
     );
     this.addSql(
-      `update "problem_presentation_overrides" set "texts_en" = case when "message_en" = '' then '[]'::jsonb else jsonb_build_array("message_en") end, "texts_ru" = case when "message_ru" = '' then '[]'::jsonb else jsonb_build_array("message_ru") end where "texts_en" = '[]'::jsonb and "texts_ru" = '[]'::jsonb;`,
+      `update "problem_presentation_overrides" set "texts_en" = case when "message_en" = '' then '[]'::jsonb else jsonb_build_array("message_en") end where "texts_en" = '[]'::jsonb;`,
+    );
+    this.addSql(
+      `update "problem_presentation_overrides" set "texts_ru" = case when "message_ru" = '' then '[]'::jsonb else jsonb_build_array("message_ru") end where "texts_ru" = '[]'::jsonb;`,
     );
     this.addSql(`create table "api_response_studio_sources" (
       "id" uuid not null, "tenant_id" uuid not null, "name" varchar(200) not null, "slug" varchar(100) not null, "json_url" text not null, "docs_url" text not null default '', "enabled" boolean not null default true, "manual_only" boolean not null default true, "revision" integer not null default 1,

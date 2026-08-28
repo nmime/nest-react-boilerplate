@@ -27,6 +27,8 @@ import {
 
 class StudioRevisionConflict extends Error {}
 class StudioNotFound extends Error {}
+class StudioValidationError extends Error {}
+const MAX_BULK_ITEMS = 200;
 const MAX_SNAPSHOT_BYTES = 32 * 1024;
 const cleanObject = (value: unknown, depth = 0): unknown => {
   if (depth > 6) return '[truncated]';
@@ -57,10 +59,12 @@ const studioError = (cause: unknown): ApiResponseStudioRepositoryError =>
     ? { code: 'revision_conflict', message: 'The API response changed after it was loaded. Refresh and try again.' }
     : cause instanceof StudioNotFound
       ? { code: 'not_found', message: 'The API Response Studio record was not found.' }
-      : {
-          code: 'repository_error',
-          message: cause instanceof Error ? cause.message : 'API Response Studio repository failed.',
-        };
+      : cause instanceof StudioValidationError
+        ? { code: 'validation_error', message: cause.message }
+        : {
+            code: 'repository_error',
+            message: cause instanceof Error ? cause.message : 'API Response Studio repository failed.',
+          };
 const result = <T>(promise: Promise<T>): ResultAsync<T, ApiResponseStudioRepositoryError> =>
   ResultAsync.fromPromise(promise, studioError);
 const sourceRecord = (entity: ApiResponseStudioSourceEntity): ApiResponseStudioSourceRecord => ({ ...entity });
@@ -280,38 +284,40 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
 
   bulkUpdate(input: BulkUpdateApiResponseStudioResponseInput) {
     return result(
-      this.entityManager.transactional(async (em) => {
-        const entities = await this.lockMany(em, input.tenantId, input.items);
-        const before = entities.map(responseRecord);
-        for (const entity of entities) {
-          if (input.patch.display !== undefined) entity.display = input.patch.display;
-          if (input.patch.severity !== undefined) entity.severity = input.patch.severity;
-          if (input.patch.support !== undefined) entity.support = input.patch.support;
-          if (input.patch.customDescription !== undefined) entity.customDescription = input.patch.customDescription;
-          if (input.patch.figmaOnly !== undefined) entity.figmaOnly = input.patch.figmaOnly;
-          if (input.patch.comments !== undefined) entity.comments = input.patch.comments;
-          if (input.patch.texts !== undefined)
-            entity.texts = {
-              en: [...input.patch.texts.en],
-              ru: [...input.patch.texts.ru],
-              zh: [...input.patch.texts.zh],
-            };
-          entity.revision += 1;
-          entity.updatedByUserId = input.actorUserId;
-          entity.updatedAt = new Date();
-        }
-        await this.audit(em, {
-          tenantId: input.tenantId,
-          sourceId: entities[0]?.sourceId ?? null,
-          action: 'admin.api_response_studio.response.bulk_update',
-          actorUserId: input.actorUserId,
-          before: { rows: before },
-          after: { rows: entities.map(responseRecord) },
-          metadata: input.metadata,
-        });
-        await em.flush();
-        return entities.map(responseRecord);
-      }),
+      this.withBoundedItems(input.items, 'Bulk update', (items) =>
+        this.entityManager.transactional(async (em) => {
+          const entities = await this.lockMany(em, input.tenantId, items);
+          const before = entities.map(responseRecord);
+          for (const entity of entities) {
+            if (input.patch.display !== undefined) entity.display = input.patch.display;
+            if (input.patch.severity !== undefined) entity.severity = input.patch.severity;
+            if (input.patch.support !== undefined) entity.support = input.patch.support;
+            if (input.patch.customDescription !== undefined) entity.customDescription = input.patch.customDescription;
+            if (input.patch.figmaOnly !== undefined) entity.figmaOnly = input.patch.figmaOnly;
+            if (input.patch.comments !== undefined) entity.comments = input.patch.comments;
+            if (input.patch.texts !== undefined)
+              entity.texts = {
+                en: [...input.patch.texts.en],
+                ru: [...input.patch.texts.ru],
+                zh: [...input.patch.texts.zh],
+              };
+            entity.revision += 1;
+            entity.updatedByUserId = input.actorUserId;
+            entity.updatedAt = new Date();
+          }
+          await this.audit(em, {
+            tenantId: input.tenantId,
+            sourceId: entities[0]?.sourceId ?? null,
+            action: 'admin.api_response_studio.response.bulk_update',
+            actorUserId: input.actorUserId,
+            before: { rows: before },
+            after: { rows: entities.map(responseRecord) },
+            metadata: input.metadata,
+          });
+          await em.flush();
+          return entities.map(responseRecord);
+        }),
+      ),
     );
   }
 
@@ -322,27 +328,29 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
     metadata?: Record<string, unknown>;
   }) {
     return result(
-      this.entityManager.transactional(async (em) => {
-        const entities = await this.lockMany(em, input.tenantId, input.items);
-        const before = entities.map(responseRecord);
-        for (const entity of entities) {
-          entity.changeDismissed = true;
-          entity.revision += 1;
-          entity.updatedByUserId = input.actorUserId;
-          entity.updatedAt = new Date();
-        }
-        await this.audit(em, {
-          tenantId: input.tenantId,
-          sourceId: entities[0]?.sourceId ?? null,
-          action: 'admin.api_response_studio.change.dismiss',
-          actorUserId: input.actorUserId,
-          before: { rows: before },
-          after: { rows: entities.map(responseRecord) },
-          metadata: input.metadata,
-        });
-        await em.flush();
-        return entities.map(responseRecord);
-      }),
+      this.withBoundedItems(input.items, 'Dismiss', (items) =>
+        this.entityManager.transactional(async (em) => {
+          const entities = await this.lockMany(em, input.tenantId, items);
+          const before = entities.map(responseRecord);
+          for (const entity of entities) {
+            entity.changeDismissed = true;
+            entity.revision += 1;
+            entity.updatedByUserId = input.actorUserId;
+            entity.updatedAt = new Date();
+          }
+          await this.audit(em, {
+            tenantId: input.tenantId,
+            sourceId: entities[0]?.sourceId ?? null,
+            action: 'admin.api_response_studio.change.dismiss',
+            actorUserId: input.actorUserId,
+            before: { rows: before },
+            after: { rows: entities.map(responseRecord) },
+            metadata: input.metadata,
+          });
+          await em.flush();
+          return entities.map(responseRecord);
+        }),
+      ),
     );
   }
 
@@ -483,6 +491,16 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
     if (!entity) throw new StudioNotFound();
     if (entity.revision !== revision) throw new StudioRevisionConflict();
     return entity;
+  }
+  private withBoundedItems<T>(
+    items: ReadonlyArray<{ id: string; expectedRevision: number }>,
+    operation: string,
+    run: (items: ReadonlyArray<{ id: string; expectedRevision: number }>) => Promise<T>,
+  ): Promise<T> {
+    if (items.length === 0 || items.length > MAX_BULK_ITEMS) {
+      return Promise.reject(new StudioValidationError(`${operation} requires between 1 and 200 rows.`));
+    }
+    return run(items);
   }
   private async lockMany(
     em: EntityManager,

@@ -12,16 +12,16 @@ export const Migration20260828110000CreateApiResponseStudio: MongoMigration = {
   name: 'CreateApiResponseStudio',
   async up(database: Db): Promise<void> {
     await initializeMongoAuthPersistence(database);
-    await database.collection(AuthMongoCollections.presentations).updateMany({ textsEn: { $exists: false } }, [
+    await database.collection(AuthMongoCollections.presentations).updateMany({}, [
       {
         $set: {
-          messageZh: { $literal: '' },
-          textsEn: { $cond: [{ $eq: ['$messageEn', ''] }, [], ['$messageEn']] },
-          textsRu: { $cond: [{ $eq: ['$messageRu', ''] }, [], ['$messageRu']] },
-          textsZh: { $literal: [] },
-          support: { $literal: false },
-          customDescription: { $literal: '' },
-          figmaOnly: { $literal: false },
+          messageZh: { $ifNull: ['$messageZh', ''] },
+          textsEn: { $ifNull: ['$textsEn', { $cond: [{ $eq: ['$messageEn', ''] }, [], ['$messageEn']] }] },
+          textsRu: { $ifNull: ['$textsRu', { $cond: [{ $eq: ['$messageRu', ''] }, [], ['$messageRu']] }] },
+          textsZh: { $ifNull: ['$textsZh', []] },
+          support: { $ifNull: ['$support', false] },
+          customDescription: { $ifNull: ['$customDescription', ''] },
+          figmaOnly: { $ifNull: ['$figmaOnly', false] },
         },
       },
     ]);

@@ -25,16 +25,21 @@ import { MongoClientToken, MongoDatabaseToken, runInMongoTransaction } from './m
 
 class RevisionConflict extends Error {}
 class NotFound extends Error {}
+class ValidationError extends Error {}
+const MAX_BULK_ITEMS = 200;
+const MAX_SNAPSHOT_BYTES = 32 * 1024;
 const mapped = <T>(promise: Promise<T>): ResultAsync<T, ApiResponseStudioRepositoryError> =>
   ResultAsync.fromPromise(promise, (error) =>
     error instanceof RevisionConflict
       ? { code: 'revision_conflict', message: 'The API response changed after it was loaded. Refresh and try again.' }
       : error instanceof NotFound
         ? { code: 'not_found', message: 'The API Response Studio record was not found.' }
-        : {
-            code: 'repository_error',
-            message: error instanceof Error ? error.message : 'API Response Studio repository failed.',
-          },
+        : error instanceof ValidationError
+          ? { code: 'validation_error', message: error.message }
+          : {
+              code: 'repository_error',
+              message: error instanceof Error ? error.message : 'API Response Studio repository failed.',
+            },
   );
 const source = (value: Document & { _id: string }): ApiResponseStudioSourceRecord =>
   withoutId(value) as unknown as ApiResponseStudioSourceRecord;
@@ -42,12 +47,28 @@ const response = (value: Document & { _id: string }): ApiResponseStudioResponseR
   withoutId(value) as unknown as ApiResponseStudioResponseRecord;
 const history = (value: Document & { _id: string }): ApiResponseStudioHistoryRecord =>
   withoutId(value) as unknown as ApiResponseStudioHistoryRecord;
+const cleanObject = (value: unknown, depth = 0): unknown => {
+  if (depth > 6) return '[truncated]';
+  if (Array.isArray(value)) return value.slice(0, 100).map((item) => cleanObject(item, depth + 1));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .slice(0, 100)
+        .map(([key, item]) => [
+          key,
+          /authorization|cookie|credential|password|secret|token/iu.test(key)
+            ? '[redacted]'
+            : cleanObject(item, depth + 1),
+        ]),
+    );
+  }
+  return typeof value === 'string' ? value.slice(0, 4000) : value;
+};
 const bounded = (value: unknown): Record<string, unknown> => {
-  const json = JSON.stringify(value, (key, item) =>
-    /authorization|cookie|credential|password|secret|token/iu.test(key) ? '[redacted]' : item,
-  );
-  return Buffer.byteLength(json, 'utf8') <= 32 * 1024
-    ? (JSON.parse(json) as Record<string, unknown>)
+  const cleaned = cleanObject(value);
+  const json = JSON.stringify(cleaned);
+  return Buffer.byteLength(json, 'utf8') <= MAX_SNAPSHOT_BYTES
+    ? ((cleaned as Record<string, unknown>) ?? {})
     : { truncated: true, bytes: Buffer.byteLength(json, 'utf8') };
 };
 
@@ -276,32 +297,34 @@ export class MongoApiResponseStudioRepository implements ApiResponseStudioReposi
   }
   bulkUpdate(input: BulkUpdateApiResponseStudioResponseInput) {
     return mapped(
-      runInMongoTransaction(this.client, async (session) => {
-        const before = await this.lockRows(input.tenantId, input.items, session);
-        const after: ApiResponseStudioResponseRecord[] = [];
-        for (const item of before) {
-          const updated = await this.rows().findOneAndUpdate(
-            { tenantId: input.tenantId, _id: item._id, revision: item.revision },
-            {
-              $set: { ...input.patch, updatedByUserId: input.actorUserId, updatedAt: new Date() },
-              $inc: { revision: 1 },
-            },
-            { session, returnDocument: 'after', includeResultMetadata: false },
-          );
-          if (!updated) throw new RevisionConflict();
-          after.push(response(updated));
-        }
-        await this.audit(session, {
-          tenantId: input.tenantId,
-          sourceId: before[0]?.sourceId ?? null,
-          action: 'admin.api_response_studio.response.bulk_update',
-          actorUserId: input.actorUserId,
-          before: { rows: before.map(response) },
-          after: { rows: after },
-          metadata: input.metadata,
-        });
-        return after;
-      }),
+      this.withBoundedItems(input.items, 'Bulk update', (items) =>
+        runInMongoTransaction(this.client, async (session) => {
+          const before = await this.lockRows(input.tenantId, items, session);
+          const after: ApiResponseStudioResponseRecord[] = [];
+          for (const item of before) {
+            const updated = await this.rows().findOneAndUpdate(
+              { tenantId: input.tenantId, _id: item._id, revision: item.revision },
+              {
+                $set: { ...input.patch, updatedByUserId: input.actorUserId, updatedAt: new Date() },
+                $inc: { revision: 1 },
+              },
+              { session, returnDocument: 'after', includeResultMetadata: false },
+            );
+            if (!updated) throw new RevisionConflict();
+            after.push(response(updated));
+          }
+          await this.audit(session, {
+            tenantId: input.tenantId,
+            sourceId: before[0]?.sourceId ?? null,
+            action: 'admin.api_response_studio.response.bulk_update',
+            actorUserId: input.actorUserId,
+            before: { rows: before.map(response) },
+            after: { rows: after },
+            metadata: input.metadata,
+          });
+          return after;
+        }),
+      ),
     );
   }
   dismissChanges(input: {
@@ -311,32 +334,34 @@ export class MongoApiResponseStudioRepository implements ApiResponseStudioReposi
     metadata?: Record<string, unknown>;
   }) {
     return mapped(
-      runInMongoTransaction(this.client, async (session) => {
-        const before = await this.lockRows(input.tenantId, input.items, session);
-        const after: ApiResponseStudioResponseRecord[] = [];
-        for (const item of before) {
-          const updated = await this.rows().findOneAndUpdate(
-            { tenantId: input.tenantId, _id: item._id, revision: item.revision },
-            {
-              $set: { changeDismissed: true, updatedByUserId: input.actorUserId, updatedAt: new Date() },
-              $inc: { revision: 1 },
-            },
-            { session, returnDocument: 'after', includeResultMetadata: false },
-          );
-          if (!updated) throw new RevisionConflict();
-          after.push(response(updated));
-        }
-        await this.audit(session, {
-          tenantId: input.tenantId,
-          sourceId: before[0]?.sourceId ?? null,
-          action: 'admin.api_response_studio.change.dismiss',
-          actorUserId: input.actorUserId,
-          before: { rows: before.map(response) },
-          after: { rows: after },
-          metadata: input.metadata,
-        });
-        return after;
-      }),
+      this.withBoundedItems(input.items, 'Dismiss', (items) =>
+        runInMongoTransaction(this.client, async (session) => {
+          const before = await this.lockRows(input.tenantId, items, session);
+          const after: ApiResponseStudioResponseRecord[] = [];
+          for (const item of before) {
+            const updated = await this.rows().findOneAndUpdate(
+              { tenantId: input.tenantId, _id: item._id, revision: item.revision },
+              {
+                $set: { changeDismissed: true, updatedByUserId: input.actorUserId, updatedAt: new Date() },
+                $inc: { revision: 1 },
+              },
+              { session, returnDocument: 'after', includeResultMetadata: false },
+            );
+            if (!updated) throw new RevisionConflict();
+            after.push(response(updated));
+          }
+          await this.audit(session, {
+            tenantId: input.tenantId,
+            sourceId: before[0]?.sourceId ?? null,
+            action: 'admin.api_response_studio.change.dismiss',
+            actorUserId: input.actorUserId,
+            before: { rows: before.map(response) },
+            after: { rows: after },
+            metadata: input.metadata,
+          });
+          return after;
+        }),
+      ),
     );
   }
   sync(input: SyncApiResponseStudioSourceInput) {
@@ -506,6 +531,16 @@ export class MongoApiResponseStudioRepository implements ApiResponseStudioReposi
     const item = await this.rows().findOne({ tenantId, _id: id, revision }, { session });
     if (!item) throw new RevisionConflict();
     return item;
+  }
+  private withBoundedItems<T>(
+    items: ReadonlyArray<{ id: string; expectedRevision: number }>,
+    operation: string,
+    run: (items: ReadonlyArray<{ id: string; expectedRevision: number }>) => Promise<T>,
+  ): Promise<T> {
+    if (items.length === 0 || items.length > MAX_BULK_ITEMS) {
+      return Promise.reject(new ValidationError(`${operation} requires between 1 and 200 rows.`));
+    }
+    return run(items);
   }
   private async lockRows(
     tenantId: string,

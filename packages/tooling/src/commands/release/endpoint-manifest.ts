@@ -233,6 +233,12 @@ const evidenceRules: Array<{
       "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.spec.ts",
   },
   {
+    matches: (row) => row.source.includes("admin-api-response-studio.controller.ts"),
+    classification: "covered-component",
+    evidence:
+      "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+  },
+  {
     matches: (row) => row.source.includes("admin-profile.controller.ts"),
     classification: "covered-component",
     evidence:

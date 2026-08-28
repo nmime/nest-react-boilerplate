@@ -368,6 +368,11 @@ export const AuthMongoCollectionDefinitions: Array<{
       { name: 'ix__admin_audit_logs__tenant_created', key: { tenantId: 1, createdAt: -1, _id: -1 } },
       { name: 'ix__admin_audit_logs__tenant_action', key: { tenantId: 1, action: 1 } },
       { name: 'ix__admin_audit_logs__tenant_resource_created', key: { tenantId: 1, resource: 1, createdAt: -1 } },
+      {
+        name: 'ix__admin_audit_logs__studio_tenant_created',
+        key: { tenantId: 1, resource: 1, createdAt: -1 },
+        partialFilterExpression: { resource: 'admin.settings.api_response_studio' },
+      },
     ],
   },
   {
@@ -636,6 +641,11 @@ export const AuthMongoCollectionDefinitions: Array<{
     indexes: [
       { name: 'ix__outbox__tenant_status_created', key: { tenantId: 1, status: 1, createdAt: 1 } },
       { name: 'ix__outbox__tenant_aggregate', key: { tenantId: 1, aggregateType: 1, aggregateId: 1 } },
+      {
+        name: 'ix__outbox__studio_tenant_created',
+        key: { tenantId: 1, aggregateType: 1, createdAt: -1 },
+        partialFilterExpression: { aggregateType: 'api-response-studio' },
+      },
     ],
   },
   {

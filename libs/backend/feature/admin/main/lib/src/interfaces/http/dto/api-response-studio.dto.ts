@@ -104,6 +104,26 @@ export class ApiResponseStudioRevisionItemDto {
   @ApiProperty() @IsUUID() id!: string;
   @ApiProperty() @IsInt() @Min(1) expectedRevision!: number;
 }
+export class ApiResponseStudioPresentationPatchDto {
+  @ApiPropertyOptional({ enum: ProblemPresentationDisplays })
+  @IsOptional()
+  @IsIn(ProblemPresentationDisplays)
+  display?: ProblemPresentationDisplay;
+  @ApiPropertyOptional({ enum: ProblemPresentationSeverities })
+  @IsOptional()
+  @IsIn(ProblemPresentationSeverities)
+  severity?: ProblemPresentationSeverity;
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() support?: boolean;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(1000) customDescription?: string;
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() figmaOnly?: boolean;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(4000) comments?: string;
+  @ApiPropertyOptional({ type: () => ApiResponseStudioTextsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ApiResponseStudioTextsDto)
+  texts?: ApiResponseStudioTextsDto;
+}
+
 export class BulkApiResponseStudioResponsesDto {
   @ApiProperty({ type: () => ApiResponseStudioRevisionItemDto, isArray: true })
   @IsArray()
@@ -112,10 +132,10 @@ export class BulkApiResponseStudioResponsesDto {
   @ValidateNested({ each: true })
   @Type(() => ApiResponseStudioRevisionItemDto)
   items!: ApiResponseStudioRevisionItemDto[];
-  @ApiProperty({ type: () => ApiResponseStudioPresentationDto })
+  @ApiProperty({ type: () => ApiResponseStudioPresentationPatchDto })
   @ValidateNested()
-  @Type(() => ApiResponseStudioPresentationDto)
-  patch!: ApiResponseStudioPresentationDto;
+  @Type(() => ApiResponseStudioPresentationPatchDto)
+  patch!: ApiResponseStudioPresentationPatchDto;
 }
 export class DismissApiResponseStudioResponsesDto {
   @ApiProperty({ type: () => ApiResponseStudioRevisionItemDto, isArray: true })
@@ -195,7 +215,7 @@ export class ApiResponseStudioResponseViewDto extends ApiResponseStudioPresentat
   @ApiProperty() description!: string;
   @ApiProperty() schemaSnapshot!: string;
   @ApiProperty() exampleSnapshot!: string;
-  @ApiProperty({ type: Object, isArray: true }) enumChoices!: object[];
+  @ApiProperty({ type: Object, isArray: true }) enumChoices!: Array<Record<string, unknown>>;
   @ApiProperty() changeState!: string;
   @ApiProperty() changeDismissed!: boolean;
   @ApiProperty() deleted!: boolean;
@@ -214,8 +234,8 @@ export class ApiResponseStudioResponseListDto {
   @ApiProperty() total!: number;
 }
 export class ApiResponseStudioDashboardDto {
-  @ApiProperty({ type: Object, isArray: true }) sources!: object[];
-  @ApiProperty({ type: Object }) totals!: object;
+  @ApiProperty({ type: Object, isArray: true }) sources!: Array<Record<string, unknown>>;
+  @ApiProperty({ type: Object }) totals!: Record<string, unknown>;
 }
 export class ApiResponseStudioHistoryViewDto {
   @ApiProperty() id!: string;
@@ -224,9 +244,9 @@ export class ApiResponseStudioHistoryViewDto {
   @ApiPropertyOptional() responseId!: string | null;
   @ApiProperty() action!: string;
   @ApiProperty() actorUserId!: string;
-  @ApiProperty({ type: Object }) before!: object;
-  @ApiProperty({ type: Object }) after!: object;
-  @ApiProperty({ type: Object }) metadata!: object;
+  @ApiProperty({ type: Object }) before!: Record<string, unknown>;
+  @ApiProperty({ type: Object }) after!: Record<string, unknown>;
+  @ApiProperty({ type: Object }) metadata!: Record<string, unknown>;
   @ApiProperty() createdAt!: Date;
 }
 export class ApiResponseStudioHistoryListDto {

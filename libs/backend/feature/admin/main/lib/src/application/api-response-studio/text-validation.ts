@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity, no-control-regex, sonarjs/super-linear-regex, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument -- Validation deliberately recognizes bounded placeholders, limited tags, and disallowed control bytes. */
 import type { ApiResponseStudioPresentation, ApiResponseStudioTexts } from '@app/backend-feature-auth-shared';
 import { ProblemPresentationDisplays, ProblemPresentationSeverities } from '@app/common-problem-details';
 
@@ -27,7 +28,7 @@ const variablesFor = (lines: readonly string[]): string[] =>
     ...new Set(
       lines.flatMap((line) => [...line.matchAll(VariablePattern)].map((match) => match[1] ?? '')).filter(Boolean),
     ),
-  ].sort();
+  ].sort((a, b) => a.localeCompare(b));
 
 const tagsFor = (lines: readonly string[]): string[] => {
   const tags: string[] = [];
@@ -58,7 +59,7 @@ const tagsFor = (lines: readonly string[]): string[] => {
       throw new ApiResponseStudioValidationError('Presentation text contains unbalanced markup.');
     }
   }
-  return [...new Set(tags)].sort();
+  return [...new Set(tags)].sort((a, b) => a.localeCompare(b));
 };
 
 const assertBalancedVariables = (lines: readonly string[]): void => {

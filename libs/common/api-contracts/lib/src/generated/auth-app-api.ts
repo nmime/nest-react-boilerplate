@@ -635,13 +635,19 @@ export interface components {
     ProblemPresentationRuntimeViewDto: {
       ruleId: string;
       /** @enum {string} */
-      display: 'toast' | 'silent';
+      display: 'toast' | 'modal' | 'custom' | 'silent';
       /** @enum {string} */
       severity: 'error' | 'warning' | 'info' | 'success';
       messageEn?: string;
       messageRu?: string;
+      messageZh?: string;
+      texts?: Record<string, never>;
+      customDescription?: string;
+      support?: boolean;
+      figmaOnly?: boolean;
       revision: number;
       updatedAt?: string;
+      updatedByUserId?: string;
     };
     ProblemPresentationRuntimePayloadDto: {
       items: components['schemas']['ProblemPresentationRuntimeViewDto'][];

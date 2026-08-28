@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-restricted-types, @typescript-eslint/no-unnecessary-condition, sonarjs/no-nested-conditional -- Bounded recursive traversal intentionally handles heterogeneous OpenAPI documents. */
 import { createHash } from 'node:crypto';
 import type {
   ApiResponseStudioEnumChoice,
@@ -28,6 +29,7 @@ interface ParseOptions {
   readonly maxSnapshotBytes?: number;
   readonly enumExpansionCap?: number;
   readonly enumChoicesByBaseKey?: Readonly<Record<string, readonly ApiResponseStudioEnumChoice[]>>;
+  readonly externalDocuments?: Readonly<Record<string, Record<string, unknown>>>;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -40,7 +42,7 @@ const sortValue = (value: unknown): unknown => {
   if (isRecord(value)) {
     return Object.fromEntries(
       Object.keys(value)
-        .sort()
+        .sort((a, b) => a.localeCompare(b))
         .map((key) => [key, sortValue(value[key])]),
     );
   }
@@ -54,21 +56,46 @@ const boundedSnapshot = (value: unknown, maxBytes: number): string => {
 };
 const hash = (value: string): string => createHash('sha256').update(value).digest('hex');
 const localRefSegments = (ref: string): string[] | null => {
-  if (!ref.startsWith('#/')) return null;
+  if (!ref.startsWith('#/')) {
+    return null;
+  }
   return ref
     .slice(2)
     .split('/')
     .map((segment) => segment.replaceAll('~1', '/').replaceAll('~0', '~'));
 };
-const getAtRef = (document: Record<string, unknown>, ref: string): unknown => {
-  const segments = localRefSegments(ref);
-  if (!segments) return { $ref: ref };
+const getAtSegments = (document: Record<string, unknown>, segments: readonly string[], ref: string): unknown => {
   let value: unknown = document;
   for (const segment of segments) {
-    if (!isRecord(value)) return { $ref: ref };
+    if (!isRecord(value)) {
+      return { $ref: ref };
+    }
     value = value[segment];
   }
   return value;
+};
+
+const getAtRef = (
+  document: Record<string, unknown>,
+  ref: string,
+  externalDocuments: Readonly<Record<string, Record<string, unknown>>>,
+): unknown => {
+  const localSegments = localRefSegments(ref);
+  if (localSegments) {
+    return getAtSegments(document, localSegments, ref);
+  }
+  const hashAt = ref.indexOf('#');
+  const url = hashAt >= 0 ? ref.slice(0, hashAt) : ref;
+  const fragment = hashAt >= 0 ? ref.slice(hashAt) : '';
+  const external = externalDocuments[url];
+  if (!external) {
+    return { $externalRef: ref };
+  }
+  if (!fragment) {
+    return external;
+  }
+  const externalSegments = localRefSegments(fragment);
+  return externalSegments ? getAtSegments(external, externalSegments, ref) : { $externalRef: ref };
 };
 
 const resolveSchema = (
@@ -76,37 +103,59 @@ const resolveSchema = (
   value: unknown,
   limits: Required<Pick<ParseOptions, 'maxDepth' | 'maxNodes'>>,
   state: { nodes: number; refs: Set<string> },
+  externalDocuments: Readonly<Record<string, Record<string, unknown>>>,
   depth = 0,
 ): unknown => {
-  if (depth > limits.maxDepth || state.nodes >= limits.maxNodes) return { $truncated: true };
+  if (depth > limits.maxDepth || state.nodes >= limits.maxNodes) {
+    return { $truncated: true };
+  }
   state.nodes += 1;
-  if (Array.isArray(value)) return value.map((item) => resolveSchema(document, item, limits, state, depth + 1));
-  if (!isRecord(value)) return value;
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveSchema(document, item, limits, state, externalDocuments, depth + 1));
+  }
+  if (!isRecord(value)) {
+    return value;
+  }
   const ref = typeof value.$ref === 'string' ? value.$ref : undefined;
   if (ref) {
-    if (state.refs.has(ref)) return { $circular: ref };
+    if (state.refs.has(ref)) {
+      return { $circular: ref };
+    }
     state.refs.add(ref);
-    const resolved = resolveSchema(document, getAtRef(document, ref), limits, state, depth + 1);
+    const resolved = resolveSchema(
+      document,
+      getAtRef(document, ref, externalDocuments),
+      limits,
+      state,
+      externalDocuments,
+      depth + 1,
+    );
     state.refs.delete(ref);
     return isRecord(resolved) ? { ...resolved, $name: ref.split('/').at(-1) } : resolved;
   }
   return Object.fromEntries(
     Object.keys(value)
-      .sort()
-      .map((key) => [key, resolveSchema(document, value[key], limits, state, depth + 1)]),
+      .sort((a, b) => a.localeCompare(b))
+      .map((key) => [key, resolveSchema(document, value[key], limits, state, externalDocuments, depth + 1)]),
   );
 };
 
 const schemaVariants = (schema: unknown): unknown[] => {
-  if (!isRecord(schema)) return [schema];
+  if (!isRecord(schema)) {
+    return [schema];
+  }
   for (const keyword of ['oneOf', 'anyOf'] as const) {
     const variants = schema[keyword];
-    if (Array.isArray(variants) && variants.length > 0) return variants;
+    if (Array.isArray(variants) && variants.length > 0) {
+      return variants;
+    }
   }
   const allOf = schema.allOf;
   if (Array.isArray(allOf) && allOf.length > 0) {
     const merged = allOf.reduce<Record<string, unknown>>((acc, item) => {
-      if (!isRecord(item)) return acc;
+      if (!isRecord(item)) {
+        return acc;
+      }
       const properties = isRecord(item.properties) ? item.properties : {};
       const required = Array.isArray(item.required) ? item.required : [];
       return {
@@ -124,28 +173,42 @@ const schemaVariants = (schema: unknown): unknown[] => {
 const DiscriminatorKeys = ['error_type', 'errorType', 'code', 'type'] as const;
 
 const schemaDiscriminator = (schema: unknown): string => {
-  if (!isRecord(schema) || !isRecord(schema.properties)) return '';
+  if (!isRecord(schema) || !isRecord(schema.properties)) {
+    return '';
+  }
   for (const key of DiscriminatorKeys) {
     const property = isRecord(schema.properties[key]) ? schema.properties[key] : undefined;
-    if (!property) continue;
+    if (!property) {
+      continue;
+    }
     for (const keyword of ['const', 'default', 'example']) {
       const discriminator = property[keyword];
-      if (typeof discriminator === 'string' && discriminator.trim()) return discriminator.trim().slice(0, 200);
+      if (typeof discriminator === 'string' && discriminator.trim()) {
+        return discriminator.trim().slice(0, 200);
+      }
     }
     if (Array.isArray(property.enum) && property.enum.length === 1) {
       const discriminator = property.enum[0];
-      if (typeof discriminator === 'string' && discriminator.trim()) return discriminator.trim().slice(0, 200);
+      if (typeof discriminator === 'string' && discriminator.trim()) {
+        return discriminator.trim().slice(0, 200);
+      }
     }
   }
   return '';
 };
 
 const recordDiscriminator = (value: unknown, includeType: boolean): string => {
-  if (!isRecord(value)) return '';
+  if (!isRecord(value)) {
+    return '';
+  }
   for (const key of DiscriminatorKeys) {
-    if (key === 'type' && !includeType) continue;
+    if (key === 'type' && !includeType) {
+      continue;
+    }
     const candidate = value[key];
-    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim().slice(0, 200);
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim().slice(0, 200);
+    }
   }
   return '';
 };
@@ -158,21 +221,29 @@ const collectEnums = (
   prefix = '',
   result: ApiResponseStudioEnumChoice[] = [],
 ): ApiResponseStudioEnumChoice[] => {
-  if (!isRecord(schema)) return result;
+  if (!isRecord(schema)) {
+    return result;
+  }
   if (Array.isArray(schema.enum)) {
-    const values = schema.enum.map(String).sort();
-    if (values.length > 0) result.push({ property: prefix || '$value', values, enabledValues: [] });
+    const values = schema.enum.map(String).sort((a, b) => a.localeCompare(b));
+    if (values.length > 0) {
+      result.push({ property: prefix || '$value', values, enabledValues: [] });
+    }
   }
   const properties = schema.properties;
   if (isRecord(properties)) {
-    for (const key of Object.keys(properties).sort())
+    for (const key of Object.keys(properties).sort((a, b) => a.localeCompare(b))) {
       collectEnums(properties[key], prefix ? `${prefix}.${key}` : key, result);
+    }
   }
-  if (schema.items) collectEnums(schema.items, `${prefix}[]`, result);
+  if (schema.items) {
+    collectEnums(schema.items, `${prefix}[]`, result);
+  }
   for (const keyword of ['oneOf', 'allOf', 'anyOf']) {
     const variants = schema[keyword];
-    if (Array.isArray(variants))
+    if (Array.isArray(variants)) {
       variants.forEach((item, index) => collectEnums(item, `${prefix}.${keyword}[${index}]`, result));
+    }
   }
   return result;
 };
@@ -184,14 +255,20 @@ const expansionSuffixes = (
   const axes = choices
     .map((choice) => ({
       ...choice,
-      enabledValues: [...choice.enabledValues].filter((value) => choice.values.includes(value)).sort(),
+      enabledValues: [...choice.enabledValues]
+        .filter((value) => choice.values.includes(value))
+        .sort((a, b) => a.localeCompare(b)),
     }))
     .filter((choice) => choice.enabledValues.length > 0)
     .sort((a, b) => a.property.localeCompare(b.property));
-  if (axes.length === 0) return [{ suffix: '', choices: choices.map((choice) => ({ ...choice })) }];
+  if (axes.length === 0) {
+    return [{ suffix: '', choices: choices.map((choice) => ({ ...choice })) }];
+  }
   const results: Array<{ suffix: string; choices: ApiResponseStudioEnumChoice[] }> = [];
   const walk = (index: number, values: string[]) => {
-    if (results.length >= cap) return;
+    if (results.length >= cap) {
+      return;
+    }
     if (index >= axes.length) {
       results.push({
         suffix: values.map((value) => encodeURIComponent(value)).join('~'),
@@ -199,10 +276,37 @@ const expansionSuffixes = (
       });
       return;
     }
-    for (const value of axes[index]?.enabledValues ?? []) walk(index + 1, [...values, value]);
+    for (const value of axes[index]?.enabledValues ?? []) {
+      walk(index + 1, [...values, value]);
+    }
   };
   walk(0, []);
   return results;
+};
+
+export const collectExternalOpenApiRefs = (document: Record<string, unknown>): string[] => {
+  const refs = new Set<string>();
+  const walk = (value: unknown, seen: Set<object>): void => {
+    if (!value || typeof value !== 'object' || seen.has(value)) {
+      return;
+    }
+    seen.add(value);
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        walk(item, seen);
+      });
+      return;
+    }
+    const record = value as Record<string, unknown>;
+    if (typeof record.$ref === 'string' && !record.$ref.startsWith('#/')) {
+      refs.add(record.$ref.split('#')[0] ?? record.$ref);
+    }
+    Object.values(record).forEach((item) => {
+      walk(item, seen);
+    });
+  };
+  walk(document, new Set());
+  return [...refs].filter(Boolean).sort((a, b) => a.localeCompare(b));
 };
 
 export const parseOpenApiResponses = (
@@ -210,23 +314,38 @@ export const parseOpenApiResponses = (
   options: ParseOptions = {},
 ): ApiResponseStudioParsedVariant[] => {
   const openapi = typeof document.openapi === 'string' ? document.openapi : '';
-  if (!/^3(?:\.\d+){1,2}(?:[-+].*)?$/u.test(openapi)) throw new Error('OpenAPI 3.x document is required.');
+  if (!/^3(?:\.\d+){1,2}(?:[-+].*)?$/u.test(openapi)) {
+    throw new Error('OpenAPI 3.x document is required.');
+  }
   const paths = isRecord(document.paths) ? document.paths : {};
   const maxDepth = options.maxDepth ?? DefaultMaxDepth;
   const maxNodes = options.maxNodes ?? DefaultMaxNodes;
   const maxSnapshotBytes = options.maxSnapshotBytes ?? DefaultMaxSnapshotBytes;
   const enumExpansionCap = options.enumExpansionCap ?? DefaultEnumExpansionCap;
   const variants: ApiResponseStudioParsedVariant[] = [];
-  for (const path of Object.keys(paths).sort()) {
-    if (HealthPattern.test(path)) continue;
+  for (const path of Object.keys(paths).sort((a, b) => a.localeCompare(b))) {
+    if (HealthPattern.test(path)) {
+      continue;
+    }
     const pathItem = paths[path];
-    if (!isRecord(pathItem)) continue;
-    for (const rawMethod of Object.keys(pathItem).sort()) {
+    if (!isRecord(pathItem)) {
+      continue;
+    }
+    for (const rawMethod of Object.keys(pathItem).sort((a, b) => a.localeCompare(b))) {
       const method = rawMethod.toUpperCase() as ApiResponseStudioMethod;
-      if (!HttpMethods.has(method)) continue;
+      if (!HttpMethods.has(method)) {
+        continue;
+      }
       const operation = pathItem[rawMethod];
-      if (!isRecord(operation)) continue;
-      const tags = Array.isArray(operation.tags) ? operation.tags.map(String).filter(Boolean).sort() : [];
+      if (!isRecord(operation)) {
+        continue;
+      }
+      const tags = Array.isArray(operation.tags)
+        ? operation.tags
+            .map(String)
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b))
+        : [];
       const tag = tags[0] ?? 'default';
       const operationId = typeof operation.operationId === 'string' ? operation.operationId : '';
       const summary = typeof operation.summary === 'string' ? operation.summary : '';
@@ -234,7 +353,9 @@ export const parseOpenApiResponses = (
       const statuses = Object.keys(responses).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
       for (const statusKey of statuses) {
         const response = responses[statusKey];
-        if (!isRecord(response)) continue;
+        if (!isRecord(response)) {
+          continue;
+        }
         const status: ApiResponseStudioStatus = /^\d{3}$/u.test(statusKey) ? (statusKey as `${number}`) : 'default';
         const description = typeof response.description === 'string' ? response.description : '';
         const content = isRecord(response.content) ? response.content : {};
@@ -252,6 +373,7 @@ export const parseOpenApiResponses = (
           unresolvedSchema,
           { maxDepth, maxNodes },
           { nodes: 0, refs: new Set() },
+          options.externalDocuments ?? {},
         );
         const resolvedVariants = schemaVariants(resolved);
         for (const schema of resolvedVariants) {

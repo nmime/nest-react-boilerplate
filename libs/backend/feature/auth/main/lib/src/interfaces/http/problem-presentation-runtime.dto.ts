@@ -22,11 +22,29 @@ export class ProblemPresentationRuntimeViewDto {
   @ApiPropertyOptional()
   messageRu?: string;
 
+  @ApiPropertyOptional()
+  messageZh?: string;
+
+  @ApiPropertyOptional({ type: Object })
+  texts?: { en?: readonly string[]; ru?: readonly string[]; zh?: readonly string[] };
+
+  @ApiPropertyOptional()
+  customDescription?: string;
+
+  @ApiPropertyOptional()
+  support?: boolean;
+
+  @ApiPropertyOptional()
+  figmaOnly?: boolean;
+
   @ApiProperty()
   revision!: number;
 
   @ApiPropertyOptional()
   updatedAt?: string;
+
+  @ApiPropertyOptional()
+  updatedByUserId?: string;
 }
 
 export class ProblemPresentationRuntimePayloadDto {

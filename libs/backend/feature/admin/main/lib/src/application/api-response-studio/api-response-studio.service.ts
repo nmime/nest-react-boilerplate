@@ -7,11 +7,12 @@ import {
   type ApiResponseStudioRepositoryError,
   type ApiResponseStudioRepositoryPort,
   type ApiResponseStudioResponseQuery,
+  type ApiResponseStudioResponseRecord,
   type BulkUpdateApiResponseStudioResponseInput,
   type CreateApiResponseStudioSourceInput,
   type UpdateApiResponseStudioSourceInput,
 } from '@app/backend-feature-auth-shared';
-import { parseOpenApiResponses } from './openapi-parser';
+import { collectExternalOpenApiRefs, parseOpenApiResponses } from './openapi-parser';
 import { SafeOpenApiFetcher } from './safe-openapi-fetcher';
 import { ApiResponseStudioValidationError, normalizeAndValidatePresentation } from './text-validation';
 
@@ -76,8 +77,9 @@ export class ApiResponseStudioService {
   bulkUpdate(
     input: Omit<BulkUpdateApiResponseStudioResponseInput, 'patch'> & { patch: Partial<ApiResponseStudioPresentation> },
   ) {
-    if (input.items.length === 0 || input.items.length > 200)
+    if (input.items.length === 0 || input.items.length > 200) {
       return errAsync(validationError('Bulk update requires between 1 and 200 rows.'));
+    }
     try {
       const patch =
         'texts' in input.patch
@@ -112,8 +114,9 @@ export class ApiResponseStudioService {
     actorUserId: string;
     metadata?: Record<string, unknown>;
   }) {
-    if (input.items.length === 0 || input.items.length > 200)
+    if (input.items.length === 0 || input.items.length > 200) {
       return errAsync(validationError('Dismiss requires between 1 and 200 rows.'));
+    }
     return this.repository.dismissChanges(input);
   }
 
@@ -125,17 +128,47 @@ export class ApiResponseStudioService {
     metadata?: Record<string, unknown>;
   }) {
     return this.repository.findSource(input.tenantId, input.sourceId).andThen((source) => {
-      if (!source)
+      if (!source) {
         return errAsync<never, ApiResponseStudioRepositoryError>(validationError('OpenAPI source was not found.'));
+      }
       return ResultAsync.fromPromise(
-        this.fetcher.fetchJson(source.jsonUrl).then((document) => parseOpenApiResponses(document)),
+        this.fetcher.fetchJson(source.jsonUrl).then(async (document) => {
+          const externalDocuments = Object.fromEntries(
+            await Promise.all(
+              collectExternalOpenApiRefs(document).map(
+                async (url) => [url, await this.fetcher.fetchJsonReference(url)] as const,
+              ),
+            ),
+          );
+          return parseOpenApiResponses(document, { externalDocuments });
+        }),
         normalizeError,
       ).andThen((variants) => this.repository.sync({ ...input, variants }));
     });
   }
 
   export(tenantId: string, query?: ApiResponseStudioResponseQuery) {
-    return this.repository.listResponses(tenantId, { ...query, limit: 10_000, offset: 0 }).andThen((rows) => {
+    return ResultAsync.fromPromise(
+      (async () => {
+        const rows: ApiResponseStudioResponseRecord[] = [];
+        const pageSize = 500;
+        const maxRows = 10_000;
+        for (let offset = 0; offset < maxRows; offset += pageSize) {
+          // Export pagination is intentionally sequential to preserve deterministic repository ordering.
+          // eslint-disable-next-line no-await-in-loop
+          const page = await this.repository.listResponses(tenantId, { ...query, limit: pageSize, offset });
+          if (page.isErr()) {
+            throw new Error(page.error.message);
+          }
+          rows.push(...page.value);
+          if (page.value.length < pageSize) {
+            break;
+          }
+        }
+        return rows;
+      })(),
+      normalizeError,
+    ).andThen((rows) => {
       const payload = rows
         .filter((row) => !row.deleted)
         .sort((a, b) => a.stableKey.localeCompare(b.stableKey))

@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity, no-await-in-loop -- Redirect and DNS revalidation is deliberately sequential and fail-closed. */
 import { isIP } from 'node:net';
 import { Injectable } from '@nestjs/common';
 
@@ -41,15 +42,23 @@ const blockedIpv4 = (value: string): boolean => {
 };
 const blockedIpv6 = (value: string): boolean => {
   const address = value.toLowerCase().split('%')[0] ?? '';
-  if (address === '::' || address === '::1') return true;
-  if (address.startsWith('fc') || address.startsWith('fd') || /^fe[89ab]/u.test(address)) return true;
+  if (address === '::' || address === '::1') {
+    return true;
+  }
+  if (address.startsWith('fc') || address.startsWith('fd') || /^fe[89ab]/u.test(address)) {
+    return true;
+  }
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/u.exec(address)?.[1];
   return mapped ? blockedIpv4(mapped) : false;
 };
 export const isPublicAddress = (value: string): boolean => {
   const kind = isIP(value);
-  if (kind === 4) return !blockedIpv4(value);
-  if (kind === 6) return !blockedIpv6(value);
+  if (kind === 4) {
+    return !blockedIpv4(value);
+  }
+  if (kind === 6) {
+    return !blockedIpv6(value);
+  }
   return false;
 };
 
@@ -70,10 +79,16 @@ export class UndiciHttpPort implements ApiResponseStudioHttpPort {
     headers: Readonly<Record<string, string>>;
   }): Promise<ApiResponseStudioHttpResponse> {
     const address = input.addresses[0];
-    if (!address) throw new Error('No validated source address is available.');
+    if (!address) {
+      throw new Error('No validated source address is available.');
+    }
     const { Agent, request } = await import('undici');
     const dispatcher = new Agent({
-      connect: { lookup: (_hostname, _options, callback) => callback(null, address, isIP(address)) },
+      connect: {
+        lookup: (_hostname, _options, callback) => {
+          callback(null, address, isIP(address));
+        },
+      },
     });
     try {
       const response = await request(input.url, {
@@ -112,9 +127,21 @@ export class SafeOpenApiFetcher {
     private readonly defaults: SafeOpenApiFetcherOptions = { allowedHosts: parseAllowedHosts() },
   ) {}
 
-  async fetchJson(
+  fetchJson(urlValue: string, overrides: Partial<SafeOpenApiFetcherOptions> = {}): Promise<Record<string, unknown>> {
+    return this.fetchJsonObject(urlValue, overrides, true);
+  }
+
+  fetchJsonReference(
     urlValue: string,
     overrides: Partial<SafeOpenApiFetcherOptions> = {},
+  ): Promise<Record<string, unknown>> {
+    return this.fetchJsonObject(urlValue, overrides, false);
+  }
+
+  private async fetchJsonObject(
+    urlValue: string,
+    overrides: Partial<SafeOpenApiFetcherOptions>,
+    requireOpenApi: boolean,
   ): Promise<Record<string, unknown>> {
     const options = { timeoutMs: 8_000, maxBytes: 2 * 1024 * 1024, maxRedirects: 3, ...this.defaults, ...overrides };
     let current = this.validateUrl(urlValue, options.allowedHosts);
@@ -124,7 +151,9 @@ export class SafeOpenApiFetcher {
         throw new Error('OpenAPI source resolves to a non-public address.');
       }
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), options.timeoutMs);
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, options.timeoutMs);
       try {
         const response = await this.http.request({
           url: current,
@@ -134,13 +163,15 @@ export class SafeOpenApiFetcher {
         });
         if ([301, 302, 303, 307, 308].includes(response.status)) {
           const location = response.headers['location'];
-          if (!location || redirect === options.maxRedirects)
+          if (!location || redirect === options.maxRedirects) {
             throw new Error('OpenAPI source redirect is invalid or exceeds the limit.');
+          }
           current = this.validateUrl(new URL(location, current).toString(), options.allowedHosts);
           continue;
         }
-        if (response.status < 200 || response.status >= 300)
+        if (response.status < 200 || response.status >= 300) {
           throw new Error(`OpenAPI source returned HTTP ${response.status}.`);
+        }
         const contentType = response.headers['content-type']?.split(';')[0]?.trim().toLowerCase() ?? '';
         if (
           !['application/json', 'application/problem+json', 'application/vnd.oai.openapi+json'].includes(contentType)
@@ -148,22 +179,31 @@ export class SafeOpenApiFetcher {
           throw new Error('OpenAPI source must return a JSON media type.');
         }
         const encoding = response.headers['content-encoding']?.trim().toLowerCase();
-        if (encoding && encoding !== 'identity') throw new Error('Compressed OpenAPI responses are not accepted.');
+        if (encoding && encoding !== 'identity') {
+          throw new Error('Compressed OpenAPI responses are not accepted.');
+        }
         const declared = Number(response.headers['content-length'] ?? '0');
-        if (Number.isFinite(declared) && declared > options.maxBytes)
+        if (Number.isFinite(declared) && declared > options.maxBytes) {
           throw new Error('OpenAPI source exceeds the response size limit.');
+        }
         const chunks: Uint8Array[] = [];
         let total = 0;
         for await (const chunk of response.body) {
           total += chunk.byteLength;
-          if (total > options.maxBytes) throw new Error('OpenAPI source exceeds the response size limit.');
+          if (total > options.maxBytes) {
+            throw new Error('OpenAPI source exceeds the response size limit.');
+          }
           chunks.push(chunk);
         }
         const parsed: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
           throw new Error('OpenAPI source must contain a JSON object.');
+        }
         const document = parsed as Record<string, unknown>;
-        if (typeof document.openapi !== 'string' || !/^3(?:\.\d+){1,2}(?:[-+].*)?$/u.test(document.openapi)) {
+        if (
+          requireOpenApi &&
+          (typeof document.openapi !== 'string' || !/^3(?:\.\d+){1,2}(?:[-+].*)?$/u.test(document.openapi))
+        ) {
           throw new Error('OpenAPI 3.x document is required.');
         }
         return document;

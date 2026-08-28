@@ -10721,6 +10721,3126 @@
     },
     {
       "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio dashboard completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dashboard failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio dashboard failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dashboard failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dashboard failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dashboard failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dashboard failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dashboard failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dashboard failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/dashboard:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dashboard",
+        "path": "/admin/settings/api-response-studio/dashboard",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dashboard could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio export completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio export failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio export failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio export failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio export failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio export failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio export failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio export failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio export failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/export:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_export",
+        "path": "/admin/settings/api-response-studio/export",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio export could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio history completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio history failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio history failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio history failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio history failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio history failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio history failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio history failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio history failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/history:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_history",
+        "path": "/admin/settings/api-response-studio/history",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio history could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio responses completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio responses failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio responses failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio responses failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio responses failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio responses failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio responses failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio responses failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio responses failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/responses:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_responses",
+        "path": "/admin/settings/api-response-studio/responses",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio responses could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio update Response completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Response failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio update Response failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Response failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Response failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Response failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Response failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Response failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Response failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}",
+        "method": "PUT",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Response could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio reset Response completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio reset Response failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio reset Response failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio reset Response failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio reset Response failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio reset Response failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio reset Response failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio reset Response failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio reset Response failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/responses/{id}/reset:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_resetResponse",
+        "path": "/admin/settings/api-response-studio/responses/{id}/reset",
+        "method": "PUT",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio reset Response could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio bulk completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio bulk failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio bulk failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio bulk failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio bulk failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio bulk failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio bulk failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio bulk failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio bulk failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/bulk:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_bulk",
+        "path": "/admin/settings/api-response-studio/responses/bulk",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio bulk could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio dismiss completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dismiss failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio dismiss failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dismiss failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dismiss failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dismiss failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dismiss failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dismiss failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dismiss failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/settings/api-response-studio/responses/dismiss:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_dismiss",
+        "path": "/admin/settings/api-response-studio/responses/dismiss",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio dismiss could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio sources completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sources failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio sources failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sources failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sources failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sources failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sources failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sources failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sources failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/settings/api-response-studio/sources:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sources",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sources could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio create Source completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio create Source failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio create Source failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio create Source failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio create Source failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio create Source failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio create Source failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio create Source failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio create Source failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_createSource",
+        "path": "/admin/settings/api-response-studio/sources",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio create Source could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio update Source completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Source failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio update Source failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Source failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Source failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Source failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Source failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Source failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Source failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PUT:/admin/settings/api-response-studio/sources/{id}:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_updateSource",
+        "path": "/admin/settings/api-response-studio/sources/{id}",
+        "method": "PUT",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio update Source could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:200",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 200,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio sync completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:400",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 400,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sync failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:401",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 401,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Admin Api Response Studio sync failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:403",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 403,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sync failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:404",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 404,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sync failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:409",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 409,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sync failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:429",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 429,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sync failed: Too Many Requests.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:500",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": 500,
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sync failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:ERR",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sync failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/settings/api-response-studio/sources/{id}/sync:NET",
+      "match": {
+        "endpoint": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AdminApiResponseStudioController_sync",
+        "path": "/admin/settings/api-response-studio/sources/{id}/sync",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["AdminApiResponseStudio"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Admin Api Response Studio sync could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
       "id": "admin-app-api:GET:/admin/settings/problem-presentations:200",
       "match": {
         "endpoint": "/admin/settings/problem-presentations",

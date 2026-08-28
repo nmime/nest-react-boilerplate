@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-nested-conditional, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-assignment, no-await-in-loop -- Docker-backed component fixtures validate transaction rollback and tenant isolation. */
 // @requirements REQ-API-RESPONSE-STUDIO-003
 // @requirements REQ-API-RESPONSE-STUDIO-004
 import { randomUUID } from 'node:crypto';
@@ -36,7 +37,9 @@ const variant = (
 
 async function unwrap<T, E extends { message: string }>(result: ResultAsync<T, E>): Promise<T> {
   const settled = await result;
-  if (settled.isErr()) throw new Error(settled.error.message);
+  if (settled.isErr()) {
+    throw new Error(settled.error.message);
+  }
   return settled.value;
 }
 
@@ -122,7 +125,9 @@ describeIfDocker('MongoApiResponseStudioRepository on a replica set', () => {
     );
     const rows = await unwrap(repository.listResponses(tenantA));
     const net = rows.find((row) => row.status === 'NET');
-    if (!net) throw new Error('Expected NET row.');
+    if (!net) {
+      throw new Error('Expected NET row.');
+    }
     const edited = await unwrap(
       repository.updateResponse({
         tenantId: tenantA,

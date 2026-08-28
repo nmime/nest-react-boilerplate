@@ -368,6 +368,91 @@
       "project": "admin-app-api",
       "kind": "http",
       "method": "GET",
+      "path": "/admin/settings/api-response-studio/dashboard",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:68",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/api-response-studio/export",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:238",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/api-response-studio/history",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:247",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/api-response-studio/responses",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:142",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/api-response-studio/sources",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:74",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
       "path": "/admin/settings/problem-presentations",
       "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.ts:37",
       "authClassification": "session-rbac",
@@ -548,6 +633,42 @@
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/settings/api-response-studio/responses/bulk",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:200",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/settings/api-response-studio/responses/dismiss",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:219",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "manual-fixture",
@@ -920,6 +1041,42 @@
     {
       "project": "admin-app-api",
       "kind": "http",
+      "method": "POST",
+      "path": "/admin/settings/api-response-studio/sources",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:80",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/settings/api-response-studio/sources/:id/sync",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:121",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
       "method": "PUT",
       "path": "/admin/feature-flags/:key",
       "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-feature-flags.controller.ts:34",
@@ -944,6 +1101,60 @@
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/settings/api-response-studio/responses/:id",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:156",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/settings/api-response-studio/responses/:id/reset",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:179",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/settings/api-response-studio/sources/:id",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:100",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "manual-fixture",

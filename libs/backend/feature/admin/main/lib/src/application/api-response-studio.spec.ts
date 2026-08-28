@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-hardcoded-ip -- Explicit public and reserved addresses are security test fixtures. */
 // @requirements REQ-API-RESPONSE-STUDIO-001 REQ-API-RESPONSE-STUDIO-002 REQ-API-RESPONSE-STUDIO-003 REQ-API-RESPONSE-STUDIO-004
 import { okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
@@ -22,7 +23,9 @@ const jsonBody = (value: unknown): AsyncIterable<Uint8Array> => ({
 
 const bodyFrom = (...chunks: string[]): AsyncIterable<Uint8Array> => ({
   async *[Symbol.asyncIterator]() {
-    for (const chunk of chunks) yield Buffer.from(chunk);
+    for (const chunk of chunks) {
+      yield Buffer.from(chunk);
+    }
   },
 });
 
@@ -48,7 +51,9 @@ const createFetcher = (input?: {
   const http: ApiResponseStudioHttpPort = {
     request: vi.fn(async () => {
       const next = queue.shift();
-      if (!next) throw new Error('Unexpected HTTP request.');
+      if (!next) {
+        throw new Error('Unexpected HTTP request.');
+      }
       return next;
     }),
   };
@@ -140,7 +145,7 @@ describe('parseOpenApiResponses', () => {
       properties: { next: { $circular: '#/components/schemas/Problem' } },
     });
     expect(variants.map((variant) => variant.stableKey)).toEqual(
-      [...variants.map((variant) => variant.stableKey)].sort(),
+      [...variants.map((variant) => variant.stableKey)].sort((a, b) => a.localeCompare(b)),
     );
     expect(
       variants.filter((variant) => variant.path === '/v1/widgets' && ['ERR', 'NET'].includes(variant.status)),
@@ -335,8 +340,11 @@ describe('SafeOpenApiFetcher', () => {
         maxBytes: message === 'size limit' ? 8 : 1_000,
         maxRedirects: 0,
       });
-      if (message === 'Unexpected') await expect(promise).rejects.toBeInstanceOf(SyntaxError);
-      else await expect(promise).rejects.toThrow(message);
+      if (message === 'Unexpected') {
+        await expect(promise).rejects.toBeInstanceOf(SyntaxError);
+      } else {
+        await expect(promise).rejects.toThrow(message);
+      }
     },
   );
 
@@ -345,8 +353,14 @@ describe('SafeOpenApiFetcher', () => {
     const http: ApiResponseStudioHttpPort = {
       request: vi.fn(
         ({ signal }) =>
-          new Promise((_resolve, reject) => {
-            signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
+          new Promise<ApiResponseStudioHttpResponse>((_resolve, reject) => {
+            signal.addEventListener(
+              'abort',
+              () => {
+                reject(new Error('aborted'));
+              },
+              { once: true },
+            );
           }),
       ),
     };
@@ -429,7 +443,7 @@ describe('ApiResponseStudioService executable boundaries', () => {
     const service = new ApiResponseStudioService(repository as never, {} as never);
 
     const exported = (await service.export('tenant-1', { search: 'widget' }))._unsafeUnwrap();
-    expect(repository.listResponses).toHaveBeenCalledWith('tenant-1', { search: 'widget', limit: 10_000, offset: 0 });
+    expect(repository.listResponses).toHaveBeenCalledWith('tenant-1', { search: 'widget', limit: 500, offset: 0 });
     expect(exported).toEqual({
       filename: 'api-response-presentations.json',
       mediaType: 'application/json; charset=utf-8',

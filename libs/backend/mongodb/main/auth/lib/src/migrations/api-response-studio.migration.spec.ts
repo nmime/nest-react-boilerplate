@@ -9,7 +9,7 @@ import { authMongoMigrations } from './index';
 
 const definition = (name: string) => {
   const value = AuthMongoCollectionDefinitions.find((item) => item.name === name);
-  if (!value) throw new Error(`Missing collection definition ${name}.`);
+  if (!value) {throw new Error(`Missing collection definition ${name}.`);}
   return value;
 };
 

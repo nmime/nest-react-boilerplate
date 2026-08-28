@@ -47,6 +47,19 @@ export type AdminRbacRoleDto = components['schemas']['AdminRbacRoleDto'];
 export type AdminRoleViewDto = components['schemas']['AdminRoleViewDto'];
 export type AdminUserListPayloadDto = components['schemas']['AdminUserListPayloadDto'];
 export type AdminUserViewDto = components['schemas']['AdminUserViewDto'];
+export type ApiResponseStudioDashboardDto = components['schemas']['ApiResponseStudioDashboardDto'];
+export type ApiResponseStudioExportDto = components['schemas']['ApiResponseStudioExportDto'];
+export type ApiResponseStudioHistoryListDto = components['schemas']['ApiResponseStudioHistoryListDto'];
+export type ApiResponseStudioHistoryViewDto = components['schemas']['ApiResponseStudioHistoryViewDto'];
+export type ApiResponseStudioPresentationPatchDto = components['schemas']['ApiResponseStudioPresentationPatchDto'];
+export type ApiResponseStudioResponseListDto = components['schemas']['ApiResponseStudioResponseListDto'];
+export type ApiResponseStudioResponseViewDto = components['schemas']['ApiResponseStudioResponseViewDto'];
+export type ApiResponseStudioRevisionItemDto = components['schemas']['ApiResponseStudioRevisionItemDto'];
+export type ApiResponseStudioSourceListDto = components['schemas']['ApiResponseStudioSourceListDto'];
+export type ApiResponseStudioSourceViewDto = components['schemas']['ApiResponseStudioSourceViewDto'];
+export type ApiResponseStudioSyncResultDto = components['schemas']['ApiResponseStudioSyncResultDto'];
+export type ApiResponseStudioSyncSummaryDto = components['schemas']['ApiResponseStudioSyncSummaryDto'];
+export type ApiResponseStudioTextsDto = components['schemas']['ApiResponseStudioTextsDto'];
 export type AssignAdminUserRolesDto = components['schemas']['AssignAdminUserRolesDto'];
 export type AuditLogAdminListPayloadDto = components['schemas']['AuditLogAdminListPayloadDto'];
 export type AuditLogAdminMetadataDto = components['schemas']['AuditLogAdminMetadataDto'];
@@ -56,15 +69,20 @@ export type AuthLoginAnalyticsDimensionDto = components['schemas']['AuthLoginAna
 export type AuthLoginAnalyticsEventDto = components['schemas']['AuthLoginAnalyticsEventDto'];
 export type AuthLoginAnalyticsListPayloadDto = components['schemas']['AuthLoginAnalyticsListPayloadDto'];
 export type AuthLoginAnalyticsSummaryDto = components['schemas']['AuthLoginAnalyticsSummaryDto'];
+export type BulkApiResponseStudioResponsesDto = components['schemas']['BulkApiResponseStudioResponsesDto'];
 export type CreateAdminNotificationBroadcastDto = components['schemas']['CreateAdminNotificationBroadcastDto'];
 export type CreateAdminNotificationSegmentDto = components['schemas']['CreateAdminNotificationSegmentDto'];
 export type CreateAdminNotificationTemplateDto = components['schemas']['CreateAdminNotificationTemplateDto'];
 export type CreateAdminRoleDto = components['schemas']['CreateAdminRoleDto'];
+export type CreateApiResponseStudioSourceDto = components['schemas']['CreateApiResponseStudioSourceDto'];
+export type DismissApiResponseStudioResponsesDto = components['schemas']['DismissApiResponseStudioResponsesDto'];
 export type PreviewAdminNotificationTemplateDto = components['schemas']['PreviewAdminNotificationTemplateDto'];
 export type ResetAdminProblemPresentationDto = components['schemas']['ResetAdminProblemPresentationDto'];
 export type ResetAdminProblemPresentationResultDto = components['schemas']['ResetAdminProblemPresentationResultDto'];
+export type ResetApiResponseStudioResponseDto = components['schemas']['ResetApiResponseStudioResponseDto'];
 export type ScheduleAdminNotificationBroadcastDto = components['schemas']['ScheduleAdminNotificationBroadcastDto'];
 export type SetAdminRolePermissionsDto = components['schemas']['SetAdminRolePermissionsDto'];
+export type SyncApiResponseStudioSourceDto = components['schemas']['SyncApiResponseStudioSourceDto'];
 export type TestSendAdminNotificationTemplateDto = components['schemas']['TestSendAdminNotificationTemplateDto'];
 export type UpdateAdminNotificationBroadcastDto = components['schemas']['UpdateAdminNotificationBroadcastDto'];
 export type UpdateAdminNotificationSegmentDto = components['schemas']['UpdateAdminNotificationSegmentDto'];
@@ -73,6 +91,8 @@ export type UpdateAdminProblemPresentationDto = components['schemas']['UpdateAdm
 export type UpdateAdminRoleDto = components['schemas']['UpdateAdminRoleDto'];
 export type UpdateAdminUserAccessPolicyDto = components['schemas']['UpdateAdminUserAccessPolicyDto'];
 export type UpdateAdminUserStatusDto = components['schemas']['UpdateAdminUserStatusDto'];
+export type UpdateApiResponseStudioResponseDto = components['schemas']['UpdateApiResponseStudioResponseDto'];
+export type UpdateApiResponseStudioSourceDto = components['schemas']['UpdateApiResponseStudioSourceDto'];
 export type UploadAdminNotificationSegmentCsvDto = components['schemas']['UploadAdminNotificationSegmentCsvDto'];
 export type UpsertAdminFeatureFlagDto = components['schemas']['UpsertAdminFeatureFlagDto'];
 
@@ -84,6 +104,23 @@ export const adminHealthControllerGetHealthPath = '/admin/health' as const;
 export const adminHealthControllerGetPrivateHealthPath = '/admin/health/private' as const;
 export const adminHealthControllerGetLivenessPath = '/admin/live' as const;
 export const adminHealthControllerGetReadinessPath = '/admin/ready' as const;
+export const adminApiResponseStudioControllerDashboardPath = '/admin/settings/api-response-studio/dashboard' as const;
+export const adminApiResponseStudioControllerSourcesPath = '/admin/settings/api-response-studio/sources' as const;
+export const adminApiResponseStudioControllerCreateSourcePath = '/admin/settings/api-response-studio/sources' as const;
+export const adminApiResponseStudioControllerUpdateSourcePath =
+  '/admin/settings/api-response-studio/sources/{id}' as const;
+export const adminApiResponseStudioControllerSyncPath =
+  '/admin/settings/api-response-studio/sources/{id}/sync' as const;
+export const adminApiResponseStudioControllerResponsesPath = '/admin/settings/api-response-studio/responses' as const;
+export const adminApiResponseStudioControllerUpdateResponsePath =
+  '/admin/settings/api-response-studio/responses/{id}' as const;
+export const adminApiResponseStudioControllerResetResponsePath =
+  '/admin/settings/api-response-studio/responses/{id}/reset' as const;
+export const adminApiResponseStudioControllerBulkPath = '/admin/settings/api-response-studio/responses/bulk' as const;
+export const adminApiResponseStudioControllerDismissPath =
+  '/admin/settings/api-response-studio/responses/dismiss' as const;
+export const adminApiResponseStudioControllerExportPath = '/admin/settings/api-response-studio/export' as const;
+export const adminApiResponseStudioControllerHistoryPath = '/admin/settings/api-response-studio/history' as const;
 export const adminFeatureFlagsControllerListPath = '/admin/feature-flags' as const;
 export const adminFeatureFlagsControllerUpsertPath = '/admin/feature-flags/{key}' as const;
 export const adminProfileControllerMePath = '/admin/profile/me' as const;
@@ -183,6 +220,191 @@ export const adminHealthControllerGetReadiness = (options?: ApiClientRequestOpti
 export type AdminHealthControllerGetReadinessResponse = OpenApiData<typeof adminHealthControllerGetReadiness>;
 export type AdminHealthControllerGetReadinessData = EnvelopeData<AdminHealthControllerGetReadinessResponse>;
 export type AdminHealthControllerGetReadinessError = OpenApiError<typeof adminHealthControllerGetReadiness>;
+
+export const adminApiResponseStudioControllerDashboard = (options?: ApiClientRequestOptions) =>
+  client.GET(adminApiResponseStudioControllerDashboardPath, toOpenApiFetchOptions(options));
+export type AdminApiResponseStudioControllerDashboardResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerDashboard
+>;
+export type AdminApiResponseStudioControllerDashboardData =
+  EnvelopeData<AdminApiResponseStudioControllerDashboardResponse>;
+export type AdminApiResponseStudioControllerDashboardError = OpenApiError<
+  typeof adminApiResponseStudioControllerDashboard
+>;
+
+export const adminApiResponseStudioControllerSources = (options?: ApiClientRequestOptions) =>
+  client.GET(adminApiResponseStudioControllerSourcesPath, toOpenApiFetchOptions(options));
+export type AdminApiResponseStudioControllerSourcesResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerSources
+>;
+export type AdminApiResponseStudioControllerSourcesData = EnvelopeData<AdminApiResponseStudioControllerSourcesResponse>;
+export type AdminApiResponseStudioControllerSourcesError = OpenApiError<typeof adminApiResponseStudioControllerSources>;
+
+export const adminApiResponseStudioControllerCreateSource = (
+  body: CreateApiResponseStudioSourceDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.POST(adminApiResponseStudioControllerCreateSourcePath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type AdminApiResponseStudioControllerCreateSourceResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerCreateSource
+>;
+export type AdminApiResponseStudioControllerCreateSourceData =
+  EnvelopeData<AdminApiResponseStudioControllerCreateSourceResponse>;
+export type AdminApiResponseStudioControllerCreateSourceError = OpenApiError<
+  typeof adminApiResponseStudioControllerCreateSource
+>;
+
+export const adminApiResponseStudioControllerUpdateSource = (
+  id: string,
+  body: UpdateApiResponseStudioSourceDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PUT(adminApiResponseStudioControllerUpdateSourcePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { id } },
+    body,
+  });
+export type AdminApiResponseStudioControllerUpdateSourceResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerUpdateSource
+>;
+export type AdminApiResponseStudioControllerUpdateSourceData =
+  EnvelopeData<AdminApiResponseStudioControllerUpdateSourceResponse>;
+export type AdminApiResponseStudioControllerUpdateSourceError = OpenApiError<
+  typeof adminApiResponseStudioControllerUpdateSource
+>;
+
+export const adminApiResponseStudioControllerSync = (
+  id: string,
+  body: SyncApiResponseStudioSourceDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.POST(adminApiResponseStudioControllerSyncPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { id } },
+    body,
+  });
+export type AdminApiResponseStudioControllerSyncResponse = OpenApiData<typeof adminApiResponseStudioControllerSync>;
+export type AdminApiResponseStudioControllerSyncData = EnvelopeData<AdminApiResponseStudioControllerSyncResponse>;
+export type AdminApiResponseStudioControllerSyncError = OpenApiError<typeof adminApiResponseStudioControllerSync>;
+
+export type AdminApiResponseStudioControllerResponsesQuery = NonNullable<
+  paths[typeof adminApiResponseStudioControllerResponsesPath]['get']['parameters']['query']
+>;
+export const adminApiResponseStudioControllerResponses = (
+  query?: AdminApiResponseStudioControllerResponsesQuery,
+  options?: ApiClientRequestOptions,
+) =>
+  client.GET(adminApiResponseStudioControllerResponsesPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { query },
+  });
+export type AdminApiResponseStudioControllerResponsesResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerResponses
+>;
+export type AdminApiResponseStudioControllerResponsesData =
+  EnvelopeData<AdminApiResponseStudioControllerResponsesResponse>;
+export type AdminApiResponseStudioControllerResponsesError = OpenApiError<
+  typeof adminApiResponseStudioControllerResponses
+>;
+
+export const adminApiResponseStudioControllerUpdateResponse = (
+  id: string,
+  body: UpdateApiResponseStudioResponseDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PUT(adminApiResponseStudioControllerUpdateResponsePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { id } },
+    body,
+  });
+export type AdminApiResponseStudioControllerUpdateResponseResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerUpdateResponse
+>;
+export type AdminApiResponseStudioControllerUpdateResponseData =
+  EnvelopeData<AdminApiResponseStudioControllerUpdateResponseResponse>;
+export type AdminApiResponseStudioControllerUpdateResponseError = OpenApiError<
+  typeof adminApiResponseStudioControllerUpdateResponse
+>;
+
+export const adminApiResponseStudioControllerResetResponse = (
+  id: string,
+  body: ResetApiResponseStudioResponseDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PUT(adminApiResponseStudioControllerResetResponsePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { id } },
+    body,
+  });
+export type AdminApiResponseStudioControllerResetResponseResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerResetResponse
+>;
+export type AdminApiResponseStudioControllerResetResponseData =
+  EnvelopeData<AdminApiResponseStudioControllerResetResponseResponse>;
+export type AdminApiResponseStudioControllerResetResponseError = OpenApiError<
+  typeof adminApiResponseStudioControllerResetResponse
+>;
+
+export const adminApiResponseStudioControllerBulk = (
+  body: BulkApiResponseStudioResponsesDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminApiResponseStudioControllerBulkPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type AdminApiResponseStudioControllerBulkResponse = OpenApiData<typeof adminApiResponseStudioControllerBulk>;
+export type AdminApiResponseStudioControllerBulkData = EnvelopeData<AdminApiResponseStudioControllerBulkResponse>;
+export type AdminApiResponseStudioControllerBulkError = OpenApiError<typeof adminApiResponseStudioControllerBulk>;
+
+export const adminApiResponseStudioControllerDismiss = (
+  body: DismissApiResponseStudioResponsesDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminApiResponseStudioControllerDismissPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type AdminApiResponseStudioControllerDismissResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerDismiss
+>;
+export type AdminApiResponseStudioControllerDismissData = EnvelopeData<AdminApiResponseStudioControllerDismissResponse>;
+export type AdminApiResponseStudioControllerDismissError = OpenApiError<typeof adminApiResponseStudioControllerDismiss>;
+
+export type AdminApiResponseStudioControllerExportQuery = NonNullable<
+  paths[typeof adminApiResponseStudioControllerExportPath]['get']['parameters']['query']
+>;
+export const adminApiResponseStudioControllerExport = (
+  query?: AdminApiResponseStudioControllerExportQuery,
+  options?: ApiClientRequestOptions,
+) =>
+  client.GET(adminApiResponseStudioControllerExportPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { query },
+  });
+export type AdminApiResponseStudioControllerExportResponse = OpenApiData<typeof adminApiResponseStudioControllerExport>;
+export type AdminApiResponseStudioControllerExportData = EnvelopeData<AdminApiResponseStudioControllerExportResponse>;
+export type AdminApiResponseStudioControllerExportError = OpenApiError<typeof adminApiResponseStudioControllerExport>;
+
+export type AdminApiResponseStudioControllerHistoryQuery = NonNullable<
+  paths[typeof adminApiResponseStudioControllerHistoryPath]['get']['parameters']['query']
+>;
+export const adminApiResponseStudioControllerHistory = (
+  query?: AdminApiResponseStudioControllerHistoryQuery,
+  options?: ApiClientRequestOptions,
+) =>
+  client.GET(adminApiResponseStudioControllerHistoryPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { query },
+  });
+export type AdminApiResponseStudioControllerHistoryResponse = OpenApiData<
+  typeof adminApiResponseStudioControllerHistory
+>;
+export type AdminApiResponseStudioControllerHistoryData = EnvelopeData<AdminApiResponseStudioControllerHistoryResponse>;
+export type AdminApiResponseStudioControllerHistoryError = OpenApiError<typeof adminApiResponseStudioControllerHistory>;
 
 export const adminFeatureFlagsControllerList = (options?: ApiClientRequestOptions) =>
   client.GET(adminFeatureFlagsControllerListPath, toOpenApiFetchOptions(options));
@@ -902,6 +1124,30 @@ export const getAdminHealthControllerGetPrivateHealthQueryKey = () =>
 export const getAdminHealthControllerGetLivenessQueryKey = () => ['get', adminHealthControllerGetLivenessPath] as const;
 export const getAdminHealthControllerGetReadinessQueryKey = () =>
   ['get', adminHealthControllerGetReadinessPath] as const;
+export const getAdminApiResponseStudioControllerDashboardQueryKey = () =>
+  ['get', adminApiResponseStudioControllerDashboardPath] as const;
+export const getAdminApiResponseStudioControllerSourcesQueryKey = () =>
+  ['get', adminApiResponseStudioControllerSourcesPath] as const;
+export const getAdminApiResponseStudioControllerCreateSourceMutationKey = () =>
+  ['post', adminApiResponseStudioControllerCreateSourcePath] as const;
+export const getAdminApiResponseStudioControllerUpdateSourceMutationKey = () =>
+  ['put', adminApiResponseStudioControllerUpdateSourcePath] as const;
+export const getAdminApiResponseStudioControllerSyncMutationKey = () =>
+  ['post', adminApiResponseStudioControllerSyncPath] as const;
+export const getAdminApiResponseStudioControllerResponsesQueryKey = () =>
+  ['get', adminApiResponseStudioControllerResponsesPath] as const;
+export const getAdminApiResponseStudioControllerUpdateResponseMutationKey = () =>
+  ['put', adminApiResponseStudioControllerUpdateResponsePath] as const;
+export const getAdminApiResponseStudioControllerResetResponseMutationKey = () =>
+  ['put', adminApiResponseStudioControllerResetResponsePath] as const;
+export const getAdminApiResponseStudioControllerBulkMutationKey = () =>
+  ['patch', adminApiResponseStudioControllerBulkPath] as const;
+export const getAdminApiResponseStudioControllerDismissMutationKey = () =>
+  ['patch', adminApiResponseStudioControllerDismissPath] as const;
+export const getAdminApiResponseStudioControllerExportQueryKey = () =>
+  ['get', adminApiResponseStudioControllerExportPath] as const;
+export const getAdminApiResponseStudioControllerHistoryQueryKey = () =>
+  ['get', adminApiResponseStudioControllerHistoryPath] as const;
 export const getAdminFeatureFlagsControllerListQueryKey = () => ['get', adminFeatureFlagsControllerListPath] as const;
 export const getAdminFeatureFlagsControllerUpsertMutationKey = () =>
   ['put', adminFeatureFlagsControllerUpsertPath] as const;

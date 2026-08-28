@@ -15,7 +15,7 @@ const collectSql = (migration: { addSql(sql: string): void }, run: () => void): 
 describe('API Response Studio PostgreSQL migration', () => {
   it('creates tenant-scoped tables, constraints and deterministic query indexes', () => {
     const migration = new Migration20260828110000CreateApiResponseStudio(undefined as never, undefined as never);
-    const sql = collectSql(migration, () => migration.up());
+    const sql = collectSql(migration, () => { migration.up(); });
 
     expect(sql).toContain('create table "api_response_studio_sources"');
     expect(sql).toContain('unique ("tenant_id","slug")');
@@ -23,18 +23,18 @@ describe('API Response Studio PostgreSQL migration', () => {
     expect(sql).toContain('unique ("tenant_id","source_id","stable_key")');
     expect(sql).toContain("check (\"display\" in ('toast','modal','custom','silent'))");
     expect(sql).toContain("check (\"severity\" in ('error','warning','info','success'))");
-    expect(sql).toContain('ix__api_response_studio_sources__tenant_enabled');
-    expect(sql).toContain('ix__api_response_studio_responses__tenant_source_path');
-    expect(sql).toContain('ix__api_response_studio_responses__tenant_change');
-    expect(sql).toContain('ix__api_response_studio_responses__tenant_deleted');
-    expect(sql).toContain('ix__api_response_studio_history__tenant_created');
-    expect(sql).toContain('ix__api_response_studio_history__tenant_source_created');
-    expect(sql).toContain('ix__api_response_studio_history__tenant_response_created');
+    expect(sql).toContain('ix__api_response_studio_sources__tenant_id_enabled');
+    expect(sql).toContain('ix__api_response_studio_responses__tenant_id_source_id_path');
+    expect(sql).toContain('ix__api_response_studio_responses__tenant_id_change_s__1788d913');
+    expect(sql).toContain('ix__api_response_studio_responses__tenant_id_deleted');
+    expect(sql).toContain('ix__api_response_studio_history__tenant_id_created_at_desc');
+    expect(sql).toContain('ix__api_response_studio_history__tenant_id_source_id___c3c7c7b9');
+    expect(sql).toContain('ix__api_response_studio_history__tenant_id_response_i__8f4d4e26');
   });
 
   it('backfills EN and RU independently and preserves already-populated presentation arrays', () => {
     const migration = new Migration20260828110000CreateApiResponseStudio(undefined as never, undefined as never);
-    const sql = collectSql(migration, () => migration.up());
+    const sql = collectSql(migration, () => { migration.up(); });
     const updates = sql
       .split('\n')
       .filter((statement) => statement.startsWith('update "problem_presentation_overrides"'));
@@ -52,7 +52,7 @@ describe('API Response Studio PostgreSQL migration', () => {
 
   it('is last in the catalog and has an explicit rollback for only its additive schema', () => {
     const migration = new Migration20260828110000CreateApiResponseStudio(undefined as never, undefined as never);
-    const down = collectSql(migration, () => migration.down());
+    const down = collectSql(migration, () => { migration.down(); });
 
     expect(authMigrations.indexOf(Migration20260812120000AddAuthUserAccountRecovery)).toBeLessThan(
       authMigrations.indexOf(Migration20260828110000CreateApiResponseStudio),

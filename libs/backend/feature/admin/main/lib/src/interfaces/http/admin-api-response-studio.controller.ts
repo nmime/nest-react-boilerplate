@@ -51,11 +51,11 @@ import {
 } from './dto';
 
 const unwrap = <T>(result: { isErr(): boolean; error?: { code: string; message: string }; value?: T }): T => {
-  if (!result.isErr()) return result.value as T;
+  if (!result.isErr()) {return result.value as T;}
   const error = result.error;
-  if (error?.code === 'revision_conflict') throw new ConflictException(error.message);
-  if (error?.code === 'not_found') throw new NotFoundException(error.message);
-  if (error?.code === 'validation_error') throw new BadRequestException(error.message);
+  if (error?.code === 'revision_conflict') {throw new ConflictException(error.message);}
+  if (error?.code === 'not_found') {throw new NotFoundException(error.message);}
+  if (error?.code === 'validation_error') {throw new BadRequestException(error.message);}
   throw new InternalServerErrorException(error?.message ?? 'API Response Studio operation failed.');
 };
 

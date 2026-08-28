@@ -1,103 +1,107 @@
-import { useEffect, useMemo, useState } from 'react';
+/* eslint-disable sonarjs/cognitive-complexity, sonarjs/no-nested-functions -- The studio route intentionally coordinates its table, filters, dialogs, and mutations in one FSD page boundary. */
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ProblemPresentationDisplays,
-  ProblemPresentationSeverities,
-  type ProblemPresentationDisplay,
-  type ProblemPresentationSeverity,
-} from '@app/common-problem-details';
-import { apiToastRuntime, configureProblemPresentationOverrides } from '@app/frontend-api-support';
-import { getLocalization, Language } from '@app/frontend-i18n-shared';
-import {
-  adminApi,
-  apiToastRuleCatalog,
-  throwOnOpenApiErrorData,
-  type ApiClientRequestOptions,
-  type ApiToastRuleCatalogItem,
-} from '@app/frontend-api-client';
+import { ApiError } from '@app/frontend-api-support';
+import type { ProblemPresentationDisplay } from '@app/common-problem-details';
+import type { ApiClientRequestOptions } from '@app/frontend-api-client';
 import { useI18n } from '@app/frontend-runtime';
 import {
   UiButton,
   UiCard,
+  UiCheckbox,
   UiConfirmDialog,
-  UiDataTable,
+  UiDialog,
   UiInput,
   UiNotification,
   UiSection,
   UiSelect,
   UiStatCard,
   UiStatusTag,
-  UiTextarea,
+  UiTabs,
+  UiTextField,
 } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
+import {
+  apiResponseStudioApi,
+  apiResponseStudioQueryKeys,
+  emptyPresentation,
+  PresentationEditor,
+  type ApiResponseStudioHistoryQuery,
+  type ApiResponseStudioPresentation,
+  type ApiResponseStudioPresentationPatch,
+  type ApiResponseStudioResponse,
+  type ApiResponseStudioResponseQuery,
+  type ApiResponseStudioSource,
+  type CreateApiResponseStudioSource,
+  type StudioChangeState,
+  type StudioLanguage,
+  toRevisionItem,
+} from '../../features/api-response-studio';
 import { errorText, formatDate } from '../../shared';
 
-type OverrideRow = adminApi.AdminProblemPresentationViewDto;
-type DisplayFilter = ProblemPresentationDisplay | 'all';
+type Notice = { message: string; tone: 'success' | 'warning' };
+type SourceDraft = CreateApiResponseStudioSource;
 
-interface PresentationRow extends ApiToastRuleCatalogItem {
-  readonly [key: string]: unknown;
-  readonly catalogState: 'active' | 'deleted';
-  readonly comment: string;
-  readonly display: ProblemPresentationDisplay;
-  readonly messageEn: string;
-  readonly messageRu: string;
-  readonly overridden: boolean;
-  readonly revision: number;
-  readonly severity: ProblemPresentationSeverity;
-  readonly updatedAt?: string;
-}
+const newSource: SourceDraft = { docsUrl: '', enabled: true, jsonUrl: '', name: '', slug: '' };
+const displayValues: ProblemPresentationDisplay[] = ['toast', 'modal', 'custom', 'silent'];
+const changeValues: StudioChangeState[] = ['unchanged', 'new', 'modified', 'deleted'];
+const languageValues: StudioLanguage[] = ['en', 'ru', 'zh'];
+const presentationOf = (response: ApiResponseStudioResponse): ApiResponseStudioPresentation => ({
+  comments: response.comments,
+  customDescription: response.customDescription,
+  display: response.display,
+  figmaOnly: response.figmaOnly,
+  severity: response.severity,
+  support: response.support,
+  texts: {
+    en: [...response.texts.en],
+    ru: [...response.texts.ru],
+    zh: [...response.texts.zh],
+  },
+});
 
-const statusTone = (severity: ProblemPresentationSeverity): 'info' | 'success' | 'warning' => {
-  if (severity === 'success') {
-    return 'success';
-  }
-  return severity === 'info' ? 'info' : 'warning';
+const groupResponses = (items: readonly ApiResponseStudioResponse[]) => {
+  const groups = new Map<string, Map<string, ApiResponseStudioResponse[]>>();
+  items.forEach((item) => {
+    const tag = item.tag || 'Other';
+    const paths = groups.get(tag) ?? new Map<string, ApiResponseStudioResponse[]>();
+    const responses = paths.get(item.path) ?? [];
+    responses.push(item);
+    paths.set(item.path, responses);
+    groups.set(tag, paths);
+  });
+  return [...groups].sort(([left], [right]) => left.localeCompare(right));
 };
 
-const mergeCatalog = (overrides: readonly OverrideRow[]): PresentationRow[] => {
-  const overridesByRuleId = new Map(overrides.map((override) => [override.ruleId, override]));
-  const generatedRuleIds = new Set(apiToastRuleCatalog.map((rule) => rule.id));
-  const active = apiToastRuleCatalog.map((rule) => {
-    const override = overridesByRuleId.get(rule.id);
-    return {
-      ...rule,
-      catalogState: 'active' as const,
-      comment: override?.comment ?? '',
-      display: override?.display ?? (rule.defaultDisplay as ProblemPresentationDisplay),
-      messageEn: override?.messageEn ?? '',
-      messageRu: override?.messageRu ?? '',
-      overridden: Boolean(override),
-      revision: override?.revision ?? 0,
-      severity: override?.severity ?? rule.defaultSeverity,
-      ...(override?.updatedAt ? { updatedAt: override.updatedAt } : {}),
-    };
-  });
-  const deleted = overrides
-    .filter((override) => !generatedRuleIds.has(override.ruleId))
-    .map((override): PresentationRow => ({
-      app: /^([^:]+)/u.exec(override.ruleId)?.[1] ?? '—',
-      catalogState: 'deleted',
-      comment: override.comment,
-      defaultDisplay: 'silent',
-      defaultMessage: '',
-      defaultSeverity: 'error',
-      display: override.display,
-      errorCode: null,
-      id: override.ruleId,
-      messageEn: override.messageEn,
-      messageRu: override.messageRu,
-      method: '—',
-      operationId: null,
-      overridden: true,
-      path: override.ruleId,
-      revision: override.revision,
-      severity: override.severity,
-      status: 'DELETED',
-      tags: [],
-      ...(override.updatedAt ? { updatedAt: override.updatedAt } : {}),
-    }));
-  return [...active, ...deleted];
+const percent = (translated: number, total: number): string => `${total ? Math.round((translated / total) * 100) : 0}%`;
+
+const presentationPatch = (
+  before: ApiResponseStudioPresentation,
+  after: ApiResponseStudioPresentation,
+): ApiResponseStudioPresentationPatch => {
+  const patch: ApiResponseStudioPresentationPatch = {};
+  if (before.display !== after.display) {
+    patch.display = after.display;
+  }
+  if (before.severity !== after.severity) {
+    patch.severity = after.severity;
+  }
+  if (before.support !== after.support) {
+    patch.support = after.support;
+  }
+  if (before.customDescription !== after.customDescription) {
+    patch.customDescription = after.customDescription;
+  }
+  if (before.figmaOnly !== after.figmaOnly) {
+    patch.figmaOnly = after.figmaOnly;
+  }
+  if (before.comments !== after.comments) {
+    patch.comments = after.comments;
+  }
+  if (JSON.stringify(before.texts) !== JSON.stringify(after.texts)) {
+    patch.texts = after.texts;
+  }
+  return patch;
 };
 
 export const ProblemPresentationsPage = ({
@@ -107,383 +111,846 @@ export const ProblemPresentationsPage = ({
   access: AdminAccess;
   requestOptions?: ApiClientRequestOptions;
 }>) => {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
-  const [appFilter, setAppFilter] = useState('all');
-  const [displayFilter, setDisplayFilter] = useState<DisplayFilter>('all');
-  const [editTarget, setEditTarget] = useState<PresentationRow>();
-  const [resetTarget, setResetTarget] = useState<PresentationRow>();
-  const [draftDisplay, setDraftDisplay] = useState<ProblemPresentationDisplay>('toast');
-  const [draftSeverity, setDraftSeverity] = useState<ProblemPresentationSeverity>('error');
-  const [draftMessageEn, setDraftMessageEn] = useState('');
-  const [draftMessageRu, setDraftMessageRu] = useState('');
-  const [draftComment, setDraftComment] = useState('');
-  const [notice, setNotice] = useState<{ message: string; tone: 'success' | 'warning' }>();
+  const canWrite = access.canUpdateSettings;
+  const [query, setQuery] = useState<ApiResponseStudioResponseQuery>({ includeDeleted: true, limit: 100, offset: 0 });
+  const [historyQuery, setHistoryQuery] = useState<ApiResponseStudioHistoryQuery>({ limit: 100, offset: 0 });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [notice, setNotice] = useState<Notice>();
+  const [sourceTarget, setSourceTarget] = useState<ApiResponseStudioSource>();
+  const [sourceDraft, setSourceDraft] = useState<SourceDraft>(newSource);
+  const [sourceError, setSourceError] = useState('');
+  const [editTarget, setEditTarget] = useState<ApiResponseStudioResponse>();
+  const [resetTarget, setResetTarget] = useState<ApiResponseStudioResponse>();
+  const [viewerTarget, setViewerTarget] = useState<ApiResponseStudioResponse>();
+  const [editorDraft, setEditorDraft] = useState<ApiResponseStudioPresentation>(emptyPresentation);
+  const [bulkDraft, setBulkDraft] = useState<ApiResponseStudioPresentation>(emptyPresentation);
+  const [bulkBaseline, setBulkBaseline] = useState<ApiResponseStudioPresentation>(emptyPresentation);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
-  const presentations = useQuery({
-    queryKey: [...adminApi.getAdminProblemPresentationsControllerListQueryKey(), requestOptions] as const,
-    queryFn: () => throwOnOpenApiErrorData(adminApi.adminProblemPresentationsControllerList(requestOptions)),
+  const dashboard = useQuery({
+    queryFn: () => apiResponseStudioApi.dashboard(requestOptions),
+    queryKey: apiResponseStudioQueryKeys.dashboard,
     retry: false,
   });
-  // Memoised because `?? []` produces a fresh array on every render while the
-  // query is loading, which would re-run the configure effect below each time.
-  const overrides = useMemo(() => presentations.data?.items ?? [], [presentations.data]);
-  useEffect(() => {
-    if (presentations.data) {
-      configureProblemPresentationOverrides(overrides);
-    }
-  }, [overrides, presentations.data]);
+  const sources = useQuery({
+    queryFn: () => apiResponseStudioApi.listSources(requestOptions),
+    queryKey: apiResponseStudioQueryKeys.sources,
+    retry: false,
+  });
+  const responses = useQuery({
+    queryFn: () => apiResponseStudioApi.listResponses(query, requestOptions),
+    queryKey: apiResponseStudioQueryKeys.responses(query),
+    retry: false,
+  });
+  const history = useQuery({
+    queryFn: () => apiResponseStudioApi.history(historyQuery, requestOptions),
+    queryKey: apiResponseStudioQueryKeys.history(historyQuery),
+    retry: false,
+  });
 
-  const items = useMemo(() => mergeCatalog(overrides), [overrides]);
-  const normalizedSearch = search.trim().toLowerCase();
-  const rows = useMemo(
+  const rows = useMemo(() => responses.data?.items ?? [], [responses.data]);
+  const groups = useMemo(() => groupResponses(rows), [rows]);
+  const selectedRows = useMemo(() => rows.filter((row) => selected.has(row.id)), [rows, selected]);
+  const coverage = useMemo(
     () =>
-      items.filter((item) => {
-        const matchesApp = appFilter === 'all' || item.app === appFilter;
-        const matchesDisplay = displayFilter === 'all' || item.display === displayFilter;
-        const matchesSearch =
-          !normalizedSearch ||
-          [item.id, item.path, item.method, item.status.toString(), item.errorCode ?? '', ...item.tags].some((value) =>
-            value.toLowerCase().includes(normalizedSearch),
-          );
-        return matchesApp && matchesDisplay && matchesSearch;
-      }),
-    [appFilter, displayFilter, items, normalizedSearch],
+      Object.fromEntries(
+        languageValues.map((language) => [language, rows.filter((row) => row.texts[language].length > 0).length]),
+      ) as Record<StudioLanguage, number>,
+    [rows],
   );
+  const total = responses.data?.total ?? rows.length;
+  const changed = rows.filter((row) => row.changeState !== 'unchanged' && !row.changeDismissed).length;
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({
-      queryKey: adminApi.getAdminProblemPresentationsControllerListQueryKey(),
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: apiResponseStudioQueryKeys.all });
+  };
+  const mutationError = (error: unknown, fallback: Parameters<typeof errorText>[1]) => {
+    setNotice({
+      message:
+        error instanceof ApiError && error.status === 409
+          ? t('admin.apiResponseStudio.error.conflict')
+          : errorText(error, fallback, t),
+      tone: 'warning',
     });
-  const updateMutation = useMutation({
-    mutationFn: (body: adminApi.UpdateAdminProblemPresentationDto) =>
-      throwOnOpenApiErrorData(adminApi.adminProblemPresentationsControllerUpdate(body, requestOptions)),
+  };
+  const success = async (message: string) => {
+    setNotice({ message, tone: 'success' });
+    setSelected(new Set());
+    await invalidate();
+  };
+
+  const sourceMutation = useMutation({
+    mutationFn: ({ source, draft }: { source?: ApiResponseStudioSource; draft: SourceDraft }) =>
+      source
+        ? apiResponseStudioApi.updateSource(source, draft, requestOptions)
+        : apiResponseStudioApi.createSource(draft, requestOptions),
+    onError: (error) => {
+      mutationError(error, 'admin.apiResponseStudio.error.source');
+    },
     onSuccess: async () => {
-      setNotice({ message: t('admin.problemPresentations.notice.updated'), tone: 'success' });
-      await invalidate();
+      setSourceTarget(undefined);
+      setSourceDraft(newSource);
+      await success(t('admin.apiResponseStudio.notice.sourceSaved'));
     },
-    onError: (error: unknown) => {
-      setNotice({
-        message: errorText(error, 'admin.problemPresentations.error.updateFailed', t),
-        tone: 'warning',
-      });
+  });
+  const syncMutation = useMutation({
+    mutationFn: (source: ApiResponseStudioSource) => apiResponseStudioApi.syncSource(source, requestOptions),
+    onError: (error) => {
+      mutationError(error, 'admin.apiResponseStudio.error.sync');
     },
+    onSuccess: () => success(t('admin.apiResponseStudio.notice.synced')),
+  });
+  const responseMutation = useMutation({
+    mutationFn: ({
+      response,
+      presentation,
+    }: {
+      response: ApiResponseStudioResponse;
+      presentation: ApiResponseStudioPresentation;
+    }) => apiResponseStudioApi.updateResponse(response, presentation, requestOptions),
+    onError: (error) => {
+      mutationError(error, 'admin.apiResponseStudio.error.update');
+    },
+    onSuccess: async () => {
+      setEditTarget(undefined);
+      await success(t('admin.apiResponseStudio.notice.updated'));
+    },
+  });
+  const bulkMutation = useMutation({
+    mutationFn: ({
+      responses: selectedResponses,
+      patch,
+    }: {
+      responses: ApiResponseStudioResponse[];
+      patch: ApiResponseStudioPresentationPatch;
+    }) => apiResponseStudioApi.bulkUpdate(selectedResponses.map(toRevisionItem), patch, requestOptions),
+    onError: (error) => {
+      mutationError(error, 'admin.apiResponseStudio.error.bulk');
+    },
+    onSuccess: async () => {
+      setBulkOpen(false);
+      await success(t('admin.apiResponseStudio.notice.bulkUpdated'));
+    },
+  });
+  const dismissMutation = useMutation({
+    mutationFn: () => apiResponseStudioApi.dismiss(selectedRows.map(toRevisionItem), requestOptions),
+    onError: (error) => {
+      mutationError(error, 'admin.apiResponseStudio.error.dismiss');
+    },
+    onSuccess: () => success(t('admin.apiResponseStudio.notice.dismissed')),
   });
   const resetMutation = useMutation({
-    mutationFn: ({ ruleId, expectedRevision }: { ruleId: string; expectedRevision: number }) =>
-      throwOnOpenApiErrorData(
-        adminApi.adminProblemPresentationsControllerReset({ ruleId, expectedRevision }, requestOptions),
-      ),
-    onSuccess: async () => {
-      setNotice({ message: t('admin.problemPresentations.notice.reset'), tone: 'success' });
-      await invalidate();
+    mutationFn: (response: ApiResponseStudioResponse) =>
+      apiResponseStudioApi.reset(response.id, response.revision, requestOptions),
+    onError: (error) => {
+      mutationError(error, 'admin.apiResponseStudio.error.reset');
     },
-    onError: (error: unknown) => {
-      setNotice({
-        message: errorText(error, 'admin.problemPresentations.error.resetFailed', t),
-        tone: 'warning',
-      });
+    onSuccess: async () => {
+      setResetTarget(undefined);
+      await success(t('admin.apiResponseStudio.notice.reset'));
     },
   });
+  const disableSourceMutation = useMutation({
+    mutationFn: (source: ApiResponseStudioSource) =>
+      apiResponseStudioApi.updateSource(
+        source,
+        {
+          docsUrl: source.docsUrl,
+          enabled: false,
+          jsonUrl: source.jsonUrl,
+          name: source.name,
+          slug: source.slug,
+        },
+        requestOptions,
+      ),
+    onError: (error) => {
+      mutationError(error, 'admin.apiResponseStudio.error.source');
+    },
+    onSuccess: () => success(t('admin.apiResponseStudio.notice.sourceDisabled')),
+  });
 
-  const openEditor = (row: PresentationRow) => {
-    setEditTarget(row);
-    setDraftDisplay(row.display);
-    setDraftSeverity(row.severity);
-    setDraftMessageEn(row.messageEn);
-    setDraftMessageRu(row.messageRu);
-    setDraftComment(row.comment);
-  };
-  const preview = (row: PresentationRow) => {
-    if (row.display === 'silent') {
-      setNotice({ message: t('admin.problemPresentations.preview.silent'), tone: 'warning' });
-      return;
-    }
-    apiToastRuntime.show({
-      category: row.severity,
-      message:
-        getLocalization(
-          {
-            [Language.En]: row.messageEn || undefined,
-            [Language.Ru]: row.messageRu || undefined,
-          },
-          locale,
-        ) ?? row.defaultMessage,
-      title: `${row.method} ${row.path}`,
+  const toggleMany = (ids: readonly string[], checked: boolean) => {
+    setSelected((current) => {
+      const next = new Set(current);
+      ids.forEach((id) => (checked ? next.add(id) : next.delete(id)));
+      return next;
     });
   };
+  const openSource = (source?: ApiResponseStudioSource) => {
+    setSourceTarget(source);
+    setSourceError('');
+    setSourceDraft(
+      source
+        ? {
+            docsUrl: source.docsUrl,
+            enabled: source.enabled,
+            jsonUrl: source.jsonUrl,
+            name: source.name,
+            slug: source.slug,
+          }
+        : { ...newSource },
+    );
+  };
+  const saveSource = () => {
+    if (!sourceDraft.name.trim() || !/^[a-z][a-z0-9-]{0,99}$/u.test(sourceDraft.slug)) {
+      setSourceError(t('admin.apiResponseStudio.validation.source'));
+      return;
+    }
+    try {
+      const url = new URL(sourceDraft.jsonUrl);
+      if (url.protocol !== 'https:') {
+        throw new Error('https');
+      }
+    } catch {
+      setSourceError(t('admin.apiResponseStudio.validation.https'));
+      return;
+    }
+    sourceMutation.mutate({ source: sourceTarget, draft: sourceDraft });
+  };
+  const exportInventory = async () => {
+    try {
+      const exported = await apiResponseStudioApi.export(query, requestOptions);
+      const blob = new Blob([exported.content], { type: exported.mediaType });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = exported.filename;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setNotice({ message: t('admin.apiResponseStudio.notice.exported'), tone: 'success' });
+    } catch (error) {
+      mutationError(error, 'admin.apiResponseStudio.error.export');
+    }
+  };
 
-  const displayOptions = [
-    { label: t('admin.problemPresentations.filter.all'), value: 'all' },
-    ...ProblemPresentationDisplays.map((display) => ({
-      label: t(`admin.problemPresentations.display.${display}`),
-      value: display,
-    })),
-  ];
-  const severityOptions = ProblemPresentationSeverities.map((severity) => ({
-    label: t(`admin.problemPresentations.severity.${severity}`),
-    value: severity,
-  }));
-  const appOptions = [
-    { label: t('admin.problemPresentations.filter.allServices'), value: 'all' },
-    ...[...new Set(items.map((item) => item.app))].map((app) => ({ label: app, value: app })),
-  ];
-
-  return (
-    <UiSection
-      className="admin-page admin-problem-presentations-page"
-      eyebrow={t('admin.problemPresentations.eyebrow')}
-      headingLevel={1}
-      title={t('admin.problemPresentations.title')}
-    >
-      <p className="admin-page-description">{t('admin.problemPresentations.description')}</p>
-      <div className="admin-stat-grid xr-stat-grid">
-        <UiStatCard
-          className="admin-stat-card"
-          label={t('admin.problemPresentations.summary.total')}
-          value={`${items.length}`}
-          detail={t('admin.problemPresentations.summary.responses')}
+  const filterPanel = (
+    <UiCard className="admin-filter-card admin-studio-filters" title={t('admin.apiResponseStudio.inventory.filters')}>
+      <div className="admin-studio-filter-grid">
+        <UiInput
+          aria-label={t('admin.apiResponseStudio.filter.search')}
+          onChange={(event) => {
+            setQuery((current) => ({ ...current, search: event.currentTarget.value || undefined }));
+          }}
+          placeholder={t('admin.apiResponseStudio.filter.searchPlaceholder')}
+          value={query.search ?? ''}
         />
-        <UiStatCard
-          className="admin-stat-card"
-          label={t('admin.problemPresentations.summary.toast')}
-          value={`${items.filter((item) => item.display === 'toast').length}`}
-          detail={t('admin.problemPresentations.display.toast')}
+        <UiSelect
+          label={t('admin.apiResponseStudio.filter.source')}
+          onValueChange={(sourceId) => {
+            setQuery((current) => ({ ...current, sourceId: sourceId || undefined }));
+          }}
+          options={[
+            { label: t('admin.apiResponseStudio.filter.all'), value: '' },
+            ...(sources.data?.items ?? []).map((source) => ({ label: source.name, value: source.id })),
+          ]}
+          value={query.sourceId ?? ''}
         />
-        <UiStatCard
-          className="admin-stat-card"
-          label={t('admin.problemPresentations.summary.silent')}
-          value={`${items.filter((item) => item.display === 'silent').length}`}
-          detail={t('admin.problemPresentations.display.silent')}
+        <UiSelect
+          label={t('admin.apiResponseStudio.filter.display')}
+          onValueChange={(display) => {
+            setQuery((current) => ({
+              ...current,
+              display: (display || undefined) as ProblemPresentationDisplay | undefined,
+            }));
+          }}
+          options={[
+            { label: t('admin.apiResponseStudio.filter.all'), value: '' },
+            ...displayValues.map((display) => ({
+              label: t(`admin.apiResponseStudio.display.${display}`),
+              value: display,
+            })),
+          ]}
+          value={query.display ?? ''}
         />
-        <UiStatCard
-          className="admin-stat-card"
-          label={t('admin.problemPresentations.summary.overridden')}
-          value={`${overrides.length}`}
-          detail={t('admin.problemPresentations.source.override')}
+        <UiSelect
+          label={t('admin.apiResponseStudio.filter.change')}
+          onValueChange={(changeState) => {
+            setQuery((current) => ({
+              ...current,
+              changeState: (changeState || undefined) as StudioChangeState | undefined,
+            }));
+          }}
+          options={[
+            { label: t('admin.apiResponseStudio.filter.all'), value: '' },
+            ...changeValues.map((change) => ({ label: t(`admin.apiResponseStudio.change.${change}`), value: change })),
+          ]}
+          value={query.changeState ?? ''}
+        />
+        <UiSelect
+          label={t('admin.apiResponseStudio.filter.missingLanguage')}
+          onValueChange={(missingLanguage) => {
+            setQuery((current) => ({
+              ...current,
+              missingLanguage: (missingLanguage || undefined) as StudioLanguage | undefined,
+            }));
+          }}
+          options={[
+            { label: t('admin.apiResponseStudio.filter.all'), value: '' },
+            ...languageValues.map((language) => ({ label: language.toUpperCase(), value: language })),
+          ]}
+          value={query.missingLanguage ?? ''}
         />
       </div>
-      {notice ? <UiNotification message={notice.message} tone={notice.tone} /> : null}
-      <UiCard className="admin-filter-card" title={t('admin.problemPresentations.title')}>
-        <div className="admin-table-toolbar admin-table-toolbar--leading">
-          <UiInput
-            aria-label={t('admin.problemPresentations.searchLabel')}
-            onChange={(event) => {
-              setSearch(event.currentTarget.value);
+    </UiCard>
+  );
+
+  const inventory = (
+    <div className="admin-studio-tab">
+      {filterPanel}
+      <UiCard className="admin-table-card admin-studio-inventory" title={t('admin.apiResponseStudio.inventory.title')}>
+        <div className="admin-studio-bulkbar">
+          <UiCheckbox
+            checked={rows.length > 0 && rows.every((row) => selected.has(row.id))}
+            label={t('admin.apiResponseStudio.selection.all')}
+            onCheckedChange={(checked) => {
+              toggleMany(
+                rows.map((row) => row.id),
+                checked === true,
+              );
             }}
-            placeholder={t('admin.problemPresentations.searchPlaceholder')}
-            value={search}
           />
-          <UiSelect
-            label={t('admin.problemPresentations.filter.service')}
-            onValueChange={setAppFilter}
-            options={appOptions}
-            value={appFilter}
+          <span aria-live="polite">{t('admin.apiResponseStudio.selection.count', { count: selected.size })}</span>
+          <div className="admin-row-actions">
+            {canWrite ? (
+              <>
+                <UiButton
+                  disabled={selectedRows.length === 0}
+                  onClick={() => {
+                    const baseline = selectedRows[0] ? presentationOf(selectedRows[0]) : emptyPresentation;
+                    setBulkBaseline(baseline);
+                    setBulkDraft(baseline);
+                    setBulkOpen(true);
+                  }}
+                  size="sm"
+                >
+                  {t('admin.apiResponseStudio.action.bulkEdit')}
+                </UiButton>
+                <UiButton
+                  disabled={selectedRows.length === 0}
+                  onClick={() => {
+                    dismissMutation.mutate();
+                  }}
+                  size="sm"
+                  variant="secondary"
+                >
+                  {t('admin.apiResponseStudio.action.dismiss')}
+                </UiButton>
+              </>
+            ) : null}
+            <UiButton onClick={() => void exportInventory()} size="sm" variant="secondary">
+              {t('admin.apiResponseStudio.action.export')}
+            </UiButton>
+          </div>
+        </div>
+        {responses.isLoading ? <p role="status">{t('admin.apiResponseStudio.loading.inventory')}</p> : null}
+        {responses.error ? (
+          <UiNotification
+            message={errorText(responses.error, 'admin.apiResponseStudio.error.inventory', t)}
+            tone="warning"
           />
-          <UiSelect
-            label={t('admin.problemPresentations.filter.display')}
-            onValueChange={(value) => {
-              setDisplayFilter(value as DisplayFilter);
+        ) : null}
+        {!responses.isLoading && !responses.error && rows.length === 0 ? (
+          <div className="admin-studio-empty">
+            <strong>{t('admin.apiResponseStudio.empty.title')}</strong>
+            <p>{t('admin.apiResponseStudio.empty.description')}</p>
+          </div>
+        ) : null}
+        <div className="admin-studio-pagination" aria-label={t('admin.apiResponseStudio.inventory.pagination')}>
+          <UiButton
+            disabled={(query.offset ?? 0) === 0}
+            onClick={() => {
+              setQuery((current) => ({ ...current, offset: Math.max(0, (current.offset ?? 0) - 100) }));
             }}
-            options={displayOptions}
-            value={displayFilter}
-          />
+            size="sm"
+            variant="secondary"
+          >
+            {t('admin.apiResponseStudio.action.previous')}
+          </UiButton>
+          <span>{`${(query.offset ?? 0) + (rows.length ? 1 : 0)}–${(query.offset ?? 0) + rows.length} / ${total}`}</span>
+          <UiButton
+            disabled={(query.offset ?? 0) + rows.length >= total}
+            onClick={() => {
+              setQuery((current) => ({ ...current, offset: (current.offset ?? 0) + 100 }));
+            }}
+            size="sm"
+            variant="secondary"
+          >
+            {t('admin.apiResponseStudio.action.next')}
+          </UiButton>
+        </div>
+        <div className="admin-studio-groups">
+          {groups.map(([tag, paths]) => {
+            const groupRows = [...paths.values()].flat();
+            return (
+              <section className="admin-studio-group" key={tag}>
+                <header>
+                  <UiCheckbox
+                    checked={groupRows.every((row) => selected.has(row.id))}
+                    label={t('admin.apiResponseStudio.selection.group', { name: tag })}
+                    onCheckedChange={(checked) => {
+                      toggleMany(
+                        groupRows.map((row) => row.id),
+                        checked === true,
+                      );
+                    }}
+                  />
+                  <UiStatusTag label={`${groupRows.length}`} tone="neutral" />
+                </header>
+                {[...paths].map(([path, pathRows]) => (
+                  <div className="admin-studio-path" key={path}>
+                    <div className="admin-studio-path__header">
+                      <UiCheckbox
+                        checked={pathRows.every((row) => selected.has(row.id))}
+                        label={t('admin.apiResponseStudio.selection.path', { path })}
+                        onCheckedChange={(checked) => {
+                          toggleMany(
+                            pathRows.map((row) => row.id),
+                            checked === true,
+                          );
+                        }}
+                      />
+                      <code>{path}</code>
+                    </div>
+                    <div className="admin-studio-response-list">
+                      {pathRows.map((row) => (
+                        <article className="admin-studio-response" data-deleted={row.deleted} key={row.id}>
+                          <UiCheckbox
+                            checked={selected.has(row.id)}
+                            label={t('admin.apiResponseStudio.selection.row', {
+                              method: row.method,
+                              status: row.status,
+                            })}
+                            labelHidden
+                            onCheckedChange={(checked) => {
+                              toggleMany([row.id], checked === true);
+                            }}
+                          />
+                          <div className="admin-studio-response__identity">
+                            <strong>{`${row.method} ${row.status}`}</strong>
+                            <small>{row.summary || row.errorType || row.operationId || row.stableKey}</small>
+                          </div>
+                          <div className="admin-studio-response__status">
+                            <UiStatusTag label={t(`admin.apiResponseStudio.display.${row.display}`)} tone="info" />
+                            <UiStatusTag
+                              label={t(`admin.apiResponseStudio.change.${row.changeState}`)}
+                              tone={row.changeState === 'unchanged' ? 'neutral' : 'warning'}
+                            />
+                          </div>
+                          <div
+                            className="admin-studio-language-badges"
+                            aria-label={t('admin.apiResponseStudio.coverage.label')}
+                          >
+                            {languageValues.map((language) => (
+                              <span data-complete={row.texts[language].length > 0} key={language}>
+                                {language.toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="admin-row-actions">
+                            <UiButton
+                              onClick={() => {
+                                setViewerTarget(row);
+                              }}
+                              size="sm"
+                              variant="ghost"
+                            >
+                              {t('admin.apiResponseStudio.action.inspect')}
+                            </UiButton>
+                            {canWrite ? (
+                              <>
+                                <UiButton
+                                  onClick={() => {
+                                    setEditTarget(row);
+                                    setEditorDraft(presentationOf(row));
+                                  }}
+                                  size="sm"
+                                  variant="secondary"
+                                >
+                                  {t('admin.apiResponseStudio.action.edit')}
+                                </UiButton>
+                                <UiButton
+                                  onClick={() => {
+                                    setResetTarget(row);
+                                  }}
+                                  size="sm"
+                                  variant="ghost"
+                                >
+                                  {t('admin.apiResponseStudio.action.reset')}
+                                </UiButton>
+                              </>
+                            ) : null}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            );
+          })}
         </div>
       </UiCard>
-      <UiCard className="admin-table-card" title={t('admin.problemPresentations.title')}>
-        <UiDataTable<PresentationRow>
-          rows={rows}
-          rowKey={(row) => row.id}
-          isLoading={presentations.isLoading}
-          loadingLabel={t('admin.problemPresentations.loading')}
-          error={
-            presentations.error
-              ? errorText(presentations.error, 'admin.problemPresentations.error.requestFailed', t)
-              : undefined
-          }
-          emptyTitle={t('admin.problemPresentations.emptyTitle')}
-          emptyDescription={t('admin.problemPresentations.emptyDescription')}
-          columns={[
-            {
-              id: 'endpoint',
-              header: t('admin.problemPresentations.column.endpoint'),
-              render: (row) => (
-                <span className="admin-problem-cell">
-                  <strong>{row.path}</strong>
-                  <small>{`${row.app} · ${row.tags.join(', ') || row.operationId || '—'}`}</small>
-                </span>
-              ),
-            },
-            {
-              id: 'response',
-              header: t('admin.problemPresentations.column.response'),
-              render: (row) => (
-                <span className="admin-problem-presentation">
-                  <span className="admin-chip">{`${row.method} ${row.status}`}</span>
-                  <small>{row.errorCode ?? '—'}</small>
-                </span>
-              ),
-            },
-            {
-              id: 'presentation',
-              header: t('admin.problemPresentations.column.presentation'),
-              render: (row) => (
-                <span className="admin-problem-presentation">
-                  <UiStatusTag
-                    label={t(`admin.problemPresentations.display.${row.display}`)}
-                    tone={row.display === 'silent' ? 'info' : statusTone(row.severity)}
-                  />
-                  <small>{t(`admin.problemPresentations.severity.${row.severity}`)}</small>
-                </span>
-              ),
-            },
-            {
-              id: 'source',
-              header: t('admin.problemPresentations.column.source'),
-              render: (row) => {
-                let sourceLabel = t('admin.problemPresentations.source.generated');
-                if (row.catalogState === 'deleted') {
-                  sourceLabel = t('admin.problemPresentations.source.deleted');
-                } else if (row.overridden) {
-                  sourceLabel = t('admin.problemPresentations.source.override');
-                }
-                return (
-                  <span className="admin-problem-source">
-                    <UiStatusTag
-                      label={sourceLabel}
-                      tone={row.catalogState === 'deleted' || row.overridden ? 'warning' : 'info'}
-                    />
-                    <small>{row.updatedAt ? formatDate(row.updatedAt) : row.id}</small>
-                  </span>
-                );
-              },
-            },
-            {
-              id: 'actions',
-              header: t('admin.problemPresentations.column.actions'),
-              align: 'right',
-              render: (row) => (
-                <span className="admin-row-actions">
+    </div>
+  );
+
+  const sourcePanel = (
+    <div className="admin-studio-tab">
+      <div className="admin-studio-panel-heading">
+        <p>{t('admin.apiResponseStudio.sources.description')}</p>
+        {canWrite ? (
+          <UiButton
+            onClick={() => {
+              openSource();
+            }}
+          >
+            {t('admin.apiResponseStudio.action.addSource')}
+          </UiButton>
+        ) : null}
+      </div>
+      {sources.isLoading ? <p role="status">{t('admin.apiResponseStudio.loading.sources')}</p> : null}
+      {sources.error ? (
+        <UiNotification message={errorText(sources.error, 'admin.apiResponseStudio.error.sources', t)} tone="warning" />
+      ) : null}
+      <div className="admin-studio-source-grid">
+        {(sources.data?.items ?? []).map((source) => (
+          <UiCard key={source.id} title={source.name}>
+            <dl className="admin-studio-source-details">
+              <div>
+                <dt>{t('admin.apiResponseStudio.source.url')}</dt>
+                <dd>
+                  <a href={source.jsonUrl} rel="noopener noreferrer" target="_blank">
+                    {source.jsonUrl}
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt>{t('admin.apiResponseStudio.source.status')}</dt>
+                <dd>{source.lastSyncStatus || '—'}</dd>
+              </div>
+              <div>
+                <dt>{t('admin.apiResponseStudio.source.lastSync')}</dt>
+                <dd>{formatDate(source.lastSyncAt ?? undefined)}</dd>
+              </div>
+            </dl>
+            {source.lastSyncError ? <UiNotification message={source.lastSyncError} tone="warning" /> : null}
+            <div className="admin-row-actions">
+              {source.docsUrl ? (
+                <UiButton href={source.docsUrl} rel="noopener noreferrer" size="sm" target="_blank" variant="ghost">
+                  {t('admin.apiResponseStudio.action.docs')}
+                </UiButton>
+              ) : null}
+              {canWrite ? (
+                <>
                   <UiButton
                     onClick={() => {
-                      preview(row);
+                      openSource(source);
                     }}
                     size="sm"
-                    variant="ghost"
+                    variant="secondary"
                   >
-                    {t('admin.problemPresentations.action.preview')}
+                    {t('admin.apiResponseStudio.action.edit')}
                   </UiButton>
-                  {access.canUpdateSettings && row.catalogState === 'active' ? (
+                  <UiButton
+                    disabled={syncMutation.isPending}
+                    onClick={() => {
+                      syncMutation.mutate(source);
+                    }}
+                    size="sm"
+                  >
+                    {t('admin.apiResponseStudio.action.sync')}
+                  </UiButton>
+                  {source.enabled ? (
                     <UiButton
                       onClick={() => {
-                        openEditor(row);
-                      }}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      {t('admin.problemPresentations.action.edit')}
-                    </UiButton>
-                  ) : null}
-                  {access.canUpdateSettings && row.overridden ? (
-                    <UiButton
-                      onClick={() => {
-                        setResetTarget(row);
+                        disableSourceMutation.mutate(source);
                       }}
                       size="sm"
                       variant="ghost"
                     >
-                      {t('admin.problemPresentations.action.reset')}
+                      {t('admin.apiResponseStudio.action.disable')}
                     </UiButton>
                   ) : null}
-                </span>
-              ),
-            },
-          ]}
-        />
-      </UiCard>
-      {editTarget ? (
-        <UiConfirmDialog
-          open
-          onOpenChange={() => {
-            setEditTarget(undefined);
+                </>
+              ) : null}
+            </div>
+          </UiCard>
+        ))}
+      </div>
+      {!sources.isLoading && !sources.error && (sources.data?.items.length ?? 0) === 0 ? (
+        <div className="admin-studio-empty">
+          <strong>{t('admin.apiResponseStudio.sources.empty')}</strong>
+        </div>
+      ) : null}
+    </div>
+  );
+
+  const historyPanel = (
+    <div className="admin-studio-tab">
+      {history.isLoading ? <p role="status">{t('admin.apiResponseStudio.loading.history')}</p> : null}
+      {history.error ? (
+        <UiNotification message={errorText(history.error, 'admin.apiResponseStudio.error.history', t)} tone="warning" />
+      ) : null}
+      <ol className="admin-studio-history">
+        {(history.data?.items ?? []).map((entry) => (
+          <li key={entry.id}>
+            <div>
+              <strong>{entry.action}</strong>
+              <small>{entry.actorUserId}</small>
+            </div>
+            <time dateTime={entry.createdAt}>{formatDate(entry.createdAt)}</time>
+            <details>
+              <summary>{t('admin.apiResponseStudio.history.details')}</summary>
+              <pre>
+                {JSON.stringify({ before: entry.before, after: entry.after, metadata: entry.metadata }, null, 2)}
+              </pre>
+            </details>
+          </li>
+        ))}
+      </ol>
+      <div className="admin-studio-pagination" aria-label={t('admin.apiResponseStudio.history.pagination')}>
+        <UiButton
+          disabled={(historyQuery.offset ?? 0) === 0}
+          onClick={() => {
+            setHistoryQuery((current) => ({ ...current, offset: Math.max(0, (current.offset ?? 0) - 100) }));
           }}
-          title={t('admin.problemPresentations.dialog.title', { code: `${editTarget.method} ${editTarget.path}` })}
-          description={t('admin.problemPresentations.dialog.description')}
-          confirmLabel={t('admin.problemPresentations.dialog.save')}
-          onConfirm={() => {
-            updateMutation.mutate({
-              comment: draftComment,
-              display: draftDisplay,
-              expectedRevision: editTarget.revision,
-              messageEn: draftMessageEn,
-              messageRu: draftMessageRu,
-              ruleId: editTarget.id,
-              severity: draftSeverity,
-            });
-            setEditTarget(undefined);
-          }}
+          size="sm"
+          variant="secondary"
         >
-          <div className="admin-problem-editor">
-            <UiSelect
-              label={t('admin.problemPresentations.dialog.display')}
-              onValueChange={(value) => {
-                setDraftDisplay(value as ProblemPresentationDisplay);
-              }}
-              options={displayOptions.filter((option) => option.value !== 'all')}
-              value={draftDisplay}
-            />
-            <UiSelect
-              label={t('admin.problemPresentations.dialog.severity')}
-              onValueChange={(value) => {
-                setDraftSeverity(value as ProblemPresentationSeverity);
-              }}
-              options={severityOptions}
-              value={draftSeverity}
-            />
-            <UiTextarea
-              aria-label={t('admin.problemPresentations.dialog.messageEn')}
+          {t('admin.apiResponseStudio.action.previous')}
+        </UiButton>
+        <span>{`${(historyQuery.offset ?? 0) + ((history.data?.items.length ?? 0) ? 1 : 0)}–${(historyQuery.offset ?? 0) + (history.data?.items.length ?? 0)}`}</span>
+        <UiButton
+          disabled={(history.data?.items.length ?? 0) < 100}
+          onClick={() => {
+            setHistoryQuery((current) => ({ ...current, offset: (current.offset ?? 0) + 100 }));
+          }}
+          size="sm"
+          variant="secondary"
+        >
+          {t('admin.apiResponseStudio.action.next')}
+        </UiButton>
+      </div>
+      {!history.isLoading && !history.error && (history.data?.items.length ?? 0) === 0 ? (
+        <div className="admin-studio-empty">
+          <strong>{t('admin.apiResponseStudio.history.empty')}</strong>
+        </div>
+      ) : null}
+    </div>
+  );
+
+  return (
+    <UiSection
+      className="admin-page admin-api-response-studio-page"
+      eyebrow={t('admin.apiResponseStudio.eyebrow')}
+      headingLevel={1}
+      title={t('admin.apiResponseStudio.title')}
+    >
+      <div className="admin-studio-intro">
+        <p className="admin-page-description">{t('admin.apiResponseStudio.description')}</p>
+        {!canWrite ? <UiStatusTag label={t('admin.apiResponseStudio.readOnly')} tone="info" /> : null}
+      </div>
+      {notice ? <UiNotification message={notice.message} tone={notice.tone} /> : null}
+      {dashboard.error ? (
+        <UiNotification
+          message={errorText(dashboard.error, 'admin.apiResponseStudio.error.dashboard', t)}
+          tone="warning"
+        />
+      ) : null}
+      <div className="admin-stat-grid xr-stat-grid admin-studio-stats" aria-busy={dashboard.isLoading}>
+        <UiStatCard
+          className="admin-stat-card"
+          detail={t('admin.apiResponseStudio.stats.responsesDetail')}
+          label={t('admin.apiResponseStudio.stats.responses')}
+          value={`${total}`}
+        />
+        <UiStatCard
+          className="admin-stat-card"
+          detail={t('admin.apiResponseStudio.stats.sourcesDetail')}
+          label={t('admin.apiResponseStudio.stats.sources')}
+          value={`${sources.data?.items.length ?? dashboard.data?.sources.length ?? 0}`}
+        />
+        <UiStatCard
+          className="admin-stat-card"
+          detail={t('admin.apiResponseStudio.stats.changesDetail')}
+          label={t('admin.apiResponseStudio.stats.changes')}
+          value={`${changed}`}
+        />
+        {languageValues.map((language) => (
+          <UiStatCard
+            className="admin-stat-card"
+            detail={`${coverage[language]} / ${rows.length}`}
+            key={language}
+            label={t('admin.apiResponseStudio.stats.coverage', { language: language.toUpperCase() })}
+            value={percent(coverage[language], rows.length)}
+          />
+        ))}
+      </div>
+      <UiTabs
+        label={t('admin.apiResponseStudio.tabs.label')}
+        items={[
+          { content: inventory, label: t('admin.apiResponseStudio.tabs.inventory'), value: 'inventory' },
+          { content: sourcePanel, label: t('admin.apiResponseStudio.tabs.sources'), value: 'sources' },
+          { content: historyPanel, label: t('admin.apiResponseStudio.tabs.history'), value: 'history' },
+        ]}
+      />
+      {sourceTarget || sourceDraft !== newSource ? (
+        <UiConfirmDialog
+          cancelLabel={t('admin.apiResponseStudio.action.cancel')}
+          confirmLabel={t('admin.apiResponseStudio.action.saveSource')}
+          description={t('admin.apiResponseStudio.source.dialogDescription')}
+          onConfirm={saveSource}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSourceTarget(undefined);
+              setSourceDraft({ ...newSource });
+            }
+          }}
+          open
+          title={
+            sourceTarget
+              ? t('admin.apiResponseStudio.source.editTitle')
+              : t('admin.apiResponseStudio.source.createTitle')
+          }
+        >
+          <div className="admin-studio-editor">
+            {sourceError ? <UiNotification message={sourceError} tone="warning" /> : null}
+            <UiTextField
+              label={t('admin.apiResponseStudio.source.name')}
               onChange={(event) => {
-                setDraftMessageEn(event.currentTarget.value);
+                const name = event.currentTarget.value;
+                setSourceDraft((current) => ({ ...current, name }));
               }}
-              placeholder={editTarget.defaultMessage}
-              value={draftMessageEn}
+              value={sourceDraft.name}
             />
-            <UiTextarea
-              aria-label={t('admin.problemPresentations.dialog.messageRu')}
+            <UiTextField
+              label={t('admin.apiResponseStudio.source.slug')}
               onChange={(event) => {
-                setDraftMessageRu(event.currentTarget.value);
+                const slug = event.currentTarget.value;
+                setSourceDraft((current) => ({ ...current, slug }));
               }}
-              placeholder={t('admin.problemPresentations.dialog.messageRuPlaceholder')}
-              value={draftMessageRu}
+              value={sourceDraft.slug}
             />
-            <UiTextarea
-              aria-label={t('admin.problemPresentations.dialog.comment')}
+            <UiTextField
+              label={t('admin.apiResponseStudio.source.jsonUrl')}
               onChange={(event) => {
-                setDraftComment(event.currentTarget.value);
+                const jsonUrl = event.currentTarget.value;
+                setSourceDraft((current) => ({ ...current, jsonUrl }));
               }}
-              placeholder={t('admin.problemPresentations.dialog.commentPlaceholder')}
-              value={draftComment}
+              type="url"
+              value={sourceDraft.jsonUrl}
+            />
+            <UiTextField
+              label={t('admin.apiResponseStudio.source.docsUrl')}
+              onChange={(event) => {
+                const docsUrl = event.currentTarget.value;
+                setSourceDraft((current) => ({ ...current, docsUrl }));
+              }}
+              type="url"
+              value={sourceDraft.docsUrl}
+            />
+            <UiCheckbox
+              checked={sourceDraft.enabled}
+              label={t('admin.apiResponseStudio.source.enabled')}
+              onCheckedChange={(checked) => {
+                setSourceDraft((current) => ({ ...current, enabled: checked === true }));
+              }}
             />
           </div>
         </UiConfirmDialog>
       ) : null}
+      {editTarget ? (
+        <UiConfirmDialog
+          cancelLabel={t('admin.apiResponseStudio.action.cancel')}
+          confirmLabel={t('admin.apiResponseStudio.action.save')}
+          description={t('admin.apiResponseStudio.editor.description')}
+          onConfirm={() => {
+            responseMutation.mutate({ response: editTarget, presentation: editorDraft });
+          }}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditTarget(undefined);
+            }
+          }}
+          open
+          title={t('admin.apiResponseStudio.editor.title', {
+            method: editTarget.method,
+            path: editTarget.path,
+            status: editTarget.status,
+          })}
+        >
+          <PresentationEditor key={editTarget.id} initial={editorDraft} onChange={setEditorDraft} />
+        </UiConfirmDialog>
+      ) : null}
+      {bulkOpen ? (
+        <UiConfirmDialog
+          cancelLabel={t('admin.apiResponseStudio.action.cancel')}
+          confirmLabel={t('admin.apiResponseStudio.action.applyBulk')}
+          description={t('admin.apiResponseStudio.bulk.description', { count: selectedRows.length })}
+          onConfirm={() => {
+            const patch = presentationPatch(bulkBaseline, bulkDraft);
+            if (Object.keys(patch).length === 0) {
+              return;
+            }
+            bulkMutation.mutate({ responses: selectedRows, patch });
+          }}
+          onOpenChange={setBulkOpen}
+          open
+          title={t('admin.apiResponseStudio.bulk.title')}
+        >
+          <PresentationEditor
+            key={selectedRows.map((row) => row.id).join(':') || 'bulk-editor'}
+            initial={bulkDraft}
+            onChange={setBulkDraft}
+          />
+        </UiConfirmDialog>
+      ) : null}
       {resetTarget ? (
         <UiConfirmDialog
-          open
-          onOpenChange={() => {
-            setResetTarget(undefined);
-          }}
-          title={t('admin.problemPresentations.dialog.resetTitle', {
-            code: `${resetTarget.method} ${resetTarget.path}`,
-          })}
-          description={t('admin.problemPresentations.dialog.resetDescription')}
-          confirmLabel={t('admin.problemPresentations.action.reset')}
+          cancelLabel={t('admin.apiResponseStudio.action.cancel')}
+          confirmLabel={t('admin.apiResponseStudio.action.reset')}
+          description={t('admin.apiResponseStudio.reset.description')}
           onConfirm={() => {
-            resetMutation.mutate({ ruleId: resetTarget.id, expectedRevision: resetTarget.revision });
-            setResetTarget(undefined);
+            resetMutation.mutate(resetTarget);
           }}
+          onOpenChange={(open) => {
+            if (!open) {
+              setResetTarget(undefined);
+            }
+          }}
+          open
+          title={t('admin.apiResponseStudio.reset.title')}
         />
+      ) : null}
+      {viewerTarget ? (
+        <UiDialog
+          description={t('admin.apiResponseStudio.viewer.description')}
+          onOpenChange={(open) => {
+            if (!open) {
+              setViewerTarget(undefined);
+            }
+          }}
+          open
+          title={`${viewerTarget.method} ${viewerTarget.path} · ${viewerTarget.status}`}
+        >
+          <div className="admin-studio-viewer">
+            <section>
+              <h3>{t('admin.apiResponseStudio.viewer.schema')}</h3>
+              <pre>{viewerTarget.schemaSnapshot || t('admin.apiResponseStudio.viewer.none')}</pre>
+            </section>
+            <section>
+              <h3>{t('admin.apiResponseStudio.viewer.example')}</h3>
+              <pre>{viewerTarget.exampleSnapshot || t('admin.apiResponseStudio.viewer.none')}</pre>
+            </section>
+            {viewerTarget.enumChoices.length ? (
+              <section>
+                <h3>{t('admin.apiResponseStudio.viewer.enums')}</h3>
+                <pre>{JSON.stringify(viewerTarget.enumChoices, null, 2)}</pre>
+              </section>
+            ) : null}
+          </div>
+        </UiDialog>
       ) : null}
     </UiSection>
   );

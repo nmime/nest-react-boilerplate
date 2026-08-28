@@ -6512,7 +6512,7 @@
           },
           "display": {
             "type": "string",
-            "enum": ["toast", "silent"]
+            "enum": ["toast", "modal", "custom", "silent"]
           },
           "severity": {
             "type": "string",
@@ -6524,10 +6524,28 @@
           "messageRu": {
             "type": "string"
           },
+          "messageZh": {
+            "type": "string"
+          },
+          "texts": {
+            "type": "object"
+          },
+          "customDescription": {
+            "type": "string"
+          },
+          "support": {
+            "type": "boolean"
+          },
+          "figmaOnly": {
+            "type": "boolean"
+          },
           "revision": {
             "type": "number"
           },
           "updatedAt": {
+            "type": "string"
+          },
+          "updatedByUserId": {
             "type": "string"
           }
         },

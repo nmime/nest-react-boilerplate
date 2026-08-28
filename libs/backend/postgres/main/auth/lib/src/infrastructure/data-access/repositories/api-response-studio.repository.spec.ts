@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-nested-conditional, @typescript-eslint/no-restricted-types -- In-memory transactional test doubles intentionally mirror MikroORM object APIs. */
 // @requirements REQ-API-RESPONSE-STUDIO-003
 // @requirements REQ-API-RESPONSE-STUDIO-004
 import type { EntityManager } from '@mikro-orm/core';
@@ -115,7 +116,9 @@ const createEntityManager = (options: ManagerOptions = {}) => {
 
 const unwrap = async <T, E extends { message: string }>(result: ResultAsync<T, E>): Promise<T> => {
   const settled = await result;
-  if (settled.isErr()) throw new Error(settled.error.message);
+  if (settled.isErr()) {
+    throw new Error(settled.error.message);
+  }
   return settled.value;
 };
 

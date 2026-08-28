@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention, @typescript-eslint/no-unnecessary-condition, sonarjs/no-nested-conditional, @typescript-eslint/require-await -- Repository mappings preserve database column names and transaction-port signatures. */
 import { EntityManager, LockMode } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync } from 'neverthrow';
@@ -31,8 +32,12 @@ class StudioValidationError extends Error {}
 const MAX_BULK_ITEMS = 200;
 const MAX_SNAPSHOT_BYTES = 32 * 1024;
 const cleanObject = (value: unknown, depth = 0): unknown => {
-  if (depth > 6) return '[truncated]';
-  if (Array.isArray(value)) return value.slice(0, 100).map((item) => cleanObject(item, depth + 1));
+  if (depth > 6) {
+    return '[truncated]';
+  }
+  if (Array.isArray(value)) {
+    return value.slice(0, 100).map((item) => cleanObject(item, depth + 1));
+  }
   if (value && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
@@ -167,15 +172,31 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
           { tenantId: input.tenantId, id: input.id },
           { lockMode: LockMode.PESSIMISTIC_WRITE },
         );
-        if (!entity) throw new StudioNotFound();
-        if (entity.revision !== input.expectedRevision) throw new StudioRevisionConflict();
+        if (!entity) {
+          throw new StudioNotFound();
+        }
+        if (entity.revision !== input.expectedRevision) {
+          throw new StudioRevisionConflict();
+        }
         const before = sourceRecord(entity);
-        if (input.name !== undefined) entity.name = input.name.trim();
-        if (input.slug !== undefined) entity.slug = input.slug.trim().toLowerCase();
-        if (input.jsonUrl !== undefined) entity.jsonUrl = input.jsonUrl.trim();
-        if (input.docsUrl !== undefined) entity.docsUrl = input.docsUrl.trim();
-        if (input.enabled !== undefined) entity.enabled = input.enabled;
-        if (input.manualOnly !== undefined) entity.manualOnly = input.manualOnly;
+        if (input.name !== undefined) {
+          entity.name = input.name.trim();
+        }
+        if (input.slug !== undefined) {
+          entity.slug = input.slug.trim().toLowerCase();
+        }
+        if (input.jsonUrl !== undefined) {
+          entity.jsonUrl = input.jsonUrl.trim();
+        }
+        if (input.docsUrl !== undefined) {
+          entity.docsUrl = input.docsUrl.trim();
+        }
+        if (input.enabled !== undefined) {
+          entity.enabled = input.enabled;
+        }
+        if (input.manualOnly !== undefined) {
+          entity.manualOnly = input.manualOnly;
+        }
         entity.revision += 1;
         entity.updatedByUserId = input.actorUserId;
         entity.updatedAt = new Date();
@@ -289,18 +310,31 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
           const entities = await this.lockMany(em, input.tenantId, items);
           const before = entities.map(responseRecord);
           for (const entity of entities) {
-            if (input.patch.display !== undefined) entity.display = input.patch.display;
-            if (input.patch.severity !== undefined) entity.severity = input.patch.severity;
-            if (input.patch.support !== undefined) entity.support = input.patch.support;
-            if (input.patch.customDescription !== undefined) entity.customDescription = input.patch.customDescription;
-            if (input.patch.figmaOnly !== undefined) entity.figmaOnly = input.patch.figmaOnly;
-            if (input.patch.comments !== undefined) entity.comments = input.patch.comments;
-            if (input.patch.texts !== undefined)
+            if (input.patch.display !== undefined) {
+              entity.display = input.patch.display;
+            }
+            if (input.patch.severity !== undefined) {
+              entity.severity = input.patch.severity;
+            }
+            if (input.patch.support !== undefined) {
+              entity.support = input.patch.support;
+            }
+            if (input.patch.customDescription !== undefined) {
+              entity.customDescription = input.patch.customDescription;
+            }
+            if (input.patch.figmaOnly !== undefined) {
+              entity.figmaOnly = input.patch.figmaOnly;
+            }
+            if (input.patch.comments !== undefined) {
+              entity.comments = input.patch.comments;
+            }
+            if (input.patch.texts !== undefined) {
               entity.texts = {
                 en: [...input.patch.texts.en],
                 ru: [...input.patch.texts.ru],
                 zh: [...input.patch.texts.zh],
               };
+            }
             entity.revision += 1;
             entity.updatedByUserId = input.actorUserId;
             entity.updatedAt = new Date();
@@ -362,8 +396,12 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
           { tenantId: input.tenantId, id: input.sourceId },
           { lockMode: LockMode.PESSIMISTIC_WRITE },
         );
-        if (!source) throw new StudioNotFound();
-        if (source.revision !== input.expectedRevision) throw new StudioRevisionConflict();
+        if (!source) {
+          throw new StudioNotFound();
+        }
+        if (source.revision !== input.expectedRevision) {
+          throw new StudioRevisionConflict();
+        }
         const existing = await em.find(
           ApiResponseStudioResponseEntity,
           { tenantId: input.tenantId, sourceId: input.sourceId },
@@ -418,7 +456,9 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
         source.lastSyncSummary = summary;
         source.updatedByUserId = input.actorUserId;
         source.updatedAt = input.syncedAt ?? new Date();
-        if (changed) source.revision += 1;
+        if (changed) {
+          source.revision += 1;
+        }
         await this.audit(em, {
           tenantId: input.tenantId,
           sourceId: source.id,
@@ -488,8 +528,12 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
       { tenantId, id },
       { lockMode: LockMode.PESSIMISTIC_WRITE },
     );
-    if (!entity) throw new StudioNotFound();
-    if (entity.revision !== revision) throw new StudioRevisionConflict();
+    if (!entity) {
+      throw new StudioNotFound();
+    }
+    if (entity.revision !== revision) {
+      throw new StudioRevisionConflict();
+    }
     return entity;
   }
   private withBoundedItems<T>(
@@ -508,7 +552,9 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
     items: ReadonlyArray<{ id: string; expectedRevision: number }>,
   ) {
     const unique = new Map(items.map((item) => [item.id, item]));
-    if (unique.size !== items.length) throw new StudioRevisionConflict();
+    if (unique.size !== items.length) {
+      throw new StudioRevisionConflict();
+    }
     const entities = await em.find(
       ApiResponseStudioResponseEntity,
       { tenantId, id: { $in: [...unique.keys()] } },
@@ -517,8 +563,9 @@ export class ApiResponseStudioRepository implements ApiResponseStudioRepositoryP
     if (
       entities.length !== items.length ||
       entities.some((entity) => entity.revision !== unique.get(entity.id)?.expectedRevision)
-    )
+    ) {
       throw new StudioRevisionConflict();
+    }
     return entities;
   }
   private async audit(

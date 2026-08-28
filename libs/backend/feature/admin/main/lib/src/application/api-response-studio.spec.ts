@@ -152,10 +152,10 @@ describe('parseOpenApiResponses', () => {
     ).toHaveLength(2);
   });
 
-  it('uses persisted enum choices with a deterministic Cartesian cap', () => {
+  it('expands persisted enum choices deterministically when the Cartesian product equals the cap', () => {
     const baseKey = 'GET:/v1/widgets:400:example-problem';
     const variants = parseOpenApiResponses(apiDocument(), {
-      enumExpansionCap: 3,
+      enumExpansionCap: 6,
       enumChoicesByBaseKey: {
         [baseKey]: [
           { property: 'code', values: ['a', 'b', 'c'], enabledValues: ['c', 'a', 'b'] },
@@ -164,12 +164,134 @@ describe('parseOpenApiResponses', () => {
       },
     }).filter((variant) => variant.status === '400' && variant.enumChoices.length > 0);
 
-    expect(variants).toHaveLength(3);
     expect(variants.map((variant) => variant.stableKey)).toEqual([
       `${baseKey}:a~hard`,
       `${baseKey}:a~soft`,
       `${baseKey}:b~hard`,
+      `${baseKey}:b~soft`,
+      `${baseKey}:c~hard`,
+      `${baseKey}:c~soft`,
     ]);
+  });
+
+  it('rejects persisted enum choices when the full Cartesian product exceeds the cap', () => {
+    const baseKey = 'GET:/v1/widgets:400:example-problem';
+    const parse = () =>
+      parseOpenApiResponses(apiDocument(), {
+        enumExpansionCap: 5,
+        enumChoicesByBaseKey: {
+          [baseKey]: [
+            { property: 'code', values: ['a', 'b', 'c'], enabledValues: ['c', 'a', 'b'] },
+            { property: 'kind', values: ['hard', 'soft'], enabledValues: ['soft', 'hard'] },
+          ],
+        },
+      });
+
+    expect(parse).toThrow('OpenAPI enum expansion product 6 exceeds the 5-variant expansion limit.');
+  });
+
+  it('preserves the existing 4xx discriminator fallback priority', () => {
+    const document = {
+      openapi: '3.1.0',
+      paths: {
+        '/v1/widgets': {
+          get: {
+            responses: {
+              400: {
+                description: 'Invalid widget',
+                content: {
+                  'application/problem+json': {
+                    schema: {
+                      type: 'object',
+                      properties: { code: { enum: ['enum-code'], default: 'default-code' } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    expect(
+      parseOpenApiResponses(document).some((variant) => variant.stableKey === 'GET:/v1/widgets:400:default-code'),
+    ).toBe(true);
+  });
+
+  it('uses a resolved 2xx union discriminator property for distinct stable keys', () => {
+    const document = {
+      openapi: '3.1.0',
+      paths: {
+        '/v1/jobs': {
+          get: {
+            responses: {
+              200: {
+                description: 'Job state',
+                content: { 'application/json': { schema: { $ref: '#/components/schemas/JobState' } } },
+              },
+            },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          JobState: {
+            discriminator: { propertyName: 'kind' },
+            oneOf: [
+              { type: 'object', properties: { kind: { const: 'created' } } },
+              { type: 'object', properties: { kind: { enum: ['running'] } } },
+              { type: 'object', properties: { kind: { default: 'completed' } } },
+              { type: 'object', properties: { kind: { example: 'failed' } } },
+            ],
+          },
+        },
+      },
+    };
+
+    const stableKeys = parseOpenApiResponses(document)
+      .filter((variant) => variant.status === '200')
+      .map((variant) => variant.stableKey);
+
+    expect(stableKeys).toEqual([
+      'GET:/v1/jobs:200:completed',
+      'GET:/v1/jobs:200:created',
+      'GET:/v1/jobs:200:failed',
+      'GET:/v1/jobs:200:running',
+    ]);
+    expect(new Set(stableKeys).size).toBe(stableKeys.length);
+  });
+
+  it('rejects colliding stable keys within one parsed response', () => {
+    const document = {
+      openapi: '3.1.0',
+      paths: {
+        '/v1/jobs': {
+          get: {
+            responses: {
+              200: {
+                description: 'Job state',
+                content: {
+                  'application/json': {
+                    schema: {
+                      discriminator: { propertyName: 'kind' },
+                      oneOf: [
+                        { type: 'object', properties: { kind: { const: 'same' } } },
+                        { type: 'object', properties: { kind: { enum: ['same'] } } },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    expect(() => parseOpenApiResponses(document)).toThrow(
+      'OpenAPI response variants produced duplicate stable key: GET:/v1/jobs:200:same',
+    );
   });
 
   it('resolves relative and transitive external references against each document URL', () => {
@@ -240,7 +362,28 @@ describe('parseOpenApiResponses', () => {
   });
 
   it('truncates depth, node, and snapshot limits deterministically and rejects non-3.x documents', () => {
-    const document = apiDocument();
+    const document = {
+      openapi: '3.1.0',
+      paths: {
+        '/v1/widgets': {
+          get: {
+            responses: {
+              400: {
+                description: 'Invalid widget',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { detail: { type: 'object', properties: { message: { type: 'string' } } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
     const first = parseOpenApiResponses(document, { maxDepth: 1, maxNodes: 3, maxSnapshotBytes: 20 });
     const second = parseOpenApiResponses(document, { maxDepth: 1, maxNodes: 3, maxSnapshotBytes: 20 });
     const schemaSnapshot = first.find((variant) => variant.status === '400')!.schemaSnapshot;
@@ -598,7 +741,9 @@ describe('ApiResponseStudioService executable boundaries', () => {
     const older = persisted(1, ['a', 'b']);
     const latest = persisted(2, ['c']);
     const filler = { ...persisted(1, []), stableKey: 'GET:/v1/other:ERR:-', path: '/v1/other', errorType: '' };
-    const firstPage = Array.from({ length: 500 }, (_, index) => (index === 0 ? older : { ...filler, id: `f-${index}` }));
+    const firstPage = Array.from({ length: 500 }, (_, index) =>
+      index === 0 ? older : { ...filler, id: `f-${index}` },
+    );
     const repository = {
       findSource: vi.fn(() => okAsync({ jsonUrl: 'https://api.example.com/openapi.json' })),
       listResponses: vi
@@ -636,14 +781,12 @@ describe('ApiResponseStudioService executable boundaries', () => {
     const variants = repository.sync.mock.calls[0]?.[0].variants ?? [];
     expect(
       variants
-        .filter((variant: { status: string; enumChoices: readonly unknown[] }) =>
-          variant.status === '400' && variant.enumChoices.length > 0,
+        .filter(
+          (variant: { status: string; enumChoices: readonly unknown[] }) =>
+            variant.status === '400' && variant.enumChoices.length > 0,
         )
         .map((variant: { stableKey: string }) => variant.stableKey),
-    ).toEqual([
-      'GET:/v1/widgets:400:example-problem:c~hard',
-      'GET:/v1/widgets:400:example-problem:c~soft',
-    ]);
+    ).toEqual(['GET:/v1/widgets:400:example-problem:c~hard', 'GET:/v1/widgets:400:example-problem:c~soft']);
   });
 
   it('normalizes valid response updates and rejects invalid updates before persistence', async () => {

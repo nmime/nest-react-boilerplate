@@ -97,7 +97,12 @@ const getAtRef = (
 ): { document: Record<string, unknown>; value: unknown; baseUrl?: string; identity: string } => {
   const localSegments = localRefSegments(ref);
   if (localSegments) {
-    return { document, value: getAtSegments(document, localSegments, ref), baseUrl, identity: `${baseUrl ?? 'root'}${ref}` };
+    return {
+      document,
+      value: getAtSegments(document, localSegments, ref),
+      baseUrl,
+      identity: `${baseUrl ?? 'root'}${ref}`,
+    };
   }
   const hashAt = ref.indexOf('#');
   const externalUrl = absoluteExternalRef(ref, baseUrl);
@@ -198,26 +203,44 @@ const schemaVariants = (schema: unknown): unknown[] => {
 
 const DiscriminatorKeys = ['error_type', 'errorType', 'code', 'type'] as const;
 
-const schemaDiscriminator = (schema: unknown): string => {
+const discriminatorPropertyNameFor = (schema: unknown): string => {
+  if (!isRecord(schema) || !isRecord(schema.discriminator)) {
+    return '';
+  }
+  const propertyName = schema.discriminator.propertyName;
+  return typeof propertyName === 'string' && propertyName.trim() ? propertyName.trim().slice(0, 200) : '';
+};
+
+const propertyDiscriminator = (property: unknown, preferSingleEnum: boolean): string => {
+  if (!isRecord(property)) {
+    return '';
+  }
+  const singleEnum = Array.isArray(property.enum) && property.enum.length === 1 ? property.enum[0] : undefined;
+  const candidates = preferSingleEnum
+    ? [property.const, singleEnum, property.default, property.example]
+    : [property.const, property.default, property.example, singleEnum];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim().slice(0, 200);
+    }
+  }
+  return '';
+};
+
+const schemaDiscriminator = (schema: unknown, preferredPropertyName = ''): string => {
   if (!isRecord(schema) || !isRecord(schema.properties)) {
     return '';
   }
+  if (preferredPropertyName) {
+    const preferred = propertyDiscriminator(schema.properties[preferredPropertyName], true);
+    if (preferred) {
+      return preferred;
+    }
+  }
   for (const key of DiscriminatorKeys) {
-    const property = isRecord(schema.properties[key]) ? schema.properties[key] : undefined;
-    if (!property) {
-      continue;
-    }
-    for (const keyword of ['const', 'default', 'example']) {
-      const discriminator = property[keyword];
-      if (typeof discriminator === 'string' && discriminator.trim()) {
-        return discriminator.trim().slice(0, 200);
-      }
-    }
-    if (Array.isArray(property.enum) && property.enum.length === 1) {
-      const discriminator = property.enum[0];
-      if (typeof discriminator === 'string' && discriminator.trim()) {
-        return discriminator.trim().slice(0, 200);
-      }
+    const discriminator = propertyDiscriminator(schema.properties[key], false);
+    if (discriminator) {
+      return discriminator;
     }
   }
   return '';
@@ -239,8 +262,10 @@ const recordDiscriminator = (value: unknown, includeType: boolean): string => {
   return '';
 };
 
-const errorTypeFor = (schema: unknown, example: unknown): string =>
-  schemaDiscriminator(schema) || recordDiscriminator(example, true) || recordDiscriminator(schema, false);
+const errorTypeFor = (schema: unknown, example: unknown, discriminatorPropertyName = ''): string =>
+  schemaDiscriminator(schema, discriminatorPropertyName) ||
+  recordDiscriminator(example, true) ||
+  recordDiscriminator(schema, false);
 
 const collectEnums = (
   schema: unknown,
@@ -295,15 +320,18 @@ const expansionSuffixes = (
       throw new Error(`OpenAPI enum ${choice.property} exceeds the ${cap}-value expansion limit.`);
     }
   }
-  const combinations = axes.reduce((product, choice) => product * choice.enabledValues.length, 1);
-  if (!Number.isSafeInteger(combinations)) {
-    throw new Error('OpenAPI enum expansion product exceeds the safe integer limit.');
+  let combinations = 1;
+  for (const choice of axes) {
+    if (combinations > Number.MAX_SAFE_INTEGER / choice.enabledValues.length) {
+      throw new Error('OpenAPI enum expansion product exceeds the safe integer limit.');
+    }
+    combinations *= choice.enabledValues.length;
+  }
+  if (combinations > cap) {
+    throw new Error(`OpenAPI enum expansion product ${combinations} exceeds the ${cap}-variant expansion limit.`);
   }
   const results: Array<{ suffix: string; choices: ApiResponseStudioEnumChoice[] }> = [];
   const walk = (index: number, values: string[]) => {
-    if (results.length >= cap) {
-      return;
-    }
     if (index >= axes.length) {
       results.push({
         suffix: values.map((value) => encodeURIComponent(value)).join('~'),
@@ -313,19 +341,13 @@ const expansionSuffixes = (
     }
     for (const value of axes[index]?.enabledValues ?? []) {
       walk(index + 1, [...values, value]);
-      if (results.length >= cap) {
-        return;
-      }
     }
   };
   walk(0, []);
   return results;
 };
 
-export const collectExternalOpenApiRefs = (
-  document: Record<string, unknown>,
-  baseUrl?: string,
-): string[] => {
+export const collectExternalOpenApiRefs = (document: Record<string, unknown>, baseUrl?: string): string[] => {
   const refs = new Set<string>();
   const walk = (value: unknown, seen: Set<object>): void => {
     if (!value || typeof value !== 'object' || seen.has(value)) {
@@ -421,8 +443,12 @@ export const parseOpenApiResponses = (
           options.baseUrl,
         );
         const resolvedVariants = schemaVariants(resolved);
+        const unionDiscriminatorPropertyName = /^2\d{2}$/u.test(status)
+          ? discriminatorPropertyNameFor(resolved) || discriminatorPropertyNameFor(unresolvedSchema)
+          : '';
+        const responseStableKeys = new Set<string>();
         for (const schema of resolvedVariants) {
-          const errorType = errorTypeFor(schema, example);
+          const errorType = errorTypeFor(schema, example, unionDiscriminatorPropertyName);
           const baseKey = `${method}:${path}:${status}:${errorType || '-'}`;
           const discoveredChoices = collectEnums(schema);
           const persisted = options.enumChoicesByBaseKey?.[baseKey] ?? [];
@@ -432,6 +458,10 @@ export const parseOpenApiResponses = (
           }));
           for (const expansion of expansionSuffixes(choices, enumExpansionCap)) {
             const stableKey = expansion.suffix ? `${baseKey}:${expansion.suffix}` : baseKey;
+            if (responseStableKeys.has(stableKey)) {
+              throw new Error(`OpenAPI response variants produced duplicate stable key: ${stableKey}`);
+            }
+            responseStableKeys.add(stableKey);
             const schemaSnapshot = boundedSnapshot(schema, maxSnapshotBytes);
             const exampleSnapshot = boundedSnapshot(example ?? null, maxSnapshotBytes);
             variants.push({

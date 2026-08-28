@@ -9,7 +9,7 @@
   "admin.apiResponseStudio.source.editTitle": "编辑 OpenAPI 源",
   "admin.apiResponseStudio.source.name": "源名称",
   "admin.apiResponseStudio.source.slug": "源标识",
-  "admin.apiResponseStudio.source.jsonUrl": "OpenAPI JSON HTTPS URL",
+  "admin.apiResponseStudio.source.jsonUrl": "OpenAPI JSON HTTPS 地址",
   "admin.apiResponseStudio.source.docsUrl": "文档 HTTPS URL",
   "admin.apiResponseStudio.source.enabled": "启用源",
   "admin.apiResponseStudio.validation.source": "请输入名称，以及以字母开头的小写源标识。",

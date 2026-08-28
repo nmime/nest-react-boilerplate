@@ -165,7 +165,7 @@ const evidenceRules: Array<{
   {
     matches: (row) => row.project === "landing-app" && row.path === "/problems",
     classification: "covered-component",
-    evidence: "apps/frontend/landing/src/astro/pages/problems.spec.ts",
+    evidence: "apps/frontend/landing/src/astro/tests/problems.spec.ts",
   },
   {
     matches: (row) => row.project === "landing-app",

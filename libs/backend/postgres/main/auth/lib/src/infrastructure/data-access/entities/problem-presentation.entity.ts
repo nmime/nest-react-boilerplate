@@ -16,6 +16,13 @@ export interface ProblemPresentationEntityInput {
   comment?: string;
   messageEn?: string;
   messageRu?: string;
+  messageZh?: string;
+  textsEn?: string[];
+  textsRu?: string[];
+  textsZh?: string[];
+  support?: boolean;
+  customDescription?: string;
+  figmaOnly?: boolean;
   revision?: number;
   updatedByUserId: string;
   createdAt?: Date;
@@ -31,6 +38,13 @@ export class ProblemPresentationEntity {
   comment = '';
   messageEn = '';
   messageRu = '';
+  messageZh = '';
+  textsEn: string[] = [];
+  textsRu: string[] = [];
+  textsZh: string[] = [];
+  support = false;
+  customDescription = '';
+  figmaOnly = false;
   revision = 1;
   updatedByUserId!: string;
   createdAt: Date = new Date();
@@ -45,6 +59,13 @@ export class ProblemPresentationEntity {
       this.comment = input.comment ?? '';
       this.messageEn = input.messageEn ?? '';
       this.messageRu = input.messageRu ?? '';
+      this.messageZh = input.messageZh ?? '';
+      this.textsEn = input.textsEn ?? (this.messageEn ? [this.messageEn] : []);
+      this.textsRu = input.textsRu ?? (this.messageRu ? [this.messageRu] : []);
+      this.textsZh = input.textsZh ?? (this.messageZh ? [this.messageZh] : []);
+      this.support = input.support ?? false;
+      this.customDescription = input.customDescription ?? '';
+      this.figmaOnly = input.figmaOnly ?? false;
       this.revision = input.revision ?? 1;
       this.updatedByUserId = input.updatedByUserId;
       this.createdAt = input.createdAt ?? new Date();
@@ -71,6 +92,13 @@ export const ProblemPresentationEntitySchema = new EntitySchema<ProblemPresentat
     comment: { type: 'text', default: '' },
     messageEn: { type: 'text', fieldName: 'message_en', default: '' },
     messageRu: { type: 'text', fieldName: 'message_ru', default: '' },
+    messageZh: { type: 'text', fieldName: 'message_zh', default: '' },
+    textsEn: { type: 'json', fieldName: 'texts_en', defaultRaw: "'[]'::jsonb" },
+    textsRu: { type: 'json', fieldName: 'texts_ru', defaultRaw: "'[]'::jsonb" },
+    textsZh: { type: 'json', fieldName: 'texts_zh', defaultRaw: "'[]'::jsonb" },
+    support: { type: 'boolean', default: false },
+    customDescription: { type: 'text', fieldName: 'custom_description', default: '' },
+    figmaOnly: { type: 'boolean', fieldName: 'figma_only', default: false },
     revision: { type: 'integer', default: 1 },
     updatedByUserId: { type: 'uuid', fieldName: 'updated_by_user_id' },
     createdAt: {

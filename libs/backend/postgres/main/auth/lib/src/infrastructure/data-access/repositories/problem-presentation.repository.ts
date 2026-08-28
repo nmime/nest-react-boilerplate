@@ -22,6 +22,13 @@ export interface SaveProblemPresentationInput {
   comment?: string;
   messageEn?: string;
   messageRu?: string;
+  messageZh?: string;
+  textsEn?: readonly string[];
+  textsRu?: readonly string[];
+  textsZh?: readonly string[];
+  support?: boolean;
+  customDescription?: string;
+  figmaOnly?: boolean;
   expectedRevision: number;
   actorUserId: string;
   metadata?: Record<string, unknown>;
@@ -94,6 +101,13 @@ export class ProblemPresentationRepository {
           comment: input.comment?.trim(),
           messageEn: input.messageEn?.trim(),
           messageRu: input.messageRu?.trim(),
+          messageZh: input.messageZh?.trim(),
+          textsEn: [...(input.textsEn ?? [])],
+          textsRu: [...(input.textsRu ?? [])],
+          textsZh: [...(input.textsZh ?? [])],
+          support: input.support,
+          customDescription: input.customDescription?.trim(),
+          figmaOnly: input.figmaOnly,
           updatedByUserId: input.actorUserId,
         });
 
@@ -102,7 +116,14 @@ export class ProblemPresentationRepository {
         entity.severity = input.severity;
         entity.comment = input.comment?.trim() ?? '';
         entity.messageEn = input.messageEn?.trim() ?? '';
-        entity.messageRu = input.messageRu?.trim() ?? '';
+        entity.messageRu = input.messageRu?.trim() ?? input.textsRu?.[0]?.trim() ?? '';
+        entity.messageZh = input.messageZh?.trim() ?? input.textsZh?.[0]?.trim() ?? '';
+        entity.textsEn = [...(input.textsEn ?? (entity.messageEn ? [entity.messageEn] : []))];
+        entity.textsRu = [...(input.textsRu ?? (entity.messageRu ? [entity.messageRu] : []))];
+        entity.textsZh = [...(input.textsZh ?? (entity.messageZh ? [entity.messageZh] : []))];
+        entity.support = input.support ?? false;
+        entity.customDescription = input.customDescription?.trim() ?? '';
+        entity.figmaOnly = input.figmaOnly ?? false;
         entity.revision += 1;
         entity.updatedByUserId = input.actorUserId;
         entity.updatedAt = new Date();
@@ -176,6 +197,13 @@ const snapshot = (entity: ProblemPresentationEntity): Record<string, unknown> =>
   comment: entity.comment,
   messageEn: entity.messageEn,
   messageRu: entity.messageRu,
+  messageZh: entity.messageZh,
+  textsEn: entity.textsEn,
+  textsRu: entity.textsRu,
+  textsZh: entity.textsZh,
+  support: entity.support,
+  customDescription: entity.customDescription,
+  figmaOnly: entity.figmaOnly,
   revision: entity.revision,
 });
 

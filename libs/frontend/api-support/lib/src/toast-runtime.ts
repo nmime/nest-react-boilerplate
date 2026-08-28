@@ -121,6 +121,14 @@ export const createDefaultApiToastRules = (): ApiToastRule[] => [
   },
 ];
 
+const readStringArray = (value: unknown): readonly string[] | undefined => {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const strings = value.flatMap((item) => (typeof item === 'string' && item.trim() ? [item] : []));
+  return strings.length > 0 ? strings : undefined;
+};
+
 const parseProblemPresentationOverride = (item: unknown): ProblemPresentationOverride | undefined => {
   if (!isRecord(item)) {
     return undefined;
@@ -135,17 +143,38 @@ const parseProblemPresentationOverride = (item: unknown): ProblemPresentationOve
     return undefined;
   }
 
-  const messageEn = readOptionalString(item.messageEn);
-  const messageRu = readOptionalString(item.messageRu);
+  const texts = isRecord(item.texts) ? item.texts : {};
+  const textsEn = readStringArray(texts.en ?? item.textsEn);
+  const textsRu = readStringArray(texts.ru ?? item.textsRu);
+  const textsZh = readStringArray(texts.zh ?? item.textsZh);
+  const messageEn = readOptionalString(item.messageEn) ?? textsEn?.[0];
+  const messageRu = readOptionalString(item.messageRu) ?? textsRu?.[0];
+  const messageZh = readOptionalString(item.messageZh) ?? textsZh?.[0];
   const updatedAt = readOptionalString(item.updatedAt);
+  const customDescription = readOptionalString(item.customDescription);
+  const updatedByUserId = readOptionalString(item.updatedByUserId);
   return {
     display,
     ...(messageEn ? { messageEn } : {}),
     ...(messageRu ? { messageRu } : {}),
+    ...(messageZh ? { messageZh } : {}),
+    ...(textsEn || textsRu || textsZh
+      ? {
+          texts: {
+            ...(textsEn ? { en: textsEn } : {}),
+            ...(textsRu ? { ru: textsRu } : {}),
+            ...(textsZh ? { zh: textsZh } : {}),
+          },
+        }
+      : {}),
+    ...(customDescription ? { customDescription } : {}),
+    figmaOnly: item.figmaOnly === true,
+    support: item.support === true,
     revision: typeof item.revision === 'number' && item.revision >= 0 ? item.revision : 0,
     ruleId,
     severity,
     ...(updatedAt ? { updatedAt } : {}),
+    ...(updatedByUserId ? { updatedByUserId } : {}),
   };
 };
 
@@ -163,14 +192,20 @@ export const configureProblemPresentationOverrides = (value: unknown): void => {
   }
 };
 
-const localizedOverrideMessage = (override: ProblemPresentationOverride): string | undefined =>
+const localizedOverrideLines = (override: ProblemPresentationOverride): readonly string[] | undefined =>
   getLocalization(
     {
-      [Language.En]: override.messageEn,
-      [Language.Ru]: override.messageRu,
+      [Language.En]: override.texts?.en ?? (override.messageEn ? [override.messageEn] : undefined),
+      [Language.Ru]: override.texts?.ru ?? (override.messageRu ? [override.messageRu] : undefined),
+      zh: override.texts?.zh ?? (override.messageZh ? [override.messageZh] : undefined),
     },
     getApiLocale(),
   );
+
+const localizedOverrideMessage = (override: ProblemPresentationOverride): string | undefined => {
+  const lines = localizedOverrideLines(override);
+  return lines?.length ? lines.join('\n') : undefined;
+};
 
 export const applyProblemPresentationOverrides = (rules: readonly ApiToastRule[]): ApiToastRule[] =>
   rules.map((rule) => {
@@ -344,6 +379,37 @@ export const resolveApiToastRule = (
   rules: readonly ApiToastRule[] = createDefaultApiToastRules(),
 ): ApiToastRule | null => rules.find((rule) => matchesRule(rule, context)) ?? null;
 
+export interface ApiProblemPresentation {
+  readonly customDescription?: string;
+  readonly display: 'custom' | 'modal';
+  readonly figmaOnly: boolean;
+  readonly lines: readonly string[];
+  readonly ruleId: string;
+  readonly severity: ApiToastCategory;
+  readonly support: boolean;
+}
+
+export const resolveApiProblemPresentation = (
+  context: ApiToastContext,
+  rules: readonly ApiToastRule[] = createDefaultApiToastRules(),
+): ApiProblemPresentation | null => {
+  const rule = resolveApiToastRule(context, rules);
+  if (!rule || (rule.display !== 'modal' && rule.display !== 'custom')) {
+    return null;
+  }
+  const overrideId = rule.id.replace(/:override:\d+$/u, '');
+  const override = problemPresentationOverrides.get(overrideId);
+  return {
+    display: rule.display,
+    ruleId: overrideId,
+    severity: rule.toast.category,
+    support: override?.support === true,
+    figmaOnly: override?.figmaOnly === true,
+    ...(override?.customDescription ? { customDescription: override.customDescription } : {}),
+    lines: override ? (localizedOverrideLines(override) ?? []) : [],
+  };
+};
+
 export class ApiToastRuntime {
   private readonly clock: () => number;
   private readonly createId: () => string;
@@ -408,7 +474,7 @@ export class ApiToastRuntime {
   ): ApiToast | null {
     const rule = resolveApiToastRule(context, rules);
 
-    if (!rule || rule.display === 'silent' || rule.display === 'modal') {
+    if (!rule || rule.display !== 'toast') {
       return null;
     }
 

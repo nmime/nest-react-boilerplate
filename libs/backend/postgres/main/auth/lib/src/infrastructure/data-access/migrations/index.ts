@@ -27,6 +27,7 @@ import { Migration20260722092000CreateCanonicalSessions } from './Migration20260
 import { Migration20260722100000GrantFeatureFlagPermissions } from './Migration20260722100000GrantFeatureFlagPermissions';
 import { Migration20260804120000RemoveTenantRowLevelSecurity } from './Migration20260804120000RemoveTenantRowLevelSecurity';
 import { Migration20260812120000AddAuthUserAccountRecovery } from './Migration20260812120000AddAuthUserAccountRecovery';
+import { Migration20260828110000CreateApiResponseStudio } from './Migration20260828110000CreateApiResponseStudio';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
 
@@ -59,6 +60,7 @@ export const authMigrations = [
   Migration20260722100000GrantFeatureFlagPermissions,
   Migration20260804120000RemoveTenantRowLevelSecurity,
   Migration20260812120000AddAuthUserAccountRecovery,
+  Migration20260828110000CreateApiResponseStudio,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -98,3 +100,5 @@ export * from './Migration20260722092000CreateCanonicalSessions';
 export * from './Migration20260722100000GrantFeatureFlagPermissions';
 export * from './Migration20260804120000RemoveTenantRowLevelSecurity';
 export * from './Migration20260812120000AddAuthUserAccountRecovery';
+
+export * from './Migration20260828110000CreateApiResponseStudio';

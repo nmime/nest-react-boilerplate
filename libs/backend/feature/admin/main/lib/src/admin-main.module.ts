@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import {
   AdminAuditLogRepositoryInjectToken,
+  ApiResponseStudioRepositoryInjectToken,
   AdminUserMutationRepositoryInjectToken,
   AuthRoleRepositoryInjectToken,
   AuthUserRepositoryInjectToken,
   ProblemPresentationRepositoryInjectToken,
   type AdminAuditLogRepositoryPort,
+  type ApiResponseStudioRepositoryPort,
   type AdminUserMutationRepositoryPort,
   type AuthRoleRepositoryPort,
   type AuthUserRepositoryPort,
@@ -15,12 +17,15 @@ import { FeatureFlagRepositoryToken } from '@app/common-feature-flags';
 import {
   type AdminFeatureFlagRepository,
   AdminFeatureFlagsUseCase,
+  ApiResponseStudioService,
+  SafeOpenApiFetcher,
   GetAdminProfileUseCase,
   AdminRolesUseCase,
   AdminUsersUseCase,
   ProblemPresentationsUseCase,
 } from './application';
 import {
+  AdminApiResponseStudioController,
   AdminDatabaseAccessGuard,
   AdminFeatureFlagsController,
   AdminProblemPresentationsController,
@@ -31,6 +36,7 @@ import {
 
 @Module({
   controllers: [
+    AdminApiResponseStudioController,
     AdminFeatureFlagsController,
     AdminProfileController,
     AdminRolesController,
@@ -38,6 +44,7 @@ import {
     AdminProblemPresentationsController,
   ],
   providers: [
+    AdminApiResponseStudioController,
     AdminDatabaseAccessGuard,
     {
       provide: AdminFeatureFlagsUseCase,
@@ -51,6 +58,7 @@ import {
       inject: [
         AuthUserRepositoryInjectToken,
         AdminAuditLogRepositoryInjectToken,
+        ApiResponseStudioRepositoryInjectToken,
         AdminUserMutationRepositoryInjectToken,
         AuthRoleRepositoryInjectToken,
       ],
@@ -67,6 +75,7 @@ import {
         AuthRoleRepositoryInjectToken,
         AdminUserMutationRepositoryInjectToken,
         AdminAuditLogRepositoryInjectToken,
+        ApiResponseStudioRepositoryInjectToken,
       ],
       useFactory: (
         roles: AuthRoleRepositoryPort,

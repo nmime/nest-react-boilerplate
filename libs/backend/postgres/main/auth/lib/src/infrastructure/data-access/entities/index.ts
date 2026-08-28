@@ -31,3 +31,5 @@ export * from './auth-user-role.entity';
 export * from './auth-user-permission.entity';
 
 export * from './problem-presentation.entity';
+
+export * from './api-response-studio.entity';

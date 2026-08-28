@@ -7,3 +7,5 @@ export * from './admin-roles.controller';
 export * from './admin-users.controller';
 export * from './admin-problem-presentations.controller';
 export * from './dto';
+
+export * from './admin-api-response-studio.controller';

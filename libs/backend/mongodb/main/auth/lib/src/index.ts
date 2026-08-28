@@ -8,3 +8,5 @@ export * from './auth-mongo-admin.repository';
 export * from './auth-mongo-analytics.repository';
 export * from './auth-mongo-problem-presentation.repository';
 export * from './mongo-runtime';
+
+export * from './auth-mongo-api-response-studio.repository';

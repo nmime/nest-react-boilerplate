@@ -3,6 +3,7 @@ import { mongodbAdapter } from 'better-auth/adapters/mongodb';
 import type { Db, MongoClient } from 'mongodb';
 import {
   AdminAuditLogRepositoryInjectToken,
+  ApiResponseStudioRepositoryInjectToken,
   AdminUserMutationRepositoryInjectToken,
   AuthLinkTokenRepositoryInjectToken,
   AuthLoginEventRepositoryInjectToken,
@@ -36,6 +37,7 @@ import {
 import { MongoAdminAuditLogRepository, MongoAdminUserMutationRepository } from './auth-mongo-admin.repository';
 import { MongoAuthLoginEventRepository } from './auth-mongo-analytics.repository';
 import { MongoProblemPresentationRepository } from './auth-mongo-problem-presentation.repository';
+import { MongoApiResponseStudioRepository } from './auth-mongo-api-response-studio.repository';
 
 const repositories = [
   MongoAuthUserRepository,
@@ -50,6 +52,7 @@ const repositories = [
   MongoAdminUserMutationRepository,
   MongoAuthLoginEventRepository,
   MongoProblemPresentationRepository,
+  MongoApiResponseStudioRepository,
 ];
 const ports = [
   { provide: AuthUserRepositoryInjectToken, useExisting: MongoAuthUserRepository },
@@ -64,6 +67,7 @@ const ports = [
   { provide: AdminUserMutationRepositoryInjectToken, useExisting: MongoAdminUserMutationRepository },
   { provide: AuthLoginEventRepositoryInjectToken, useExisting: MongoAuthLoginEventRepository },
   { provide: ProblemPresentationRepositoryInjectToken, useExisting: MongoProblemPresentationRepository },
+  { provide: ApiResponseStudioRepositoryInjectToken, useExisting: MongoApiResponseStudioRepository },
 ];
 const betterAuthDatabaseProvider = {
   provide: BetterAuthDatabaseProviderInjectToken,

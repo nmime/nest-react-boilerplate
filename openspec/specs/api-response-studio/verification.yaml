@@ -1,0 +1,153 @@
+version: 3
+capability: api-response-studio
+owners:
+  product: admin-platform-maintainers
+  verification: quality-engineering
+  security: security-maintainers
+requirements:
+  - id: REQ-API-RESPONSE-STUDIO-001
+    projects:
+      - '@app/common-problem-details'
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-admin-main'
+      - '@app/backend-postgres-main-auth'
+      - '@app/backend-mongodb-main-auth'
+      - '@app/frontend-api-support'
+    risk: critical
+    profiles:
+      - domain
+      - api
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Presentation validation and fail-closed capable-consumer behavior are precise contract and runtime invariants.
+      alternativeEvidence:
+        - vitest
+        - contract
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/admin/main/lib/src/application/api-response-studio.spec.ts
+        target: '@app/backend-feature-admin-main:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-support/lib/src/toast-runtime.spec.ts
+        target: '@app/frontend-api-support:test'
+        lanes: [pr, main]
+  - id: REQ-API-RESPONSE-STUDIO-002
+    projects:
+      - admin-app-api
+      - '@app/backend-feature-admin-main'
+      - '@app/backend-feature-admin-shared'
+    risk: critical
+    profiles:
+      - domain
+      - security
+      - api
+    cucumber:
+      disposition: not-applicable
+      reason: SSRF, redirect, timeout, media-type, and size defenses require deterministic adversarial unit and controller tests.
+      alternativeEvidence:
+        - security
+        - vitest
+    evidence:
+      - kind: security
+        file: libs/backend/feature/admin/main/lib/src/application/api-response-studio.spec.ts
+        target: '@app/backend-feature-admin-main:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts
+        target: '@app/backend-feature-admin-main:test'
+        lanes: [pr, main]
+  - id: REQ-API-RESPONSE-STUDIO-003
+    projects:
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-feature-admin-main'
+      - '@app/backend-postgres-main-auth'
+      - '@app/backend-mongodb-main-auth'
+    risk: critical
+    profiles:
+      - domain
+      - persistence
+    cucumber:
+      disposition: not-applicable
+      reason: Reference resolution, cycles, caps, idempotency, and soft deletion are parser and repository invariants.
+      alternativeEvidence:
+        - vitest
+        - component
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/admin/main/lib/src/application/api-response-studio.spec.ts
+        target: '@app/backend-feature-admin-main:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/repositories/api-response-studio.repository.spec.ts
+        target: '@app/backend-postgres-main-auth:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/mongodb/main/auth/lib/src/auth-mongo-api-response-studio.repository.spec.ts
+        target: '@app/backend-mongodb-main-auth:test'
+        lanes: [pr, main]
+  - id: REQ-API-RESPONSE-STUDIO-004
+    projects:
+      - admin-app-api
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-feature-admin-main'
+      - '@app/backend-postgres-main-auth'
+      - '@app/backend-mongodb-main-auth'
+      - '@app/common-api-contracts'
+      - '@app/frontend-api-client'
+    risk: critical
+    profiles:
+      - api
+      - persistence
+      - security
+    cucumber:
+      disposition: not-applicable
+      reason: Atomic bulk rollback, CAS, audit/outbox, export ordering, and generated compatibility require repository and contract evidence.
+      alternativeEvidence:
+        - contract
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts
+        target: '@app/backend-feature-admin-main:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/repositories/api-response-studio.repository.spec.ts
+        target: '@app/backend-postgres-main-auth:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/generated-api-client.spec.ts
+        target: '@app/frontend-api-client:test'
+        lanes: [pr, main]
+  - id: REQ-API-RESPONSE-STUDIO-005
+    projects:
+      - admin-app
+      - '@app/frontend-api-client'
+      - '@app/frontend-api-support'
+      - '@app/frontend-feature-admin-shared'
+      - '@app/frontend-runtime'
+      - '@app/frontend-ui-web'
+      - '@app/i18n-en-admin'
+      - '@app/i18n-ru-admin'
+    risk: high
+    profiles:
+      - domain
+      - journey
+      - accessibility
+    cucumber:
+      disposition: not-applicable
+      reason: Generated-client integration, filters, selection, dialogs, responsive table behavior, and accessible states require rendered app and browser evidence.
+      alternativeEvidence:
+        - vitest
+        - playwright
+    evidence:
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/problem-presentations/problem-presentations-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes: [runtime]

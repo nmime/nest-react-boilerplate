@@ -1085,7 +1085,7 @@ export interface components {
       figmaOnly: boolean;
       comments: string;
       texts: components['schemas']['ApiResponseStudioTextsDto'];
-      enumChoices: components['schemas']['ApiResponseStudioEnumChoiceDto'][];
+      enumChoices?: components['schemas']['ApiResponseStudioEnumChoiceDto'][];
       expectedRevision: number;
     };
     ResetApiResponseStudioResponseDto: {

@@ -4,7 +4,7 @@
   "admin.apiResponseStudio.viewer.example": "Снимок примера",
   "admin.apiResponseStudio.viewer.enums": "Варианты enum",
   "admin.apiResponseStudio.viewer.none": "Снимок отсутствует.",
-  "admin.apiResponseStudio.display.toast": "Toast",
+  "admin.apiResponseStudio.display.toast": "Всплывающее уведомление",
   "admin.apiResponseStudio.display.modal": "Модальное окно",
   "admin.apiResponseStudio.display.custom": "Особое",
   "admin.apiResponseStudio.display.silent": "Без уведомления",

@@ -332,19 +332,28 @@ describe('SafeOpenApiFetcher', () => {
       '10.0.0.1',
       '169.254.169.254',
       '192.168.1.1',
+      '100.64.0.1',
+      '192.0.0.9',
       '192.0.2.1',
       '198.18.0.1',
       '198.51.100.1',
       '203.0.113.1',
       '224.0.0.1',
       '::1',
+      '64:ff9b::1',
       '64:ff9b:1::1',
+      '100::1',
       '2001::1',
       '2001:2::1',
+      '2001:3::1',
+      '2001:4:112::1',
       '2001:10::1',
+      '2001:20::1',
+      '2001:30::1',
       '2001:db8::1',
       '2002::1',
       '3fff::1',
+      '5f00::1',
       'fc00::1',
       'fe80::1',
       'ff02::1',
@@ -494,6 +503,61 @@ describe('ApiResponseStudioService executable boundaries', () => {
     expect(repository.sync).not.toHaveBeenCalled();
   });
 
+  it('fetches every relative and transitive external document through the safe fetcher before persistence', async () => {
+    const rootUrl = 'https://api.example.com/spec/openapi.json';
+    const schemasUrl = 'https://api.example.com/spec/schemas.json';
+    const sharedUrl = 'https://api.example.com/shared.json';
+    const root = {
+      openapi: '3.1.0',
+      paths: {
+        '/v1/widgets': {
+          get: {
+            tags: ['Widgets'],
+            responses: {
+              '400': {
+                description: 'Invalid widget',
+                content: { 'application/json': { schema: { $ref: './schemas.json#/WidgetError' } } },
+              },
+            },
+          },
+        },
+      },
+    };
+    const schemas = { WidgetError: { $ref: '../shared.json#/WidgetError' } };
+    const shared = {
+      WidgetError: {
+        type: 'object',
+        properties: { code: { type: 'string', const: 'invalid-widget' } },
+      },
+    };
+    const repository = {
+      findSource: vi.fn(() => okAsync({ jsonUrl: rootUrl })),
+      listResponses: vi.fn(() => okAsync([])),
+      sync: vi.fn((input) => okAsync(input)),
+    };
+    const fetcher = {
+      fetchJson: vi.fn(async () => root),
+      fetchJsonReference: vi.fn(async (url: string) => {
+        if (url === schemasUrl) return schemas;
+        if (url === sharedUrl) return shared;
+        throw new Error(`unexpected external URL: ${url}`);
+      }),
+    };
+    const service = new ApiResponseStudioService(repository as never, fetcher as never);
+
+    const result = await service.sync({
+      tenantId: 'tenant-1',
+      sourceId: 'source-1',
+      expectedRevision: 1,
+      actorUserId: 'actor-1',
+    });
+
+    expect(result.isOk()).toBe(true);
+    expect(fetcher.fetchJson).toHaveBeenCalledWith(rootUrl);
+    expect(fetcher.fetchJsonReference.mock.calls).toEqual([[schemasUrl], [sharedUrl]]);
+    expect(repository.sync).toHaveBeenCalledOnce();
+  });
+
   it('loads all saved rows and applies the latest persisted enum choices to capped synchronization', async () => {
     const updatedAt = new Date('2026-08-28T10:00:00.000Z');
     const persisted = (revision: number, enabledValues: readonly string[]) => ({
@@ -599,6 +663,16 @@ describe('ApiResponseStudioService executable boundaries', () => {
     });
     expect(accepted._unsafeUnwrap()).toMatchObject({ comments: 'reviewed', tenantId: 'tenant-1' });
 
+    const legacyAccepted = await service.updateResponse({
+      tenantId: 'tenant-1',
+      id: 'row-1',
+      expectedRevision: 3,
+      actorUserId: 'actor-1',
+      presentation: valid,
+    });
+    expect(legacyAccepted.isOk()).toBe(true);
+    expect(repository.updateResponse.mock.calls[1]?.[0]).not.toHaveProperty('enumChoices');
+
     const rejected = await service.updateResponse({
       tenantId: 'tenant-1',
       id: 'row-1',
@@ -608,7 +682,7 @@ describe('ApiResponseStudioService executable boundaries', () => {
       enumChoices: [],
     });
     expect(rejected._unsafeUnwrapErr()).toMatchObject({ code: 'validation_error' });
-    expect(repository.updateResponse).toHaveBeenCalledOnce();
+    expect(repository.updateResponse).toHaveBeenCalledTimes(2);
   });
 
   it('exports active rows in stable-key order with deterministic content and rejects oversized output', async () => {

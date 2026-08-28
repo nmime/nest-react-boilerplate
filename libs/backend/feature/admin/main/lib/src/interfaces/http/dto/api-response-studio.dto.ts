@@ -113,7 +113,8 @@ export class SyncApiResponseStudioSourceDto {
   @ApiProperty() @IsInt() @Min(1) expectedRevision!: number;
 }
 export class UpdateApiResponseStudioResponseDto extends ApiResponseStudioPresentationDto {
-  @ApiProperty({ type: () => ApiResponseStudioEnumChoiceDto, isArray: true })
+  @ApiPropertyOptional({ type: () => ApiResponseStudioEnumChoiceDto, isArray: true })
+  @IsOptional()
   @IsArray()
   @ArrayMaxSize(100)
   @ValidateNested({ each: true })

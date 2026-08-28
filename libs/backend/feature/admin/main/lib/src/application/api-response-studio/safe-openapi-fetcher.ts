@@ -27,6 +27,10 @@ export interface SafeOpenApiFetcherOptions {
   readonly maxRedirects?: number;
 }
 
+// ipaddr.js deliberately assigns named ranges to every IANA special-purpose
+// prefix. Only ordinary unicast is eligible for outbound OpenAPI retrieval;
+// the explicit CIDRs below cover newer non-global allocations that older
+// ipaddr.js releases may still classify as unicast.
 const PublicAddressRanges = new Set(['unicast']);
 const ExplicitlyNonGlobalCidrs = [
   '192.0.0.0/24',

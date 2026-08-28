@@ -1,9 +1,9 @@
 {
-  "admin.apiResponseStudio.eyebrow": "API操作",
+  "admin.apiResponseStudio.eyebrow": "API 操作",
   "admin.apiResponseStudio.title": "API 响应工作室",
-  "admin.apiResponseStudio.description": "查看API响应范围，同步OpenAPI源，并控制每个响应在受支持客户端上的呈现方式。",
-  "admin.apiResponseStudio.readOnly": "只读权限",
-  "admin.apiResponseStudio.history.details": "修订数据",
-  "admin.apiResponseStudio.history.empty": "没有录制任何工作室更改。",
-  "admin.apiResponseStudio.history.pagination": "历史记录页面"
+  "admin.apiResponseStudio.description": "查看 API 响应覆盖情况、同步 OpenAPI 源，并控制每个响应在受支持客户端中的展示方式。",
+  "admin.apiResponseStudio.readOnly": "只读访问",
+  "admin.apiResponseStudio.history.details": "版本数据",
+  "admin.apiResponseStudio.history.empty": "尚未记录工作室更改。",
+  "admin.apiResponseStudio.history.pagination": "历史记录分页"
 }

@@ -71,7 +71,7 @@ const writeAccess = createAdminAccess({
 });
 const readAccess = createAdminAccess({ subject: 'reader', roles: ['reader'], permissions: ['admin:settings:read'] });
 
-const Providers = ({ children, locale = 'en' }: { children: ReactElement; locale?: 'en' | 'ru' }) => (
+const Providers = ({ children, locale = 'en' }: { children: ReactElement; locale?: 'en' | 'ru' | 'zh' }) => (
   <FrontendStateProvider initialLocale={locale}>
     <FrontendI18nProvider translations={adminFrontendTranslations}>
       <QueryClientProvider
@@ -102,7 +102,7 @@ const installApi = () => {
     ],
   });
 };
-const renderPage = (access = writeAccess, locale: 'en' | 'ru' = 'en') => {
+const renderPage = (access = writeAccess, locale: 'en' | 'ru' | 'zh' = 'en') => {
   installApi();
   return render(
     <Providers locale={locale}>
@@ -209,6 +209,14 @@ describe('API Response Studio', () => {
         undefined,
       ),
     );
+  });
+
+  it('renders the supported Chinese catalog without falling back to English page copy', async () => {
+    renderPage(readAccess, 'zh');
+    expect(await screen.findByRole('heading', { name: 'API 响应工作室' })).toBeTruthy();
+    expect(await screen.findByText('只读访问')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: '清单' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '导出' })).toBeTruthy();
   });
 
   it('keeps read-only RU administrators able to filter, inspect, export, and view history without mutation controls', async () => {

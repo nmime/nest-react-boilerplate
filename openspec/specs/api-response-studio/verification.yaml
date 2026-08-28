@@ -74,7 +74,7 @@ requirements:
         file: libs/backend/feature/admin/main/lib/src/application/api-response-studio.spec.ts
         target: '@app/backend-feature-admin-main:test'
         lanes: [pr, main]
-      - kind: component
+      - kind: vitest
         file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/repositories/api-response-studio.repository.spec.ts
         target: '@app/backend-postgres-main-auth:test'
         lanes: [pr, main]
@@ -102,7 +102,7 @@ requirements:
         file: libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts
         target: '@app/backend-feature-admin-main:test'
         lanes: [pr, main]
-      - kind: component
+      - kind: vitest
         file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/repositories/api-response-studio.repository.spec.ts
         target: '@app/backend-postgres-main-auth:test'
         lanes: [pr, main]

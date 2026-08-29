@@ -101,6 +101,9 @@ describe('PaymentsPostgresPersistence', () => {
     expect(transaction.flush).toHaveBeenCalledTimes(2);
     await expect(persistence.listPaymentRecords(tenantId)).resolves.toHaveLength(1);
     await expect(persistence.findPaymentRecord(paymentId)).resolves.toMatchObject({ id: paymentId });
+    await expect(persistence.findPaymentRecordByProviderReference('stripe', 'pi_1')).resolves.toMatchObject({
+      id: paymentId,
+    });
     await expect(persistence.listPaymentEvents(paymentId)).resolves.toMatchObject([{ id: 1, paymentId }]);
     entityManager.findOne.mockResolvedValueOnce(null);
     await expect(persistence.findPaymentRecord('missing')).resolves.toBeNull();
@@ -194,6 +197,94 @@ describe('PaymentsPostgresPersistence', () => {
     ).resolves.toMatchObject({ state: 'up' });
   });
 
+  it('claims new, finalized, in-flight, and resumable receipts under an advisory and row lock', async () => {
+    const fresh = new PaymentWebhookReceiptEntity({
+      id: 'receipt-fresh',
+      providerCode: 'stripe',
+      idempotencyKey: 'evt_fresh',
+      rawBody: '{}',
+      signatureValid: 'valid',
+      receivedAt: new Date('2026-08-26T00:00:10.000Z'),
+    });
+    const finalized = Object.assign(
+      new PaymentWebhookReceiptEntity({
+        id: 'receipt-final',
+        providerCode: 'stripe',
+        idempotencyKey: 'evt_final',
+        rawBody: '{}',
+        signatureValid: 'valid',
+      }),
+      { processingStatus: 'applied' as const },
+    );
+    const stale = Object.assign(
+      new PaymentWebhookReceiptEntity({
+        id: 'receipt-stale',
+        providerCode: 'stripe',
+        idempotencyKey: 'evt_stale',
+        rawBody: '{}',
+        signatureValid: 'valid',
+        receivedAt: new Date('2026-08-26T00:00:00.000Z'),
+      }),
+      { processingStatus: 'error' as const, statusCode: 502, error: 'offline' },
+    );
+    const existing = [fresh, finalized, stale];
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce([{ id: 'receipt-new' }])
+      .mockResolvedValue([]);
+    const transaction = {
+      getConnection: vi.fn(() => ({ execute })),
+      findOne: vi.fn(async () => existing.shift() ?? null),
+      persist: vi.fn(),
+      flush: vi.fn().mockResolvedValue(undefined),
+    };
+    const entityManager = {
+      transactional: vi.fn(async (callback: (em: typeof transaction) => Promise<unknown>) => callback(transaction)),
+    };
+    const persistence = persistenceWith(entityManager);
+    const input = {
+      providerCode: 'stripe',
+      idempotencyKey: 'evt_1',
+      rawBody: '{}',
+      signatureValid: 'valid' as const,
+      receivedAt: new Date('2026-08-26T00:00:10.000Z'),
+    };
+    const inflightBefore = new Date('2026-08-26T00:00:05.000Z');
+
+    vi.useFakeTimers();
+    vi.setSystemTime(input.receivedAt);
+    await expect(
+      persistence.claimWebhookReceipt({ ...input, receivedAt: undefined }, inflightBefore),
+    ).resolves.toMatchObject({ kind: 'claimed' });
+    vi.useRealTimers();
+    await expect(persistence.claimWebhookReceipt(input, inflightBefore)).resolves.toMatchObject({ kind: 'inflight' });
+    await expect(persistence.claimWebhookReceipt(input, inflightBefore)).resolves.toMatchObject({ kind: 'finalized' });
+    await expect(persistence.claimWebhookReceipt(input, inflightBefore)).resolves.toMatchObject({ kind: 'resumable' });
+    expect(entityManager.transactional).toHaveBeenLastCalledWith(expect.any(Function), {
+      propagation: 'required',
+      isolationLevel: 'read committed',
+      clear: true,
+    });
+    expect(execute).toHaveBeenCalledWith(
+      expect.stringContaining('on conflict ("provider_code", "idempotency_key") do nothing'),
+      expect.arrayContaining(['stripe', 'evt_1', '{}', 'valid']),
+      'all',
+    );
+    expect(transaction.findOne).toHaveBeenCalledWith(
+      PaymentWebhookReceiptEntity,
+      { providerCode: 'stripe', idempotencyKey: 'evt_1' },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+    expect(stale).toMatchObject({
+      processingStatus: 'pending',
+      statusCode: null,
+      error: null,
+      receivedAt: new Date('2026-08-26T00:00:00.000Z'),
+      claimedAt: new Date('2026-08-26T00:00:10.000Z'),
+      processedAt: null,
+    });
+  });
+
   it('inserts receipts and commits receipt-event-transition in one locked transaction', async () => {
     const row = payment({ status: 'processing' });
     const persisted: unknown[] = [];
@@ -205,7 +296,7 @@ describe('PaymentsPostgresPersistence', () => {
         }
       }),
       flush: vi.fn().mockResolvedValue(undefined),
-      findOne: vi.fn().mockResolvedValue(row),
+      findOne: vi.fn((entity: unknown) => Promise.resolve(entity === PaymentEntity ? row : null)),
     };
     const entityManager = {
       persist: vi.fn(),
@@ -233,6 +324,11 @@ describe('PaymentsPostgresPersistence', () => {
       transitionedAt: new Date('2026-08-26T00:00:00.000Z'),
     });
 
+    expect(transaction.findOne).toHaveBeenCalledWith(
+      PaymentWebhookReceiptEntity,
+      { id: undefined },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
     expect(transaction.findOne).toHaveBeenCalledWith(
       PaymentEntity,
       { id: paymentId },

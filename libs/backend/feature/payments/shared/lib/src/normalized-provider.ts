@@ -29,6 +29,8 @@ export function isNormalizedProviderStatus(value: string): value is NormalizedPr
 export interface NormalizedWebhookEvent {
   /** Our payment id when the provider carries it in the event. */
   readonly paymentIdHint?: string;
+  /** Provider-side payment id when the callback omits our own reference. */
+  readonly providerPaymentIdHint?: string;
   readonly providerStatusRaw: string;
   /** Exact decimal strings; amounts move only from provider-confirmed values. */
   readonly paidAmount?: string;

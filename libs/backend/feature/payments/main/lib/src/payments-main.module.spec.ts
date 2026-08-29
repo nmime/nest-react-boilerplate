@@ -4,10 +4,17 @@ import { Module } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { PaymentProviderPort, PaymentProvidersInjectToken } from '@app/backend-feature-payments-shared';
 import { PaymentsController } from './payments.controller';
+import { PaymentsWebhooksController } from './payments-webhooks.controller';
 import { PaymentsMainModule } from './payments-main.module';
 import { ProviderHttpClient } from './providers';
 import { PaymentsService } from './payments.service';
-import { PaymentProviderResolver, PaymentProviderResolverOptionsInjectToken, ProviderHealthService } from './service';
+import {
+  PaymentProviderResolver,
+  PaymentProviderResolverOptionsInjectToken,
+  PaymentsWebhooksService,
+  ProviderHealthService,
+  PaymentWebhookMetricsService,
+} from './service';
 
 @Module({})
 class StubPersistenceModule {}
@@ -21,13 +28,22 @@ describe('PaymentsMainModule', () => {
     expect(dynamicModule.providers).toEqual(
       expect.arrayContaining([
         PaymentsService,
+        PaymentWebhookMetricsService,
+        expect.objectContaining({ provide: PaymentsWebhooksService }),
         expect.objectContaining({ provide: ProviderHealthService }),
         expect.objectContaining({ provide: ProviderHttpClient }),
         expect.objectContaining({ provide: PaymentProviderResolver }),
       ]),
     );
     expect(dynamicModule.exports).toEqual(
-      expect.arrayContaining([PaymentsService, ProviderHealthService, ProviderHttpClient, PaymentProviderResolver]),
+      expect.arrayContaining([
+        PaymentsService,
+        PaymentsWebhooksService,
+        PaymentWebhookMetricsService,
+        ProviderHealthService,
+        ProviderHttpClient,
+        PaymentProviderResolver,
+      ]),
     );
   });
 
@@ -75,6 +91,17 @@ describe('PaymentsMainModule', () => {
         options: { ttlMs: number },
       ) => PaymentProviderResolver;
     };
+    const webhookService = providers.find(
+      (provider) =>
+        typeof provider === 'object' && 'provide' in provider && provider.provide === PaymentsWebhooksService,
+    ) as {
+      inject: unknown[];
+      useFactory: (
+        value: never,
+        providerResolver: PaymentProviderResolver,
+        metrics: PaymentWebhookMetricsService,
+      ) => PaymentsWebhooksService;
+    };
     const health = providersHealth.useFactory(persistence);
     const registry = registryProvider.useFactory(alpha);
 
@@ -88,7 +115,16 @@ describe('PaymentsMainModule', () => {
       PaymentProvidersInjectToken,
       PaymentProviderResolverOptionsInjectToken,
     ]);
-    expect(resolver.useFactory(persistence, health, registry, { ttlMs: 25 })).toBeInstanceOf(PaymentProviderResolver);
+    const providerResolver = resolver.useFactory(persistence, health, registry, { ttlMs: 25 });
+    expect(providerResolver).toBeInstanceOf(PaymentProviderResolver);
+    expect(webhookService.inject).toEqual([
+      expect.any(Function),
+      PaymentProviderResolver,
+      PaymentWebhookMetricsService,
+    ]);
+    expect(webhookService.useFactory(persistence, providerResolver, new PaymentWebhookMetricsService())).toBeInstanceOf(
+      PaymentsWebhooksService,
+    );
     expect(() => registryProvider.useFactory(alpha, new DuplicateAlphaProvider())).toThrow(
       'Duplicate payment provider code: alpha',
     );
@@ -126,7 +162,10 @@ describe('PaymentsMainModule', () => {
 
   it('keeps the HTTP surface out of a process that only needs the service', () => {
     expect(PaymentsMainModule.forRoot().controllers ?? []).toEqual([]);
-    expect(PaymentsMainModule.forRoot({ exposeHttp: true }).controllers).toEqual([PaymentsController]);
+    expect(PaymentsMainModule.forRoot({ exposeHttp: true }).controllers).toEqual([
+      PaymentsController,
+      PaymentsWebhooksController,
+    ]);
   });
 
   it('accepts the scheduler contract the capability wiring passes', () => {
@@ -137,7 +176,7 @@ describe('PaymentsMainModule', () => {
     });
 
     expect(dynamicModule.imports).toEqual([StubPersistenceModule]);
-    expect(dynamicModule.controllers).toEqual([PaymentsController]);
+    expect(dynamicModule.controllers).toEqual([PaymentsController, PaymentsWebhooksController]);
     expect(dynamicModule.providers).toEqual(
       expect.arrayContaining([PaymentsService, expect.objectContaining({ provide: ProviderHealthService })]),
     );

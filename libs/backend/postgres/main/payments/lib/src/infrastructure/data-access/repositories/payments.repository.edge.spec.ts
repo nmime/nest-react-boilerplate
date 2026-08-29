@@ -1,7 +1,13 @@
 // @requirements REQ-PAYMENT-PROVIDER-001 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
-import { PaymentEntity, PaymentEventEntity, PaymentProviderEntity, PaymentProviderHealthEntity } from '../entities';
+import {
+  PaymentEntity,
+  PaymentEventEntity,
+  PaymentProviderEntity,
+  PaymentProviderHealthEntity,
+  PaymentWebhookReceiptEntity,
+} from '../entities';
 import { PaymentsPostgresPersistence } from './payments.repository';
 
 const paymentId = '123e4567-e89b-12d3-a456-426614174000';
@@ -132,6 +138,50 @@ describe('PaymentsPostgresPersistence edge paths', () => {
     ).resolves.toMatchObject({ state: 'degraded', lastSuccessAt: null });
     await expect(persistence.findPaymentProviderHealth('missing')).resolves.toBeNull();
     await expect(persistence.listPaymentProviders()).resolves.toEqual([]);
+  });
+
+  it('rejects a claim when a conflict winner cannot be observed', async () => {
+    const transaction = {
+      getConnection: vi.fn(() => ({ execute: vi.fn().mockResolvedValue([]) })),
+      findOne: vi.fn().mockResolvedValue(null),
+    };
+    const persistence = persistenceWith({
+      transactional: vi.fn(async (callback: (em: typeof transaction) => Promise<unknown>) => callback(transaction)),
+    });
+
+    await expect(
+      persistence.claimWebhookReceipt(
+        { providerCode: 'stripe', idempotencyKey: 'evt_missing', rawBody: '{}', signatureValid: 'valid' },
+        new Date(),
+      ),
+    ).rejects.toThrow('Webhook receipt conflict winner is not visible.');
+  });
+
+  it('finds and updates webhook receipts, including nullable terminal metadata', async () => {
+    const row = new PaymentWebhookReceiptEntity({ ...receipt, id: 'receipt-edge' });
+    const missing = persistenceWith({ findOne: vi.fn().mockResolvedValue(null) });
+    await expect(missing.findWebhookReceipt('stripe', 'missing')).resolves.toBeNull();
+    await expect(missing.findPaymentRecordByProviderReference('stripe', 'missing')).resolves.toBeNull();
+    await expect(missing.updateWebhookReceipt('missing', { processingStatus: 'error' })).rejects.toThrow(
+      'Webhook receipt missing does not exist.',
+    );
+
+    const persistence = persistenceWith({
+      findOne: vi.fn().mockResolvedValue(row),
+      flush: vi.fn().mockResolvedValue(undefined),
+    });
+    await expect(persistence.findWebhookReceipt('stripe', 'evt_edge')).resolves.toMatchObject({ id: 'receipt-edge' });
+    await expect(
+      persistence.updateWebhookReceipt('receipt-edge', {
+        processingStatus: 'ignored',
+        statusCode: null,
+        error: null,
+        processedAt: null,
+      }),
+    ).resolves.toMatchObject({ processingStatus: 'ignored', statusCode: null, error: null, processedAt: null });
+    await expect(persistence.updateWebhookReceipt('receipt-edge', {})).resolves.toMatchObject({
+      processingStatus: 'ignored',
+    });
   });
 
   it.each([

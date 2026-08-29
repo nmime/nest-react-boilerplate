@@ -17,7 +17,9 @@ import {
   type PaymentRefundRecord,
   type PaymentsDto,
   PaymentsPersistence,
+  type PaymentWebhookReceiptClaimOutcome,
   type PaymentWebhookReceiptRecord,
+  type UpdatePaymentWebhookReceiptParams,
   type UpsertPaymentProviderHealthParams,
   type UpsertPaymentProviderParams,
 } from './index';
@@ -80,6 +82,17 @@ class InMemoryPaymentsPersistence extends PaymentsPersistence {
     return this.records.get(id) ?? null;
   }
 
+  override async findPaymentRecordByProviderReference(
+    providerCode: string,
+    providerPaymentId: string,
+  ): Promise<PaymentRecord | null> {
+    return (
+      [...this.records.values()].find(
+        (record) => record.providerCode === providerCode && record.providerPaymentId === providerPaymentId,
+      ) ?? null
+    );
+  }
+
   override async appendPaymentEvent(input: CreatePaymentEventParams): Promise<PaymentEventRecord> {
     const event: PaymentEventRecord = {
       id: this.events.length + 1,
@@ -119,7 +132,19 @@ class InMemoryPaymentsPersistence extends PaymentsPersistence {
   ): Promise<PaymentProviderHealthRecord> {
     throw new Error('not needed by port-shape test');
   }
+  override async findWebhookReceipt(): Promise<PaymentWebhookReceiptRecord | null> {
+    return null;
+  }
+  override async claimWebhookReceipt(): Promise<PaymentWebhookReceiptClaimOutcome> {
+    throw new Error('not needed by port-shape test');
+  }
   override async insertWebhookReceipt(_input: CreatePaymentWebhookReceiptParams): Promise<PaymentWebhookReceiptRecord> {
+    throw new Error('not needed by port-shape test');
+  }
+  override async updateWebhookReceipt(
+    _id: string,
+    _input: UpdatePaymentWebhookReceiptParams,
+  ): Promise<PaymentWebhookReceiptRecord> {
     throw new Error('not needed by port-shape test');
   }
   override async commitWebhookPaymentTransition(

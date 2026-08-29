@@ -118,6 +118,11 @@ describe('payments capability — catalog entry', () => {
           importPath:
             '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100300CreatePaymentWebhookReceipts.ts',
         },
+        {
+          importName: 'Migration20260827100000AddPaymentWebhookClaimLease',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260827100000AddPaymentWebhookClaimLease.ts',
+        },
       ],
     });
   });
@@ -226,6 +231,7 @@ describe('payments capability — committed workspace wiring list', () => {
       'Migration20260823100100CreatePayments',
       'Migration20260823100200CreatePaymentEvents',
       'Migration20260823100300CreatePaymentWebhookReceipts',
+      'Migration20260827100000AddPaymentWebhookClaimLease',
     ]) {
       assert.match(content, new RegExp(`import \\{ ${name} \\} from`, 'u'));
       assert.match(content, new RegExp(`\\{ class: ${name}, name: '${name}' \\}`, 'u'));

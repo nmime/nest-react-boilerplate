@@ -17,8 +17,7 @@ slash-escaped serialized body under `MD5(base64(body) + key)` (Heleket);
 HMAC-SHA256 over the raw body keyed by `sha256(token)` (CryptoBot);
 dual HMAC headers (CloudPayments); no documented scheme → result `none`
 (X-Rocket, YooKassa v3). An invalid signature MUST answer 400
-`webhook-signature-invalid` with a best-effort receipt row
-(`signature_valid='invalid'`) and a P1 alert.
+`webhook-signature-invalid` before any receipt or other persistence call.
 
 **Evidence profile:** domain, documentation
 
@@ -27,9 +26,10 @@ dual HMAC headers (CloudPayments); no documented scheme → result `none`
 - Verification is constant-time comparison where a scheme exists; the
   signature is always computed over the raw bytes, never a re-serialized
   parse.
-- Every verification outcome is recorded: `signature_valid` ∈
-  `valid|invalid|none` on the receipt, and the metric
-  `webhooks.received{provider,signature}`.
+- Valid and unsigned verification outcomes are recorded as
+  `signature_valid` ∈ `valid|none` on the durable receipt, and every
+  delivery outcome is emitted through production OpenTelemetry metrics.
+  Invalid signatures are metrics-only because they MUST create no receipt.
 - Unknown provider keys answer 400 `webhook-signature-invalid`
   (unroutable).
 
@@ -46,8 +46,7 @@ dual HMAC headers (CloudPayments); no documented scheme → result `none`
 - **WHEN** a delivery's `Stripe-Signature` does not verify under the
   endpoint secret, or its timestamp is more than 5 minutes old
 - **THEN** the ingress answers 400 `webhook-signature-invalid`
-- **AND** a receipt row with `signature_valid='invalid'` is recorded and
-  a P1 alert fires
+- **AND** no receipt, event, or payment row is written
 
 #### Scenario: An X-Rocket callback arrives
 
@@ -65,7 +64,7 @@ dual HMAC headers (CloudPayments); no documented scheme → result `none`
 
 ### Requirement: [REQ-PAYMENT-WEBHOOK-002] Every webhook is receipted before it acts and replays safely
 
-Each delivery SHALL insert a `payment_webhook_receipts` row keyed by
+Each verified delivery SHALL atomically claim a `payment_webhook_receipts` row keyed by
 `(provider_code, idempotency_key)` — storing `raw_body` exactly as
 received, `signature_valid`, and processing status — before any state
 change. A redelivery of an `applied` key MUST answer 200 with zero side
@@ -82,9 +81,9 @@ provider redelivers. A disabled provider MUST still accept its webhooks.
 - The unique constraint on `(provider_code, idempotency_key)` is the
   replay wall on every persistence axis — dedupe is database-level, safe
   across replicas.
-- The response is sent right after the receipt commits (target < 200 ms);
-  a provider re-fetch over its 3 s budget leaves the receipt `pending`
-  for the reconciler, and the provider's retry still gets 200.
+- A 200 response is sent only after the receipt and every required event
+  and payment transition are durable. A stale or failed claim is recovered
+  by one atomic owner; concurrent claimants observe the in-flight 409 wall.
 - Idempotency keys are provider-specific composites (X-Rocket body `id`;
   CryptoBot `invoice_id:paid_at`; Heleket `uuid:status:txid`;
   NOWPayments `payment_id:payment_status:purchase_id`; YooKassa
@@ -98,7 +97,8 @@ provider redelivers. A disabled provider MUST still accept its webhooks.
 - A provider retry after our 409 gets 200 once the first delivery
   applied — the rejection table exists so provider retry regimes
   (CryptoBot 17×/3d then auto-disable, YooKassa 7×/24h) always converge.
-- A DB failure during receipt insert commits nothing and answers 502.
+- A transient DB failure during claim, transition, or terminal receipt
+  persistence answers 502; success is never acknowledged before durability.
 
 #### Scenario: The same delivery arrives twice
 
@@ -142,40 +142,49 @@ signature — MUST always re-fetch, accepting finality only on
 
 **Evidence profile:** domain, documentation
 
+**U6 implementation boundary:** U6 enforces the universal inline `getStatus`
+re-fetch before a `paid` transition and returns 502 on any transient re-fetch
+or persistence failure so provider redelivery resumes the durable receipt.
+Provider-specific realized-amount comparison, X-Rocket `finalizedAt` mapping,
+P1/manual-queue escalation, and reconciler completion remain U7-U9 work and
+MUST NOT be claimed by U6 evidence.
+
 **Invariants:**
 
 - The double-check rule is universal: no provider's webhook body alone
   ever moves a payment to `paid`.
-- The re-fetch runs inline with a 3 s budget; over budget, the receipt
-  stays `pending` and the reconciler completes the transition (the
-  provider's retry still gets 200 via the applied-receipt path).
-- The re-fetch evidence (provider status, finality marker, realized
-  amount) lands in the `paid` transition's `provider_evidence`.
+- U6 accepts exactly zero or one normalized event per delivery. A provider
+  adapter that produces multiple events is rejected before receipt claim;
+  receipt-wide batch finalization is not partially acknowledged.
+- A re-fetch failure marks the claimed receipt `error`, answers 502, and
+  permits exactly one later redelivery to renew the claim lease.
+- Provider-specific re-fetch evidence eventually lands in the `paid`
+  transition's `provider_evidence` when U7-U9 adapters expose it.
 
 **Failure behavior:**
 
-- Amount mismatch between a signed webhook and its re-fetch: no
-  transition, P1, manual queue — the payment stays where it was.
-- A re-fetch that contradicts the webhook (provider no longer reports
-  paid) defers the transition to the reconciler's next evidence.
+- U6 treats any adapter-reported amount/finality contradiction as not-paid and
+  makes no transition; U7-U9 add explicit amount/finality fields and escalation.
+- A re-fetch timeout or transient provider failure answers 502. It never sends
+  200 for a non-durable or unresolved paid transition.
 
 #### Scenario: A signed webhook claims paid but the API disagrees
 
-- **WHEN** a Stripe webhook reports `payment_intent.succeeded` for an
-  amount the re-fetched PaymentIntent does not carry
+- **WHEN** a Stripe webhook reports `payment_intent.succeeded` but the
+  re-fetched provider status is not paid
 - **THEN** no transition to `paid` occurs
-- **AND** a P1 alert fires and the payment goes to the manual queue
+- **AND** the receipt is finalized without changing the payment
 
 #### Scenario: An unsigned X-Rocket webhook claims paid
 
 - **WHEN** a X-Rocket `payment_status_changed` reports
   `payment.status = 'paid'`
-- **THEN** the system re-fetches the invoice and its payments
-- **AND** the transition applies only if the re-fetch shows `paid` with
-  `finalizedAt != null`
+- **THEN** the system re-fetches through the provider adapter
+- **AND** U7's adapter MUST expose finality so only a finalized payment can map
+  to the normalized paid status
 
 #### Scenario: The re-fetch times out
 
-- **WHEN** the inline re-fetch exceeds its 3 s budget
-- **THEN** the receipt stays `pending` and the 200 is still sent
-- **AND** the reconciler completes the transition from the next poll
+- **WHEN** the inline re-fetch fails or exceeds its provider timeout
+- **THEN** the receipt is marked `error` and the ingress answers 502
+- **AND** a provider redelivery renews the claim lease and retries cleanly

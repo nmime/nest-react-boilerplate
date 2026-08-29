@@ -609,7 +609,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     // The scaffold's DDL rides with the capability so a workspace that never selected it does
     // not carry the table it will never write to. U3 replaces the scaffold migration with the
     // four production tables (payment_providers, payments, payment_events,
-    // payment_webhook_receipts).
+    // payment_webhook_receipts); U6 adds the claim-lease columns on the receipts table.
     providerMigrations: {
       postgres: [
         {
@@ -631,6 +631,11 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
           importName: 'Migration20260823100300CreatePaymentWebhookReceipts',
           importPath:
             '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100300CreatePaymentWebhookReceipts.ts',
+        },
+        {
+          importName: 'Migration20260827100000AddPaymentWebhookClaimLease',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260827100000AddPaymentWebhookClaimLease.ts',
         },
       ],
     },

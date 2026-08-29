@@ -125,6 +125,7 @@ export interface PaymentWebhookReceiptRecord {
   readonly error: string | null;
   readonly requestId: string | null;
   readonly receivedAt: Date;
+  readonly claimedAt: Date;
   readonly processedAt: Date | null;
 }
 
@@ -141,8 +142,22 @@ export interface CreatePaymentWebhookReceiptParams {
   readonly error?: string | null;
   readonly requestId?: string | null;
   readonly receivedAt?: Date;
+  readonly claimedAt?: Date;
   readonly processedAt?: Date | null;
 }
+
+export interface UpdatePaymentWebhookReceiptParams {
+  readonly processingStatus?: PaymentWebhookProcessingStatus;
+  readonly statusCode?: number | null;
+  readonly error?: string | null;
+  readonly processedAt?: Date | null;
+}
+
+export type PaymentWebhookReceiptClaimOutcome =
+  | { readonly kind: 'claimed'; readonly receipt: PaymentWebhookReceiptRecord }
+  | { readonly kind: 'finalized'; readonly receipt: PaymentWebhookReceiptRecord }
+  | { readonly kind: 'inflight'; readonly receipt: PaymentWebhookReceiptRecord }
+  | { readonly kind: 'resumable'; readonly receipt: PaymentWebhookReceiptRecord };
 
 export interface CommitWebhookPaymentTransitionParams {
   readonly receipt: CreatePaymentWebhookReceiptParams;
@@ -220,6 +235,10 @@ export abstract class PaymentsPersistence {
   abstract listPaymentRecords(tenantId: string): Promise<PaymentRecord[]>;
   abstract createPaymentRecord(input: CreatePaymentRecordParams): Promise<PaymentRecord>;
   abstract findPaymentRecord(id: string): Promise<PaymentRecord | null>;
+  abstract findPaymentRecordByProviderReference(
+    providerCode: string,
+    providerPaymentId: string,
+  ): Promise<PaymentRecord | null>;
   abstract appendPaymentEvent(input: CreatePaymentEventParams): Promise<PaymentEventRecord>;
   abstract listPaymentEvents(paymentId: string): Promise<PaymentEventRecord[]>;
 
@@ -230,7 +249,19 @@ export abstract class PaymentsPersistence {
   abstract findPaymentProviderHealth(providerCode: string): Promise<PaymentProviderHealthRecord | null>;
   abstract upsertPaymentProviderHealth(input: UpsertPaymentProviderHealthParams): Promise<PaymentProviderHealthRecord>;
 
+  abstract findWebhookReceipt(
+    providerCode: string,
+    idempotencyKey: string,
+  ): Promise<PaymentWebhookReceiptRecord | null>;
+  abstract claimWebhookReceipt(
+    input: CreatePaymentWebhookReceiptParams,
+    inflightBefore: Date,
+  ): Promise<PaymentWebhookReceiptClaimOutcome>;
   abstract insertWebhookReceipt(input: CreatePaymentWebhookReceiptParams): Promise<PaymentWebhookReceiptRecord>;
+  abstract updateWebhookReceipt(
+    id: string,
+    input: UpdatePaymentWebhookReceiptParams,
+  ): Promise<PaymentWebhookReceiptRecord>;
   abstract commitWebhookPaymentTransition(
     input: CommitWebhookPaymentTransitionParams,
   ): Promise<CommittedWebhookPaymentTransition>;

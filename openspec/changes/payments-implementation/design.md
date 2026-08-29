@@ -508,29 +508,30 @@ Controllers never hand-throw HTTP errors; they throw the repo's typed exceptions
 | `payment-refund-window-closed`        | 409                             | provider refund window passed (YooKassa 3 y, CP 1 y)                                          |
 | `payment-fx-unavailable`              | 503                             | no fiat-currency rate quote at creation (§2.3)                                                |
 | `payment-not-found`                   | 404                             | unknown id (customer + admin)                                                                 |
-| `webhook-signature-invalid`           | 400                             | webhook rejected — bad signature (also recorded + P1)                                         |
+| `webhook-signature-invalid`           | 400                             | webhook rejected before persistence — bad signature                                           |
 | `webhook-replayed`                    | 409                             | duplicate idempotency key while prior delivery still in-flight                                |
 | `webhook-stale`                       | 410                             | replay/stale event on terminal payment beyond freshness window                                |
-| `webhook-processing-error`            | 502                             | we could not persist the receipt (DB failure) — provider must redeliver                       |
+| `webhook-processing-error`            | 502                             | durable claim/transition/finalization failed — provider must redeliver                        |
 
 Per-provider mapping tables live in each adapter (X-Rocket's full 38-pair inventory in §4.1; Heleket `state:1` envelope → class by error text; Stripe error object `{error: {type, message}}` → class by `type`; unknown provider error → `server` class, retryable, mapped to `payment-provider-unavailable` after budget).
 
 ### 5.2 Webhook ingress — rejection cases + idempotent redelivery
 
-Routes: `POST /api/v1/webhooks/{x-rocket|cryptobot|heleket|nowpayments|yookassa|cloudpayments|stripe|adyen}` (+ `GET /api/v1/webhooks/cloudpayments` for its GET-format IPN). Public, **no auth guard** — signature-gated instead. A fastify raw-body hook stashes `req.rawBody` (exact bytes) before JSON parsing; **verification always runs over the raw body, first, before any parsing business**.
+Routes: `POST /api/v1/webhooks/{x-rocket|cryptobot|heleket|nowpayments|yookassa|cloudpayments|stripe|adyen}` (+ `GET /api/v1/webhooks/cloudpayments` for its GET-format IPN). Public, **no auth guard** — provider-verified instead (signed where the provider supplies a signature, mandatory status re-fetch where it does not). Fastify/Nest raw-body capture preserves exact POST bytes and the CloudPayments GET handler preserves the untouched raw query; **verification always runs over that raw input before parsing or persistence**.
 
 Pipeline (per delivery):
 
 1. Provider row lookup: unknown `:provider` key → 400 `webhook-signature-invalid` (unroutable). **A disabled provider still accepts webhooks** (in-flight payments must settle); disablement only fail-closes _new_ payments.
-2. `verifyWebhook(raw)`: `invalid` → **400** (receipt row `signature_valid='invalid'` best-effort, P1 alert, metric `webhooks.rejected{reason='bad_signature'}`); `none`/`valid` → continue.
-3. Idempotency on `(provider_code, idempotency_key)`:
-   - first time → insert receipt (`pending`) → continue;
-   - duplicate, prior `processing_status='applied'` → **200 immediately, zero side effects** (this is the _idempotent redelivery_ path — the provider stops retrying, nothing re-transitions, invariant 6);
-   - duplicate, prior `pending` (in-flight < 5 s) → **409 `webhook-replayed`** (provider retries later and gets 200);
-   - duplicate, prior `rejected|error` → reprocess (200 if applied, 502 if it fails again).
-4. Stale: event time (X-Rocket `timestamp`, Stripe `t`, Heleket payload time) older than **24 h** and the payment already terminal → **410 `webhook-stale`** (tells the provider's queue to drop it; receipt recorded `ignored`).
-5. Process: parse events → double-check via `getStatus` where the rule requires (invariant 2) → `transitionPayment` (same tx as receipt→`applied`) → **200**. Response is sent right after the receipt commits (target < 200 ms); the provider re-fetch is inline with a 3 s budget and, if it overruns, the receipt stays `pending` and the reconciler completes the transition — the provider's retry hits the duplicate path and still gets 200.
-6. If the receipt **cannot be persisted** (DB failure) → **502 `webhook-processing-error`** (provider redelivers; nothing was committed).
+2. `verifyWebhook(raw)`: `invalid` → **400** before any persistence (metric `webhooks.rejected{reason='bad_signature'}`); `none`/`valid` → continue.
+3. Exactly zero or one normalized event is accepted per delivery in U6; multi-event adapter output is rejected before claim so a receipt can never be partially finalized.
+4. Idempotency on `(provider_code, idempotency_key)`:
+   - first time → atomically claim a receipt (`pending`) → continue;
+   - duplicate, prior `processing_status='applied'|'ignored'` → **200 immediately, zero side effects** (the provider stops retrying and nothing re-transitions);
+   - duplicate, prior `pending` with `claimed_at` inside the 5 s lease → **409 `webhook-replayed`**;
+   - duplicate, prior `rejected|error` or expired `claimed_at` → one atomic recovery owner renews `claimed_at`; `received_at` remains the authoritative delivery time and concurrent claimants stay behind the in-flight wall.
+5. Stale: event time (X-Rocket `timestamp`, Stripe `t`, Heleket payload time) older than **24 h** and the payment already terminal → **410 `webhook-stale`** (tells the provider's queue to drop it; receipt recorded `ignored`).
+6. Process: parse the verified event → double-check via `getStatus` (invariant 2) → atomically persist receipt/event/payment completion → **200**. The ingress never acknowledges success while a required durable write is pending.
+7. If claim, provider-status recovery, transition, or terminal receipt persistence fails transiently → **502 `webhook-processing-error`** (provider redelivers; success was not acknowledged).
 
 All webhook responses: no secrets, `requestId` in the problem `instance`; metrics on every outcome; raw body stored for admin debugging (admin-only, audit-logged).
 
@@ -561,7 +562,7 @@ All webhook responses: no secrets, `requestId` in the problem `instance`; metric
 ### 5.6 Observability (OTel is already bootstrapped by `bootstrapNestApi`)
 
 - **Metrics**: counters `payments.created{provider,kind}`, `payments.state_change{from,to,provider}`, `webhooks.received{provider,signature}` (signature ∈ valid|invalid|none), `webhooks.rejected{provider,reason}` (reason ∈ bad_signature|replay|stale|parse|unknown_provider); histograms `webhooks.processing_seconds`, `providers.request_seconds{provider,endpoint,status_class}`; gauges `provider.health_state{provider,state}`, `payments.stuck{provider,age_bucket}`, `outbox.lag_seconds`.
-- **Alerts**: **P1** — any `signature_valid='invalid'` (attack or misconfiguration); stuck payments > 2 h; provider health `down` (auth class); master-key mismatch at boot; late-paid-after-close (invariant 8). **P2** — webhook rejection rate > 5 %/10 min; outbox lag > 5 min; provider `degraded` > 30 min; underpaid payment > 1 h; cryptobot webhook silence > 24 h with live invoices.
+- **Alerts**: **P1** — any `webhooks.rejected{reason='bad_signature'}` signal (attack or misconfiguration); stuck payments > 2 h; provider health `down` (auth class); master-key mismatch at boot; late-paid-after-close (invariant 8). **P2** — webhook rejection rate > 5 %/10 min; outbox lag > 5 min; provider `degraded` > 30 min; underpaid payment > 1 h; cryptobot webhook silence > 24 h with live invoices.
 - **Tracing**: CLS `requestId` propagates webhook → receipt → transition → outbox; OTel span per provider call (URL + status + provider code logged; **headers and bodies never logged**).
 
 ### 5.7 Rollback plan (provider registry)
@@ -645,7 +646,7 @@ Convention checks the feature must satisfy (they scan every generated-contract-i
   2. **refund** → refund confirmed (mock supports refund) → `refunded`;
   3. **replay** the same webhook id → 200, zero state change (idempotent redelivery);
   4. **disable** provider → create → 503 fail-closed;
-  5. **negative signature** → 400 + receipt `signature_valid='invalid'` + P1 metric;
+  5. **negative signature** → 400 + no receipt/event/payment writes + rejected metric;
   6. stale terminal event → 410; in-flight duplicate → 409;
   7. provider unreachable at create → 503 (health down path).
      Scenarios 1, 3, 4, 5 also run at lane pr (fast subset).

@@ -19,7 +19,9 @@ import {
   type PaymentRefundRecord,
   type PaymentsDto,
   PaymentsPersistence,
+  type PaymentWebhookReceiptClaimOutcome,
   type PaymentWebhookReceiptRecord,
+  type UpdatePaymentWebhookReceiptParams,
   type UpsertPaymentProviderHealthParams,
   type UpsertPaymentProviderParams,
 } from '@app/backend-feature-payments-shared';
@@ -133,6 +135,7 @@ function toPaymentWebhookReceiptRecord(entity: PaymentWebhookReceiptEntity): Pay
     error: entity.error,
     requestId: entity.requestId,
     receivedAt: entity.receivedAt,
+    claimedAt: entity.claimedAt,
     processedAt: entity.processedAt,
   };
 }
@@ -239,6 +242,14 @@ export class PaymentsPostgresPersistence extends PaymentsPersistence {
     return row ? toPaymentRecord(row) : null;
   }
 
+  async findPaymentRecordByProviderReference(
+    providerCode: string,
+    providerPaymentId: string,
+  ): Promise<PaymentRecord | null> {
+    const row = await this.entityManager.findOne(PaymentEntity, { providerCode, providerPaymentId });
+    return row ? toPaymentRecord(row) : null;
+  }
+
   async appendPaymentEvent(input: CreatePaymentEventParams): Promise<PaymentEventRecord> {
     const event = new PaymentEventEntity(input);
     this.entityManager.persist(event);
@@ -320,9 +331,101 @@ export class PaymentsPostgresPersistence extends PaymentsPersistence {
     return toPaymentProviderHealthRecord(health);
   }
 
+  async findWebhookReceipt(providerCode: string, idempotencyKey: string): Promise<PaymentWebhookReceiptRecord | null> {
+    const row = await this.entityManager.findOne(PaymentWebhookReceiptEntity, { providerCode, idempotencyKey });
+    return row ? toPaymentWebhookReceiptRecord(row) : null;
+  }
+
+  async claimWebhookReceipt(
+    input: CreatePaymentWebhookReceiptParams,
+    inflightBefore: Date,
+  ): Promise<PaymentWebhookReceiptClaimOutcome> {
+    return this.entityManager.transactional(
+      async (em) => {
+        const claimedAt = input.claimedAt ?? input.receivedAt ?? new Date();
+        const candidate = new PaymentWebhookReceiptEntity({ ...input, claimedAt });
+        const inserted = await em.getConnection().execute<{ id: string }[]>(
+          `insert into "payment_webhook_receipts" (
+             "id", "provider_code", "idempotency_key", "raw_body", "content_type",
+             "signature_valid", "signature_kind", "status_code", "processing_status",
+             "error", "request_id", "received_at", "claimed_at", "processed_at"
+           ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           on conflict ("provider_code", "idempotency_key") do nothing
+           returning "id"`,
+          [
+            candidate.id,
+            candidate.providerCode,
+            candidate.idempotencyKey,
+            candidate.rawBody,
+            candidate.contentType,
+            candidate.signatureValid,
+            candidate.signatureKind,
+            candidate.statusCode,
+            candidate.processingStatus,
+            candidate.error,
+            candidate.requestId,
+            candidate.receivedAt,
+            candidate.claimedAt,
+            candidate.processedAt,
+          ],
+          'all',
+        );
+        if (inserted.length === 1) {
+          return { kind: 'claimed', receipt: toPaymentWebhookReceiptRecord(candidate) };
+        }
+        const existing = await em.findOne(
+          PaymentWebhookReceiptEntity,
+          { providerCode: input.providerCode, idempotencyKey: input.idempotencyKey },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        if (!existing) {
+          throw new Error('Webhook receipt conflict winner is not visible.');
+        }
+        if (existing.processingStatus === 'applied' || existing.processingStatus === 'ignored') {
+          return { kind: 'finalized', receipt: toPaymentWebhookReceiptRecord(existing) };
+        }
+        if (existing.processingStatus === 'pending' && existing.claimedAt > inflightBefore) {
+          return { kind: 'inflight', receipt: toPaymentWebhookReceiptRecord(existing) };
+        }
+        existing.processingStatus = 'pending';
+        existing.statusCode = null;
+        existing.error = null;
+        existing.processedAt = null;
+        existing.claimedAt = claimedAt;
+        await em.flush();
+        return { kind: 'resumable', receipt: toPaymentWebhookReceiptRecord(existing) };
+      },
+      { propagation: 'required', isolationLevel: 'read committed', clear: true },
+    );
+  }
+
   async insertWebhookReceipt(input: CreatePaymentWebhookReceiptParams): Promise<PaymentWebhookReceiptRecord> {
     const receipt = new PaymentWebhookReceiptEntity(input);
     this.entityManager.persist(receipt);
+    await this.entityManager.flush();
+    return toPaymentWebhookReceiptRecord(receipt);
+  }
+
+  async updateWebhookReceipt(
+    id: string,
+    input: UpdatePaymentWebhookReceiptParams,
+  ): Promise<PaymentWebhookReceiptRecord> {
+    const receipt = await this.entityManager.findOne(PaymentWebhookReceiptEntity, { id });
+    if (!receipt) {
+      throw new Error(`Webhook receipt ${id} does not exist.`);
+    }
+    if (input.processingStatus !== undefined) {
+      receipt.processingStatus = input.processingStatus;
+    }
+    if (input.statusCode !== undefined) {
+      receipt.statusCode = input.statusCode;
+    }
+    if (input.error !== undefined) {
+      receipt.error = input.error;
+    }
+    if (input.processedAt !== undefined) {
+      receipt.processedAt = input.processedAt;
+    }
     await this.entityManager.flush();
     return toPaymentWebhookReceiptRecord(receipt);
   }
@@ -331,11 +434,16 @@ export class PaymentsPostgresPersistence extends PaymentsPersistence {
     input: CommitWebhookPaymentTransitionParams,
   ): Promise<CommittedWebhookPaymentTransition> {
     return this.entityManager.transactional(async (em) => {
-      // Receipt is intentionally inserted and flushed first. It still participates in this one
-      // transaction, so any later event/payment failure rolls the receipt back with everything else.
-      const receipt = new PaymentWebhookReceiptEntity(input.receipt);
-      em.persist(receipt);
-      await em.flush();
+      let receipt = await em.findOne(
+        PaymentWebhookReceiptEntity,
+        { id: input.receipt.id },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!receipt) {
+        receipt = new PaymentWebhookReceiptEntity(input.receipt);
+        em.persist(receipt);
+        await em.flush();
+      }
 
       const payment = await em.findOne(
         PaymentEntity,
@@ -362,6 +470,7 @@ export class PaymentsPostgresPersistence extends PaymentsPersistence {
       applyPaymentTransition(payment, input, at);
       receipt.processingStatus = 'applied';
       receipt.statusCode = input.statusCode ?? 200;
+      receipt.error = null;
       receipt.processedAt = at;
       await em.flush();
 

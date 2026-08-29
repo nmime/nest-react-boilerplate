@@ -30,6 +30,19 @@ describe("canonical endpoint manifest", () => {
       "libs/backend/feature/auth/main/lib/src/application/better-auth-runtime-contract.spec.ts",
     );
     assert.doesNotMatch(endpointManifestText(manifest), /uncovered/u);
+    const webhookRows = manifest.rows.filter((row) => row.path.startsWith('/api/v1/webhooks/'));
+    assert.equal(webhookRows.length, 50);
+    assert.ok(webhookRows.every((row) => row.authClassification === 'verified-provider'));
+    assert.ok(webhookRows.every((row) => row.coverageClassification === 'covered-component'));
+    assert.ok(
+      webhookRows.every(
+        (row) => row.testEvidence === 'libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts',
+      ),
+    );
+    assert.deepEqual(
+      [...new Set(webhookRows.map((row) => row.project))].sort(),
+      ['admin-app-api', 'auth-app-api', 'notification-consumer', 'notification-scheduler', 'user-app-api'],
+    );
   });
 
   it("rejects duplicate rows and missing source, evidence, or smoke classifications", () => {

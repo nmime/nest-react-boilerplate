@@ -19,6 +19,7 @@ export class PaymentWebhookReceiptEntity {
   error: string | null = null;
   requestId: string | null = null;
   receivedAt: Date = new Date();
+  claimedAt: Date = new Date();
   processedAt: Date | null = null;
 
   constructor(input?: CreatePaymentWebhookReceiptParams) {
@@ -37,6 +38,7 @@ export class PaymentWebhookReceiptEntity {
     this.error = input.error ?? null;
     this.requestId = input.requestId ?? null;
     this.receivedAt = input.receivedAt ?? new Date();
+    this.claimedAt = input.claimedAt ?? this.receivedAt;
     this.processedAt = input.processedAt ?? null;
   }
 }
@@ -57,6 +59,7 @@ export const PaymentWebhookReceiptEntitySchema = new EntitySchema<PaymentWebhook
     error: { type: 'text', nullable: true },
     requestId: { type: 'text', fieldName: 'request_id', nullable: true },
     receivedAt: { type: 'timestamptz', fieldName: 'received_at', onCreate: () => new Date() },
+    claimedAt: { type: 'timestamptz', fieldName: 'claimed_at', onCreate: () => new Date() },
     processedAt: { type: 'timestamptz', fieldName: 'processed_at', nullable: true },
   },
   uniques: [

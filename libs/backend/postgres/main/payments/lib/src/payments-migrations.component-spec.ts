@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005
+// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createHash, randomUUID } from 'node:crypto';
 import { MikroORM, type Options } from '@mikro-orm/core';
@@ -120,8 +120,8 @@ describe('payments postgres migrations against PostgreSQL', () => {
     }
   });
 
-  it('captures ledger checksums for all four migrations', () => {
-    expect(ledgerChecksums).toHaveLength(4);
+  it('captures ledger checksums for all five migrations', () => {
+    expect(ledgerChecksums).toHaveLength(5);
     for (const entry of ledgerChecksums) {
       expect(entry.checksum).toMatch(/^[0-9a-f]{16}$/);
     }
@@ -129,7 +129,7 @@ describe('payments postgres migrations against PostgreSQL', () => {
     process.stdout.write(`payments migration ledger checksums: ${JSON.stringify(ledgerChecksums)}\n`);
   });
 
-  it('forwards all 4, then full rollback, then re-applies on a fresh database', async () => {
+  it('forwards all 5, then full rollback, then re-applies on a fresh database', async () => {
     const current = orm!;
     const migrator = current.migrator;
 
@@ -183,6 +183,14 @@ describe('payments postgres migrations against PostgreSQL', () => {
     expect(uniqCheck.map((r) => r.indexname)).toEqual(
       expect.arrayContaining(['uq__payments__provider_code_id', 'uq__payments__provider_code_provider_payment_id']),
     );
+    const receiptLeaseColumns = await current.em
+      .getConnection()
+      .execute<{ column_name: string }[]>(
+        `select column_name from information_schema.columns where table_name = 'payment_webhook_receipts' and column_name = 'claimed_at'`,
+        [],
+        'all',
+      );
+    expect(receiptLeaseColumns).toEqual([{ column_name: 'claimed_at' }]);
 
     // Full rollback
     await migrator.down({ to: 0 });
@@ -258,6 +266,50 @@ describe('payments postgres migrations against PostgreSQL', () => {
         `insert into "payment_webhook_receipts" ("provider_code","idempotency_key","raw_body","signature_valid") values ('stripe','evt_123','{}','valid')`,
       ),
     ).rejects.toThrow(/uq__payment_webhook_receipts__provider_code_idempotency_key/);
+  });
+
+  it('serializes concurrent first claims and leases stale recovery without rewriting receipt time', async () => {
+    const current = orm!;
+    const first = new PaymentsPostgresPersistence(current.em.fork());
+    const second = new PaymentsPostgresPersistence(current.em.fork());
+    const idempotencyKey = `claim-${randomUUID()}`;
+    const receivedAt = new Date('2026-08-27T09:00:00.000Z');
+    const input = {
+      providerCode: 'stripe',
+      idempotencyKey,
+      rawBody: '{}',
+      signatureValid: 'valid' as const,
+      receivedAt,
+    };
+
+    const [left, right] = await Promise.all([
+      first.claimWebhookReceipt(input, new Date(receivedAt.getTime() - 5_000)),
+      second.claimWebhookReceipt(input, new Date(receivedAt.getTime() - 5_000)),
+    ]);
+    expect([left.kind, right.kind].sort((firstKind, secondKind) => firstKind.localeCompare(secondKind))).toEqual([
+      'claimed',
+      'inflight',
+    ]);
+
+    const original = left.kind === 'claimed' ? left.receipt : right.receipt;
+    await current.em
+      .getConnection()
+      .execute(
+        `update "payment_webhook_receipts" set "processing_status" = 'error', "status_code" = 502 where "id" = ?`,
+        [original.id],
+      );
+    const recoveredAt = new Date(receivedAt.getTime() + 60_000);
+    const recovered = await first.claimWebhookReceipt(
+      { ...input, claimedAt: recoveredAt },
+      new Date(recoveredAt.getTime() - 5_000),
+    );
+    expect(recovered).toMatchObject({
+      kind: 'resumable',
+      receipt: { receivedAt, claimedAt: recoveredAt, processingStatus: 'pending' },
+    });
+    await expect(
+      second.claimWebhookReceipt({ ...input, claimedAt: recoveredAt }, new Date(recoveredAt.getTime() - 5_000)),
+    ).resolves.toMatchObject({ kind: 'inflight' });
   });
 
   it('binds the shared port to the real repository and persists provider, payment, event, refund, and health rows', async () => {

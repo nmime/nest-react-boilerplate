@@ -6,13 +6,16 @@ import {
   PaymentsPersistence,
 } from '@app/backend-feature-payments-shared';
 import { PaymentsController } from './payments.controller';
+import { PaymentsWebhooksController } from './payments-webhooks.controller';
 import { PaymentsService } from './payments.service';
 import { ProviderHttpClient } from './providers';
 import {
   PaymentProviderResolver,
   PaymentProviderResolverOptionsInjectToken,
+  PaymentsWebhooksService,
   ProviderHealthService,
   type PaymentProviderResolverOptions,
+  PaymentWebhookMetricsService,
 } from './service';
 
 export interface PaymentsMainModuleOptions {
@@ -44,9 +47,19 @@ export class PaymentsMainModule {
     return {
       module: PaymentsMainModule,
       imports: options.imports ?? [],
-      controllers: options.exposeHttp === true ? [PaymentsController] : [],
+      controllers: options.exposeHttp === true ? [PaymentsController, PaymentsWebhooksController] : [],
       providers: [
         PaymentsService,
+        PaymentWebhookMetricsService,
+        {
+          provide: PaymentsWebhooksService,
+          useFactory: (
+            persistence: PaymentsPersistence,
+            resolver: PaymentProviderResolver,
+            metrics: PaymentWebhookMetricsService,
+          ): PaymentsWebhooksService => new PaymentsWebhooksService(persistence, resolver, metrics),
+          inject: [PaymentsPersistence, PaymentProviderResolver, PaymentWebhookMetricsService],
+        },
         {
           provide: ProviderHealthService,
           useFactory: (persistence: PaymentsPersistence): ProviderHealthService =>
@@ -93,7 +106,14 @@ export class PaymentsMainModule {
           useValue: options.resolver ?? {},
         },
       ],
-      exports: [PaymentsService, ProviderHealthService, ProviderHttpClient, PaymentProviderResolver],
+      exports: [
+        PaymentsService,
+        PaymentsWebhooksService,
+        PaymentWebhookMetricsService,
+        ProviderHealthService,
+        ProviderHttpClient,
+        PaymentProviderResolver,
+      ],
     };
   }
 }

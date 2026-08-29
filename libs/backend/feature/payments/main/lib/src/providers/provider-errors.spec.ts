@@ -7,6 +7,10 @@ import {
   PaymentProviderRateLimitedException,
   PaymentProviderUnavailableException,
   providerProblemFromHttpError,
+  WebhookProcessingException,
+  WebhookReplayedException,
+  WebhookSignatureInvalidException,
+  WebhookStaleException,
 } from './provider-errors';
 
 describe('provider problem exceptions', () => {
@@ -32,6 +36,15 @@ describe('provider problem exceptions', () => {
       providerProblemType: code,
     });
     expect((mapped as InstanceType<typeof Expected>).cause).toBe(source);
+  });
+
+  it.each([
+    [WebhookSignatureInvalidException, 400, 'webhook-signature-invalid'],
+    [WebhookReplayedException, 409, 'webhook-replayed'],
+    [WebhookStaleException, 410, 'webhook-stale'],
+    [WebhookProcessingException, 502, 'webhook-processing-error'],
+  ] as const)('publishes %s with the exact webhook response contract', (ExceptionType, status, code) => {
+    expect(new ExceptionType().toProblemDetails()).toMatchObject({ status, code });
   });
 
   it('publishes retryAfterSeconds for an exhausted provider rate limit', () => {

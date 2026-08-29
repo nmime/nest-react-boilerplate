@@ -1,5 +1,7 @@
-import { Logger as LoggerImplementation } from '@nestjs/common';
-import { NestFactory as NestFactoryImplementation } from '@nestjs/core';
+import {
+  bootstrapNestApi as bootstrapNestApiImplementation,
+  resolveDefaultDevelopmentCorsOrigins as resolveDefaultDevelopmentCorsOriginsImplementation,
+} from '@app/backend-common-bootstrap';
 
-export const Logger = LoggerImplementation;
-export const NestFactory = NestFactoryImplementation;
+export const bootstrapNestApi = bootstrapNestApiImplementation;
+export const resolveDefaultDevelopmentCorsOrigins = resolveDefaultDevelopmentCorsOriginsImplementation;

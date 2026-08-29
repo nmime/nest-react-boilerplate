@@ -4,6 +4,7 @@ import { Migration20260823100000CreatePaymentProviders } from './Migration202608
 import { Migration20260823100100CreatePayments } from './Migration20260823100100CreatePayments';
 import { Migration20260823100200CreatePaymentEvents } from './Migration20260823100200CreatePaymentEvents';
 import { Migration20260823100300CreatePaymentWebhookReceipts } from './Migration20260823100300CreatePaymentWebhookReceipts';
+import { Migration20260827100000AddPaymentWebhookClaimLease } from './Migration20260827100000AddPaymentWebhookClaimLease';
 import { paymentsMigrations } from './index';
 
 function renderUp(migration: { addSql(sql: string): void; up(): void }): string {
@@ -102,6 +103,7 @@ describe('payments postgres migrations', () => {
       renderUp(new Migration20260823100100CreatePayments(undefined as never, undefined as never)),
       renderUp(new Migration20260823100200CreatePaymentEvents(undefined as never, undefined as never)),
       renderUp(new Migration20260823100300CreatePaymentWebhookReceipts(undefined as never, undefined as never)),
+      renderUp(new Migration20260827100000AddPaymentWebhookClaimLease(undefined as never, undefined as never)),
     ].join('\n');
 
     for (const fragment of fragments) {
@@ -145,6 +147,7 @@ describe('payments postgres migrations', () => {
       renderUp(new Migration20260823100100CreatePayments(undefined as never, undefined as never)),
       renderUp(new Migration20260823100200CreatePaymentEvents(undefined as never, undefined as never)),
       renderUp(new Migration20260823100300CreatePaymentWebhookReceipts(undefined as never, undefined as never)),
+      renderUp(new Migration20260827100000AddPaymentWebhookClaimLease(undefined as never, undefined as never)),
     ].join('\n');
     // Every timestamp column must be timestamptz
     expect(allSql).not.toMatch(/\btimestamp\b(?!tz)/);
@@ -157,6 +160,7 @@ describe('payments postgres migrations', () => {
       renderUp(new Migration20260823100100CreatePayments(undefined as never, undefined as never)),
       renderUp(new Migration20260823100200CreatePaymentEvents(undefined as never, undefined as never)),
       renderUp(new Migration20260823100300CreatePaymentWebhookReceipts(undefined as never, undefined as never)),
+      renderUp(new Migration20260827100000AddPaymentWebhookClaimLease(undefined as never, undefined as never)),
     ].join('\n');
     const names = [...allSql.matchAll(/"((?:pk|uq|ix|ck|fk)__[a-z_]+)"/gu)].map(([, name]) => name ?? '');
     expect(names.length).toBeGreaterThan(0);
@@ -198,16 +202,28 @@ describe('payments postgres migrations', () => {
     }
   });
 
-  it('registers all four migrations for tooling in timestamp order', () => {
+  it('adds a reversible claim-lease column and replaces the pending-age index', () => {
+    const migration = new Migration20260827100000AddPaymentWebhookClaimLease(undefined as never, undefined as never);
+    const up = renderUp(migration);
+    const down = renderDown(migration);
+    expect(up).toContain('add column "claimed_at" timestamptz null');
+    expect(up).toContain('set "claimed_at" = "received_at"');
+    expect(up).toContain('processing_status_claimed_at');
+    expect(down).toContain('processing_status_received_at');
+    expect(down).toContain('drop column "claimed_at"');
+  });
+
+  it('registers all five migrations for tooling in timestamp order', () => {
     expect(paymentsMigrations).toEqual([
       Migration20260823100000CreatePaymentProviders,
       Migration20260823100100CreatePayments,
       Migration20260823100200CreatePaymentEvents,
       Migration20260823100300CreatePaymentWebhookReceipts,
+      Migration20260827100000AddPaymentWebhookClaimLease,
     ]);
     // Names must be lexicographically ordered (timestamp order)
     const names = paymentsMigrations.map((m) => m.name);
     expect([...names].sort((left, right) => left.localeCompare(right))).toEqual(names);
-    expect(new Set(names).size).toBe(4);
+    expect(new Set(names).size).toBe(5);
   });
 });

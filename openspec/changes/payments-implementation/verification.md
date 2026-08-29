@@ -1,87 +1,83 @@
 ## Evidence Policy
 
-The five payments projects are capability-owned by exactly three
-capabilities — ordering, providers, webhooks — one concern per directory,
-because the three have distinct owners of failure. The precise file,
-target/script, lane, owner, profile, and risk mapping is canonical in each
-durable capability's `verification.yaml` (version 3). High-risk
-requirements (REQ-PAYMENT-ORDER-001, REQ-PAYMENT-PROVIDER-002,
-REQ-PAYMENT-WEBHOOK-002) carry product owner `runtime-maintainers` and an
-independent verification owner `backend-maintainers`, as required.
+The five payments projects are capability-owned by exactly three capabilities —
+ordering, providers, and webhooks — because the three have distinct owners of
+failure. The canonical file, target/script, lane, owner, profile, and risk
+mapping lives in each durable capability's version-3 `verification.yaml`.
+High-risk requirements (`REQ-PAYMENT-ORDER-001`,
+`REQ-PAYMENT-PROVIDER-002`, and `REQ-PAYMENT-WEBHOOK-002`) keep independent
+product and verification owners.
 
-At this stage of the change (U1 shell) the sidecars carry scaffold-level
-evidence: the module/DTO/alias suites that exist in the five generated
-projects, re-pointed from the retired scaffold requirement at the owning
-requirement. Units U2–U9 replace each sidecar's evidence list with the real
-suites as they land (contract, component, playwright, security,
-operations); every evidence `file` must exist at merge time.
+Evidence is current through U6. U2 replaced the shared-domain scaffold with
+state-machine, money, FX, provider-port, and problem-type suites. U3 and U4
+added live PostgreSQL and MongoDB persistence evidence. U5 added resolver,
+health, and transport policy evidence. U6 adds raw HTTP ingress, exact RFC 9457
+response coverage, replay and recovery service coverage, production
+OpenTelemetry metrics, database claim-race component tests, and crash recovery.
+The mock-provider full-stack journey and real provider adapter fixtures remain
+planned for U7-U10 and are not claimed here.
 
 ## Requirement Evidence
 
-| Requirement                | Risk   | U1 evidence (scaffold-level)                                                         | U2+ evidence owners                                                                 |
-| -------------------------- | ------ | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| `REQ-PAYMENT-ORDER-001`    | high   | shared/main/admin scaffold suites + spec.md                                          | state-machine matrix vitest (shared), admin override specs                          |
-| `REQ-PAYMENT-ORDER-002`    | normal | shared alias suite + spec.md                                                         | payment-money + fx-snapshot vitest (shared)                                         |
-| `REQ-PAYMENT-ORDER-003`    | normal | shared port suite, main controller suite, postgres + mongo scaffold suites + spec.md | idempotency vitest, unique-index component (postgres)                               |
-| `REQ-PAYMENT-ORDER-004`    | normal | main service suite, postgres entity suite + spec.md                                  | reconciler/expiry vitest + component                                                |
-| `REQ-PAYMENT-PROVIDER-001` | normal | admin + postgres scaffold suites + spec.md                                           | resolver vitest (main), registry component                                          |
-| `REQ-PAYMENT-PROVIDER-002` | high   | admin module suite, postgres alias suite + spec.md                                   | envelope crypto vitest (main), redaction security spec (admin)                      |
-| `REQ-PAYMENT-PROVIDER-003` | normal | main alias suite + spec.md                                                           | 8 adapter contract vitest + X-Rocket spec-fixture contract test                     |
-| `REQ-PAYMENT-PROVIDER-004` | normal | postgres alias suite + spec.md                                                       | health-state vitest (main)                                                          |
-| `REQ-PAYMENT-PROVIDER-005` | normal | main service suite, postgres migration suite, mongo module/index suites + spec.md    | outbox component (postgres `component-test`), ordered-write component (mongo)       |
-| `REQ-PAYMENT-WEBHOOK-001`  | normal | main controller suite + spec.md                                                      | per-provider signature vitest incl. Heleket/NOWPayments/Stripe/Adyen golden samples |
-| `REQ-PAYMENT-WEBHOOK-002`  | high   | postgres entity suite, mongo component/collection/alias suites + spec.md             | receipt-replay component (postgres), rejection-table + redelivery vitest            |
-| `REQ-PAYMENT-WEBHOOK-003`  | normal | main module suite + spec.md                                                          | double-check vitest (main), journey scenario (playwright)                           |
+| Requirement                | Current evidence through U6                                                                                                                    | Later evidence                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `REQ-PAYMENT-ORDER-001`    | shared state-machine matrix and admin override suites                                                                                          | mutation/resilience                                      |
+| `REQ-PAYMENT-ORDER-002`    | payment-money and FX snapshot suites                                                                                                           | provider settlement fixtures                             |
+| `REQ-PAYMENT-ORDER-003`    | shared idempotency, PostgreSQL unique/atomic component, Mongo ordered-write component                                                          | full-stack ordering journey                              |
+| `REQ-PAYMENT-ORDER-004`    | transition persistence and current service behavior                                                                                            | U9 reconciler/expiry                                     |
+| `REQ-PAYMENT-PROVIDER-001` | resolver registry and policy suites                                                                                                            | U7/U8 adapter registry                                   |
+| `REQ-PAYMENT-PROVIDER-002` | credential boundary/problem coverage                                                                                                           | operator rotation/security evidence                      |
+| `REQ-PAYMENT-PROVIDER-003` | normalized port and HTTP policy suites                                                                                                         | eight U7/U8 adapter contracts                            |
+| `REQ-PAYMENT-PROVIDER-004` | provider health-state suites                                                                                                                   | runtime health probes                                    |
+| `REQ-PAYMENT-PROVIDER-005` | PostgreSQL outbox component and Mongo ordered-write/crash recovery                                                                             | U9 dispatch/reconciliation                               |
+| `REQ-PAYMENT-WEBHOOK-001`  | raw POST and CloudPayments raw-query HTTP fidelity; verification-before-persistence service assertions                                         | U7/U8 provider signature golden samples                  |
+| `REQ-PAYMENT-WEBHOOK-002`  | HTTP 400/409/410/502/200 problem/success bodies, PostgreSQL and Mongo claim races, recovery leases, unique replay walls, transition durability | mock-provider full-stack journey                         |
+| `REQ-PAYMENT-WEBHOOK-003`  | inline provider-status recheck before paid transition; transient recheck failure returns 502 and resumes                                       | U7/U8 amount/finality evidence; U9 escalation/reconciler |
 
 ## Independence Review
 
-A webhook is never trusted from its own body: verification is a separate
-security boundary (raw bytes, per-provider algorithm, constant-time
-compare), the transition is proven by the shared pure state-machine spec,
-and the receipt wall is proven at the database constraint level. The
-journey profile is proven by the fullstack-e2e Playwright suite against a
-mock provider (in-repo fastify fixture serving a deterministic API and
-signing webhooks per the configured scheme) at lane main — the backend-only
-capabilities carry no Cucumber acceptance profile. High-risk manifests
-reject identical product and verification owners at validation time.
+A webhook body is never trusted on its own. The controller preserves raw input,
+the provider port verifies before receipt persistence, and a paid event requires
+a separate provider-status re-fetch. PostgreSQL first claims use conflict-safe
+`INSERT ... ON CONFLICT DO NOTHING` followed by a locked winner read; MongoDB
+uses the unique replay index plus atomic compare-and-set recovery. Both axes keep
+an authoritative `receivedAt` and renew `claimedAt` on resume, so a stale retry
+has one owner and cannot immediately be double-claimed. U6 accepts at most one
+normalized event per delivery; multi-event adapter output is rejected before
+persistence rather than partially finalized.
 
 ## PR, Main, Nightly, and Runtime Lanes
 
-- PR: OpenSpec strict + trace validation, focused Vitest for impacted
-  requirements (domain), security (signature/replay) for webhook/credential
-  requirements, static tooling evidence.
-- Main: PR evidence plus contract (per-endpoint envelope + error codes) and
-  component/persistence evidence selected for changed requirements
-  (`@app/backend-postgres-main-payments:component-test`,
-  `@app/backend-mongodb-main-payments:component-test`), plus the
-  fullstack-e2e journey (scenarios 1, 3, 4, 5 as the fast subset).
-- Nightly: mutation (state machine + Heleket serializer seeds), property,
-  and full component/resilience evidence.
-- Runtime: fullstack-e2e scenarios 1–7 against the repository-owned stack
-  with the mock provider registered in the DB; provider credentials and
-  production telemetry remain release-environment evidence, never
-  fabricated in the repository.
+- PR: strict OpenSpec/trace validation, focused Vitest, static tooling evidence,
+  endpoint-manifest drift check, formatting, and closure validation.
+- Main: PR evidence plus PostgreSQL and MongoDB component tests for changed
+  persistence requirements.
+- Nightly: mutation/property/resilience evidence and the later full provider
+  matrix.
+- Runtime: U9/U10 mock-provider full-stack scenarios against the
+  repository-owned stack. Provider credentials and production telemetry remain
+  release-environment evidence and are never fabricated in repository tests.
 
 ## Runtime and Environment Boundary
 
-Container-backed component evidence self-skips where Docker is absent and
-reports the explicit prerequisite; real-DB tests use local PostgreSQL.
-Hosted forge executions occur only after the revision is pushed. An
-unavailable external environment is never converted into a passing
-source-code result.
+The U6 closure ran against fresh local PostgreSQL. A live MongoDB run was
+observed during implementation, while the final post-migration rerun honestly
+self-skipped after the local server became unavailable. The Mongo component
+harness can also use a configured URI or Testcontainers and self-skips with an
+explicit reason only when no server/runtime exists. Hosted
+forge evidence occurs only after a revision is pushed; U6 does not claim it.
 
 ## Residual Risk
 
-- Provider details absent from the verified sources (rate-limit numbers,
-  X-Rocket testnet trigger, Adyen reconciliation GET) are handled as
-  operator onboarding tasks with golden tests pinned from staging captures
-  before enablement — never assumed in code.
-- RU compliance decisions are operator-owned; the repository encodes only
-  the verified exclusions as row defaults and keeps X-Rocket disabled until
-  written support confirmation.
+- U7/U8 still own provider-specific signature algorithms, realized-amount
+  comparison, X-Rocket `finalizedAt` mapping, and normalized provider evidence.
+- U9 owns reconciler completion, manual-queue/P1 escalation, and the outbox
+  dispatcher.
+- U10 owns the mock-provider full-stack acceptance journey and operational
+  release evidence.
 
 ## Independent Verification Reviewer
 
-- Backend maintainers review all payments evidence changes; security
-  maintainers review credential envelope and webhook signature evidence;
-  platform operations reviews the runbook and fail-closed evidence.
+Backend maintainers review payments evidence changes; security maintainers
+review credential and signature evidence; platform operations reviews runbooks
+and fail-closed runtime evidence.

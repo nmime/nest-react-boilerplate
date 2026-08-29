@@ -29,6 +29,7 @@ export const EndpointAuthClassifications = [
   "session",
   "session-rbac",
   "signed-provider",
+  "verified-provider",
 ] as const;
 
 export type EndpointAuthClassification =
@@ -120,15 +121,24 @@ const controllerOwnerRules: ControllerOwnerRule[] = [
       "libs/backend/feature/audit-log/admin/lib/src/",
       "libs/backend/feature/auth/admin/lib/src/",
       "libs/backend/feature/notification/admin/lib/src/",
+      "libs/backend/feature/payments/main/lib/src/",
     ],
   },
   {
     project: "auth-app-api",
-    prefixes: ["libs/backend/feature/auth/main/lib/src/"],
+    prefixes: ["libs/backend/feature/auth/main/lib/src/", "libs/backend/feature/payments/main/lib/src/"],
   },
   {
     project: "user-app-api",
-    prefixes: ["libs/backend/feature/user/main/lib/src/"],
+    prefixes: ["libs/backend/feature/user/main/lib/src/", "libs/backend/feature/payments/main/lib/src/"],
+  },
+  {
+    project: "notification-consumer",
+    prefixes: ["libs/backend/feature/payments/main/lib/src/"],
+  },
+  {
+    project: "notification-scheduler",
+    prefixes: ["libs/backend/feature/payments/main/lib/src/"],
   },
   {
     project: "discord-app-api",
@@ -144,6 +154,8 @@ const httpApiProjects = [
   "admin-app-api",
   "auth-app-api",
   "discord-app-api",
+  "notification-consumer",
+  "notification-scheduler",
   "telegram-bot-api",
   "user-app-api",
 ] as const;
@@ -196,6 +208,16 @@ const evidenceRules: Array<{
     matches: (row) => row.kind === "openapi-json" || row.kind === "swagger-ui",
     classification: "covered-unit",
     evidence: "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+  },
+  {
+    matches: (row) => row.source.includes("payments-webhooks.controller.ts"),
+    classification: "covered-component",
+    evidence: "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
+  },
+  {
+    matches: (row) => row.source.includes("feature/payments/main/lib/src/payments.controller.ts"),
+    classification: "covered-unit",
+    evidence: "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
   },
   {
     matches: (row) => row.source.startsWith("libs/backend/common/health/"),
@@ -817,6 +839,7 @@ function classifyAuth(endpoint: DiscoveredEndpoint): EndpointAuthClassification 
   if (endpoint.path === "/api/auth/*") return "delegated-public-provider";
   if (endpoint.path.endsWith("/health/private")) return "private-network";
   if (/\/(?:health|live|ready)$/u.test(endpoint.path)) return "public";
+  if (endpoint.path.startsWith("/api/v1/webhooks/")) return "verified-provider";
   if (endpoint.path === "/discord/interactions" || endpoint.path === "/telegram/webhook") {
     return "signed-provider";
   }
@@ -897,7 +920,7 @@ function classifySmoke(
       expectedStatusClasses: ["2xx", "4xx"],
     };
   }
-  if (row.authClassification === "signed-provider") {
+  if (row.authClassification === "signed-provider" || row.authClassification === "verified-provider") {
     return {
       baseUrlEnv,
       classification: "signed-provider",
@@ -956,6 +979,8 @@ function baseUrlEnvironment(project: string): string {
     "auth-app-api": "AUTH_API_BASE_URL",
     "discord-app-api": "DISCORD_API_BASE_URL",
     "landing-app": "LANDING_APP_BASE_URL",
+    "notification-consumer": "NOTIFICATION_CONSUMER_BASE_URL",
+    "notification-scheduler": "NOTIFICATION_SCHEDULER_BASE_URL",
     "mobile-app": "MOBILE_APP_BASE_URL",
     "site-app": "SITE_APP_BASE_URL",
     "telegram-bot-api": "TELEGRAM_API_BASE_URL",

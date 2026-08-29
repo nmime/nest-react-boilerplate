@@ -14,31 +14,31 @@
 
 ## 2. Shared domain (U2)
 
-- [ ] 2.1 State machine + invariants 1–9 (`payment-state-machine.ts`,
+- [x] 2.1 State machine + invariants 1–9 (`payment-state-machine.ts`,
       transition-matrix spec covering every legal/illegal pair).
-- [ ] 2.2 `payment-money.ts` string↔ratio boundary (no-float discipline).
-- [ ] 2.3 `fx-snapshot.ts` quote selection, feeInclusive tagging,
+- [x] 2.2 `payment-money.ts` string↔ratio boundary (no-float discipline).
+- [x] 2.3 `fx-snapshot.ts` quote selection, feeInclusive tagging,
       missing-quote failure.
-- [ ] 2.4 `PaymentProviderPort` + normalized status/error types +
+- [x] 2.4 `PaymentProviderPort` + normalized status/error types +
       `PaymentProvidersInjectToken`.
-- [ ] 2.5 Register the 15 payments problem types in
+- [x] 2.5 Register the 15 payments problem types in
       `@app/common-problem-details`.
-- [ ] 2.6 Retire scaffold evidence in the sidecars; shared at 100%.
+- [x] 2.6 Retire scaffold evidence in the sidecars; shared at 100%.
 
 ## 3. Postgres persistence (U3)
 
-- [ ] 3.1 Entities + the 4 numbered migrations with `down()`.
-- [ ] 3.2 `PaymentsPostgresPersistence` bound to the shared port via
+- [x] 3.1 Entities + the 4 numbered migrations with `down()`.
+- [x] 3.2 `PaymentsPostgresPersistence` bound to the shared port via
       `useExisting`; health table + outbox queries.
-- [ ] 3.3 Component specs: forward + rollback on a clean container,
+- [x] 3.3 Component specs: forward + rollback on a clean container,
       unique-constraint replay, outbox `SKIP LOCKED`, atomicity.
 
 ## 4. Mongo reference axis (U4)
 
-- [ ] 4.1 Collections, validators, indexes (receipt unique index).
-- [ ] 4.2 Ordered-write repository (receipt → event → payment) + verifier +
+- [x] 4.1 Collections, validators, indexes (receipt unique index).
+- [x] 4.2 Ordered-write repository (receipt → event → payment) + verifier +
       `forRoot`; axis left unwired.
-- [ ] 4.3 Component specs (`@testcontainers/mongodb`); 100%.
+- [x] 4.3 Component specs (`@testcontainers/mongodb`); 100%.
 
 ## 5. Provider framework (U5)
 
@@ -53,11 +53,12 @@
 
 ## 6. Webhook ingress (U6)
 
-- [ ] 6.1 Raw-body hook, 8 POST routes + CP GET, verification dispatch.
-- [ ] 6.2 Receipt persistence + the 400/409/410/502/200 table + redelivery
-      idempotency.
-- [ ] 6.3 Metrics wiring; bad-signature → 400, replay → 409, stale-terminal
-      → 410, DB-failure → 502 proven by specs.
+- [x] 6.1 Raw-body hook, 8 POST routes + CP GET, verification dispatch.
+- [x] 6.2 Atomic receipt claiming + the finalized-200/in-flight-409/stale-410/
+      transient-502 table + redelivery recovery on PostgreSQL and MongoDB.
+- [x] 6.3 Production OpenTelemetry metrics; bad-signature → 400/no receipt,
+      finalized replay → 200/no dispatch, in-flight replay → 409,
+      stale-terminal → 410, DB-failure → 502 proven by HTTP and persistence specs.
 
 ## 7. Crypto adapters (U7)
 

@@ -15,12 +15,18 @@ requirements:
       - documentation
     cucumber:
       disposition: not-applicable
-      reason: Signature verification over raw bytes is an adversarial boundary asserted with per-provider golden samples, not a browser journey; the journey profile is proven by the fullstack-e2e playwright suite (mock provider) at lane main.
+      reason: Signature verification over raw bytes is an adversarial boundary asserted with per-provider golden samples, not a browser journey. A mock-provider full-stack journey remains planned for U9/U10 and is not claimed as U6 evidence.
       alternativeEvidence:
         - vitest
     evidence:
       - kind: vitest
-        file: libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts
+        file: libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/service/payments-webhooks.service.spec.ts
         target: '@app/backend-feature-payments-main:test'
         lanes:
           - pr
@@ -41,13 +47,31 @@ requirements:
       - documentation
     cucumber:
       disposition: not-applicable
-      reason: Receipt-first idempotency and the 400/409/410/502 rejection table are proven by replay and race assertions, not a browser journey; the journey profile is proven by the fullstack-e2e playwright suite (mock provider) at lane main.
+      reason: Receipt-first idempotency and the 400/409/410/502 rejection table are proven by replay and race assertions, not a browser journey. A mock-provider full-stack journey remains planned for U9/U10 and is not claimed as U6 evidence.
       alternativeEvidence:
         - vitest
     evidence:
       - kind: vitest
-        file: libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/entities/payments.entity.spec.ts
+        file: libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/service/payments-webhooks.service.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/repositories/payments.repository.spec.ts
         target: '@app/backend-postgres-main-payments:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/postgres/main/payments/lib/src/payments-migrations.component-spec.ts
+        target: '@app/backend-postgres-main-payments:component-test'
         lanes:
           - pr
           - main
@@ -58,13 +82,7 @@ requirements:
           - pr
           - main
       - kind: vitest
-        file: libs/backend/mongodb/main/payments/lib/src/payments-mongo.collection.spec.ts
-        target: '@app/backend-mongodb-main-payments:test'
-        lanes:
-          - pr
-          - main
-      - kind: vitest
-        file: libs/backend/mongodb/main/payments/lib/src/alias.spec.ts
+        file: libs/backend/mongodb/main/payments/lib/src/payments-mongo.repository.spec.ts
         target: '@app/backend-mongodb-main-payments:test'
         lanes:
           - pr
@@ -83,12 +101,18 @@ requirements:
       - documentation
     cucumber:
       disposition: not-applicable
-      reason: The no-paid-without-recheck rule is enforced between webhook ingress and provider API calls, a backend-only path; the journey profile is proven by the fullstack-e2e playwright suite (mock provider) at lane main.
+      reason: The no-paid-without-recheck rule is enforced between webhook ingress and provider API calls, a backend-only path. A mock-provider full-stack journey remains planned for U9/U10 and is not claimed as U6 evidence.
       alternativeEvidence:
         - vitest
     evidence:
       - kind: vitest
-        file: libs/backend/feature/payments/main/lib/src/payments-main.module.spec.ts
+        file: libs/backend/feature/payments/main/lib/src/service/payments-webhooks.service.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/service/webhook-metrics.service.spec.ts
         target: '@app/backend-feature-payments-main:test'
         lanes:
           - pr

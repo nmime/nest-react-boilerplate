@@ -30,6 +30,30 @@ export class PaymentProviderCapabilityException extends Exception({
   problemType: 'payment-provider-capability',
 }) {}
 
+export class WebhookSignatureInvalidException extends Exception({
+  name: 'WebhookSignatureInvalidException',
+  kind: ExceptionKind.Client,
+  problemType: 'webhook-signature-invalid',
+}) {}
+
+export class WebhookReplayedException extends Exception({
+  name: 'WebhookReplayedException',
+  kind: ExceptionKind.Client,
+  problemType: 'webhook-replayed',
+}) {}
+
+export class WebhookStaleException extends Exception({
+  name: 'WebhookStaleException',
+  kind: ExceptionKind.Client,
+  problemType: 'webhook-stale',
+}) {}
+
+export class WebhookProcessingException extends Exception({
+  name: 'WebhookProcessingException',
+  kind: ExceptionKind.Server,
+  problemType: 'webhook-processing-error',
+}) {}
+
 /** Converts the normalized provider failure into the public RFC 9457 exception. */
 export function providerProblemFromHttpError(error: ProviderHttpError): Error {
   const context = {

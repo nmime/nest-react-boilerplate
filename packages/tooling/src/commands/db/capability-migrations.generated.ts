@@ -10,6 +10,7 @@ import { Migration20260823100000CreatePaymentProviders } from '../../../../../li
 import { Migration20260823100100CreatePayments } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100100CreatePayments.ts';
 import { Migration20260823100200CreatePaymentEvents } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100200CreatePaymentEvents.ts';
 import { Migration20260823100300CreatePaymentWebhookReceipts } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100300CreatePaymentWebhookReceipts.ts';
+import { Migration20260827100000AddPaymentWebhookClaimLease } from '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260827100000AddPaymentWebhookClaimLease.ts';
 // </nrb-generated-capability-migration-imports>
 
 export const capabilityMigrations: readonly MigrationObject[] = [
@@ -18,5 +19,6 @@ export const capabilityMigrations: readonly MigrationObject[] = [
   { class: Migration20260823100100CreatePayments, name: 'Migration20260823100100CreatePayments' },
   { class: Migration20260823100200CreatePaymentEvents, name: 'Migration20260823100200CreatePaymentEvents' },
   { class: Migration20260823100300CreatePaymentWebhookReceipts, name: 'Migration20260823100300CreatePaymentWebhookReceipts' },
+  { class: Migration20260827100000AddPaymentWebhookClaimLease, name: 'Migration20260827100000AddPaymentWebhookClaimLease' },
   // </nrb-generated-capability-migration-entries>
 ];

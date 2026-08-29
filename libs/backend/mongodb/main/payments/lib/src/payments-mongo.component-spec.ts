@@ -162,12 +162,12 @@ describe('MongoDB payments persistence', () => {
 
   liveMongoTest('applies, re-verifies, and drift-checks the numbered migration', async (active) => {
     await expect(runMongoMigrations(active.database, paymentsMongoMigrations)).resolves.toEqual({
-      applied: ['20260823100000_initialize_payments'],
+      applied: ['20260823100000_initialize_payments', '20260827100000_add_payment_webhook_claim_lease'],
       skipped: [],
     });
     await expect(runMongoMigrations(active.database, paymentsMongoMigrations)).resolves.toEqual({
       applied: [],
-      skipped: ['20260823100000_initialize_payments'],
+      skipped: ['20260823100000_initialize_payments', '20260827100000_add_payment_webhook_claim_lease'],
     });
     await expect(verifyAppliedMongoMigrations(active.database, paymentsMongoMigrations)).resolves.toBeUndefined();
 
@@ -189,6 +189,47 @@ describe('MongoDB payments persistence', () => {
       expect.objectContaining({ name: PaymentWebhookReplayIndexName, unique: true }),
     );
   });
+
+  liveMongoTest(
+    'claims one concurrent winner and renews a stale lease without rewriting receipt time',
+    async (active) => {
+      await runMongoMigrations(active.database, paymentsMongoMigrations);
+      const first = new PaymentsMongoPersistence(active.database);
+      const second = new PaymentsMongoPersistence(active.database);
+      const receivedAt = new Date('2026-08-27T09:00:00.000Z');
+      const input = {
+        providerCode: 'stripe',
+        idempotencyKey: `claim-${randomUUID()}`,
+        rawBody: '{}',
+        signatureValid: 'valid' as const,
+        receivedAt,
+      };
+
+      const [left, right] = await Promise.all([
+        first.claimWebhookReceipt(input, new Date(receivedAt.getTime() - 5_000)),
+        second.claimWebhookReceipt(input, new Date(receivedAt.getTime() - 5_000)),
+      ]);
+      expect([left.kind, right.kind].sort((firstKind, secondKind) => firstKind.localeCompare(secondKind))).toEqual([
+        'claimed',
+        'inflight',
+      ]);
+
+      const original = left.kind === 'claimed' ? left.receipt : right.receipt;
+      await active.database
+        .collection<StringIdDocument>(PaymentWebhookReceiptsCollectionName)
+        .updateOne({ _id: original.id }, { $set: { processingStatus: 'error', statusCode: 502 } });
+      const recoveredAt = new Date(receivedAt.getTime() + 60_000);
+      await expect(
+        first.claimWebhookReceipt({ ...input, claimedAt: recoveredAt }, new Date(recoveredAt.getTime() - 5_000)),
+      ).resolves.toMatchObject({
+        kind: 'resumable',
+        receipt: { receivedAt, claimedAt: recoveredAt, processingStatus: 'pending' },
+      });
+      await expect(
+        second.claimWebhookReceipt({ ...input, claimedAt: recoveredAt }, new Date(recoveredAt.getTime() - 5_000)),
+      ).resolves.toMatchObject({ kind: 'inflight' });
+    },
+  );
 
   liveMongoTest('enforces validators and the receipt replay wall in the live database', async (active) => {
     await runMongoMigrations(active.database, paymentsMongoMigrations);
@@ -212,6 +253,7 @@ describe('MongoDB payments persistence', () => {
       error: null,
       requestId: null,
       receivedAt: new Date(),
+      claimedAt: new Date(),
       processedAt: null,
     };
     await active.database.collection<StringIdDocument>(PaymentWebhookReceiptsCollectionName).insertOne(receipt);

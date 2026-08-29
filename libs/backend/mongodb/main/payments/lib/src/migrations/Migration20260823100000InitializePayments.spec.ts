@@ -1,6 +1,7 @@
 // @requirements REQ-PAYMENT-ORDER-003
 import { describe, expect, it, vi } from 'vitest';
 import { Migration20260823100000InitializePayments } from './Migration20260823100000InitializePayments';
+import { Migration20260827100000AddPaymentWebhookClaimLease } from './Migration20260827100000AddPaymentWebhookClaimLease';
 import { paymentsMongoMigrations } from './index';
 
 const collectionMocks = vi.hoisted(() => ({
@@ -21,7 +22,10 @@ describe('Migration20260823100000InitializePayments', () => {
   it('declares the stable migration id, name, and exported ordering', () => {
     expect(Migration20260823100000InitializePayments.id).toBe('20260823100000_initialize_payments');
     expect(Migration20260823100000InitializePayments.name).toBe('InitializePayments');
-    expect(paymentsMongoMigrations).toEqual([Migration20260823100000InitializePayments]);
+    expect(paymentsMongoMigrations).toEqual([
+      Migration20260823100000InitializePayments,
+      Migration20260827100000AddPaymentWebhookClaimLease,
+    ]);
   });
 
   it('up() initializes all payment collections', async () => {

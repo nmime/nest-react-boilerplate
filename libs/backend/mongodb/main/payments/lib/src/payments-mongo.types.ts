@@ -65,6 +65,7 @@ export interface PaymentWebhookReceiptDocument {
   error: string | null;
   requestId: string | null;
   receivedAt: Date;
+  claimedAt: Date;
   processedAt: Date | null;
 }
 

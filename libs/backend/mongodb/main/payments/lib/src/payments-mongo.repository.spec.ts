@@ -15,6 +15,7 @@ function collection(overrides: Record<string, unknown> = {}) {
   return {
     find: vi.fn(() => cursor([])),
     findOne: vi.fn().mockResolvedValue(null),
+    findOneAndUpdate: vi.fn().mockResolvedValue(null),
     insertOne: vi.fn().mockResolvedValue({ acknowledged: true }),
     updateOne: vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
     updateMany: vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
@@ -78,6 +79,8 @@ describe('PaymentsMongoPersistence', () => {
         .mockResolvedValueOnce(row)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(row)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(row)
         .mockResolvedValueOnce(null),
     });
     const persistence = persistenceWith(allCollections({ payments }));
@@ -92,6 +95,10 @@ describe('PaymentsMongoPersistence', () => {
     ]);
     await expect(persistence.findPaymentRecord(paymentId)).resolves.toMatchObject({ id: paymentId });
     await expect(persistence.findPaymentRecord('missing')).resolves.toBeNull();
+    await expect(persistence.findPaymentRecordByProviderReference('stripe', 'pi_1')).resolves.toMatchObject({
+      id: paymentId,
+    });
+    await expect(persistence.findPaymentRecordByProviderReference('stripe', 'missing')).resolves.toBeNull();
   });
 
   it('creates a payment followed by its deterministic created event', async () => {
@@ -330,7 +337,113 @@ describe('PaymentsMongoPersistence', () => {
     ).resolves.toMatchObject({ id: expect.any(String), createdAt: expect.any(Date), confirmedAt: null });
   });
 
-  it('inserts a standalone webhook receipt', async () => {
+  it('claims new, finalized, in-flight, and resumable receipts with duplicate-key and CAS walls', async () => {
+    const stale = {
+      _id: 'receipt-stale',
+      providerCode: 'stripe',
+      idempotencyKey: 'evt_1',
+      rawBody: '{}',
+      contentType: null,
+      signatureValid: 'valid',
+      signatureKind: null,
+      statusCode: null,
+      processingStatus: 'pending',
+      error: null,
+      requestId: null,
+      receivedAt: new Date('2026-08-26T00:00:00.000Z'),
+      claimedAt: new Date('2026-08-26T00:00:00.000Z'),
+      processedAt: null,
+    };
+    const applied = { ...stale, _id: 'receipt-applied', processingStatus: 'applied' };
+    const pending = {
+      ...stale,
+      _id: 'receipt-pending',
+      receivedAt: new Date('2026-08-26T00:00:10.000Z'),
+      claimedAt: new Date('2026-08-26T00:00:10.000Z'),
+    };
+    const duplicate = Object.assign(new Error('duplicate key'), { code: 11000 });
+    const receipts = collection({
+      findOneAndUpdate: vi
+        .fn()
+        .mockResolvedValueOnce(stale)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null),
+      insertOne: vi
+        .fn()
+        .mockResolvedValueOnce({ acknowledged: true })
+        .mockRejectedValueOnce(duplicate)
+        .mockRejectedValueOnce(duplicate),
+      findOne: vi.fn().mockResolvedValueOnce(applied).mockResolvedValueOnce(pending),
+    });
+    const persistence = persistenceWith(allCollections({ payment_webhook_receipts: receipts }));
+    const input = {
+      providerCode: 'stripe',
+      idempotencyKey: 'evt_1',
+      rawBody: '{}',
+      signatureValid: 'valid' as const,
+      receivedAt: new Date('2026-08-26T00:00:10.000Z'),
+      claimedAt: new Date('2026-08-26T00:00:10.000Z'),
+    };
+    const inflightBefore = new Date('2026-08-26T00:00:05.000Z');
+
+    await expect(persistence.claimWebhookReceipt(input, inflightBefore)).resolves.toMatchObject({ kind: 'resumable' });
+    await expect(persistence.claimWebhookReceipt(input, inflightBefore)).resolves.toMatchObject({ kind: 'claimed' });
+    await expect(persistence.claimWebhookReceipt(input, inflightBefore)).resolves.toMatchObject({ kind: 'finalized' });
+    await expect(persistence.claimWebhookReceipt(input, inflightBefore)).resolves.toMatchObject({ kind: 'inflight' });
+    expect(receipts.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerCode: 'stripe',
+        idempotencyKey: 'evt_1',
+        $or: expect.arrayContaining([{ processingStatus: 'pending', claimedAt: { $lte: inflightBefore } }]),
+      }),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          processingStatus: 'pending',
+          claimedAt: new Date('2026-08-26T00:00:10.000Z'),
+        }),
+      }),
+      { returnDocument: 'after' },
+    );
+    expect(stale).toMatchObject({
+      receivedAt: new Date('2026-08-26T00:00:00.000Z'),
+      claimedAt: new Date('2026-08-26T00:00:00.000Z'),
+    });
+  });
+
+  it('propagates non-duplicate claim failures and a duplicate claim when the winner cannot be read', async () => {
+    const offline = persistenceWith(
+      allCollections({
+        payment_webhook_receipts: collection({
+          findOneAndUpdate: vi.fn().mockResolvedValue(null),
+          insertOne: vi.fn().mockRejectedValue(new Error('offline')),
+        }),
+      }),
+    );
+    await expect(
+      offline.claimWebhookReceipt(
+        { providerCode: 'stripe', idempotencyKey: 'evt_offline', rawBody: '{}', signatureValid: 'valid' },
+        now,
+      ),
+    ).rejects.toThrow('offline');
+
+    const duplicate = Object.assign(new Error('duplicate key'), { code: 11000 });
+    const receipts = collection({
+      findOneAndUpdate: vi.fn().mockResolvedValue(null),
+      insertOne: vi.fn().mockRejectedValue(duplicate),
+      findOne: vi.fn().mockResolvedValue(null),
+    });
+    const persistence = persistenceWith(allCollections({ payment_webhook_receipts: receipts }));
+
+    await expect(
+      persistence.claimWebhookReceipt(
+        { providerCode: 'stripe', idempotencyKey: 'evt_missing', rawBody: '{}', signatureValid: 'valid' },
+        now,
+      ),
+    ).rejects.toThrow('duplicate key');
+  });
+
+  it('inserts, finds, and updates standalone webhook receipts', async () => {
     const receipts = collection();
     const persistence = persistenceWith(allCollections({ payment_webhook_receipts: receipts }));
 
@@ -342,9 +455,47 @@ describe('PaymentsMongoPersistence', () => {
         rawBody: '{}',
         signatureValid: 'valid',
         receivedAt: now,
+        claimedAt: now,
       }),
     ).resolves.toMatchObject({ id: 'receipt-1', processingStatus: 'pending' });
     expect(receipts.insertOne).toHaveBeenCalledWith(expect.objectContaining({ _id: 'receipt-1' }));
+
+    const row = {
+      _id: 'receipt-1',
+      providerCode: 'stripe',
+      idempotencyKey: 'evt_1',
+      rawBody: '{}',
+      contentType: null,
+      signatureValid: 'valid',
+      signatureKind: null,
+      statusCode: 200,
+      processingStatus: 'ignored',
+      error: null,
+      requestId: null,
+      receivedAt: now,
+      claimedAt: now,
+      processedAt: now,
+    };
+    vi.mocked(receipts.findOne).mockResolvedValueOnce(row).mockResolvedValueOnce(null);
+    vi.mocked(receipts.findOneAndUpdate)
+      .mockResolvedValueOnce(row)
+      .mockResolvedValueOnce(row)
+      .mockResolvedValueOnce(null);
+
+    await expect(persistence.findWebhookReceipt('stripe', 'evt_1')).resolves.toMatchObject({ id: 'receipt-1' });
+    await expect(persistence.findWebhookReceipt('stripe', 'missing')).resolves.toBeNull();
+    await expect(
+      persistence.updateWebhookReceipt('receipt-1', {
+        processingStatus: 'ignored',
+        statusCode: 200,
+        error: null,
+        processedAt: now,
+      }),
+    ).resolves.toMatchObject({ processingStatus: 'ignored', statusCode: 200 });
+    await expect(persistence.updateWebhookReceipt('receipt-1', {})).resolves.toMatchObject({ id: 'receipt-1' });
+    await expect(persistence.updateWebhookReceipt('missing', {})).rejects.toThrow(
+      'Webhook receipt missing does not exist.',
+    );
   });
 
   it.each([
@@ -369,6 +520,7 @@ describe('PaymentsMongoPersistence', () => {
       error: null,
       requestId: null,
       receivedAt: now,
+      claimedAt: now,
       processedAt: now,
     };
     const event = {
@@ -428,6 +580,7 @@ describe('PaymentsMongoPersistence', () => {
         rawBody: '{}',
         signatureValid: 'valid',
         receivedAt: now,
+        claimedAt: now,
       },
       paymentId,
       toStatus,
@@ -472,6 +625,7 @@ describe('PaymentsMongoPersistence', () => {
       error: null,
       requestId: null,
       receivedAt: now,
+      claimedAt: now,
       processedAt: null,
     };
     const appliedReceipt = { ...existingReceipt, processingStatus: 'applied', statusCode: 200, processedAt: now };

@@ -25,7 +25,9 @@ export const PaymentsTenantCreatedIndexName = 'ix__payments__tenant_id_created_a
 export const PaymentEventsPaymentCreatedIndexName = 'ix__payment_events__payment_id_created_at';
 export const PaymentEventsOutboxIndexName = 'ix__payment_events__outbox';
 export const PaymentWebhookReplayIndexName = 'uq__payment_webhook_receipts__provider_code_idempotency_key';
-export const PaymentWebhookProcessingIndexName = 'ix__payment_webhook_receipts__processing_status_received_at';
+export const PaymentWebhookProcessingIndexName = 'ix__payment_webhook_receipts__processing_status_claimed_at';
+/** Pre-U6 lease index name; the claim-lease migration drops it before reapplying definitions. */
+export const PaymentWebhookProcessingLegacyIndexName = 'ix__payment_webhook_receipts__processing_status_received_at';
 export const PaymentProvidersTenantIndexName = 'uq__payment_providers__code_tenant_id';
 export const PaymentProvidersRoutingIndexName = 'ix__payment_providers__enabled_priority';
 export const PaymentRefundsPaymentIndexName = 'ix__payment_refunds__payment_id_created_at';
@@ -153,6 +155,7 @@ export const PaymentWebhookReceiptsCollectionValidator: Document = {
       'error',
       'requestId',
       'receivedAt',
+      'claimedAt',
       'processedAt',
     ],
     properties: {
@@ -168,6 +171,7 @@ export const PaymentWebhookReceiptsCollectionValidator: Document = {
       error: nullableString,
       requestId: nullableString,
       receivedAt: { bsonType: 'date' },
+      claimedAt: { bsonType: 'date' },
       processedAt: nullableDate,
     },
   },
@@ -305,7 +309,7 @@ export const PaymentEventsIndexes: Array<IndexDescription & CreateIndexesOptions
 
 export const PaymentWebhookReceiptsIndexes: Array<IndexDescription & CreateIndexesOptions> = [
   { name: PaymentWebhookReplayIndexName, key: { providerCode: 1, idempotencyKey: 1 }, unique: true },
-  { name: PaymentWebhookProcessingIndexName, key: { processingStatus: 1, receivedAt: 1 } },
+  { name: PaymentWebhookProcessingIndexName, key: { processingStatus: 1, claimedAt: 1 } },
 ];
 
 export const PaymentProvidersIndexes: Array<IndexDescription & CreateIndexesOptions> = [

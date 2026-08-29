@@ -17,6 +17,7 @@ describe('MongoDB payments public API', () => {
       initializePaymentsCollections: expect.any(Function),
       verifyPaymentsCollections: expect.any(Function),
       Migration20260823100000InitializePayments: expect.any(Object),
+      Migration20260827100000AddPaymentWebhookClaimLease: expect.any(Object),
       paymentsMongoMigrations: expect.any(Array),
     });
   });

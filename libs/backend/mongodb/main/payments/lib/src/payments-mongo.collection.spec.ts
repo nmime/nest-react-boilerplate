@@ -53,14 +53,24 @@ describe('payments MongoDB collections', () => {
         },
       },
     });
-    expect(
-      PaymentsMongoCollectionDefinitions.find(({ name }) => name === PaymentWebhookReceiptsCollectionName)?.indexes,
-    ).toContainEqual(
+    const receiptDefinition = PaymentsMongoCollectionDefinitions.find(
+      ({ name }) => name === PaymentWebhookReceiptsCollectionName,
+    );
+    expect(receiptDefinition?.validator).toMatchObject({
+      $jsonSchema: {
+        required: expect.arrayContaining(['receivedAt', 'claimedAt']),
+        properties: { claimedAt: { bsonType: 'date' } },
+      },
+    });
+    expect(receiptDefinition?.indexes).toContainEqual(
       expect.objectContaining({
         name: PaymentWebhookReplayIndexName,
         key: { providerCode: 1, idempotencyKey: 1 },
         unique: true,
       }),
+    );
+    expect(receiptDefinition?.indexes).toContainEqual(
+      expect.objectContaining({ key: { processingStatus: 1, claimedAt: 1 } }),
     );
     expect(
       PaymentsMongoCollectionDefinitions.find(({ name }) => name === PaymentEventsCollectionName)?.indexes,

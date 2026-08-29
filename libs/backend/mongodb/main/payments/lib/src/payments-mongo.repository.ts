@@ -16,7 +16,9 @@ import type {
   PaymentRecord,
   PaymentRefundRecord,
   PaymentsDto,
+  PaymentWebhookReceiptClaimOutcome,
   PaymentWebhookReceiptRecord,
+  UpdatePaymentWebhookReceiptParams,
   UpsertPaymentProviderHealthParams,
   UpsertPaymentProviderParams,
 } from '@app/backend-feature-payments-shared';
@@ -145,6 +147,7 @@ function toPaymentWebhookReceiptRecord(document: PaymentWebhookReceiptDocument):
     error: document.error,
     requestId: document.requestId,
     receivedAt: document.receivedAt,
+    claimedAt: document.claimedAt,
     processedAt: document.processedAt,
   };
 }
@@ -224,6 +227,7 @@ function newReceiptDocument(input: CreatePaymentWebhookReceiptParams): PaymentWe
     error: input.error ?? null,
     requestId: input.requestId ?? null,
     receivedAt: input.receivedAt ?? new Date(),
+    claimedAt: input.claimedAt ?? input.receivedAt ?? new Date(),
     processedAt: input.processedAt ?? null,
   };
 }
@@ -316,6 +320,14 @@ export class PaymentsMongoPersistence extends PaymentsPersistence {
     return row ? toPaymentRecord(row) : null;
   }
 
+  async findPaymentRecordByProviderReference(
+    providerCode: string,
+    providerPaymentId: string,
+  ): Promise<PaymentRecord | null> {
+    const row = await this.payments.findOne({ providerCode, providerPaymentId });
+    return row ? toPaymentRecord(row) : null;
+  }
+
   async appendPaymentEvent(input: CreatePaymentEventParams): Promise<PaymentEventRecord> {
     const event = newEventDocument(input);
     await this.events.insertOne(event);
@@ -395,10 +407,88 @@ export class PaymentsMongoPersistence extends PaymentsPersistence {
     return toPaymentProviderHealthRecord(document);
   }
 
+  async findWebhookReceipt(providerCode: string, idempotencyKey: string): Promise<PaymentWebhookReceiptRecord | null> {
+    const row = await this.receipts.findOne({ providerCode, idempotencyKey });
+    return row ? toPaymentWebhookReceiptRecord(row) : null;
+  }
+
+  async claimWebhookReceipt(
+    input: CreatePaymentWebhookReceiptParams,
+    inflightBefore: Date,
+  ): Promise<PaymentWebhookReceiptClaimOutcome> {
+    const candidate = newReceiptDocument(input);
+    const resumed = await this.receipts.findOneAndUpdate(
+      {
+        providerCode: input.providerCode,
+        idempotencyKey: input.idempotencyKey,
+        $or: [
+          { processingStatus: { $in: ['rejected', 'error'] } },
+          { processingStatus: 'pending', claimedAt: { $lte: inflightBefore } },
+        ],
+      },
+      {
+        $set: {
+          processingStatus: 'pending',
+          statusCode: null,
+          error: null,
+          processedAt: null,
+          claimedAt: candidate.claimedAt,
+        },
+      },
+      { returnDocument: 'after' },
+    );
+    if (resumed) {
+      return { kind: 'resumable', receipt: toPaymentWebhookReceiptRecord(resumed) };
+    }
+    try {
+      await this.receipts.insertOne(candidate);
+      return { kind: 'claimed', receipt: toPaymentWebhookReceiptRecord(candidate) };
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+      const existing = await this.receipts.findOne({
+        providerCode: input.providerCode,
+        idempotencyKey: input.idempotencyKey,
+      });
+      if (!existing) {
+        throw error;
+      }
+      if (existing.processingStatus === 'applied' || existing.processingStatus === 'ignored') {
+        return { kind: 'finalized', receipt: toPaymentWebhookReceiptRecord(existing) };
+      }
+      return { kind: 'inflight', receipt: toPaymentWebhookReceiptRecord(existing) };
+    }
+  }
+
   async insertWebhookReceipt(input: CreatePaymentWebhookReceiptParams): Promise<PaymentWebhookReceiptRecord> {
     const receipt = newReceiptDocument(input);
     await this.receipts.insertOne(receipt);
     return toPaymentWebhookReceiptRecord(receipt);
+  }
+
+  async updateWebhookReceipt(
+    id: string,
+    input: UpdatePaymentWebhookReceiptParams,
+  ): Promise<PaymentWebhookReceiptRecord> {
+    const set: Record<string, unknown> = {};
+    if (input.processingStatus !== undefined) {
+      set['processingStatus'] = input.processingStatus;
+    }
+    if (input.statusCode !== undefined) {
+      set['statusCode'] = input.statusCode;
+    }
+    if (input.error !== undefined) {
+      set['error'] = input.error;
+    }
+    if (input.processedAt !== undefined) {
+      set['processedAt'] = input.processedAt;
+    }
+    const result = await this.receipts.findOneAndUpdate({ _id: id }, { $set: set }, { returnDocument: 'after' });
+    if (!result) {
+      throw new Error(`Webhook receipt ${id} does not exist.`);
+    }
+    return toPaymentWebhookReceiptRecord(result);
   }
 
   async commitWebhookPaymentTransition(

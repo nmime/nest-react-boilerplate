@@ -47,6 +47,7 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
   }
 
   async resolve(
+    tenantId: string,
     targetType: NotificationTargetType,
     targetId: string,
     delivery: NotificationDeliveryRecord,
@@ -64,7 +65,7 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
         delivery.provider === NotificationDeliveryProvider.MailPace) &&
       delivery.channel === NotificationChannel.Email
     ) {
-      return this.resolveEmail(targetType, targetId);
+      return this.resolveEmail(tenantId, targetType, targetId);
     }
     if (delivery.channel !== NotificationChannel.Bot) {
       return null;
@@ -77,7 +78,7 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
       return null;
     }
 
-    const identitiesResult = await this.externalIdentityRepository.findByUser(targetId);
+    const identitiesResult = await this.externalIdentityRepository.findByUser(targetId, tenantId);
     if (identitiesResult.isErr()) {
       // A transient repository failure is not the same as "no recipient": throw so the
       // delivery is retried instead of being permanently marked as an incorrect target.
@@ -96,6 +97,7 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
   }
 
   private async resolveEmail(
+    tenantId: string,
     targetType: NotificationTargetType,
     targetId: string,
   ): Promise<ResolvedNotificationRecipient | null> {
@@ -105,12 +107,14 @@ export class NotificationRecipientResolverService extends NotificationRecipientR
     if (targetType !== NotificationTargetType.User) {
       return null;
     }
-    const userResult = await this.authUserRepository.findById(targetId);
+    const userResult = await this.authUserRepository.findById(targetId, tenantId);
     if (userResult.isErr()) {
       throw new NotificationRecipientLookupError(targetType, targetId, userResult.error.message);
     }
     const user = userResult.value;
-    return user?.email && isEmailAddress(user.email) ? { address: user.email, language: user.locale } : null;
+    return user?.email && isEmailAddress(user.email)
+      ? { address: user.email.trim().toLowerCase(), language: user.locale }
+      : null;
   }
 
   private isTelegramTarget(targetType: NotificationTargetType): boolean {

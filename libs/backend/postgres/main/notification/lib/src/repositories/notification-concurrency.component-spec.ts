@@ -1,4 +1,4 @@
-// @requirements REQ-NOTIFY-PERSISTENCE-005
+// @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005
 import { randomUUID } from 'node:crypto';
 import { MikroORM } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
@@ -11,7 +11,7 @@ import {
   startPostgresContainer,
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
-import { NotificationStatus, NotificationTargetType } from '@app/common-notifications';
+import { NotificationChannel, NotificationStatus, NotificationTargetType } from '@app/common-notifications';
 import {
   EmptyNotificationDeliveryClaimId,
   NotificationAudienceSnapshotEntitySchema,
@@ -59,6 +59,137 @@ describeIfDocker('notification persistence concurrency', () => {
   afterAll(async () => {
     await orm.close(true);
     await stopPostgresContainer(container);
+  });
+
+  it('isolates tenant templates while retaining the shared-template fallback', async () => {
+    const tenantA = randomUUID();
+    const tenantB = randomUUID();
+    const templateCode = `welcome-${randomUUID()}`;
+    const notifications = deliveryPersistence(orm.em.fork());
+    await notifications.upsertTemplate({
+      code: templateCode,
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Shared' } } }],
+    });
+    await notifications.upsertTemplate({
+      tenantId: tenantA,
+      code: templateCode,
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Tenant A' } } }],
+    });
+    await notifications.upsertTemplate({
+      tenantId: tenantB,
+      code: templateCode,
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Tenant B' } } }],
+    });
+
+    const tenantARecord = await notifications.create({
+      tenantId: tenantA,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-a-chat',
+      templateCode,
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+    const tenantC = randomUUID();
+    const tenantCRecord = await notifications.create({
+      tenantId: tenantC,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-c-chat',
+      templateCode,
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+
+    const templates = await rows<{ id: string; tenantId: string | null }>(
+      orm.em,
+      'select id, tenant_id as "tenantId" from notification_templates where code = ? order by tenant_id nulls first',
+      [templateCode],
+    );
+    expect(templates).toHaveLength(3);
+    const templateByTenant = new Map(templates.map((template) => [template.tenantId, template.id]));
+    expect(tenantARecord.template.id).toBe(templateByTenant.get(tenantA));
+    expect(tenantCRecord.template.id).toBe(templateByTenant.get(null));
+  });
+
+  it('uses a usable shared template when the tenant override is not publishable', async () => {
+    const tenantId = randomUUID();
+    const templateCode = `fallback-${randomUUID()}`;
+    const notifications = deliveryPersistence(orm.em.fork());
+    await notifications.upsertTemplate({
+      code: templateCode,
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Shared' } } }],
+    });
+    await orm.em.getConnection().execute(
+      `insert into notification_templates
+         (id, tenant_id, code, name, description, source, status, current_version_id, created_by, updated_by)
+       values (?, ?, ?, ?, null, 'code', 'draft', null, null, null)`,
+      [randomUUID(), tenantId, templateCode, templateCode],
+    );
+
+    const record = await notifications.create({
+      tenantId,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-chat',
+      templateCode,
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+
+    expect(record.template.channels[NotificationChannel.Bot]?.content).toEqual({ body: { en: 'Shared' } });
+  });
+
+  it('uses a shared template when the tenant version lacks a requested channel', async () => {
+    const tenantId = randomUUID();
+    const templateCode = `channel-fallback-${randomUUID()}`;
+    const notifications = deliveryPersistence(orm.em.fork());
+    await notifications.upsertTemplate({
+      code: templateCode,
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Shared' } } }],
+    });
+    await notifications.upsertTemplate({
+      tenantId,
+      code: templateCode,
+      channels: [
+        {
+          channel: NotificationChannel.Email,
+          content: { subject: { en: 'Tenant' }, body: { en: 'Tenant' } },
+        },
+      ],
+    });
+
+    const record = await notifications.create({
+      tenantId,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-chat',
+      templateCode,
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+
+    expect(record.template.channels[NotificationChannel.Bot]?.content).toEqual({ body: { en: 'Shared' } });
+    expect(record.template.channels[NotificationChannel.Email]).toBeUndefined();
+  });
+
+  it('rejects the request when neither tenant nor shared template supports the requested channel', async () => {
+    const tenantId = randomUUID();
+    const templateCode = `unusable-${randomUUID()}`;
+    const notifications = deliveryPersistence(orm.em.fork());
+    const emailChannel = {
+      channel: NotificationChannel.Email,
+      content: { subject: { en: 'Email' }, body: { en: 'Email' } },
+    } as const;
+    await notifications.upsertTemplate({ code: templateCode, channels: [emailChannel] });
+    await notifications.upsertTemplate({ tenantId, code: templateCode, channels: [emailChannel] });
+
+    await expect(
+      notifications.create({
+        tenantId,
+        targetType: NotificationTargetType.TelegramChat,
+        targetId: 'tenant-chat',
+        templateCode,
+        channels: [NotificationChannel.Bot],
+        inAppVisible: false,
+      }),
+    ).rejects.toThrow(`${templateCode} has no published version that supports the requested channels`);
   });
 
   it('materializes, activates, claims, and records one delivery under concurrent workers', async () => {

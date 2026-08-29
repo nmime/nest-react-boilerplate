@@ -1,12 +1,8 @@
 /* eslint-disable no-await-in-loop -- schema and index initialization is intentionally ordered */
 import type { Db, Document, IndexDescription } from 'mongodb';
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import {
-  assertCollectionDefinition,
-  MongoMigrationLedgerCollection,
-} from '../../../shared/lib/src/migrations/mongo-migration';
+import { assertCollectionDefinition } from '../../../shared/lib/src/migrations/mongo-migration';
 import { NotificationMongoCollections } from './notification-mongo.documents';
-import { verifyTenantOwnedMongoNotificationPersistence } from './notification-mongo.tenant-collections';
 
 const text = { bsonType: 'string' } as const;
 const nullableText = { bsonType: ['string', 'null'] } as const;
@@ -33,7 +29,7 @@ function validator(required: string[], properties: Record<string, unknown>): Doc
   };
 }
 
-export const NotificationMongoCollectionDefinitions: Array<{
+export const TenantOwnedNotificationMongoCollectionDefinitions: Array<{
   name: string;
   validator: Document;
   indexes: IndexDescription[];
@@ -69,7 +65,7 @@ export const NotificationMongoCollectionDefinitions: Array<{
       },
     ),
     indexes: [
-      { name: 'uq__notification_templates__code', key: { code: 1 }, unique: true },
+      { name: 'uq__notification_templates__tenant_code', key: { tenantId: 1, code: 1 }, unique: true },
       { name: 'ix__notification_templates__tenant_updated', key: { tenantId: 1, updatedAt: -1 } },
     ],
   },
@@ -116,6 +112,7 @@ export const NotificationMongoCollectionDefinitions: Array<{
     name: NotificationMongoCollections.notifications,
     validator: validator(
       [
+        'tenantId',
         'targetType',
         'targetId',
         'templateId',
@@ -128,6 +125,7 @@ export const NotificationMongoCollectionDefinitions: Array<{
         'createdAt',
       ],
       {
+        tenantId: text,
         targetType,
         targetId: text,
         templateId: text,
@@ -141,6 +139,7 @@ export const NotificationMongoCollectionDefinitions: Array<{
       },
     ),
     indexes: [
+      { name: 'ix__notifications__tenant_created', key: { tenantId: 1, createdAt: -1 } },
       { name: 'ix__notifications__target_created', key: { targetType: 1, targetId: 1, createdAt: -1 } },
       {
         name: 'uq__notifications__broadcast_target',
@@ -472,8 +471,8 @@ export const NotificationMongoCollectionDefinitions: Array<{
   },
 ];
 
-export async function initializeMongoNotificationPersistence(database: Db): Promise<void> {
-  for (const definition of NotificationMongoCollectionDefinitions) {
+export async function initializeTenantOwnedMongoNotificationPersistence(database: Db): Promise<void> {
+  for (const definition of TenantOwnedNotificationMongoCollectionDefinitions) {
     try {
       await database.createCollection(definition.name, {
         validator: definition.validator,
@@ -495,31 +494,10 @@ export async function initializeMongoNotificationPersistence(database: Db): Prom
   }
 }
 
-export async function verifyMongoNotificationPersistence(database: Db): Promise<void> {
-  try {
-    for (const definition of NotificationMongoCollectionDefinitions) {
-      await assertCollectionDefinition(database, definition);
-    }
-  } catch (error) {
-    if (!(await hasTenantOwnershipMigration(database))) {
-      throw error;
-    }
-    await verifyTenantOwnedMongoNotificationPersistence(database);
+export async function verifyTenantOwnedMongoNotificationPersistence(database: Db): Promise<void> {
+  for (const definition of TenantOwnedNotificationMongoCollectionDefinitions) {
+    await assertCollectionDefinition(database, definition);
   }
-}
-
-async function hasTenantOwnershipMigration(database: Db): Promise<boolean> {
-  const ledgers = await database
-    .listCollections({ name: MongoMigrationLedgerCollection }, { nameOnly: true })
-    .toArray();
-  if (ledgers.length === 0) {
-    return false;
-  }
-  return (
-    (await database
-      .collection<{ _id: string }>(MongoMigrationLedgerCollection)
-      .countDocuments({ _id: '20260826190100_notification_tenant_ownership' }, { limit: 1 })) > 0
-  );
 }
 
 function isNamespaceExistsError(error: unknown): boolean {

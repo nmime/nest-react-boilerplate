@@ -64,5 +64,22 @@ export const NotificationTemplateEntitySchema = new EntitySchema<NotificationTem
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },
-  uniques: [{ name: 'uq__notification_templates__code', properties: ['code'] }],
+  uniques: [
+    {
+      name: 'uq__notification_templates__code',
+      properties: ['code'],
+      expression:
+        'create unique index "uq__notification_templates__code" on "notification_templates" ("code") where "tenant_id" is null',
+    },
+    {
+      name: 'uq__notification_templates__tenant_id_code',
+      properties: ['tenantId', 'code'],
+      expression:
+        'create unique index "uq__notification_templates__tenant_id_code" on "notification_templates" ("tenant_id", "code") where "tenant_id" is not null',
+    },
+  ],
+  checks: [
+    { name: 'ck__notification_templates__source', expression: `"source" in ('code', 'admin')` },
+    { name: 'ck__notification_templates__status', expression: `"status" in ('draft', 'published', 'archived')` },
+  ],
 });

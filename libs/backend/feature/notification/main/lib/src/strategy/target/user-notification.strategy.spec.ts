@@ -21,6 +21,7 @@ describe(UserNotificationStrategy.name, () => {
       },
       notification: {
         id: 'notification-1',
+        tenantId: '11111111-1111-4111-8111-111111111111',
         targetType: NotificationTargetType.User,
         targetId: 'user-1',
         extra: null,

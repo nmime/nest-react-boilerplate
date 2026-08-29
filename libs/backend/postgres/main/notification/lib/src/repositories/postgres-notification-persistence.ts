@@ -6,7 +6,6 @@ import {
   EmptyNotificationAudienceError,
   InvalidNotificationTemplateError,
   NotificationPersistence,
-  NotificationTemplateChannelNotFoundError,
   NotificationTemplateNotFoundError,
   type CreateTemplateNotificationBatch,
   type CreateTemplateNotificationParams,
@@ -82,7 +81,8 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
 
     return this.entityManager.transactional(async (em) => {
       const now = new Date();
-      let template = await em.findOne(NotificationTemplateEntity, { code: params.code });
+      const tenantId = params.tenantId ?? null;
+      let template = await em.findOne(NotificationTemplateEntity, { code: params.code, tenantId });
       if (template) {
         template.description = params.description ?? null;
         template.name = template.name || params.code;
@@ -91,6 +91,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
         template.updatedAt = now;
       } else {
         template = new NotificationTemplateEntity({
+          tenantId,
           code: params.code,
           name: params.code,
           description: params.description,
@@ -175,6 +176,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
         // A single MikroORM EntityManager transaction must sequence unit-of-work mutations.
         // eslint-disable-next-line no-await-in-loop
         const record = await this.createInTransaction(em, {
+          tenantId: params.tenantId,
           targetType: params.targetType,
           targetId: item.targetId,
           templateCode: item.templateCode,
@@ -407,35 +409,35 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
       throw new EmptyNotificationAudienceError();
     }
 
-    const template = await em.findOne(NotificationTemplateEntity, { code: params.templateCode });
-    if (!template) {
-      throw new NotificationTemplateNotFoundError(params.templateCode);
-    }
-
-    if (!template.currentVersionId) {
-      throw new InvalidNotificationTemplateError(`${template.code} has no published version`);
-    }
-    const templateVersion = await em.findOne(NotificationTemplateVersionEntity, { id: template.currentVersionId });
-    if (!templateVersion?.publishedAt) {
-      throw new InvalidNotificationTemplateError(`${template.code} has no published version`);
-    }
-    const effectiveChannels = await em.find(NotificationTemplateVersionChannelEntity, {
-      templateVersionId: templateVersion.id,
+    const tenantTemplate = await em.findOne(NotificationTemplateEntity, {
+      code: params.templateCode,
+      tenantId: params.tenantId,
     });
-    for (const channel of channels) {
-      if (!effectiveChannels.some((templateChannel) => templateChannel.channel === channel)) {
-        throw new NotificationTemplateChannelNotFoundError(template.code, channel);
+    let candidateCount = tenantTemplate ? 1 : 0;
+    let selected = tenantTemplate
+      ? await usablePostgresTemplate(em, tenantTemplate, channels, inAppVisible)
+      : undefined;
+    if (!selected) {
+      const sharedTemplate = await em.findOne(NotificationTemplateEntity, {
+        code: params.templateCode,
+        tenantId: null,
+      });
+      candidateCount += sharedTemplate ? 1 : 0;
+      selected = sharedTemplate ? await usablePostgresTemplate(em, sharedTemplate, channels, inAppVisible) : undefined;
+    }
+    if (!selected) {
+      if (candidateCount === 0) {
+        throw new NotificationTemplateNotFoundError(params.templateCode);
       }
+      throw new InvalidNotificationTemplateError(
+        `${params.templateCode} has no published version that supports the requested channels`,
+      );
     }
-    if (
-      inAppVisible &&
-      !effectiveChannels.some((templateChannel) => templateChannel.channel === NotificationChannel.InApp)
-    ) {
-      throw new NotificationTemplateChannelNotFoundError(template.code, NotificationChannel.InApp);
-    }
+    const { template, templateVersion, effectiveChannels } = selected;
 
     const createdAt = new Date();
     const notification = new NotificationEntity<T>({
+      tenantId: params.tenantId,
       targetType: params.targetType,
       targetId: params.targetId,
       template,
@@ -468,6 +470,37 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
     await em.flush();
     return mapNotification(notification, effectiveChannels, null, templateVersion);
   }
+}
+
+async function usablePostgresTemplate(
+  em: EntityManager,
+  template: NotificationTemplateEntity,
+  deliveryChannels: NotificationDeliveryChannel[],
+  inAppVisible: boolean,
+): Promise<
+  | {
+      template: NotificationTemplateEntity;
+      templateVersion: NotificationTemplateVersionEntity;
+      effectiveChannels: NotificationTemplateVersionChannelEntity[];
+    }
+  | undefined
+> {
+  if (!template.currentVersionId) {
+    return undefined;
+  }
+  const templateVersion = await em.findOne(NotificationTemplateVersionEntity, { id: template.currentVersionId });
+  if (!templateVersion?.publishedAt) {
+    return undefined;
+  }
+  const effectiveChannels = await em.find(NotificationTemplateVersionChannelEntity, {
+    templateVersionId: templateVersion.id,
+  });
+  const supportsDeliveries = deliveryChannels.every((channel) =>
+    effectiveChannels.some((templateChannel) => templateChannel.channel === channel),
+  );
+  const supportsInApp =
+    !inAppVisible || effectiveChannels.some((templateChannel) => templateChannel.channel === NotificationChannel.InApp);
+  return supportsDeliveries && supportsInApp ? { template, templateVersion, effectiveChannels } : undefined;
 }
 
 function resolveRoutes(
@@ -558,6 +591,7 @@ function mapNotification<T>(
 ): NotificationRecord<T> {
   return {
     id: notification.id,
+    tenantId: notification.tenantId,
     targetType: notification.targetType,
     targetId: notification.targetId,
     template: mapTemplate(notification.template, channels, version),

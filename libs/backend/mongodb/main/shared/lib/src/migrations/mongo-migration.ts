@@ -29,6 +29,7 @@ export interface MongoMigration {
   readonly name: string;
   up(database: Db): Promise<void>;
   verify(database: Db): Promise<void>;
+  down?(database: Db): Promise<void>;
 }
 
 export interface MongoMigrationResult {

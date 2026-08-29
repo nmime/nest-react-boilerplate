@@ -15,6 +15,7 @@ export interface NotificationDeliveryRoute {
 }
 
 export type CreateTemplateNotificationParams<T = NotificationData> = {
+  tenantId: string;
   targetType: NotificationTargetType;
   targetId: string;
   templateCode: string;

@@ -117,7 +117,7 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
   async createAdminTemplate(input: CreateAdminNotificationTemplateInput): Promise<NotificationTemplateAdminRecord> {
     validateChannels(input.channels, true);
     const template = await runInMongoTransaction(this.client, async (session) => {
-      if (await this.templates.findOne({ code: input.code }, { session })) {
+      if (await this.templates.findOne({ tenantId: input.tenantId, code: input.code }, { session })) {
         throw new Error('notification_template_code_conflict');
       }
       const now = new Date();
@@ -895,6 +895,7 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
           const [data, sensitive] = splitSensitiveVariables(version.variablesSchema, variables);
           const notification: NotificationDocument = {
             _id: randomUUID(),
+            tenantId: broadcast.tenantId,
             targetType: member.targetType,
             targetId: member.targetId,
             templateId: template._id,

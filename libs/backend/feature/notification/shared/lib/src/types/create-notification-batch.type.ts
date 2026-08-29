@@ -9,6 +9,7 @@ import type {
 import type { NotificationDeliveryRoute } from './create-notification-params.type';
 
 export type CreateTemplateNotificationBatch<T = NotificationData> = {
+  tenantId: string;
   targetType: NotificationTargetType;
   deliveries?: NotificationDeliveryRoute[];
   channels?: NotificationDeliveryChannel[];

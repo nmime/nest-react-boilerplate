@@ -8,6 +8,7 @@ export interface ResolvedNotificationRecipient {
 /** Maps a domain target (for example a user id) to a concrete provider address. */
 export abstract class NotificationRecipientResolver {
   abstract resolve(
+    tenantId: string,
     targetType: NotificationTargetType,
     targetId: string,
     delivery: NotificationDeliveryRecord,

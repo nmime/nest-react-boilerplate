@@ -1,7 +1,9 @@
-// @requirements REQ-NOTIFY-PERSISTENCE-005
+// @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005
 import { randomUUID } from 'node:crypto';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
+import { hasDockerRuntime } from '@app/backend-common-component-test';
 import {
+  NotificationAudienceSnapshotStatus,
   NotificationBroadcastStatus,
   NotificationChannel,
   NotificationDeliveryProvider,
@@ -11,7 +13,7 @@ import {
 } from '@app/common-notifications';
 import { MongoClient } from 'mongodb';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { initializeMongoNotificationPersistence } from './notification-mongo.collections';
+import { initializeTenantOwnedMongoNotificationPersistence } from './notification-mongo.tenant-collections';
 import {
   NotificationMongoCollections,
   type NotificationBroadcastDocument,
@@ -21,7 +23,13 @@ import { MongoNotificationBroadcastPersistence } from './mongo-notification-broa
 import { MongoNotificationClaimLeaseMs, MongoNotificationPersistence } from './mongo-notification.persistence';
 import { NotificationMongoPayloadCryptoService } from './notification-payload-crypto.service';
 
-describe('Mongo notification persistence on a replica set', () => {
+const dockerAvailable = hasDockerRuntime();
+if (!dockerAvailable) {
+  process.stderr.write('Mongo notification component test: skipped because Docker is not available on this host.\n');
+}
+const describeIfDocker = dockerAvailable ? describe : describe.skip;
+
+describeIfDocker('Mongo notification persistence on a replica set', () => {
   let container: StartedMongoDBContainer;
   let client: MongoClient;
 
@@ -35,7 +43,7 @@ describe('Mongo notification persistence on a replica set', () => {
   beforeEach(async () => {
     const database = client.db('notification_component');
     await database.dropDatabase();
-    await initializeMongoNotificationPersistence(database);
+    await initializeTenantOwnedMongoNotificationPersistence(database);
   });
 
   afterAll(async () => {
@@ -55,6 +63,169 @@ describe('Mongo notification persistence on a replica set', () => {
     };
   };
 
+  it('allows the same template code in separate tenants without cross-tenant mutation', async () => {
+    const { database, notifications } = repositories();
+    const tenantA = randomUUID();
+    const tenantB = randomUUID();
+
+    await notifications.upsertTemplate({
+      tenantId: tenantA,
+      code: 'welcome',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Tenant A' } } }],
+    });
+    await notifications.upsertTemplate({
+      tenantId: tenantB,
+      code: 'welcome',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Tenant B' } } }],
+    });
+
+    const templates = await database
+      .collection(NotificationMongoCollections.templates)
+      .find({ code: 'welcome' })
+      .sort({ tenantId: 1 })
+      .toArray();
+    expect(templates.map((template) => String(template['tenantId']))).toEqual(
+      [tenantA, tenantB].sort((left, right) => left.localeCompare(right)),
+    );
+    expect(new Set(templates.map((template) => String(template['currentVersionId']))).size).toBe(2);
+  });
+
+  it('uses a tenant template in preference to the shared fallback and never another tenant template', async () => {
+    const { database, notifications } = repositories();
+    const tenantA = randomUUID();
+    const tenantB = randomUUID();
+    await notifications.upsertTemplate({
+      code: 'welcome',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Shared' } } }],
+    });
+    await notifications.upsertTemplate({
+      tenantId: tenantA,
+      code: 'welcome',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Tenant A' } } }],
+    });
+
+    const tenantANotification = await notifications.create({
+      tenantId: tenantA,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-a-chat',
+      templateCode: 'welcome',
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+    const tenantBNotification = await notifications.create({
+      tenantId: tenantB,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-b-chat',
+      templateCode: 'welcome',
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+    const persisted = await database
+      .collection(NotificationMongoCollections.notifications)
+      .find({ _id: { $in: [tenantANotification.id as never, tenantBNotification.id as never] } })
+      .toArray();
+    const byTenant = new Map(persisted.map((notification) => [notification['tenantId'], notification]));
+    const templates = await database
+      .collection(NotificationMongoCollections.templates)
+      .find({ code: 'welcome' })
+      .toArray();
+    const tenantTemplate = templates.find((template) => template['tenantId'] === tenantA);
+    const sharedTemplate = templates.find((template) => template['tenantId'] === null);
+    expect(byTenant.get(tenantA)?.['templateId']).toBe(tenantTemplate?.['_id']);
+    expect(byTenant.get(tenantB)?.['templateId']).toBe(sharedTemplate?.['_id']);
+  });
+
+  it('uses a usable shared template when the tenant override is not publishable', async () => {
+    const { database, notifications } = repositories();
+    const tenantId = randomUUID();
+    await notifications.upsertTemplate({
+      code: 'welcome',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Shared' } } }],
+    });
+    const unpublishedTenantTemplateId = randomUUID();
+    await database
+      .collection<{ _id: string } & Record<string, unknown>>(NotificationMongoCollections.templates)
+      .insertOne({
+        _id: unpublishedTenantTemplateId,
+        tenantId,
+        code: 'welcome',
+        name: 'welcome',
+        description: null,
+        source: 'code',
+        status: 'draft',
+        currentVersionId: null,
+        createdBy: null,
+        updatedBy: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+    const record = await notifications.create({
+      tenantId,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-chat',
+      templateCode: 'welcome',
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+
+    expect(record.template.id).not.toBe(unpublishedTenantTemplateId);
+    expect(record.template.channels[NotificationChannel.Bot]?.content).toEqual({ body: { en: 'Shared' } });
+  });
+
+  it('uses a shared template when the tenant version lacks a requested channel', async () => {
+    const { notifications } = repositories();
+    const tenantId = randomUUID();
+    await notifications.upsertTemplate({
+      code: 'welcome',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Shared' } } }],
+    });
+    await notifications.upsertTemplate({
+      tenantId,
+      code: 'welcome',
+      channels: [
+        {
+          channel: NotificationChannel.Email,
+          content: { subject: { en: 'Tenant' }, body: { en: 'Tenant' } },
+        },
+      ],
+    });
+
+    const record = await notifications.create({
+      tenantId,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-chat',
+      templateCode: 'welcome',
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+
+    expect(record.template.channels[NotificationChannel.Bot]?.content).toEqual({ body: { en: 'Shared' } });
+    expect(record.template.channels[NotificationChannel.Email]).toBeUndefined();
+  });
+
+  it('rejects the request when neither tenant nor shared template supports the requested channel', async () => {
+    const { notifications } = repositories();
+    const tenantId = randomUUID();
+    const emailChannel = {
+      channel: NotificationChannel.Email,
+      content: { subject: { en: 'Email' }, body: { en: 'Email' } },
+    } as const;
+    await notifications.upsertTemplate({ code: 'welcome', channels: [emailChannel] });
+    await notifications.upsertTemplate({ tenantId, code: 'welcome', channels: [emailChannel] });
+
+    await expect(
+      notifications.create({
+        tenantId,
+        targetType: NotificationTargetType.TelegramChat,
+        targetId: 'tenant-chat',
+        templateCode: 'welcome',
+        channels: [NotificationChannel.Bot],
+        inAppVisible: false,
+      }),
+    ).rejects.toThrow('welcome has no published version that supports the requested channels');
+  });
+
   it('rolls back every notification and delivery when a batch item fails', async () => {
     const { database, notifications } = repositories();
     await notifications.upsertTemplate({
@@ -64,6 +235,7 @@ describe('Mongo notification persistence on a replica set', () => {
 
     await expect(
       notifications.createBatch({
+        tenantId: '11111111-1111-4111-8111-111111111111',
         targetType: NotificationTargetType.TelegramChat,
         inAppVisible: false,
         items: [
@@ -375,6 +547,87 @@ describe('Mongo notification persistence on a replica set', () => {
     });
   });
 
+  it('preserves broadcast tenant ownership while materializing Mongo notifications', async () => {
+    const { broadcasts, database } = repositories();
+    const tenantId = randomUUID();
+    const actorId = randomUUID();
+    const template = await broadcasts.createAdminTemplate({
+      tenantId,
+      actorId,
+      code: `materialize-${randomUUID()}`,
+      name: 'Materialize',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Hello' } } }],
+    });
+    const published = await broadcasts.publishAdminTemplate(template.id, tenantId, actorId);
+    if (!published?.currentVersionId) {
+      throw new Error('Expected a published template version.');
+    }
+    const segment = await broadcasts.createSegment({
+      tenantId,
+      actorId,
+      name: 'Recipients',
+      kind: NotificationSegmentKind.Static,
+    });
+    const broadcast = await broadcasts.createBroadcast({
+      tenantId,
+      actorId,
+      name: 'Tenant notice',
+      templateVersionId: published.currentVersionId,
+      channel: NotificationChannel.Bot,
+      provider: NotificationDeliveryProvider.TelegramBot,
+      segmentIds: [segment.id],
+    });
+    const now = new Date();
+    const snapshotId = randomUUID();
+    await database.collection(NotificationMongoCollections.snapshots).insertOne({
+      // The production collection uses UUID strings; Mongo's default generic otherwise assumes ObjectId.
+      _id: snapshotId as never,
+      broadcastId: broadcast.id,
+      snapshotAt: now,
+      status: NotificationAudienceSnapshotStatus.Completed,
+      resolvedCount: 1,
+      distinctCount: 1,
+      duplicateCount: 0,
+      conflictCount: 0,
+      invalidCount: 0,
+      error: null,
+      claimToken: null,
+      claimExpiresAt: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await database.collection(NotificationMongoCollections.snapshotMembers).insertOne({
+      _id: randomUUID() as never,
+      snapshotId,
+      targetType: NotificationTargetType.TelegramChat,
+      targetId: 'tenant-chat',
+      language: null,
+      variables: {},
+      materializedAt: null,
+      createdAt: now,
+    });
+    await database.collection<NotificationBroadcastDocument>(NotificationMongoCollections.broadcasts).updateOne(
+      { _id: broadcast.id },
+      {
+        $set: {
+          status: NotificationBroadcastStatus.Sending,
+          materializedAt: null,
+          materializationClaimToken: null,
+          materializationClaimExpiresAt: null,
+        },
+      },
+    );
+
+    const context = await broadcasts.claimBroadcastMaterialization(10);
+    if (!context) {
+      throw new Error('Expected a materialization claim.');
+    }
+    await expect(broadcasts.materializeBroadcastMembers(context)).resolves.toBe(1);
+    await expect(
+      database.collection(NotificationMongoCollections.notifications).findOne({ broadcastId: broadcast.id }),
+    ).resolves.toMatchObject({ tenantId });
+  });
+
   it('applies an idempotent broadcast transition and snapshot creation atomically', async () => {
     const { broadcasts, database } = repositories();
     const tenantId = randomUUID();
@@ -451,10 +704,12 @@ async function createPendingNotification(persistence: MongoNotificationPersisten
     code: 'delivery',
     channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Hello' } } }],
   });
-  await persistence.create({
+  const notification = await persistence.create({
+    tenantId: '11111111-1111-4111-8111-111111111111',
     targetType: NotificationTargetType.TelegramChat,
     targetId,
     templateCode: 'delivery',
     inAppVisible: false,
   });
+  expect(notification.tenantId).toBe('11111111-1111-4111-8111-111111111111');
 }

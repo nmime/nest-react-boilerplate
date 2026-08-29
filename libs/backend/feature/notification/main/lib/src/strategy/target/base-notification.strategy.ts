@@ -37,7 +37,12 @@ export async function deliverNotification(
   });
 
   params.signal.throwIfAborted();
-  const recipient = await params.recipientResolver.resolve(notification.targetType, notification.targetId, delivery);
+  const recipient = await params.recipientResolver.resolve(
+    notification.tenantId,
+    notification.targetType,
+    notification.targetId,
+    delivery,
+  );
   params.signal.throwIfAborted();
   if (!recipient) {
     logger.warn(`Notification recipient not found for ${notification.targetType}/${notification.targetId}`);

@@ -201,6 +201,7 @@ export interface NotificationTemplateRecord {
 
 export interface NotificationRecord<T = NotificationData> {
   id: string;
+  tenantId: string;
   targetType: NotificationTargetType;
   targetId: string;
   template: NotificationTemplateRecord;

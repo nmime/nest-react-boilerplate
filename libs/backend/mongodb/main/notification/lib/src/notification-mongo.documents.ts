@@ -80,6 +80,7 @@ export interface NotificationTemplateVersionChannelDocument {
 
 export interface NotificationDocument<T = NotificationData> {
   _id: string;
+  tenantId: string;
   targetType: NotificationTargetType;
   targetId: string;
   templateId: string;

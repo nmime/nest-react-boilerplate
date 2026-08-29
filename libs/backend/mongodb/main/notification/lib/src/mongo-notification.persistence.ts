@@ -4,7 +4,6 @@ import {
   EmptyNotificationAudienceError,
   InvalidNotificationTemplateError,
   NotificationPersistence,
-  NotificationTemplateChannelNotFoundError,
   NotificationTemplateNotFoundError,
   type ClaimPendingNotificationDeliveriesParams,
   type CreateTemplateNotificationBatch,
@@ -75,11 +74,12 @@ export class MongoNotificationPersistence extends NotificationPersistence {
     validateTemplateChannels(params.channels);
     return runInMongoTransaction(this.client, async (session) => {
       const now = new Date();
-      let template = await this.templates.findOne({ code: params.code }, { session });
+      const tenantId = params.tenantId ?? null;
+      let template = await this.templates.findOne({ code: params.code, tenantId }, { session });
       if (!template) {
         template = {
           _id: randomUUID(),
-          tenantId: null,
+          tenantId,
           code: params.code,
           name: params.code,
           description: params.description ?? null,
@@ -172,6 +172,7 @@ export class MongoNotificationPersistence extends NotificationPersistence {
           // eslint-disable-next-line no-await-in-loop
           await this.createInTransaction(
             {
+              tenantId: params.tenantId,
               targetType: params.targetType,
               targetId: item.targetId,
               templateCode: item.templateCode,
@@ -362,6 +363,32 @@ export class MongoNotificationPersistence extends NotificationPersistence {
     });
   }
 
+  private async usableTemplate(
+    template: NotificationTemplateDocument,
+    routes: NotificationDeliveryRoute[],
+    inAppVisible: boolean,
+    session: ClientSession,
+  ): Promise<
+    | {
+        template: NotificationTemplateDocument;
+        version: NotificationTemplateVersionDocument;
+        channels: NotificationTemplateVersionChannelDocument[];
+      }
+    | undefined
+  > {
+    if (!template.currentVersionId) {
+      return undefined;
+    }
+    const version = await this.versions.findOne({ _id: template.currentVersionId }, { session });
+    if (!version?.publishedAt) {
+      return undefined;
+    }
+    const channels = await this.channels.find({ templateVersionId: version._id }, { session }).toArray();
+    const supportsDeliveries = routes.every((route) => channels.some((item) => item.channel === route.channel));
+    const supportsInApp = !inAppVisible || channels.some((item) => item.channel === NotificationChannel.InApp);
+    return supportsDeliveries && supportsInApp ? { template, version, channels } : undefined;
+  }
+
   async countRecentDeliveryErrors(params: FindRecentNotificationDeliveryErrorsParams): Promise<number> {
     const count = await this.deliveries.countDocuments({
       $or: [
@@ -387,29 +414,32 @@ export class MongoNotificationPersistence extends NotificationPersistence {
     if (routes.length === 0 && !inAppVisible) {
       throw new EmptyNotificationAudienceError();
     }
-    const template = await this.templates.findOne({ code: params.templateCode }, { session });
-    if (!template) {
-      throw new NotificationTemplateNotFoundError(params.templateCode);
+    const tenantTemplate = await this.templates.findOne(
+      { code: params.templateCode, tenantId: params.tenantId },
+      { session },
+    );
+    let candidateCount = tenantTemplate ? 1 : 0;
+    let selected = tenantTemplate
+      ? await this.usableTemplate(tenantTemplate, routes, inAppVisible, session)
+      : undefined;
+    if (!selected) {
+      const sharedTemplate = await this.templates.findOne({ code: params.templateCode, tenantId: null }, { session });
+      candidateCount += sharedTemplate ? 1 : 0;
+      selected = sharedTemplate ? await this.usableTemplate(sharedTemplate, routes, inAppVisible, session) : undefined;
     }
-    if (!template.currentVersionId) {
-      throw new InvalidNotificationTemplateError(`${template.code} has no published version`);
-    }
-    const version = await this.versions.findOne({ _id: template.currentVersionId }, { session });
-    if (!version?.publishedAt) {
-      throw new InvalidNotificationTemplateError(`${template.code} has no published version`);
-    }
-    const channels = await this.channels.find({ templateVersionId: version._id }, { session }).toArray();
-    for (const route of routes) {
-      if (!channels.some((item) => item.channel === route.channel)) {
-        throw new NotificationTemplateChannelNotFoundError(template.code, route.channel);
+    if (!selected) {
+      if (candidateCount === 0) {
+        throw new NotificationTemplateNotFoundError(params.templateCode);
       }
+      throw new InvalidNotificationTemplateError(
+        `${params.templateCode} has no published version that supports the requested channels`,
+      );
     }
-    if (inAppVisible && !channels.some((item) => item.channel === NotificationChannel.InApp)) {
-      throw new NotificationTemplateChannelNotFoundError(template.code, NotificationChannel.InApp);
-    }
+    const { template, version, channels } = selected;
     const createdAt = new Date();
     const notification: NotificationDocument<T> = {
       _id: randomUUID(),
+      tenantId: params.tenantId,
       targetType: params.targetType,
       targetId: params.targetId,
       templateId: template._id,
@@ -540,6 +570,7 @@ function mapNotification<T>(
 ): NotificationRecord<T> {
   return {
     id: notification._id,
+    tenantId: notification.tenantId,
     targetType: notification.targetType,
     targetId: notification.targetId,
     template: mapTemplate(

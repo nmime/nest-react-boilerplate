@@ -31,6 +31,7 @@ describe(PostgresNotificationBroadcastPersistence.name, () => {
       publishedAt: new Date('2026-07-20T00:00:00.000Z'),
     });
     const broadcast = new NotificationBroadcastEntity({
+      tenantId: '11111111-1111-4111-8111-111111111111',
       templateVersionId: version.id,
       status: NotificationBroadcastStatus.Sending,
       provider: NotificationDeliveryProvider.Resend,
@@ -92,7 +93,7 @@ describe(PostgresNotificationBroadcastPersistence.name, () => {
     expect(broadcast.pendingCount).toBe(1);
     expect(broadcast.materializedAt).toBeInstanceOf(Date);
     expect(transaction.persist).toHaveBeenCalledWith([
-      expect.any(NotificationEntity),
+      expect.objectContaining({ tenantId: broadcast.tenantId }),
       expect.any(NotificationDeliveryEntity),
     ]);
   });

@@ -46,16 +46,12 @@ export const TenantAppRole = 'nrb_app';
 export const TenantSystemRole = 'nrb_system';
 
 /**
- * Tenant-scoped tables grouped by the migration set that CREATES them.
+ * Authoritative inventory of strictly tenant-owned tables, grouped by the domain that owns them.
  *
- * Each domain installs policies for its own tables, because the migration sets
- * run independently: one cross-domain migration in `auth` fails with
- * `relation "notification_broadcasts" does not exist`, since the notification
- * tables do not exist yet at that point.
- *
- * A tenant-scoped table missing from here has no policy and leaks across
- * tenants, so adding a `tenant_id` column means adding the table here.
- * `tenant-policy.spec.ts` scans the entity sources and fails if one is absent.
+ * The current runtime intentionally does not engage RLS: requests do not assume the restricted
+ * role or establish the tenant GUC. Tenant isolation is therefore enforced by explicit repository
+ * predicates. The same complete inventory also feeds historical RLS reversal migrations, so a new
+ * non-nullable `tenant_id` table must be registered here even when no policy is currently active.
  */
 export const TenantScopedTablesByDomain = {
   // `feature_flags` is grouped with auth because the auth set is what creates it:
@@ -79,7 +75,7 @@ export const TenantScopedTablesByDomain = {
     'problem_presentation_overrides',
     'transactional_outbox_events',
   ],
-  notification: ['notification_broadcasts', 'notification_segments'],
+  notification: ['notification_broadcasts', 'notification_segments', 'notifications'],
 } as const satisfies Record<string, readonly string[]>;
 
 /**

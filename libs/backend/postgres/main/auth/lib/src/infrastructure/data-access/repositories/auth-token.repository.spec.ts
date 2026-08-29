@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-CREDENTIAL-003 REQ-AUTH-PERSISTENCE-007
 import { LockMode } from '@mikro-orm/core';
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
@@ -65,11 +65,44 @@ describe('AuthTokenRepository', () => {
     expect(flush).toHaveBeenCalledTimes(2);
   });
 
+  it('derives token ownership globally when no trusted tenant filter is provided', async () => {
+    const { findOne, entityManager } = createEntityManagerMock();
+    const token = Object.assign(new AuthUserTokenEntity(), { tenantId });
+    findOne.mockResolvedValue(token);
+
+    const result = await new AuthTokenRepository(entityManager).consumeUserToken(
+      'global-action-hash',
+      'email_verification',
+      undefined,
+      now,
+    );
+
+    expect(result._unsafeUnwrap()).toBe(token);
+    expect(findOne).toHaveBeenCalledWith(
+      AuthUserTokenEntity,
+      {
+        tokenHash: 'global-action-hash',
+        purpose: 'email_verification',
+        consumedAt: null,
+        expiresAt: { $gt: now },
+      },
+      { lockMode: LockMode.PESSIMISTIC_WRITE },
+    );
+  });
+
   it('returns null when a user action token is not usable', async () => {
     const { flush, entityManager } = createEntityManagerMock();
     const result = await new AuthTokenRepository(entityManager).consumeUserToken('missing', 'email_verification');
     expect(result._unsafeUnwrap()).toBeNull();
     expect(flush).not.toHaveBeenCalled();
+  });
+
+  it('revokes an undelivered token only within its owning tenant', async () => {
+    const { nativeDelete, entityManager } = createEntityManagerMock();
+    nativeDelete.mockResolvedValueOnce(1);
+    const result = await new AuthTokenRepository(entityManager).revokeUserToken('action-hash', tenantId);
+    expect(result._unsafeUnwrap()).toBe(true);
+    expect(nativeDelete).toHaveBeenCalledWith(AuthUserTokenEntity, { tokenHash: 'action-hash', tenantId });
   });
 
   it('cleans expired user-action rows', async () => {

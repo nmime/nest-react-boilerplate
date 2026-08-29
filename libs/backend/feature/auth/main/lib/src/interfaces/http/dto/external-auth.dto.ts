@@ -7,8 +7,14 @@ import {
   type ExternalAuthProvider,
 } from '@app/backend-feature-auth-shared';
 
+const legacyTenantProperty = {
+  format: 'uuid',
+  deprecated: true,
+  description: 'Deprecated compatibility field. The server ignores this value and derives tenant ownership.',
+} as const;
+
 export class ExternalAuthIntentDto {
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional(legacyTenantProperty)
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -39,7 +45,7 @@ export class TelegramTmaDto extends ExternalAuthIntentDto {
 export class TelegramOidcSessionDto extends ExternalAuthIntentDto {}
 
 export class TelegramBotLinkDto {
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional(legacyTenantProperty)
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -74,7 +80,7 @@ export class TelegramBotLinkDto {
 }
 
 export class LinkTokenDto {
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional(legacyTenantProperty)
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -99,7 +105,7 @@ export class LinkTokenDto {
 export class DiscordAuthorizationRequestDto extends ExternalAuthIntentDto {}
 
 export class DiscordCallbackQueryDto {
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional(legacyTenantProperty)
   @IsOptional()
   @IsUUID()
   tenantId?: string;

@@ -20,6 +20,7 @@ import { ApiOkDataResponse, ApiExceptions, ApiProblemTypes, ApiSessionCookieAuth
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import {
   CurrentUser,
+  DefaultAuthTenantId,
   isDemoPrincipal,
   principalUserView,
   Public,
@@ -128,7 +129,7 @@ export class AuthController {
     } catch (error) {
       await this.loginAnalytics.record({
         request,
-        tenantId: input.tenantId,
+        tenantId: DefaultAuthTenantId,
         identifier: input.email,
         eventType: 'registration',
         outcome: 'failure',
@@ -163,7 +164,7 @@ export class AuthController {
     } catch (error) {
       await this.loginAnalytics.record({
         request,
-        tenantId: input.tenantId,
+        tenantId: DefaultAuthTenantId,
         identifier: input.email,
         eventType: 'login',
         outcome: 'failure',
@@ -195,7 +196,7 @@ export class AuthController {
       }
       return createOkResponse(result);
     } catch (error) {
-      await this.recordExternalFailure(request, input.tenantId, 'telegram', 'telegram_tma');
+      await this.recordExternalFailure(request, 'telegram', 'telegram_tma');
       throw error;
     }
   }
@@ -220,7 +221,7 @@ export class AuthController {
       }
       return createOkResponse(result);
     } catch (error) {
-      await this.recordExternalFailure(request, input.tenantId, 'telegram', 'telegram_oidc');
+      await this.recordExternalFailure(request, 'telegram', 'telegram_oidc');
       throw error;
     }
   }
@@ -270,7 +271,7 @@ export class AuthController {
       }
       response.send?.(createOkResponse(result));
     } catch (error) {
-      await this.recordExternalFailure(request, input.tenantId, 'discord', 'discord_oauth');
+      await this.recordExternalFailure(request, 'discord', 'discord_oauth');
       throw error;
     }
   }
@@ -445,15 +446,10 @@ export class AuthController {
     });
   }
 
-  private recordExternalFailure(
-    request: AuthenticatedRequest,
-    tenantId: string | null | undefined,
-    provider: string,
-    channel: string,
-  ): Promise<void> {
+  private recordExternalFailure(request: AuthenticatedRequest, provider: string, channel: string): Promise<void> {
     return this.loginAnalytics.record({
       request,
-      tenantId,
+      tenantId: DefaultAuthTenantId,
       eventType: 'login',
       outcome: 'failure',
       provider,

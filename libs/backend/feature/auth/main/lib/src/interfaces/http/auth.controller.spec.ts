@@ -173,11 +173,15 @@ function toController(
       }),
     ),
   },
+  loginAnalytics: Pick<import('../../application').AuthLoginAnalyticsService, 'record'> = {
+    record: vi.fn(() => Promise.resolve()),
+  },
 ): AuthController {
   return new AuthController(
     service as AuthService,
     externalAuth as ExternalAuthService,
     betterAuthTelegramSession as BetterAuthTelegramSessionService,
+    loginAnalytics,
   );
 }
 
@@ -278,6 +282,51 @@ describe('AuthController', () => {
     expect(request.auth).toEqual(expectedPrincipal);
     expect(session.regenerate).toHaveBeenCalledOnce();
     expect(session.save).toHaveBeenCalledOnce();
+  });
+
+  it('records public authentication failures against the server-owned default tenant', async () => {
+    const loginAnalytics = { record: vi.fn(() => Promise.resolve()) };
+    const service = createService({ login: vi.fn(() => Promise.reject(new Error('rejected'))) });
+    const externalAuth = createExternalAuthService({
+      discordCallback: vi.fn(() => Promise.reject(new Error('rejected'))),
+      telegramOidcSession: vi.fn(() => Promise.reject(new Error('rejected'))),
+    });
+    const controller = toController(service, externalAuth, undefined, loginAnalytics);
+    const { request } = createRequest();
+
+    await expect(
+      controller.login(
+        {
+          email: 'user@example.com',
+          password: 'password123',
+        },
+        request,
+      ),
+    ).rejects.toThrow('rejected');
+    await expect(
+      controller.discordCallback(
+        {
+          code: 'oauth-code',
+          state: 'oauth-state',
+        },
+        request,
+        {},
+      ),
+    ).rejects.toThrow('rejected');
+    await expect(controller.telegramOidcSession({}, request)).rejects.toThrow('rejected');
+
+    expect(loginAnalytics.record).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ tenantId: DefaultAuthTenantId, failureCode: 'credentials_rejected' }),
+    );
+    expect(loginAnalytics.record).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ tenantId: DefaultAuthTenantId, failureCode: 'provider_authentication_failed' }),
+    );
+    expect(loginAnalytics.record).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({ tenantId: DefaultAuthTenantId, failureCode: 'provider_authentication_failed' }),
+    );
   });
 
   it('preserves session authentication metadata when updating preferences', async () => {
@@ -519,7 +568,7 @@ describe('AuthController', () => {
     });
   });
 
-  it('binds created link tokens to the caller tenant and ignores a body-supplied tenantId', async () => {
+  it('binds created link tokens to the caller tenant and ignores the deprecated body tenant', async () => {
     const principal: AuthenticatedPrincipal = {
       subject: 'user-id',
       tenantId: DefaultAuthTenantId,
@@ -533,9 +582,10 @@ describe('AuthController', () => {
     const externalAuth = createExternalAuthService();
     const controller = toController(createService(), externalAuth);
 
+    const suppliedTenant = '00000000-0000-4000-8000-000000000042';
     await controller.createLinkToken(principal, {
       provider: AuthProvider.Telegram,
-      tenantId: '00000000-0000-4000-8000-000000000042',
+      tenantId: suppliedTenant,
     });
 
     expect(externalAuth.createLinkToken).toHaveBeenCalledWith(
@@ -545,7 +595,7 @@ describe('AuthController', () => {
       }),
     );
     expect(externalAuth.createLinkToken).not.toHaveBeenCalledWith(
-      expect.objectContaining({ tenantId: '00000000-0000-4000-8000-000000000042' }),
+      expect.objectContaining({ tenantId: suppliedTenant }),
     );
   });
 

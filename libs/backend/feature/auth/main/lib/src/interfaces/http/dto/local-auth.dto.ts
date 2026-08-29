@@ -3,8 +3,14 @@ import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-va
 import { supportedLocales } from '@app/backend-common-i18n';
 import { userThemePreferences } from '@app/backend-feature-auth-shared';
 
+const legacyTenantProperty = {
+  format: 'uuid',
+  deprecated: true,
+  description: 'Deprecated compatibility field. The server ignores this value and derives tenant ownership.',
+} as const;
+
 export class RegisterDto {
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional(legacyTenantProperty)
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -31,7 +37,7 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional(legacyTenantProperty)
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -47,7 +53,7 @@ export class LoginDto {
 }
 
 export class UserActionTokenRequestDto {
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional(legacyTenantProperty)
   @IsOptional()
   @IsUUID()
   tenantId?: string;
@@ -58,7 +64,7 @@ export class UserActionTokenRequestDto {
 }
 
 export class UserActionTokenConfirmDto {
-  @ApiPropertyOptional({ format: 'uuid' })
+  @ApiPropertyOptional(legacyTenantProperty)
   @IsOptional()
   @IsUUID()
   tenantId?: string;

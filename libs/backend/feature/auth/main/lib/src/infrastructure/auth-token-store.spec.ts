@@ -23,12 +23,27 @@ describe('InMemoryAuthTokenStore', () => {
     expect(await store.consumeUserActionToken(issued.value.token, 'email_verification', tenantB)).toMatchObject({
       value: null,
     });
-    expect(await store.consumeUserActionToken(issued.value.token, 'email_verification', tenantA)).toMatchObject({
-      value: expect.objectContaining({ userId: 'user-1', consumedAt: expect.any(Date) }),
+    expect(await store.consumeUserActionToken(issued.value.token, 'email_verification')).toMatchObject({
+      value: expect.objectContaining({ tenantId: tenantA, userId: 'user-1', consumedAt: expect.any(Date) }),
     });
     expect(await store.consumeUserActionToken(issued.value.token, 'email_verification', tenantA)).toMatchObject({
       value: null,
     });
+  });
+
+  it('revokes an undelivered token only within its owning tenant', async () => {
+    const store = new InMemoryAuthTokenStore();
+    const issued = (
+      await store.issueUserActionToken({
+        tenantId: tenantA,
+        userId: 'user-1',
+        purpose: 'password_reset',
+      })
+    )._unsafeUnwrap();
+
+    expect((await store.revokeUserActionToken(issued.tokenHash, tenantB))._unsafeUnwrap()).toBe(false);
+    expect((await store.revokeUserActionToken(issued.tokenHash, tenantA))._unsafeUnwrap()).toBe(true);
+    expect((await store.consumeUserActionToken(issued.token, 'password_reset', tenantA))._unsafeUnwrap()).toBeNull();
   });
 
   it('does not expose any refresh-token authentication API', () => {
@@ -43,6 +58,7 @@ describe('InMemoryAuthTokenStore', () => {
 describe('PostgresAuthTokenStore', () => {
   it('persists only a hash and consumes through the repository', async () => {
     const createUserToken = vi.fn((input) => okAsync(input));
+    const revokeUserToken = vi.fn(() => okAsync(true));
     const consumeUserToken = vi.fn(() =>
       okAsync({
         id: 'token-1',
@@ -54,7 +70,7 @@ describe('PostgresAuthTokenStore', () => {
         consumedAt: new Date(),
       }),
     );
-    const store = new PostgresAuthTokenStore({ createUserToken, consumeUserToken } as never);
+    const store = new PostgresAuthTokenStore({ createUserToken, consumeUserToken, revokeUserToken } as never);
 
     const issued = await store.issueUserActionToken({
       tenantId: tenantA,
@@ -74,6 +90,8 @@ describe('PostgresAuthTokenStore', () => {
     const consumed = await store.consumeUserActionToken(issued.value.token, 'password_reset', tenantA);
     expect(consumed.isOk()).toBe(true);
     expect(consumeUserToken).toHaveBeenCalledWith(hashOpaqueToken(issued.value.token), 'password_reset', tenantA);
+    expect((await store.revokeUserActionToken(issued.value.tokenHash, tenantA))._unsafeUnwrap()).toBe(true);
+    expect(revokeUserToken).toHaveBeenCalledWith(issued.value.tokenHash, tenantA);
   });
 
   it('maps repository failures without exposing repository details as a second auth path', async () => {

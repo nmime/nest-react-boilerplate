@@ -30,20 +30,28 @@ export class InMemoryAuthTokenStore implements AuthTokenStore {
     return okAsync(issued);
   }
 
+  revokeUserActionToken(tokenHash: string, tenantId?: string): ResultAsync<boolean, AuthTokenStoreError> {
+    const record = this.userTokensByHash.get(tokenHash);
+    if (!record || record.tenantId !== (tenantId ?? DefaultAuthTenantId)) {
+      return okAsync(false);
+    }
+    this.userTokensByHash.delete(tokenHash);
+    return okAsync(true);
+  }
+
   consumeUserActionToken(
     token: string,
     purpose: AuthUserTokenPurpose,
-    tenantId?: string,
+    tenantId?: string | null,
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError> {
     const tokenHash = hashOpaqueToken(token);
     const record = this.userTokensByHash.get(tokenHash) ?? null;
-    const resolvedTenantId = tenantId ?? DefaultAuthTenantId;
     if (
       !record ||
       record.purpose !== purpose ||
       record.consumedAt ||
       record.expiresAt <= new Date() ||
-      record.tenantId !== resolvedTenantId
+      (tenantId !== null && tenantId !== undefined && record.tenantId !== tenantId)
     ) {
       return okAsync(null);
     }

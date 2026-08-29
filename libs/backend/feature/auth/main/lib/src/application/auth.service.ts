@@ -5,11 +5,13 @@ import {
   Injectable,
   Optional,
   NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
   AuthProvider,
   AuthProviderChannel,
+  DefaultAuthTenantId,
   normalizeUserThemePreference,
   permissionsForRoles,
   resolveBootstrapRoleKeys,
@@ -80,7 +82,7 @@ export class AuthService {
   ) {}
 
   async register(input: RegisterUserInput): Promise<AuthSessionView> {
-    const tenantId = parseTenantId(input.tenantId);
+    const tenantId = DefaultAuthTenantId;
     const email = normalizeEmail(input.email);
     const existing = await this.users.findByEmail(email, tenantId);
     if (existing.isErr()) {
@@ -132,7 +134,7 @@ export class AuthService {
   }
 
   async login(input: LoginInput): Promise<AuthSessionView> {
-    const tenantId = parseTenantId(input.tenantId);
+    const tenantId = DefaultAuthTenantId;
     const email = normalizeEmail(input.email);
     const user = await this.users.findByEmail(email, tenantId);
     if (user.isErr() || !user.value || !verifyPassword(input.password, user.value.passwordHash)) {
@@ -162,7 +164,7 @@ export class AuthService {
     purpose: AuthUserTokenPurpose,
     tenantId?: string | null,
   ): Promise<boolean> {
-    const consumed = await this.tokens.consumeUserActionToken(token, purpose, parseTenantId(tenantId));
+    const consumed = await this.tokens.consumeUserActionToken(token, purpose, tenantId);
     return consumed.isOk() && Boolean(consumed.value);
   }
 
@@ -277,7 +279,7 @@ export class AuthService {
     input: UserActionTokenInput,
     purpose: AuthUserTokenPurpose,
   ): Promise<string | null> {
-    const tenantId = parseTenantId(input.tenantId);
+    const tenantId = DefaultAuthTenantId;
     const email = normalizeEmail(input.email);
     const user = await this.users.findByEmail(email, tenantId);
     if (user.isErr() || !user.value) {
@@ -293,11 +295,20 @@ export class AuthService {
       return null;
     }
     if (this.authNotifications) {
-      await this.authNotifications.publishUserAction({
-        userId: user.value.id,
-        purpose,
-        token: issued.value.token,
-      });
+      try {
+        await this.authNotifications.publishUserAction({
+          tenantId,
+          userId: user.value.id,
+          purpose,
+          token: issued.value.token,
+        });
+      } catch (error) {
+        const revoked = await this.tokens.revokeUserActionToken(issued.value.tokenHash, tenantId);
+        if (revoked.isErr() || !revoked.value) {
+          throw new ServiceUnavailableException('Unable to revoke an undelivered authentication credential.');
+        }
+        throw error;
+      }
     }
     return issued.value.token;
   }
@@ -312,7 +323,7 @@ export class AuthService {
     input: UserActionTokenConfirmInput,
     purpose: AuthUserTokenPurpose,
   ): Promise<UserActionTokenRecord> {
-    const consumed = await this.tokens.consumeUserActionToken(input.token, purpose, parseTenantId(input.tenantId));
+    const consumed = await this.tokens.consumeUserActionToken(input.token, purpose);
     if (consumed.isErr() || !consumed.value) {
       throw new UnauthorizedException('Recovery code is invalid or has already been used.');
     }

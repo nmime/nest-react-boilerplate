@@ -231,11 +231,7 @@ export class BetterAuthApiController {
     const requestBody = asRecord(req.body);
     await this.loginAnalytics?.record({
       request: req as unknown as AuthenticatedRequest,
-      tenantId:
-        stringValue(user?.tenantId) ??
-        stringValue(session?.tenantId) ??
-        stringValue(requestBody?.tenantId) ??
-        DefaultAuthTenantId,
+      tenantId: stringValue(user?.tenantId) ?? stringValue(session?.tenantId) ?? DefaultAuthTenantId,
       userId: stringValue(user?.id) ?? stringValue(session?.userId),
       identifier: stringValue(user?.email) ?? stringValue(requestBody?.email),
       sessionId: stringValue(session?.id),
@@ -255,7 +251,7 @@ export class BetterAuthApiController {
     const requestBody = asRecord(req.body);
     await this.loginAnalytics?.record({
       request: req as unknown as AuthenticatedRequest,
-      tenantId: stringValue(requestBody?.tenantId) ?? DefaultAuthTenantId,
+      tenantId: DefaultAuthTenantId,
       identifier: stringValue(requestBody?.email),
       eventType: route.eventType,
       outcome: 'failure',

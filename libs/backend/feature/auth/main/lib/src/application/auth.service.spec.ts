@@ -1,6 +1,12 @@
 // @requirements REQ-AUTH-ACCESS-001
 // Evidence for: REQ-AUTH-CREDENTIAL-003
-import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
 import { AuthenticatedTheme, DefaultAuthTenantId, createDefaultAccessPolicy } from '@app/backend-feature-auth-shared';
@@ -328,10 +334,32 @@ describe('AuthService', () => {
       email: 'active@example.com',
     });
     expect(publishUserAction).toHaveBeenCalledWith({
+      tenantId: activeRecord.tenantId,
       userId: activeRecord.id,
       purpose: 'password_reset',
       token: deliveredResetToken,
     });
+
+    const revokingTokenStore = new InMemoryAuthTokenStore();
+    const revokeUserActionToken = vi.spyOn(revokingTokenStore, 'revokeUserActionToken');
+    const failedDelivery = new AuthService(users as never, revokingTokenStore, undefined, undefined, {
+      publishUserAction: vi.fn(() => Promise.reject(new Error('delivery failed'))),
+    } as never);
+    await expect(failedDelivery.issuePasswordResetToken({ email: 'active@example.com' })).rejects.toThrow(
+      'delivery failed',
+    );
+    expect(revokeUserActionToken).toHaveBeenCalledWith(expect.any(String), activeRecord.tenantId);
+
+    const revokeFailureTokens: Partial<AuthTokenStore> = {
+      issueUserActionToken: (input) => revokingTokenStore.issueUserActionToken(input),
+      revokeUserActionToken: () => errAsync({ code: 'token_store_error', message: 'revoke failed' }),
+    };
+    const revokeFailure = new AuthService(users as never, revokeFailureTokens as AuthTokenStore, undefined, undefined, {
+      publishUserAction: vi.fn(() => Promise.reject(new Error('delivery failed'))),
+    } as never);
+    await expect(revokeFailure.issuePasswordResetToken({ email: 'active@example.com' })).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
 
     const issueFailureTokens: Partial<AuthTokenStore> = {
       issueUserActionToken: () => errAsync({ code: 'token_store_error', message: 'issue failed' }),
@@ -349,34 +377,64 @@ describe('AuthService', () => {
     );
   });
 
-  it('redeems an emailed verification code and reports the verified account', async () => {
+  it('redeems an emailed verification code and derives ownership from the persisted token', async () => {
     const users = new InMemoryAuthUserStore();
-    const service = new AuthService(users, new InMemoryAuthTokenStore());
-    const registered = await service.register({ email: 'verify@example.com', password: 'password123' });
+    const tokens = new InMemoryAuthTokenStore();
+    const service = new AuthService(users, tokens);
+    const tenantId = '22222222-2222-4222-8222-222222222222';
+    const account = (
+      await users.create({
+        tenantId,
+        email: 'verify@example.com',
+        passwordHash: hashPassword('password123'),
+        roles: ['user'],
+        permissions: ['profile:read'],
+      })
+    )._unsafeUnwrap();
+    const token = (
+      await tokens.issueUserActionToken({ tenantId, userId: account.id, purpose: 'email_verification' })
+    )._unsafeUnwrap().token;
 
-    const token = await service.issueEmailVerificationToken({ email: 'verify@example.com' });
-    await expect(service.confirmEmailVerification({ token: token ?? '' })).resolves.toMatchObject({
-      id: registered.user.id,
-    });
+    await expect(
+      service.confirmEmailVerification({
+        tenantId: '11111111-1111-4111-8111-111111111111',
+        token,
+      } as Parameters<AuthService['confirmEmailVerification']>[0] & { tenantId: string }),
+    ).resolves.toMatchObject({ id: account.id, tenantId });
 
-    expect((await users.findById(registered.user.id))._unsafeUnwrap()?.emailVerifiedAt).toBeInstanceOf(Date);
+    expect((await users.findById(account.id, tenantId))._unsafeUnwrap()?.emailVerifiedAt).toBeInstanceOf(Date);
   });
 
-  it('redeems an emailed reset code, replaces the password, and advances the credential revision', async () => {
+  it('redeems an emailed reset code, derives ownership from it, and advances the credential revision', async () => {
     const users = new InMemoryAuthUserStore();
-    const service = new AuthService(users, new InMemoryAuthTokenStore());
-    await service.register({ email: 'reset@example.com', password: 'password123' });
+    const tokens = new InMemoryAuthTokenStore();
+    const service = new AuthService(users, tokens);
+    const tenantId = '22222222-2222-4222-8222-222222222222';
+    const account = (
+      await users.create({
+        tenantId,
+        email: 'reset@example.com',
+        passwordHash: hashPassword('password123'),
+        roles: ['user'],
+        permissions: ['profile:read'],
+      })
+    )._unsafeUnwrap();
+    const token = (
+      await tokens.issueUserActionToken({ tenantId, userId: account.id, purpose: 'password_reset' })
+    )._unsafeUnwrap().token;
 
-    const token = await service.issuePasswordResetToken({ email: 'reset@example.com' });
     await expect(
-      service.confirmPasswordReset({ token: token ?? '', password: 'replacement123' }),
-    ).resolves.toMatchObject({ email: 'reset@example.com' });
+      service.confirmPasswordReset({
+        tenantId: '11111111-1111-4111-8111-111111111111',
+        token,
+        password: 'replacement123',
+      } as Parameters<AuthService['confirmPasswordReset']>[0] & { tenantId: string }),
+    ).resolves.toMatchObject({ email: 'reset@example.com', tenantId });
 
-    await expect(service.login({ email: 'reset@example.com', password: 'password123' })).rejects.toThrow(
-      UnauthorizedException,
-    );
-    const session = await service.login({ email: 'reset@example.com', password: 'replacement123' });
-    expect(session.credentialRevision).toBe(1);
+    const reloaded = (await users.findById(account.id, tenantId))._unsafeUnwrap();
+    expect(reloaded).toMatchObject({ credentialRevision: 1, tenantId });
+    expect(verifyPassword('password123', reloaded?.passwordHash ?? '')).toBe(false);
+    expect(verifyPassword('replacement123', reloaded?.passwordHash ?? '')).toBe(true);
   });
 
   it('refuses unknown, replayed, and cross-purpose recovery codes', async () => {

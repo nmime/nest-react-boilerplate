@@ -97,7 +97,7 @@ export class PostgresSocialAuthStore implements SocialAuthStore {
   consumeLinkToken(
     tokenHash: string,
     purpose: AuthLinkTokenPurpose,
-    tenantId: string,
+    tenantId: string | null | undefined,
     now: Date = new Date(),
   ): ResultAsync<LinkTokenRecord | null, SocialAuthStoreError> {
     return this.linkTokens

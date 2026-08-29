@@ -35,7 +35,7 @@ export class AuthLinkTokenRepository {
   consumeToken(
     tokenHash: string,
     purpose: AuthLinkTokenPurpose,
-    tenantId: string = DefaultAuthTenantId,
+    tenantId?: string | null,
     now: Date = new Date(),
   ): ResultAsync<AuthLinkTokenEntity | null, SocialAuthRepositoryError> {
     return ResultAsync.fromPromise(this.consumeTokenTransaction(tokenHash, purpose, tenantId, now), mapSocialAuthError);
@@ -71,7 +71,7 @@ export class AuthLinkTokenRepository {
   private async consumeTokenTransaction(
     tokenHash: string,
     purpose: AuthLinkTokenPurpose,
-    tenantId: string,
+    tenantId: string | null | undefined,
     now: Date,
   ): Promise<AuthLinkTokenEntity | null> {
     return this.entityManager.transactional(async (em) => {
@@ -80,7 +80,7 @@ export class AuthLinkTokenRepository {
         {
           tokenHash,
           purpose,
-          tenantId,
+          ...(tenantId === null || tenantId === undefined ? {} : { tenantId }),
           consumedAt: null,
           revokedAt: null,
           expiresAt: { $gt: now },

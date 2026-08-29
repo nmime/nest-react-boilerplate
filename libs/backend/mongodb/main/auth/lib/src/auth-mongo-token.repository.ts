@@ -22,10 +22,17 @@ export class MongoAuthTokenRepository implements AuthTokenRepositoryPort {
   consumeUserToken(
     tokenHash: string,
     purpose: AuthPersistenceUserTokenPurpose,
-    tenantId = DefaultAuthTenantId,
+    tenantId?: string | null,
     now = new Date(),
   ): ResultAsync<AuthUserTokenRecord | null, AuthRepositoryError> {
     return repositoryResult(this.consume(tokenHash, purpose, tenantId, now));
+  }
+  revokeUserToken(tokenHash: string, tenantId = DefaultAuthTenantId): ResultAsync<boolean, AuthRepositoryError> {
+    return repositoryResult(
+      collection(this.database, AuthMongoCollections.userTokens)
+        .deleteOne({ tokenHash, tenantId })
+        .then((result) => result.deletedCount > 0),
+    );
   }
   cleanupExpiredTokens(before = new Date()): ResultAsync<{ userTokensDeleted: number }, AuthRepositoryError> {
     return repositoryResult(
@@ -53,11 +60,17 @@ export class MongoAuthTokenRepository implements AuthTokenRepositoryPort {
   private async consume(
     tokenHash: string,
     purpose: AuthPersistenceUserTokenPurpose,
-    tenantId: string,
+    tenantId: string | null | undefined,
     now: Date,
   ): Promise<AuthUserTokenRecord | null> {
     const document = await collection(this.database, AuthMongoCollections.userTokens).findOneAndUpdate(
-      { tokenHash, purpose, tenantId, consumedAt: null, expiresAt: { $gt: now } },
+      {
+        tokenHash,
+        purpose,
+        ...(tenantId === null || tenantId === undefined ? {} : { tenantId }),
+        consumedAt: null,
+        expiresAt: { $gt: now },
+      },
       { $set: { consumedAt: now, updatedAt: now } },
       { returnDocument: 'after', includeResultMetadata: false },
     );

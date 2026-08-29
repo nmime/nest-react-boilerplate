@@ -27,6 +27,7 @@ import {
   applyApexHostSelection,
   buildAnchoredPortReplacements,
   buildOrderedReplacements,
+  removalLiterals,
   type AnchoredReplacement,
 } from './rules.ts';
 
@@ -137,6 +138,7 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
   }
 
   const desiredConfigHash = configHash(options.desired);
+  const removals = removalLiterals(options.previous, options.desired);
   const rewrittenContent = new Map<string, string>();
   for (const operation of rewriteOperations) {
     if (operation.kind === 'update_file') rewrittenContent.set(operation.path, operation.content);
@@ -156,7 +158,9 @@ export async function planReconfigure(options: ReconfigurePlanOptions): Promise<
     appliedFiles[path] = {
       hash: hashString(content),
       rules,
-      ...(originalContent !== undefined ? { originalContent } : {}),
+      // Persisted snapshots must not carry values removed by this transition
+      // (e.g. a removed tenant seed user) into `.nrb/identity.json`.
+      ...(originalContent !== undefined ? { originalContent: scrubRemovedLiterals(originalContent, removals) } : {}),
     };
   }
   if (priorApplied[defaultConfigPath] !== undefined || rewrittenContent.has(defaultConfigPath)) {
@@ -377,7 +381,10 @@ function applyRules(
   let content = before;
   const rules: string[] = [];
   for (const replacement of replacements) {
-    const next = content.split(replacement.from).join(replacement.to);
+    const next =
+      replacement.to === ''
+        ? stripRemovedLiteral(content, replacement.from)
+        : content.split(replacement.from).join(replacement.to);
     if (next !== content) rules.push(replacement.label);
     content = next;
   }
@@ -389,6 +396,30 @@ function applyRules(
   const apex = applyApexHostSelection(content, previous.identity, desired.identity);
   if (apex !== content) rules.push('identity:apexApp');
   return { content: apex, rules: [...new Set(rules)] };
+}
+
+/**
+ * Removal rule application (`to === ''`): strip every occurrence of the
+ * literal plus the adjacent space/tab run so token-separated values do not
+ * leave doubled separators behind. The value must stand alone as a token —
+ * no word char, `@`, `.` or `-` may immediately precede it — and must be
+ * followed by whitespace or end of content, so longer literals are never
+ * cut mid-token. Newlines are never consumed.
+ */
+function stripRemovedLiteral(content: string, literal: string): string {
+  return content.replace(buildRemovalRegExp(literal), '');
+}
+
+/** Same token-boundary stripping, applied to persisted snapshot copies. */
+function scrubRemovedLiterals(content: string, literals: readonly string[]): string {
+  let scrubbed = content;
+  for (const literal of literals) scrubbed = stripRemovedLiteral(scrubbed, literal);
+  return scrubbed;
+}
+
+function buildRemovalRegExp(literal: string): RegExp {
+  const escaped = literal.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  return new RegExp(`[ \\t]*(?<![\\w@.-])${escaped}(?=\\s|$)`, 'gu');
 }
 
 function applyAnchoredPortReplacement(content: string, replacement: AnchoredReplacement): string {

@@ -236,6 +236,78 @@ describe('reconfigure engine state and rollback', () => {
     );
   });
 
+  it('emits removal rules for a removed seed user without shifting surviving users', () => {
+    const previous = parseNrbConfig({
+      schemaVersion: '2.0.0',
+      apps: [],
+      capabilities: [],
+      identity: {},
+      tenant: {
+        seed: {
+          admin: { name: 'Alice Administrator', email: 'admin@example.com', password: 'ChangeMe123!' },
+          users: [
+            { name: 'Retired User', email: 'retired@example.com', password: 'removed-user-password' },
+            { name: 'Current User', email: 'current@example.com', password: 'current-user-password' },
+          ],
+        },
+      },
+      options: {},
+    });
+    const desired = parseNrbConfig({
+      ...previous,
+      tenant: {
+        ...previous.tenant,
+        seed: {
+          admin: { ...previous.tenant.seed.admin },
+          users: [{ ...previous.tenant.seed.users[1] }],
+        },
+      },
+    });
+    assert.deepEqual(
+      buildOrderedReplacements(previous, desired).filter(({ label }) => label.startsWith('tenant:')),
+      [
+        { from: 'removed-user-password', to: '', label: 'tenant:seed:removed:password' },
+        { from: 'retired@example.com', to: '', label: 'tenant:seed:removed:email' },
+        { from: 'Retired User', to: '', label: 'tenant:seed:removed:name' },
+      ],
+    );
+  });
+
+  it('strips a removed seed user value from managed file content', async () => {
+    const previous = config();
+    const desired = parseNrbConfig({
+      ...previous,
+      tenant: {
+        ...previous.tenant,
+        seed: {
+          admin: { ...previous.tenant.seed.admin },
+          users: [{ ...previous.tenant.seed.users[1] }],
+        },
+      },
+    });
+    const fs = memoryFilesystem({ 'fixture.txt': 'bob.user@example.com Bob@User456! retired-style\n' });
+    const result = await runReconfigure({
+      fs,
+      desired,
+      previous,
+      manifest: null,
+      state: emptyState,
+      templateBase: 'abc123',
+      force: true,
+      targetPaths: ['fixture.txt'],
+    });
+    assert.equal(result.status, 'updated');
+    // The removed user's email and password are stripped together with the
+    // separating whitespace; the untouched value keeps its leading position.
+    assert.equal(await fs.read('fixture.txt'), ' retired-style\n');
+    for (const operation of result.plan.operations) {
+      assert.ok(
+        !operation.description.includes('Bob@User456!'),
+        'removed password must not appear in operation descriptions',
+      );
+    }
+  });
+
   it('refuses tenant-id changes unless the fresh-database guard passes', async () => {
     const previous = config();
     const desired = parseNrbConfig({

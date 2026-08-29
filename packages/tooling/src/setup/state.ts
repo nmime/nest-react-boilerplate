@@ -157,13 +157,19 @@ export function buildState(
   files: Record<string, string>,
   reconfiguredFiles?: Record<string, string>,
 ): SetupState {
+  const sortedFiles = sortFileHashes(files);
+  const sortedReconfiguredFiles = reconfiguredFiles ? sortFileHashes(reconfiguredFiles) : {};
   return {
     version: 1,
     configHash,
-    files,
-    ...(reconfiguredFiles && Object.keys(reconfiguredFiles).length > 0 ? { reconfiguredFiles } : {}),
-    digest: computeStateDigest(files),
+    files: sortedFiles,
+    ...(Object.keys(sortedReconfiguredFiles).length > 0 ? { reconfiguredFiles: sortedReconfiguredFiles } : {}),
+    digest: computeStateDigest(sortedFiles),
   };
+}
+
+function sortFileHashes(files: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(files).sort(([left], [right]) => left.localeCompare(right)));
 }
 
 /**

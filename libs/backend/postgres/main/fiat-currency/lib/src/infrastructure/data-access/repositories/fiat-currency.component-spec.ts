@@ -55,10 +55,11 @@ describeIfDocker('fiat currency persistence against PostgreSQL', () => {
     await persistence.recordRates([{ code: 'EUR', usdPerUnit: '1.0700000000', asOf: monday, source: 'ecb' }]);
 
     const stored = await persistence.findCurrency('EUR');
-    expect(stored).toMatchObject({ usdPerUnit: '1.0800000000', rateAsOf: tuesday, minorUnitExponent: 2 });
+    expect(stored).toMatchObject({ usdPerUnit: '1.08', rateAsOf: tuesday, minorUnitExponent: 2 });
 
     const history = await persistence.listRateHistory({ code: 'EUR', limit: 10 });
     expect(history.map((rate) => rate.asOf)).toEqual([tuesday, monday]);
+    expect(history.map((rate) => rate.usdPerUnit)).toEqual(['1.08', '1.07']);
     expect(history[0]?.usdPerUnit).toBe(stored?.usdPerUnit);
   });
 
@@ -85,6 +86,28 @@ describeIfDocker('fiat currency persistence against PostgreSQL', () => {
         '1.2700000000',
       ]),
     ).rejects.toThrow(/uq__fiat_currency_rates__code_as_of_source/u);
+  });
+
+  it('serializes concurrent retries and headline updates per currency', async () => {
+    const setup = repository(orm.em.fork());
+    await setup.upsertCurrency({ code: 'CAD', name: { en: 'Canadian dollar' }, symbol: { default: '$' } });
+    const older = new Date('2026-08-11T00:00:00.000Z');
+    const newer = new Date('2026-08-12T00:00:00.000Z');
+
+    const [first, second] = await Promise.all([
+      repository(orm.em.fork()).recordRates([{ code: 'CAD', usdPerUnit: '0.72', asOf: older, source: 'boc' }]),
+      repository(orm.em.fork()).recordRates([{ code: 'CAD', usdPerUnit: '0.73', asOf: newer, source: 'boc' }]),
+    ]);
+
+    expect(first).toHaveLength(1);
+    expect(second).toHaveLength(1);
+    await Promise.all([
+      repository(orm.em.fork()).recordRates([{ code: 'CAD', usdPerUnit: '0.7300000000', asOf: newer, source: 'boc' }]),
+      repository(orm.em.fork()).recordRates([{ code: 'CAD', usdPerUnit: '0.73', asOf: newer, source: 'boc' }]),
+    ]);
+    const verified = repository(orm.em.fork());
+    expect(await verified.findCurrency('CAD')).toMatchObject({ usdPerUnit: '0.73', rateAsOf: newer });
+    expect(await verified.listRateHistory({ code: 'CAD', limit: 10 })).toHaveLength(2);
   });
 
   it('refuses a rate for a currency the catalogue does not hold and writes none of the batch', async () => {

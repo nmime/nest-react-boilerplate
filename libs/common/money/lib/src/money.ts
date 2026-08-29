@@ -46,7 +46,8 @@ export interface MoneyRatio {
 /** An integer multiplier, or an exact ratio for anything fractional. */
 export type MoneyRate = number | MoneyRatio;
 
-const currencyCodePattern = /^[A-Z]{3}$/u;
+const isoCurrencyCodePattern = /^[A-Z]{3}$/u;
+const registeredCurrencyCodePattern = /^[A-Z][A-Z0-9]{2,11}$/u;
 const decimalTextPattern = /^-?\d+(?:\.\d+)?$/u;
 const defaultMinorUnitExponent = 2;
 
@@ -96,21 +97,41 @@ export class MoneyCurrencyMismatchError extends Error {
   }
 }
 
-function assertCurrencyCode(code: string): CurrencyCode {
-  if (!currencyCodePattern.test(code)) {
-    throw new TypeError(`Currency must be three uppercase letters (received ${JSON.stringify(code)}).`);
+function assertIsoCurrencyCode(code: string): CurrencyCode {
+  if (!isoCurrencyCodePattern.test(code)) {
+    throw new TypeError(
+      `Unregistered currency must be three uppercase letters (received ${JSON.stringify(code)}). ` +
+        'Register non-ISO asset codes before use.',
+    );
   }
   return code;
 }
 
+function assertRegisteredCurrencyCode(code: string): CurrencyCode {
+  if (!registeredCurrencyCodePattern.test(code)) {
+    throw new TypeError(
+      `Registered currency must be 3 to 12 uppercase ASCII letters or digits, starting with a letter ` +
+        `(received ${JSON.stringify(code)}).`,
+    );
+  }
+  return code;
+}
+
+function assertCurrencyCode(code: string): CurrencyCode {
+  return registeredCurrencyExponents.has(code) ? code : assertIsoCurrencyCode(code);
+}
+
 /**
  * Declares a currency this workspace does not get from the ISO table — a crypto unit, a loyalty
- * point, an internal ledger unit. Registering the same exponent twice is a no-op so a module
- * that registers on import stays safe to import more than once; a conflicting exponent throws,
- * because one of the two callers is already computing with the wrong scale.
+ * point, an internal ledger unit. Extension codes are 3–12 uppercase ASCII letters or digits and
+ * start with a letter, so provider assets such as `USDT`, `USDC`, and `XROCK` are representable
+ * without admitting whitespace, punctuation, or locale-dependent Unicode. Registering the same
+ * exponent twice is a no-op so a module that registers on import stays safe to import more than
+ * once; a conflicting exponent throws, because one of the two callers is already computing with
+ * the wrong scale.
  */
 function registerCurrency(definition: CurrencyDefinition): void {
-  const code = assertCurrencyCode(definition.code);
+  const code = assertRegisteredCurrencyCode(definition.code);
   const { minorUnitExponent: exponent } = definition;
 
   if (!Number.isInteger(exponent) || exponent < 0 || exponent > 12) {
@@ -152,11 +173,13 @@ function assertSameCurrency(left: Money, right: Money): CurrencyCode {
 }
 
 function add(left: Money, right: Money): Money {
-  return of(left.amountMinor + right.amountMinor, assertSameCurrency(left, right));
+  const currency = assertSameCurrency(left, right);
+  return toSafeMinorUnits(BigInt(left.amountMinor) + BigInt(right.amountMinor), currency);
 }
 
 function subtract(left: Money, right: Money): Money {
-  return of(left.amountMinor - right.amountMinor, assertSameCurrency(left, right));
+  const currency = assertSameCurrency(left, right);
+  return toSafeMinorUnits(BigInt(left.amountMinor) - BigInt(right.amountMinor), currency);
 }
 
 /** `-1`, `0`, or `1`, so the result composes with `Array.prototype.sort`. */
@@ -184,7 +207,7 @@ function rate(decimalText: string): MoneyRatio {
   const denominator = 10 ** fraction.length;
   const magnitude = Number(`${whole}${fraction}`);
 
-  if (!Number.isSafeInteger(magnitude)) {
+  if (!Number.isSafeInteger(magnitude) || !Number.isSafeInteger(denominator)) {
     throw new RangeError(`Rate ${decimalText} has more digits than can be represented exactly.`);
   }
 
@@ -193,6 +216,9 @@ function rate(decimalText: string): MoneyRatio {
 
 function toRatio(value: MoneyRate): MoneyRatio {
   if (typeof value !== 'number') {
+    if (!Number.isSafeInteger(value.numerator) || !Number.isSafeInteger(value.denominator)) {
+      throw new TypeError('A rate ratio must contain safe whole-number numerator and denominator values.');
+    }
     return value;
   }
 
@@ -262,14 +288,14 @@ function allocate(value: Money, weights: readonly number[]): Money[] {
     throw new RangeError('Allocation weights must be non-negative whole numbers.');
   }
 
-  const weightSum = weights.reduce((total, weight) => total + weight, 0);
-  if (weightSum === 0) {
+  const weightSum = weights.reduce((total, weight) => total + BigInt(weight), 0n);
+  if (weightSum === 0n) {
     throw new RangeError('Allocation needs at least one weight above zero.');
   }
 
   const sign = value.amountMinor < 0 ? -1n : 1n;
   const magnitude = BigInt(Math.abs(value.amountMinor));
-  const divisor = BigInt(weightSum);
+  const divisor = weightSum;
   const shares = weights.map((weight) => ({ weight, share: (magnitude * BigInt(weight)) / divisor }));
   // Each floored share loses less than one minor unit and a zero weight loses nothing, so the
   // leftover is always smaller than the number of eligible shares: one pass is enough.
@@ -328,17 +354,38 @@ function formatAmount(value: Money): string {
 /**
  * Renders an amount for a human. Display only — {@link Money.formatAmount} is the exact form;
  * this one goes through a double on its way to `Intl`, and locale rules may abbreviate.
+ *
+ * ECMA-402 currency formatting only accepts three-letter codes. Registered extension assets use
+ * locale number grouping plus the code, for example `1.500000 USDT`, instead of throwing at the
+ * display boundary. ISO currencies retain native symbols and `currencyDisplay` behavior.
  */
 function format(value: Money, locale: string, options: Intl.NumberFormatOptions = {}): string {
   const exponent = minorUnitExponent(value.currency);
+  const amount = value.amountMinor / 10 ** exponent;
+  const fractionOptions = {
+    minimumFractionDigits: exponent,
+    maximumFractionDigits: exponent,
+  } as const;
+
+  if (!isoCurrencyCodePattern.test(value.currency)) {
+    const numberOptions = { ...options };
+    delete numberOptions.currency;
+    delete numberOptions.currencyDisplay;
+    delete numberOptions.currencySign;
+    delete numberOptions.style;
+    return `${new Intl.NumberFormat(locale, {
+      ...fractionOptions,
+      ...numberOptions,
+      style: 'decimal',
+    }).format(amount)} ${value.currency}`;
+  }
 
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: value.currency,
-    minimumFractionDigits: exponent,
-    maximumFractionDigits: exponent,
+    ...fractionOptions,
     ...options,
-  }).format(value.amountMinor / 10 ** exponent);
+  }).format(amount);
 }
 
 /**

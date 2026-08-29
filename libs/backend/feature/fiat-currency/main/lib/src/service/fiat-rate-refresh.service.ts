@@ -50,25 +50,20 @@ export class FiatRateRefreshService {
     let recorded = 0;
 
     for (const source of this.sources) {
-      let quotes: readonly FiatRateQuoteResult[];
-
       try {
-        quotes = await source.fetchUsdRates(codes);
+        const quotes: readonly FiatRateQuoteResult[] = await source.fetchUsdRates(codes);
+        if (quotes.length === 0) {
+          continue;
+        }
+
+        const rates: RecordFiatRateParams[] = quotes.map((quote) => ({ ...quote, source: source.id }));
+        recorded += (await this.persistence.recordRates(rates)).length;
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error);
 
         this.logger.warn(`Rate source "${source.id}" failed: ${reason}`);
         failures.push({ source: source.id, reason });
-        continue;
       }
-
-      if (quotes.length === 0) {
-        continue;
-      }
-
-      const rates: RecordFiatRateParams[] = quotes.map((quote) => ({ ...quote, source: source.id }));
-
-      recorded += (await this.persistence.recordRates(rates)).length;
     }
 
     return { recorded, failures };

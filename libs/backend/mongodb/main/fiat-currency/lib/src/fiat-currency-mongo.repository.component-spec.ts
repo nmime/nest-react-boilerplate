@@ -1,5 +1,6 @@
 // @requirements REQ-FIAT-HISTORY-003
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
+import { hasDockerRuntime } from '@app/backend-common-component-test';
 import { MongoClient } from 'mongodb';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -13,7 +14,13 @@ import type { FiatCurrencyDocument, FiatCurrencyRateDocument } from './fiat-curr
 
 const databaseName = 'fiat_currency_component';
 
-describe('fiat currency persistence against MongoDB', () => {
+const dockerAvailable = hasDockerRuntime();
+if (!dockerAvailable) {
+  process.stderr.write('Mongo fiat currency component test: skipped because Docker is not available on this host.\n');
+}
+const describeIfDocker = dockerAvailable ? describe : describe.skip;
+
+describeIfDocker('fiat currency persistence against MongoDB', () => {
   let container: StartedMongoDBContainer;
   let client: MongoClient;
   let persistence: FiatCurrencyMongoPersistence;
@@ -26,7 +33,7 @@ describe('fiat currency persistence against MongoDB', () => {
     await client.connect();
     const database = client.db(databaseName);
     await initializeFiatCurrencyCollections(database);
-    persistence = new FiatCurrencyMongoPersistence(database);
+    persistence = new FiatCurrencyMongoPersistence(database, client);
   });
 
   afterAll(async () => {
@@ -57,10 +64,11 @@ describe('fiat currency persistence against MongoDB', () => {
     await persistence.recordRates([{ code: 'EUR', usdPerUnit: '1.0700000000', asOf: monday, source: 'ecb' }]);
 
     const stored = await persistence.findCurrency('EUR');
-    expect(stored).toMatchObject({ usdPerUnit: '1.0800000000', rateAsOf: tuesday, minorUnitExponent: 2 });
+    expect(stored).toMatchObject({ usdPerUnit: '1.08', rateAsOf: tuesday, minorUnitExponent: 2 });
 
     const history = await persistence.listRateHistory({ code: 'EUR', limit: 10 });
     expect(history.map((rate) => rate.asOf)).toEqual([tuesday, monday]);
+    expect(history.map((rate) => rate.usdPerUnit)).toEqual(['1.08', '1.07']);
     expect(stored).toMatchObject({ name: { en: 'Euro', ru: 'Евро' }, symbol: { default: '€' } });
   });
 
@@ -87,12 +95,19 @@ describe('fiat currency persistence against MongoDB', () => {
     ).rejects.toThrow(/duplicate key/u);
   });
 
-  it('refuses a rate for a currency the catalogue does not hold', async () => {
+  it('rolls back the complete rate batch when a later currency is unknown', async () => {
+    await persistence.upsertCurrency({ code: 'JPY', name: { en: 'Yen' }, symbol: { default: '¥' } });
+    const asOf = new Date('2026-08-11T13:00:00.000Z');
+
     await expect(
       persistence.recordRates([
-        { code: 'XXX', usdPerUnit: '1.0000000000', asOf: new Date('2026-08-11T13:00:00.000Z'), source: 'ecb' },
+        { code: 'JPY', usdPerUnit: '0.0067000000', asOf, source: 'ecb' },
+        { code: 'XXX', usdPerUnit: '1.0000000000', asOf, source: 'ecb' },
       ]),
     ).rejects.toThrow('XXX is not in the fiat catalogue');
+
+    await expect(persistence.listRateHistory({ code: 'JPY', limit: 10 })).resolves.toEqual([]);
+    await expect(persistence.findCurrency('JPY')).resolves.toMatchObject({ usdPerUnit: null, rateAsOf: null });
   });
 
   it('rejects a rate wider than the Postgres axis would hold, so the two cannot drift', async () => {

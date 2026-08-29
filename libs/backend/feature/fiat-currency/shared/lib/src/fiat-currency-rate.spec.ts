@@ -6,6 +6,8 @@ import {
   fiatMoneyFromUsd,
   fiatMoneyToUsd,
   fiatRateRatio,
+  normalizeFiatRateText,
+  resolveFiatMinorUnitExponent,
   usdRateQuote,
 } from './fiat-currency-rate';
 import type { FiatCurrency } from './fiat-currency.types';
@@ -23,6 +25,27 @@ const currency = (overrides: Partial<FiatCurrency> = {}): FiatCurrency => ({
   usdPerUnit: '1.08',
   rateAsOf: new Date('2026-08-12T00:00:00.000Z'),
   ...overrides,
+});
+
+describe('resolveFiatMinorUnitExponent', () => {
+  it('accepts ISO exponents and rejects catalogue drift', () => {
+    expect(resolveFiatMinorUnitExponent('JPY')).toBe(0);
+    expect(resolveFiatMinorUnitExponent('BHD', 3)).toBe(3);
+    expect(() => resolveFiatMinorUnitExponent('EUR', 3)).toThrow(/registered money exponent 2/u);
+  });
+});
+
+describe('normalizeFiatRateText', () => {
+  it('canonicalizes equivalent decimal text for immutable observation comparison', () => {
+    expect(normalizeFiatRateText('1.0700000000')).toBe('1.07');
+    expect(normalizeFiatRateText('1.0000000000')).toBe('1');
+    expect(normalizeFiatRateText('00001.0700')).toBe('1.07');
+  });
+
+  it('rejects precision PostgreSQL would otherwise round and MongoDB would reject', () => {
+    expect(() => normalizeFiatRateText('1.08000000001')).toThrow('numeric(15,10)');
+    expect(() => normalizeFiatRateText('100000')).toThrow('numeric(15,10)');
+  });
 });
 
 describe('fiatRateRatio', () => {

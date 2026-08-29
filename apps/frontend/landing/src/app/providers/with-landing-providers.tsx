@@ -14,7 +14,7 @@ import type { ComponentType } from 'react';
 const LandingRuntimeOverlayProvider = observer(function LandingRuntimeOverlayProvider() {
   const appStore = useAppStore();
   const locale = useStore().locale.locale;
-  const { dismissToast, state, toasts } = useApiRuntimeOverlayModel();
+  const { dismissPresentation, dismissToast, state, toasts } = useApiRuntimeOverlayModel();
 
   return (
     <UiApiRuntimeOverlay
@@ -34,15 +34,19 @@ const LandingRuntimeOverlayProvider = observer(function LandingRuntimeOverlayPro
         defaultOfflineMessage: translate('ui.runtime.offline.description', {
           locale,
         }),
+        defaultPresentationTitle: translate('ui.runtime.requestFailed.title', { locale }),
         defaultServerErrorMessage: translate('ui.runtime.serverUnavailable.description', { locale }),
         dismissLabel: translate('ui.runtime.dismissToast', { locale }),
         offlineTitle: translate('ui.runtime.offline.title', { locale }),
         serverErrorTitle: translate('ui.runtime.serverUnavailable.title', {
           locale,
         }),
+        supportGuidance: translate('ui.runtime.presentation.support', { locale }),
       }}
       lastError={state.lastError}
+      onDismissPresentation={dismissPresentation}
       onDismissToast={dismissToast}
+      presentation={state.presentation}
       redirectTo={state.redirectTo ?? '/'}
       status={state.status}
       toasts={toasts}

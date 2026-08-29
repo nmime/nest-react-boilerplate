@@ -1,5 +1,15 @@
 export type ApiRuntimeStatus = 'online' | 'offline' | 'server-error';
 
+export interface ApiRuntimePresentationSnapshot {
+  customDescription?: string;
+  display: 'custom' | 'modal';
+  figmaOnly: boolean;
+  lines: readonly string[];
+  ruleId: string;
+  severity: 'error' | 'info' | 'success' | 'warning';
+  support: boolean;
+}
+
 export type ApiRuntimeEvent =
   | {
       type: 'request-succeeded';
@@ -21,6 +31,10 @@ export type ApiRuntimeEvent =
   | {
       type: 'toast';
       toast: ApiRuntimeToastSnapshot;
+    }
+  | {
+      type: 'presentation';
+      presentation: ApiRuntimePresentationSnapshot;
     };
 
 export interface NormalizedApiErrorSnapshot {
@@ -44,6 +58,7 @@ export interface ApiRuntimeToastSnapshot {
 export interface ApiRuntimeState {
   authRequired: boolean;
   lastError: NormalizedApiErrorSnapshot | null;
+  presentation: ApiRuntimePresentationSnapshot | null;
   redirectTo: string | null;
   status: ApiRuntimeStatus;
 }
@@ -52,6 +67,7 @@ export type ApiRuntimeEventListener = (event: ApiRuntimeEvent) => void;
 
 export interface ApiRuntimeEventHub {
   clearAuthRequired: () => void;
+  clearPresentation: () => void;
   emit: (event: ApiRuntimeEvent) => void;
   getState: () => ApiRuntimeState;
   reset: () => void;
@@ -61,6 +77,7 @@ export interface ApiRuntimeEventHub {
 const initialState = (): ApiRuntimeState => ({
   authRequired: false,
   lastError: null,
+  presentation: null,
   redirectTo: null,
   status: 'online',
 });
@@ -80,6 +97,10 @@ export const createApiRuntimeEventHub = (): ApiRuntimeEventHub => {
 
     if (event.type === 'server-error') {
       state = { ...state, lastError: event.error, status: 'server-error' };
+    }
+
+    if (event.type === 'presentation') {
+      state = { ...state, presentation: event.presentation };
     }
 
     if (event.type === 'auth-required') {
@@ -103,6 +124,9 @@ export const createApiRuntimeEventHub = (): ApiRuntimeEventHub => {
         authRequired: false,
         redirectTo: null,
       };
+    },
+    clearPresentation: () => {
+      state = { ...state, presentation: null };
     },
     emit,
     getState: () => state,

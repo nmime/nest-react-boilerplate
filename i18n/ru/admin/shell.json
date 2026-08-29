@@ -37,6 +37,7 @@
   "admin.permission.dashboardMissing": "Отсутствует разрешение на панель администратора.",
   "admin.permission.profileMissing": "Отсутствует разрешение на профиль администратора.",
   "admin.permission.featureFlagsMissing": "Отсутствует разрешение на флаги функций.",
+  "admin.permission.settingsMissing": "Отсутствует разрешение на настройки администратора.",
   "admin.loadingProfile": "Загрузка профиля администратора...",
   "admin.loadingEyebrow": "Загрузка",
   "admin.error.profileRequestFailed": "Запрос профиля не удался."

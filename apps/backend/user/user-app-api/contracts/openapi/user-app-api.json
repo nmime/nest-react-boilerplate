@@ -841,7 +841,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "roles": {
             "type": "array",
@@ -873,7 +873,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "roles": {
             "type": "array",

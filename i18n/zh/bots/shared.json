@@ -1,0 +1,13 @@
+{
+  "bot.error.expired": "此机器人操作已过期。请重新开始。",
+  "bot.error.rateLimited": "机器人操作太多。请稍候，然后重试。",
+  "bot.error.unauthorized": "登录或链接您的帐户以使用此机器人操作。",
+  "bot.error.unavailable": "服务暂时不可用。",
+  "bot.error.linkFailed": "无法从机器人关联您的帐户。",
+  "bot.error.unlinkFailed": "无法取消您的账号与机器人的关联。",
+  "bot.error.tampered": "无法验证此机器人操作。请重新开始。",
+  "bot.error.wrongOwner": "此智能小助手操作属于其他Discord用户。",
+  "bot.error.wrongGuild": "此机器人操作属于另一个Discord服务器。",
+  "bot.error.wrongTenant": "此机器人操作属于另一个工作区。",
+  "bot.error.unknown": "机器人无法完成此操作。"
+}

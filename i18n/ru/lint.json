@@ -28,7 +28,10 @@
     "the",
     "your"
   ],
-  "reviewedTechnicalTerms": ["/account link", "/account status"],
+  "reviewedTechnicalTerms": [
+    "/account link",
+    "/account status"
+  ],
   "untranslatedKeys": [
     "admin.audit.filter.uuidPlaceholder",
     "admin.loginAnalytics.column.geo",
@@ -38,7 +41,6 @@
     "admin.notification.option.provider.mailPace",
     "admin.notification.option.provider.resend",
     "admin.problemPresentations.column.endpoint",
-    "admin.problemPresentations.display.toast",
     "admin.profile.emailLine",
     "admin.users.column.email",
     "auth.provider.discord",

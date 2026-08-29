@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-ERROR-005
+// @requirements REQ-API-RESPONSE-STUDIO-001 REQ-FRONTEND-ERROR-005
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { configureApiLocale } from './api-locale';
@@ -8,6 +8,7 @@ import {
   configureProblemPresentationOverrides,
   createDefaultApiToastRules,
   parseApiToastRules,
+  resolveApiProblemPresentation,
   resolveApiToastRule,
   resolveApiToastRules,
   type ApiToastRule,
@@ -323,18 +324,84 @@ describe('ApiToastRuntime defaults', () => {
     expect(runtime.visible.map((toast) => toast.id)).toEqual(['toast-2']);
   });
 
-  it('skips silent and modal rules in showForApiResult', () => {
+  it.each(['modal', 'custom'] as const)('returns typed %s presentation data without emitting a toast', (display) => {
+    configureApiLocale({ locale: 'zh' });
+    configureProblemPresentationOverrides([
+      {
+        ruleId: `${display}-rule`,
+        display,
+        severity: 'warning',
+        support: true,
+        figmaOnly: display === 'custom',
+        customDescription: display === 'custom' ? 'https://www.figma.com/file/design' : '',
+        texts: {
+          en: ['English line one', 'English line two'],
+          ru: ['Русская строка один', 'Русская строка два'],
+          zh: ['中文第一行', '中文第二行'],
+        },
+        revision: 7,
+      },
+    ]);
+    const rules = resolveApiToastRules([
+      {
+        display: 'toast',
+        id: `${display}-rule`,
+        match: { status: 500 },
+        toast: { category: 'error', messageSource: 'problem', title: 'Request failed' },
+      },
+    ]);
+    const emitted: unknown[] = [];
+    const runtime = new ApiToastRuntime({
+      eventHub: {
+        clearAuthRequired: () => undefined,
+        clearPresentation: () => undefined,
+        emit: (event) => emitted.push(event),
+        getState: () => ({ authRequired: false, lastError: null, presentation: null, redirectTo: null, status: 'online' }),
+        reset: () => undefined,
+        subscribe: () => () => undefined,
+      },
+    });
+
+    expect(runtime.showForApiResult({ status: 500 }, rules)).toBeNull();
+    expect(runtime.visible).toHaveLength(0);
+    expect(emitted).toEqual([
+      {
+        type: 'presentation',
+        presentation: {
+          display,
+          ruleId: `${display}-rule`,
+          severity: 'warning',
+          support: true,
+          figmaOnly: display === 'custom',
+          ...(display === 'custom' ? { customDescription: 'https://www.figma.com/file/design' } : {}),
+          lines: ['中文第一行', '中文第二行'],
+        },
+      },
+    ]);
+    expect(resolveApiProblemPresentation({ status: 500 }, rules)).toEqual({
+      display,
+      ruleId: `${display}-rule`,
+      severity: 'warning',
+      support: true,
+      figmaOnly: display === 'custom',
+      ...(display === 'custom' ? { customDescription: 'https://www.figma.com/file/design' } : {}),
+      lines: ['中文第一行', '中文第二行'],
+    });
+  });
+
+  it('preserves silent no-toast behavior and does not expose silent rules as capable presentations', () => {
     const runtime = new ApiToastRuntime();
     const rules = parseApiToastRules([
       {
-        display: 'modal',
-        id: 'modal-rule',
-        match: { status: 500 },
-        toast: { category: 'error', title: 'Modal' },
+        display: 'silent',
+        id: 'silent-rule',
+        match: { status: 401 },
+        toast: { category: 'info', title: 'Silent' },
       },
     ]);
 
-    expect(runtime.showForApiResult({ status: 500 }, rules)).toBeNull();
+    expect(runtime.showForApiResult({ status: 401 }, rules)).toBeNull();
+    expect(resolveApiProblemPresentation({ status: 401 }, rules)).toBeNull();
     expect(runtime.visible).toHaveLength(0);
   });
 

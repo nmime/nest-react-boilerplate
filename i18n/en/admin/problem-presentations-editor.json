@@ -1,0 +1,19 @@
+{
+  "admin.apiResponseStudio.editor.title": "Edit {{method}} {{path}} · {{status}}",
+  "admin.apiResponseStudio.editor.description": "Presentation fields are saved together with the current revision.",
+  "admin.apiResponseStudio.editor.display": "Display mode",
+  "admin.apiResponseStudio.editor.severity": "Severity",
+  "admin.apiResponseStudio.editor.support": "Show support guidance",
+  "admin.apiResponseStudio.editor.figmaOnly": "Figma-only specification",
+  "admin.apiResponseStudio.editor.customDescription": "Custom description",
+  "admin.apiResponseStudio.editor.comments": "Internal comments",
+  "admin.apiResponseStudio.editor.texts.en": "English messages",
+  "admin.apiResponseStudio.editor.texts.ru": "Russian messages",
+  "admin.apiResponseStudio.editor.texts.zh": "Chinese messages",
+  "admin.apiResponseStudio.editor.textsHint": "One message per line, up to eight entries.",
+  "admin.apiResponseStudio.bulk.title": "Bulk edit selected responses",
+  "admin.apiResponseStudio.bulk.description": "All {{count}} responses are updated atomically. A stale revision prevents every change.",
+  "admin.apiResponseStudio.reset.title": "Reset response presentation?",
+  "admin.apiResponseStudio.reset.description": "Custom presentation fields will be replaced by the latest synchronized source values.",
+  "admin.apiResponseStudio.editor.enums": "Enum enabled values"
+}

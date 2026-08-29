@@ -6456,7 +6456,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "theme": {
             "type": "string",
@@ -6548,7 +6548,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           }
         },
         "required": ["email", "password"]
@@ -6942,7 +6942,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "theme": {
             "type": "string",
@@ -6989,7 +6989,7 @@
         "properties": {
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           }
         },
         "required": ["locale"]
@@ -6999,7 +6999,7 @@
         "properties": {
           "locale": {
             "type": "string",
-            "enum": ["en", "ru"]
+            "enum": ["en", "ru", "zh"]
           },
           "theme": {
             "type": "string",
@@ -7014,7 +7014,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["en", "ru"]
+              "enum": ["en", "ru", "zh"]
             }
           }
         },
@@ -7038,7 +7038,7 @@
           },
           "display": {
             "type": "string",
-            "enum": ["toast", "silent"]
+            "enum": ["toast", "modal", "custom", "silent"]
           },
           "severity": {
             "type": "string",
@@ -7050,10 +7050,28 @@
           "messageRu": {
             "type": "string"
           },
+          "messageZh": {
+            "type": "string"
+          },
+          "texts": {
+            "type": "object"
+          },
+          "customDescription": {
+            "type": "string"
+          },
+          "support": {
+            "type": "boolean"
+          },
+          "figmaOnly": {
+            "type": "boolean"
+          },
           "revision": {
             "type": "number"
           },
           "updatedAt": {
+            "type": "string"
+          },
+          "updatedByUserId": {
             "type": "string"
           }
         },

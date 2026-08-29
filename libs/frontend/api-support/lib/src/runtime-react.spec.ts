@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-ERROR-005
+// @requirements REQ-API-RESPONSE-STUDIO-001 REQ-FRONTEND-ERROR-005
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -68,6 +68,7 @@ describe('useApiRuntimeOverlayModel', () => {
   it('renders with the shared runtime dependencies by default', () => {
     const { result } = renderHook(() => useApiRuntimeOverlayModel());
 
+    expect(result.current.dismissPresentation).toBeInstanceOf(Function);
     expect(result.current.dismissToast).toBeInstanceOf(Function);
     expect(result.current.state.status).toBe('online');
     expect(Array.isArray(result.current.toasts)).toBe(true);
@@ -147,6 +148,31 @@ describe('useApiRuntimeOverlayModel', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it('dismisses a presentation without clearing unrelated runtime state', () => {
+    const eventHub = createApiRuntimeEventHub();
+    const toastRuntime = new ApiToastRuntime({ clock: () => 1 });
+    eventHub.emit({ type: 'server-error', error: snapshot() });
+    eventHub.emit({
+      type: 'presentation',
+      presentation: {
+        display: 'custom',
+        figmaOnly: false,
+        lines: ['Custom failure'],
+        ruleId: 'custom-failure',
+        severity: 'error',
+        support: false,
+      },
+    });
+    const { result } = renderHook(() => useApiRuntimeOverlayModel({ eventHub, toastRuntime }));
+
+    act(() => {
+      result.current.dismissPresentation();
+    });
+
+    expect(result.current.state.presentation).toBeNull();
+    expect(result.current.state.status).toBe('server-error');
   });
 
   it('dismisses a toast and re-renders the visible list', () => {

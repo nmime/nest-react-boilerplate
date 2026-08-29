@@ -1,0 +1,16 @@
+{
+  "reviewedTechnicalTerms": ["API", "Discord", "Figma", "JSON", "OAuth", "OpenAPI", "PostgreSQL", "Telegram"],
+  "untranslatedKeys": [
+    "admin.audit.filter.uuidPlaceholder",
+    "admin.notification.option.provider.appleApns",
+    "admin.notification.option.provider.googleFcm",
+    "admin.notification.option.provider.mailPace",
+    "admin.notification.option.provider.resend",
+    "admin.apiResponseStudio.source.url",
+    "auth.provider.discord",
+    "auth.provider.telegram",
+    "auth.social.protocol.oauth",
+    "user.form.emailPlaceholder",
+    "user.form.registerEmailPlaceholder"
+  ]
+}

@@ -653,6 +653,13 @@ export interface ProblemPresentationRecord {
   comment: string;
   messageEn: string;
   messageRu: string;
+  messageZh?: string;
+  textsEn?: string[];
+  textsRu?: string[];
+  textsZh?: string[];
+  support?: boolean;
+  customDescription?: string;
+  figmaOnly?: boolean;
   revision: number;
   updatedByUserId: string;
   createdAt: Date;
@@ -666,6 +673,13 @@ export interface SaveProblemPresentationInput {
   comment?: string;
   messageEn?: string;
   messageRu?: string;
+  messageZh?: string;
+  textsEn?: readonly string[];
+  textsRu?: readonly string[];
+  textsZh?: readonly string[];
+  support?: boolean;
+  customDescription?: string;
+  figmaOnly?: boolean;
   expectedRevision: number;
   actorUserId: string;
   metadata?: Record<string, unknown>;

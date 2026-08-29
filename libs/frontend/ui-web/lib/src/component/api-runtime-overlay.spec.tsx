@@ -1,5 +1,5 @@
-// @requirements REQ-FRONTEND-ERROR-005
-// Evidence for: REQ-FRONTEND-ERROR-005
+// @requirements REQ-API-RESPONSE-STUDIO-005 REQ-FRONTEND-ERROR-005
+// Evidence for: REQ-API-RESPONSE-STUDIO-005 REQ-FRONTEND-ERROR-005
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -83,6 +83,51 @@ describe('UiApiRuntimeOverlay', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onAuthDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['modal', 'custom'] as const)('renders and dismisses a focused %s problem presentation', (display) => {
+    const onDismissPresentation = vi.fn();
+    render(
+      <UiApiRuntimeOverlay
+        onDismissPresentation={onDismissPresentation}
+        presentation={{
+          display,
+          figmaOnly: display === 'custom',
+          lines: ['中文第一行', '中文第二行'],
+          ruleId: `${display}-rule`,
+          severity: 'warning',
+          support: true,
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.getByText('中文第一行')).toBeTruthy();
+    expect(screen.getByText('中文第二行')).toBeTruthy();
+    expect(screen.getByText('Contact support if this problem continues.')).toBeTruthy();
+    expect(screen.getByText('中文第一行').parentElement?.textContent).not.toContain('中文第一行中文第一行');
+    expect(screen.getByText('中文第二行').parentElement?.getAttribute('data-presentation-mode')).toBe(display);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onDismissPresentation).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses supplied localized presentation copy when the override has no title or support copy', () => {
+    render(
+      <UiApiRuntimeOverlay
+        copy={{ defaultPresentationTitle: 'Ошибка запроса', supportGuidance: 'Обратитесь в поддержку.' }}
+        presentation={{
+          display: 'modal',
+          figmaOnly: false,
+          lines: [],
+          ruleId: 'localized-copy',
+          severity: 'error',
+          support: true,
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Ошибка запроса' })).toBeTruthy();
+    expect(screen.getByText('Обратитесь в поддержку.')).toBeTruthy();
   });
 
   it('prefers a provided auth action over the default sign-in link', () => {

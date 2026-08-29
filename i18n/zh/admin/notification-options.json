@@ -1,0 +1,14 @@
+{
+  "admin.notification.option.channel.bot": "机器人",
+  "admin.notification.option.channel.email": "电子邮箱",
+  "admin.notification.option.channel.push": "推送通知",
+  "admin.notification.option.provider.appleApns": "Apple APNs",
+  "admin.notification.option.provider.discordBot": "Discord机器人",
+  "admin.notification.option.provider.googleFcm": "Google FCM",
+  "admin.notification.option.provider.mailPace": "MailPace",
+  "admin.notification.option.provider.resend": "Resend",
+  "admin.notification.option.provider.telegramBot": "Telegram 机器人",
+  "admin.notification.option.segment.authUsers": "认证用户",
+  "admin.notification.option.segment.dynamic": "动态",
+  "admin.notification.option.segment.static": "Static  静态？"
+}

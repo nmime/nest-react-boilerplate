@@ -1,0 +1,17 @@
+{
+  "admin.apiResponseStudio.sources.description": "Источники синхронизируются вручную. Сервер проверяет HTTPS-адреса перед импортом.",
+  "admin.apiResponseStudio.sources.empty": "Источники OpenAPI еще не настроены.",
+  "admin.apiResponseStudio.source.url": "JSON OpenAPI",
+  "admin.apiResponseStudio.source.status": "Последний статус",
+  "admin.apiResponseStudio.source.lastSync": "Последняя синхронизация",
+  "admin.apiResponseStudio.source.dialogDescription": "Настройте нейтральный источник OpenAPI. Синхронизация выполняется только вручную.",
+  "admin.apiResponseStudio.source.createTitle": "Добавить источник OpenAPI",
+  "admin.apiResponseStudio.source.editTitle": "Изменить источник OpenAPI",
+  "admin.apiResponseStudio.source.name": "Название источника",
+  "admin.apiResponseStudio.source.slug": "Идентификатор источника",
+  "admin.apiResponseStudio.source.jsonUrl": "HTTPS-адрес JSON OpenAPI",
+  "admin.apiResponseStudio.source.docsUrl": "HTTPS-адрес документации",
+  "admin.apiResponseStudio.source.enabled": "Источник включен",
+  "admin.apiResponseStudio.validation.source": "Укажите название и строчный идентификатор, начинающийся с буквы.",
+  "admin.apiResponseStudio.validation.https": "Адрес JSON OpenAPI должен быть корректным HTTPS-адресом."
+}

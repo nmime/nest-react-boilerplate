@@ -21,3 +21,5 @@ export * from './auth-role.repository';
 export * from './auth-user-role.repository';
 
 export * from './problem-presentation.repository';
+
+export * from './api-response-studio.repository';

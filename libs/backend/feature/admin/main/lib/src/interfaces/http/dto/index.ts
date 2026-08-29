@@ -19,3 +19,5 @@ export * from './admin-rbac-catalog-payload.dto';
 export * from './authenticated-principal.dto';
 export * from './admin-profile-view.dto';
 export * from './admin-profile-payload.dto';
+
+export * from './api-response-studio.dto';

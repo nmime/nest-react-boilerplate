@@ -35,14 +35,16 @@ type CatalogKey = 'greeting' | 'only';
 const catalog: Record<Locale, Partial<Record<CatalogKey, string>>> = {
   en: { greeting: 'Hello {{ name }}', only: 'English only' },
   ru: { greeting: 'Привет {{ name }}' },
+  zh: { greeting: '你好 {{ name }}' },
 };
 
 describe('locale catalog surface', () => {
   it('exposes the supported set and its dot-accessible language map', () => {
-    expect(supportedLocales).toEqual(['en', 'ru']);
+    expect(supportedLocales).toEqual(['en', 'ru', 'zh']);
     expect(defaultLocale).toBe('en');
     expect(Language.En).toBe('en');
     expect(Language.Ru).toBe('ru');
+    expect(Language.Zh).toBe('zh');
   });
 
   it('recognizes supported locales and rejects everything else', () => {

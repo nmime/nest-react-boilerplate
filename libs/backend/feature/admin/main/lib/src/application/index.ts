@@ -6,3 +6,5 @@ export * from './problem-presentations.use-case';
 export * from './admin-users.use-case';
 export * from './mapper';
 export * from './util';
+
+export * from './api-response-studio';

@@ -1,0 +1,17 @@
+{
+  "admin.apiResponseStudio.sources.description": "Sources are synchronized manually. URLs must use HTTPS and are validated by the server before import.",
+  "admin.apiResponseStudio.sources.empty": "No OpenAPI sources have been configured.",
+  "admin.apiResponseStudio.source.url": "OpenAPI JSON",
+  "admin.apiResponseStudio.source.status": "Last status",
+  "admin.apiResponseStudio.source.lastSync": "Last sync",
+  "admin.apiResponseStudio.source.dialogDescription": "Configure a product-neutral OpenAPI source. Synchronization remains manual.",
+  "admin.apiResponseStudio.source.createTitle": "Add OpenAPI source",
+  "admin.apiResponseStudio.source.editTitle": "Edit OpenAPI source",
+  "admin.apiResponseStudio.source.name": "Source name",
+  "admin.apiResponseStudio.source.slug": "Source slug",
+  "admin.apiResponseStudio.source.jsonUrl": "OpenAPI JSON HTTPS URL",
+  "admin.apiResponseStudio.source.docsUrl": "Documentation HTTPS URL",
+  "admin.apiResponseStudio.source.enabled": "Source enabled",
+  "admin.apiResponseStudio.validation.source": "Enter a name and a lowercase slug that starts with a letter.",
+  "admin.apiResponseStudio.validation.https": "The OpenAPI JSON URL must be a valid HTTPS address."
+}

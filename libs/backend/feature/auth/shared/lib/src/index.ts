@@ -9,3 +9,5 @@ export * from './session-account-access';
 export * from './oauth';
 
 export * from './util';
+
+export * from './api-response-studio';

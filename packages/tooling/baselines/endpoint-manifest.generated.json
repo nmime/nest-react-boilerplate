@@ -4,24 +4,6 @@
     {
       "project": "admin-app-api",
       "kind": "http",
-      "method": "ALL",
-      "path": "/api/v1/webhooks/:provider",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:91",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
       "method": "GET",
       "path": "/admin/audit",
       "source": "libs/backend/feature/audit-log/admin/lib/src/audit-log-admin.controller.ts:31",
@@ -386,6 +368,91 @@
       "project": "admin-app-api",
       "kind": "http",
       "method": "GET",
+      "path": "/admin/settings/api-response-studio/dashboard",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:68",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/api-response-studio/export",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:239",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/api-response-studio/history",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:248",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/api-response-studio/responses",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:142",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
+      "path": "/admin/settings/api-response-studio/sources",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:74",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "rbac-allowed-denied",
+        "expectedStatusClasses": [
+          "2xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "GET",
       "path": "/admin/settings/problem-presentations",
       "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-problem-presentations.controller.ts:37",
       "authClassification": "session-rbac",
@@ -438,24 +505,6 @@
       "project": "admin-app-api",
       "kind": "http",
       "method": "GET",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:70",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "GET",
       "path": "/health",
       "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
       "authClassification": "public",
@@ -499,23 +548,6 @@
       "smoke": {
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "automatic",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "GET",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:40",
-      "authClassification": "session-rbac",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "rbac-allowed-denied",
         "expectedStatusClasses": [
           "2xx"
         ]
@@ -601,6 +633,42 @@
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/settings/api-response-studio/responses/bulk",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:201",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PATCH",
+      "path": "/admin/settings/api-response-studio/responses/dismiss",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:220",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "manual-fixture",
@@ -974,155 +1042,29 @@
       "project": "admin-app-api",
       "kind": "http",
       "method": "POST",
-      "path": "/api/v1/webhooks/adyen",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:85",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:64",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cryptobot",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:40",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/heleket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:46",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/nowpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:52",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/stripe",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:79",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/x-rocket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:32",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/yookassa",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:58",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "ADMIN_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "admin-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:47",
+      "path": "/admin/settings/api-response-studio/sources",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:80",
       "authClassification": "session-rbac",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/admin/settings/api-response-studio/sources/:id/sync",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:121",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "manual-fixture",
@@ -1159,6 +1101,60 @@
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-roles.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/settings/api-response-studio/responses/:id",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:156",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/settings/api-response-studio/responses/:id/reset",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:180",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "ADMIN_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "admin-app-api",
+      "kind": "http",
+      "method": "PUT",
+      "path": "/admin/settings/api-response-studio/sources/:id",
+      "source": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.ts:100",
+      "authClassification": "session-rbac",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/admin/main/lib/src/interfaces/http/admin-api-response-studio.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "ADMIN_API_BASE_URL",
         "classification": "manual-fixture",
@@ -1541,24 +1537,6 @@
     {
       "project": "auth-app-api",
       "kind": "http",
-      "method": "ALL",
-      "path": "/api/v1/webhooks/:provider",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:91",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
       "method": "DELETE",
       "path": "/auth/provider-identities/:identityId",
       "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:290",
@@ -1568,24 +1546,6 @@
       "smoke": {
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "manual-fixture",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "GET",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:70",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
         "expectedStatusClasses": [
           "2xx",
           "4xx"
@@ -1733,23 +1693,6 @@
       "project": "auth-app-api",
       "kind": "http",
       "method": "GET",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:40",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "rbac-allowed-denied",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "GET",
       "path": "/ready",
       "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
       "authClassification": "public",
@@ -1793,150 +1736,6 @@
       "smoke": {
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "manual-fixture",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/adyen",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:85",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:64",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cryptobot",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:40",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/heleket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:46",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/nowpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:52",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/stripe",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:79",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/x-rocket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:32",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/yookassa",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:58",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "signed-provider",
         "expectedStatusClasses": [
           "2xx",
           "4xx"
@@ -2150,24 +1949,6 @@
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "AUTH_API_BASE_URL",
-        "classification": "manual-fixture",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "auth-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:47",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
       "smoke": {
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "manual-fixture",
@@ -2512,290 +2293,6 @@
     },
     {
       "project": "notification-consumer",
-      "kind": "http",
-      "method": "ALL",
-      "path": "/api/v1/webhooks/:provider",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:91",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "GET",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:70",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "GET",
-      "path": "/health",
-      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
-      "authClassification": "public",
-      "coverageClassification": "covered-integration",
-      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "automatic",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "GET",
-      "path": "/health/private",
-      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:19",
-      "authClassification": "private-network",
-      "coverageClassification": "covered-integration",
-      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "GET",
-      "path": "/live",
-      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:26",
-      "authClassification": "public",
-      "coverageClassification": "covered-integration",
-      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "automatic",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "GET",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:40",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "rbac-allowed-denied",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "GET",
-      "path": "/ready",
-      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
-      "authClassification": "public",
-      "coverageClassification": "covered-integration",
-      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "automatic",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/adyen",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:85",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:64",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cryptobot",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:40",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/heleket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:46",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/nowpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:52",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/stripe",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:79",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/x-rocket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:32",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/yookassa",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:58",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:47",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "manual-fixture",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
       "kind": "lifecycle",
       "method": "N/A",
       "path": "auth:expired-token-cleanup",
@@ -2813,42 +2310,6 @@
       "authClassification": "background",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-consumer.service.spec.ts"
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "openapi-json",
-      "method": "GET",
-      "path": "/docs/openapi.json",
-      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
-      "authClassification": "public",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "swagger-ui",
-      "method": "GET",
-      "path": "/docs",
-      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
-      "authClassification": "public",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
     },
     {
       "project": "notification-scheduler",
@@ -2882,290 +2343,6 @@
     },
     {
       "project": "notification-scheduler",
-      "kind": "http",
-      "method": "ALL",
-      "path": "/api/v1/webhooks/:provider",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:91",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "GET",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:70",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "GET",
-      "path": "/health",
-      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
-      "authClassification": "public",
-      "coverageClassification": "covered-integration",
-      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "automatic",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "GET",
-      "path": "/health/private",
-      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:19",
-      "authClassification": "private-network",
-      "coverageClassification": "covered-integration",
-      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "GET",
-      "path": "/live",
-      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:26",
-      "authClassification": "public",
-      "coverageClassification": "covered-integration",
-      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "automatic",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "GET",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:40",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "rbac-allowed-denied",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "GET",
-      "path": "/ready",
-      "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
-      "authClassification": "public",
-      "coverageClassification": "covered-integration",
-      "testEvidence": "libs/backend/common/health/lib/src/base-health.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "automatic",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/adyen",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:85",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:64",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cryptobot",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:40",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/heleket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:46",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/nowpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:52",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/stripe",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:79",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/x-rocket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:32",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/yookassa",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:58",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:47",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "manual-fixture",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
       "kind": "lifecycle",
       "method": "N/A",
       "path": "auth:expired-token-cleanup",
@@ -3183,42 +2360,6 @@
       "authClassification": "background",
       "coverageClassification": "covered-unit",
       "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-provider-readiness.service.spec.ts"
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "openapi-json",
-      "method": "GET",
-      "path": "/docs/openapi.json",
-      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
-      "authClassification": "public",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "swagger-ui",
-      "method": "GET",
-      "path": "/docs",
-      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
-      "authClassification": "public",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
     },
     {
       "project": "site-app",
@@ -3522,42 +2663,6 @@
     {
       "project": "user-app-api",
       "kind": "http",
-      "method": "ALL",
-      "path": "/api/v1/webhooks/:provider",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:91",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "GET",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:70",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
       "method": "GET",
       "path": "/health",
       "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
@@ -3611,23 +2716,6 @@
       "project": "user-app-api",
       "kind": "http",
       "method": "GET",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:40",
-      "authClassification": "session-rbac",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "rbac-allowed-denied",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "GET",
       "path": "/profile/me",
       "source": "libs/backend/feature/user/main/lib/src/interfaces/http/profile.controller.ts:27",
       "authClassification": "session-rbac",
@@ -3655,168 +2743,6 @@
         "classification": "automatic",
         "expectedStatusClasses": [
           "2xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/adyen",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:85",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:64",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cryptobot",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:40",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/heleket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:46",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/nowpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:52",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/stripe",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:79",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/x-rocket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:32",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/yookassa",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:58",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "user-app-api",
-      "kind": "http",
-      "method": "POST",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:47",
-      "authClassification": "session-rbac",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "USER_API_BASE_URL",
-        "classification": "manual-fixture",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
         ]
       }
     },

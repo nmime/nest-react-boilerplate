@@ -1,0 +1,21 @@
+{
+  "tma.title": "Telegram 小程序",
+  "tma.description": "Telegram 提供安全启动上下文；在普通浏览器中打开时，同一界面仍清晰可用。",
+  "tma.loading": "正在加载 Telegram 小程序…",
+  "tma.idle": "正在等待 Telegram 提供已签名的小程序启动数据。",
+  "tma.unsupported": "请在 Telegram 中打开此页面以继续。",
+  "tma.authenticated": "Telegram 小程序会话已验证。",
+  "tma.link.required": "请关联 Telegram 账号后继续。",
+  "tma.link.pending": "请在 Telegram 中完成关联。",
+  "tma.link.success": "已通过小程序关联 Telegram 账号。",
+  "tma.link.error": "无法通过小程序关联 Telegram。",
+  "tma.deepNavigation.loading": "正在打开请求的小程序目标…",
+  "tma.deepNavigation.unsupported": "暂不支持此小程序目标。",
+  "tma.deepNavigation.notFound": "未找到请求的小程序目标。",
+  "deepNav.loading": "正在打开请求的目标…",
+  "deepNav.unsupported": "不支持此深层链接。",
+  "deepNav.authenticated": "已为当前会话验证深层链接。",
+  "deepNav.linkRequired": "打开此目标前，请先关联账号。",
+  "deepNav.expired": "此深层链接已过期。",
+  "deepNav.notFound": "未找到目标。"
+}

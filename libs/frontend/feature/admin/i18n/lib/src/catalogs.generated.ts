@@ -7,6 +7,11 @@ import enAdminNavigationCatalog from '@app/i18n-en-admin/navigation.json';
 import enAdminNotificationNavigationCatalog from '@app/i18n-en-admin/notification-navigation.json';
 import enAdminNotificationOptionsCatalog from '@app/i18n-en-admin/notification-options.json';
 import enAdminNotificationsCatalog from '@app/i18n-en-admin/notifications.json';
+import enAdminProblemPresentationsActionsCatalog from '@app/i18n-en-admin/problem-presentations-actions.json';
+import enAdminProblemPresentationsEditorCatalog from '@app/i18n-en-admin/problem-presentations-editor.json';
+import enAdminProblemPresentationsInventoryCatalog from '@app/i18n-en-admin/problem-presentations-inventory.json';
+import enAdminProblemPresentationsSourcesCatalog from '@app/i18n-en-admin/problem-presentations-sources.json';
+import enAdminProblemPresentationsViewerCatalog from '@app/i18n-en-admin/problem-presentations-viewer.json';
 import enAdminProblemPresentationsCatalog from '@app/i18n-en-admin/problem-presentations.json';
 import enAdminRolesCatalog from '@app/i18n-en-admin/roles.json';
 import enAdminShellCatalog from '@app/i18n-en-admin/shell.json';
@@ -21,12 +26,36 @@ import ruAdminNavigationCatalog from '@app/i18n-ru-admin/navigation.json';
 import ruAdminNotificationNavigationCatalog from '@app/i18n-ru-admin/notification-navigation.json';
 import ruAdminNotificationOptionsCatalog from '@app/i18n-ru-admin/notification-options.json';
 import ruAdminNotificationsCatalog from '@app/i18n-ru-admin/notifications.json';
+import ruAdminProblemPresentationsActionsCatalog from '@app/i18n-ru-admin/problem-presentations-actions.json';
+import ruAdminProblemPresentationsEditorCatalog from '@app/i18n-ru-admin/problem-presentations-editor.json';
+import ruAdminProblemPresentationsInventoryCatalog from '@app/i18n-ru-admin/problem-presentations-inventory.json';
+import ruAdminProblemPresentationsSourcesCatalog from '@app/i18n-ru-admin/problem-presentations-sources.json';
+import ruAdminProblemPresentationsViewerCatalog from '@app/i18n-ru-admin/problem-presentations-viewer.json';
 import ruAdminProblemPresentationsCatalog from '@app/i18n-ru-admin/problem-presentations.json';
 import ruAdminRolesCatalog from '@app/i18n-ru-admin/roles.json';
 import ruAdminShellCatalog from '@app/i18n-ru-admin/shell.json';
 import ruAdminUsersCatalog from '@app/i18n-ru-admin/users.json';
 import ruCommonErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonSharedCatalog from '@app/i18n-ru-common/shared.json';
+import zhAdminAuditCatalog from '@app/i18n-zh-admin/audit.json';
+import zhAdminDashboardCatalog from '@app/i18n-zh-admin/dashboard.json';
+import zhAdminFeatureFlagsCatalog from '@app/i18n-zh-admin/feature-flags.json';
+import zhAdminLoginAnalyticsCatalog from '@app/i18n-zh-admin/login-analytics.json';
+import zhAdminNavigationCatalog from '@app/i18n-zh-admin/navigation.json';
+import zhAdminNotificationNavigationCatalog from '@app/i18n-zh-admin/notification-navigation.json';
+import zhAdminNotificationOptionsCatalog from '@app/i18n-zh-admin/notification-options.json';
+import zhAdminNotificationsCatalog from '@app/i18n-zh-admin/notifications.json';
+import zhAdminProblemPresentationsActionsCatalog from '@app/i18n-zh-admin/problem-presentations-actions.json';
+import zhAdminProblemPresentationsEditorCatalog from '@app/i18n-zh-admin/problem-presentations-editor.json';
+import zhAdminProblemPresentationsInventoryCatalog from '@app/i18n-zh-admin/problem-presentations-inventory.json';
+import zhAdminProblemPresentationsSourcesCatalog from '@app/i18n-zh-admin/problem-presentations-sources.json';
+import zhAdminProblemPresentationsViewerCatalog from '@app/i18n-zh-admin/problem-presentations-viewer.json';
+import zhAdminProblemPresentationsCatalog from '@app/i18n-zh-admin/problem-presentations.json';
+import zhAdminRolesCatalog from '@app/i18n-zh-admin/roles.json';
+import zhAdminShellCatalog from '@app/i18n-zh-admin/shell.json';
+import zhAdminUsersCatalog from '@app/i18n-zh-admin/users.json';
+import zhCommonErrorsCatalog from '@app/i18n-zh-common/errors.json';
+import zhCommonSharedCatalog from '@app/i18n-zh-common/shared.json';
 import type { Locale, RuntimeLocaleCatalogFileEntry } from '@app/common-i18n-runtime';
 
 export const catalogFileNames = [
@@ -38,6 +67,11 @@ export const catalogFileNames = [
   'admin/notification-navigation.json',
   'admin/notification-options.json',
   'admin/notifications.json',
+  'admin/problem-presentations-actions.json',
+  'admin/problem-presentations-editor.json',
+  'admin/problem-presentations-inventory.json',
+  'admin/problem-presentations-sources.json',
+  'admin/problem-presentations-viewer.json',
   'admin/problem-presentations.json',
   'admin/roles.json',
   'admin/shell.json',
@@ -56,6 +90,11 @@ export const localeCatalogFiles = {
     ['admin/notification-navigation.json', enAdminNotificationNavigationCatalog],
     ['admin/notification-options.json', enAdminNotificationOptionsCatalog],
     ['admin/notifications.json', enAdminNotificationsCatalog],
+    ['admin/problem-presentations-actions.json', enAdminProblemPresentationsActionsCatalog],
+    ['admin/problem-presentations-editor.json', enAdminProblemPresentationsEditorCatalog],
+    ['admin/problem-presentations-inventory.json', enAdminProblemPresentationsInventoryCatalog],
+    ['admin/problem-presentations-sources.json', enAdminProblemPresentationsSourcesCatalog],
+    ['admin/problem-presentations-viewer.json', enAdminProblemPresentationsViewerCatalog],
     ['admin/problem-presentations.json', enAdminProblemPresentationsCatalog],
     ['admin/roles.json', enAdminRolesCatalog],
     ['admin/shell.json', enAdminShellCatalog],
@@ -72,11 +111,37 @@ export const localeCatalogFiles = {
     ['admin/notification-navigation.json', ruAdminNotificationNavigationCatalog],
     ['admin/notification-options.json', ruAdminNotificationOptionsCatalog],
     ['admin/notifications.json', ruAdminNotificationsCatalog],
+    ['admin/problem-presentations-actions.json', ruAdminProblemPresentationsActionsCatalog],
+    ['admin/problem-presentations-editor.json', ruAdminProblemPresentationsEditorCatalog],
+    ['admin/problem-presentations-inventory.json', ruAdminProblemPresentationsInventoryCatalog],
+    ['admin/problem-presentations-sources.json', ruAdminProblemPresentationsSourcesCatalog],
+    ['admin/problem-presentations-viewer.json', ruAdminProblemPresentationsViewerCatalog],
     ['admin/problem-presentations.json', ruAdminProblemPresentationsCatalog],
     ['admin/roles.json', ruAdminRolesCatalog],
     ['admin/shell.json', ruAdminShellCatalog],
     ['admin/users.json', ruAdminUsersCatalog],
     ['common/errors.json', ruCommonErrorsCatalog],
     ['common/shared.json', ruCommonSharedCatalog],
+  ],
+  zh: [
+    ['admin/audit.json', zhAdminAuditCatalog],
+    ['admin/dashboard.json', zhAdminDashboardCatalog],
+    ['admin/feature-flags.json', zhAdminFeatureFlagsCatalog],
+    ['admin/login-analytics.json', zhAdminLoginAnalyticsCatalog],
+    ['admin/navigation.json', zhAdminNavigationCatalog],
+    ['admin/notification-navigation.json', zhAdminNotificationNavigationCatalog],
+    ['admin/notification-options.json', zhAdminNotificationOptionsCatalog],
+    ['admin/notifications.json', zhAdminNotificationsCatalog],
+    ['admin/problem-presentations-actions.json', zhAdminProblemPresentationsActionsCatalog],
+    ['admin/problem-presentations-editor.json', zhAdminProblemPresentationsEditorCatalog],
+    ['admin/problem-presentations-inventory.json', zhAdminProblemPresentationsInventoryCatalog],
+    ['admin/problem-presentations-sources.json', zhAdminProblemPresentationsSourcesCatalog],
+    ['admin/problem-presentations-viewer.json', zhAdminProblemPresentationsViewerCatalog],
+    ['admin/problem-presentations.json', zhAdminProblemPresentationsCatalog],
+    ['admin/roles.json', zhAdminRolesCatalog],
+    ['admin/shell.json', zhAdminShellCatalog],
+    ['admin/users.json', zhAdminUsersCatalog],
+    ['common/errors.json', zhCommonErrorsCatalog],
+    ['common/shared.json', zhCommonSharedCatalog],
   ],
 } as const satisfies Record<Locale, readonly RuntimeLocaleCatalogFileEntry[]>;

@@ -5,6 +5,9 @@ import enLandingAppCatalog from '@app/i18n-en-landing/app.json';
 import ruCommonErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonSharedCatalog from '@app/i18n-ru-common/shared.json';
 import ruLandingAppCatalog from '@app/i18n-ru-landing/app.json';
+import zhCommonErrorsCatalog from '@app/i18n-zh-common/errors.json';
+import zhCommonSharedCatalog from '@app/i18n-zh-common/shared.json';
+import zhLandingAppCatalog from '@app/i18n-zh-landing/app.json';
 import type { Locale, RuntimeLocaleCatalogFileEntry } from '@app/common-i18n-runtime';
 
 export const catalogFileNames = [
@@ -23,5 +26,10 @@ export const localeCatalogFiles = {
     ['common/errors.json', ruCommonErrorsCatalog],
     ['common/shared.json', ruCommonSharedCatalog],
     ['landing/app.json', ruLandingAppCatalog],
+  ],
+  zh: [
+    ['common/errors.json', zhCommonErrorsCatalog],
+    ['common/shared.json', zhCommonSharedCatalog],
+    ['landing/app.json', zhLandingAppCatalog],
   ],
 } as const satisfies Record<Locale, readonly RuntimeLocaleCatalogFileEntry[]>;

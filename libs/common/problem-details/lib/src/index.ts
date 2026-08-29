@@ -16,7 +16,7 @@ const UriReferenceCharacterPattern = /^[A-Za-z0-9._~:/?#[\]@!$&'()*+,;=%-]+$/u;
 const InvalidPercentEncodingPattern = /%(?![0-9A-Fa-f]{2})/u;
 const UriReferenceResolutionBase = 'https://uri-reference.invalid/';
 
-export const ProblemPresentationDisplays = ['toast', 'silent'] as const;
+export const ProblemPresentationDisplays = ['toast', 'modal', 'custom', 'silent'] as const;
 export type ProblemPresentationDisplay = (typeof ProblemPresentationDisplays)[number];
 
 export const ProblemPresentationSeverities = ['error', 'warning', 'info', 'success'] as const;
@@ -121,15 +121,28 @@ export const ProblemTypeDefinitions = [
 
 export type ProblemTypeCode = (typeof ProblemTypeDefinitions)[number]['code'];
 
+export interface ProblemPresentationTexts {
+  readonly en?: readonly string[];
+  readonly ru?: readonly string[];
+  readonly zh?: readonly string[];
+}
+
 export interface ProblemPresentationOverride {
   readonly comment?: string;
+  readonly comments?: string;
+  readonly customDescription?: string;
   readonly display: ProblemPresentationDisplay;
+  readonly figmaOnly?: boolean;
   readonly messageEn?: string;
   readonly messageRu?: string;
+  readonly messageZh?: string;
   readonly revision: number;
   readonly ruleId: string;
   readonly severity: ProblemPresentationSeverity;
+  readonly support?: boolean;
+  readonly texts?: ProblemPresentationTexts;
   readonly updatedAt?: string;
+  readonly updatedByUserId?: string;
 }
 
 export function isProblemPresentationDisplay(value: string): value is ProblemPresentationDisplay {

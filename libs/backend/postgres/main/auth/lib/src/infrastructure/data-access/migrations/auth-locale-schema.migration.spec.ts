@@ -28,7 +28,12 @@ describe('auth locale schema migration', () => {
     // Derived, not restated: a product that widens `supportedLocales` writes its own migration
     // and this file stops being something it has to edit. `check-constraint.spec.ts` is what
     // holds the whole chain to the tuple; this only pins what THIS migration does.
-    expect(sql).toContain(`check (${checkConstraintSql('locale', supportedLocales)})`);
+    expect(sql).toContain(
+      `check (${checkConstraintSql(
+        'locale',
+        supportedLocales.filter((locale) => locale !== 'zh'),
+      )})`,
+    );
   });
 
   it('keeps the locale migration before later feature flag migrations', () => {

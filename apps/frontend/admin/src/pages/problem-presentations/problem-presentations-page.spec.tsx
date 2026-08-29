@@ -1,378 +1,285 @@
-// @requirements REQ-FRONTEND-SHELL-004
+/* eslint-disable @typescript-eslint/no-confusing-void-expression -- Test callbacks intentionally use concise mock implementations. */
+// @requirements REQ-API-RESPONSE-STUDIO-005
 import type { ReactElement } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { apiToastRuntime } from '@app/frontend-api-support';
-import { adminApi } from '@app/frontend-api-client';
 import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
-import { FrontendI18nProvider, FrontendStateProvider, type Locale } from '@app/frontend-runtime';
-import { createAdminAccess, type AdminAccess } from '../../entities/admin-session';
+import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
+import { createAdminAccess } from '../../entities/admin-session';
+import {
+  apiResponseStudioApi,
+  type ApiResponseStudioResponse,
+  type ApiResponseStudioSource,
+} from '../../features/api-response-studio';
+import { ApiError } from '@app/frontend-api-support';
 import { ProblemPresentationsPage } from './problem-presentations-page';
 
-const { catalog } = vi.hoisted(() => ({
-  catalog: [
-    {
-      app: 'admin-app-api',
-      defaultDisplay: 'toast',
-      defaultMessage: 'Generated success message',
-      defaultSeverity: 'error',
-      errorCode: 'success-code',
-      id: 'admin-app-api:GET:/success:400:success-code',
-      method: 'GET',
-      operationId: 'getSuccess',
-      path: '/success',
-      status: 400,
-      tags: ['SuccessTag'],
-    },
-    {
-      app: 'admin-app-api',
-      defaultDisplay: 'toast',
-      defaultMessage: 'Generated info message',
-      defaultSeverity: 'warning',
-      errorCode: null,
-      id: 'admin-app-api:POST:/info:409',
-      method: 'POST',
-      operationId: 'postInfo',
-      path: '/info',
-      status: 409,
-      tags: [],
-    },
-    {
-      app: 'auth-app-api',
-      defaultDisplay: 'silent',
-      defaultMessage: 'Generated silent message',
-      defaultSeverity: 'error',
-      errorCode: null,
-      id: 'auth-app-api:GET:/silent:401',
-      method: 'GET',
-      operationId: null,
-      path: '/silent',
-      status: 401,
-      tags: [],
-    },
-    {
-      app: 'user-app-api',
-      defaultDisplay: 'toast',
-      defaultMessage: 'Generated default message',
-      defaultSeverity: 'warning',
-      errorCode: null,
-      id: 'user-app-api:GET:/default:503',
-      method: 'GET',
-      operationId: 'getDefault',
-      path: '/default',
-      status: 503,
-      tags: ['DefaultTag'],
-    },
-  ],
-}));
-
-vi.mock('@app/frontend-api-client', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@app/frontend-api-client')>();
-  return { ...actual, apiToastRuleCatalog: catalog };
+const source: ApiResponseStudioSource = {
+  docsUrl: 'https://api.example.test/docs',
+  enabled: true,
+  id: 'source-1',
+  jsonUrl: 'https://api.example.test/openapi.json',
+  lastSyncAt: '2026-08-28T09:00:00.000Z',
+  lastSyncError: '',
+  lastSyncStatus: 'success',
+  lastSyncSummary: { created: 2 },
+  manualOnly: true,
+  name: 'Core API',
+  revision: 2,
+  slug: 'core-api',
+  updatedAt: '2026-08-28T09:00:00.000Z',
+};
+const response = (id: string, path: string, status: string, tag = 'Accounts'): ApiResponseStudioResponse => ({
+  changeDismissed: false,
+  changeState: id === 'response-1' ? 'modified' : 'new',
+  comments: 'Review',
+  customDescription: 'Custom detail',
+  deleted: false,
+  description: 'Generated detail',
+  display: 'toast',
+  enumChoices: [{ property: 'code', values: ['locked'], enabledValues: [] }],
+  errorType: 'https://example.test/problems#locked',
+  exampleSnapshot: '{"code":"locked"}',
+  figmaOnly: false,
+  id,
+  method: 'GET',
+  operationId: `get${id}`,
+  path,
+  revision: 3,
+  schemaSnapshot: '{"type":"object"}',
+  severity: 'warning',
+  stableKey: `${path}:${status}`,
+  status,
+  summary: 'Locked account',
+  sourceId: source.id,
+  support: true,
+  tag,
+  texts: { en: ['Try again'], ru: ['Повторите'], zh: [] },
+  updatedAt: '2026-08-28T10:00:00.000Z',
 });
-
+const rows = [
+  response('response-1', '/accounts/{id}', '409'),
+  response('response-2', '/accounts/{id}', '404'),
+  response('response-3', '/health', '503', 'System'),
+];
 const writeAccess = createAdminAccess({
-  subject: 'admin-id',
+  subject: 'admin',
   roles: ['admin'],
   permissions: ['admin:settings:read', 'admin:settings:update'],
 });
-const readAccess = createAdminAccess({
-  subject: 'admin-id',
-  roles: ['admin'],
-  permissions: ['admin:settings:read'],
-});
+const readAccess = createAdminAccess({ subject: 'reader', roles: ['reader'], permissions: ['admin:settings:read'] });
 
-type Override = adminApi.AdminProblemPresentationViewDto;
-
-const activeOverrides: Override[] = [
-  {
-    comment: 'Success override',
-    display: 'toast',
-    messageEn: '',
-    messageRu: 'Русский fallback',
-    revision: 1,
-    ruleId: 'admin-app-api:GET:/success:400:success-code',
-    severity: 'success',
-  },
-  {
-    comment: 'Info override',
-    display: 'toast',
-    messageEn: 'English info',
-    messageRu: '',
-    revision: 2,
-    ruleId: 'admin-app-api:POST:/info:409',
-    severity: 'info',
-    updatedAt: '2026-07-19T12:00:00.000Z',
-  },
-  {
-    comment: 'Inline auth state',
-    display: 'silent',
-    messageEn: '',
-    messageRu: '',
-    revision: 3,
-    ruleId: 'auth-app-api:GET:/silent:401',
-    severity: 'warning',
-  },
-];
-
-const deletedOverrides: Override[] = [
-  {
-    comment: 'Removed endpoint',
-    display: 'toast',
-    messageEn: 'Deleted message',
-    messageRu: '',
-    revision: 4,
-    ruleId: 'legacy-app-api:GET:/removed:410',
-    severity: 'warning',
-    updatedAt: '2026-07-19T13:00:00.000Z',
-  },
-  {
-    comment: 'Malformed stale row',
-    display: 'silent',
-    messageEn: '',
-    messageRu: '',
-    revision: 1,
-    ruleId: '',
-    severity: 'error',
-  },
-];
-
-const ok = (items: readonly Override[]) =>
-  Promise.resolve({
-    data: { data: { items: [...items] } },
-    error: undefined,
-    response: new Response(null, { status: 200 }),
-  });
-
-const TestProviders = ({ children, locale = 'en' }: Readonly<{ children: ReactElement; locale?: Locale }>) => (
+const Providers = ({ children, locale = 'en' }: { children: ReactElement; locale?: 'en' | 'ru' | 'zh' }) => (
   <FrontendStateProvider initialLocale={locale}>
     <FrontendI18nProvider translations={adminFrontendTranslations}>
       <QueryClientProvider
-        client={
-          new QueryClient({
-            defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
-          })
-        }
+        client={new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } })}
       >
         {children}
       </QueryClientProvider>
     </FrontendI18nProvider>
   </FrontendStateProvider>
 );
-
-const renderPage = ({
-  access = writeAccess,
-  locale = 'en',
-  overrides = activeOverrides,
-}: {
-  access?: AdminAccess;
-  locale?: Locale;
-  overrides?: readonly Override[];
-} = {}) => {
-  vi.spyOn(adminApi, 'adminProblemPresentationsControllerList').mockReturnValue(ok(overrides) as never);
+const installApi = () => {
+  vi.spyOn(apiResponseStudioApi, 'dashboard').mockResolvedValue({ sources: [], totals: { responses: 3 } });
+  vi.spyOn(apiResponseStudioApi, 'listSources').mockResolvedValue({ items: [source] });
+  vi.spyOn(apiResponseStudioApi, 'listResponses').mockResolvedValue({ items: rows, total: rows.length });
+  vi.spyOn(apiResponseStudioApi, 'history').mockResolvedValue({
+    items: [
+      {
+        action: 'response.updated',
+        actorUserId: 'admin',
+        after: {},
+        before: {},
+        createdAt: '2026-08-28T10:00:00.000Z',
+        id: 'history-1',
+        metadata: {},
+        responseId: rows[0]!.id,
+        sourceId: source.id,
+      },
+    ],
+  });
+};
+const renderPage = (access = writeAccess, locale: 'en' | 'ru' | 'zh' = 'en') => {
+  installApi();
   return render(
-    <TestProviders locale={locale}>
+    <Providers locale={locale}>
       <ProblemPresentationsPage access={access} />
-    </TestProviders>,
+    </Providers>,
   );
 };
+const checkbox = (name: RegExp | string) => screen.getByRole('checkbox', { name });
 
-const installRadixPointerMocks = () => {
-  Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
-    configurable: true,
-    value: vi.fn(() => false),
-  });
-  Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', {
-    configurable: true,
-    value: vi.fn(),
-  });
-  Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
-    configurable: true,
-    value: vi.fn(),
-  });
-  Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
-    configurable: true,
-    value: vi.fn(),
-  });
-};
-
-const chooseSelectOption = (container: HTMLElement, label: string, value: string) => {
-  installRadixPointerMocks();
-  fireEvent.pointerDown(within(container).getByRole('combobox', { name: label }), {
-    button: 0,
-    ctrlKey: false,
-    pointerType: 'mouse',
-  });
-  const option = document.querySelector<HTMLElement>(`[role="option"][data-value="${value}"]`);
-  expect(option).toBeTruthy();
-  fireEvent.click(option as HTMLElement);
-};
-
-const rowFor = async (text: string): Promise<HTMLElement> => {
-  const cell = await screen.findByText(text);
-  const row = cell.closest('tr');
-  expect(row).toBeTruthy();
-  return row as HTMLElement;
-};
-
-describe('ProblemPresentationsPage', () => {
+describe('API Response Studio', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
   });
 
-  it('merges active and deleted rules, filters them, and previews every display path', async () => {
-    const toastSpy = vi.spyOn(apiToastRuntime, 'show');
-    renderPage({ overrides: [...activeOverrides, ...deletedOverrides] });
-
-    const successRow = await rowFor('/success');
-    fireEvent.click(within(successRow).getByRole('button', { name: 'Preview toast' }));
-    expect(toastSpy).toHaveBeenLastCalledWith({
-      category: 'success',
-      message: 'Русский fallback',
-      title: 'GET /success',
-    });
-
-    const infoRow = await rowFor('/info');
-    expect(within(infoRow).getByText(/postInfo/u)).toBeTruthy();
-    fireEvent.click(within(infoRow).getByRole('button', { name: 'Preview toast' }));
-    expect(toastSpy).toHaveBeenLastCalledWith({
-      category: 'info',
-      message: 'English info',
-      title: 'POST /info',
-    });
-
-    const defaultRow = await rowFor('/default');
-    fireEvent.click(within(defaultRow).getByRole('button', { name: 'Preview toast' }));
-    expect(toastSpy).toHaveBeenLastCalledWith({
-      category: 'warning',
-      message: 'Generated default message',
-      title: 'GET /default',
-    });
-
-    const silentRow = await rowFor('/silent');
-    fireEvent.click(within(silentRow).getByRole('button', { name: 'Preview toast' }));
-    expect(await screen.findByText(/calling form or feature owns its inline error state/u)).toBeTruthy();
-
-    expect((await screen.findAllByText('Deleted from OpenAPI')).length).toBe(2);
-    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
-
-    const search = screen.getByRole('textbox', { name: 'Search API responses' });
-    fireEvent.change(search, { target: { value: 'DefaultTag' } });
-    expect(await screen.findByText('/default')).toBeTruthy();
-    fireEvent.change(search, { target: { value: '' } });
-
-    chooseSelectOption(document.body, 'Service', 'auth-app-api');
-    expect(await screen.findByText('/silent')).toBeTruthy();
-    chooseSelectOption(document.body, 'Display', 'silent');
-    expect(await screen.findByText('/silent')).toBeTruthy();
-  });
-
-  it('uses Russian copy fallbacks and keeps write controls hidden for read-only admins', async () => {
-    const toastSpy = vi.spyOn(apiToastRuntime, 'show');
-    renderPage({ access: readAccess, locale: 'ru', overrides: activeOverrides });
-
-    const successRow = await rowFor('/success');
-    fireEvent.click(within(successRow).getAllByRole('button')[0]!);
-    expect(toastSpy).toHaveBeenLastCalledWith(expect.objectContaining({ message: 'Русский fallback' }));
-
-    const infoRow = await rowFor('/info');
-    fireEvent.click(within(infoRow).getAllByRole('button')[0]!);
-    expect(toastSpy).toHaveBeenLastCalledWith(expect.objectContaining({ message: 'English info' }));
-    expect(screen.queryByRole('button', { name: /Edit|Изменить/u })).toBeNull();
-    expect(screen.queryByRole('button', { name: /Reset|Сброс/u })).toBeNull();
-  });
-
-  it('edits every field, saves, resets, and closes both dialogs', async () => {
-    const updateSpy = vi.spyOn(adminApi, 'adminProblemPresentationsControllerUpdate').mockReturnValue(
-      ok([activeOverrides[0]!]).then(({ response }) => ({
-        data: { data: activeOverrides[0]! },
-        error: undefined,
-        response,
-      })) as never,
-    );
-    const resetSpy = vi.spyOn(adminApi, 'adminProblemPresentationsControllerReset').mockResolvedValue({
-      data: { data: { ruleId: activeOverrides[0]!.ruleId } },
-      error: undefined,
-      response: new Response(null, { status: 200 }),
-    });
+  it('renders dashboard coverage, grouped inventory, hierarchy selection, schema/example and history', async () => {
+    const user = userEvent.setup();
     renderPage();
+    expect(await screen.findByRole('heading', { name: 'API Response Studio' })).toBeTruthy();
+    expect(await screen.findByRole('group', { name: /EN coverage: 100%/i }, { timeout: 3000 })).toBeTruthy();
+    expect(screen.getByRole('group', { name: /ZH coverage: 0%/i })).toBeTruthy();
+    fireEvent.click(checkbox('Select group Accounts'));
+    expect(screen.getByText('2 selected')).toBeTruthy();
+    fireEvent.click(checkbox('Select path /accounts/{id}'));
+    expect(screen.getByText('0 selected')).toBeTruthy();
+    fireEvent.click(checkbox(/Select GET response 409/));
+    const row = screen.getByText('GET 409').closest('article')!;
+    fireEvent.click(within(row).getByRole('button', { name: 'Schema & example' }));
+    expect(screen.getByText('{"type":"object"}')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await user.click(screen.getByRole('tab', { name: 'History' }));
+    const historyPanel = await screen.findByRole('tabpanel', { name: 'History' });
+    expect(await within(historyPanel).findByText('response.updated')).toBeTruthy();
+  });
 
-    const row = await rowFor('/success');
+  it('supports source create/edit/manual sync/disable and client validation', async () => {
+    const user = userEvent.setup();
+    const create = vi.spyOn(apiResponseStudioApi, 'createSource').mockResolvedValue(source);
+    const sync = vi.spyOn(apiResponseStudioApi, 'syncSource').mockResolvedValue({ source, summary: { created: 1 } });
+    vi.spyOn(apiResponseStudioApi, 'updateSource').mockResolvedValue({ ...source, enabled: false });
+    renderPage();
+    await screen.findByText('GET 409');
+    await user.click(screen.getByRole('tab', { name: 'Sources' }));
+    await user.click(await screen.findByRole('button', { name: 'Sync now' }));
+    await waitFor(() => expect(sync).toHaveBeenCalledWith(source, undefined));
+    await user.click(screen.getByRole('button', { name: 'Add source' }));
+    const dialog = await screen.findByRole('alertdialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save source' }));
+    expect(await screen.findByText(/Enter a name and a lowercase slug/)).toBeTruthy();
+    fireEvent.change(within(dialog).getByLabelText('Source name'), { target: { value: 'Billing API' } });
+    fireEvent.change(within(dialog).getByLabelText('Source slug'), { target: { value: 'billing-api' } });
+    fireEvent.change(within(dialog).getByLabelText('OpenAPI JSON HTTPS URL'), {
+      target: { value: 'https://billing.example.test/openapi.json' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save source' }));
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Billing API', slug: 'billing-api' }),
+        undefined,
+      ),
+    );
+  });
+
+  it('edits all row fields and applies an atomic bulk editor with EN/RU/ZH arrays', async () => {
+    const update = vi.spyOn(apiResponseStudioApi, 'updateResponse').mockResolvedValue(rows[0]!);
+    const bulk = vi.spyOn(apiResponseStudioApi, 'bulkUpdate').mockResolvedValue({ items: rows.slice(0, 2) });
+    renderPage();
+    const row = (await screen.findByText('GET 409')).closest('article')!;
     fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
     let dialog = screen.getByRole('alertdialog');
-    chooseSelectOption(dialog, 'Display mode', 'silent');
-    chooseSelectOption(dialog, 'Severity', 'warning');
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'English toast message' }), {
-      target: { value: 'Changed English' },
-    });
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Russian toast message' }), {
-      target: { value: 'Изменено' },
-    });
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Internal comment' }), {
-      target: { value: 'Changed comment' },
-    });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save rule' }));
-
-    await waitFor(() => {
-      expect(updateSpy).toHaveBeenCalledWith(
-        {
-          comment: 'Changed comment',
-          display: 'silent',
-          expectedRevision: 1,
-          messageEn: 'Changed English',
-          messageRu: 'Изменено',
-          ruleId: activeOverrides[0]!.ruleId,
-          severity: 'warning',
-        },
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Show support guidance' }));
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'locked' }));
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Figma-only specification' }));
+    fireEvent.change(within(dialog).getByLabelText('Custom description'), { target: { value: 'Updated detail' } });
+    fireEvent.change(within(dialog).getByLabelText('Internal comments'), { target: { value: 'Updated comment' } });
+    fireEvent.change(within(dialog).getByLabelText('Chinese messages'), { target: { value: '重试\n联系支持' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save response' }));
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(
+        rows[0],
+        expect.objectContaining({
+          comments: 'Updated comment',
+          customDescription: 'Updated detail',
+          figmaOnly: true,
+          support: false,
+          texts: expect.objectContaining({ zh: ['重试', '联系支持'] }),
+        }),
+        [{ enabledValues: ['locked'], property: 'code', values: ['locked'] }],
         undefined,
-      );
-    });
-    expect(await screen.findByText(/Presentation rule saved/u)).toBeTruthy();
-
-    fireEvent.click(within(await rowFor('/success')).getByRole('button', { name: 'Edit' }));
+      ),
+    );
+    fireEvent.click(checkbox('Select group Accounts'));
+    fireEvent.click(screen.getByRole('button', { name: 'Bulk edit' }));
     dialog = screen.getByRole('alertdialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('alertdialog')).toBeNull();
-
-    fireEvent.click(within(await rowFor('/success')).getByRole('button', { name: 'Reset' }));
-    dialog = screen.getByRole('alertdialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('alertdialog')).toBeNull();
-
-    fireEvent.click(within(await rowFor('/success')).getByRole('button', { name: 'Reset' }));
-    dialog = screen.getByRole('alertdialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Reset' }));
-    await waitFor(() => {
-      expect(resetSpy).toHaveBeenCalledWith({ expectedRevision: 1, ruleId: activeOverrides[0]!.ruleId }, undefined);
-    });
-    expect(await screen.findByText(/reset to its generated default/u)).toBeTruthy();
+    fireEvent.change(within(dialog).getByLabelText('English messages'), { target: { value: 'Bulk one\nBulk two' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Apply to selection' }));
+    await waitFor(() =>
+      expect(bulk).toHaveBeenCalledWith(
+        [
+          { expectedRevision: 3, id: 'response-1' },
+          { expectedRevision: 3, id: 'response-2' },
+        ],
+        expect.objectContaining({ texts: expect.objectContaining({ en: ['Bulk one', 'Bulk two'] }) }),
+        undefined,
+      ),
+    );
   });
 
-  it('shows list, update, and reset failures', async () => {
-    vi.spyOn(adminApi, 'adminProblemPresentationsControllerList').mockRejectedValueOnce(new Error('list offline'));
-    render(
-      <TestProviders>
-        <ProblemPresentationsPage access={writeAccess} />
-      </TestProviders>,
-    );
-    expect(await screen.findByText('API response presentation overrides could not be loaded.')).toBeTruthy();
+  it('renders the supported Chinese catalog without falling back to English page copy', async () => {
+    renderPage(readAccess, 'zh');
+    expect(await screen.findByRole('heading', { name: 'API 响应工作室' })).toBeTruthy();
+    expect(await screen.findByText('只读访问')).toBeTruthy();
+    expect(screen.getByRole('tab', { name: '清单' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '导出' })).toBeTruthy();
+  });
 
+  it('keeps read-only RU administrators able to filter, inspect, export, and view history without mutation controls', async () => {
+    const user = userEvent.setup();
+    const exported = vi
+      .spyOn(apiResponseStudioApi, 'export')
+      .mockResolvedValue({ content: '{}', filename: 'responses.json', mediaType: 'application/json' });
+    vi.stubGlobal('URL', { ...URL, createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() });
+    renderPage(readAccess, 'ru');
+    expect(await screen.findByText('Доступ только для чтения')).toBeTruthy();
+    await screen.findByText('GET 409');
+    expect(screen.queryByRole('button', { name: 'Добавить источник' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Изменить' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Экспорт' }));
+    await waitFor(() => expect(exported).toHaveBeenCalled());
+    await user.click(screen.getByRole('tab', { name: 'История' }));
+    const historyPanel = await screen.findByRole('tabpanel', { name: 'История' });
+    expect(await within(historyPanel).findByText('response.updated')).toBeTruthy();
+    vi.unstubAllGlobals();
+  });
+
+  it('renders loading, empty, request error, conflict and recoverable mutation errors', async () => {
+    installApi();
+    const failedResponses = vi
+      .spyOn(apiResponseStudioApi, 'listResponses')
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue({ items: rows, total: rows.length });
+    render(
+      <Providers>
+        <ProblemPresentationsPage access={writeAccess} />
+      </Providers>,
+    );
+    expect(await screen.findByText('The API response inventory could not be loaded.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(failedResponses).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('GET 409')).toBeTruthy();
     cleanup();
     vi.restoreAllMocks();
-    vi.spyOn(adminApi, 'adminProblemPresentationsControllerUpdate').mockRejectedValue(new Error('update rejected'));
-    vi.spyOn(adminApi, 'adminProblemPresentationsControllerReset').mockRejectedValue(new Error('reset rejected'));
-    renderPage();
-
-    let row = await rowFor('/success');
+    installApi();
+    vi.spyOn(apiResponseStudioApi, 'listResponses').mockResolvedValue({ items: [], total: 0 });
+    render(
+      <Providers>
+        <ProblemPresentationsPage access={writeAccess} />
+      </Providers>,
+    );
+    expect(await screen.findByText('No responses match these filters')).toBeTruthy();
+    cleanup();
+    vi.restoreAllMocks();
+    installApi();
+    vi.spyOn(apiResponseStudioApi, 'updateResponse').mockRejectedValue(new ApiError('conflict', 409));
+    render(
+      <Providers>
+        <ProblemPresentationsPage access={writeAccess} />
+      </Providers>,
+    );
+    const row = (await screen.findByText('GET 409')).closest('article')!;
     fireEvent.click(within(row).getByRole('button', { name: 'Edit' }));
-    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Save rule' }));
-    expect(await screen.findByText('The presentation rule could not be saved.')).toBeTruthy();
-
-    row = await rowFor('/success');
-    fireEvent.click(within(row).getByRole('button', { name: 'Reset' }));
-    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Reset' }));
-    expect(await screen.findByText('The presentation rule could not be reset.')).toBeTruthy();
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Save response' }));
+    expect(await screen.findByText(/changed after it was opened/)).toBeTruthy();
+    const listResponses = vi.mocked(apiResponseStudioApi.listResponses);
+    const callsBeforeReload = listResponses.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: 'Reload latest data' }));
+    await waitFor(() => expect(listResponses.mock.calls.length).toBeGreaterThan(callsBeforeReload));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });

@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-ERROR-005
+// @requirements REQ-API-RESPONSE-STUDIO-001 REQ-FRONTEND-ERROR-005
 import { describe, expect, it, vi } from 'vitest';
 
 import { createApiRuntimeEventHub, type NormalizedApiErrorSnapshot } from './runtime-events';
@@ -20,6 +20,7 @@ describe('createApiRuntimeEventHub', () => {
     expect(hub.getState()).toEqual({
       authRequired: false,
       lastError: null,
+      presentation: null,
       redirectTo: null,
       status: 'online',
     });
@@ -87,8 +88,35 @@ describe('createApiRuntimeEventHub', () => {
     expect(hub.getState()).toEqual({
       authRequired: true,
       lastError: null,
+      presentation: null,
       redirectTo: '/auth',
       status: 'online',
+    });
+  });
+
+  it('clears only the active presentation without losing connectivity or auth state', () => {
+    const hub = createApiRuntimeEventHub();
+    hub.emit({ type: 'server-error', error: snapshot() });
+    hub.emit({ type: 'auth-required', reason: 'retry-rejected', redirectTo: '/auth' });
+    hub.emit({
+      type: 'presentation',
+      presentation: {
+        display: 'modal',
+        figmaOnly: false,
+        lines: ['Retry later'],
+        ruleId: 'retry-later',
+        severity: 'warning',
+        support: true,
+      },
+    });
+
+    hub.clearPresentation();
+
+    expect(hub.getState()).toMatchObject({
+      authRequired: true,
+      presentation: null,
+      redirectTo: '/auth',
+      status: 'server-error',
     });
   });
 
@@ -117,6 +145,7 @@ describe('createApiRuntimeEventHub', () => {
     expect(hub.getState()).toEqual({
       authRequired: false,
       lastError: null,
+      presentation: null,
       redirectTo: null,
       status: 'online',
     });

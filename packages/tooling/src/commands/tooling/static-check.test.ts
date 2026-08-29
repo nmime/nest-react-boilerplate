@@ -1174,6 +1174,17 @@ describe("static-check stale admin API name guard", () => {
 });
 
 describe("static-check repository scan boundaries", () => {
+  it("ignores the git worktree pointer file", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(workspaceRoot, ".git", "gitdir: /tmp/worktree-pointer\n");
+      assert.deepEqual(checkStaleReferences(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
   it("scans canonical task files and docs while excluding local nested worktrees", () => {
     const workspaceRoot = createWorkspace();
 
@@ -1859,20 +1870,51 @@ ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(
           2,
         ),
       );
-      writeText(
-        workspaceRoot,
-        "i18n/ru/lint.json",
-        JSON.stringify(
-          {
-            residuePatterns: [{ pattern: "[Гг]ъ|englishъ", label: "use ғ" }],
-            foreignProseMarkers: ["please", "save", "settings", "cancel"],
-            reviewedTechnicalTerms: ["PostgreSQL", "Discord", "Settings API"],
-            untranslatedKeys: ["common.copied"],
-          },
-          null,
-          2,
-        ),
-      );
+      for (const locale of supportedLocales.filter((candidate) => candidate !== "en")) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/common/shared.json`,
+          JSON.stringify(
+            locale === "ru"
+              ? {
+                  "common/shared.json.key": "ru:common/shared.json",
+                  "common.residue": "Созлаenglishъмалар",
+                  "common.prose": "Please save your settings",
+                  "common.reviewed": "PostgreSQL уланиш",
+                  "common.api": "Справочник Settings API",
+                  "common.copied": "Discord",
+                  "common.pending": "Cancel",
+                }
+              : {
+                  "common/shared.json.key": `${locale}:common/shared.json`,
+                  "common.residue": `${locale}:residue`,
+                  "common.prose": `${locale}:prose`,
+                  "common.reviewed": `${locale}:reviewed`,
+                  "common.api": `${locale}:api`,
+                  "common.copied": `${locale}:copied`,
+                  "common.pending": `${locale}:pending`,
+                },
+            null,
+            2,
+          ),
+        );
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/lint.json`,
+          JSON.stringify(
+            locale === "ru"
+              ? {
+                  residuePatterns: [{ pattern: "[Гг]ъ|englishъ", label: "use ғ" }],
+                  foreignProseMarkers: ["please", "save", "settings", "cancel"],
+                  reviewedTechnicalTerms: ["PostgreSQL", "Discord", "Settings API"],
+                  untranslatedKeys: ["common.copied"],
+                }
+              : {},
+            null,
+            2,
+          ),
+        );
+      }
 
       const stderr = checkThinLocaleCatalogs(workspaceRoot)
         .map((failure) => failure.stderr)
@@ -1928,20 +1970,45 @@ ${Array.from({ length: 61 }, (_, index) => `  "common.${index}": "value"`).join(
           2,
         ),
       );
-      writeText(
-        workspaceRoot,
-        "i18n/ru/lint.json",
-        JSON.stringify(
-          {
-            residuePatterns: [{ pattern: "[A-Za-z]", label: "Latin residue" }],
-            foreignProseMarkers: ["error", "please", "save"],
-            reviewedTechnicalTerms: [],
-            untranslatedKeys: [],
-          },
-          null,
-          2,
-        ),
-      );
+      for (const locale of supportedLocales.filter((candidate) => candidate !== "en")) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/common/shared.json`,
+          JSON.stringify(
+            locale === "ru"
+              ? {
+                  "common/shared.json.key": "ru:common/shared.json",
+                  "common.failure": "Сбой: {{error}}",
+                  "common.nested": "Долг: {{outer{inner}tail}}",
+                  "common.realProse": "Please save",
+                }
+              : {
+                  "common/shared.json.key": `${locale}:common/shared.json`,
+                  "common.failure": `${locale}: {{error}}`,
+                  "common.nested": `${locale}: {{outer{inner}tail}}`,
+                  "common.realProse": `${locale}: translated`,
+                },
+            null,
+            2,
+          ),
+        );
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/lint.json`,
+          JSON.stringify(
+            locale === "ru"
+              ? {
+                  residuePatterns: [{ pattern: "[A-Za-z]", label: "Latin residue" }],
+                  foreignProseMarkers: ["error", "please", "save"],
+                  reviewedTechnicalTerms: [],
+                  untranslatedKeys: [],
+                }
+              : {},
+            null,
+            2,
+          ),
+        );
+      }
 
       const stderr = checkThinLocaleCatalogs(workspaceRoot)
         .map((failure) => failure.stderr)

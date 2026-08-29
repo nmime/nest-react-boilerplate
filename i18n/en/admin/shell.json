@@ -37,6 +37,7 @@
   "admin.permission.dashboardMissing": "Missing admin dashboard permission.",
   "admin.permission.profileMissing": "Missing admin profile permission.",
   "admin.permission.featureFlagsMissing": "Missing feature flag permission.",
+  "admin.permission.settingsMissing": "Missing admin settings permission.",
   "admin.loadingProfile": "Loading admin profile...",
   "admin.loadingEyebrow": "Loading",
   "admin.error.profileRequestFailed": "Profile request failed."

@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // Expo puts this in the exported web document's <title>. It is the one shell that neither the
   // Vite brand transform nor the Astro template reaches, so without reading the same key it stays
   // boilerplate-branded however a product configures the rest of the frontend.
-  name: process.env.VITE_PRODUCT_NAME?.trim() || defaultProductName,
+  name: (process.env['VITE_PRODUCT_NAME'] as string | undefined)?.trim() || defaultProductName,
   slug: 'nest-react-boilerplate-mobile',
   scheme: 'nestreact',
   version: '0.0.0',
@@ -35,6 +35,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     ...config.extra,
-    apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? defaultApiBaseUrl,
+    apiBaseUrl: (process.env['EXPO_PUBLIC_API_BASE_URL'] as string | undefined) ?? defaultApiBaseUrl,
   },
 });

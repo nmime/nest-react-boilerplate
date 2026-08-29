@@ -192,7 +192,7 @@ function apiMock(
       { status: 200, headers: { 'content-type': 'application/json' } },
     );
   });
-  return { calls, fetchMock: fetchMock as typeof fetch };
+  return { calls, fetchMock };
 }
 
 function latestPayload(
@@ -302,6 +302,19 @@ async function waitForTelegramText(
 }
 
 describe('createTelegramBot', () => {
+  it('uses the normalized API root for Telegram requests', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ apiRoot: 'http://127.0.0.1:9099' }), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+
+    expect(fetchMock).toHaveBeenCalled();
+    expect(resolveRequestUrl(fetchMock.mock.calls[0]?.[0] as Parameters<typeof fetch>[0])).toMatch(
+      /^http:\/\/127\.0\.0\.1:9099\/bot123:test\//u,
+    );
+    expect(calls.some((call) => call.method === 'sendMessage')).toBe(true);
+  });
+
   it('handles /start with a localized public menu', async () => {
     const { calls, fetchMock } = apiMock();
     const { bot } = createTelegramBot(config(), { fetch: fetchMock });

@@ -145,6 +145,7 @@ apps:
       limits: { cpu: 1000m, memory: 1Gi }
   discordAppApi:
     enabled: false
+    autoscalingEnabled: false
     replicas: 1
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/discord-app-api
@@ -162,6 +163,7 @@ apps:
       limits: { cpu: 500m, memory: 512Mi }
   telegramBotApi:
     enabled: false
+    autoscalingEnabled: false
     replicas: 1
     image:
       repository: ghcr.io/your-github-org/nest-react-boilerplate/telegram-bot-api

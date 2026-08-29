@@ -6,6 +6,15 @@ import { NatsInjectToken } from './const';
 import { NatsModule } from './nats.module';
 import type { NatsConnectionFactory } from './type';
 
+const { createNatsConnectionMock } = vi.hoisted(() => ({
+  createNatsConnectionMock: vi.fn<NatsConnectionFactory>(),
+}));
+
+vi.mock('./nats-client.factory', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./nats-client.factory')>()),
+  createNatsConnection: createNatsConnectionMock,
+}));
+
 function mockConnection(overrides: Partial<NatsConnection> = {}): NatsConnection {
   return {
     isClosed: vi.fn(() => false),
@@ -67,6 +76,21 @@ describe('NatsModule.forRoot', () => {
         name: 'unit',
       }),
     );
+
+    await moduleRef.close();
+  });
+
+  it('uses the default connection factory when no custom factory is supplied', async () => {
+    const created = mockConnection();
+    createNatsConnectionMock.mockResolvedValueOnce(created);
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [NatsModule.forRoot({ servers: ['nats://nats:4222'] })],
+    }).compile();
+
+    expect(moduleRef.get(NatsInjectToken, { strict: false })).toBe(created);
+    expect(createNatsConnectionMock).toHaveBeenCalledTimes(1);
+    expect(createNatsConnectionMock).toHaveBeenCalledWith({ servers: ['nats://nats:4222'] });
 
     await moduleRef.close();
   });

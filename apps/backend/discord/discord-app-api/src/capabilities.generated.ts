@@ -4,7 +4,30 @@
 // setup rewrites it whole. A product module belongs instead in the app's hand-written
 // root module that imports it, which setup never rewrites.
 import { Global, Module } from '@nestjs/common';
+import { RedisModule } from '@app/backend-common-redis';
+import { S3Module } from '@app/backend-common-s3';
+import { PostgresMainModule } from '@app/backend-postgres-main';
+import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
+import { FeatureFlagsPostgresModule } from '@app/backend-postgres-main-feature-flags';
+import { NotificationPostgresModule } from '@app/backend-postgres-main-notification';
 
 @Global()
-@Module({ imports: [], exports: [] })
+@Module({
+  imports: [
+    AuthPostgresModule,
+    FeatureFlagsPostgresModule,
+    NotificationPostgresModule,
+    PostgresMainModule.forRoot(),
+    RedisModule.forRoot(),
+    S3Module.forRoot(),
+  ],
+  exports: [
+    AuthPostgresModule,
+    FeatureFlagsPostgresModule,
+    NotificationPostgresModule,
+    PostgresMainModule,
+    RedisModule,
+    S3Module,
+  ],
+})
 export class DiscordAppApiCapabilitiesModule {}

@@ -303,16 +303,20 @@ describe('catalog — appCatalog', () => {
     assert.ok(appCatalog['user-app'].requiresApps.includes('user-app-api'));
   });
 
-  it('bot APIs require their integration capability, Redis, and durable persistence', () => {
-    for (const [app, capability] of [
-      ['telegram-bot-api', 'telegram-bot'],
-      ['discord-app-api', 'discord-bot'],
-    ] as const) {
-      const entry = appCatalog[app];
-      assert.ok(entry.requiresCapabilities.includes(capability));
-      assert.ok(entry.requiresCapabilities.includes('redis'));
-      assert.equal(entry.requiresDurableDatabase, true);
-    }
+  it('telegram-bot-api requires its integration and Redis but no durable database', () => {
+    const entry = appCatalog['telegram-bot-api'];
+
+    assert.ok(entry.requiresCapabilities.includes('telegram-bot'));
+    assert.ok(entry.requiresCapabilities.includes('redis'));
+    assert.equal(entry.requiresDurableDatabase, undefined);
+  });
+
+  it('discord-app-api keeps its durable persistence contract', () => {
+    const entry = appCatalog['discord-app-api'];
+
+    assert.ok(entry.requiresCapabilities.includes('discord-bot'));
+    assert.ok(entry.requiresCapabilities.includes('redis'));
+    assert.equal(entry.requiresDurableDatabase, true);
   });
 
   it('classifies integrations and the notification scheduler as optional applications', () => {
@@ -495,7 +499,9 @@ describe('catalog — capabilityCatalog', () => {
         const hosts =
           wiring.hosts === 'selected-backend'
             ? selection.apps.filter((appId) => appCatalog[appId].platform === 'backend')
-            : wiring.hosts.filter((appId) => selectedApps.has(appId));
+            : wiring.hosts === 'durable-backend'
+              ? selection.apps.filter((appId) => appCatalog[appId].requiresDurableDatabase === true)
+              : wiring.hosts.filter((appId) => selectedApps.has(appId));
         const moduleImports = [wiring, ...(wiring.additionalImports ?? [])];
         for (const appId of hosts) {
           const appModule = backendCapabilityModuleCatalog[appId];
@@ -818,15 +824,21 @@ describe('component — schema → preset → catalog', () => {
     assert.ok(e.apps.includes('admin-app-api'));
   });
 
-  it('config with telegram-bot-api expansion', () => {
+  it('config with telegram-bot-api expansion needs Redis but no durable provider', () => {
     const c = parseNrbConfig({
       schemaVersion,
       apps: ['telegram-bot-api'],
-      capabilities: ['mongodb', 'telegram-bot'],
+      capabilities: ['telegram-bot'],
     });
     const e = expandDependencies(c.apps, c.capabilities);
     assert.ok(e.apps.includes('telegram-bot-api'));
-    assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
+    assert.deepEqual(e.capabilities, ['i18n', 'redis', 'telegram-bot']);
+    assert.equal(
+      validateSelection(['telegram-bot-api'], ['i18n', 'redis', 'telegram-bot']).some((issue) =>
+        issue.message.includes('durable database provider'),
+      ),
+      false,
+    );
   });
 
   it('round-trip: parse → preset expand → re-parse expanded config', () => {

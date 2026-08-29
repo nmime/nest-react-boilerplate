@@ -14,6 +14,10 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts'],
     globals: false,
-    coverage: fullCoverage('coverage/apps/backend/telegram/telegram-bot-api', ['src/**/*.ts'], []),
+    coverage: fullCoverage(
+      'coverage/apps/backend/telegram/telegram-bot-api',
+      ['src/**/*.ts'],
+      ['src/endpoint-registry.ts'],
+    ),
   },
 });

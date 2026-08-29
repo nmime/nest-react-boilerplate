@@ -11,7 +11,9 @@
     "notification-scheduler",
     "site-app",
     "user-app",
-    "user-app-api"
+    "user-app-api",
+    "discord-app-api",
+    "telegram-bot-api"
   ],
   "capabilities": [
     "authz",
@@ -21,7 +23,10 @@
     "notifications",
     "payments",
     "postgres",
-    "s3"
+    "s3",
+    "discord-bot",
+    "redis",
+    "telegram-bot"
   ],
   "identity": {
     "name": "Nest React Boilerplate",

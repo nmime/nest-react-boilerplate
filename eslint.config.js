@@ -273,11 +273,7 @@ module.exports = [
           // Only files no project tsconfig covers may fall back to the
           // default project; the globs must stay narrow (typescript-eslint
           // rejects `**`) because the default program is whole-repo.
-          allowDefaultProject: [
-            'playwright.extended.config.ts',
-            'libs/frontend/ui-web/lib/.storybook/*.ts',
-            'libs/frontend/ui-web/lib/.storybook/*.tsx',
-          ],
+          allowDefaultProject: ['playwright.extended.config.ts'],
           defaultProject: 'tsconfig.lint.json',
         },
         tsconfigRootDir: __dirname,

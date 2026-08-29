@@ -4,7 +4,12 @@
 // setup rewrites it whole. A product module belongs instead in the app's hand-written
 // root module that imports it, which setup never rewrites.
 import { Global, Module } from '@nestjs/common';
+import { RedisModule } from '@app/backend-common-redis';
+import { S3Module } from '@app/backend-common-s3';
 
 @Global()
-@Module({ imports: [], exports: [] })
+@Module({
+  imports: [RedisModule.forRoot(), S3Module.forRoot()],
+  exports: [RedisModule, S3Module],
+})
 export class TelegramBotApiCapabilitiesModule {}

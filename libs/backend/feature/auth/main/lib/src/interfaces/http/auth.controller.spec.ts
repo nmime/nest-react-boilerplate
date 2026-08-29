@@ -113,10 +113,12 @@ function createExternalAuthService(
     telegramTma: vi.fn(() => Promise.resolve({ status: 'authenticated' as const, session: sessionView })),
     telegramOidcSession: vi.fn(() => Promise.resolve({ status: 'authenticated' as const, session: sessionView })),
     telegramBotLink: vi.fn(() => Promise.resolve({ status: 'linked' as const, identity: externalIdentity })),
-    createDiscordAuthorizationRequest: vi.fn(() => ({
-      authorizationUrl: 'https://discord.example.test/oauth',
-      stateExpiresAt: '2026-07-05T00:00:00.000Z',
-    })),
+    createDiscordAuthorizationRequest: vi.fn(() =>
+      Promise.resolve({
+        authorizationUrl: 'https://discord.example.test/oauth',
+        stateExpiresAt: '2026-07-05T00:00:00.000Z',
+      }),
+    ),
     discordCallback: vi.fn(() => Promise.resolve({ status: 'authenticated' as const, session: sessionView })),
     listProviderIdentities: vi.fn(() => Promise.resolve([externalIdentity])),
     unlinkProviderIdentity: vi.fn(() => Promise.resolve({ unlinked: true })),
@@ -500,12 +502,12 @@ describe('AuthController', () => {
       }),
     ).resolves.toMatchObject({ data: { status: 'linked' } });
 
-    expect(
+    await expect(
       controller.discordAuthorizationRequest(
         { returnUrl: 'https://app.example.test/after' },
         createRequest(principal).request,
       ),
-    ).toEqual({
+    ).resolves.toEqual({
       data: {
         authorizationUrl: 'https://discord.example.test/oauth',
         stateExpiresAt: '2026-07-05T00:00:00.000Z',
@@ -513,12 +515,12 @@ describe('AuthController', () => {
     });
     const authOnlyDiscordRequest = createRequest(principal).request;
     delete authOnlyDiscordRequest.user;
-    expect(controller.discordAuthorizationRequest({}, authOnlyDiscordRequest)).toMatchObject({
+    await expect(controller.discordAuthorizationRequest({}, authOnlyDiscordRequest)).resolves.toMatchObject({
       data: {
         authorizationUrl: 'https://discord.example.test/oauth',
       },
     });
-    expect(controller.discordAuthorizationRequest({}, createRequest().request)).toMatchObject({
+    await expect(controller.discordAuthorizationRequest({}, createRequest().request)).resolves.toMatchObject({
       data: {
         authorizationUrl: 'https://discord.example.test/oauth',
       },

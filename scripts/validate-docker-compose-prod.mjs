@@ -73,7 +73,7 @@ assert.ok(
   !prodCompose.includes('POSTGRES_PASSWORD: ${POSTGRES_PASSWORD'),
   'production Compose must not inline database passwords',
 );
-has(prodCompose, 'TRUST_PROXY: ${TRUST_PROXY:-true}', 'reverse-proxy trust reaches backend containers');
+has(prodCompose, 'TRUST_PROXY: ${TRUST_PROXY:-1}', 'one-hop reverse-proxy trust reaches backend containers');
 has(
   prodCompose,
   'AUTH_ALLOWED_RETURN_URLS: ${AUTH_ALLOWED_RETURN_URLS:?set comma-separated allowed auth return URL origins}',
@@ -203,6 +203,15 @@ for (const expected of [
 ]) {
   has(discordAuthCompose, expected, `Discord auth overlay ${expected}`);
 }
+const authDiscordOverlay = discordAuthCompose.split('\n\n  discord-app-api:')[0];
+const discordAppOverlay = discordAuthCompose.split('\n\n  discord-app-api:')[1] ?? '';
+for (const [service, serviceBlock] of [
+  ['auth-app-api', authDiscordOverlay],
+  ['discord-app-api', discordAppOverlay],
+]) {
+  has(serviceBlock, '<<: *discord-oauth-env', `${service} receives Discord OAuth client settings`);
+  has(serviceBlock, '- discord_client_secret', `${service} receives the Discord OAuth client secret`);
+}
 
 for (const service of [
   'migrator',
@@ -256,7 +265,7 @@ for (const expected of [
   'COMPOSE_DOMAIN_MODE=per-app-domains',
   externalProxyModeContract,
   'COMPOSE_TLS_MODE=automatic',
-  'TRUST_PROXY=true',
+  'TRUST_PROXY=1',
   'EDGE_BIND_ADDRESS=0.0.0.0',
   'EDGE_HTTP_PORT=80',
   'EDGE_HTTPS_PORT=443',

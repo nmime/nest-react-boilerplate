@@ -403,7 +403,7 @@ describe('ExternalAuthService', () => {
   it('stores Discord state with PKCE, validates callback state once, and rejects replay', async () => {
     const { service } = createService();
 
-    const authorization = service.createDiscordAuthorizationRequest({});
+    const authorization = await service.createDiscordAuthorizationRequest({});
 
     expect(authorization.authorizationUrl).toContain('discord.example.test');
     expect(arcticMocks.authorizationUrl).toHaveBeenCalledWith('discord-state', 'discord-code-verifier', [
@@ -445,9 +445,9 @@ describe('ExternalAuthService', () => {
       .mockReturnValueOnce('state-2')
       .mockReturnValueOnce('state-3');
 
-    service.createDiscordAuthorizationRequest({});
-    service.createDiscordAuthorizationRequest({});
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
 
     await expect(service.discordCallback({ code: 'callback-code', state: 'state-1' })).rejects.toThrow('invalid_state');
     await expect(service.discordCallback({ code: 'callback-code', state: 'state-3' })).resolves.toMatchObject({
@@ -461,7 +461,7 @@ describe('ExternalAuthService', () => {
     vi.setSystemTime(new Date('2026-06-14T12:00:00.000Z'));
     process.env.DISCORD_OAUTH_STATE_TTL_SECONDS = '1';
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     vi.setSystemTime(new Date('2026-06-14T12:00:02.000Z'));
 
     await expect(
@@ -473,11 +473,11 @@ describe('ExternalAuthService', () => {
 
     vi.useRealTimers();
     process.env.AUTH_ALLOWED_RETURN_URLS = 'https://app.example.test/';
-    expect(() =>
+    await expect(
       service.createDiscordAuthorizationRequest({
         returnUrl: 'https://evil.example.test/callback',
       }),
-    ).toThrow('return_url_not_allowed');
+    ).rejects.toThrow('return_url_not_allowed');
   });
 
   it('rejects Discord callbacks missing code or state and prunes expired stored states', async () => {
@@ -490,9 +490,9 @@ describe('ExternalAuthService', () => {
     process.env.DISCORD_OAUTH_STATE_TTL_SECONDS = '1';
     arcticMocks.generateState.mockReturnValueOnce('expired-state').mockReturnValueOnce('fresh-state');
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     vi.setSystemTime(new Date('2026-06-14T12:00:02.000Z'));
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
 
     await expect(
       service.discordCallback({
@@ -506,68 +506,68 @@ describe('ExternalAuthService', () => {
     vi.useRealTimers();
   });
 
-  it('validates return URLs by structured origin instead of raw prefix', () => {
+  it('validates return URLs by structured origin instead of raw prefix', async () => {
     const { service } = createService();
 
     // Accepts a legitimately configured origin (including sub-paths).
     process.env.AUTH_ALLOWED_RETURN_URLS = 'https://user-app.example.com';
-    expect(() =>
+    await expect(
       service.createDiscordAuthorizationRequest({
         returnUrl: 'https://user-app.example.com/callback',
       }),
-    ).not.toThrow();
+    ).resolves.toBeDefined();
 
     // Rejects the classic prefix-matching bypass (suffix-appended host).
-    expect(() =>
+    await expect(
       service.createDiscordAuthorizationRequest({
         returnUrl: 'https://user-app.example.com.evil.com/callback',
       }),
-    ).toThrow('return_url_not_allowed');
+    ).rejects.toThrow('return_url_not_allowed');
 
     // Rejects URLs carrying userinfo credentials even when the host matches.
-    expect(() =>
+    await expect(
       service.createDiscordAuthorizationRequest({
         returnUrl: 'https://user:pass@user-app.example.com/callback',
       }),
-    ).toThrow('return_url_not_allowed');
+    ).rejects.toThrow('return_url_not_allowed');
 
     // Rejects non-http(s) schemes such as javascript:.
-    expect(() =>
+    await expect(
       service.createDiscordAuthorizationRequest({
         returnUrl: 'javascript:alert(document.domain)',
       }),
-    ).toThrow('return_url_not_allowed');
+    ).rejects.toThrow('return_url_not_allowed');
 
     // Enforces a path-segment boundary: "/app" must not match "/appevil".
     process.env.AUTH_ALLOWED_RETURN_URLS = 'https://user-app.example.com/app';
-    expect(() =>
+    await expect(
       service.createDiscordAuthorizationRequest({
         returnUrl: 'https://user-app.example.com/appevil',
       }),
-    ).toThrow('return_url_not_allowed');
-    expect(() =>
+    ).rejects.toThrow('return_url_not_allowed');
+    await expect(
       service.createDiscordAuthorizationRequest({
         returnUrl: 'https://user-app.example.com/app/next',
       }),
-    ).not.toThrow();
+    ).resolves.toBeDefined();
   });
 
-  it('maps Discord provider disabled and missing configuration to stable errors', () => {
+  it('maps Discord provider disabled and missing configuration to stable errors', async () => {
     const { service } = createService();
 
     process.env.AUTH_DISCORD_ENABLED = 'false';
-    expect(() => service.createDiscordAuthorizationRequest({})).toThrow('provider_disabled');
+    await expect(service.createDiscordAuthorizationRequest({})).rejects.toThrow('provider_disabled');
 
     delete process.env.AUTH_DISCORD_ENABLED;
     delete process.env.DISCORD_CLIENT_SECRET;
-    expect(() => service.createDiscordAuthorizationRequest({})).toThrow('provider_not_configured');
+    await expect(service.createDiscordAuthorizationRequest({})).rejects.toThrow('provider_not_configured');
   });
 
   it('maps failed Discord userinfo responses to provider errors', async () => {
     const { service } = createService();
     vi.mocked(fetch).mockResolvedValueOnce(new Response('{}', { status: 503 }));
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     await expect(
       service.discordCallback({
         code: 'callback-code',
@@ -589,7 +589,7 @@ describe('ExternalAuthService', () => {
       ),
     );
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     const unverified = await service.discordCallback({
       code: 'callback-code',
       state: 'discord-state',
@@ -615,7 +615,7 @@ describe('ExternalAuthService', () => {
       ),
     );
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     const verified = await service.discordCallback({
       code: 'callback-code',
       state: 'discord-state-2',
@@ -637,7 +637,7 @@ describe('ExternalAuthService', () => {
       ),
     );
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     const minimal = await service.discordCallback({
       code: 'callback-code',
       state: 'discord-state-3',
@@ -660,7 +660,7 @@ describe('ExternalAuthService', () => {
       ),
     );
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     await expect(
       service.discordCallback({
         code: 'callback-code',
@@ -678,7 +678,7 @@ describe('ExternalAuthService', () => {
     const social = new CapturingSocialAuthStore();
     const { service } = createService(social);
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     const disabled = await service.discordCallback({
       code: 'callback-code',
       state: 'discord-state',
@@ -691,7 +691,7 @@ describe('ExternalAuthService', () => {
     arcticMocks.generateState.mockReturnValueOnce('discord-state-2');
     arcticMocks.validateAuthorizationCode.mockResolvedValueOnce(discordTokens({ scopes: ['identify', 'email'] }));
     process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     const enabled = await service.discordCallback({
       code: 'callback-code',
       state: 'discord-state-2',
@@ -722,7 +722,7 @@ describe('ExternalAuthService', () => {
     process.env.AUTH_PROVIDER_TOKEN_ENCRYPTION_ENABLED = 'true';
     process.env.DISCORD_SCOPES = 'identify,email';
 
-    service.createDiscordAuthorizationRequest({});
+    await service.createDiscordAuthorizationRequest({});
     await service.discordCallback({
       code: 'callback-code',
       state: 'discord-state',
@@ -740,7 +740,7 @@ describe('ExternalAuthService', () => {
     arcticMocks.generateState.mockReturnValueOnce('discord-state-without-scopes');
     arcticMocks.validateAuthorizationCode.mockResolvedValueOnce(discordTokens({ refreshValue: null }));
     delete process.env.DISCORD_SCOPES;
-    serviceWithoutConfiguredScopes.createDiscordAuthorizationRequest({});
+    await serviceWithoutConfiguredScopes.createDiscordAuthorizationRequest({});
     await serviceWithoutConfiguredScopes.discordCallback({
       code: 'callback-code',
       state: 'discord-state-without-scopes',
@@ -757,7 +757,7 @@ describe('ExternalAuthService', () => {
           const social = new CapturingSocialAuthStore();
           vi.spyOn(social, 'persistProviderToken').mockReturnValue(persistenceResult);
           const { service } = createService(social);
-          service.createDiscordAuthorizationRequest({});
+          await service.createDiscordAuthorizationRequest({});
 
           await expect(service.discordCallback({ code: 'callback-code', state: 'discord-state' })).rejects.toThrow(
             'Provider token storage is unavailable.',
@@ -1195,7 +1195,7 @@ describe('ExternalAuthService', () => {
       password: 'password123',
     });
 
-    service.createDiscordAuthorizationRequest({
+    await service.createDiscordAuthorizationRequest({
       intent: ExternalAuthIntent.Link,
       principal: {
         subject: passwordSession.user.id,

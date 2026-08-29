@@ -1816,7 +1816,8 @@
         "baseUrlEnv": "AUTH_API_BASE_URL",
         "classification": "automatic",
         "expectedStatusClasses": [
-          "2xx"
+          "2xx",
+          "4xx"
         ]
       }
     },
@@ -2693,7 +2694,7 @@
       "source": "apps/frontend/landing/src/astro/pages/problems.astro:1",
       "authClassification": "public",
       "coverageClassification": "covered-component",
-      "testEvidence": "apps/frontend/landing/src/astro/pages/problems.spec.ts",
+      "testEvidence": "apps/frontend/landing/src/astro/tests/problems.spec.ts",
       "smoke": {
         "baseUrlEnv": "LANDING_APP_BASE_URL",
         "classification": "automatic",

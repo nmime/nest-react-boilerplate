@@ -85,6 +85,42 @@ describe('current closure validation', () => {
 });
 
 describe('all-reference closure context', () => {
+  it('removes durable provider edges from stateless configured backend apps', () => {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-stateless-graph-'));
+    mkdirSync(join(root, '.nrb'));
+    writeFileSync(
+      join(root, 'nrb.config.json'),
+      JSON.stringify({
+        schemaVersion: '1.0.0',
+        apps: ['telegram-bot-api'],
+        capabilities: ['postgres', 'redis', 'telegram-bot'],
+      }),
+    );
+    writeFileSync(join(root, '.nrb/workspace.json'), '{}');
+    const graph: ProjectGraphLike = {
+      nodes: {
+        'telegram-bot-api': { data: {} },
+        '@app/backend-common-redis': { data: {} },
+        '@app/backend-postgres-main': { data: {} },
+        '@app/backend-postgres-main-auth': { data: {} },
+      },
+      dependencies: {
+        'telegram-bot-api': [
+          { target: '@app/backend-common-redis' },
+          { target: '@app/backend-postgres-main' },
+          { target: '@app/backend-postgres-main-auth' },
+        ],
+      },
+    };
+
+    try {
+      const projected = configuredClosureGraph(root, graph);
+      assert.deepEqual(projected.dependencies['telegram-bot-api'], [{ target: '@app/backend-common-redis' }]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('projects checked-in application edges onto the selected reference provider', () => {
     const root = mkdtempSync(join(tmpdir(), 'nrb-reference-graph-'));
     mkdirSync(join(root, '.nrb'));
@@ -106,7 +142,13 @@ describe('all-reference closure context', () => {
     };
 
     try {
-      const projected = configuredClosureGraph(root, graph);
+      const projected = configuredClosureGraph(root, graph, {
+        apps: [],
+        capabilities: [],
+        configHash: 'a'.repeat(64),
+        product: parseNrbConfig({ schemaVersion: '1.0.0' }).product,
+        deployment: parseNrbConfig({ schemaVersion: '1.0.0' }).deployment,
+      });
       assert.deepEqual(projected.dependencies['auth-app-api'], [
         { target: '@app/backend-common-bootstrap' },
         { target: '@app/backend-mongodb-main' },

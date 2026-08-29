@@ -584,8 +584,8 @@ const bakeDriver = read('scripts/build-images.mjs');
 
 const assertNamedClosureBuilds = (compose, label) => {
   has(compose, 'nrb-closure: ${NRB_CLOSURE_CONTEXT:?', `${label} required named closure context`);
-  const buildCount = compose.match(/^    build:$/gmu)?.length ?? 0;
-  const namedBuildCount = compose.match(/^      <<: \*nrb-build$/gmu)?.length ?? 0;
+  const buildCount = compose.match(/^ {4}build:$/gmu)?.length ?? 0;
+  const namedBuildCount = compose.match(/^ {6}<<: \*nrb-build$/gmu)?.length ?? 0;
   assert.ok(buildCount > 0, `${label} must define Dockerfile builds.`);
   assert.equal(namedBuildCount, buildCount, `${label} has a Dockerfile build without the nrb-closure anchor.`);
 };
@@ -979,6 +979,7 @@ if (validateHelmStatic) {
   const helmPrometheusRule = read('.helm/templates/prometheusrule.yaml');
   const helmDashboard = read('.helm/dashboards/nest-react-boilerplate.json');
   const deploymentTemplate = read('.helm/templates/deployment.yaml');
+  const hpaTemplate = read('.helm/templates/hpa.yaml');
   const helmValidator = read('scripts/validate-helm.sh');
   const selectedHelmValidation = section(
     helmValidator,
@@ -1168,6 +1169,33 @@ if (validateHelmStatic) {
   }
   has(deploymentTemplate, 'LANDING_USER_APP_URL', 'Helm landing deployment derives the user-app destination');
   has(deploymentTemplate, 'LANDING_ADMIN_APP_URL', 'Helm landing deployment derives the admin-app destination');
+  for (const [template, label] of [
+    [deploymentTemplate, 'Deployment'],
+    [hpaTemplate, 'HPA'],
+  ]) {
+    has(
+      template,
+      'dig "autoscalingEnabled" true $app',
+      `Helm ${label} defaults per-app autoscaling to enabled without swallowing explicit false`,
+    );
+  }
+  has(
+    deploymentTemplate,
+    '(not $appAutoscalingEnabled)',
+    'Helm Deployment keeps fixed replicas for per-app autoscaling opt-outs',
+  );
+  has(
+    deploymentTemplate,
+    'spec:\n  {{ if or (not $root.Values.autoscaling.enabled) (not $appAutoscalingEnabled) }}\n  replicas: {{ $app.replicas }}\n{{ end }}\n  revisionHistoryLimit',
+    'Helm Deployment preserves newlines around optional replicas',
+  );
+  assert.ok(
+    deploymentTemplate.endsWith('{{ end }}\n'),
+    'Helm Deployment preserves the YAML document separator between rendered apps',
+  );
+  has(hpaTemplate, '$appAutoscalingEnabled', 'Helm HPA excludes per-app autoscaling opt-outs');
+  has(valuesSchema, '"autoscalingEnabled"', 'Helm schema documents the per-app autoscaling flag');
+  has(valuesSchema, '"default": true', 'Helm schema defaults per-app autoscaling to enabled');
   has(valuesSchema, '"minItems": 1', 'Helm schema requires at least one OTEL exporter port');
   has(valuesSchema, '"maximum": 65535', 'Helm schema bounds OTEL exporter ports');
   has(valuesSchema, '"pattern": "^[a-z0-9]', 'Helm schema validates OTEL namespace selectors');
@@ -1306,6 +1334,11 @@ if (validateHelmStatic) {
     for (const [app, service, host] of optionalApiDomainAssignments) {
       const appBlock = yamlMapEntry(values, app);
       has(appBlock, 'enabled: false', `${label} ${app} remains opt-in`);
+      has(
+        appBlock,
+        'autoscalingEnabled: false',
+        `${label} ${app} keeps replica-local integration state on a fixed replica set`,
+      );
       const hostEntry = section(ingressBlock, `- host: ${host}`, '\n    - host:');
       has(hostEntry, `service: ${service}`, `${label} ${app} optional ingress service`);
       has(hostEntry, 'enabled: false', `${label} ${app} optional ingress is disabled with the app`);

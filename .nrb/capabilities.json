@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "configHash": "3a436b3cb8c4fcf9eafdc8416b279e06923da6b6b560aa11c9bf8900894e3958",
+  "configHash": "a1a43a3b54b28ad2f9de93b47689ffb5bc03efd51cf6b2beebb45f80e4e64b2f",
   "capabilities": [
     {
       "id": "authz",
@@ -31,6 +31,26 @@
       "deploymentOwnership": null
     },
     {
+      "id": "discord-bot",
+      "activation": "application",
+      "projects": [
+        "@app/backend-feature-discord-bot"
+      ],
+      "dockerServices": [
+        "discord-app-api"
+      ],
+      "environmentVariables": [
+        "DISCORD_APPLICATION_ID",
+        "DISCORD_BOT_TOKEN",
+        "DISCORD_PUBLIC_KEY"
+      ],
+      "generatedFiles": [],
+      "backendWiring": [],
+      "telemetryWiring": null,
+      "providerTelemetryInstrumentation": null,
+      "deploymentOwnership": null
+    },
+    {
       "id": "feature-flags",
       "activation": "nest-module",
       "projects": [
@@ -42,13 +62,14 @@
       "generatedFiles": [
         "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
+        "apps/backend/discord/discord-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
         {
-          "hosts": "selected-backend",
+          "hosts": "durable-backend",
           "moduleExpression": "FeatureFlagsPostgresModule",
           "imports": [
             {
@@ -127,6 +148,7 @@
       "generatedFiles": [
         "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
+        "apps/backend/discord/discord-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
@@ -135,9 +157,7 @@
         {
           "hosts": [
             "user-app-api",
-            "auth-app-api",
-            "discord-app-api",
-            "telegram-bot-api"
+            "auth-app-api"
           ],
           "moduleExpression": "NotificationMainModule.forRoot({ enableScheduler: false, exposeHttp: false })",
           "imports": [
@@ -172,49 +192,12 @@
           ]
         },
         {
-          "hosts": "selected-backend",
+          "hosts": "durable-backend",
           "moduleExpression": "NotificationPostgresModule",
           "imports": [
             {
               "importName": "NotificationPostgresModule",
               "importPath": "@app/backend-postgres-main-notification"
-            }
-          ]
-        }
-      ],
-      "telemetryWiring": null,
-      "providerTelemetryInstrumentation": null,
-      "deploymentOwnership": null
-    },
-    {
-      "id": "payments",
-      "activation": "nest-module",
-      "projects": [
-        "@app/backend-feature-payments-main",
-        "@app/backend-feature-payments-shared",
-        "@app/backend-postgres-main-payments"
-      ],
-      "dockerServices": [],
-      "environmentVariables": [],
-      "generatedFiles": [
-        "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
-        "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
-        "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
-        "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
-        "apps/backend/user/user-app-api/src/capabilities.generated.ts"
-      ],
-      "backendWiring": [
-        {
-          "hosts": "selected-backend",
-          "moduleExpression": "PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })",
-          "imports": [
-            {
-              "importName": "PaymentsMainModule",
-              "importPath": "@app/backend-feature-payments-main"
-            },
-            {
-              "importName": "PaymentsPostgresModule",
-              "importPath": "@app/backend-postgres-main-payments"
             }
           ]
         }
@@ -240,13 +223,14 @@
       "generatedFiles": [
         "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
+        "apps/backend/discord/discord-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
         {
-          "hosts": "selected-backend",
+          "hosts": "durable-backend",
           "moduleExpression": "PostgresMainModule.forRoot()",
           "imports": [
             {
@@ -256,7 +240,7 @@
           ]
         },
         {
-          "hosts": "selected-backend",
+          "hosts": "durable-backend",
           "moduleExpression": "AuthPostgresModule",
           "imports": [
             {
@@ -272,6 +256,51 @@
         "importPath": "@app/backend-postgres-main-otel"
       },
       "deploymentOwnership": null
+    },
+    {
+      "id": "redis",
+      "activation": "nest-module",
+      "projects": [
+        "@app/backend-common-redis"
+      ],
+      "dockerServices": [
+        "redis"
+      ],
+      "environmentVariables": [
+        "REDIS_URL"
+      ],
+      "generatedFiles": [
+        "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
+        "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
+        "apps/backend/discord/discord-app-api/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts",
+        "apps/backend/user/user-app-api/src/capabilities.generated.ts"
+      ],
+      "backendWiring": [
+        {
+          "hosts": [
+            "admin-app-api",
+            "auth-app-api",
+            "discord-app-api",
+            "notification-consumer",
+            "notification-scheduler",
+            "telegram-bot-api",
+            "user-app-api"
+          ],
+          "moduleExpression": "RedisModule.forRoot()",
+          "imports": [
+            {
+              "importName": "RedisModule",
+              "importPath": "@app/backend-common-redis"
+            }
+          ]
+        }
+      ],
+      "telemetryWiring": null,
+      "providerTelemetryInstrumentation": null,
+      "deploymentOwnership": "bundled"
     },
     {
       "id": "s3",
@@ -293,8 +322,10 @@
       "generatedFiles": [
         "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
+        "apps/backend/discord/discord-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
@@ -312,6 +343,38 @@
       "telemetryWiring": null,
       "providerTelemetryInstrumentation": null,
       "deploymentOwnership": "bundled"
+    },
+    {
+      "id": "telegram-bot",
+      "activation": "application",
+      "projects": [
+        "@app/backend-feature-telegram-bot",
+        "@app/backend-feature-telegram-shared"
+      ],
+      "dockerServices": [
+        "telegram-bot-api"
+      ],
+      "environmentVariables": [
+        "AUTH_ALLOWED_RETURN_URLS",
+        "AUTH_TELEGRAM_ENABLED",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_TRUSTED_ORIGINS",
+        "BETTER_AUTH_URL",
+        "TELEGRAM_API_ROOT",
+        "TELEGRAM_BOT_MODE",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_MINI_APP_URL",
+        "TELEGRAM_OIDC_CLIENT_ID",
+        "TELEGRAM_OIDC_CLIENT_SECRET",
+        "TELEGRAM_OIDC_ENABLED",
+        "TELEGRAM_TMA_MAX_AGE_SECONDS",
+        "VITE_TELEGRAM_AUTH_ENABLED"
+      ],
+      "generatedFiles": [],
+      "backendWiring": [],
+      "telemetryWiring": null,
+      "providerTelemetryInstrumentation": null,
+      "deploymentOwnership": null
     }
   ]
 }

@@ -2,6 +2,8 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { describe, expect, it } from 'vitest';
 import { BaseHealthController, HealthService } from '@app/backend-common-health';
+import { RedisInjectToken } from '@app/backend-common-redis';
+import { TelegramBotInstanceInjectToken, type TelegramBotInstance } from '@app/backend-feature-telegram-bot';
 import { TelegramWebhookController } from './telegram-webhook.controller';
 import { TelegramPollingService } from './telegram-polling.service';
 import { TelegramBotApiModule } from './telegram-bot-api.module';
@@ -30,6 +32,8 @@ describe('TelegramBotApiModule', () => {
       expect(compiledModule.get(BaseHealthController)).toBeInstanceOf(BaseHealthController);
       expect(compiledModule.get(HealthService).appName).toBe('telegram-bot-api');
       expect(compiledModule.get(TelegramWebhookController)).toBeInstanceOf(TelegramWebhookController);
+      expect(compiledModule.get(RedisInjectToken)).toBeDefined();
+      expect(compiledModule.get<TelegramBotInstance>(TelegramBotInstanceInjectToken).config.mode).toBe('webhook');
       // Polling service should NOT be registered in webhook mode
       expect(() => compiledModule.get(TelegramPollingService)).toThrow();
     } finally {
@@ -63,6 +67,10 @@ describe('TelegramBotApiModule', () => {
       expect(compiledModule.get(BaseHealthController)).toBeInstanceOf(BaseHealthController);
       expect(compiledModule.get(HealthService).appName).toBe('telegram-bot-api');
       expect(compiledModule.get(TelegramPollingService)).toBeInstanceOf(TelegramPollingService);
+      expect(compiledModule.get<TelegramBotInstance>(TelegramBotInstanceInjectToken).config.mode).toBe('polling');
+      expect(compiledModule.get(RedisInjectToken)).toBeDefined();
+      // Redis remains available through the generated capability module, but polling mode
+      // does not inject it into the bot provider or register webhook replay protection.
       // Webhook controller should NOT be registered in polling mode
       expect(() => compiledModule.get(TelegramWebhookController)).toThrow();
     } finally {

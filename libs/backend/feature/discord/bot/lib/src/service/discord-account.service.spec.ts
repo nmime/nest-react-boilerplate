@@ -62,10 +62,11 @@ describe('DiscordAccountService', () => {
   });
 
   it('surfaces auth-service unavailability and reports status', async () => {
+    const createDiscordAuthorizationRequest = vi.fn(() => {
+      throw new Error('auth service unavailable');
+    });
     const service = new DiscordAccountService({
-      createDiscordAuthorizationRequest: vi.fn(() => {
-        throw new Error('auth service unavailable');
-      }),
+      createDiscordAuthorizationRequest,
       listProviderIdentities: vi.fn().mockResolvedValue([
         {
           provider: 'discord',
@@ -89,6 +90,34 @@ describe('DiscordAccountService', () => {
         locale: 'en',
       }),
     ).rejects.toThrow('auth service unavailable');
+    expect(createDiscordAuthorizationRequest).toHaveBeenCalledWith({
+      tenantId,
+      intent: 'link',
+      returnUrl: undefined,
+      principal: { subject: '123456789012345678', tenantId },
+    });
+
+    const reachable = new DiscordAccountService({
+      createDiscordAuthorizationRequest: vi
+        .fn()
+        .mockResolvedValue({
+          authorizationUrl: 'https://discord.com/oauth2/authorize?state=abc',
+          stateExpiresAt: '2030-01-01T00:00:00.000Z',
+        }),
+      listProviderIdentities: vi.fn().mockResolvedValue([]),
+    });
+    await expect(
+      reachable.createLink({
+        userId: '123456789012345678',
+        tenantId,
+        locale: 'en',
+        returnUrl: 'https://app.example.test/return',
+      }),
+    ).resolves.toEqual({
+      authorizationUrl: 'https://discord.com/oauth2/authorize?state=abc',
+      expiresAt: '2030-01-01T00:00:00.000Z',
+    });
+
     await expect(service.status({ userId: '123456789012345678', tenantId })).resolves.toEqual({
       linked: true,
       displayName: 'tester',

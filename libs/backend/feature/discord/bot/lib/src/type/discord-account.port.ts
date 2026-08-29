@@ -47,7 +47,7 @@ export interface DiscordExternalAuthPort {
     intent: 'link';
     returnUrl?: string | null;
     principal: { subject: string; tenantId: string };
-  }): { authorizationUrl: string; stateExpiresAt: string };
+  }): Promise<{ authorizationUrl: string; stateExpiresAt: string }>;
   listProviderIdentities(
     userId: string,
     tenantId: string,

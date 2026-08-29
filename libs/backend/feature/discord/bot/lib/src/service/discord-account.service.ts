@@ -47,7 +47,7 @@ export class DiscordAccountService extends DiscordAccountApplicationPort {
       return this.linkUrlBuilder.build({ ...input, tenantId });
     }
     if (this.externalAuth) {
-      const result = this.externalAuth.createDiscordAuthorizationRequest({
+      const result = await this.externalAuth.createDiscordAuthorizationRequest({
         tenantId,
         intent: 'link',
         returnUrl: input.returnUrl,

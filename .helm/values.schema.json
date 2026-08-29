@@ -2,6 +2,20 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
+    "apps": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "autoscalingEnabled": {
+            "description": "Allow this app to participate in global HorizontalPodAutoscaler rendering. Defaults to true when omitted.",
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
     "config": {
       "type": "object",
       "properties": {

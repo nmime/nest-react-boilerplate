@@ -193,7 +193,12 @@ export function generateCapabilitiesManifest(summary: PlanSummary): { path: stri
     const backendWiring = resolveCapabilityBackendWiring(entry, provider);
     const generatedFiles = new Set<string>();
     for (const wiring of backendWiring) {
-      const hosts = wiring.hosts === 'selected-backend' ? summary.apps : wiring.hosts;
+      const hosts =
+        wiring.hosts === 'durable-backend'
+          ? summary.apps.filter((appId) => appCatalog[appId as AppId].requiresDurableDatabase === true)
+          : wiring.hosts === 'selected-backend'
+            ? summary.apps
+            : wiring.hosts;
       for (const host of hosts) {
         const generatedModule = backendCapabilityModuleCatalog[host as AppId];
         if (summary.apps.includes(host) && generatedModule) {
@@ -202,7 +207,12 @@ export function generateCapabilitiesManifest(summary: PlanSummary): { path: stri
       }
     }
     if (entry.telemetryWiring) {
-      const hosts = entry.telemetryWiring.hosts === 'selected-backend' ? summary.apps : entry.telemetryWiring.hosts;
+      const hosts =
+        entry.telemetryWiring.hosts === 'selected-backend'
+          ? summary.apps
+          : entry.telemetryWiring.hosts === 'durable-backend'
+            ? summary.apps.filter((appId) => appCatalog[appId as AppId].requiresDurableDatabase === true)
+            : entry.telemetryWiring.hosts;
       for (const host of hosts) {
         const generatedModule = backendCapabilityModuleCatalog[host as AppId];
         if (summary.apps.includes(host) && generatedModule) {
@@ -442,7 +452,11 @@ function resolveBackendTelemetryWiring(appId: AppId, capabilities: string[]) {
     .map((capabilityId) => capabilityCatalog[capabilityId])
     .find((capability) => {
       const hosts = capability.telemetryWiring?.hosts;
-      return hosts === 'selected-backend' || hosts?.includes(appId);
+      return (
+        hosts === 'selected-backend' ||
+        (hosts === 'durable-backend' && appCatalog[appId].requiresDurableDatabase === true) ||
+        hosts?.includes(appId)
+      );
     });
   if (!entry?.telemetryWiring) {
     return undefined;
@@ -450,19 +464,29 @@ function resolveBackendTelemetryWiring(appId: AppId, capabilities: string[]) {
   const provider = resolveDatabaseProvider(capabilities);
   return {
     ...entry.telemetryWiring,
-    providerInstrumentation: provider ? capabilityCatalog[provider].providerTelemetryInstrumentation : undefined,
+    providerInstrumentation:
+      provider && appCatalog[appId].requiresDurableDatabase === true
+        ? capabilityCatalog[provider].providerTelemetryInstrumentation
+        : undefined,
   };
 }
 
 function resolveBackendWiring(appId: AppId, capabilities: string[]): BackendModuleWiring[] {
   const provider = resolveDatabaseProvider(capabilities);
-  if (appCatalog[appId].requiresDurableDatabase && !provider) {
+  const requiresDurableDatabase = appCatalog[appId].requiresDurableDatabase === true;
+  if (requiresDurableDatabase && !provider) {
     throw new Error(`${appId} requires exactly one durable database provider.`);
   }
   return capabilities.flatMap((capabilityId) =>
-    resolveCapabilityBackendWiring(capabilityCatalog[capabilityId], provider).filter(
-      (wiring) => wiring.hosts === 'selected-backend' || wiring.hosts.includes(appId),
-    ),
+    resolveCapabilityBackendWiring(capabilityCatalog[capabilityId], provider).filter((wiring) => {
+      if (wiring.hosts === 'selected-backend') {
+        return true;
+      }
+      if (wiring.hosts === 'durable-backend') {
+        return requiresDurableDatabase;
+      }
+      return wiring.hosts.includes(appId);
+    }),
   );
 }
 

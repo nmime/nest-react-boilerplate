@@ -196,6 +196,15 @@ describe('closure materializer', () => {
     assert.doesNotMatch(singleDomainCaddyfile, /routes\/core\/admin\.caddy|admin-app-api:8088/u);
   });
 
+  it('pins selected replica-local integrations to one replica without autoscaling', () => {
+    const selected = closure('postgres');
+    selected.releaseImages = ['discord-app-api', 'telegram-bot-api'];
+    const values = renderClosureHelmValues(selected);
+
+    assert.match(values, /discordAppApi:\n {4}enabled: true\n {4}autoscalingEnabled: false\n {4}replicas: 1/u);
+    assert.match(values, /telegramBotApi:\n {4}enabled: true\n {4}autoscalingEnabled: false\n {4}replicas: 1/u);
+  });
+
   it('disables ingress for a background-only selected closure', () => {
     const selected = closure('postgres');
     selected.releaseImages = ['migrator', 'notification-scheduler'];

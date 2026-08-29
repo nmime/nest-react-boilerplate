@@ -1,47 +1,95 @@
-// @requirements REQ-SOCIAL-COMMANDS-003
-import { MODULE_METADATA } from '@nestjs/common/constants';
+// @requirements REQ-SOCIAL-SESSION-002
+import type { FactoryProvider } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { RedisInjectToken } from '@app/backend-common-redis';
 import { TelegramBotInstanceInjectToken } from '../const';
+import type { TelegramBotInstance } from '../type';
+
+const mocks = vi.hoisted(() => ({
+  config: {
+    token: '123:test',
+    setupMenuButton: false,
+    mode: 'webhook' as const,
+    environment: 'test' as const,
+    sessionTtlSeconds: 60,
+    rateLimit: { timeFrameMs: 1_000, limit: 3 },
+  },
+  createTelegramBot: vi.fn(() => ({ id: 'bot' })),
+  createTelegramSessionStorage: vi.fn(() => ({ id: 'session-storage' })),
+  resolveTelegramBotConfig: vi.fn(),
+  toRatelimiterRedisClient: vi.fn(() => ({ id: 'rate-limit-storage' })),
+}));
+
+vi.mock('./bot', () => ({
+  createTelegramBot: mocks.createTelegramBot,
+}));
+vi.mock('./config', () => ({
+  resolveTelegramBotConfig: mocks.resolveTelegramBotConfig,
+}));
+vi.mock('./session', () => ({
+  createTelegramSessionStorage: mocks.createTelegramSessionStorage,
+  toRatelimiterRedisClient: mocks.toRatelimiterRedisClient,
+}));
+
 import { TelegramBotModule } from './telegram-bot.module';
 
-function hasConfigToken(value: unknown): value is { config: { token: string } } {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'config' in value &&
-    typeof value.config === 'object' &&
-    value.config !== null &&
-    'token' in value.config &&
-    typeof value.config.token === 'string'
+function botProvider(useRedis: boolean): FactoryProvider<TelegramBotInstance> {
+  const module = TelegramBotModule.register({ useRedis });
+  const provider = module.providers?.find(
+    (candidate) => typeof candidate === 'object' && candidate.provide === TelegramBotInstanceInjectToken,
   );
+  if (!provider || typeof provider !== 'object' || !('useFactory' in provider)) {
+    throw new Error('Expected Telegram bot instance provider.');
+  }
+  expect(module.exports).toContain(TelegramBotInstanceInjectToken);
+  expect(module.imports).toEqual([]);
+  expect(module.exports).toEqual([TelegramBotInstanceInjectToken]);
+  return provider as FactoryProvider<TelegramBotInstance>;
 }
 
 describe('TelegramBotModule', () => {
   afterEach(() => {
-    vi.unstubAllEnvs();
+    vi.clearAllMocks();
   });
 
-  it('declares and exports the bot instance provider', () => {
-    const providersMetadata: unknown = Reflect.getMetadata(MODULE_METADATA.PROVIDERS, TelegramBotModule);
-    const providers = providersMetadata as Array<{
-      provide?: unknown;
-      useFactory?: () => unknown;
-    }>;
+  it('keeps the default polling/test composition independent from Redis', () => {
+    mocks.resolveTelegramBotConfig.mockReturnValue(mocks.config);
+    const provider = botProvider(false);
 
-    const provider = providers.find((candidate) => candidate.provide === TelegramBotInstanceInjectToken);
-    expect(typeof provider?.useFactory).toBe('function');
+    expect(provider.inject).toEqual([]);
+    (provider.useFactory as () => TelegramBotInstance)();
 
-    const exportsMetadata: unknown = Reflect.getMetadata(MODULE_METADATA.EXPORTS, TelegramBotModule);
-    expect(Array.isArray(exportsMetadata)).toBe(true);
-    expect(exportsMetadata).toContain(TelegramBotInstanceInjectToken);
+    expect(mocks.createTelegramSessionStorage).not.toHaveBeenCalled();
+    expect(mocks.toRatelimiterRedisClient).not.toHaveBeenCalled();
+    expect(mocks.createTelegramBot).toHaveBeenCalledWith(mocks.config, {});
+  });
 
-    vi.stubEnv('TELEGRAM_BOT_TOKEN', '123:test');
-    vi.stubEnv('VITEST', 'true');
-    const instance = provider?.useFactory?.();
-    expect(hasConfigToken(instance)).toBe(true);
-    if (!hasConfigToken(instance)) {
-      throw new Error('Expected Telegram bot instance config.');
-    }
-    expect(instance.config.token).toBe('123:test');
+  it('defaults dynamic registration to no host imports', () => {
+    expect(TelegramBotModule.register().imports).toEqual([]);
+  });
+
+  it('passes host imports through the dynamic module scope', () => {
+    class HostRedisModule {}
+    const module = TelegramBotModule.register({ imports: [HostRedisModule], useRedis: true });
+    expect(module.imports).toEqual([HostRedisModule]);
+  });
+
+  it('injects one Redis client into webhook session and bot rate-limit storage', () => {
+    mocks.resolveTelegramBotConfig.mockReturnValue(mocks.config);
+    const provider = botProvider(true);
+    const redis = { id: 'redis' };
+
+    expect(provider.inject).toEqual([RedisInjectToken]);
+    (provider.useFactory as (client: unknown) => TelegramBotInstance)(redis);
+
+    expect(mocks.createTelegramSessionStorage).toHaveBeenCalledWith({
+      redis,
+      ttlSeconds: 60,
+    });
+    expect(mocks.toRatelimiterRedisClient).toHaveBeenCalledWith(redis);
+    expect(mocks.createTelegramBot).toHaveBeenCalledWith(mocks.config, {
+      sessionStorage: { id: 'session-storage' },
+      rateLimitStorage: { id: 'rate-limit-storage' },
+    });
   });
 });

@@ -42,7 +42,25 @@ describe('resolveBackendEnvironmentConfig', () => {
       },
       trustProxy: true,
     });
-    expect(config.session.secret.length).toBeGreaterThanOrEqual(32);
+    expect(config.session?.secret.length).toBeGreaterThanOrEqual(32);
+  });
+
+  it('omits session config without validating session-only environment for sessionless APIs', () => {
+    expect(
+      resolveBackendEnvironmentConfig(
+        { appName: 'telegram-bot-api', port: 3013, enableCookieSessions: false },
+        {
+          AUTH_PERSISTENCE: 'sqlite',
+          NODE_ENV: 'production',
+          RATE_LIMIT_ENABLED: 'false',
+          SESSION_COOKIE_MAX_AGE_SECONDS: 'invalid',
+          SESSION_COOKIE_SAME_SITE: 'sideways',
+          SESSION_COOKIE_SECURE: 'maybe',
+          SESSION_SECRET: 'short',
+          SESSION_SWEEP_INTERVAL_MS: 'invalid',
+        },
+      ).session,
+    ).toBeUndefined();
   });
 
   it('uses an in-memory session store for explicit memory auth persistence', () => {
@@ -55,7 +73,7 @@ describe('resolveBackendEnvironmentConfig', () => {
     );
 
     expect(config.session).not.toHaveProperty('databaseUrl');
-    expect(config.session.persistence).toBe('memory');
+    expect(config.session?.persistence).toBe('memory');
     expect(config.session).not.toHaveProperty('mongodb');
   });
 
@@ -69,7 +87,7 @@ describe('resolveBackendEnvironmentConfig', () => {
         MONGODB_URI: 'mongodb://mongo-a,mongo-b/auth',
       },
     );
-    expect(fromEnvironment.session.persistence).toBe('mongodb');
+    expect(fromEnvironment.session?.persistence).toBe('mongodb');
     expect(fromEnvironment.session).not.toHaveProperty('databaseUrl');
     expect(fromEnvironment.session).not.toHaveProperty('mongodb');
   });

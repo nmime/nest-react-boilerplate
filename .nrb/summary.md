@@ -1,18 +1,20 @@
 # Setup Plan Summary
 
-**Configuration hash:** `3a436b3cb8c4fcf9eafdc8416b279e06923da6b6b560aa11c9bf8900894e3958`
+**Configuration hash:** `a1a43a3b54b28ad2f9de93b47689ffb5bc03efd51cf6b2beebb45f80e4e64b2f`
 
 ## Applications
 
 - admin-app
 - admin-app-api
 - auth-app-api
+- discord-app-api
 - fullstack-e2e
 - landing-app
 - mobile-app
 - notification-consumer
 - notification-scheduler
 - site-app
+- telegram-bot-api
 - user-app
 - user-app-api
 
@@ -20,12 +22,14 @@
 
 - authz
 - design-tokens
+- discord-bot
 - feature-flags
 - i18n
 - notifications
-- payments
 - postgres
+- redis
 - s3
+- telegram-bot
 
 ## Product
 
@@ -41,11 +45,3 @@
 - Redis ownership: bundled
 - NATS ownership: bundled
 - S3 ownership: bundled
-
-## Identity
-
-- Name: Nest React Boilerplate
-- Slug: nest-react-boilerplate
-- Domain: example.com
-- Owner: your-github-org
-- Brand slug: nest-react-boilerplate

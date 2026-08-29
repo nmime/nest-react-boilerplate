@@ -4,7 +4,8 @@
     "lib": ["es2022", "dom"],
     "module": "esnext",
     "moduleResolution": "bundler",
-    "types": ["node", "@playwright/test"]
+    "types": ["node", "@playwright/test"],
+    "allowImportingTsExtensions": true
   },
-  "include": ["playwright.config.ts", "src/**/*.ts"]
+  "include": ["playwright.config.ts", "src/**/*.ts", "tests/**/*.ts"]
 }

@@ -1,4 +1,4 @@
-import { DynamicModule, Module, type Provider } from '@nestjs/common';
+import { DynamicModule, Module, type ModuleMetadata, type Provider } from '@nestjs/common';
 import { AuthController, PersistentSessionAccessGuard, ProblemPresentationsController } from './interfaces/http';
 import { BetterAuthApiController } from './application/better-auth-api.controller';
 import { BetterAuthModule } from './application/better-auth.module';
@@ -17,6 +17,7 @@ import {
 import {
   AuthRoleStoreInjectToken,
   AuthUserStoreInjectToken,
+  DiscordOauthStateStoreInjectToken,
   InMemoryAuthRoleStore,
   InMemoryAuthUserStore,
   PostgresAuthRoleStore,
@@ -26,6 +27,7 @@ import {
   PostgresAuthTokenStore,
   InMemorySocialAuthStore,
   PostgresSocialAuthStore,
+  RedisDiscordOauthStateStore,
   SocialAuthStoreInjectToken,
 } from './infrastructure';
 
@@ -38,6 +40,7 @@ export enum AuthPersistenceMode {
 
 export interface AuthMainModuleOptions {
   mode?: AuthPersistenceMode;
+  imports?: NonNullable<ModuleMetadata['imports']>;
 }
 
 function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
@@ -61,15 +64,21 @@ function resolvePersistenceMode(): AuthPersistenceMode {
     : AuthPersistenceMode.Postgres;
 }
 
+interface NormalizedAuthMainModuleOptions {
+  mode: AuthPersistenceMode;
+  imports: NonNullable<ModuleMetadata['imports']>;
+}
+
 function normalizeOptions(
   optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
-): Required<AuthMainModuleOptions> {
+): NormalizedAuthMainModuleOptions {
   if (typeof optionsOrMode === 'string') {
-    return { mode: optionsOrMode };
+    return { mode: optionsOrMode, imports: [] };
   }
 
   return {
     mode: optionsOrMode.mode ?? resolvePersistenceMode(),
+    imports: optionsOrMode.imports ?? [],
   };
 }
 
@@ -108,7 +117,7 @@ export class AuthMainModule {
     assertSafePersistenceMode(options.mode);
     return {
       module: AuthMainModule,
-      imports: [BetterAuthModule.forRoot()],
+      imports: [...options.imports, BetterAuthModule.forRoot()],
       controllers: [AuthController, BetterAuthApiController, ProblemPresentationsController],
       providers: [
         AuthService,
@@ -119,6 +128,12 @@ export class AuthMainModule {
         BetterAuthTelegramSessionService,
         PersistentSessionAccessGuard,
         EffectivePermissionService,
+        ...(options.mode === AuthPersistenceMode.Memory
+          ? []
+          : [
+              RedisDiscordOauthStateStore,
+              { provide: DiscordOauthStateStoreInjectToken, useExisting: RedisDiscordOauthStateStore },
+            ]),
         ...persistenceProviders(options.mode),
       ],
       exports: [

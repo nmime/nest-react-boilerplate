@@ -45,6 +45,35 @@ describe("canonical endpoint manifest", () => {
     );
   });
 
+  it("accepts the Discord callback's missing-parameter 4xx without weakening other automatic GETs", () => {
+    const manifest = generateEndpointManifest(workspaceRoot);
+    const discordCallback = manifest.rows.find(
+      (row) =>
+        row.project === "auth-app-api" &&
+        row.kind === "http" &&
+        row.method === "GET" &&
+        row.path === "/auth/discord/callback",
+    );
+    const publicHealth = manifest.rows.find(
+      (row) =>
+        row.project === "auth-app-api" &&
+        row.kind === "http" &&
+        row.method === "GET" &&
+        row.path === "/health",
+    );
+
+    assert.deepEqual(discordCallback?.smoke, {
+      baseUrlEnv: "AUTH_API_BASE_URL",
+      classification: "automatic",
+      expectedStatusClasses: ["2xx", "4xx"],
+    });
+    assert.deepEqual(publicHealth?.smoke, {
+      baseUrlEnv: "AUTH_API_BASE_URL",
+      classification: "automatic",
+      expectedStatusClasses: ["2xx"],
+    });
+  });
+
   it("rejects duplicate rows and missing source, evidence, or smoke classifications", () => {
     const root = mkdtempSync(join(tmpdir(), "endpoint-manifest-"));
     try {

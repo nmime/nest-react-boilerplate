@@ -177,7 +177,7 @@ const evidenceRules: Array<{
   {
     matches: (row) => row.project === "landing-app" && row.path === "/problems",
     classification: "covered-component",
-    evidence: "apps/frontend/landing/src/astro/pages/problems.spec.ts",
+    evidence: "apps/frontend/landing/src/astro/tests/problems.spec.ts",
   },
   {
     matches: (row) => row.project === "landing-app",
@@ -888,7 +888,9 @@ export type ProbedSmokeClassification = (typeof ProbedSmokeClassifications)[numb
  *   the per-origin cookie jar (seeded or captured); the shell must load
  *   (2xx) or redirect (3xx).
  * - `automatic` (public HTTP GETs such as /health, /live, /ready and public
- *   static pages): one probe; 2xx.
+ *   static pages): one probe; 2xx. The Discord OAuth callback also accepts 4xx
+ *   because an anonymous smoke probe intentionally omits its required code and
+ *   state query parameters.
  * - `public-conditional` (/docs, /docs/openapi.json, /health/private): one
  *   probe; 2xx when enabled/reachable, 4xx when disabled/off-network.
  * - `delegated-runtime`, `manual-fixture`, `signed-provider`: not invoked by
@@ -962,6 +964,13 @@ function classifySmoke(
     return {
       baseUrlEnv,
       classification: "manual-fixture",
+      expectedStatusClasses: ["2xx", "4xx"],
+    };
+  }
+  if (row.project === "auth-app-api" && row.path === "/auth/discord/callback") {
+    return {
+      baseUrlEnv,
+      classification: "automatic",
       expectedStatusClasses: ["2xx", "4xx"],
     };
   }

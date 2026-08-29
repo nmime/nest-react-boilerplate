@@ -30,7 +30,14 @@ function filesystem(paths: string[] = []): FilesystemAdapter {
 
 describe('tenant change guard', () => {
   it('allows a checkout with no seed marker and no configured database', async () => {
-    await assertTenantChangeAllowed('.', filesystem(), { databaseUrl: '' });
+    // Isolated root: a host checkout's .env may configure a live database, and
+    // an empty databaseUrl must mean "unconfigured", not "read the host env".
+    const root = mkdtempSync(join(tmpdir(), 'nrb-tenant-guard-empty-'));
+    try {
+      await assertTenantChangeAllowed(root, filesystem(), { databaseUrl: '' });
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
   });
 
   it('refuses every supported seed marker before probing the database', async () => {

@@ -67,6 +67,7 @@
     "@tanstack/react-router": "1.170.18",
     "@testcontainers/postgresql": "12.0.4",
     "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
     "@tma.js/init-data-node": "2.0.8",
     "@tma.js/sdk-react": "3.0.23",
     "@types/babel__core": "7.20.5",
@@ -93,6 +94,7 @@
     "fastify": "5.10.0",
     "happy-dom": "20.10.6",
     "helmet": "8.3.0",
+    "ipaddr.js": "2.4.0",
     "istanbul-lib-coverage": "3.2.2",
     "joi": "18.2.3",
     "jose": "6.2.3",
@@ -122,6 +124,7 @@
     "testcontainers": "12.0.4",
     "tslib": "2.8.1",
     "typescript": "6.0.3",
+    "undici": "7.29.0",
     "vike": "0.4.260",
     "vike-react": "0.6.25",
     "vite": "8.1.5",
@@ -161,6 +164,7 @@
     "jiti": "2.7.0",
     "jsonc-eslint-parser": "3.1.0",
     "nx": "23.1.0",
+    "prettier": "3.9.6",
     "react-native-web": "0.21.2",
     "sharp": "0.35.3",
     "supertest": "7.2.2",
@@ -171,7 +175,7 @@
     "yaml": "2.9.0"
   },
   "nrb": {
-    "configHash": "fb2597bd18a10d9424f7d5309d38dced332783cd3a7efc76289abfd7cd751e5f",
-    "graphDigest": "300d74ec37830bf405dfb243024643edeb6058215926ba2c79786e7ec283bd01"
+    "configHash": "3a436b3cb8c4fcf9eafdc8416b279e06923da6b6b560aa11c9bf8900894e3958",
+    "graphDigest": "0a03663958e4cd97345b85a38971b54daff0cea6212d19a0565e1c3dd33326a8"
   }
 }

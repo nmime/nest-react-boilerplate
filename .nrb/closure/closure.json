@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "configHash": "fb2597bd18a10d9424f7d5309d38dced332783cd3a7efc76289abfd7cd751e5f",
-  "graphDigest": "7adf7c236d7b9d4d80e052b6b70dd0097742e88a9ee82e5719f77343d8722372",
+  "configHash": "3a436b3cb8c4fcf9eafdc8416b279e06923da6b6b560aa11c9bf8900894e3958",
+  "graphDigest": "0a03663958e4cd97345b85a38971b54daff0cea6212d19a0565e1c3dd33326a8",
   "provider": "postgres",
   "roots": [
     "admin-app",
@@ -31,6 +31,7 @@
     "@app/backend-common-response",
     "@app/backend-common-s3",
     "@app/backend-common-swagger",
+    "@app/backend-common-tenant-context",
     "@app/backend-common-tenant-policy",
     "@app/backend-common-validation",
     "@app/backend-feature-admin-main",
@@ -87,6 +88,10 @@
     "@app/i18n-ru-common",
     "@app/i18n-ru-landing",
     "@app/i18n-ru-user",
+    "@app/i18n-zh-admin",
+    "@app/i18n-zh-common",
+    "@app/i18n-zh-landing",
+    "@app/i18n-zh-user",
     "admin-app",
     "admin-app-api",
     "auth-app-api",
@@ -165,6 +170,7 @@
       "@app/backend-common-response",
       "@app/backend-common-s3",
       "@app/backend-common-swagger",
+      "@app/backend-common-tenant-context",
       "@app/backend-common-tenant-policy",
       "@app/backend-common-validation",
       "@app/backend-feature-admin-main",
@@ -266,6 +272,7 @@
       "@app/backend-common-response",
       "@app/backend-common-s3",
       "@app/backend-common-swagger",
+      "@app/backend-common-tenant-context",
       "@app/backend-common-tenant-policy",
       "@app/backend-common-validation",
       "@app/backend-feature-admin-main",
@@ -335,6 +342,7 @@
       "@app/backend-common-response",
       "@app/backend-common-s3",
       "@app/backend-common-swagger",
+      "@app/backend-common-tenant-context",
       "@app/backend-common-tenant-policy",
       "@app/backend-common-validation",
       "@app/backend-feature-admin-main",
@@ -464,6 +472,7 @@
     "@tanstack/react-router": "1.170.18",
     "@testcontainers/postgresql": "12.0.4",
     "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
     "@tma.js/init-data-node": "2.0.8",
     "@tma.js/sdk-react": "3.0.23",
     "@types/babel__core": "7.20.5",
@@ -490,6 +499,7 @@
     "fastify": "5.10.0",
     "happy-dom": "20.10.6",
     "helmet": "8.3.0",
+    "ipaddr.js": "2.4.0",
     "istanbul-lib-coverage": "3.2.2",
     "joi": "18.2.3",
     "jose": "6.2.3",
@@ -519,6 +529,7 @@
     "testcontainers": "12.0.4",
     "tslib": "2.8.1",
     "typescript": "6.0.3",
+    "undici": "7.29.0",
     "vike": "0.4.260",
     "vike-react": "0.6.25",
     "vite": "8.1.5",
@@ -558,6 +569,7 @@
     "jiti": "2.7.0",
     "jsonc-eslint-parser": "3.1.0",
     "nx": "23.1.0",
+    "prettier": "3.9.6",
     "react-native-web": "0.21.2",
     "sharp": "0.35.3",
     "supertest": "7.2.2",
@@ -614,6 +626,103 @@
       "redis": "bundled",
       "nats": "bundled",
       "s3": "bundled"
+    },
+    "imageRegistry": "ghcr.io/your-github-org/nest-react-boilerplate"
+  },
+  "identity": {
+    "name": "Nest React Boilerplate",
+    "slug": "nest-react-boilerplate",
+    "packageName": "nest-react-boilerplate",
+    "dbName": "nest_react_boilerplate",
+    "className": "NestReactBoilerplate",
+    "owner": "your-github-org",
+    "domain": "example.com",
+    "apexApp": "landing-app",
+    "aliasPrefix": "@app",
+    "toolingScope": "@repo",
+    "brand": {
+      "cliBin": "nrb",
+      "stateDir": ".nrb",
+      "envPrefix": "NRB",
+      "imagePrefix": "nrb",
+      "imageTag": "local",
+      "redisKeyPrefix": "nrb:",
+      "helmChart": "nest-react-boilerplate",
+      "helmRelease": "nest-react-boilerplate",
+      "natsClientName": "nest-react-boilerplate-local",
+      "s3Bucket": "nest-react-boilerplate"
+    }
+  },
+  "runtime": {
+    "ports": {
+      "admin-app-api": 3001,
+      "user-app-api": 3002,
+      "auth-app-api": 3003,
+      "discord-app-api": 3007,
+      "telegram-bot-api": 3013,
+      "admin-app": 4200,
+      "user-app": 4201,
+      "landing-app": 4202,
+      "site-app": 4203,
+      "mobile-app": 4300,
+      "postgres": 5432,
+      "redis": 6379,
+      "mongodb": 27017,
+      "nats": 4222,
+      "nats-monitor": 8222,
+      "minio": 9000,
+      "minio-console": 9001,
+      "otlp-grpc": 4317,
+      "otlp-http": 4318,
+      "edge": 8080,
+      "grafana": 3000,
+      "prometheus": 9090,
+      "loki": 3100,
+      "tempo": 3200
+    },
+    "stagingOffset": 100,
+    "containerPort": 80,
+    "postgres": {
+      "user": "postgres",
+      "password": "postgres"
+    },
+    "minio": {
+      "accessKey": "minioadmin",
+      "secretKey": "minioadmin"
+    },
+    "localSecrets": {
+      "session": "local-session-secret-change-me-32-chars",
+      "betterAuth": "local-better-auth-secret-change-me-32-chars",
+      "discordCustomId": "local-discord-custom-id-secret"
+    }
+  },
+  "session": {
+    "cookieNameDev": "nrb.sid",
+    "cookieNameProd": "__Host-nrb.sid",
+    "maxAgeSeconds": 604800,
+    "sameSite": "lax",
+    "secure": true
+  },
+  "tenant": {
+    "defaultTenantId": "00000000-0000-0000-0000-000000000000",
+    "seed": {
+      "admin": {
+        "name": "Alice Administrator",
+        "email": "admin@example.com",
+        "password": "ChangeMe123!"
+      },
+      "users": [
+        {
+          "name": "Bob User",
+          "email": "bob.user@example.com",
+          "password": "Bob@User456!"
+        },
+        {
+          "name": "Charlie Dev",
+          "email": "charlie.dev@example.com",
+          "password": "Charlie@Dev789!"
+        }
+      ]
     }
   }
 }

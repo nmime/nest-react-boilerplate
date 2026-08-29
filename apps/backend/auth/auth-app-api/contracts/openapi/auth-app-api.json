@@ -1815,6 +1815,8 @@
             "name": "tenantId",
             "required": false,
             "in": "query",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership.",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -6022,7 +6024,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "email": {
             "type": "string",
@@ -6050,7 +6054,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "email": {
             "type": "string",
@@ -6157,7 +6163,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "intent": {
             "type": "string",
@@ -6184,7 +6192,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "intent": {
             "type": "string",
@@ -6206,7 +6216,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "linkToken": {
             "type": "string",
@@ -6248,7 +6260,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "intent": {
             "type": "string",
@@ -6312,7 +6326,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "provider": {
             "type": "string",
@@ -6344,7 +6360,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "email": {
             "type": "string",
@@ -6369,7 +6387,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "token": {
             "type": "string",
@@ -6383,7 +6403,9 @@
         "properties": {
           "tenantId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "deprecated": true,
+            "description": "Deprecated compatibility field. The server ignores this value and derives tenant ownership."
           },
           "token": {
             "type": "string",

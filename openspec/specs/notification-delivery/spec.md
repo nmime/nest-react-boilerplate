@@ -60,15 +60,23 @@ produce deterministic content for the selected tenant, event, and recipient.
 
 - Published template versions are immutable.
 - Required channel fields remain typed and localized.
+- Template selection considers only the principal tenant first and the explicitly shared `tenantId=null` template second.
+- A candidate is usable only when its current version is published and supports every requested delivery and in-app channel.
+- An unusable tenant override does not block a usable shared fallback, and another tenant's template is never eligible.
 
 **Failure behavior:**
 
-- Missing, invalid, or unpublished template content prevents delivery.
+- Missing, invalid, unpublished, or channel-incomplete tenant and shared candidates prevent delivery with the existing template-channel error.
 
 #### Scenario: Missing channel template
 
-- **WHEN** a delivery has no published content for its channel
+- **WHEN** neither the principal tenant candidate nor the shared candidate has published content for every requested channel
 - **THEN** provider dispatch does not occur
+
+#### Scenario: Shared fallback after an unusable tenant override
+
+- **WHEN** the principal tenant's template is unpublished or lacks a requested channel and a usable shared template exists
+- **THEN** the shared template is selected without considering another tenant's template
 
 ### Requirement: [REQ-NOTIFY-AUDIENCE-004] Audience materialization is tenant-safe
 
@@ -80,16 +88,23 @@ tenant ownership, deterministic membership, and bounded input validation.
 **Invariants:**
 
 - Audience snapshots cannot contain another tenant's members.
+- Notification, delivery, claim, broadcast, and recipient-resolution persistence carry the principal tenant scope.
 - Re-materialization preserves stable membership identity.
 
 **Failure behavior:**
 
 - Invalid uploads, filters, or ownership reject the audience operation.
+- Missing or ambiguous legacy notification ownership refuses migration before any partial backfill is committed.
 
 #### Scenario: Cross-tenant segment
 
 - **WHEN** a broadcast references another tenant's segment
 - **THEN** materialization is rejected before delivery creation
+
+#### Scenario: Ambiguous legacy notification ownership
+
+- **WHEN** a legacy ordinary notification cannot resolve ownership from a tenant-owned source
+- **THEN** the ownership migration refuses the dataset and commits no partial backfill
 
 ### Requirement: [REQ-NOTIFY-PERSISTENCE-005] Delivery payloads and retries are durable and protected
 

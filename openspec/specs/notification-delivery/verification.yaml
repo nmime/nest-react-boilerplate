@@ -72,6 +72,7 @@ requirements:
       - '@app/backend-feature-notification-main'
       - '@app/backend-feature-notification-shared'
       - '@app/backend-postgres-main-notification'
+      - '@app/backend-mongodb-main-notification'
     risk: high
     profiles:
       - domain
@@ -95,11 +96,30 @@ requirements:
         lanes:
           - main
           - nightly
+      - kind: vitest
+        file: libs/backend/postgres/main/notification/lib/src/repositories/postgres-notification-persistence.spec.ts
+        target: '@app/backend-postgres-main-notification:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/postgres/main/notification/lib/src/repositories/notification-concurrency.component-spec.ts
+        target: '@app/backend-postgres-main-notification:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: component
+        file: libs/backend/mongodb/main/notification/lib/src/notification-mongo.repository.component-spec.ts
+        target: '@app/backend-mongodb-main-notification:component-test'
+        lanes:
+          - main
+          - nightly
   - id: REQ-NOTIFY-AUDIENCE-004
     projects:
       - '@app/backend-feature-notification-admin'
       - '@app/backend-feature-notification-main'
       - '@app/backend-postgres-main-notification'
+      - '@app/backend-mongodb-main-notification'
     risk: critical
     profiles:
       - domain
@@ -127,6 +147,30 @@ requirements:
       - kind: security
         file: libs/backend/feature/notification/main/lib/src/service/notification-recipient-resolver.service.spec.ts
         target: '@app/backend-feature-notification-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/postgres/main/notification/lib/src/repositories/notification-concurrency.component-spec.ts
+        target: '@app/backend-postgres-main-notification:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: component
+        file: libs/backend/mongodb/main/notification/lib/src/notification-mongo.repository.component-spec.ts
+        target: '@app/backend-mongodb-main-notification:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: vitest
+        file: libs/backend/mongodb/main/notification/lib/src/notification-mongo.migration.spec.ts
+        target: '@app/backend-mongodb-main-notification:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/notification/lib/src/infrastructure/data-access/migrations/notification-delivery-claim.migration.spec.ts
+        target: '@app/backend-postgres-main-notification:test'
         lanes:
           - pr
           - main
@@ -164,6 +208,24 @@ requirements:
       - kind: security
         file: libs/backend/postgres/main/notification/lib/src/notification-payload-crypto.service.spec.ts
         target: '@app/backend-postgres-main-notification:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/postgres/main/notification/lib/src/repositories/notification-concurrency.component-spec.ts
+        target: '@app/backend-postgres-main-notification:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: vitest
+        file: libs/backend/postgres/main/notification/lib/src/repositories/postgres-notification-persistence.spec.ts
+        target: '@app/backend-postgres-main-notification:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/mongodb/main/notification/lib/src/notification-mongo.migration.spec.ts
+        target: '@app/backend-mongodb-main-notification:test'
         lanes:
           - pr
           - main

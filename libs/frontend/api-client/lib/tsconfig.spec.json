@@ -4,5 +4,5 @@
     "outDir": "../../../../dist/out-tsc/libs/frontend/api-client-spec",
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.d.ts"]
+  "include": ["src/**/*.spec.ts", "src/**/*.spec.tsx", "src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.d.ts"]
 }

@@ -87,13 +87,21 @@ export interface ApiClientProviderProps extends ApiClientRuntimeConfig {
 }
 
 export const ApiClientProvider = ({
+  baseUrls,
   children,
+  fetchImpl,
+  headers,
   loadProblemPresentationOverrides = false,
-  ...config
 }: ApiClientProviderProps) => {
+  const { admin: adminBaseUrl, auth: authBaseUrl, user: userBaseUrl } = baseUrls;
   const registry = useMemo(
-    () => createApiClientRegistry(config),
-    [config.baseUrls.admin, config.baseUrls.auth, config.baseUrls.user, config.fetchImpl, config.headers],
+    () =>
+      createApiClientRegistry({
+        baseUrls: { admin: adminBaseUrl, auth: authBaseUrl, user: userBaseUrl },
+        fetchImpl,
+        headers,
+      }),
+    [adminBaseUrl, authBaseUrl, userBaseUrl, fetchImpl, headers],
   );
 
   useEffect(() => {

@@ -6,7 +6,11 @@ property of an amount — it is operator data with a source and a timestamp. Thi
 capability is where that data lives.
 
 Selected with `--capability fiat-currency`. It requires a durable database and
-ships on both persistence axes.
+ships on both persistence axes. The catalogue is operator-owned shared
+reference data: its rows deliberately have no tenant discriminator, and every
+tenant sees the same offered fiat set and rate history. Tenant-owned pricing or
+negotiated rate overrides belong in a product feature keyed by tenant; they must
+not be added here as implicit ownership on the global catalogue.
 
 ## What it stores
 
@@ -117,11 +121,11 @@ Recording is append-only and never moves backwards:
   headline rate — only a strictly newer observation advances it;
 - a batch containing one malformed rate is rejected before anything is written.
 
-On Postgres both statements share a transaction. MongoDB single-node
-deployments have no transaction, so the pair is ordered deliberately: the
-history row is written first, and a crash in between leaves a headline rate one
-tick stale but recoverable from history — rather than a headline rate with no
-evidence behind it.
+On Postgres both statements share a transaction. MongoDB uses the same atomic
+batch semantics through a replica-set transaction: either every history row and
+its corresponding headline update commit, or the complete provider batch rolls
+back. A standalone MongoDB server cannot satisfy this contract; deployments that
+select this capability must provide replica-set transaction support.
 
 ## Verification
 

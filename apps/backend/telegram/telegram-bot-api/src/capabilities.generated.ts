@@ -6,10 +6,16 @@
 import { Global, Module } from '@nestjs/common';
 import { RedisModule } from '@app/backend-common-redis';
 import { S3Module } from '@app/backend-common-s3';
+import { PaymentsMainModule } from '@app/backend-feature-payments-main';
+import { PaymentsPostgresModule } from '@app/backend-postgres-main-payments';
 
 @Global()
 @Module({
-  imports: [RedisModule.forRoot(), S3Module.forRoot()],
-  exports: [RedisModule, S3Module],
+  imports: [
+    PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } }),
+    RedisModule.forRoot(),
+    S3Module.forRoot(),
+  ],
+  exports: [PaymentsMainModule, RedisModule, S3Module],
 })
 export class TelegramBotApiCapabilitiesModule {}

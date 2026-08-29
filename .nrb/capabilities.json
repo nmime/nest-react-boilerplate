@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "configHash": "a1a43a3b54b28ad2f9de93b47689ffb5bc03efd51cf6b2beebb45f80e4e64b2f",
+  "configHash": "698b1783439b3a1d385cf1380377dd6175c71e64271f8f177b71f875469fb10c",
   "capabilities": [
     {
       "id": "authz",
@@ -198,6 +198,45 @@
             {
               "importName": "NotificationPostgresModule",
               "importPath": "@app/backend-postgres-main-notification"
+            }
+          ]
+        }
+      ],
+      "telemetryWiring": null,
+      "providerTelemetryInstrumentation": null,
+      "deploymentOwnership": null
+    },
+    {
+      "id": "payments",
+      "activation": "nest-module",
+      "projects": [
+        "@app/backend-feature-payments-main",
+        "@app/backend-feature-payments-shared",
+        "@app/backend-postgres-main-payments"
+      ],
+      "dockerServices": [],
+      "environmentVariables": [],
+      "generatedFiles": [
+        "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
+        "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
+        "apps/backend/discord/discord-app-api/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts",
+        "apps/backend/user/user-app-api/src/capabilities.generated.ts"
+      ],
+      "backendWiring": [
+        {
+          "hosts": "selected-backend",
+          "moduleExpression": "PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })",
+          "imports": [
+            {
+              "importName": "PaymentsMainModule",
+              "importPath": "@app/backend-feature-payments-main"
+            },
+            {
+              "importName": "PaymentsPostgresModule",
+              "importPath": "@app/backend-postgres-main-payments"
             }
           ]
         }

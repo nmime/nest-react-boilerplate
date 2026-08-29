@@ -6,10 +6,12 @@
 import { Global, Module } from '@nestjs/common';
 import { RedisModule } from '@app/backend-common-redis';
 import { S3Module } from '@app/backend-common-s3';
+import { PaymentsMainModule } from '@app/backend-feature-payments-main';
 import { PostgresMainModule } from '@app/backend-postgres-main';
 import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
 import { FeatureFlagsPostgresModule } from '@app/backend-postgres-main-feature-flags';
 import { NotificationPostgresModule } from '@app/backend-postgres-main-notification';
+import { PaymentsPostgresModule } from '@app/backend-postgres-main-payments';
 
 @Global()
 @Module({
@@ -17,6 +19,7 @@ import { NotificationPostgresModule } from '@app/backend-postgres-main-notificat
     AuthPostgresModule,
     FeatureFlagsPostgresModule,
     NotificationPostgresModule,
+    PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } }),
     PostgresMainModule.forRoot(),
     RedisModule.forRoot(),
     S3Module.forRoot(),
@@ -25,6 +28,7 @@ import { NotificationPostgresModule } from '@app/backend-postgres-main-notificat
     AuthPostgresModule,
     FeatureFlagsPostgresModule,
     NotificationPostgresModule,
+    PaymentsMainModule,
     PostgresMainModule,
     RedisModule,
     S3Module,

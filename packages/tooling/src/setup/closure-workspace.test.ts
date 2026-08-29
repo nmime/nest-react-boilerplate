@@ -142,12 +142,17 @@ describe('all-reference closure context', () => {
     };
 
     try {
+      const config = parseNrbConfig({ schemaVersion: '1.0.0' });
       const projected = configuredClosureGraph(root, graph, {
         apps: [],
         capabilities: [],
         configHash: 'a'.repeat(64),
-        product: parseNrbConfig({ schemaVersion: '1.0.0' }).product,
-        deployment: parseNrbConfig({ schemaVersion: '1.0.0' }).deployment,
+        product: config.product,
+        deployment: config.deployment,
+        identity: config.identity,
+        runtime: config.runtime,
+        session: config.session,
+        tenant: config.tenant,
       });
       assert.deepEqual(projected.dependencies['auth-app-api'], [
         { target: '@app/backend-common-bootstrap' },

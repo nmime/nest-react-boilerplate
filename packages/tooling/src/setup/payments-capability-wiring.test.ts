@@ -38,9 +38,16 @@ const SELECTED_BACKENDS = [
   'user-app-api',
   'notification-consumer',
   'notification-scheduler',
+  // The committed selection turns payments on with every backend selected, and the
+  // capability wires `hosts: 'selected-backend'`, so the bot hosts carry the shared
+  // webhook-ingress module in their generated capabilities modules too (6de5ed04).
+  'telegram-bot-api',
+  'discord-app-api',
 ] as const;
 
-const UNSELECTED_BACKENDS = ['discord-app-api', 'telegram-bot-api'] as const;
+// No selected backend is payments-free anymore; the loops below iterate this list so a
+// future payments-free backend only needs an entry here.
+const UNSELECTED_BACKENDS: readonly string[] = [];
 
 const GENERATED_MODULE_PATHS: Record<string, string> = {
   'admin-app-api': 'apps/backend/admin/admin-app-api/src/capabilities.generated.ts',

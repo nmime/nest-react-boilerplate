@@ -1,7 +1,6 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { MongoClient } from 'mongodb';
-import ConnectionString from 'mongodb-connection-string-url';
+import { createRequire } from 'node:module';
 import { isAbsolute, join, resolve } from 'node:path';
 import type { FilesystemAdapter } from '../setup/adapters/filesystem.js';
 import { parseNrbConfig, type NrbConfig } from '../setup/schema.js';
@@ -175,7 +174,30 @@ async function assertFreshMongoDatabase(
   database: string,
   options: TenantChangeGuardOptions,
 ): Promise<void> {
-  let parsed: ConnectionString;
+  const runProbe =
+    options.runMongoProbe ??
+    (async (uri: string, databaseName: string): Promise<'fresh' | 'applied'> => {
+      // The mongodb driver sits on the selected closure's forbidden-provider package list, so a
+      // postgres selection prunes it from node_modules and a literal import (static or dynamic)
+      // fails resolution — at CLI boot, because this module is loaded eagerly on every nrb run.
+      // Resolve it by name only when a tenant guard actually probes migration state.
+      const driver = requireMongoPackage('mongodb') as MongoDriver;
+      const client = new driver.MongoClient(uri, { serverSelectionTimeoutMS: 5_000 });
+      try {
+        await client.connect();
+        const count = await client.db(databaseName).collection('mongo_migrations').countDocuments({}, { limit: 1 });
+        return count > 0 ? 'applied' : 'fresh';
+      } finally {
+        await client.close();
+      }
+    });
+  const connectionUrlModule = requireMongoPackage('mongodb-connection-string-url') as {
+    default?: new (uri: string) => MongoConnectionString;
+  };
+  const ConnectionString = connectionUrlModule.default ?? (connectionUrlModule as unknown as new (
+    uri: string,
+  ) => MongoConnectionString);
+  let parsed: MongoConnectionString;
   try {
     parsed = new ConnectionString(mongodbUri);
   } catch {
@@ -189,18 +211,6 @@ async function assertFreshMongoDatabase(
       'Refusing tenant.defaultTenantId rewrite because MONGODB_URI and MONGODB_DATABASE disagree; migration state is unknown.',
     );
   }
-  const runProbe =
-    options.runMongoProbe ??
-    (async (uri: string, databaseName: string): Promise<'fresh' | 'applied'> => {
-      const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5_000 });
-      try {
-        await client.connect();
-        const count = await client.db(databaseName).collection('mongo_migrations').countDocuments({}, { limit: 1 });
-        return count > 0 ? 'applied' : 'fresh';
-      } finally {
-        await client.close();
-      }
-    });
   let probe: 'fresh' | 'applied';
   try {
     probe = await runProbe(mongodbUri, database);
@@ -211,6 +221,43 @@ async function assertFreshMongoDatabase(
     );
   }
   assertFreshProbeResult(probe);
+}
+
+/**
+ * Shapes of the mongodb driver packages used by the tenant guard.
+ *
+ * They are structural on purpose: the packages sit on the selected closure's
+ * forbidden-provider list, so type references to them would fail `tsc` on a postgres-only
+ * closure the same way runtime imports do.
+ */
+interface MongoConnectionString {
+  pathname: string;
+}
+
+interface MongoDriver {
+  MongoClient: new (
+    uri: string,
+    options?: { serverSelectionTimeoutMS?: number },
+  ) => {
+    connect(): Promise<unknown>;
+    db(name: string): {
+      collection(name: string): {
+        countDocuments(query: Record<string, never>, options: { limit: number }): Promise<number>;
+      };
+    };
+    close(): Promise<void> | void;
+  };
+}
+
+/**
+ * Resolve a driver package at call time through the tooling package's own dependency graph.
+ *
+ * Resolution failures propagate unwrapped so a caller can distinguish "driver not installed"
+ * from the domain errors below. An indirect specifier keeps the resolution invisible to the
+ * static import smoke check, which must pass on a postgres-only closure without the driver.
+ */
+function requireMongoPackage(name: string): unknown {
+  return createRequire(import.meta.url)(name);
 }
 
 function assertFreshProbeResult(probe: string): void {

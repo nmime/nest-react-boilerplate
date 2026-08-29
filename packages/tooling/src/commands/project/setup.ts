@@ -44,6 +44,7 @@ import { runPrompts, buildConfig, formatConfigSummary, formatPlanSummary } from 
 import { appCatalog, appPublicHostname, capabilityCatalog } from "../../setup/catalog.js";
 import { materializeSelection, updateSelection } from "../../setup/selection.js";
 import { buildSelectedClosure, createLiveProjectGraph } from "../../setup/closure.js";
+import { configuredClosureGraph } from "../../setup/closure-workspace.js";
 import {
   synchronizeClosureArtifacts,
   type ClosureSyncResult,
@@ -501,7 +502,12 @@ async function synchronizeLiveClosure(
     tenant: NrbConfig['tenant'];
   },
 ): Promise<ClosureSyncResult> {
-  const graph = await createLiveProjectGraph();
+  // Build on the configured graph, not the raw live graph: `closure install` validates the
+  // manifest against `buildConfiguredClosure`, which strips durable-database edges from
+  // stateless apps. A stateless app reaching a provider project (e.g. telegram-bot-api ->
+  // @app/backend-postgres-main-payments) would otherwise be written into the digest by setup
+  // and filtered out by validation, and the sequence could never converge.
+  const graph = configuredClosureGraph(workspaceRoot, await createLiveProjectGraph());
   const closure = buildSelectedClosure(graph, {
     apps: selection.apps as AppId[],
     capabilities: selection.capabilities as CapabilityId[],

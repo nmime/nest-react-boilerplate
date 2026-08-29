@@ -146,8 +146,11 @@ export class MongoAdminUserMutationRepository implements AdminUserMutationReposi
     if (!document) {
       return null;
     }
+    const actor = await users.findOne({ _id: input.actorUserId, tenantId }, { session });
+    if (!actor) {
+      return null;
+    }
     const before = await toMongoAuthUserRecord(this.database, document, session);
-    const powerfulBefore = await countPowerfulUsers(this.database, tenantId, session);
     if (input.policy.roles !== undefined) {
       await reconcileMongoUserRoles(
         this.database,
@@ -187,7 +190,7 @@ export class MongoAdminUserMutationRepository implements AdminUserMutationReposi
     if (input.actorUserId === input.targetUserId && removesPowerful) {
       throw new Error('Administrators cannot remove their own active admin write access.');
     }
-    if (removesPowerful && powerfulBefore <= 1) {
+    if (removesPowerful && (await countPowerfulUsers(this.database, tenantId, session)) === 0) {
       throw new Error('At least one active administrator must retain admin write access.');
     }
     const audit = makeAudit({

@@ -1,7 +1,7 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { ResultAsync } from 'neverthrow';
-import { AuthRoleEntity, AuthUserRoleEntity, DefaultAuthTenantId } from '../entities';
+import { AuthRoleEntity, AuthUserEntity, AuthUserRoleEntity, DefaultAuthTenantId } from '../entities';
 import { listRoleKeysSql, resolveEffectiveAccessSql } from './const/auth-user-role.sql';
 import { mapAuthRoleRepositoryError } from './mapper/auth-role-error.mapper';
 import type { AuthRoleRepositoryError } from './type/auth-role.type';
@@ -48,6 +48,10 @@ export class AuthUserRoleRepository {
     const desiredKeys = [...new Set(input.roleKeys)];
 
     return this.entityManager.transactional(async (em) => {
+      const user = await em.findOne(AuthUserEntity, { id: input.userId, tenantId });
+      if (!user) {
+        return [];
+      }
       const roles =
         desiredKeys.length === 0
           ? []

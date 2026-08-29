@@ -314,6 +314,10 @@ export async function reconcileMongoUserRoles(
   grantedByUserId: string | null,
   session: ClientSession,
 ): Promise<string[]> {
+  const user = await collection(database, AuthMongoCollections.users).findOne({ _id: userId, tenantId }, { session });
+  if (!user) {
+    return [];
+  }
   await ensureMongoTenantRbac(database, tenantId, session);
   const roles = await collection(database, AuthMongoCollections.roles)
     .find({ tenantId, key: { $in: [...new Set(keys)] } }, { session })
@@ -346,6 +350,10 @@ export async function reconcileMongoDirectPermissions(
   grantedByUserId: string | null,
   session: ClientSession,
 ): Promise<void> {
+  const user = await collection(database, AuthMongoCollections.users).findOne({ _id: userId, tenantId }, { session });
+  if (!user) {
+    return;
+  }
   const permissions = await collection(database, AuthMongoCollections.permissions)
     .find({ key: { $in: [...new Set(keys)] } }, { session })
     .toArray();

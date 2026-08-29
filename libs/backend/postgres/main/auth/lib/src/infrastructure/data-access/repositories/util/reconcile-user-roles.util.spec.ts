@@ -5,6 +5,7 @@ import {
   AuthPermissionEntity,
   AuthRoleEntity,
   AuthRolePermissionEntity,
+  AuthUserEntity,
   AuthUserPermissionEntity,
   AuthUserRoleEntity,
 } from '../../entities';
@@ -36,6 +37,7 @@ function permission(id: string, key: string): AuthPermissionEntity {
 }
 
 function createFindMock(byEntity: {
+  userExists?: boolean;
   roles?: AuthRoleEntity[];
   userRoles?: AuthUserRoleEntity[];
   userPermissions?: AuthUserPermissionEntity[];
@@ -59,6 +61,10 @@ function createFindMock(byEntity: {
   });
 }
 
+function createUserLookup(userExists = true) {
+  return vi.fn((entity: unknown) => Promise.resolve(entity === AuthUserEntity && userExists ? { id: userId } : null));
+}
+
 describe('reconcileUserRoles', () => {
   it('deletes stale assignments and skips the role lookup when no keys are desired', async () => {
     const find = createFindMock({
@@ -66,7 +72,7 @@ describe('reconcileUserRoles', () => {
     });
     const persist = vi.fn();
     const nativeDelete = vi.fn(() => Promise.resolve(1));
-    const em = { find, persist, nativeDelete } as unknown as EntityManager;
+    const em = { findOne: createUserLookup(), find, persist, nativeDelete } as unknown as EntityManager;
 
     await reconcileUserRoles(em, tenantId, userId, actorUserId, []);
 
@@ -79,6 +85,21 @@ describe('reconcileUserRoles', () => {
     });
   });
 
+  it('does not mutate assignments for a user outside the tenant', async () => {
+    const find = vi.fn();
+    const persist = vi.fn();
+    const nativeDelete = vi.fn();
+    const findOne = createUserLookup(false);
+    const em = { findOne, find, persist, nativeDelete } as unknown as EntityManager;
+
+    await reconcileUserRoles(em, tenantId, userId, actorUserId, ['admin']);
+
+    expect(findOne).toHaveBeenCalledWith(AuthUserEntity, { id: userId, tenantId });
+    expect(find).not.toHaveBeenCalled();
+    expect(persist).not.toHaveBeenCalled();
+    expect(nativeDelete).not.toHaveBeenCalled();
+  });
+
   it('inserts missing assignments without deleting when nothing is removed', async () => {
     const find = createFindMock({
       roles: [role('role-user', 'user')],
@@ -86,7 +107,7 @@ describe('reconcileUserRoles', () => {
     });
     const persist = vi.fn();
     const nativeDelete = vi.fn(() => Promise.resolve(0));
-    const em = { find, persist, nativeDelete } as unknown as EntityManager;
+    const em = { findOne: createUserLookup(), find, persist, nativeDelete } as unknown as EntityManager;
 
     await reconcileUserRoles(em, tenantId, userId, actorUserId, ['user']);
 
@@ -99,6 +120,21 @@ describe('reconcileUserRoles', () => {
 });
 
 describe('reconcileUserDirectPermissions', () => {
+  it('does not mutate permissions for a user outside the tenant', async () => {
+    const find = vi.fn();
+    const persist = vi.fn();
+    const nativeDelete = vi.fn();
+    const findOne = createUserLookup(false);
+    const em = { findOne, find, persist, nativeDelete } as unknown as EntityManager;
+
+    await reconcileUserDirectPermissions(em, tenantId, userId, actorUserId, ['admin:audit:read']);
+
+    expect(findOne).toHaveBeenCalledWith(AuthUserEntity, { id: userId, tenantId });
+    expect(find).not.toHaveBeenCalled();
+    expect(persist).not.toHaveBeenCalled();
+    expect(nativeDelete).not.toHaveBeenCalled();
+  });
+
   it('stores only direct exception grants in the normalized user-permission join', async () => {
     const find = createFindMock({
       permissions: [permission('perm-audit', 'admin:audit:read')],
@@ -106,7 +142,7 @@ describe('reconcileUserDirectPermissions', () => {
     });
     const persist = vi.fn();
     const nativeDelete = vi.fn(() => Promise.resolve(1));
-    const em = { find, persist, nativeDelete } as unknown as EntityManager;
+    const em = { findOne: createUserLookup(), find, persist, nativeDelete } as unknown as EntityManager;
 
     await reconcileUserDirectPermissions(em, tenantId, userId, actorUserId, ['admin:audit:read']);
 

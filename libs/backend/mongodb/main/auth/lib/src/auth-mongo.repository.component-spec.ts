@@ -1,6 +1,7 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-TENANT-004 REQ-AUTH-IDENTITY-005 REQ-AUTH-PERSISTENCE-007
 import { randomUUID } from 'node:crypto';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
+import { hasDockerRuntime } from '@app/backend-common-component-test';
 import { AuthProvider, AuthProviderChannel, DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import { MongoClient } from 'mongodb';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -13,7 +14,13 @@ import { MongoAuthLinkTokenRepository, MongoExternalIdentityRepository } from '.
 import { MongoAdminAuditLogRepository, MongoAdminUserMutationRepository } from './auth-mongo-admin.repository';
 import { MongoProblemPresentationRepository } from './auth-mongo-problem-presentation.repository';
 
-describe('Mongo auth repositories on a replica set', () => {
+const dockerAvailable = hasDockerRuntime();
+if (!dockerAvailable) {
+  process.stderr.write('Mongo auth component test: skipped because Docker is not available on this host.\n');
+}
+const describeIfDocker = dockerAvailable ? describe : describe.skip;
+
+describeIfDocker('Mongo auth repositories on a replica set', () => {
   let container: StartedMongoDBContainer;
   let client: MongoClient;
 
@@ -64,6 +71,72 @@ describe('Mongo auth repositories on a replica set', () => {
       permissions: ['profile:read'],
     });
     await expect(unwrap(reloaded.users.findById(user.id, DefaultAuthTenantId))).resolves.toBeNull();
+  });
+
+  it('rejects cross-tenant user mutation and RBAC assignment', async () => {
+    const { database, users, userRoles, mutations } = repositories();
+    const tenantA = randomUUID();
+    const tenantB = randomUUID();
+    const user = await unwrap(
+      users.createUser({ tenantId: tenantA, email: 'isolated@example.com', passwordHash: 'old' }),
+    );
+
+    await expect(unwrap(users.setPreferences(user.id, { locale: 'ru' }, tenantB))).resolves.toBeNull();
+    await expect(unwrap(users.replacePassword(user.id, 'new', tenantB))).resolves.toBeNull();
+    await expect(
+      unwrap(userRoles.assignRoles({ tenantId: tenantB, userId: user.id, roleKeys: ['admin'] })),
+    ).resolves.toEqual([]);
+    await expect(
+      unwrap(
+        mutations.mutateAccessPolicyWithAudit({
+          tenantId: tenantB,
+          targetUserId: user.id,
+          actorUserId: randomUUID(),
+          action: 'admin.user.access_policy.update',
+          policy: { permissions: ['admin:audit:read'] },
+          audit: {},
+        }),
+      ),
+    ).resolves.toBeNull();
+    await expect(unwrap(users.findById(user.id, tenantA))).resolves.toMatchObject({
+      passwordHash: 'old',
+      locale: 'en',
+      roles: [],
+      permissions: [],
+    });
+    await expect(unwrap(users.findById(user.id, tenantB))).resolves.toBeNull();
+    await expect(
+      database.collection(AuthMongoCollections.userPermissions).countDocuments({ userId: user.id, tenantId: tenantB }),
+    ).resolves.toBe(0);
+  });
+
+  it('rejects a caller from another tenant even when the target belongs to the requested tenant', async () => {
+    const { database, users, mutations } = repositories();
+    const tenantA = randomUUID();
+    const tenantB = randomUUID();
+    const actor = await unwrap(
+      users.createUser({ tenantId: tenantA, email: 'actor-a@example.com', passwordHash: 'actor-hash' }),
+    );
+    const target = await unwrap(
+      users.createUser({ tenantId: tenantB, email: 'target-b@example.com', passwordHash: 'target-hash' }),
+    );
+
+    await expect(
+      unwrap(
+        mutations.mutateAccessPolicyWithAudit({
+          tenantId: tenantB,
+          targetUserId: target.id,
+          actorUserId: actor.id,
+          action: 'admin.user.status.update',
+          policy: { status: 'disabled' },
+          audit: {},
+        }),
+      ),
+    ).resolves.toBeNull();
+    await expect(unwrap(users.findById(target.id, tenantB))).resolves.toMatchObject({ status: 'active' });
+    await expect(
+      database.collection(AuthMongoCollections.auditLogs).countDocuments({ tenantId: tenantB }),
+    ).resolves.toBe(0);
   });
 
   it('records account recovery against the live validator', async () => {
@@ -187,14 +260,14 @@ describe('Mongo auth repositories on a replica set', () => {
     const results = await Promise.all([
       mutations.mutateAccessPolicyWithAudit({
         targetUserId: first.id,
-        actorUserId: randomUUID(),
+        actorUserId: second.id,
         action: 'admin.user.status.update',
         policy: { status: 'disabled' },
         audit: {},
       }),
       mutations.mutateAccessPolicyWithAudit({
         targetUserId: second.id,
-        actorUserId: randomUUID(),
+        actorUserId: first.id,
         action: 'admin.user.status.update',
         policy: { status: 'disabled' },
         audit: {},

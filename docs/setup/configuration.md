@@ -287,7 +287,7 @@ application stack with staging-specific secrets, databases, and domain names.
    explicit process-level `COMPOSE_PROFILES` activates the selected profiles.
 
 4. **Staging port offsets:** staging services use ports offset by +100 from
-   production defaults to avoid collisions. See [PORTS.md](../PORTS.md#staging).
+   production defaults to avoid collisions. See [PORTS.md](../PORTS.md#staging-matrix).
 
 ### CI/CD — Deploying to Staging
 

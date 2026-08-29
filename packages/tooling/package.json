@@ -10,6 +10,7 @@
   },
   "scripts": {
     "tooling": "node ./bin/repo-tooling.mjs",
+    "test": "node ./scripts/run-tests.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "static-check": "node --max-old-space-size=1024 ./bin/repo-tooling.mjs tooling static-check",
     "check": "pnpm run typecheck && pnpm run static-check"

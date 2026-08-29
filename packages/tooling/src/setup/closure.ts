@@ -5,7 +5,15 @@ import { appCatalog, capabilityCatalog, durableDatabaseProviderIds } from './cat
 import type { DurableDatabaseProviderId } from './catalog.js';
 import {
   defaultDeploymentConfig,
+  defaultIdentityBrandConfig,
+  defaultIdentityConfig,
   defaultProductConfig,
+  defaultRuntimeConfig,
+  defaultRuntimePorts,
+  defaultSessionConfig,
+  defaultTenantConfig,
+  defaultTenantSeedAdmin,
+  defaultTenantSeedUsers,
   parseNrbConfig,
   schemaVersion,
   type AppId,
@@ -86,6 +94,10 @@ export interface SelectedClosureManifest {
   releaseImages: string[];
   product: NrbConfig['product'];
   deployment: NrbConfig['deployment'];
+  identity: NrbConfig['identity'];
+  runtime: NrbConfig['runtime'];
+  session: NrbConfig['session'];
+  tenant: NrbConfig['tenant'];
 }
 
 export interface ClosureInput {
@@ -94,6 +106,10 @@ export interface ClosureInput {
   configHash: string;
   product?: NrbConfig['product'];
   deployment?: NrbConfig['deployment'];
+  identity?: NrbConfig['identity'];
+  runtime?: NrbConfig['runtime'];
+  session?: NrbConfig['session'];
+  tenant?: NrbConfig['tenant'];
 }
 
 interface GraphNodeLike {
@@ -132,6 +148,27 @@ export function buildSelectedClosure(graph: ProjectGraphLike, input: ClosureInpu
     ...defaultDeploymentConfig,
     targets: [...defaultDeploymentConfig.targets],
     infrastructure: { ...defaultDeploymentConfig.infrastructure },
+    imageRegistry: defaultDeploymentConfig.imageRegistry,
+  };
+  const identity = input.identity ?? {
+    ...defaultIdentityConfig,
+    brand: { ...defaultIdentityBrandConfig },
+  };
+  const runtime = input.runtime ?? {
+    ports: { ...defaultRuntimePorts },
+    stagingOffset: defaultRuntimeConfig.stagingOffset,
+    containerPort: defaultRuntimeConfig.containerPort,
+    postgres: { ...defaultRuntimeConfig.postgres },
+    minio: { ...defaultRuntimeConfig.minio },
+    localSecrets: { ...defaultRuntimeConfig.localSecrets },
+  };
+  const session = input.session ?? { ...defaultSessionConfig };
+  const tenant = input.tenant ?? {
+    defaultTenantId: defaultTenantConfig.defaultTenantId,
+    seed: {
+      admin: { ...defaultTenantSeedAdmin },
+      users: [...defaultTenantSeedUsers],
+    },
   };
   const seedProjects = new Set<string>(roots);
 
@@ -186,6 +223,10 @@ export function buildSelectedClosure(graph: ProjectGraphLike, input: ClosureInpu
     releaseImages,
     product,
     deployment,
+    identity,
+    runtime,
+    session,
+    tenant,
   });
 }
 
@@ -230,6 +271,10 @@ export function parseSelectedClosure(raw: unknown): SelectedClosureManifest {
     capabilities: [],
     product: raw.product,
     deployment: raw.deployment,
+    identity: raw.identity,
+    runtime: raw.runtime,
+    session: raw.session,
+    tenant: raw.tenant,
   });
 
   return withCombinedExternalPackages({
@@ -246,6 +291,10 @@ export function parseSelectedClosure(raw: unknown): SelectedClosureManifest {
     releaseImages,
     product: operational.product,
     deployment: operational.deployment,
+    identity: operational.identity,
+    runtime: operational.runtime,
+    session: operational.session,
+    tenant: operational.tenant,
   });
 }
 

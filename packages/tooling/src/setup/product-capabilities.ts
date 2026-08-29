@@ -1,4 +1,4 @@
-import type { CapabilityEntry } from './catalog.js';
+import type { CapabilityEntry } from './catalog.ts';
 
 /**
  * The one file a product edits to add capabilities of its own.

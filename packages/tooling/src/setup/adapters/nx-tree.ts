@@ -7,7 +7,7 @@
  * applier writes to disk through the Node filesystem adapter; here we write
  * to the Tree so that `formatFiles` and change tracking work correctly.
  */
-import type { FilesystemAdapter } from '../adapters/filesystem.js';
+import type { FilesystemAdapter } from '../adapters/filesystem.ts';
 import type { Tree } from 'nx/src/generators/tree';
 
 // ---------------------------------------------------------------------------

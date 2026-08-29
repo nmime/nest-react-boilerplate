@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "cli": "nx",
+  "$id": "@repo/tooling/reconfigure",
+  "title": "Reconfigure",
+  "description": "Apply nrb.config.json identity and runtime values through the shared reconfigure engine",
+  "type": "object",
+  "properties": {
+    "config": {
+      "type": "string",
+      "description": "JSON config path inside the Nx workspace (relative or absolute)",
+      "default": "nrb.config.json",
+      "x-priority": "important"
+    },
+    "plan": {
+      "type": "boolean",
+      "description": "Print the shared rewrite-only plan; combine with Nx --dryRun to avoid flushing the Tree",
+      "default": false
+    },
+    "force": {
+      "type": "boolean",
+      "description": "Overwrite tracked files whose content drifted",
+      "default": false
+    }
+  },
+  "required": []
+}

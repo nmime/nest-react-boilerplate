@@ -24,6 +24,7 @@ import { runSpecValidate } from './commands/spec/validate';
 import { runSpecVerify } from './commands/spec/verify';
 import { runShadcnAddCommand, runUiRegistryAddCommand, runUiRegistrySearchCommand } from './commands/ui/shadcn-add';
 import { runClosureFromContext } from './commands/project/closure';
+import { runReconfigureFromContext } from './commands/project/reconfigure';
 import { run } from './runtime/process';
 
 export interface CommandContext {
@@ -115,6 +116,12 @@ register(
   runDoctorFromContext,
 );
 register('setup', 'Shorthand for project:setup — boilerplate configuration.', runSetupFromContext, true);
+register(
+  'reconfigure',
+  'Apply identity and runtime values from nrb.config.json with drift protection and rollback.',
+  runReconfigureFromContext,
+  true,
+);
 register('doctor', 'Shorthand for project:doctor — workspace health checks.', runDoctorFromContext);
 register('add', 'Add an app, library, or feature to the workspace.', runAddFromContext, true);
 register(

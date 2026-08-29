@@ -17,7 +17,10 @@ The repository separates three decisions that should not be conflated:
    setup state, canonical `capabilities.generated.ts` module composition, and a
    pre-import `capabilities.bootstrap.generated.ts` initializer for every
    backend app. It does not delete unselected source or invent credentials.
-3. `pnpm nrb add` generates a new app, library, or feature in the required
+3. `pnpm nrb reconfigure` reapplies changed identity/runtime values from
+   `nrb.config.json` in place. The CLI and `@repo/tooling:reconfigure` Nx
+   generator share one engine through Node-FS and Nx `Tree` adapters.
+4. `pnpm nrb add` generates a new app, library, or feature in the required
    architecture. A generated deployable is not publicly exposed until its
    product owner explicitly registers runtime configuration, DNS, TLS, and
    deployment ownership.
@@ -81,12 +84,23 @@ pnpm run onboarding:verify
 pnpm run dev
 ```
 
-`pnpm nrb init` requires a DNS base without a protocol, port, path, or wildcard.
-`--apex-app` assigns the product apex to `landing-app` or `site-app`; the other
-keeps its exact app-ID hostname. Initialization rewrites the root domain and all
+`pnpm nrb init` requires a DNS base without a protocol, port, path, or wildcard
+unless a complete schema-v2 source is passed with `--config <path>`. It persists
+the resolved config and `.nrb/identity.json`, then delegates to the same engine
+as `pnpm nrb reconfigure`. `--apex-app` assigns the product apex to
+`landing-app` or `site-app`; the other keeps its exact app-ID hostname.
+Initialization rewrites the root domain and all
 known subdomains, including site, mobile, admin, user, auth, public APIs, bot
 APIs, staging hosts, CSP entries, TLS SANs, and example email addresses. It
 never creates DNS records or certificates.
+
+To change the identity later, edit `nrb.config.json`, inspect
+`pnpm nrb reconfigure --dry-run`, then apply `pnpm nrb reconfigure`. An
+unchanged repeat is a zero-operation "already up to date" result. The command
+refuses and names any engine-tracked file whose recorded hash drifted; use
+`--force` only after reviewing that file. Every write target is backed up before
+apply, and any mid-apply error restores the pre-run bytes. The equivalent CI/Nx
+surface is `pnpm exec nx generate @repo/tooling:reconfigure --plan --dryRun`.
 
 `pnpm run onboarding:verify` is a non-deploying proof after installation. It
 runs the workspace doctor, resolves all five presets as dry runs with exact app

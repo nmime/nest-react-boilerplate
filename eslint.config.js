@@ -474,7 +474,11 @@ module.exports = [
   {
     // Node's test registration API returns promises that are intentionally not
     // awaited at module scope; Nx Tree doubles also expose dynamic values.
-    files: ['packages/tooling/src/generators/**/*.test.ts', 'packages/tooling/src/setup/**/*.test.ts'],
+    files: [
+      'packages/tooling/src/generators/**/*.test.ts',
+      'packages/tooling/src/reconfigure/**/*.test.ts',
+      'packages/tooling/src/setup/**/*.test.ts',
+    ],
     rules: {
       '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -491,6 +495,8 @@ module.exports = [
       'sonarjs/assertions-in-tests': 'off',
       'sonarjs/no-alphabetical-sort': 'off',
       'sonarjs/no-misleading-array-reverse': 'off',
+      // Reconfigure tests assert shell/template source containing literal `${...}` placeholders.
+      'no-template-curly-in-string': 'off',
       'no-await-in-loop': 'off',
       'no-console': 'off',
     },
@@ -502,6 +508,7 @@ module.exports = [
       'packages/tooling/src/cli.ts',
       'packages/tooling/src/generators/*/generator.ts',
       'packages/tooling/src/generators/paths.ts',
+      'packages/tooling/src/reconfigure/*.ts',
       'packages/tooling/src/setup/*.ts',
       'packages/tooling/src/setup/apply.ts',
       'packages/tooling/src/setup/catalog.ts',
@@ -525,8 +532,23 @@ module.exports = [
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
+      // Setup/reconfigure is an imperative mutation engine; its existing style uses guarded
+      // single-line operations and workspace-resolved executables by design.
+      curly: 'off',
+      'sonarjs/no-os-command-from-path': 'off',
+      'sonarjs/no-nested-template-literals': 'off',
+      // Identity and credential validators are bounded setup inputs; the generic regex heuristic
+      // flags these anchored patterns despite their fixed, linear matching domain.
+      'sonarjs/super-linear-regex': 'off',
       'no-await-in-loop': 'off',
       'no-console': 'off',
+    },
+  },
+  {
+    files: ['packages/tooling/src/setup/schema.ts'],
+    rules: {
+      // These are documented local-development seed defaults, not production credentials.
+      'sonarjs/no-hardcoded-passwords': 'off',
     },
   },
   {

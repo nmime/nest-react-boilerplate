@@ -45,7 +45,7 @@ describe("git conventions config", () => {
     try {
       writeFileSync(
         join(root, "nrb.config.json"),
-        JSON.stringify({ schemaVersion: "1.0.0", gitConventions: { body: { maxSubjectLength: 42 } } }),
+        JSON.stringify({ schemaVersion: "2.0.0", gitConventions: { body: { maxSubjectLength: 42 } } }),
       );
 
       assert.equal(loadGitConventionsConfig(root).body.maxSubjectLength, 42);

@@ -14,6 +14,8 @@ import {
   rename as renameAsync,
   rm as rmAsync,
   access as accessAsync,
+  chmod as chmodAsync,
+  stat as statAsync,
 } from 'node:fs/promises';
 import { join, dirname, resolve, relative, posix, isAbsolute } from 'node:path';
 import type { FilesystemAdapter } from './filesystem.js';
@@ -86,12 +88,16 @@ export function createNodeFilesystem(baseDir: string): FilesystemAdapter {
       const abs = resolvePath(resolvedBase, path);
       const dir = dirname(abs);
       const tmpPath = abs + '.tmp';
+      const existingMode = await statAsync(abs)
+        .then((stats) => stats.mode & 0o777)
+        .catch(() => null);
 
       // Ensure parent directory exists
       await mkdirAsync(dir, { recursive: true });
 
       // Write to temp file first (atomic replacement)
       await writeFileAsync(tmpPath, content, 'utf8');
+      if (existingMode !== null) await chmodAsync(tmpPath, existingMode);
 
       // Rename temp → target (atomic on POSIX)
       await renameAsync(tmpPath, abs);

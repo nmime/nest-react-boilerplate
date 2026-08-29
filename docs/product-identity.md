@@ -185,15 +185,22 @@ them.
    `nmime`, so the security-advisory URL, `CODEOWNERS`, the release-repository
    default, the `.mailmap` canonical identity, and the git-convention author
    constants all keep the upstream account. 38 tracked files contain it.
-2. **Identity is not a declared value yet.** `nrb.config.json` carries
-   `deployment.publicDomain` but no `product.identity` block, so the values passed
-   to `nrb init` are not recorded anywhere and cannot be replayed after an upstream
-   merge. Until they are, keep them in a checked-in script.
-3. **Validators assert the literals.** Several scripts under `scripts/` compare
+2. **Validators assert the literals.** Several scripts under `scripts/` compare
    against `nest-react-boilerplate` / `nest_react_boilerplate` directly rather
    than against a configured value, so a renamed product must update the
    validators too.
-4. **`nrb init` cannot rename files.** It emits content changes only.
+3. **`nrb init` cannot rename files.** It emits content changes only. Rename
+   `.helm/dashboards/nest-react-boilerplate.json` and
+   `docker/grafana/dashboards/nest-react-boilerplate.json` by hand and update
+   their references.
+
+Identity values are declared in `nrb.config.json` (`identity`, `brand`, `runtime`,
+`session`, `tenant`) and survive `nrb setup` replay. The `reconfigure/identity-targets`
+module derives the replacement map from `identity` so that re-running `nrb init`
+after an upstream merge reapplies the same literals deterministically. `planner`
+derives database URLs and ports from `identity.dbName` and `runtime.ports`, and
+`closure` / `workspace.json` carry the full identity snapshot so that build and
+deploy targets do not hardcode the boilerplate literals.
 
 ## Related
 

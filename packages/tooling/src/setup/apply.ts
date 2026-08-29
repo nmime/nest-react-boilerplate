@@ -13,9 +13,9 @@
  * was configured with `prune: true`.  The applier trusts the planner's
  * output and does not independently decide what to delete.
  */
-import type { SetupOperation } from './operations.js';
-import type { FilesystemAdapter, FileConflict, ApplyResult } from './adapters/filesystem.js';
-import { hashString } from './state.js';
+import type { SetupOperation } from './operations.ts';
+import type { FilesystemAdapter, FileConflict, ApplyResult } from './adapters/filesystem.ts';
+import { hashString } from './state.ts';
 
 // ---------------------------------------------------------------------------
 // Apply options

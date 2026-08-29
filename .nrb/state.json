@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "configHash": "aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b",
+  "configHash": "7174e8c6c43fb781f49657c3d9af29b8b49b0b993a9ce59e159df46a7403d73f",
   "files": {
-    "nrb.config.json": "415e8d544477f5c46bcbcb2ba8f01c740daa37e56e4d2db321a3bcd8230d3c42",
-    ".nrb/summary.md": "3cb3a3a34f8b6df81840b211a006044c018ed3c95c8eaf0a59fadfae515a209b",
-    ".nrb/workspace.json": "f7cd7fdf5ba44edca47ddff51f575d14c951edc9e57a88efa4bf51e8475d1040",
-    ".nrb/capabilities.json": "268c3f2465f4fd184e45b8dda946ea8d9a4cfb81add30a82397ffbca547a5424",
+    "nrb.config.json": "03beab9753d14aa0534a952ac897c093145b8e83e200b684c9879779db76fab4",
+    ".nrb/summary.md": "049f692a4e6b94bb612ae16b1f47d535a25b0c14ed063a3bf055fde306c6c83c",
+    ".nrb/workspace.json": "0cd355fbf5b1f5aa67b5577e07b772179dab206ffe5e10122844b447bd5f8b3c",
+    ".nrb/capabilities.json": "9d18c99afe1c7d1053926f2cc43c71d1326edc04af84315a03cc7c210c19167c",
     ".nrb/capabilities.env": "7fa2ead580b7c47e9247027ff74d579ecfcd2564600c20842adf37bb99f0b022",
     "packages/tooling/src/commands/db/capability-migrations.generated.ts": "41f98d0a77a0e8681b651431e53408d1914faaf48eb57e1885648ecb8cef74fe",
     "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "bb95faf78c53f63b6b17e494f06f242c39ab02b01e81c01faf143eda1e730618",
@@ -21,7 +21,11 @@
     "apps/backend/discord/discord-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/telegram/telegram-bot-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
-    "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
+    "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    ".nrb/closure.json": "e5628201f9e736a63cf153572c2cfa86ae217c70c0bf60488f77396bb1ed1654",
+    ".nrb/closure/package.json": "6486a742b2492028b6de146b72464e3c1d44bc6e58d4f5e6b0df7ff5f960cd29",
+    ".nrb/closure/nrb.config.json": "03beab9753d14aa0534a952ac897c093145b8e83e200b684c9879779db76fab4",
+    ".nrb/identity.json": "c15e5225b6c91938706ad94910a2368aca36315302da4ba32e159c05650cbc18"
   },
-  "digest": "25cfc650b5ac6ad675f0818d6881239eae0d27f50053be02512f8510265037e8"
+  "digest": "45594dc1cf85ee8aa8f2cf555b1789b65427adfb577b88052f838dcff13395c5"
 }

@@ -12,7 +12,15 @@ import * as readline from 'node:readline/promises';
 import type { NrbConfig, PresetId } from './schema.js';
 import {
   defaultDeploymentConfig,
+  defaultIdentityConfig,
+  defaultIdentityBrandConfig,
   defaultProductConfig,
+  defaultRuntimeConfig,
+  defaultRuntimePorts,
+  defaultSessionConfig,
+  defaultTenantConfig,
+  defaultTenantSeedAdmin,
+  defaultTenantSeedUsers,
   frontendAppIds,
   isPublicDomain,
   schemaVersion,
@@ -299,7 +307,15 @@ async function promptProductAndDeployment(
   }
   return {
     product: { ciMode, frontendApiMode, mobileTargets },
-    deployment: { targets, publicDomain, primaryApp, publicTopology, kubernetesDelivery, infrastructure },
+    deployment: {
+      targets,
+      publicDomain,
+      primaryApp,
+      publicTopology,
+      kubernetesDelivery,
+      infrastructure,
+      imageRegistry: currentDeployment.imageRegistry,
+    },
   };
 }
 
@@ -433,6 +449,11 @@ export function buildConfig(
     product?: Partial<NrbConfig['product']>;
     deployment?: Partial<NrbConfig['deployment']>;
     options?: Partial<NrbConfig['options']>;
+    identity?: Partial<NrbConfig['identity']>;
+    appRenames?: NrbConfig['appRenames'];
+    runtime?: Partial<NrbConfig['runtime']>;
+    session?: Partial<NrbConfig['session']>;
+    tenant?: Partial<NrbConfig['tenant']>;
   } = {},
 ): NrbConfig {
   return {
@@ -440,6 +461,15 @@ export function buildConfig(
     preset: overrides.preset ?? prompts.preset,
     apps: overrides.apps ?? prompts.apps,
     capabilities: overrides.capabilities ?? prompts.capabilities,
+    identity: {
+      ...defaultIdentityConfig,
+      ...overrides.identity,
+      brand: {
+        ...defaultIdentityBrandConfig,
+        ...overrides.identity?.brand,
+      },
+    },
+    appRenames: overrides.appRenames ?? {},
     product: {
       ...prompts.product,
       ...overrides.product,
@@ -450,6 +480,29 @@ export function buildConfig(
       ...overrides.deployment,
       targets: overrides.deployment?.targets ?? prompts.deployment.targets,
       infrastructure: overrides.deployment?.infrastructure ?? prompts.deployment.infrastructure,
+      imageRegistry: overrides.deployment?.imageRegistry ?? prompts.deployment.imageRegistry,
+    },
+    runtime: {
+      ...defaultRuntimeConfig,
+      ...overrides.runtime,
+      ports: { ...defaultRuntimePorts, ...overrides.runtime?.ports },
+      postgres: { ...defaultRuntimeConfig.postgres, ...overrides.runtime?.postgres },
+      minio: { ...defaultRuntimeConfig.minio, ...overrides.runtime?.minio },
+      localSecrets: { ...defaultRuntimeConfig.localSecrets, ...overrides.runtime?.localSecrets },
+    },
+    session: {
+      ...defaultSessionConfig,
+      ...overrides.session,
+    },
+    tenant: {
+      ...defaultTenantConfig,
+      ...overrides.tenant,
+      seed: {
+        ...defaultTenantConfig.seed,
+        ...overrides.tenant?.seed,
+        admin: { ...defaultTenantSeedAdmin, ...overrides.tenant?.seed?.admin },
+        users: overrides.tenant?.seed?.users ?? [...defaultTenantSeedUsers],
+      },
     },
     options: {
       prune: overrides.options?.prune ?? prompts.prune,

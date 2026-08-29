@@ -7,6 +7,11 @@
       "schema": "./src/generators/setup/schema.json",
       "description": "Configure boilerplate setup (nrb.config.json, presets, capabilities)"
     },
+    "reconfigure": {
+      "factory": "./src/generators/reconfigure/generator.ts",
+      "schema": "./src/generators/reconfigure/schema.json",
+      "description": "Apply identity and runtime values through the shared reconfigure engine"
+    },
     "application": {
       "factory": "./src/generators/application/generator.ts",
       "schema": "./src/generators/application/schema.json",

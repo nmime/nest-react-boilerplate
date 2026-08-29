@@ -172,7 +172,7 @@ describe('setup generator', () => {
       assert.ok(tree.exists('.nrb/summary.md'));
 
       const config = JSON.parse(tree.read('nrb.config.json', 'utf8')!);
-      assert.equal(config.schemaVersion, '1.0.0');
+      assert.equal(config.schemaVersion, '2.0.0');
       // With preset, the original config.apps is [] but the resolved apps include expanded ones
       assert.equal(config.preset, 'minimal');
     });

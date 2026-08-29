@@ -1,5 +1,11 @@
 import { Body, Controller, Post, Put, UseGuards } from '@nestjs/common';
-import { RbacGuard, RequirePermissions, SessionAuthGuard } from '@app/backend-feature-auth-shared';
+import {
+  CurrentUser,
+  RbacGuard,
+  RequirePermissions,
+  SessionAuthGuard,
+  type AuthenticatedPrincipal,
+} from '@app/backend-feature-auth-shared';
 import {
   AdminNotificationBroadcastsSendPermission,
   AdminNotificationTemplatesWritePermission,
@@ -19,8 +25,12 @@ export class NotificationController {
 
   @Put('templates')
   @RequirePermissions(AdminNotificationTemplatesWritePermission)
-  upsertTemplate(@Body() body: UpsertNotificationTemplateRequestDto): Promise<NotificationTemplateRecord> {
+  upsertTemplate(
+    @Body() body: UpsertNotificationTemplateRequestDto,
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ): Promise<NotificationTemplateRecord> {
     return this.notificationService.upsertTemplate({
+      tenantId: principal.tenantId,
       code: body.code,
       description: body.description,
       channels: body.channels,
@@ -31,8 +41,10 @@ export class NotificationController {
   @RequirePermissions(AdminNotificationBroadcastsSendPermission)
   async createTemplateNotification(
     @Body() body: CreateNotificationRequestDto,
+    @CurrentUser() principal: AuthenticatedPrincipal,
   ): Promise<{ id: string; templateCode: string }> {
     const notification = await this.notificationService.createTemplateNotification({
+      tenantId: principal.tenantId,
       targetType: body.targetType,
       targetId: body.targetId,
       templateCode: body.templateCode,
@@ -50,8 +62,12 @@ export class NotificationController {
 
   @Post('batch')
   @RequirePermissions(AdminNotificationBroadcastsSendPermission)
-  async createTemplateNotificationsBatch(@Body() body: CreateNotificationBatchRequestDto): Promise<{ ids: string[] }> {
+  async createTemplateNotificationsBatch(
+    @Body() body: CreateNotificationBatchRequestDto,
+    @CurrentUser() principal: AuthenticatedPrincipal,
+  ): Promise<{ ids: string[] }> {
     const notifications = await this.notificationService.createTemplateNotificationsBatch({
+      tenantId: principal.tenantId,
       targetType: body.targetType,
       deliveries: body.deliveries,
       channels: body.channels,

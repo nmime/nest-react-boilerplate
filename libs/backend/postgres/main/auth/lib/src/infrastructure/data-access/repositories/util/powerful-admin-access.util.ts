@@ -25,6 +25,7 @@ export async function countActivePowerfulAdmins(
       countActivePowerfulAdminsSql,
       [tenantId, AdminUsersWritePermissionName, AdminUsersAccessPolicyUpdatePermissionName],
       'all',
+      entityManager.getTransactionContext(),
     )) as Array<{ active_powerful_admin_count: number | string }>;
   return Number(rows[0]?.active_powerful_admin_count ?? 0);
 }

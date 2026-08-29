@@ -4,6 +4,7 @@ import type { NotificationData, NotificationExtra, NotificationTargetType } from
 import { NotificationTemplateEntity } from './notification-template.entity';
 
 export interface NotificationEntityInput<T = NotificationData> {
+  tenantId: string;
   targetType: NotificationTargetType;
   targetId: string;
   template: NotificationTemplateEntity;
@@ -28,6 +29,7 @@ export type StoredNotificationSensitiveData = EncryptedNotificationPayload | Rec
 
 export class NotificationEntity<T = NotificationData> {
   id: string = randomUUID();
+  tenantId!: string;
   targetType!: NotificationTargetType;
   targetId!: string;
   template!: NotificationTemplateEntity;
@@ -41,6 +43,7 @@ export class NotificationEntity<T = NotificationData> {
 
   constructor(input?: NotificationEntityInput<T>) {
     if (input) {
+      this.tenantId = input.tenantId;
       this.targetType = input.targetType;
       this.targetId = input.targetId;
       this.template = input.template;
@@ -60,6 +63,7 @@ export const NotificationEntitySchema = new EntitySchema<NotificationEntity>({
   tableName: 'notifications',
   properties: {
     id: { type: 'uuid', primary: true },
+    tenantId: { type: 'uuid', fieldName: 'tenant_id' },
     targetType: { type: 'varchar', length: 32, fieldName: 'target_type' },
     targetId: { type: 'varchar', length: 320, fieldName: 'target_id' },
     template: {
@@ -77,6 +81,12 @@ export const NotificationEntitySchema = new EntitySchema<NotificationEntity>({
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
   },
   indexes: [
+    {
+      name: 'ix__notifications__tenant_id_created_at_desc',
+      properties: ['tenantId', 'createdAt'],
+      expression:
+        'create index "ix__notifications__tenant_id_created_at_desc" on "notifications" ("tenant_id", "created_at" desc)',
+    },
     { name: 'ix__notifications__template_id', properties: ['template'] },
     { name: 'ix__notifications__template_version_id', properties: ['templateVersionId'] },
     { name: 'ix__notifications__broadcast_id', properties: ['broadcastId'] },

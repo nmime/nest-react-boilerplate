@@ -165,9 +165,10 @@ export interface AuthTokenRepositoryPort {
   consumeUserToken(
     tokenHash: string,
     purpose: AuthPersistenceUserTokenPurpose,
-    tenantId?: string,
+    tenantId?: string | null,
     now?: Date,
   ): ResultAsync<AuthUserTokenRecord | null, AuthRepositoryError>;
+  revokeUserToken(tokenHash: string, tenantId?: string): ResultAsync<boolean, AuthRepositoryError>;
   cleanupExpiredTokens(before?: Date): ResultAsync<{ userTokensDeleted: number }, AuthRepositoryError>;
 }
 
@@ -290,7 +291,7 @@ export interface AuthLinkTokenRepositoryPort {
   consumeToken(
     tokenHash: string,
     purpose: AuthLinkTokenPurpose,
-    tenantId?: string,
+    tenantId?: string | null,
     now?: Date,
   ): ResultAsync<AuthLinkTokenRecord | null, AuthRepositoryError>;
   revokeToken(tokenHash: string, tenantId?: string, now?: Date): ResultAsync<boolean, AuthRepositoryError>;

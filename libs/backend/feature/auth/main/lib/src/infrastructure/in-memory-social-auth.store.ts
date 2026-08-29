@@ -133,14 +133,14 @@ export class InMemorySocialAuthStore implements SocialAuthStore {
   consumeLinkToken(
     tokenHash: string,
     purpose: AuthLinkTokenPurpose,
-    tenantId: string,
+    tenantId: string | null | undefined,
     now: Date = new Date(),
   ): ResultAsync<LinkTokenRecord | null, SocialAuthStoreError> {
     const record = this.linkTokensByHash.get(tokenHash) ?? null;
     if (
       !record ||
       record.purpose !== purpose ||
-      record.tenantId !== tenantId ||
+      (tenantId !== null && tenantId !== undefined && record.tenantId !== tenantId) ||
       record.consumedAt ||
       record.revokedAt ||
       record.expiresAt <= now

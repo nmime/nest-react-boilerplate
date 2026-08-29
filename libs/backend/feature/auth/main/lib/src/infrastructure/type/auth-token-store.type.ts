@@ -39,6 +39,7 @@ export interface AuthTokenStore {
   consumeUserActionToken(
     token: string,
     purpose: AuthUserTokenPurpose,
-    tenantId?: string,
+    tenantId?: string | null,
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError>;
+  revokeUserActionToken(tokenHash: string, tenantId?: string): ResultAsync<boolean, AuthTokenStoreError>;
 }

@@ -9,7 +9,7 @@ Also follow [libs/backend/AGENTS.md](../../../../AGENTS.md).
 - Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
 - Keep Mongo documents private and return the neutral records the shared port declares, so nothing above can tell which axis answered.
 - Collection validators and indexes are migration-owned; keep them aligned with the queries the repository actually issues.
-- A rate write must stay ordered history-first, so an interrupted pair leaves a stale headline rate rather than a rate with no observation behind it.
+- A rate write must keep history and headline updates in one MongoDB transaction, so the complete provider batch commits or rolls back atomically.
 - Respect the scope and boundary tags declared in `project.json`; do not copy their values into local instructions.
 - Keep this file short; put setup details and command lists in the local README.
 

@@ -81,6 +81,7 @@ export class NotificationAdminService {
     const message = new DefaultMessageStrategy(
       {
         id: 'preview',
+        tenantId,
         targetType: NotificationTargetType.User,
         targetId: 'preview',
         template: {
@@ -127,6 +128,7 @@ export class NotificationAdminService {
     }
     const [data, sensitiveData] = splitSensitive(version.variablesSchema, input.variables);
     return this.notifications.create({
+      tenantId: input.tenantId,
       targetType: input.targetType,
       targetId: input.targetId,
       templateCode: template.code,

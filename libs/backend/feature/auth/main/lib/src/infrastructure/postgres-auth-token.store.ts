@@ -39,10 +39,17 @@ export class PostgresAuthTokenStore implements AuthTokenStore {
       .mapErr(mapTokenStoreError);
   }
 
+  revokeUserActionToken(
+    tokenHash: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<boolean, AuthTokenStoreError> {
+    return this.repository.revokeUserToken(tokenHash, tenantId).mapErr(mapTokenStoreError);
+  }
+
   consumeUserActionToken(
     token: string,
     purpose: AuthUserTokenPurpose,
-    tenantId: string = DefaultAuthTenantId,
+    tenantId?: string | null,
   ): ResultAsync<UserActionTokenRecord | null, AuthTokenStoreError> {
     return this.repository
       .consumeUserToken(hashOpaqueToken(token), purpose, tenantId)

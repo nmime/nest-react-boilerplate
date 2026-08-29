@@ -1,3 +1,4 @@
+import { LockMode } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import type { CurrencyCode } from '@app/common-money';
@@ -10,6 +11,8 @@ import {
   type RecordFiatRateParams,
   type UpsertFiatCurrencyParams,
   fiatRateRatio,
+  normalizeFiatRateText,
+  resolveFiatMinorUnitExponent,
 } from '@app/backend-feature-fiat-currency-shared';
 import { FiatCurrencyEntity, FiatCurrencyRateEntity } from '../entities';
 
@@ -22,13 +25,18 @@ function toFiatCurrency(entity: FiatCurrencyEntity): FiatCurrency {
     imageUrl: entity.imageUrl,
     active: entity.active,
     displayOrder: entity.displayOrder,
-    usdPerUnit: entity.usdPerUnit,
+    usdPerUnit: entity.usdPerUnit === null ? null : normalizeFiatRateText(entity.usdPerUnit),
     rateAsOf: entity.rateAsOf,
   };
 }
 
 function toFiatCurrencyRate(entity: FiatCurrencyRateEntity): FiatCurrencyRate {
-  return { code: entity.code, usdPerUnit: entity.usdPerUnit, asOf: entity.asOf, source: entity.source };
+  return {
+    code: entity.code,
+    usdPerUnit: normalizeFiatRateText(entity.usdPerUnit),
+    asOf: entity.asOf,
+    source: entity.source,
+  };
 }
 
 /**
@@ -79,7 +87,7 @@ export class FiatCurrencyPostgresPersistence extends FiatCurrencyPersistence {
     // the whole map. A currency and its names are a single row, so this needs no transaction.
     currency.name = params.name;
     currency.symbol = params.symbol;
-    currency.minorUnitExponent = params.minorUnitExponent ?? currency.minorUnitExponent;
+    currency.minorUnitExponent = resolveFiatMinorUnitExponent(params.code, params.minorUnitExponent);
     currency.imageUrl = params.imageUrl === undefined ? currency.imageUrl : params.imageUrl;
     currency.active = params.active ?? currency.active;
     currency.displayOrder = params.displayOrder ?? currency.displayOrder;
@@ -116,8 +124,16 @@ export class FiatCurrencyPostgresPersistence extends FiatCurrencyPersistence {
     return this.entityManager.transactional(async (manager) => {
       const recorded: FiatCurrencyRate[] = [];
 
+      // The currency lock and duplicate lookup must remain ordered inside one transaction so a
+      // provider batch is deterministic and the headline/history pair cannot interleave.
+      /* eslint-disable no-await-in-loop */
       for (const rate of rates) {
-        const currency = await manager.findOne(FiatCurrencyEntity, { code: rate.code });
+        const normalizedRate = { ...rate, usdPerUnit: normalizeFiatRateText(rate.usdPerUnit) };
+        const currency = await manager.findOne(
+          FiatCurrencyEntity,
+          { code: rate.code },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
 
         if (!currency) {
           throw new Error(`${rate.code} is not in the fiat catalogue: add the currency before recording a rate.`);
@@ -129,19 +145,26 @@ export class FiatCurrencyPostgresPersistence extends FiatCurrencyPersistence {
           source: rate.source,
         });
 
-        if (!duplicate) {
-          manager.persist(new FiatCurrencyRateEntity(rate));
+        if (duplicate && normalizeFiatRateText(duplicate.usdPerUnit) !== normalizedRate.usdPerUnit) {
+          throw new Error(
+            `${rate.code} already has a different ${rate.source} observation at ${rate.asOf.toISOString()}.`,
+          );
         }
+        if (!duplicate) {
+          manager.persist(new FiatCurrencyRateEntity(normalizedRate));
+        }
+        const observation = duplicate ? toFiatCurrencyRate(duplicate) : normalizedRate;
 
         // A provider that backfills yesterday is reporting history, not news. Only a strictly
-        // newer observation moves the headline rate.
-        if (currency.rateAsOf === null || currency.rateAsOf < rate.asOf) {
-          currency.usdPerUnit = rate.usdPerUnit;
-          currency.rateAsOf = rate.asOf;
+        // newer observation moves the headline rate, and it always uses the immutable history value.
+        if (currency.rateAsOf === null || currency.rateAsOf < observation.asOf) {
+          currency.usdPerUnit = observation.usdPerUnit;
+          currency.rateAsOf = observation.asOf;
         }
 
-        recorded.push({ code: rate.code, usdPerUnit: rate.usdPerUnit, asOf: rate.asOf, source: rate.source });
+        recorded.push(observation);
       }
+      /* eslint-enable no-await-in-loop */
 
       await manager.flush();
 
@@ -161,7 +184,7 @@ export class FiatCurrencyPostgresPersistence extends FiatCurrencyPersistence {
 
     const where = Object.keys(window).length > 0 ? { code: query.code, asOf: window } : { code: query.code };
     const rows = await this.entityManager.find(FiatCurrencyRateEntity, where, {
-      orderBy: { asOf: 'DESC' },
+      orderBy: { asOf: 'DESC', source: 'ASC' },
       limit: query.limit,
     });
 

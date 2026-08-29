@@ -5,6 +5,19 @@ import type { FiatCurrency, FiatRateQuote } from './fiat-currency.types';
 export const usdRateQuote: FiatRateQuote = { code: 'USD', usdPerUnit: '1' };
 
 const decimalTextPattern = /^-?\d+(?:\.\d+)?$/u;
+const MaximumFiatRateIntegerDigits = 5;
+const MaximumFiatRateFractionDigits = 10;
+
+/** Keeps catalogue metadata and exact-money scaling on the same exponent. */
+export function resolveFiatMinorUnitExponent(code: string, requested?: number): number {
+  const expected = Money.minorUnitExponent(code);
+  if (requested !== undefined && requested !== expected) {
+    throw new RangeError(
+      `${code} minor unit exponent must match the registered money exponent ${expected} (received ${requested}).`,
+    );
+  }
+  return expected;
+}
 
 /**
  * Reads stored rate text as an exact ratio.
@@ -15,12 +28,15 @@ const decimalTextPattern = /^-?\d+(?:\.\d+)?$/u;
  * that is otherwise unremarkable. `1.08` and `1.0800000000` are the same number; only one of them
  * still leaves room to compute.
  */
-export function fiatRateRatio(usdPerUnit: string): MoneyRatio {
+export function normalizeFiatRateText(usdPerUnit: string): string {
   if (!decimalTextPattern.test(usdPerUnit)) {
     throw new TypeError(`A USD rate must be decimal text such as "1.08" (received ${JSON.stringify(usdPerUnit)}).`);
   }
 
-  const [whole = '', fraction = ''] = usdPerUnit.split('.');
+  const [rawWhole = '', fraction = ''] = usdPerUnit.split('.');
+  const negative = rawWhole.startsWith('-');
+  const unsignedWhole = negative ? rawWhole.slice(1) : rawWhole;
+  const significantWhole = unsignedWhole.replace(/^0+(?=\d)/u, '');
 
   // Scanned rather than trimmed with `/0+$/`: an anchored one-or-more group re-tries from every
   // position it fails at, so a long run of zeros costs quadratic time on text that arrives from a
@@ -31,13 +47,23 @@ export function fiatRateRatio(usdPerUnit: string): MoneyRatio {
   }
 
   const trimmed = fraction.slice(0, significant);
-  const ratio = Money.rate(trimmed === '' ? whole : `${whole}.${trimmed}`);
-
+  if (significantWhole.length > MaximumFiatRateIntegerDigits || trimmed.length > MaximumFiatRateFractionDigits) {
+    throw new RangeError(
+      `A USD rate must fit numeric(15,10): at most ${MaximumFiatRateIntegerDigits} integer and ` +
+        `${MaximumFiatRateFractionDigits} fractional digits (received ${JSON.stringify(usdPerUnit)}).`,
+    );
+  }
+  const normalizedMagnitude = trimmed === '' ? significantWhole : `${significantWhole}.${trimmed}`;
+  const normalized = negative ? `-${normalizedMagnitude}` : normalizedMagnitude;
+  const ratio = Money.rate(normalized);
   if (ratio.numerator <= 0) {
     throw new RangeError(`A USD rate must be above zero (received ${JSON.stringify(usdPerUnit)}).`);
   }
+  return normalized;
+}
 
-  return ratio;
+export function fiatRateRatio(usdPerUnit: string): MoneyRatio {
+  return Money.rate(normalizeFiatRateText(usdPerUnit));
 }
 
 /** The stored rate for a catalogue row, or a refusal if none has been recorded yet. */

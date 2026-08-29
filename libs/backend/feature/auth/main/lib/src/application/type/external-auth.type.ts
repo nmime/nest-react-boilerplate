@@ -16,7 +16,6 @@ export interface ExternalAuthSessionClaims {
 
 export interface TelegramTmaInput {
   betterAuthProviderSubject: string;
-  tenantId?: string | null;
   intent?: ExternalAuthIntent;
   initData: string;
   linkToken?: string | null;
@@ -25,7 +24,6 @@ export interface TelegramTmaInput {
 }
 
 export interface TelegramOidcSessionInput {
-  tenantId?: string | null;
   intent?: ExternalAuthIntent;
   linkToken?: string | null;
   returnUrl?: string | null;
@@ -38,7 +36,6 @@ export interface TelegramOidcSessionInput {
 }
 
 export interface TelegramBotLinkInput {
-  tenantId?: string | null;
   linkToken: string;
   providerSubject: string;
   username?: string | null;
@@ -48,7 +45,6 @@ export interface TelegramBotLinkInput {
 }
 
 export interface DiscordAuthorizationRequestInput {
-  tenantId?: string | null;
   intent?: ExternalAuthIntent;
   linkToken?: string | null;
   returnUrl?: string | null;
@@ -56,7 +52,6 @@ export interface DiscordAuthorizationRequestInput {
 }
 
 export interface DiscordCallbackInput {
-  tenantId?: string | null;
   code?: string | null;
   state?: string | null;
   principal?: { subject: string; tenantId: string } | null;

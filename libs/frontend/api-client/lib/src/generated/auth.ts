@@ -440,7 +440,11 @@ export interface components {
       credentialRevision?: number;
     };
     RegisterDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       /**
        * Format: email
@@ -454,7 +458,11 @@ export interface components {
       locale?: 'en' | 'ru';
     };
     LoginDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       /**
        * Format: email
@@ -491,7 +499,11 @@ export interface components {
       returnUrl?: string;
     };
     TelegramTmaDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       /** @enum {string} */
       intent?: 'login' | 'link';
@@ -504,7 +516,11 @@ export interface components {
       initData: string;
     };
     TelegramOidcSessionDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       /** @enum {string} */
       intent?: 'login' | 'link';
@@ -516,7 +532,11 @@ export interface components {
       returnUrl?: string;
     };
     TelegramBotLinkDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       linkToken: string;
       providerSubject: string;
@@ -531,7 +551,11 @@ export interface components {
       stateExpiresAt: string;
     };
     DiscordAuthorizationRequestDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       /** @enum {string} */
       intent?: 'login' | 'link';
@@ -557,7 +581,11 @@ export interface components {
       intent: 'login' | 'link';
     };
     LinkTokenDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       /** @enum {string} */
       provider: 'telegram' | 'discord';
@@ -573,7 +601,11 @@ export interface components {
       issued: boolean;
     };
     UserActionTokenRequestDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       /**
        * Format: email
@@ -586,12 +618,20 @@ export interface components {
       confirmed: true;
     };
     UserActionTokenConfirmDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       token: string;
     };
     PasswordResetConfirmDto: {
-      /** Format: uuid */
+      /**
+       * Format: uuid
+       * @deprecated
+       * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+       */
       tenantId?: string;
       token: string;
       password: string;
@@ -2242,6 +2282,10 @@ export interface operations {
   AuthController_discordCallback: {
     parameters: {
       query: {
+        /**
+         * @deprecated
+         * @description Deprecated compatibility field. The server ignores this value and derives tenant ownership.
+         */
         tenantId?: string;
         code: string;
         state: string;

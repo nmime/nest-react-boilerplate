@@ -1,8 +1,12 @@
 /* eslint-disable no-await-in-loop -- schema and index initialization is intentionally ordered */
 import type { Db, Document, IndexDescription } from 'mongodb';
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import { assertCollectionDefinition } from '../../../shared/lib/src/migrations/mongo-migration';
+import {
+  assertCollectionDefinition,
+  MongoMigrationLedgerCollection,
+} from '../../../shared/lib/src/migrations/mongo-migration';
 import { NotificationMongoCollections } from './notification-mongo.documents';
+import { verifyTenantOwnedMongoNotificationPersistence } from './notification-mongo.tenant-collections';
 
 const text = { bsonType: 'string' } as const;
 const nullableText = { bsonType: ['string', 'null'] } as const;
@@ -492,9 +496,30 @@ export async function initializeMongoNotificationPersistence(database: Db): Prom
 }
 
 export async function verifyMongoNotificationPersistence(database: Db): Promise<void> {
-  for (const definition of NotificationMongoCollectionDefinitions) {
-    await assertCollectionDefinition(database, definition);
+  try {
+    for (const definition of NotificationMongoCollectionDefinitions) {
+      await assertCollectionDefinition(database, definition);
+    }
+  } catch (error) {
+    if (!(await hasTenantOwnershipMigration(database))) {
+      throw error;
+    }
+    await verifyTenantOwnedMongoNotificationPersistence(database);
   }
+}
+
+async function hasTenantOwnershipMigration(database: Db): Promise<boolean> {
+  const ledgers = await database
+    .listCollections({ name: MongoMigrationLedgerCollection }, { nameOnly: true })
+    .toArray();
+  if (ledgers.length === 0) {
+    return false;
+  }
+  return (
+    (await database
+      .collection<{ _id: string }>(MongoMigrationLedgerCollection)
+      .countDocuments({ _id: '20260826190100_notification_tenant_ownership' }, { limit: 1 })) > 0
+  );
 }
 
 function isNamespaceExistsError(error: unknown): boolean {

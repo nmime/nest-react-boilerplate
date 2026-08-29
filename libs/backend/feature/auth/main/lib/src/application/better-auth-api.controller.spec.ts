@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { InternalException } from '@app/backend-common-exception';
+import { DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import { BetterAuthApiController } from './better-auth-api.controller';
 
 const BETTER_AUTH_TOKEN = 'BetterAuthInstanceToken';
@@ -284,6 +285,31 @@ describe('BetterAuthApiController', () => {
       expect(mockRes.headers['content-length']).toBeUndefined();
       expect(mockRes.headers['x-auth-version']).toEqual(['1']);
       expect(mockRes.getBody()).toEqual({ success: true });
+    });
+
+    it('never trusts a public request body tenant for login analytics', async () => {
+      const record = vi.fn().mockResolvedValue(undefined);
+      (controller as unknown as { loginAnalytics?: { record: typeof record } }).loginAnalytics = { record };
+      const suppliedTenant = '22222222-2222-4222-8222-222222222222';
+      mockHandler.mockResolvedValue(
+        new Response(JSON.stringify({ user: { id: 'u1', email: 'a@b.c' }, session: { id: 's1', userId: 'u1' } }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+
+      await controller.handle(
+        {
+          method: 'POST',
+          url: '/api/auth/sign-in/email',
+          headers: { 'content-type': 'application/json' },
+          body: { tenantId: suppliedTenant, email: 'a@b.c', password: 'pass' },
+        } as any,
+        mockRes,
+      );
+
+      expect(record).toHaveBeenCalledWith(expect.objectContaining({ tenantId: DefaultAuthTenantId }));
+      expect(record).not.toHaveBeenCalledWith(expect.objectContaining({ tenantId: suppliedTenant }));
     });
 
     it('handles null response for get-session without auth', async () => {

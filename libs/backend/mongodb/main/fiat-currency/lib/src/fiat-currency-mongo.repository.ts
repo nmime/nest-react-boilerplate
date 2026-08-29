@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { MongoDatabaseToken } from '@app/backend-mongodb-main';
+import { MongoClientToken, MongoDatabaseToken, runInMongoTransaction } from '@app/backend-mongodb-main';
 import {
   type FiatCurrency,
   type FiatCurrencyRate,
@@ -9,10 +9,12 @@ import {
   type RecordFiatRateParams,
   type UpsertFiatCurrencyParams,
   fiatRateRatio,
+  normalizeFiatRateText,
+  resolveFiatMinorUnitExponent,
 } from '@app/backend-feature-fiat-currency-shared';
-import { type CurrencyCode, Money } from '@app/common-money';
+import type { CurrencyCode } from '@app/common-money';
 import { Inject, Injectable } from '@nestjs/common';
-import type { Collection, Db, Filter } from 'mongodb';
+import type { ClientSession, Collection, Db, Filter, MongoClient } from 'mongodb';
 import { FiatCurrencyCollectionName, FiatCurrencyRateCollectionName } from './fiat-currency-mongo.collection';
 import type { FiatCurrencyDocument, FiatCurrencyRateDocument } from './fiat-currency-mongo.types';
 
@@ -41,18 +43,18 @@ function toFiatCurrencyRate(document: FiatCurrencyRateDocument): FiatCurrencyRat
  * as they are jsonb columns on the other axis. Nothing above this class can tell which axis it is
  * talking to, which is the point of the port.
  *
- * Rate writes are two statements without a transaction. A replica set would give one, but a
- * single-node deployment cannot, and the pair is ordered so the failure mode is benign: the
- * history row is written first, so a crash in between leaves a recorded observation whose headline
- * rate is one tick stale — recoverable by replaying the newest history row. The other order would
- * leave a headline rate with no evidence behind it.
+ * Rate-history and headline writes share one MongoDB transaction, matching the PostgreSQL adapter:
+ * either the complete provider batch is durable, or no observation/headline pair from it is.
  */
 @Injectable()
 export class FiatCurrencyMongoPersistence extends FiatCurrencyPersistence {
   private readonly currencies: Collection<FiatCurrencyDocument>;
   private readonly rates: Collection<FiatCurrencyRateDocument>;
 
-  constructor(@Inject(MongoDatabaseToken) database: Db) {
+  constructor(
+    @Inject(MongoDatabaseToken) database: Db,
+    @Inject(MongoClientToken) private readonly client: MongoClient,
+  ) {
     super();
     this.currencies = database.collection<FiatCurrencyDocument>(FiatCurrencyCollectionName);
     this.rates = database.collection<FiatCurrencyRateDocument>(FiatCurrencyRateCollectionName);
@@ -83,8 +85,7 @@ export class FiatCurrencyMongoPersistence extends FiatCurrencyPersistence {
       // map, so a locale the caller left out is a locale they deleted.
       name: params.name,
       symbol: params.symbol,
-      minorUnitExponent:
-        params.minorUnitExponent ?? existing?.minorUnitExponent ?? Money.minorUnitExponent(params.code),
+      minorUnitExponent: resolveFiatMinorUnitExponent(params.code, params.minorUnitExponent),
       active: params.active ?? existing?.active ?? true,
       displayOrder: params.displayOrder ?? existing?.displayOrder ?? 0,
       // `undefined` means "leave the image alone"; an explicit null clears it.
@@ -120,46 +121,65 @@ export class FiatCurrencyMongoPersistence extends FiatCurrencyPersistence {
   }
 
   async recordRates(rates: readonly RecordFiatRateParams[]): Promise<FiatCurrencyRate[]> {
-    // Validate every quote before writing anything: a batch half-applied because the fourth rate
-    // was malformed is worse than one that never started.
+    // Validate every quote before starting the transaction.
     for (const rate of rates) {
       fiatRateRatio(rate.usdPerUnit);
     }
 
+    return runInMongoTransaction(this.client, (session) => this.recordRatesInTransaction(rates, session));
+  }
+
+  private async recordRatesInTransaction(
+    rates: readonly RecordFiatRateParams[],
+    session: ClientSession,
+  ): Promise<FiatCurrencyRate[]> {
     const recorded: FiatCurrencyRate[] = [];
 
     for (const rate of rates) {
-      const currency = await this.currencies.findOne({ _id: rate.code });
-
+      const normalizedRate = { ...rate, usdPerUnit: normalizeFiatRateText(rate.usdPerUnit) };
+      // eslint-disable-next-line no-await-in-loop -- ordered within one transaction for deterministic batch semantics
+      const currency = await this.currencies.findOne({ _id: rate.code }, { session });
       if (!currency) {
         throw new Error(`${rate.code} is not in the fiat catalogue: add the currency before recording a rate.`);
       }
 
       // The unique index on (code, asOf, source) makes a provider retry land on the same document,
       // and $setOnInsert keeps the original recordedAt so the audit trail is not rewritten.
-      await this.rates.updateOne(
+      // eslint-disable-next-line no-await-in-loop -- the complete loop commits or rolls back as one unit
+      const result = await this.rates.findOneAndUpdate(
         { code: rate.code, asOf: rate.asOf, source: rate.source },
         {
           $setOnInsert: {
             _id: randomUUID(),
             code: rate.code,
-            usdPerUnit: rate.usdPerUnit,
+            usdPerUnit: normalizedRate.usdPerUnit,
             asOf: rate.asOf,
             source: rate.source,
             recordedAt: new Date(),
           },
         },
-        { upsert: true },
+        { upsert: true, session, returnDocument: 'after', includeResultMetadata: false },
       );
+      if (!result) {
+        throw new Error('Fiat rate upsert did not return an observation.');
+      }
+      if (normalizeFiatRateText(result.usdPerUnit) !== normalizedRate.usdPerUnit) {
+        throw new Error(
+          `${rate.code} already has a different ${rate.source} observation at ${rate.asOf.toISOString()}.`,
+        );
+      }
+      const observation = toFiatCurrencyRate(result);
 
-      if (currency.rateAsOf === null || currency.rateAsOf < rate.asOf) {
+      if (currency.rateAsOf === null || currency.rateAsOf < observation.asOf) {
+        // eslint-disable-next-line no-await-in-loop -- headline and history must share the same transaction
         await this.currencies.updateOne(
           { _id: rate.code },
-          { $set: { usdPerUnit: rate.usdPerUnit, rateAsOf: rate.asOf, updatedAt: new Date() } },
+          { $set: { usdPerUnit: observation.usdPerUnit, rateAsOf: observation.asOf, updatedAt: new Date() } },
+          { session },
         );
       }
 
-      recorded.push({ code: rate.code, usdPerUnit: rate.usdPerUnit, asOf: rate.asOf, source: rate.source });
+      recorded.push(observation);
     }
 
     return recorded;
@@ -178,7 +198,7 @@ export class FiatCurrencyMongoPersistence extends FiatCurrencyPersistence {
     const filter = (
       Object.keys(window).length > 0 ? { code: query.code, asOf: window } : { code: query.code }
     ) as Filter<FiatCurrencyRateDocument>;
-    const documents = await this.rates.find(filter).sort({ asOf: -1 }).limit(query.limit).toArray();
+    const documents = await this.rates.find(filter).sort({ asOf: -1, source: 1 }).limit(query.limit).toArray();
 
     return documents.map(toFiatCurrencyRate);
   }

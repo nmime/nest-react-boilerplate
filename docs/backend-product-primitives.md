@@ -120,8 +120,13 @@ Four properties are worth knowing before you use it:
   Rounding each share independently turns three ways of $10.00 into $9.99.
 
 `Money.registerCurrency` declares a unit the ISO table does not describe — a
-crypto unit, a loyalty point, an internal ledger unit. Any other well-formed
-three-letter code gets the ISO default of two decimal places.
+crypto unit, a loyalty point, an internal ledger unit. Extension codes are
+3–12 uppercase ASCII letters or digits, start with a letter, and must be
+registered before use; this includes provider assets such as `USDT`, `USDC`,
+and `XROCK`. Unregistered three-letter codes retain the ISO default of two
+decimal places. `Money.format` keeps native `Intl` currency formatting for ISO
+codes and formats registered extension assets as a localized number followed by
+the code, so a four-letter asset never reaches `Intl` as an invalid currency.
 
 ## Tenant-scoped queries
 

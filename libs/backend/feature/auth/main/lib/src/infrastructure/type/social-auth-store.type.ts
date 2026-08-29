@@ -115,7 +115,7 @@ export interface SocialAuthStore {
   consumeLinkToken(
     tokenHash: string,
     purpose: AuthLinkTokenPurpose,
-    tenantId: string,
+    tenantId?: string | null,
     now?: Date,
   ): ResultAsync<LinkTokenRecord | null, SocialAuthStoreError>;
   revokeLinkToken(tokenHash: string, tenantId: string, now?: Date): ResultAsync<boolean, SocialAuthStoreError>;

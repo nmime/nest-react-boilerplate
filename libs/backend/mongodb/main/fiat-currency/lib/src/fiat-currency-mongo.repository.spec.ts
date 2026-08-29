@@ -1,5 +1,5 @@
 // @requirements REQ-FIAT-HISTORY-003
-import type { Db } from 'mongodb';
+import type { ClientSession, Db, MongoClient } from 'mongodb';
 import { describe, expect, it, vi } from 'vitest';
 import { FiatCurrencyCollectionName, FiatCurrencyRateCollectionName } from './fiat-currency-mongo.collection';
 import { FiatCurrencyMongoPersistence } from './fiat-currency-mongo.repository';
@@ -43,9 +43,12 @@ function createRepository() {
     Promise.resolve({ matchedCount: 1 }),
   );
   const rateFind = vi.fn((_filter: unknown) => rateCursor());
-  const rateUpdateOne = vi.fn((_filter: unknown, _update: unknown, _options?: unknown) =>
-    Promise.resolve({ upsertedCount: 1 }),
-  );
+  const rateFindOneAndUpdate = vi.fn<
+    (_filter: unknown, update: unknown, _options?: unknown) => Promise<Record<string, unknown> | null>
+  >((_filter: unknown, update: unknown, _options?: unknown) => {
+    const inserted = (update as { $setOnInsert: Record<string, unknown> }).$setOnInsert;
+    return Promise.resolve(inserted);
+  });
 
   const collections: Record<string, unknown> = {
     [FiatCurrencyCollectionName]: {
@@ -53,17 +56,26 @@ function createRepository() {
       findOne: currencyFindOne,
       updateOne: currencyUpdateOne,
     },
-    [FiatCurrencyRateCollectionName]: { find: rateFind, updateOne: rateUpdateOne },
+    [FiatCurrencyRateCollectionName]: { find: rateFind, findOneAndUpdate: rateFindOneAndUpdate },
   };
   const database = { collection: (name: string) => collections[name] } as unknown as Db;
+  const session = {
+    startTransaction: vi.fn(),
+    commitTransaction: vi.fn().mockResolvedValue(undefined),
+    abortTransaction: vi.fn().mockResolvedValue(undefined),
+    endSession: vi.fn().mockResolvedValue(undefined),
+    inTransaction: vi.fn().mockReturnValue(true),
+  } as unknown as ClientSession;
+  const client = { startSession: vi.fn(() => session) } as unknown as MongoClient;
 
   return {
     currencyFind,
     currencyFindOne,
     currencyUpdateOne,
     rateFind,
-    rateUpdateOne,
-    persistence: new FiatCurrencyMongoPersistence(database),
+    rateFindOneAndUpdate,
+    session,
+    persistence: new FiatCurrencyMongoPersistence(database, client),
   };
 }
 
@@ -129,30 +141,43 @@ describe('FiatCurrencyMongoPersistence', () => {
     );
   });
 
-  it('takes every field the operator states verbatim', async () => {
+  it('rejects a catalogue exponent that conflicts with exact money scaling', async () => {
     const { persistence } = createRepository();
 
-    const currency = await persistence.upsertCurrency({
-      code: 'EUR',
-      name: { en: 'Euro' },
-      symbol: { default: '€' },
-      minorUnitExponent: 3,
-      active: false,
-      displayOrder: 7,
-      imageUrl: 'https://cdn.example/eur.svg',
-    });
+    await expect(
+      persistence.upsertCurrency({
+        code: 'EUR',
+        name: { en: 'Euro' },
+        symbol: { default: '€' },
+        minorUnitExponent: 3,
+        active: false,
+        displayOrder: 7,
+        imageUrl: 'https://cdn.example/eur.svg',
+      }),
+    ).rejects.toThrow(/must match the registered money exponent 2/u);
+  });
 
-    expect(currency).toEqual({
-      code: 'EUR',
-      name: { en: 'Euro' },
-      symbol: { default: '€' },
-      minorUnitExponent: 3,
-      active: false,
-      displayOrder: 7,
-      imageUrl: 'https://cdn.example/eur.svg',
-      usdPerUnit: null,
-      rateAsOf: null,
-    });
+  it('uses an explicit null image for a new catalogue entry', async () => {
+    const { persistence } = createRepository();
+
+    await expect(
+      persistence.upsertCurrency({ code: 'EUR', name: { en: 'Euro' }, symbol: { default: '€' } }),
+    ).resolves.toMatchObject({ imageUrl: null });
+  });
+
+  it('accepts an explicit image update when the money exponent remains canonical', async () => {
+    const { currencyFindOne, persistence } = createRepository();
+    currencyFindOne.mockResolvedValue(euroDocument({ imageUrl: 'https://cdn.example/old.svg' }));
+
+    await expect(
+      persistence.upsertCurrency({
+        code: 'EUR',
+        name: { en: 'Euro' },
+        symbol: { default: '€' },
+        minorUnitExponent: 2,
+        imageUrl: 'https://cdn.example/new.svg',
+      }),
+    ).resolves.toMatchObject({ minorUnitExponent: 2, imageUrl: 'https://cdn.example/new.svg' });
   });
 
   it('leaves the image and its settings alone when the update does not mention them', async () => {
@@ -211,32 +236,94 @@ describe('FiatCurrencyMongoPersistence', () => {
   });
 
   it('appends a rate and advances the current rate', async () => {
-    const { currencyFindOne, rateUpdateOne, currencyUpdateOne, persistence } = createRepository();
+    const { currencyFindOne, rateFindOneAndUpdate, currencyUpdateOne, persistence } = createRepository();
     currencyFindOne.mockResolvedValue(euroDocument());
 
     const recorded = await persistence.recordRates([{ code: 'EUR', usdPerUnit: '1.08', asOf: now, source: 'ecb' }]);
 
     expect(recorded).toEqual([{ code: 'EUR', usdPerUnit: '1.08', asOf: now, source: 'ecb' }]);
-    expect(rateUpdateOne).toHaveBeenCalledWith(
+    expect(rateFindOneAndUpdate).toHaveBeenCalledWith(
       { code: 'EUR', asOf: now, source: 'ecb' },
       expect.objectContaining({ $setOnInsert: expect.objectContaining({ usdPerUnit: '1.08' }) }),
-      { upsert: true },
+      {
+        upsert: true,
+        session: expect.any(Object),
+        returnDocument: 'after',
+        includeResultMetadata: false,
+      },
     );
     expect(currencyUpdateOne).toHaveBeenCalledWith(
       { _id: 'EUR' },
       { $set: { usdPerUnit: '1.08', rateAsOf: now, updatedAt: expect.any(Date) } },
+      { session: expect.any(Object) },
     );
   });
 
+  it('accepts equivalent decimal text for the same immutable observation', async () => {
+    const { currencyFindOne, rateFindOneAndUpdate, currencyUpdateOne, persistence, session } = createRepository();
+    currencyFindOne.mockResolvedValue(euroDocument());
+    rateFindOneAndUpdate.mockResolvedValue({
+      _id: 'rate-1',
+      code: 'EUR',
+      usdPerUnit: '1.0700000000',
+      asOf: now,
+      source: 'ecb',
+      recordedAt: now,
+    });
+
+    await expect(
+      persistence.recordRates([{ code: 'EUR', usdPerUnit: '1.07', asOf: now, source: 'ecb' }]),
+    ).resolves.toEqual([{ code: 'EUR', usdPerUnit: '1.0700000000', asOf: now, source: 'ecb' }]);
+
+    expect(currencyUpdateOne).toHaveBeenCalledWith(
+      { _id: 'EUR' },
+      { $set: { usdPerUnit: '1.0700000000', rateAsOf: now, updatedAt: expect.any(Date) } },
+      { session: expect.any(Object) },
+    );
+    expect(session.abortTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects a provider retry that changes an immutable observation', async () => {
+    const { currencyFindOne, rateFindOneAndUpdate, currencyUpdateOne, persistence, session } = createRepository();
+    currencyFindOne.mockResolvedValue(euroDocument());
+    rateFindOneAndUpdate.mockResolvedValue({
+      _id: 'rate-1',
+      code: 'EUR',
+      usdPerUnit: '1.07',
+      asOf: now,
+      source: 'ecb',
+      recordedAt: now,
+    });
+
+    await expect(
+      persistence.recordRates([{ code: 'EUR', usdPerUnit: '1.08', asOf: now, source: 'ecb' }]),
+    ).rejects.toThrow(/already has a different ecb observation/u);
+
+    expect(currencyUpdateOne).not.toHaveBeenCalled();
+    expect(session.abortTransaction).toHaveBeenCalled();
+  });
+
+  it('fails closed when the upsert does not return the stored observation', async () => {
+    const { currencyFindOne, rateFindOneAndUpdate, persistence, session } = createRepository();
+    currencyFindOne.mockResolvedValue(euroDocument());
+    rateFindOneAndUpdate.mockResolvedValue(null);
+
+    await expect(
+      persistence.recordRates([{ code: 'EUR', usdPerUnit: '1.08', asOf: now, source: 'ecb' }]),
+    ).rejects.toThrow('Fiat rate upsert did not return an observation');
+
+    expect(session.abortTransaction).toHaveBeenCalled();
+  });
+
   it('keeps a late arrival in the history without moving the current rate backwards', async () => {
-    const { currencyFindOne, rateUpdateOne, currencyUpdateOne, persistence } = createRepository();
+    const { currencyFindOne, rateFindOneAndUpdate, currencyUpdateOne, persistence } = createRepository();
     currencyFindOne.mockResolvedValue(euroDocument({ usdPerUnit: '1.09', rateAsOf: now }));
 
     await persistence.recordRates([
       { code: 'EUR', usdPerUnit: '1.08', asOf: new Date('2026-08-11T00:00:00.000Z'), source: 'ecb' },
     ]);
 
-    expect(rateUpdateOne).toHaveBeenCalled();
+    expect(rateFindOneAndUpdate).toHaveBeenCalled();
     expect(currencyUpdateOne).not.toHaveBeenCalled();
   });
 
@@ -264,7 +351,7 @@ describe('FiatCurrencyMongoPersistence', () => {
     await persistence.listRateHistory({ code: 'EUR', since: now, until: now, limit: 50 });
 
     expect(rateFind).toHaveBeenCalledWith({ code: 'EUR', asOf: { $gte: now, $lt: now } });
-    expect(sort).toHaveBeenCalledWith({ asOf: -1 });
+    expect(sort).toHaveBeenCalledWith({ asOf: -1, source: 1 });
   });
 
   it('reads unbounded history when no window is given', async () => {

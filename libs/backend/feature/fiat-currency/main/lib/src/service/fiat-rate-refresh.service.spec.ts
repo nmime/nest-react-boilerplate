@@ -91,6 +91,25 @@ describe('FiatRateRefreshService', () => {
     expect(Logger.prototype.warn).toHaveBeenCalled();
   });
 
+  it('lets later sources finish when persistence rejects one source batch', async () => {
+    const persistence = new StubPersistence();
+    persistence.recordRates
+      .mockRejectedValueOnce(new Error('immutable observation conflict'))
+      .mockImplementationOnce((rates) => Promise.resolve(rates.map((rate) => ({ ...rate }) as FiatCurrencyRate)));
+    const first = new StubSource('first', () =>
+      Promise.resolve([{ code: 'EUR', usdPerUnit: '1.07', asOf }] as FiatRateQuoteResult[]),
+    );
+    const second = new StubSource('second', () =>
+      Promise.resolve([{ code: 'GBP', usdPerUnit: '1.25', asOf }] as FiatRateQuoteResult[]),
+    );
+
+    await expect(new FiatRateRefreshService(persistence, [first, second]).refresh()).resolves.toEqual({
+      recorded: 1,
+      failures: [{ source: 'first', reason: 'immutable observation conflict' }],
+    });
+    expect(persistence.recordRates).toHaveBeenCalledTimes(2);
+  });
+
   it('reports a failure that was not thrown as an Error', async () => {
     const persistence = new StubPersistence();
     // A provider that rejects with a bare string is this test's subject, not an oversight in it.

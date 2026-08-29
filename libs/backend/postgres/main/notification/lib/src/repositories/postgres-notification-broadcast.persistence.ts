@@ -96,7 +96,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
   async createAdminTemplate(input: CreateAdminNotificationTemplateInput): Promise<NotificationTemplateAdminRecord> {
     this.validateChannels(input.channels, true);
     return this.entityManager.transactional(async (em) => {
-      const existing = await em.findOne(NotificationTemplateEntity, { code: input.code });
+      const existing = await em.findOne(NotificationTemplateEntity, { tenantId: input.tenantId, code: input.code });
       if (existing) {
         throw new Error('notification_template_code_conflict');
       }
@@ -844,6 +844,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
           validateVariables(version.variablesSchema, variables);
           const [data, sensitiveData] = splitSensitiveVariables(version.variablesSchema, variables);
           const notification = new NotificationEntity({
+            tenantId: broadcast.tenantId,
             targetType: member.targetType,
             targetId: member.targetId,
             template,
@@ -943,6 +944,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
           validateVariables(version.variablesSchema, variables);
           const [data, sensitiveData] = splitSensitiveVariables(version.variablesSchema, variables);
           const notification = new NotificationEntity({
+            tenantId: broadcast.tenantId,
             targetType: member.targetType,
             targetId: member.targetId,
             template,

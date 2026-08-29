@@ -4,6 +4,7 @@ import {
   AuthPermissionEntity,
   AuthRoleEntity,
   AuthRolePermissionEntity,
+  AuthUserEntity,
   AuthUserPermissionEntity,
   AuthUserRoleEntity,
 } from '../../entities';
@@ -18,6 +19,10 @@ export async function reconcileUserRoles(
   actorUserId: string,
   desiredRoleKeys: readonly string[],
 ): Promise<void> {
+  const user = await em.findOne(AuthUserEntity, { id: userId, tenantId });
+  if (!user) {
+    return;
+  }
   const distinctKeys = [...new Set(desiredRoleKeys)];
   const roles =
     distinctKeys.length === 0 ? [] : await em.find(AuthRoleEntity, { tenantId, key: { $in: distinctKeys } });
@@ -58,6 +63,10 @@ export async function reconcileUserDirectPermissions(
   actorUserId: string,
   desiredPermissionKeys: readonly string[],
 ): Promise<void> {
+  const user = await em.findOne(AuthUserEntity, { id: userId, tenantId });
+  if (!user) {
+    return;
+  }
   const distinctKeys = [...new Set(desiredPermissionKeys)];
   const permissions =
     distinctKeys.length === 0 ? [] : await em.find(AuthPermissionEntity, { key: { $in: distinctKeys } });

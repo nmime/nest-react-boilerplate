@@ -73,17 +73,24 @@ validate credentials and one-time artifacts before granting authenticated state.
 
 **Invariants:**
 
-- Verification and reset artifacts are scoped, expiring, and single-purpose.
+- Verification and reset artifacts are scoped, expiring, single-purpose, and globally unique by token hash.
+- Verification and reset confirmation derive ownership from the persisted artifact, never a caller-provided tenant field.
 - Authentication failures do not reveal whether an account exists.
 
 **Failure behavior:**
 
-- Invalid, expired, replayed, or mismatched credentials grant no session.
+- Invalid, expired, replayed, revoked, purpose-mismatched, or trusted-tenant-mismatched credentials grant no session.
+- A legacy artifact with unknown ownership fails closed and is not repaired into the default tenant.
 
 #### Scenario: Replayed verification artifact
 
 - **WHEN** an already consumed verification artifact is submitted
 - **THEN** authentication state remains unchanged
+
+#### Scenario: Caller-selected token tenant
+
+- **WHEN** confirmation carries a caller-controlled tenant different from the persisted token owner
+- **THEN** the persisted token owner remains authoritative and no ownership is rewritten
 
 ### Requirement: [REQ-AUTH-TENANT-004] Tenant and RBAC boundaries are enforced
 
@@ -95,16 +102,23 @@ the persistent principal and selected tenant at the backend boundary.
 **Invariants:**
 
 - A tenant-scoped role cannot grant another tenant's resource.
+- Caller and target membership are checked independently against the selected tenant.
+- Concurrent privileged mutations cannot remove the last active administrator with both required write permissions.
 - Frontend visibility is not authorization.
 
 **Failure behavior:**
 
-- Missing membership or permission returns a safe denial without protected data.
+- Missing caller or target membership or permission returns a safe denial without protected data.
 
 #### Scenario: Cross-tenant administration
 
-- **WHEN** an administrator targets a resource outside the active tenant
+- **WHEN** either the administrator or the target is outside the active tenant
 - **THEN** the operation is denied and audited
+
+#### Scenario: Concurrent administrator demotion
+
+- **WHEN** concurrent mutations attempt to demote the last two powerful administrators
+- **THEN** the tenant keeps at least one active administrator with both required write permissions
 
 ### Requirement: [REQ-AUTH-IDENTITY-005] External identities are linked safely
 
@@ -116,16 +130,25 @@ URLs, nonces, and provider subjects to the initiating authenticated boundary.
 **Invariants:**
 
 - Provider callbacks cannot select arbitrary return origins.
+- Anonymous identity-link callbacks derive user and tenant ownership from a consumed, globally unique one-time token.
+- Authenticated identity linking derives user and tenant ownership from the trusted principal.
+- Caller-provided tenant fields cannot select identity-link ownership.
 - One provider identity cannot be linked to conflicting owners silently.
 
 **Failure behavior:**
 
+- Invalid, expired, replayed, revoked, purpose-mismatched, or wrong-tenant link artifacts reject the link.
 - Invalid state, nonce, provider, subject, or return URL rejects the link.
 
 #### Scenario: Unsafe return URL
 
 - **WHEN** a social authentication callback carries a cross-origin return URL
 - **THEN** the client and backend reject or replace it with a safe destination
+
+#### Scenario: Anonymous identity link
+
+- **WHEN** an anonymous provider callback carries a valid one-time link token and a caller-controlled tenant field
+- **THEN** the linked user and tenant come only from the consumed token
 
 ### Requirement: [REQ-AUTH-PROFILE-006] User profile access respects the authenticated owner
 

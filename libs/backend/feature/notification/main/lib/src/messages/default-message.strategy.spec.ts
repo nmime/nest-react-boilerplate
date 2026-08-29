@@ -12,6 +12,7 @@ describe(DefaultMessageStrategy.name, () => {
   it('renders the requested channel without a legacy template fallback', () => {
     const notification: NotificationRecord = {
       id: 'notification-1',
+      tenantId: '11111111-1111-4111-8111-111111111111',
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       data: { name: 'Ada' },
@@ -46,6 +47,7 @@ describe(DefaultMessageStrategy.name, () => {
   it('renders localized HTML email and push media/actions through the common message contract', () => {
     const notification: NotificationRecord = {
       id: 'notification-2',
+      tenantId: '11111111-1111-4111-8111-111111111111',
       targetType: NotificationTargetType.User,
       targetId: 'user-1',
       data: { name: 'Ada' },

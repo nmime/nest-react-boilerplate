@@ -191,13 +191,20 @@ export class MongoAuthLinkTokenRepository implements AuthLinkTokenRepositoryPort
   consumeToken(
     tokenHash: string,
     purpose: AuthLinkTokenPurpose,
-    tenantId = DefaultAuthTenantId,
+    tenantId?: string | null,
     now = new Date(),
   ): ResultAsync<AuthLinkTokenRecord | null, AuthRepositoryError> {
     return repositoryResult(
       collection(this.database, AuthMongoCollections.linkTokens)
         .findOneAndUpdate(
-          { tokenHash, purpose, tenantId, consumedAt: null, revokedAt: null, expiresAt: { $gt: now } },
+          {
+            tokenHash,
+            purpose,
+            ...(tenantId === null || tenantId === undefined ? {} : { tenantId }),
+            consumedAt: null,
+            revokedAt: null,
+            expiresAt: { $gt: now },
+          },
           { $set: { consumedAt: now, updatedAt: now } },
           { returnDocument: 'after', includeResultMetadata: false },
         )

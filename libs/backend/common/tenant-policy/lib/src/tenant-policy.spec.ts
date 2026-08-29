@@ -76,15 +76,19 @@ function discoverTenantScopedTables(): DiscoveredTable[] {
 }
 
 describe('TenantScopedTablesByDomain', () => {
-  it('covers every entity table that carries a tenant_id', () => {
-    // This is the guard that matters. A new tenant-scoped table left out of the
-    // list gets no policy and leaks across tenants — and nothing else in the
-    // suite would notice, because the leak looks like ordinary working code.
+  it('registers every tenant_id entity table exactly once in the authoritative inventory', () => {
+    // RLS is intentionally not engaged at runtime; repository predicates provide current
+    // enforcement. The inventory must still stay complete because historical reversal migrations
+    // and audit scanners consume it.
     const discovered = discoverTenantScopedTables();
-    const declared = new Set<string>([...TenantScopedTables, ...TenantSharedTierTables]);
-    const missing = discovered.filter((it) => !declared.has(it.table)).map((it) => it.table);
+    const registered = [...TenantScopedTables, ...TenantSharedTierTables];
+    const discoveredTables = new Set(discovered.map((it) => it.table));
+    const registeredTables = new Set<string>(registered);
+    const missing = discovered.filter((it) => !registeredTables.has(it.table)).map((it) => it.table);
+    const stale = registered.filter((table) => !discoveredTables.has(table));
 
-    expect(missing, `tenant-scoped tables with no row-level-security policy: ${missing.join(', ')}`).toEqual([]);
+    expect(missing, `tenant_id tables missing from central registration: ${missing.join(', ')}`).toEqual([]);
+    expect(stale, `central registration names tables without tenant_id: ${stale.join(', ')}`).toEqual([]);
   });
 
   it('declares every nullable tenant_id table as shared-tier, never strict', () => {
@@ -119,8 +123,9 @@ describe('TenantScopedTablesByDomain', () => {
     expect(TenantSharedTierTables.filter((table) => strict.has(table))).toEqual([]);
   });
 
-  it('declares no table twice, so a policy is never installed from two domains', () => {
-    expect(TenantScopedTables).toHaveLength(new Set(TenantScopedTables).size);
+  it('declares no table twice across strict and shared tiers', () => {
+    const registered = [...TenantScopedTables, ...TenantSharedTierTables];
+    expect(registered).toHaveLength(new Set(registered).size);
   });
 
   it('groups tables under a domain that owns a migration set', () => {

@@ -12,6 +12,7 @@ import { parse as parseTmaInitData, validate as validateTmaInitData } from '@tma
 import {
   AuthProvider,
   AuthProviderChannel,
+  DefaultAuthTenantId,
   ExternalAuthIntent,
   permissionsForRoles,
   resolveBootstrapRoleKeys,
@@ -103,7 +104,7 @@ export class ExternalAuthService {
     }
     const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ') || null;
     return this.resolveVerifiedProfile({
-      tenantId: parseTenantId(input.tenantId),
+      tenantId: input.principal?.tenantId ?? DefaultAuthTenantId,
       intent: input.intent ?? ExternalAuthIntent.Login,
       linkToken: input.linkToken,
       returnUrl: input.returnUrl,
@@ -127,7 +128,7 @@ export class ExternalAuthService {
   async telegramOidcSession(input: TelegramOidcSessionInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Telegram);
     return this.resolveVerifiedProfile({
-      tenantId: parseTenantId(input.tenantId),
+      tenantId: input.principal?.tenantId ?? DefaultAuthTenantId,
       intent: input.intent ?? ExternalAuthIntent.Login,
       linkToken: input.linkToken,
       returnUrl: input.returnUrl,
@@ -145,13 +146,12 @@ export class ExternalAuthService {
 
   async telegramBotLink(input: TelegramBotLinkInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Telegram);
-    const tenantId = parseTenantId(input.tenantId);
-    const consumed = await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link, tenantId);
+    const consumed = await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link);
     if (!consumed.userId) {
       throw new UnauthorizedException('link_token_expired');
     }
     return this.linkProfileToUser({
-      tenantId,
+      tenantId: consumed.tenantId,
       userId: consumed.userId,
       profile: {
         provider: AuthProvider.Telegram,
@@ -257,7 +257,7 @@ export class ExternalAuthService {
 
   createDiscordAuthorizationRequest(input: DiscordAuthorizationRequestInput): DiscordAuthorizationRequestResult {
     assertProviderEnabled(AuthProvider.Discord);
-    const tenantId = parseTenantId(input.tenantId);
+    const tenantId = input.principal?.tenantId ?? DefaultAuthTenantId;
     assertReturnUrlAllowed(input.returnUrl);
     const provider = createDiscordProvider();
     const state = generateState();
@@ -351,21 +351,7 @@ export class ExternalAuthService {
   }): Promise<ExternalAuthLoginResult> {
     assertReturnUrlAllowed(input.returnUrl);
     if (input.intent === ExternalAuthIntent.Link) {
-      const userId =
-        input.principal?.subject ??
-        (input.linkToken
-          ? (await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link, input.tenantId)).userId
-          : null);
-      if (!userId) {
-        throw new UnauthorizedException('link_token_expired');
-      }
-      return this.linkProfileToUser({
-        tenantId: input.tenantId,
-        userId,
-        profile: input.profile,
-        returnUrl: input.returnUrl,
-        discordTokens: input.discordTokens,
-      });
+      return this.resolveLinkIntent(input);
     }
 
     const existing = await this.social.findIdentity(
@@ -444,6 +430,39 @@ export class ExternalAuthService {
     };
   }
 
+  private async resolveLinkIntent(input: {
+    tenantId: string;
+    linkToken?: string | null;
+    returnUrl?: string | null;
+    principal?: { subject: string; tenantId: string } | null;
+    profile: VerifiedExternalProfile;
+    discordTokens?: OAuth2Tokens;
+  }): Promise<ExternalAuthLoginResult> {
+    if (input.principal) {
+      return this.linkProfileToUser({
+        tenantId: input.principal.tenantId,
+        userId: input.principal.subject,
+        profile: input.profile,
+        returnUrl: input.returnUrl,
+        discordTokens: input.discordTokens,
+      });
+    }
+    if (!input.linkToken) {
+      throw new UnauthorizedException('link_token_expired');
+    }
+    const consumed = await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link);
+    if (!consumed.userId) {
+      throw new UnauthorizedException('link_token_expired');
+    }
+    return this.linkProfileToUser({
+      tenantId: consumed.tenantId,
+      userId: consumed.userId,
+      profile: input.profile,
+      returnUrl: input.returnUrl,
+      discordTokens: input.discordTokens,
+    });
+  }
+
   private async linkProfileToUser(input: {
     tenantId: string;
     userId: string;
@@ -516,7 +535,7 @@ export class ExternalAuthService {
     });
   }
 
-  private async consumeLinkTokenOrThrow(token: string, purpose: ExternalAuthIntent, tenantId: string) {
+  private async consumeLinkTokenOrThrow(token: string, purpose: ExternalAuthIntent, tenantId?: string | null) {
     const consumed = await this.social.consumeLinkToken(hashOpaqueToken(token), purpose, tenantId);
     if (consumed.isErr()) {
       throw new UnauthorizedException(consumed.error.message);

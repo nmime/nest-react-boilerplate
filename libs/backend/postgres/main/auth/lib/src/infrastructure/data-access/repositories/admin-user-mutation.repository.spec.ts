@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-TENANT-004 REQ-AUTH-PERSISTENCE-007
 import { LockMode, type EntityManager } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -75,14 +75,28 @@ function createEntityManagerMock(
         tenantId,
       }),
   );
-  const execute = vi.fn((sql: string) =>
-    Promise.resolve(
+  let persistedStatusMutation = false;
+  const execute = vi.fn((sql: string) => {
+    if (sql.startsWith('update "auth_users" set "status"')) {
+      persistedStatusMutation = true;
+      return Promise.resolve([]);
+    }
+    return Promise.resolve(
       sql.includes('active_powerful_admin_count')
-        ? [{ active_powerful_admin_count: String(input.powerfulAdminCount ?? 2) }]
+        ? [
+            {
+              active_powerful_admin_count: String(
+                (input.powerfulAdminCount ?? 2) -
+                  (persistedStatusMutation && user && !hasActivePowerfulAdminAccess(user) ? 1 : 0),
+              ),
+            },
+          ]
         : [],
-    ),
+    );
+  });
+  const findOne = vi.fn((_entity: unknown, where: { id?: string } = {}) =>
+    Promise.resolve(where.id === actorUserId ? createPowerfulAdmin({ id: actorUserId }) : user),
   );
-  const findOne = vi.fn(() => Promise.resolve(user));
   const find = vi.fn((entity: unknown, where: Record<string, unknown> = {}) => {
     if (entity === AuthUserRoleEntity) {
       return Promise.resolve(roleAssignments);
@@ -131,8 +145,10 @@ function createEntityManagerMock(
     return 0;
   });
   const flush = vi.fn(input.flush ?? (() => Promise.resolve()));
+  const transactionContext = 'transaction-context';
   const transactionalEntityManager = {
     getConnection: () => ({ execute }),
+    getTransactionContext: () => transactionContext,
     findOne,
     find,
     persist,
@@ -189,16 +205,23 @@ describe('AdminUserMutationRepository', () => {
     const execute = vi.fn(() => Promise.resolve([{ active_powerful_admin_count: '2' }]));
     const repository = new AdminUserMutationRepository({
       getConnection: () => ({ execute }),
+      getTransactionContext: () => undefined,
     } as unknown as EntityManager);
 
     await expect(repository.countActivePowerfulAdmins(tenantId)).resolves.toBe(2);
 
-    const [sql, parameters, mode] = execute.mock.calls[0] as unknown as [string, string[], string];
+    const [sql, parameters, mode, transactionContext] = execute.mock.calls[0] as unknown as [
+      string,
+      string[],
+      string,
+      unknown,
+    ];
     expect(sql).toContain('from "auth_user_permissions" up');
     expect(sql).toContain('from "auth_user_roles" ur');
     expect(sql).not.toContain('u."permissions"');
     expect(parameters).toEqual([tenantId, AdminUsersWritePermissionName, AdminUsersAccessPolicyUpdatePermissionName]);
     expect(mode).toBe('all');
+    expect(transactionContext).toBeUndefined();
   });
 
   it('mutates user, audit log, and outbox row in one locked transaction', async () => {
@@ -220,9 +243,12 @@ describe('AdminUserMutationRepository', () => {
     expect(mutation?.before.status).toBe('active');
     expect(mutation?.after.status).toBe('disabled');
     expect(user?.status).toBe('disabled');
-    expect(execute).toHaveBeenCalledWith('select pg_advisory_xact_lock(hashtext(?))', [
-      `admin-user-sensitive-mutation:${tenantId}`,
-    ]);
+    expect(execute).toHaveBeenCalledWith(
+      'select pg_advisory_xact_lock(hashtext(?))',
+      [`admin-user-sensitive-mutation:${tenantId}`],
+      'all',
+      'transaction-context',
+    );
     expect(findOne).toHaveBeenCalledWith(
       AuthUserEntity,
       { id: targetUserId, tenantId },
@@ -233,6 +259,7 @@ describe('AdminUserMutationRepository', () => {
       expect.stringContaining('from "auth_user_permissions" up'),
       [tenantId, AdminUsersWritePermissionName, AdminUsersAccessPolicyUpdatePermissionName],
       'all',
+      'transaction-context',
     );
     expect(persist).toHaveBeenCalledWith([expect.any(AdminAuditLogEntity), expect.any(TransactionalOutboxEventEntity)]);
     expect(flush).toHaveBeenCalledTimes(1);
@@ -456,11 +483,19 @@ function buildRoleMutationEm(input: {
   const execute = vi.fn((sql: string) =>
     Promise.resolve(
       sql.includes('active_powerful_admin_count')
-        ? [{ active_powerful_admin_count: String(input.powerfulAdminCount) }]
+        ? [
+            {
+              active_powerful_admin_count: String(
+                input.powerfulAdminCount - (input.user && !hasActivePowerfulAdminAccess(input.user) ? 1 : 0),
+              ),
+            },
+          ]
         : [],
     ),
   );
-  const findOne = vi.fn(() => Promise.resolve(input.user));
+  const findOne = vi.fn((_entity: unknown, where: { id?: string } = {}) =>
+    Promise.resolve(where.id === actorUserId ? createPowerfulAdmin({ id: actorUserId }) : input.user),
+  );
   const find = vi.fn((entity: unknown, where: Record<string, unknown>) => {
     if (entity === AuthRoleEntity) {
       if (where.key) {
@@ -488,6 +523,7 @@ function buildRoleMutationEm(input: {
   });
   const txEm = {
     getConnection: () => ({ execute }),
+    getTransactionContext: () => 'transaction-context',
     findOne,
     find,
     persist,
@@ -501,6 +537,55 @@ function buildRoleMutationEm(input: {
 }
 
 describe('AdminUserMutationRepository role assignment', () => {
+  it('refuses a mutation when the caller does not belong to the target tenant', async () => {
+    const user = new AuthUserEntity({
+      tenantId,
+      email: 'user@example.com',
+      status: 'active',
+      roles: ['user'],
+      permissions: ['profile:read'],
+    });
+    user.id = targetUserId;
+    const setup = buildRoleMutationEm({
+      user,
+      powerfulAdminCount: 2,
+      desiredRoles: [adminRole],
+      existingAssignments: [],
+      finalAssignments: [],
+      finalRoles: [],
+      finalRolePermissions: [],
+      finalPermissions: [],
+    });
+    const findOne = vi.fn((_entity: unknown, where: { id?: string } = {}) =>
+      Promise.resolve(where.id === actorUserId ? null : user),
+    );
+    const txEm = {
+      getConnection: () => ({ execute: vi.fn().mockResolvedValue([]) }),
+      getTransactionContext: () => 'transaction-context',
+      findOne,
+      find: setup.find,
+      persist: setup.persist,
+      nativeDelete: setup.nativeDelete,
+      flush: setup.flush,
+    } as unknown as EntityManager;
+    const entityManager = {
+      transactional: vi.fn((callback: (em: EntityManager) => unknown) => callback(txEm)),
+    } as unknown as EntityManager;
+
+    const result = await new AdminUserMutationRepository(entityManager).mutateUserRolesWithAudit({
+      tenantId,
+      targetUserId,
+      actorUserId,
+      desiredRoleKeys: ['admin'],
+      audit: {},
+    });
+
+    expect(result._unsafeUnwrap()).toBeNull();
+    expect(findOne).toHaveBeenNthCalledWith(2, AuthUserEntity, { id: actorUserId, tenantId });
+    expect(setup.persist).not.toHaveBeenCalled();
+    expect(setup.nativeDelete).not.toHaveBeenCalled();
+  });
+
   it('promotes a user by resolving effective access from the normalized tables', async () => {
     const user = new AuthUserEntity({
       tenantId,

@@ -1,4 +1,5 @@
 // @requirements REQ-FIAT-HISTORY-003
+import { LockMode } from '@mikro-orm/core';
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
 import { FiatCurrencyEntity, FiatCurrencyRateEntity } from '../entities';
@@ -67,7 +68,7 @@ describe('FiatCurrencyPostgresPersistence', () => {
     expect(await persistence.findCurrency('EUR')).toBeNull();
 
     findOne.mockResolvedValue(euro({ usdPerUnit: '1.0800000000' }));
-    expect(await persistence.findCurrency('EUR')).toMatchObject({ code: 'EUR', usdPerUnit: '1.0800000000' });
+    expect(await persistence.findCurrency('EUR')).toMatchObject({ code: 'EUR', usdPerUnit: '1.08' });
   });
 
   it('creates a currency that is not in the catalogue yet', async () => {
@@ -100,20 +101,36 @@ describe('FiatCurrencyPostgresPersistence', () => {
     expect(updated).toMatchObject({ active: false, displayOrder: 7, imageUrl: 'https://cdn.example.test/eur.svg' });
   });
 
-  it('accepts a new image and minor unit for an existing currency', async () => {
+  it('rejects a catalogue exponent that conflicts with exact money scaling', async () => {
     const { findOne, entityManager } = createEntityManagerMock();
     findOne.mockResolvedValue(euro({ imageUrl: 'https://cdn.example.test/old.svg' }));
     const persistence = new FiatCurrencyPostgresPersistence(entityManager);
 
-    const updated = await persistence.upsertCurrency({
-      code: 'EUR',
-      name: { en: 'Euro' },
-      symbol: { default: '€' },
-      minorUnitExponent: 4,
-      imageUrl: 'https://cdn.example.test/new.svg',
-    });
+    await expect(
+      persistence.upsertCurrency({
+        code: 'EUR',
+        name: { en: 'Euro' },
+        symbol: { default: '€' },
+        minorUnitExponent: 4,
+        imageUrl: 'https://cdn.example.test/new.svg',
+      }),
+    ).rejects.toThrow(/must match the registered money exponent 2/u);
+  });
 
-    expect(updated).toMatchObject({ minorUnitExponent: 4, imageUrl: 'https://cdn.example.test/new.svg' });
+  it('accepts an explicit image update when the money exponent remains canonical', async () => {
+    const { findOne, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(euro({ imageUrl: 'https://cdn.example.test/old.svg' }));
+    const persistence = new FiatCurrencyPostgresPersistence(entityManager);
+
+    await expect(
+      persistence.upsertCurrency({
+        code: 'EUR',
+        name: { en: 'Euro' },
+        symbol: { default: '€' },
+        minorUnitExponent: 2,
+        imageUrl: 'https://cdn.example.test/new.svg',
+      }),
+    ).resolves.toMatchObject({ minorUnitExponent: 2, imageUrl: 'https://cdn.example.test/new.svg' });
   });
 
   it('replaces the whole locale map rather than merging into the stored one', async () => {
@@ -173,6 +190,7 @@ describe('FiatCurrencyPostgresPersistence', () => {
 
     expect(recorded).toEqual([{ code: 'EUR', usdPerUnit: '1.08', asOf, source: 'ecb' }]);
     expect(currency).toMatchObject({ usdPerUnit: '1.08', rateAsOf: asOf });
+    expect(findOne).toHaveBeenCalledWith(FiatCurrencyEntity, { code: 'EUR' }, { lockMode: LockMode.PESSIMISTIC_WRITE });
     expect(persist).toHaveBeenCalledWith(expect.any(FiatCurrencyRateEntity));
   });
 
@@ -206,6 +224,37 @@ describe('FiatCurrencyPostgresPersistence', () => {
     expect(persist).not.toHaveBeenCalled();
   });
 
+  it('accepts equivalent decimal text for the same immutable observation', async () => {
+    const { findOne, persist, entityManager } = createEntityManagerMock();
+    const asOf = new Date('2026-08-12T00:00:00.000Z');
+    const currency = euro();
+    const stored = new FiatCurrencyRateEntity({ code: 'EUR', usdPerUnit: '1.0700000000', asOf, source: 'ecb' });
+    findOne.mockImplementation((entity: unknown) => Promise.resolve(entity === FiatCurrencyEntity ? currency : stored));
+    const persistence = new FiatCurrencyPostgresPersistence(entityManager);
+
+    await expect(persistence.recordRates([{ code: 'EUR', usdPerUnit: '1.07', asOf, source: 'ecb' }])).resolves.toEqual([
+      { code: 'EUR', usdPerUnit: '1.07', asOf, source: 'ecb' },
+    ]);
+
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it('rejects a provider retry that changes an immutable observation', async () => {
+    const { findOne, persist, entityManager } = createEntityManagerMock();
+    const asOf = new Date('2026-08-12T00:00:00.000Z');
+    const currency = euro();
+    const stored = new FiatCurrencyRateEntity({ code: 'EUR', usdPerUnit: '1.07', asOf, source: 'ecb' });
+    findOne.mockImplementation((entity: unknown) => Promise.resolve(entity === FiatCurrencyEntity ? currency : stored));
+    const persistence = new FiatCurrencyPostgresPersistence(entityManager);
+
+    await expect(persistence.recordRates([{ code: 'EUR', usdPerUnit: '1.08', asOf, source: 'ecb' }])).rejects.toThrow(
+      /already has a different ecb observation/u,
+    );
+
+    expect(persist).not.toHaveBeenCalled();
+    expect(currency).toMatchObject({ usdPerUnit: null, rateAsOf: null });
+  });
+
   it('refuses a rate the exact arithmetic cannot hold before it reaches the table', async () => {
     const { entityManager } = createEntityManagerMock();
     const persistence = new FiatCurrencyPostgresPersistence(entityManager);
@@ -235,7 +284,7 @@ describe('FiatCurrencyPostgresPersistence', () => {
     expect(find).toHaveBeenCalledWith(
       FiatCurrencyRateEntity,
       { code: 'EUR', asOf: { $gte: since, $lt: until } },
-      { orderBy: { asOf: 'DESC' }, limit: 50 },
+      { orderBy: { asOf: 'DESC', source: 'ASC' }, limit: 50 },
     );
   });
 
@@ -256,7 +305,7 @@ describe('FiatCurrencyPostgresPersistence', () => {
     expect(find).toHaveBeenCalledWith(
       FiatCurrencyRateEntity,
       { code: 'EUR' },
-      { orderBy: { asOf: 'DESC' }, limit: 10 },
+      { orderBy: { asOf: 'DESC', source: 'ASC' }, limit: 10 },
     );
     expect(history).toEqual([
       { code: 'EUR', usdPerUnit: '1.08', asOf: new Date('2026-08-12T00:00:00.000Z'), source: 'ecb' },

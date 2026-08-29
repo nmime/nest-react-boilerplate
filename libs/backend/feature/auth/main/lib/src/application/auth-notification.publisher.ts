@@ -22,7 +22,12 @@ const actionTemplateCode: Record<AuthAction, string> = {
 export class AuthNotificationPublisher {
   constructor(@Optional() private readonly notifications?: NotificationService) {}
 
-  async publishUserAction(params: { userId: string; purpose: AuthAction; token: string }): Promise<void> {
+  async publishUserAction(params: {
+    tenantId: string;
+    userId: string;
+    purpose: AuthAction;
+    token: string;
+  }): Promise<void> {
     const notifications = this.requireNotifications();
     const route = configuredAuthRoute();
     const templateCode = actionTemplateCode[params.purpose];
@@ -32,6 +37,7 @@ export class AuthNotificationPublisher {
       channels: codeTemplateChannels(params.purpose),
     });
     await notifications.createTemplateNotification({
+      tenantId: params.tenantId,
       targetType: NotificationTargetType.User,
       targetId: params.userId,
       templateCode,

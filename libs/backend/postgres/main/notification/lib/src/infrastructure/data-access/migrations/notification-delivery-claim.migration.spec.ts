@@ -1,11 +1,15 @@
-// @requirements REQ-NOTIFY-PERSISTENCE-005
+// @requirements REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005
 import { describe, expect, it } from 'vitest';
 import { Migration20260715100000CreateNotifications } from './Migration20260715100000CreateNotifications';
 import { Migration20260720130000AddNotificationDeliveryClaim } from './Migration20260720130000AddNotificationDeliveryClaim';
 import { Migration20260721120000NotificationProvidersAndSensitivePayload } from './Migration20260721120000NotificationProvidersAndSensitivePayload';
 import { Migration20260721160000AdminNotificationBroadcasts } from './Migration20260721160000AdminNotificationBroadcasts';
 import { Migration20260726180000NotificationClaimTokens } from './Migration20260726180000NotificationClaimTokens';
-import { Migration20260729190000NotificationDeliveryClaimOwnership, notificationMigrations } from './index';
+import {
+  Migration20260729190000NotificationDeliveryClaimOwnership,
+  Migration20260826190000NotificationTenantOwnership,
+  notificationMigrations,
+} from './index';
 
 function collectSql(migration: { addSql(sql: string): void }, run: () => void): string {
   const statements: string[] = [];
@@ -130,6 +134,50 @@ describe('Notification delivery-claim migration', () => {
     expect(notificationMigrations.indexOf(Migration20260721160000AdminNotificationBroadcasts)).toBeLessThan(
       notificationMigrations.indexOf(Migration20260726180000NotificationClaimTokens),
     );
+  });
+
+  it('backfills and requires ordinary-notification tenant ownership without enabling RLS', () => {
+    const migration = new Migration20260826190000NotificationTenantOwnership(undefined as never, undefined as never);
+    const sql = collectSql(migration, () => {
+      migration.up();
+    });
+
+    expect(sql).toContain('add column if not exists "tenant_id"');
+    expect(sql).toContain('update "notifications"');
+    expect(sql).toContain('set "tenant_id"');
+    expect(sql).toContain('cannot infer tenant ownership for legacy ordinary notifications');
+    expect(sql).toContain('ffffffff-ffff-4fff-bfff-ffffffffffff');
+    expect(sql).not.toContain('set "tenant_id" = \'00000000-0000-0000-0000-000000000000\'::uuid');
+    expect(sql).toContain('alter column "tenant_id" set not null');
+    expect(sql).toContain('drop constraint if exists "ck__notification_templates__tenant"');
+    expect(sql).toContain('drop constraint if exists "uq__notification_templates__code"');
+    expect(sql).toContain('"uq__notification_templates__code"');
+    expect(sql).toContain('"uq__notification_templates__tenant_id_code"');
+    expect(sql).toContain('"ix__notifications__tenant_id_created_at_desc"');
+    expect(sql).not.toContain('enable row level security');
+    expect(notificationMigrations.indexOf(Migration20260729190000NotificationDeliveryClaimOwnership)).toBeLessThan(
+      notificationMigrations.indexOf(Migration20260826190000NotificationTenantOwnership),
+    );
+  });
+
+  it('restores the legacy template ownership constraints only after a fail-fast compatibility guard', () => {
+    const migration = new Migration20260826190000NotificationTenantOwnership(undefined as never, undefined as never);
+    const sql = collectSql(migration, () => {
+      migration.down();
+    });
+
+    const rollbackGuard = sql.indexOf('cannot roll back notification tenant ownership');
+    const notificationIndexDrop = sql.indexOf('drop index if exists "ix__notifications__tenant_id_created_at_desc"');
+    const tenantIndexDrop = sql.indexOf('drop index if exists "uq__notification_templates__tenant_id_code"');
+    expect(rollbackGuard).toBeGreaterThanOrEqual(0);
+    expect(notificationIndexDrop).toBeGreaterThan(rollbackGuard);
+    expect(tenantIndexDrop).toBeGreaterThan(rollbackGuard);
+    expect(sql).toContain('where "source" = \'code\' and "tenant_id" is not null');
+    expect(sql).toContain('group by "code" having count(*) > 1');
+    expect(sql).toContain('add constraint "uq__notification_templates__code" unique ("code")');
+    expect(sql).toContain('add constraint "ck__notification_templates__tenant"');
+    expect(sql).toContain(`("source" = 'code' and "tenant_id" is null)`);
+    expect(sql).toContain('drop column if exists "tenant_id"');
   });
 
   it('drops reinstalled tenant policies before dropping notification_templates.tenant_id', () => {

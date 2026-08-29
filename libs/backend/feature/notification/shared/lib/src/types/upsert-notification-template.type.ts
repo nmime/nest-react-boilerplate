@@ -11,6 +11,11 @@ export interface UpsertNotificationTemplateChannel {
 }
 
 export interface UpsertNotificationTemplateParams {
+  /**
+   * Omitted only by trusted internal publishers that install a shared code-owned template.
+   * Authenticated HTTP callers always pass the principal tenant.
+   */
+  tenantId?: string;
   code: string;
   description?: string;
   channels: UpsertNotificationTemplateChannel[];

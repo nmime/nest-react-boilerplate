@@ -1,4 +1,4 @@
-// @requirements REQ-NOTIFY-PERSISTENCE-005
+// @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-PERSISTENCE-005
 import 'reflect-metadata';
 import { LockMode } from '@mikro-orm/core';
 import type { EntityManager } from '@mikro-orm/postgresql';
@@ -58,6 +58,172 @@ describe('PostgresNotificationPersistence', () => {
     // cannot order inserts by.
     expect(transaction.persist).toHaveBeenCalledTimes(3);
     expect(transaction.flush).toHaveBeenCalledTimes(3);
+  });
+
+  it('uses tenant ownership when code-owned templates are created or updated', async () => {
+    const transaction = createTransactionEntityManager();
+    transaction.findOne.mockResolvedValue(null);
+    transaction.find.mockResolvedValue([]);
+    const persistence = createPersistence(transaction);
+    const tenantId = '11111111-1111-4111-8111-111111111111';
+
+    await persistence.upsertTemplate({
+      tenantId,
+      code: 'welcome',
+      channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Hello' } } }],
+    });
+
+    expect(transaction.findOne).toHaveBeenCalledWith(NotificationTemplateEntity, { code: 'welcome', tenantId });
+    expect(
+      transaction.persist.mock.calls
+        .flatMap((call) => call)
+        .find((value) => value instanceof NotificationTemplateEntity),
+    ).toMatchObject({ tenantId, code: 'welcome' });
+  });
+
+  it('prefers the principal tenant template and only falls back to a shared template', async () => {
+    const transaction = createTransactionEntityManager();
+    const template = new NotificationTemplateEntity({
+      tenantId: '11111111-1111-4111-8111-111111111111',
+      code: 'welcome',
+      currentVersionId: '22222222-2222-4222-8222-222222222222',
+    });
+    transaction.findOne.mockResolvedValueOnce(template).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+    transaction.find.mockResolvedValue([]);
+
+    await expect(
+      createPersistence(transaction).create({
+        tenantId: template.tenantId!,
+        targetType: NotificationTargetType.User,
+        targetId: 'user-1',
+        templateCode: template.code,
+        channels: [],
+      }),
+    ).rejects.toBeInstanceOf(InvalidNotificationTemplateError);
+
+    expect(transaction.findOne).toHaveBeenNthCalledWith(1, NotificationTemplateEntity, {
+      code: template.code,
+      tenantId: template.tenantId,
+    });
+    expect(transaction.findOne).toHaveBeenNthCalledWith(3, NotificationTemplateEntity, {
+      code: template.code,
+      tenantId: null,
+    });
+  });
+
+  it('uses a usable shared template when the tenant override is not publishable', async () => {
+    const transaction = createTransactionEntityManager();
+    const tenantId = '11111111-1111-4111-8111-111111111111';
+    const tenantTemplate = new NotificationTemplateEntity({
+      tenantId,
+      code: 'welcome',
+      currentVersionId: '22222222-2222-4222-8222-222222222222',
+    });
+    const sharedTemplate = new NotificationTemplateEntity({
+      tenantId: null,
+      code: 'welcome',
+    });
+    const sharedVersion = publishedVersion(sharedTemplate);
+    const sharedBot = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: sharedVersion.id,
+      channel: NotificationChannel.Bot,
+      content: { body: { en: 'Shared' } },
+    });
+    transaction.findOne
+      .mockResolvedValueOnce(tenantTemplate)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(sharedTemplate)
+      .mockResolvedValueOnce(sharedVersion);
+    transaction.find.mockResolvedValueOnce([sharedBot]);
+
+    const record = await createPersistence(transaction).create({
+      tenantId,
+      targetType: NotificationTargetType.User,
+      targetId: 'user-1',
+      templateCode: 'welcome',
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+
+    expect(record.template.id).toBe(sharedTemplate.id);
+    expect(record.template.channels[NotificationChannel.Bot]?.content).toEqual({ body: { en: 'Shared' } });
+  });
+
+  it('uses a shared template when the tenant version lacks a requested channel', async () => {
+    const transaction = createTransactionEntityManager();
+    const tenantId = '11111111-1111-4111-8111-111111111111';
+    const tenantTemplate = new NotificationTemplateEntity({ tenantId, code: 'welcome' });
+    const tenantVersion = publishedVersion(tenantTemplate);
+    const tenantEmail = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: tenantVersion.id,
+      channel: NotificationChannel.Email,
+      content: { subject: { en: 'Tenant' }, body: { en: 'Tenant' } },
+    });
+    const sharedTemplate = new NotificationTemplateEntity({ tenantId: null, code: 'welcome' });
+    const sharedVersion = publishedVersion(sharedTemplate);
+    const sharedBot = new NotificationTemplateVersionChannelEntity({
+      templateVersionId: sharedVersion.id,
+      channel: NotificationChannel.Bot,
+      content: { body: { en: 'Shared' } },
+    });
+    transaction.findOne
+      .mockResolvedValueOnce(tenantTemplate)
+      .mockResolvedValueOnce(tenantVersion)
+      .mockResolvedValueOnce(sharedTemplate)
+      .mockResolvedValueOnce(sharedVersion);
+    transaction.find.mockResolvedValueOnce([tenantEmail]).mockResolvedValueOnce([sharedBot]);
+
+    const record = await createPersistence(transaction).create({
+      tenantId,
+      targetType: NotificationTargetType.User,
+      targetId: 'user-1',
+      templateCode: 'welcome',
+      channels: [NotificationChannel.Bot],
+      inAppVisible: false,
+    });
+
+    expect(record.template.id).toBe(sharedTemplate.id);
+    expect(record.template.channels[NotificationChannel.Bot]?.content).toEqual({ body: { en: 'Shared' } });
+  });
+
+  it('rejects the request when neither tenant nor shared template supports the requested channel', async () => {
+    const transaction = createTransactionEntityManager();
+    const tenantId = '11111111-1111-4111-8111-111111111111';
+    const tenantTemplate = new NotificationTemplateEntity({ tenantId, code: 'welcome' });
+    const tenantVersion = publishedVersion(tenantTemplate);
+    const sharedTemplate = new NotificationTemplateEntity({ tenantId: null, code: 'welcome' });
+    const sharedVersion = publishedVersion(sharedTemplate);
+    transaction.findOne
+      .mockResolvedValueOnce(tenantTemplate)
+      .mockResolvedValueOnce(tenantVersion)
+      .mockResolvedValueOnce(sharedTemplate)
+      .mockResolvedValueOnce(sharedVersion);
+    transaction.find
+      .mockResolvedValueOnce([
+        new NotificationTemplateVersionChannelEntity({
+          templateVersionId: tenantVersion.id,
+          channel: NotificationChannel.Email,
+          content: { subject: { en: 'Tenant' }, body: { en: 'Tenant' } },
+        }),
+      ])
+      .mockResolvedValueOnce([
+        new NotificationTemplateVersionChannelEntity({
+          templateVersionId: sharedVersion.id,
+          channel: NotificationChannel.Email,
+          content: { subject: { en: 'Shared' }, body: { en: 'Shared' } },
+        }),
+      ]);
+
+    await expect(
+      createPersistence(transaction).create({
+        tenantId,
+        targetType: NotificationTargetType.User,
+        targetId: 'user-1',
+        templateCode: 'welcome',
+        channels: [NotificationChannel.Bot],
+        inAppVisible: false,
+      }),
+    ).rejects.toThrow('welcome has no published version that supports the requested channels');
   });
 
   it('flushes a new version before persisting the rows whose foreign key points at it', async () => {
@@ -526,6 +692,7 @@ describe('PostgresNotificationPersistence', () => {
     transaction.find.mockResolvedValue([emailChannel]);
 
     await createPersistence(transaction).create({
+      tenantId: '11111111-1111-4111-8111-111111111111',
       targetType: NotificationTargetType.Email,
       targetId: 'user@example.com',
       templateCode: template.code,
@@ -535,6 +702,7 @@ describe('PostgresNotificationPersistence', () => {
     });
 
     const persisted = transaction.persist.mock.calls[0]?.[0] as [NotificationEntity, NotificationDeliveryEntity];
+    expect(persisted[0].tenantId).toBe('11111111-1111-4111-8111-111111111111');
     expect(persisted[0].sensitiveData.ciphertext).not.toContain('secret-code');
     expect(persisted[1].provider).toBe(NotificationDeliveryProvider.Resend);
   });
@@ -553,6 +721,7 @@ describe('PostgresNotificationPersistence', () => {
       content: { body: { en: 'Hi' } },
     });
     const notification = new NotificationEntity({
+      tenantId: '11111111-1111-4111-8111-111111111111',
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       template,
@@ -619,6 +788,7 @@ describe('PostgresNotificationPersistence', () => {
       content: { body: { en: 'Hi' } },
     });
     const notification = new NotificationEntity({
+      tenantId: '11111111-1111-4111-8111-111111111111',
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       template,
@@ -676,6 +846,7 @@ describe('PostgresNotificationPersistence', () => {
       content: { body: { en: 'Hi' } },
     });
     const notification = new NotificationEntity({
+      tenantId: '11111111-1111-4111-8111-111111111111',
       targetType: NotificationTargetType.TelegramChat,
       targetId: '123',
       template,

@@ -12,9 +12,11 @@ explicit and auditable — on either persistence axis, without the arithmetic in
 ### Requirement: [REQ-FIAT-CATALOG-001] The offered currencies and their presentation are operator data
 
 The catalogue SHALL be readable at runtime with each currency resolved for one
-locale. A currency that no locale has named MUST resolve to its own code rather
-than to an empty label, and a retired currency MUST NOT be offered unless the
-caller explicitly asks for it.
+locale. It is operator-owned shared reference data, not tenant-owned data: the
+same offered fiat set and rate history are visible on every tenant axis, and its
+persistence records carry no tenant discriminator. A currency that no locale
+has named MUST resolve to its own code rather than to an empty label, and a
+retired currency MUST NOT be offered unless the caller explicitly asks for it.
 
 **Evidence profile:** domain, api
 

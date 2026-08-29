@@ -267,6 +267,36 @@ describe('ExternalAuthService', () => {
     ).rejects.toThrow('link_token_expired');
   });
 
+  it('derives Telegram bot-link ownership from the token instead of a caller-selected tenant', async () => {
+    const tenantId = '11111111-1111-4111-8111-111111111111';
+    const social = new InMemorySocialAuthStore();
+    const { service } = createServiceWithStores(
+      {
+        findById: vi.fn().mockResolvedValue({ value: authUserRecord({ tenantId }) }),
+        recordLogin: vi.fn().mockResolvedValue({ value: authUserRecord({ tenantId }) }),
+      },
+      social,
+    );
+    const linkToken = await service.createLinkToken({
+      tenantId,
+      userId: 'external-user-id',
+      provider: AuthProvider.Telegram,
+    });
+
+    await expect(
+      service.telegramBotLink({
+        linkToken: linkToken.token,
+        providerSubject: 'tenant-owned-link',
+      }),
+    ).resolves.toMatchObject({
+      status: 'linked',
+      identity: { providerSubject: 'tenant-owned-link' },
+    });
+    await expect(social.findIdentity(AuthProvider.Telegram, 'tenant-owned-link', tenantId)).resolves.toMatchObject({
+      value: { tenantId, providerSubject: 'tenant-owned-link' },
+    });
+  });
+
   it('maps disabled and missing Telegram TMA configuration to stable errors', async () => {
     const { service } = createService();
 
@@ -1128,6 +1158,34 @@ describe('ExternalAuthService', () => {
         profile: { avatarUrl: null, displayName: null, providerSubject: '905' },
       }),
     ).resolves.toMatchObject({ status: 'linked' });
+  });
+
+  it('derives anonymous OIDC link ownership from the globally unique persisted token', async () => {
+    const tenantId = '11111111-1111-4111-8111-111111111111';
+    const social = new InMemorySocialAuthStore();
+    const { service } = createServiceWithStores(
+      {
+        findById: vi.fn().mockResolvedValue({ value: authUserRecord({ tenantId }) }),
+        recordLogin: vi.fn().mockResolvedValue({ value: authUserRecord({ tenantId }) }),
+      },
+      social,
+    );
+    const linkToken = await service.createLinkToken({
+      tenantId,
+      userId: 'external-user-id',
+      provider: AuthProvider.Telegram,
+    });
+
+    await expect(
+      service.telegramOidcSession({
+        intent: ExternalAuthIntent.Link,
+        linkToken: linkToken.token,
+        profile: { avatarUrl: null, displayName: null, providerSubject: 'token-owned-oidc' },
+      }),
+    ).resolves.toMatchObject({ status: 'linked', identity: { providerSubject: 'token-owned-oidc' } });
+    await expect(social.findIdentity(AuthProvider.Telegram, 'token-owned-oidc', tenantId)).resolves.toMatchObject({
+      value: { tenantId, userId: 'external-user-id' },
+    });
   });
 
   it('uses stored Discord principals when callback input has no principal', async () => {

@@ -9,9 +9,15 @@ describe('money construction', () => {
     expect(() => Money.of(Number.NaN, 'USD')).toThrow('whole number of minor units');
   });
 
-  it('refuses a code that is not an ISO 4217 alphabetic code', () => {
+  it('refuses malformed or unregistered extension codes', () => {
     expect(() => Money.of(100, 'usd')).toThrow('three uppercase letters');
-    expect(() => Money.of(100, 'DOLLARS')).toThrow('three uppercase letters');
+    expect(() => Money.of(100, 'USDT')).toThrow('Register non-ISO asset codes before use');
+    expect(() => {
+      Money.registerCurrency({ code: 'USD_T', minorUnitExponent: 6 });
+    }).toThrow('3 to 12 uppercase ASCII');
+    expect(() => {
+      Money.registerCurrency({ code: '1USDT', minorUnitExponent: 6 });
+    }).toThrow('starting with a letter');
   });
 
   it('knows the currencies whose minor unit is not two digits', () => {
@@ -21,16 +27,21 @@ describe('money construction', () => {
     expect(Money.minorUnitExponent('CLF')).toBe(4);
   });
 
-  it('lets a product register a currency the ISO table does not describe', () => {
+  it('lets a product register ISO-shaped and provider extension asset codes', () => {
     Money.registerCurrency({ code: 'XBT', minorUnitExponent: 8 });
+    Money.registerCurrency({ code: 'USDT', minorUnitExponent: 6 });
+    Money.registerCurrency({ code: 'USDC', minorUnitExponent: 6 });
     // A module that registers on import may be imported more than once; only a conflicting
     // exponent is a problem, because then two callers are already computing at different scales.
-    Money.registerCurrency({ code: 'XBT', minorUnitExponent: 8 });
+    Money.registerCurrency({ code: 'USDT', minorUnitExponent: 6 });
 
     expect(Money.minorUnitExponent('XBT')).toBe(8);
+    expect(Money.minorUnitExponent('USDC')).toBe(6);
+    expect(Money.parse('1.500001', 'USDT')).toEqual(Money.of(1_500_001, 'USDT'));
     expect(Money.formatAmount(Money.of(150_000_000, 'XBT'))).toBe('1.50000000');
+    expect(Money.add(Money.of(500_000, 'USDT'), Money.of(250_000, 'USDT'))).toEqual(Money.of(750_000, 'USDT'));
     expect(() => {
-      Money.registerCurrency({ code: 'XBT', minorUnitExponent: 2 });
+      Money.registerCurrency({ code: 'USDT', minorUnitExponent: 2 });
     }).toThrow('already registered');
   });
 
@@ -59,6 +70,14 @@ describe('money arithmetic', () => {
     expect(() => Money.add(Money.of(100, 'USD'), Money.of(100, 'EUR'))).toThrow(MoneyCurrencyMismatchError);
     expect(() => Money.subtract(Money.of(100, 'USD'), Money.of(100, 'EUR'))).toThrow(/USD.*EUR/u);
     expect(() => Money.compare(Money.of(100, 'USD'), Money.of(100, 'EUR'))).toThrow(MoneyCurrencyMismatchError);
+  });
+
+  it('refuses addition or subtraction that leaves the exact integer range', () => {
+    const maximum = Money.of(Number.MAX_SAFE_INTEGER, 'USD');
+    const minimum = Money.of(Number.MIN_SAFE_INTEGER, 'USD');
+
+    expect(() => Money.add(maximum, Money.of(1, 'USD'))).toThrow('too large to represent exactly');
+    expect(() => Money.subtract(minimum, Money.of(1, 'USD'))).toThrow('too large to represent exactly');
   });
 
   it('names both sides on the refusal so a caller can convert the right one', () => {
@@ -125,6 +144,17 @@ describe('money scaling', () => {
     );
   });
 
+  it('rejects structural ratios whose numbers are already unsafe or fractional', () => {
+    expect(() =>
+      Money.multiply(Money.of(100, 'USD'), { numerator: Number.MAX_SAFE_INTEGER + 1, denominator: 1 }),
+    ).toThrow('safe whole-number');
+    expect(() => Money.multiply(Money.of(100, 'USD'), { numerator: 1, denominator: 1.5 })).toThrow('safe whole-number');
+  });
+
+  it('rejects decimal rates whose power-of-ten denominator is not exact', () => {
+    expect(() => Money.rate('0.0000000000000001')).toThrow('more digits than can be represented exactly');
+  });
+
   it('refuses a result that no longer fits in an exact integer', () => {
     const huge = Money.of(Number.MAX_SAFE_INTEGER, 'USD');
 
@@ -178,6 +208,13 @@ describe('money allocation', () => {
     ]);
   });
 
+  it('keeps the weight sum exact when individually safe weights exceed the number sum range', () => {
+    expect(Money.allocate(Money.of(1, 'USD'), [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER])).toEqual([
+      Money.of(1, 'USD'),
+      Money.of(0, 'USD'),
+    ]);
+  });
+
   it('refuses weights that cannot describe a split', () => {
     expect(() => Money.allocate(Money.of(100, 'USD'), [])).toThrow('at least one weight');
     expect(() => Money.allocate(Money.of(100, 'USD'), [1, -1])).toThrow('non-negative');
@@ -208,5 +245,18 @@ describe('money decimal text', () => {
     expect(Money.format(Money.of(123_456, 'USD'), 'en-US')).toBe('$1,234.56');
     expect(Money.format(Money.of(1200, 'JPY'), 'en-US')).toBe('¥1,200');
     expect(Money.format(Money.of(123_456, 'USD'), 'en-US', { currencyDisplay: 'code' })).toContain('USD');
+  });
+
+  it('formats a registered provider asset deterministically instead of passing it to Intl as a currency', () => {
+    expect(Money.format(Money.of(1_500_001, 'USDT'), 'en-US')).toBe('1.500001 USDT');
+    expect(
+      Money.format(Money.of(1_500_001, 'USDT'), 'en-US', {
+        currency: 'USD',
+        currencyDisplay: 'symbol',
+        style: 'currency',
+        useGrouping: false,
+      }),
+    ).toBe('1.500001 USDT');
+    expect(() => Money.of(Number.MAX_SAFE_INTEGER + 1, 'USDT')).toThrow('whole number of minor units');
   });
 });

@@ -25,11 +25,21 @@ export class AuthTokenRepository {
   consumeUserToken(
     tokenHash: string,
     purpose: AuthUserTokenPurpose,
-    tenantId: string = DefaultAuthTenantId,
+    tenantId?: string | null,
     now: Date = new Date(),
   ): ResultAsync<AuthUserTokenEntity | null, AuthTokenRepositoryError> {
     return ResultAsync.fromPromise(
       this.consumeUserTokenTransaction(tokenHash, purpose, tenantId, now),
+      mapAuthTokenRepositoryError,
+    );
+  }
+
+  revokeUserToken(
+    tokenHash: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<boolean, AuthTokenRepositoryError> {
+    return ResultAsync.fromPromise(
+      this.entityManager.nativeDelete(AuthUserTokenEntity, { tokenHash, tenantId }).then((deleted) => deleted > 0),
       mapAuthTokenRepositoryError,
     );
   }
@@ -55,7 +65,7 @@ export class AuthTokenRepository {
   private async consumeUserTokenTransaction(
     tokenHash: string,
     purpose: AuthUserTokenPurpose,
-    tenantId: string,
+    tenantId: string | null | undefined,
     now: Date,
   ): Promise<AuthUserTokenEntity | null> {
     return this.entityManager.transactional(async (em) => {
@@ -64,7 +74,7 @@ export class AuthTokenRepository {
         {
           tokenHash,
           purpose,
-          tenantId,
+          ...(tenantId === null || tenantId === undefined ? {} : { tenantId }),
           consumedAt: null,
           expiresAt: { $gt: now },
         },

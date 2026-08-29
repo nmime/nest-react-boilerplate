@@ -1,7 +1,7 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-TENANT-004 REQ-AUTH-PERSISTENCE-007
 import type { EntityManager } from '@mikro-orm/postgresql';
 import { describe, expect, it, vi } from 'vitest';
-import { AuthRoleEntity, AuthUserRoleEntity, DefaultAuthTenantId } from '../entities';
+import { AuthRoleEntity, AuthUserEntity, AuthUserRoleEntity, DefaultAuthTenantId } from '../entities';
 import { AuthUserRoleRepository } from './auth-user-role.repository';
 
 function roleEntity(id: string, key: string): AuthRoleEntity {
@@ -22,7 +22,13 @@ describe('AuthUserRoleRepository', () => {
     const nativeDelete = vi.fn(() => Promise.resolve(1));
     const flush = vi.fn(() => Promise.resolve());
     const find = vi.fn((entity: unknown) => Promise.resolve(entity === AuthRoleEntity ? roles : existing));
-    const transactionalEm = { find, persist, nativeDelete, flush };
+    const transactionalEm = {
+      findOne: vi.fn(() => Promise.resolve({ id: 'user-id' })),
+      find,
+      persist,
+      nativeDelete,
+      flush,
+    };
     const entityManager = {
       transactional: vi.fn((callback: (em: unknown) => unknown) => callback(transactionalEm)),
     } as unknown as EntityManager;
@@ -61,7 +67,9 @@ describe('AuthUserRoleRepository', () => {
     const flush = vi.fn(() => Promise.resolve());
     const find = vi.fn((entity: unknown) => Promise.resolve(entity === AuthRoleEntity ? roles : existing));
     const entityManager = {
-      transactional: vi.fn((callback: (em: unknown) => unknown) => callback({ find, persist, nativeDelete, flush })),
+      transactional: vi.fn((callback: (em: unknown) => unknown) =>
+        callback({ findOne: vi.fn(() => Promise.resolve({ id: 'user-id' })), find, persist, nativeDelete, flush }),
+      ),
     } as unknown as EntityManager;
     const repository = new AuthUserRoleRepository(entityManager);
 
@@ -81,7 +89,13 @@ describe('AuthUserRoleRepository', () => {
     const flush = vi.fn(() => Promise.resolve());
     const entityManager = {
       transactional: vi.fn((callback: (em: unknown) => unknown) =>
-        callback({ find, persist: vi.fn(), nativeDelete, flush }),
+        callback({
+          findOne: vi.fn(() => Promise.resolve({ id: 'user-id' })),
+          find,
+          persist: vi.fn(),
+          nativeDelete,
+          flush,
+        }),
       ),
     } as unknown as EntityManager;
     const repository = new AuthUserRoleRepository(entityManager);
@@ -178,6 +192,28 @@ describe('AuthUserRoleRepository', () => {
     });
   });
 
+  it('does not assign a tenant role to a user outside that tenant', async () => {
+    const findOne = vi.fn(() => Promise.resolve(null));
+    const find = vi.fn();
+    const persist = vi.fn();
+    const entityManager = {
+      transactional: vi.fn((callback: (em: unknown) => unknown) =>
+        callback({ findOne, find, persist, nativeDelete: vi.fn(), flush: vi.fn() }),
+      ),
+    } as unknown as EntityManager;
+
+    const result = await new AuthUserRoleRepository(entityManager).assignRoles({
+      tenantId: 'tenant-b',
+      userId: 'tenant-a-user',
+      roleKeys: ['admin'],
+    });
+
+    expect(result._unsafeUnwrap()).toEqual([]);
+    expect(findOne).toHaveBeenCalledWith(AuthUserEntity, { id: 'tenant-a-user', tenantId: 'tenant-b' });
+    expect(find).not.toHaveBeenCalled();
+    expect(persist).not.toHaveBeenCalled();
+  });
+
   it('defaults grantedByUserId to null when inserting without a granter', async () => {
     const roles = [roleEntity('r-user', 'user')];
     const persist = vi.fn();
@@ -185,7 +221,9 @@ describe('AuthUserRoleRepository', () => {
     const flush = vi.fn(() => Promise.resolve());
     const find = vi.fn((entity: unknown) => Promise.resolve(entity === AuthRoleEntity ? roles : []));
     const entityManager = {
-      transactional: vi.fn((callback: (em: unknown) => unknown) => callback({ find, persist, nativeDelete, flush })),
+      transactional: vi.fn((callback: (em: unknown) => unknown) =>
+        callback({ findOne: vi.fn(() => Promise.resolve({ id: 'user-id' })), find, persist, nativeDelete, flush }),
+      ),
     } as unknown as EntityManager;
     const repository = new AuthUserRoleRepository(entityManager);
 

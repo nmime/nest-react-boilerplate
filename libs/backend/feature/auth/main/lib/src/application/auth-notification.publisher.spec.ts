@@ -13,10 +13,16 @@ describe(AuthNotificationPublisher.name, () => {
     const notifications = { upsertTemplate: vi.fn(), createTemplateNotification: vi.fn() };
     const publisher = new AuthNotificationPublisher(notifications as never);
 
-    await publisher.publishUserAction({ userId: 'user-1', purpose: 'password_reset', token: 'secret-code' });
+    await publisher.publishUserAction({
+      tenantId: '11111111-1111-4111-8111-111111111111',
+      userId: 'user-1',
+      purpose: 'password_reset',
+      token: 'secret-code',
+    });
 
     expect(notifications.createTemplateNotification).toHaveBeenCalledWith(
       expect.objectContaining({
+        tenantId: '11111111-1111-4111-8111-111111111111',
         targetType: NotificationTargetType.User,
         targetId: 'user-1',
         deliveries: [{ channel: NotificationChannel.Bot, provider: NotificationDeliveryProvider.TelegramBot }],

@@ -72,7 +72,12 @@ export class AdminUserMutationRepository {
   async acquireTenantMutationLock(tenantId: string, entityManager: EntityManager = this.entityManager): Promise<void> {
     await entityManager
       .getConnection()
-      .execute('select pg_advisory_xact_lock(hashtext(?))', [`admin-user-sensitive-mutation:${tenantId}`]);
+      .execute(
+        'select pg_advisory_xact_lock(hashtext(?))',
+        [`admin-user-sensitive-mutation:${tenantId}`],
+        'all',
+        entityManager.getTransactionContext(),
+      );
   }
 
   assertSensitiveMutationIsSafe(
@@ -112,6 +117,10 @@ export class AdminUserMutationRepository {
         { lockMode: LockMode.PESSIMISTIC_WRITE },
       );
       if (!beforeEntity) {
+        return null;
+      }
+      const actor = await transactionalEntityManager.findOne(AuthUserEntity, { id: input.actorUserId, tenantId });
+      if (!actor) {
         return null;
       }
 
@@ -186,6 +195,10 @@ export class AdminUserMutationRepository {
         { lockMode: LockMode.PESSIMISTIC_WRITE },
       );
       if (!beforeEntity) {
+        return null;
+      }
+      const actor = await transactionalEntityManager.findOne(AuthUserEntity, { id: input.actorUserId, tenantId });
+      if (!actor) {
         return null;
       }
 

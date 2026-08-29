@@ -11,7 +11,9 @@
     "notification-scheduler",
     "site-app",
     "user-app",
-    "user-app-api"
+    "user-app-api",
+    "discord-app-api",
+    "telegram-bot-api"
   ],
   "capabilities": [
     "authz",
@@ -20,7 +22,10 @@
     "i18n",
     "notifications",
     "postgres",
-    "s3"
+    "s3",
+    "discord-bot",
+    "redis",
+    "telegram-bot"
   ],
   "product": {
     "ciMode": "product",

@@ -223,6 +223,9 @@ export function renderClosureHelmValues(closure: SelectedClosureManifest): strin
       continue;
     }
     lines.push(`  ${app.releaseImage.helmValuesKey}:`, `    enabled: ${selected.has(app.id)}`);
+    if (app.id === 'discord-app-api' || app.id === 'telegram-bot-api') {
+      lines.push('    autoscalingEnabled: false', '    replicas: 1');
+    }
   }
   return `${lines.join('\n')}\n`;
 }

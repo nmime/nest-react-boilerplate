@@ -73,6 +73,7 @@ export interface TelegramBotIdentity {
 
 export interface TelegramBotConfig {
   token: string;
+  apiRoot?: string;
   appUrl?: string;
   setupMenuButton: boolean;
   webhookSecret?: string;

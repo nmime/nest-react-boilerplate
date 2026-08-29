@@ -9,9 +9,11 @@ import { AuthService } from './application/auth.service';
 
 import {
   AuthTokenStoreInjectToken,
+  DiscordOauthStateStoreInjectToken,
   InMemoryAuthTokenStore,
   PostgresAuthTokenStore,
-} from './infrastructure/auth-token-store';
+  RedisDiscordOauthStateStore,
+} from './infrastructure';
 import {
   AuthUserStoreInjectToken,
   InMemoryAuthUserStore,
@@ -44,6 +46,12 @@ describe('AuthMainModule', () => {
       provide: AuthTokenStoreInjectToken,
       useClass: PostgresAuthTokenStore,
     });
+    expect(postgresModule.providers).toContain(RedisDiscordOauthStateStore);
+    expect(postgresModule.providers).toContainEqual({
+      provide: DiscordOauthStateStoreInjectToken,
+      useExisting: RedisDiscordOauthStateStore,
+    });
+    expect(memoryModule.providers).not.toContain(RedisDiscordOauthStateStore);
     expect(postgresModule.imports).toHaveLength(1);
     // Durable stores are provider-agnostic adapters over the repository ports:
     // the mongodb mode wires the same stores as postgres, and the capability
@@ -55,6 +63,19 @@ describe('AuthMainModule', () => {
       useClass: PostgresAuthUserStore,
     });
     expect(mongoModule.imports).toHaveLength(1);
+  });
+
+  it('imports host-supplied persistence modules before Better Auth', () => {
+    class PersistenceModule {}
+
+    const module = AuthMainModule.forRoot({
+      mode: AuthPersistenceMode.Postgres,
+      imports: [PersistenceModule],
+    });
+
+    expect(module.imports).toHaveLength(2);
+    expect(module.imports?.[0]).toBe(PersistenceModule);
+    expect(module.imports?.[1]).toMatchObject({ module: BetterAuthModule });
   });
 
   it('uses environment selection only for neutral feature stores', () => {

@@ -1,14 +1,23 @@
 # Discord OAuth/account-linking overlay. The production wrapper selects this
 # together with the discord-app-api profile so auth and bot flows stay aligned.
 
+x-discord-oauth-env: &discord-oauth-env
+  DISCORD_AUTH_ENABLED: 'true'
+  DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?set Discord OAuth application/client id}
+  DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?set the derived Discord OAuth callback URL}
+  DISCORD_SCOPES: ${DISCORD_SCOPES:-identify email guilds.join}
+
 services:
   auth-app-api:
     environment:
-      DISCORD_AUTH_ENABLED: 'true'
-      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?set Discord OAuth application/client id}
-      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?set the derived Discord OAuth callback URL}
-      DISCORD_SCOPES: ${DISCORD_SCOPES:-identify email guilds.join}
+      <<: *discord-oauth-env
     secrets:
       - session_secret
       - better_auth_secret
+      - discord_client_secret
+
+  discord-app-api:
+    environment:
+      <<: *discord-oauth-env
+    secrets:
       - discord_client_secret

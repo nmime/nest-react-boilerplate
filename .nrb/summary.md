@@ -1,18 +1,20 @@
 # Setup Plan Summary
 
-**Configuration hash:** `aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b`
+**Configuration hash:** `a1a43a3b54b28ad2f9de93b47689ffb5bc03efd51cf6b2beebb45f80e4e64b2f`
 
 ## Applications
 
 - admin-app
 - admin-app-api
 - auth-app-api
+- discord-app-api
 - fullstack-e2e
 - landing-app
 - mobile-app
 - notification-consumer
 - notification-scheduler
 - site-app
+- telegram-bot-api
 - user-app
 - user-app-api
 
@@ -20,11 +22,14 @@
 
 - authz
 - design-tokens
+- discord-bot
 - feature-flags
 - i18n
 - notifications
 - postgres
+- redis
 - s3
+- telegram-bot
 
 ## Product
 

@@ -20,7 +20,7 @@ export class DiscordExternalAuthAdapter implements DiscordExternalAuthPort {
     intent: 'link';
     returnUrl?: string | null;
     principal: { subject: string; tenantId: string };
-  }): { authorizationUrl: string; stateExpiresAt: string } {
+  }): Promise<{ authorizationUrl: string; stateExpiresAt: string }> {
     return this.externalAuth.createDiscordAuthorizationRequest({
       tenantId: input.tenantId,
       intent: ExternalAuthIntent.Link,

@@ -6,7 +6,7 @@ import { AuthAppHealthServiceProvider } from './health.config';
 import { AuthAppApiCapabilitiesModule } from './capabilities.generated';
 
 @Module({
-  imports: [AuthMainModule.forRoot(), AuthAppApiCapabilitiesModule],
+  imports: [AuthMainModule.forRoot({ imports: [AuthAppApiCapabilitiesModule] })],
   controllers: [BaseHealthController],
   providers: [
     AuthAppHealthServiceProvider,

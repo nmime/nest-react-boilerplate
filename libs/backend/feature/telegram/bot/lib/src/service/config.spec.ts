@@ -6,6 +6,7 @@ import {
   assertWebhookRuntimeAllowed,
   resolveMode,
   resolveSafeTelegramAppUrl,
+  resolveTelegramApiRoot,
   resolveTelegramBotConfig,
   resolveTelegramWebhookUrl,
   signStartPayload,
@@ -44,6 +45,7 @@ describe('Telegram bot config', () => {
     expect(
       resolveTelegramBotConfig({
         TELEGRAM_BOT_TOKEN: ' test-token ',
+        TELEGRAM_API_ROOT: ' http://127.0.0.1:9099 ',
         VITEST: 'true',
         TELEGRAM_MINI_APP_URL: 'https://app.example.test/telegram-mini-app',
         TELEGRAM_BOT_WEBHOOK_SECRET: ' webhook-secret ',
@@ -54,6 +56,7 @@ describe('Telegram bot config', () => {
       }),
     ).toMatchObject({
       token: 'test-token',
+      apiRoot: 'http://127.0.0.1:9099',
       appUrl: 'https://app.example.test/telegram-mini-app',
       setupMenuButton: true,
       webhookSecret: 'webhook-secret',
@@ -75,6 +78,26 @@ describe('Telegram bot config', () => {
       sessionTtlSeconds: 1_209_600,
       rateLimit: { timeFrameMs: 1_000, limit: 3 },
     });
+  });
+
+  it('normalizes Telegram API roots and rejects unsafe URL components', () => {
+    expect(resolveTelegramApiRoot(undefined)).toBeUndefined();
+    expect(resolveTelegramApiRoot('   ')).toBeUndefined();
+    expect(resolveTelegramApiRoot(' https://api.telegram.org/// ')).toBe('https://api.telegram.org');
+    expect(resolveTelegramApiRoot('http://127.0.0.1:9099/bot-api///')).toBe('http://127.0.0.1:9099/bot-api');
+
+    expect(() => resolveTelegramApiRoot('not-a-url')).toThrow('TELEGRAM_API_ROOT must be a valid HTTP or HTTPS URL.');
+    expect(() => resolveTelegramApiRoot('file://api.telegram.org')).toThrow(
+      'TELEGRAM_API_ROOT must use HTTP or HTTPS.',
+    );
+    expect(() => resolveTelegramApiRoot('https://user:secret@api.telegram.org')).toThrow(
+      'TELEGRAM_API_ROOT must not include credentials.',
+    );
+    for (const value of ['https://api.telegram.org?test=1', 'https://api.telegram.org/#fragment']) {
+      expect(() => resolveTelegramApiRoot(value)).toThrow(
+        'TELEGRAM_API_ROOT must not include a query string or fragment.',
+      );
+    }
   });
 
   it('only exposes a safe canonical mini-app URL to Telegram app buttons', () => {

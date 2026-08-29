@@ -2,8 +2,15 @@
 import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiscordAccountApplicationPort, DiscordAccountService } from '@app/backend-feature-discord-bot';
-import { ExternalAuthService } from '@app/backend-feature-auth-main';
+import {
+  AuthMainModule,
+  DiscordOauthStateStoreInjectToken,
+  ExternalAuthService,
+  RedisDiscordOauthStateStore,
+} from '@app/backend-feature-auth-main';
+import { DiscordAppApiCapabilitiesModule } from './capabilities.generated';
 import { DiscordAppApiModule } from './discord-app-api.module';
+import { DiscordAuthModule } from './discord-auth.module';
 import { DiscordExternalAuthAdapter } from './discord-external-auth.adapter';
 
 const tenantId = '00000000-0000-0000-0000-000000000000';
@@ -39,6 +46,33 @@ async function boot(externalAuth: Partial<ExternalAuthService>): Promise<{
 describe('DiscordAppApiModule wiring', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('composes generated persistence capabilities inside the auth feature scope', () => {
+    const previousPersistence = process.env.AUTH_PERSISTENCE;
+    process.env.AUTH_PERSISTENCE = 'postgres';
+    try {
+      const appImports = Reflect.getMetadata('imports', DiscordAppApiModule) as unknown[];
+      const durableAuthModule = AuthMainModule.forRoot({
+        imports: [DiscordAppApiCapabilitiesModule],
+      });
+
+      expect(appImports[0]).toBe(DiscordAuthModule);
+      expect(durableAuthModule).toMatchObject({
+        module: AuthMainModule,
+        imports: [DiscordAppApiCapabilitiesModule, expect.objectContaining({ module: expect.any(Function) })],
+        providers: expect.arrayContaining([
+          RedisDiscordOauthStateStore,
+          { provide: DiscordOauthStateStoreInjectToken, useExisting: RedisDiscordOauthStateStore },
+        ]),
+      });
+    } finally {
+      if (previousPersistence === undefined) {
+        delete process.env.AUTH_PERSISTENCE;
+      } else {
+        process.env.AUTH_PERSISTENCE = previousPersistence;
+      }
+    }
   });
 
   it("binds the account service's external auth port to the ExternalAuthService adapter", async () => {
@@ -116,7 +150,7 @@ describe('DiscordAppApiModule wiring', () => {
   });
 
   it('creates Discord authorization requests through the wired ExternalAuthService', async () => {
-    const createDiscordAuthorizationRequest = vi.fn().mockReturnValue({
+    const createDiscordAuthorizationRequest = vi.fn().mockResolvedValue({
       authorizationUrl: 'https://discord.com/oauth2/authorize?state=abc',
       stateExpiresAt: '2026-07-03T00:00:00.000Z',
     });
@@ -126,14 +160,14 @@ describe('DiscordAppApiModule wiring', () => {
 
     try {
       const port = (accounts as unknown as { externalAuth: DiscordExternalAuthAdapter }).externalAuth;
-      const withReturnUrl = port.createDiscordAuthorizationRequest({
+      const withReturnUrl = await port.createDiscordAuthorizationRequest({
         tenantId,
         intent: 'link',
         returnUrl: 'https://example.com/settings',
         principal: { subject: discordUserId, tenantId },
       });
       expect(withReturnUrl.authorizationUrl).toContain('discord.com');
-      const withoutReturnUrl = port.createDiscordAuthorizationRequest({
+      const withoutReturnUrl = await port.createDiscordAuthorizationRequest({
         tenantId,
         intent: 'link',
         principal: { subject: discordUserId, tenantId },

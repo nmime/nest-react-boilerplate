@@ -1,20 +1,20 @@
 {
   "version": 1,
-  "configHash": "aa0133e47c835f81c5d8448c88c11bdc917488d6e4b1a4d5882466101678bf8b",
+  "configHash": "a1a43a3b54b28ad2f9de93b47689ffb5bc03efd51cf6b2beebb45f80e4e64b2f",
   "files": {
-    "nrb.config.json": "415e8d544477f5c46bcbcb2ba8f01c740daa37e56e4d2db321a3bcd8230d3c42",
-    ".nrb/summary.md": "3cb3a3a34f8b6df81840b211a006044c018ed3c95c8eaf0a59fadfae515a209b",
-    ".nrb/workspace.json": "f7cd7fdf5ba44edca47ddff51f575d14c951edc9e57a88efa4bf51e8475d1040",
-    ".nrb/capabilities.json": "268c3f2465f4fd184e45b8dda946ea8d9a4cfb81add30a82397ffbca547a5424",
-    ".nrb/capabilities.env": "7fa2ead580b7c47e9247027ff74d579ecfcd2564600c20842adf37bb99f0b022",
+    "nrb.config.json": "4d67c1367b73d2739174db0e01d616c36acbda5cf3ce0de6d0502d0321a5a92c",
+    ".nrb/summary.md": "40dfe0ca3876ddf21ba30e94927947188f4813399d9381b88e775f9ce0feb88a",
+    ".nrb/workspace.json": "baa34e76fd60e1729d8982c74f987d0838526a892dee4ab4173f0d6a8acc91f9",
+    ".nrb/capabilities.json": "ee8a52ea9b8a02b1310436d3f7e2c235d8beeaaebb5d810a54084c3c0ada9d1e",
+    ".nrb/capabilities.env": "15529408f6e7b80602deb3d681aa1296257d8f784555d3720761cc83071e31f1",
     "packages/tooling/src/commands/db/capability-migrations.generated.ts": "41f98d0a77a0e8681b651431e53408d1914faaf48eb57e1885648ecb8cef74fe",
-    "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "bb95faf78c53f63b6b17e494f06f242c39ab02b01e81c01faf143eda1e730618",
-    "apps/backend/user/user-app-api/src/capabilities.generated.ts": "d65d204206fe3f8ab47521a77c6976981fe729c1b596b25b037c0d5155939d90",
-    "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "89c1b2f445a457e06702875b065d037485ab09aecf5055aa06801860a2651703",
-    "apps/backend/discord/discord-app-api/src/capabilities.generated.ts": "5c828d016d45c1e6531d99465299a1e23f48bff2fc7702cb6ff499e188dc915e",
-    "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "93e8924cb3b0b67d190ad0d5655dfb49ed9998d77d50b3786919a3a22eb1fa09",
-    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "990e67d6ff79b5e0d0b92052900e511f2adbed233d367566bb8af88475221c2d",
-    "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "ae89648e21ea92c58de8b138eb2135e7ca180fb2d1d223c465885c1fbf3b91b5",
+    "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "fb48120d844d42cec21ce7f67774f522bf5dd68f84b1042fb62ec59f8b1f4c96",
+    "apps/backend/user/user-app-api/src/capabilities.generated.ts": "39b39bcd859df39396f3a4ea97c8afabcb3e978fd991b56dac09d1724f9ba913",
+    "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "82be8671ac7070f535facd93265714bcd6f89127cfa916afd2ca10030a1cbef2",
+    "apps/backend/discord/discord-app-api/src/capabilities.generated.ts": "e9ab2cad3ae70c639749dcca8bc8838bb047b349e5860f7e26d5d6772f16624d",
+    "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "e114c6ee25948d7ba246cabe7a81de6a6e74fa68aba52ad03c5315983337b69d",
+    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "4a2b6ac5cc62c455c2e6f1ac34ba6d1e94972c40368ee26f9498e72f294f1e01",
+    "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "956803e21b52aed9df67d10ebed510083142ca22956e04a9efaef505f77f3dbd",
     "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/auth/auth-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
@@ -23,5 +23,5 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
   },
-  "digest": "25cfc650b5ac6ad675f0818d6881239eae0d27f50053be02512f8510265037e8"
+  "digest": "8ea6b33f6c908069ee6f39ee1aebf55013b9badbcddaf4b7ecb64cc7669447fa"
 }

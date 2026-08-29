@@ -229,7 +229,6 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     requiresCapabilities: ['redis', 'telegram-bot'],
     requiresApps: [],
     conflictsWithCapabilities: [],
-    requiresDurableDatabase: true,
     releaseImage: {
       target: 'backend',
       helmValuesKey: 'telegramBotApi',
@@ -368,7 +367,7 @@ export interface CapabilityMigration {
 export type DurableDatabaseProviderId = 'postgres' | 'mongodb';
 
 export interface BackendModuleWiring {
-  hosts: 'selected-backend' | AppId[];
+  hosts: 'selected-backend' | 'durable-backend' | AppId[];
   importName: string;
   importPath: string;
   moduleExpression: string;
@@ -381,7 +380,7 @@ export interface BackendModuleImport {
 }
 
 export interface BackendTelemetryWiring {
-  hosts: 'selected-backend' | AppId[];
+  hosts: 'selected-backend' | 'durable-backend' | AppId[];
   initializer: BackendModuleImport;
   instrumentationFactory: BackendModuleImport;
 }
@@ -509,7 +508,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     providerBackendWiring: {
       postgres: [
         {
-          hosts: 'selected-backend',
+          hosts: 'durable-backend',
           importName: 'FeatureFlagsPostgresModule',
           importPath: '@app/backend-postgres-main-feature-flags',
           moduleExpression: 'FeatureFlagsPostgresModule',
@@ -517,7 +516,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
       ],
       mongodb: [
         {
-          hosts: 'selected-backend',
+          hosts: 'durable-backend',
           importName: 'FeatureFlagsMongoPersistenceModule',
           importPath: '@app/backend-mongodb-main-feature-flags',
           moduleExpression: 'FeatureFlagsMongoPersistenceModule',
@@ -557,7 +556,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     providerBackendWiring: {
       postgres: [
         {
-          hosts: 'selected-backend',
+          hosts: 'durable-backend',
           importName: 'FiatCurrencyMainModule',
           importPath: '@app/backend-feature-fiat-currency-main',
           additionalImports: [
@@ -572,7 +571,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
       ],
       mongodb: [
         {
-          hosts: 'selected-backend',
+          hosts: 'durable-backend',
           importName: 'FiatCurrencyMainModule',
           importPath: '@app/backend-feature-fiat-currency-main',
           additionalImports: [
@@ -633,7 +632,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     ],
     backendWiring: [
       {
-        hosts: ['user-app-api', 'auth-app-api', 'discord-app-api', 'telegram-bot-api'],
+        hosts: ['user-app-api', 'auth-app-api'],
         importName: 'NotificationMainModule',
         importPath: '@app/backend-feature-notification-main',
         moduleExpression: 'NotificationMainModule.forRoot({ enableScheduler: false, exposeHttp: false })',
@@ -654,7 +653,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     providerBackendWiring: {
       postgres: [
         {
-          hosts: 'selected-backend',
+          hosts: 'durable-backend',
           importName: 'NotificationPostgresModule',
           importPath: '@app/backend-postgres-main-notification',
           moduleExpression: 'NotificationPostgresModule',
@@ -662,7 +661,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
       ],
       mongodb: [
         {
-          hosts: 'selected-backend',
+          hosts: 'durable-backend',
           importName: 'NotificationMongoPersistenceModule',
           importPath: '@app/backend-mongodb-main-notification',
           moduleExpression: 'NotificationMongoPersistenceModule',
@@ -710,13 +709,13 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     },
     backendWiring: [
       {
-        hosts: 'selected-backend',
+        hosts: 'durable-backend',
         importName: 'PostgresMainModule',
         importPath: '@app/backend-postgres-main',
         moduleExpression: 'PostgresMainModule.forRoot()',
       },
       {
-        hosts: 'selected-backend',
+        hosts: 'durable-backend',
         importName: 'AuthPostgresModule',
         importPath: '@app/backend-postgres-main-auth',
         moduleExpression: 'AuthPostgresModule',
@@ -739,13 +738,13 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     },
     backendWiring: [
       {
-        hosts: 'selected-backend',
+        hosts: 'durable-backend',
         importName: 'MongoMainModule',
         importPath: '@app/backend-mongodb-main',
         moduleExpression: 'MongoMainModule.forRoot()',
       },
       {
-        hosts: 'selected-backend',
+        hosts: 'durable-backend',
         importName: 'AuthMongoPersistenceModule',
         importPath: '@app/backend-mongodb-main-auth',
         moduleExpression: 'AuthMongoPersistenceModule',
@@ -764,7 +763,15 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     environmentVariables: ['REDIS_URL'],
     backendWiring: [
       {
-        hosts: ['admin-app-api', 'auth-app-api', 'notification-consumer', 'notification-scheduler', 'user-app-api'],
+        hosts: [
+          'admin-app-api',
+          'auth-app-api',
+          'discord-app-api',
+          'notification-consumer',
+          'notification-scheduler',
+          'telegram-bot-api',
+          'user-app-api',
+        ],
         importName: 'RedisModule',
         importPath: '@app/backend-common-redis',
         moduleExpression: 'RedisModule.forRoot()',
@@ -885,6 +892,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
       'BETTER_AUTH_SECRET',
       'BETTER_AUTH_URL',
       'BETTER_AUTH_TRUSTED_ORIGINS',
+      'TELEGRAM_API_ROOT',
       'TELEGRAM_BOT_TOKEN',
       'TELEGRAM_BOT_MODE',
       'TELEGRAM_MINI_APP_URL',

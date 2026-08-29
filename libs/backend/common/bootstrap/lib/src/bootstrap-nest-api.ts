@@ -46,7 +46,11 @@ export interface BootstrapNestApiOptions {
   corsOrigins?: string[];
   openApi?: BootstrapOpenApiOptions;
   rateLimit?: BootstrapRateLimitOptions;
-  cookieSecret?: string;
+  /**
+   * Register Fastify cookie-session infrastructure. Disable only for APIs that
+   * explicitly own no browser session contract; stateful APIs keep this on by default.
+   */
+  enableCookieSessions?: boolean;
   /**
    * Trust-proxy setting for Fastify: `true`/`false`, or a positive integer
    * hop count to step through `x-forwarded-for`. Wins over `TRUST_PROXY`.
@@ -100,7 +104,7 @@ export interface BackendEnvironmentConfig {
     storePreference: BackendRateLimitStorePreference;
     redis?: RedisConnectionConfig;
   };
-  session: {
+  session?: {
     cookieName: string;
     maxAgeSeconds: number;
     persistence: BackendSessionPersistence;
@@ -365,25 +369,25 @@ function resolveSessionPersistence(env: NodeJS.ProcessEnv): BackendSessionPersis
 }
 
 function createSessionStore(
-  config: BackendEnvironmentConfig,
+  sessionConfig: NonNullable<BackendEnvironmentConfig['session']>,
   runtime: DurableDatabaseRuntime | undefined,
 ): BackendSessionStore | undefined {
-  if (config.session.persistence === 'memory') {
+  if (sessionConfig.persistence === 'memory') {
     return undefined;
   }
   if (!runtime) {
     throw new Error('The selected backend does not include a durable database runtime. Rerun `pnpm nrb setup`.');
   }
   assertDurableDatabaseEnvironment(runtime.provider);
-  if (config.session.persistence !== runtime.provider) {
+  if (sessionConfig.persistence !== runtime.provider) {
     throw new Error(
-      `AUTH_PERSISTENCE=${config.session.persistence} does not match the compiled ${runtime.provider} provider.`,
+      `AUTH_PERSISTENCE=${sessionConfig.persistence} does not match the compiled ${runtime.provider} provider.`,
     );
   }
   return runtime.createSessionStore({
-    defaultMaxAgeSeconds: config.session.maxAgeSeconds,
+    defaultMaxAgeSeconds: sessionConfig.maxAgeSeconds,
     env: process.env,
-    sweepIntervalMs: config.session.sweepIntervalMs,
+    sweepIntervalMs: sessionConfig.sweepIntervalMs,
   });
 }
 
@@ -397,8 +401,13 @@ function registerSessionStoreShutdown(app: NestFastifyApplication, store: Backen
 }
 
 async function registerFastifySession(app: NestFastifyApplication, config: BackendEnvironmentConfig): Promise<void> {
-  const runtime = config.session.persistence === 'memory' ? undefined : resolveDurableDatabaseRuntime(app);
-  const store = createSessionStore(config, runtime);
+  const sessionConfig = config.session;
+  if (!sessionConfig) {
+    throw new Error('Cookie-session configuration is unavailable for a session-enabled API.');
+  }
+
+  const runtime = sessionConfig.persistence === 'memory' ? undefined : resolveDurableDatabaseRuntime(app);
+  const store = createSessionStore(sessionConfig, runtime);
   if (store) {
     try {
       await store.init();
@@ -413,15 +422,15 @@ async function registerFastifySession(app: NestFastifyApplication, config: Backe
   const sessionOptions: FastifySessionOptions = {
     cookie: {
       httpOnly: true,
-      maxAge: config.session.maxAgeSeconds * 1000,
+      maxAge: sessionConfig.maxAgeSeconds * 1000,
       path: '/',
-      sameSite: config.session.sameSite,
-      secure: config.session.secure,
+      sameSite: sessionConfig.sameSite,
+      secure: sessionConfig.secure,
     },
-    cookieName: config.session.cookieName,
+    cookieName: sessionConfig.cookieName,
     rolling: true,
     saveUninitialized: false,
-    secret: config.session.secret,
+    secret: sessionConfig.secret,
     ...(store ? { store } : {}),
   };
 
@@ -443,6 +452,7 @@ async function registerApplicationFastifyPlugins(
   const registerFastifyPlugin = fastify.register.bind(fastify) as FastifyPluginRegister;
 
   for (const { plugin, options } of plugins) {
+    // eslint-disable-next-line no-await-in-loop -- Fastify plugin registration order is significant.
     await registerFastifyPlugin(plugin, options);
   }
 }
@@ -660,9 +670,27 @@ export function resolveBackendEnvironmentConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): BackendEnvironmentConfig {
   const isProduction = env.NODE_ENV === 'production';
-  const sessionPersistence = resolveSessionPersistence(env);
-
   const port = resolvePort(options, env);
+  const session =
+    options.enableCookieSessions === false
+      ? undefined
+      : {
+          cookieName: resolveSessionCookieName(isProduction, env),
+          maxAgeSeconds: readPositiveInteger(
+            'SESSION_COOKIE_MAX_AGE_SECONDS',
+            env.SESSION_COOKIE_MAX_AGE_SECONDS,
+            DefaultSessionCookieMaxAgeSeconds,
+          ),
+          persistence: resolveSessionPersistence(env),
+          sameSite: resolveSessionCookieSameSite(env),
+          secure: resolveSessionCookieSecure(isProduction, env),
+          secret: resolveSessionSecret(isProduction, env),
+          sweepIntervalMs: readPositiveInteger(
+            'SESSION_SWEEP_INTERVAL_MS',
+            env.SESSION_SWEEP_INTERVAL_MS,
+            DefaultSessionSweepIntervalMs,
+          ),
+        };
 
   return {
     bodyLimit: resolveBodyLimit(options, env),
@@ -673,23 +701,7 @@ export function resolveBackendEnvironmentConfig(
     port: port.port,
     portSource: port.source,
     rateLimit: resolveRateLimitOptions(options, env, isProduction),
-    session: {
-      cookieName: resolveSessionCookieName(isProduction, env),
-      maxAgeSeconds: readPositiveInteger(
-        'SESSION_COOKIE_MAX_AGE_SECONDS',
-        env.SESSION_COOKIE_MAX_AGE_SECONDS,
-        DefaultSessionCookieMaxAgeSeconds,
-      ),
-      persistence: sessionPersistence,
-      sameSite: resolveSessionCookieSameSite(env),
-      secure: resolveSessionCookieSecure(isProduction, env),
-      secret: resolveSessionSecret(isProduction, env),
-      sweepIntervalMs: readPositiveInteger(
-        'SESSION_SWEEP_INTERVAL_MS',
-        env.SESSION_SWEEP_INTERVAL_MS,
-        DefaultSessionSweepIntervalMs,
-      ),
-    },
+    session,
     trustProxy: resolveTrustProxy(options.trustProxy, env.TRUST_PROXY),
   };
 }
@@ -892,7 +904,9 @@ async function createAndStartNestApi(
   app.useLogger(logger);
 
   app.enableShutdownHooks();
-  await registerFastifySession(app, config);
+  if (options.enableCookieSessions ?? true) {
+    await registerFastifySession(app, config);
+  }
   await registerApplicationFastifyPlugins(app, options.fastifyPlugins ?? []);
   // CLS: wraps entire async pipeline in AsyncLocalStorage — requestId available everywhere
   app.useGlobalInterceptors(new ClsInterceptor(), new ExceptionsResponseTransformer());

@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { BaseHealthController, HealthPrivateNetworkIpGuard } from '@app/backend-common-health';
-import { InboundCallbackReplayGuard, RedisModule } from '@app/backend-common-redis';
+import { InboundCallbackReplayGuard } from '@app/backend-common-redis';
 import { resolveTelegramBotConfig, TelegramBotModule } from '@app/backend-feature-telegram-bot';
 import { TelegramBotApiHealthServiceProvider } from './health.config';
 import { TelegramBotApiCapabilitiesModule } from './capabilities.generated';
@@ -16,7 +16,12 @@ export class TelegramBotApiModule {
 
     return {
       module: TelegramBotApiModule,
-      imports: [TelegramBotModule, TelegramBotApiCapabilitiesModule, ...(useWebhook ? [RedisModule.forRoot()] : [])],
+      imports: [
+        TelegramBotModule.register({
+          imports: [TelegramBotApiCapabilitiesModule],
+          useRedis: useWebhook,
+        }),
+      ],
       controllers: [BaseHealthController, ...(useWebhook ? [TelegramWebhookController] : [])],
       providers: [
         TelegramBotApiHealthServiceProvider,

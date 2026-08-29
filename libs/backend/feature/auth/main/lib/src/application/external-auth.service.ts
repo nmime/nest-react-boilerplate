@@ -28,8 +28,11 @@ import {
   AuthUserStoreInjectToken,
   type AuthUserRecord,
   type AuthUserStore,
+  DiscordOauthStateStoreInjectToken,
+  InMemoryDiscordOauthStateStore,
   SocialAuthStoreInjectToken,
   InMemorySocialAuthStore,
+  type DiscordOauthStateStore,
   type SocialAuthStore,
 } from '../infrastructure';
 import {
@@ -49,7 +52,7 @@ import type {
   TelegramOidcSessionInput,
   TelegramTmaInput,
 } from './type/external-auth.type';
-import type { StoredDiscordState, VerifiedExternalProfile } from './type/external-auth-internal.type';
+import type { VerifiedExternalProfile } from './type/external-auth-internal.type';
 import {
   assertProviderEnabled,
   hashOpaqueToken,
@@ -69,9 +72,7 @@ export * from './type/external-auth.type';
 
 @Injectable()
 export class ExternalAuthService {
-  // In-memory, single-instance store. Multi-instance deployments need a shared
-  // store (e.g. Redis) keyed by the state hash so callbacks can hit any replica.
-  private readonly discordStates = new Map<string, StoredDiscordState>();
+  private readonly discordOauthStates: DiscordOauthStateStore;
 
   constructor(
     private readonly auth: AuthService,
@@ -80,7 +81,16 @@ export class ExternalAuthService {
     @Optional()
     @Inject(SocialAuthStoreInjectToken)
     private readonly social: SocialAuthStore = new InMemorySocialAuthStore(),
-  ) {}
+    @Optional()
+    @Inject(DiscordOauthStateStoreInjectToken)
+    discordOauthStates?: DiscordOauthStateStore,
+  ) {
+    this.discordOauthStates =
+      discordOauthStates ??
+      new InMemoryDiscordOauthStateStore(() =>
+        readPositiveInt(process.env.DISCORD_OAUTH_STATE_MAX_ENTRIES, DefaultMaxDiscordStateEntries),
+      );
+  }
 
   async telegramTma(input: TelegramTmaInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Telegram);
@@ -255,28 +265,32 @@ export class ExternalAuthService {
     ).length;
   }
 
-  createDiscordAuthorizationRequest(input: DiscordAuthorizationRequestInput): DiscordAuthorizationRequestResult {
+  async createDiscordAuthorizationRequest(
+    input: DiscordAuthorizationRequestInput,
+  ): Promise<DiscordAuthorizationRequestResult> {
     assertProviderEnabled(AuthProvider.Discord);
     const tenantId = parseTenantId(input.tenantId);
     assertReturnUrlAllowed(input.returnUrl);
     const provider = createDiscordProvider();
     const state = generateState();
+    const stateHash = hashOpaqueToken(state);
     const codeVerifier = generateCodeVerifier();
     const intent = input.intent ?? ExternalAuthIntent.Login;
-    const expiresAt = new Date(
-      Date.now() + readPositiveInt(process.env.DISCORD_OAUTH_STATE_TTL_SECONDS, DefaultDiscordStateTtlSeconds) * 1000,
+    const ttlSeconds = readPositiveInt(process.env.DISCORD_OAUTH_STATE_TTL_SECONDS, DefaultDiscordStateTtlSeconds);
+    const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+    await this.discordOauthStates.store(
+      {
+        tenantId,
+        stateHash,
+        codeVerifier,
+        intent,
+        linkToken: input.linkToken ?? undefined,
+        returnUrl: input.returnUrl ?? undefined,
+        userId: input.principal?.subject,
+        expiresAt,
+      },
+      ttlSeconds,
     );
-    this.pruneDiscordStates();
-    this.discordStates.set(hashOpaqueToken(state), {
-      tenantId,
-      stateHash: hashOpaqueToken(state),
-      codeVerifier,
-      intent,
-      linkToken: input.linkToken ?? undefined,
-      returnUrl: input.returnUrl ?? undefined,
-      userId: input.principal?.subject,
-      expiresAt,
-    });
     const scopes = readList(process.env.DISCORD_SCOPES) ?? ['identify', 'email'];
     const authorizationUrl = provider.createAuthorizationURL(state, codeVerifier, scopes);
     return {
@@ -285,32 +299,14 @@ export class ExternalAuthService {
     };
   }
 
-  private pruneDiscordStates(now: Date = new Date()): void {
-    for (const [stateHash, state] of this.discordStates) {
-      if (state.expiresAt <= now) {
-        this.discordStates.delete(stateHash);
-      }
-    }
-    const maxEntries = readPositiveInt(process.env.DISCORD_OAUTH_STATE_MAX_ENTRIES, DefaultMaxDiscordStateEntries);
-    while (this.discordStates.size >= maxEntries) {
-      const oldest = this.discordStates.keys().next().value;
-      /* v8 ignore next -- Map#keys() cannot be empty while size is positive; kept as a defensive guard. */
-      if (oldest === undefined) {
-        break;
-      }
-      this.discordStates.delete(oldest);
-    }
-  }
-
   async discordCallback(input: DiscordCallbackInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Discord);
     if (!input.code || !input.state) {
       throw new UnauthorizedException('invalid_state');
     }
     const stateHash = hashOpaqueToken(input.state);
-    const stored = this.discordStates.get(stateHash);
-    this.discordStates.delete(stateHash);
-    if (!stored || stored.expiresAt <= new Date()) {
+    const stored = await this.discordOauthStates.consume(stateHash);
+    if (!stored) {
       throw new UnauthorizedException('invalid_state');
     }
     const tokens = await createDiscordProvider().validateAuthorizationCode(input.code, stored.codeVerifier);

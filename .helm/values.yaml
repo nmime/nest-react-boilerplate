@@ -165,7 +165,9 @@ frontendNginx:
 
 # The chart deploys Nest API services and the selected frontend renderers.
 # API probes should keep /live and /ready; nginx probes use
-# frontendNginx.healthPath when nginxConfig=true.
+# frontendNginx.healthPath when nginxConfig=true. Per-app autoscalingEnabled
+# defaults to true when global autoscaling is enabled; set it false for
+# workloads that keep replica-local runtime state.
 apps:
   authAppApi:
     appId: auth-app-api
@@ -228,6 +230,7 @@ apps:
     appId: discord-app-api
     kind: backend
     enabled: false
+    autoscalingEnabled: false
     replicas: 1
     port: 80
     servicePort: 80
@@ -247,6 +250,7 @@ apps:
     appId: telegram-bot-api
     kind: backend
     enabled: false
+    autoscalingEnabled: false
     replicas: 1
     port: 80
     servicePort: 80

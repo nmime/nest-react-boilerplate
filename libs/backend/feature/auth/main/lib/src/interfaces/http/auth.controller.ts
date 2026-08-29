@@ -235,12 +235,12 @@ export class AuthController {
   @Post('discord/authorization-request')
   @Public()
   @ApiOkDataResponse(DiscordAuthorizationRequestResultDto)
-  discordAuthorizationRequest(
+  async discordAuthorizationRequest(
     @Body() input: DiscordAuthorizationRequestDto,
     @Req() request: AuthenticatedRequest,
-  ): OkResponse<{ authorizationUrl: string; stateExpiresAt: string }> {
+  ): Promise<OkResponse<{ authorizationUrl: string; stateExpiresAt: string }>> {
     return createOkResponse(
-      this.externalAuth.createDiscordAuthorizationRequest({
+      await this.externalAuth.createDiscordAuthorizationRequest({
         ...input,
         principal: request.user ?? request.auth ?? null,
       }),

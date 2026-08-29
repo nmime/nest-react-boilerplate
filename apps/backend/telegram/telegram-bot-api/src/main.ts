@@ -9,6 +9,7 @@ async function bootstrap(): Promise<void> {
   await bootstrapModule.bootstrapNestApi(appModule.TelegramBotApiModule.register(), {
     appName: 'telegram-bot-api',
     corsOrigins: bootstrapModule.resolveDefaultDevelopmentCorsOrigins(),
+    enableCookieSessions: false,
     port: 3013,
   });
 }

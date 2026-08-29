@@ -272,6 +272,7 @@ describe('bootstrapNestApi', () => {
     sessionCookieSameSite: process.env.SESSION_COOKIE_SAME_SITE,
     sessionCookieSecure: process.env.SESSION_COOKIE_SECURE,
     sessionSecret: process.env.SESSION_SECRET,
+    sessionSweepIntervalMs: process.env.SESSION_SWEEP_INTERVAL_MS,
     testApiPort: process.env.TEST_API_PORT,
     trustProxy: process.env.TRUST_PROXY,
   };
@@ -301,6 +302,7 @@ describe('bootstrapNestApi', () => {
     delete process.env.SESSION_COOKIE_SAME_SITE;
     delete process.env.SESSION_COOKIE_SECURE;
     delete process.env.SESSION_SECRET;
+    delete process.env.SESSION_SWEEP_INTERVAL_MS;
     delete process.env.TEST_API_PORT;
     delete process.env.TRUST_PROXY;
     vi.clearAllMocks();
@@ -332,6 +334,7 @@ describe('bootstrapNestApi', () => {
     process.env.SESSION_COOKIE_SAME_SITE = originalEnvironment.sessionCookieSameSite ?? '';
     process.env.SESSION_COOKIE_SECURE = originalEnvironment.sessionCookieSecure ?? '';
     process.env.SESSION_SECRET = originalEnvironment.sessionSecret ?? '';
+    process.env.SESSION_SWEEP_INTERVAL_MS = originalEnvironment.sessionSweepIntervalMs ?? '';
     process.env.TEST_API_PORT = originalEnvironment.testApiPort ?? '';
     process.env.TRUST_PROXY = originalEnvironment.trustProxy ?? '';
   });
@@ -526,7 +529,7 @@ describe('bootstrapNestApi', () => {
       const middleware = lastMiddleware();
       const response = createResponse();
       const next = vi.fn();
-      const request = { ip: 'production-client' };
+      const request = { ip: 'production-client', headers: { 'x-request-id': 'rate-limit-request' } };
 
       middleware(request, response, next);
       middleware(request, response, next);
@@ -535,6 +538,7 @@ describe('bootstrapNestApi', () => {
       expect(response.statusCode).toBe(429);
       expect(response.end).toHaveBeenCalledWith(expect.stringContaining('Too Many Requests'));
       expect(response.end).toHaveBeenCalledWith(expect.stringContaining('rate-limited'));
+      expect(response.end).toHaveBeenCalledWith(expect.stringContaining('/problem-instances/rate-limit-request'));
       expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('Production rate limiting'));
     } finally {
       stderrSpy.mockRestore();
@@ -604,6 +608,29 @@ describe('bootstrapNestApi', () => {
       mocks.fastifySession,
       expect.not.objectContaining({ store: expect.anything() }),
     );
+  });
+
+  it('skips cookie-session configuration and infrastructure for an explicitly sessionless API', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.AUTH_PERSISTENCE = 'sqlite';
+    process.env.SESSION_SECRET = 'short';
+    process.env.SESSION_COOKIE_SAME_SITE = 'sideways';
+    process.env.SESSION_COOKIE_SECURE = 'maybe';
+    process.env.SESSION_COOKIE_MAX_AGE_SECONDS = 'invalid';
+    process.env.SESSION_SWEEP_INTERVAL_MS = 'invalid';
+    process.env.RATE_LIMIT_ENABLED = 'false';
+
+    await bootstrapNestApi(TestModule, {
+      appName: 'stateless-api',
+      port: 3010,
+      enableCookieSessions: false,
+    });
+
+    expect(mocks.app.get).not.toHaveBeenCalled();
+    expect(mocks.durableRuntime.createSessionStore).not.toHaveBeenCalled();
+    expect(mocks.fastifyRegister).not.toHaveBeenCalledWith(mocks.fastifyCookie);
+    expect(mocks.fastifyRegister).not.toHaveBeenCalledWith(mocks.fastifySession, expect.anything());
+    expect(mocks.app.listen).toHaveBeenCalledWith(3010);
   });
 
   it('fails closed when the selected durable runtime capability is unavailable', async () => {

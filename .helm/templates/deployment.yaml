@@ -26,6 +26,7 @@
 -}}
 {{- range $name, $app := .Values.apps }}
 {{- if $app.enabled }}
+{{- $appAutoscalingEnabled := dig "autoscalingEnabled" true $app -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,9 +36,9 @@ metadata:
     {{- include "boilerplate.labels" $root | nindent 4 }}
     app.kubernetes.io/component: {{ kebabcase $name }}
 spec:
-  {{- if not $root.Values.autoscaling.enabled }}
+  {{ if or (not $root.Values.autoscaling.enabled) (not $appAutoscalingEnabled) }}
   replicas: {{ $app.replicas }}
-  {{- end }}
+{{ end }}
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -169,4 +170,4 @@ spec:
                 path: default.conf
       {{- end }}
 {{- end }}
-{{- end }}
+{{ end }}

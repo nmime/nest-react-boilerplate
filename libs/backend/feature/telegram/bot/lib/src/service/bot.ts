@@ -50,7 +50,10 @@ export function createTelegramBot(
   const safeAppUrl = config.appUrl && isSafeTelegramAppUrl(config.appUrl) ? config.appUrl : undefined;
   const bot = new Bot<TelegramBotContext>(config.token, {
     botInfo: config.botInfo,
-    client: dependencies.fetch ? { fetch: dependencies.fetch as never } : undefined,
+    client: {
+      ...(config.apiRoot ? { apiRoot: config.apiRoot } : {}),
+      ...(dependencies.fetch ? { fetch: dependencies.fetch as never } : {}),
+    },
   });
 
   if (dependencies.api) {

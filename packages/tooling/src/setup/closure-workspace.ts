@@ -58,7 +58,7 @@ export async function buildConfiguredClosure(
 ): Promise<SelectedClosureManifest> {
   const selection = readConfiguredSelection(workspaceRoot);
   const liveGraph = graph ?? (await createLiveProjectGraph());
-  return buildSelectedClosure(configuredClosureGraph(workspaceRoot, liveGraph), {
+  return buildSelectedClosure(configuredClosureGraph(workspaceRoot, liveGraph, selection), {
     apps: selection.apps,
     capabilities: selection.capabilities,
     configHash: selection.configHash,
@@ -67,9 +67,32 @@ export async function buildConfiguredClosure(
   });
 }
 
-export function configuredClosureGraph(workspaceRoot: string, graph: ProjectGraphLike): ProjectGraphLike {
+export function configuredClosureGraph(
+  workspaceRoot: string,
+  graph: ProjectGraphLike,
+  selection: ConfiguredSelection = readConfiguredSelection(workspaceRoot),
+): ProjectGraphLike {
   const provider = configuredReferenceProvider(workspaceRoot);
-  return provider ? referenceProviderGraph(graph, provider) : graph;
+  if (provider) {
+    return referenceProviderGraph(graph, provider);
+  }
+
+  const statelessApps = new Set(selection.apps.filter((appId) => appCatalog[appId].requiresDurableDatabase !== true));
+  if (statelessApps.size === 0) {
+    return graph;
+  }
+  const durableProjects = new Set([...providerProjects('postgres'), ...providerProjects('mongodb')]);
+  return {
+    ...graph,
+    dependencies: Object.fromEntries(
+      Object.entries(graph.dependencies).map(([project, dependencies]) => [
+        project,
+        statelessApps.has(project as keyof typeof appCatalog)
+          ? dependencies.filter((dependency) => !durableProjects.has(dependency.target))
+          : dependencies,
+      ]),
+    ),
+  };
 }
 
 export function configuredReferenceProvider(workspaceRoot: string): DurableDatabaseProviderId | undefined {

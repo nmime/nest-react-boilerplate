@@ -693,7 +693,34 @@ describe('planner — concrete capability activation', () => {
     assert.doesNotMatch(generatedModule, /backend-postgres|PostgresMainModule|AuthPostgres/);
   });
 
-  it('leaves bot-owned Redis composition out of generated capability modules', () => {
+  it('keeps provider-specific OTEL instrumentation out of stateless apps', () => {
+    const statelessSummary = planSummaryFixture({
+      apps: ['telegram-bot-api'],
+      capabilities: ['otel', 'postgres', 'telegram-bot'],
+      configHash: 'stateless-otel',
+    });
+    const generated = generateBackendCapabilityBootstrap('telegram-bot-api', statelessSummary).content;
+
+    assert.match(generated, /createOpenTelemetryInstrumentations/u);
+    assert.doesNotMatch(generated, /backend-postgres-main-otel|createPostgresOpenTelemetryInstrumentations/u);
+  });
+
+  it('keeps database-independent capability wiring available to stateless apps', () => {
+    const statelessSummary = planSummaryFixture({
+      apps: ['telegram-bot-api'],
+      capabilities: ['analytics', 'nats', 's3', 'static-data', 'telegram-bot'],
+      configHash: 'stateless-capabilities',
+    });
+    const generated = generateBackendCapabilityModule('telegram-bot-api', statelessSummary).content;
+
+    assert.match(generated, /AnalyticsModule\.forRoot\(\)/u);
+    assert.match(generated, /NatsModule\.forRoot\(\)/u);
+    assert.match(generated, /S3Module\.forRoot\(\)/u);
+    assert.match(generated, /StaticDataModule\.forRoot/u);
+    assert.doesNotMatch(generated, /Postgres|Mongo/u);
+  });
+
+  it('generates shared Redis composition for both integration APIs', () => {
     const botSummary = planSummaryFixture({
       apps: ['discord-app-api', 'telegram-bot-api'],
       capabilities: ['discord-bot', 'postgres', 'redis', 'telegram-bot'],
@@ -701,8 +728,23 @@ describe('planner — concrete capability activation', () => {
     });
 
     for (const app of ['discord-app-api', 'telegram-bot-api'] as const) {
-      assert.doesNotMatch(generateBackendCapabilityModule(app, botSummary).content, /RedisModule/u);
+      assert.match(generateBackendCapabilityModule(app, botSummary).content, /RedisModule\.forRoot\(\)/u);
     }
+  });
+
+  it('keeps selected durable-database wiring out of stateless backend apps', () => {
+    const botSummary = planSummaryFixture({
+      apps: ['discord-app-api', 'telegram-bot-api'],
+      capabilities: ['discord-bot', 'postgres', 'redis', 'telegram-bot'],
+      configHash: 'bots',
+    });
+
+    const discordModule = generateBackendCapabilityModule('discord-app-api', botSummary).content;
+    const telegramModule = generateBackendCapabilityModule('telegram-bot-api', botSummary).content;
+
+    assert.match(discordModule, /PostgresMainModule\.forRoot\(\)/u);
+    assert.match(discordModule, /AuthPostgresModule/u);
+    assert.doesNotMatch(telegramModule, /PostgresMainModule|AuthPostgresModule|S3Module/u);
   });
 
   it('keeps each generated user API source closure free of the opposite provider and driver', () => {

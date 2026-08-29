@@ -16,6 +16,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
 const chart = resolve(root, '.helm');
+const helmBinary = process.env.HELM_BIN?.trim() || 'helm';
 /**
  * These assertions are about chart behaviour, so they must not inherit the ambient
  * `.helm/values-selection.yaml` — `nrb setup` narrows that file to whatever the caller selected,
@@ -79,7 +80,7 @@ const otelEnabledArgs = [
 
 function helmAvailable() {
   try {
-    execFileSync('helm', ['version', '--short'], { stdio: 'pipe' });
+    execFileSync(helmBinary, ['version', '--short'], { stdio: 'pipe' });
     return true;
   } catch {
     return false;
@@ -95,7 +96,7 @@ test('live Kubernetes preflight plans only read or use server-side dry-run opera
     '--release=nrb',
     '--backup-cronjob=platform-postgres-backup',
   ]);
-  const plan = buildLiveValidationPlan(options, '/tmp/candidate.yaml', 7);
+  const plan = buildLiveValidationPlan(options, resolve(root, 'candidate.yaml'), 7);
   const byId = Object.fromEntries(plan.map((step) => [step.id, step]));
 
   assert.ok(byId['helm-server-dry-run'].args.includes('--dry-run=server'));
@@ -137,7 +138,7 @@ test('live Kubernetes preflight requires rollback history and a recent successfu
 /** Render the chart to multi-doc YAML text. */
 function render(releaseName, extraArgs = []) {
   return execFileSync(
-    'helm',
+    helmBinary,
     ['template', releaseName, chart, '--namespace', 'nrb', '-f', prodValues, '-f', selectionValues, ...extraArgs],
     {
       encoding: 'utf8',
@@ -149,7 +150,7 @@ function render(releaseName, extraArgs = []) {
 /** Render with default values (+ synthetic in-chart secret), like validate-helm.sh. */
 function renderDefault(releaseName, extraArgs = []) {
   return execFileSync(
-    'helm',
+    helmBinary,
     [
       'template',
       releaseName,
@@ -173,10 +174,47 @@ function renderDefault(releaseName, extraArgs = []) {
 }
 
 /** Extract the YAML doc (between `---` separators) whose kind + name match. */
-function docFor(rendered, kind, nameFragment) {
-  const docs = rendered.split(/^---$/m);
-  return docs.find((d) => d.includes(`kind: ${kind}`) && d.includes(nameFragment)) ?? '';
+function docFor(rendered, kind, name) {
+  const header = new RegExp(`^apiVersion:.*\\nkind: ${kind}\\nmetadata:\\n  name: ${name}$`, 'mu');
+  const start = header.exec(rendered)?.index;
+  if (start === undefined) return '';
+  const nextDocument = /^apiVersion:/mu.exec(rendered.slice(start + 1));
+  return rendered.slice(start, nextDocument ? start + 1 + nextDocument.index : undefined);
 }
+
+test('global autoscaling honors per-app opt-out while other apps keep HPAs', { skip: !HELM }, () => {
+  const out = render('nrbtest');
+
+  for (const app of ['discord-app-api', 'telegram-bot-api']) {
+    const deployment = docFor(out, 'Deployment', `nrbtest-${app}`);
+    assert.ok(deployment, `expected a Deployment for ${app}`);
+    assert.match(deployment, /\n {2}replicas:\s*1\n/u, `${app} must keep its fixed replica count`);
+    assert.equal(docFor(out, 'HorizontalPodAutoscaler', `nrbtest-${app}`), '', `${app} must not get an HPA`);
+  }
+
+  for (const app of ['auth-app-api', 'user-app']) {
+    const deployment = docFor(out, 'Deployment', `nrbtest-${app}`);
+    assert.ok(deployment, `expected a Deployment for ${app}`);
+    assert.doesNotMatch(deployment, /\n {2}replicas:/u, `${app} replicas must be managed by its HPA`);
+    assert.ok(docFor(out, 'HorizontalPodAutoscaler', `nrbtest-${app}`), `expected an HPA for ${app}`);
+  }
+});
+
+test('an omitted per-app autoscaling flag defaults to enabled', { skip: !HELM }, () => {
+  const out = render('nrbtest');
+  const authDeployment = docFor(out, 'Deployment', 'nrbtest-auth-app-api');
+
+  assert.doesNotMatch(authDeployment, /\n {2}replicas:/u, 'an autoscaled Deployment must omit fixed replicas');
+  assert.ok(docFor(out, 'HorizontalPodAutoscaler', 'nrbtest-auth-app-api'));
+});
+
+test('global autoscaling disabled keeps fixed replicas for ordinary apps', { skip: !HELM }, () => {
+  const out = render('nrbtest', ['--set', 'autoscaling.enabled=false']);
+  const authDeployment = docFor(out, 'Deployment', 'nrbtest-auth-app-api');
+
+  assert.match(authDeployment, /\n {2}replicas:\s*3\n/u);
+  assert.equal(docFor(out, 'HorizontalPodAutoscaler', 'nrbtest-auth-app-api'), '');
+});
 
 test('PodDisruptionBudget honors minAvailable from production values', { skip: !HELM }, () => {
   const out = render('nrbtest');
@@ -381,10 +419,15 @@ test('product-owned backend configuration reaches every workload the chart confi
   // The chart's own ConfigMap is listed last so it wins on a duplicate key, mirroring Compose
   // where `environment` beats `env_file`: a boilerplate key is overridden through values.yaml,
   // never by shadowing it from the product surface.
-  const workloads = out.split(/^---$/mu).filter((doc) => /^\s+envFrom:$/mu.test(doc));
+  const workloads = out.split('\n---\n').filter((doc) => doc.split('\n').some((line) => line.trim() === 'envFrom:'));
   assert.ok(workloads.length >= 2, 'expected the backend deployments and the migration Job to use envFrom');
   for (const doc of workloads) {
-    const name = /^\s+name:\s*(\S+)/mu.exec(doc)?.[1] ?? '<unnamed>';
+    const name =
+      doc
+        .split('\n')
+        .map((line) => line.trim())
+        .find((line) => line.startsWith('name: '))
+        ?.slice('name: '.length) ?? '<unnamed>';
     const product = doc.indexOf('name: nrbtest-product-config');
     const own = doc.indexOf('name: nrbtest-config');
     assert.ok(product >= 0, `${name} must read the product-owned ConfigMap`);

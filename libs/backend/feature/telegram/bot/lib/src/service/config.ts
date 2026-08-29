@@ -17,6 +17,7 @@ export function resolveTelegramBotConfig(env: NodeJS.ProcessEnv = process.env): 
 
   return {
     token,
+    apiRoot: resolveTelegramApiRoot(env.TELEGRAM_API_ROOT),
     appUrl: resolveSafeTelegramAppUrl(env),
     setupMenuButton: readBoolean(env.TELEGRAM_BOT_MENU_BUTTON_ENABLED, true),
     webhookSecret: (env.TELEGRAM_BOT_WEBHOOK_SECRET ?? env.TELEGRAM_WEBHOOK_SECRET)?.trim(),
@@ -29,6 +30,38 @@ export function resolveTelegramBotConfig(env: NodeJS.ProcessEnv = process.env): 
       limit: readPositiveInt(env.TELEGRAM_BOT_RATE_LIMIT, DefaultRateLimit),
     },
   };
+}
+
+export function resolveTelegramApiRoot(value: string | undefined): string | undefined {
+  const normalized = value?.trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(normalized);
+  } catch {
+    throw new Error('TELEGRAM_API_ROOT must be a valid HTTP or HTTPS URL.');
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('TELEGRAM_API_ROOT must use HTTP or HTTPS.');
+  }
+  if (url.username || url.password) {
+    throw new Error('TELEGRAM_API_ROOT must not include credentials.');
+  }
+  if (url.search || url.hash) {
+    throw new Error('TELEGRAM_API_ROOT must not include a query string or fragment.');
+  }
+
+  let pathname = url.pathname;
+  while (pathname.endsWith('/')) {
+    pathname = pathname.slice(0, -1);
+  }
+  url.pathname = pathname || '/';
+  const serialized = url.toString();
+  return url.pathname === '/' ? serialized.slice(0, -1) : serialized;
 }
 
 export function resolveSafeTelegramAppUrl(env: NodeJS.ProcessEnv = process.env): string | undefined {

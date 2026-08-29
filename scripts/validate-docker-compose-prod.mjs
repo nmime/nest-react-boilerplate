@@ -203,6 +203,15 @@ for (const expected of [
 ]) {
   has(discordAuthCompose, expected, `Discord auth overlay ${expected}`);
 }
+const authDiscordOverlay = discordAuthCompose.split('\n\n  discord-app-api:')[0];
+const discordAppOverlay = discordAuthCompose.split('\n\n  discord-app-api:')[1] ?? '';
+for (const [service, serviceBlock] of [
+  ['auth-app-api', authDiscordOverlay],
+  ['discord-app-api', discordAppOverlay],
+]) {
+  has(serviceBlock, '<<: *discord-oauth-env', `${service} receives Discord OAuth client settings`);
+  has(serviceBlock, '- discord_client_secret', `${service} receives the Discord OAuth client secret`);
+}
 
 for (const service of [
   'migrator',

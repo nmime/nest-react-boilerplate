@@ -382,6 +382,14 @@ function collectProductExternalPackages(
         : new Set([...postgresPackages, ...mongodbPackages]);
 
   for (const project of projects) {
+    // Test-only utility projects carry heavyweight dev dependencies from both
+    // datastore axes (container drivers, testcontainers bindings). They never
+    // ship in a product image, so their npm edges must not pollute a selected
+    // closure — otherwise adding an axis-specific component spec would pin the
+    // opposite provider's driver onto every closure the tooling builds.
+    if (graph.nodes[project]?.data.tags?.includes('type:test-util')) {
+      continue;
+    }
     for (const dependency of graph.dependencies[project] ?? []) {
       const external = graph.externalNodes?.[dependency.target];
       if (!external) {

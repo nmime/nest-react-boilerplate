@@ -20,6 +20,8 @@ import {
 export const client = createClient<paths>();
 
 export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
+export type CreatePaymentsBodyDto = components['schemas']['CreatePaymentsBodyDto'];
+export type PaymentsResponseDto = components['schemas']['PaymentsResponseDto'];
 export type ProfilePayloadDto = components['schemas']['ProfilePayloadDto'];
 export type UserProfileViewDto = components['schemas']['UserProfileViewDto'];
 
@@ -28,6 +30,8 @@ export const baseHealthControllerGetPrivateHealthPath = '/health/private' as con
 export const baseHealthControllerGetLivenessPath = '/live' as const;
 export const baseHealthControllerGetReadinessPath = '/ready' as const;
 export const profileControllerMePath = '/profile/me' as const;
+export const paymentsControllerListPath = '/payments' as const;
+export const paymentsControllerCreatePath = '/payments' as const;
 
 export const baseHealthControllerGetHealth = (options?: ApiClientRequestOptions) =>
   client.GET(baseHealthControllerGetHealthPath, toOpenApiFetchOptions(options));
@@ -59,9 +63,26 @@ export type ProfileControllerMeResponse = OpenApiData<typeof profileControllerMe
 export type ProfileControllerMeData = EnvelopeData<ProfileControllerMeResponse>;
 export type ProfileControllerMeError = OpenApiError<typeof profileControllerMe>;
 
+export const paymentsControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(paymentsControllerListPath, toOpenApiFetchOptions(options));
+export type PaymentsControllerListResponse = OpenApiData<typeof paymentsControllerList>;
+export type PaymentsControllerListData = EnvelopeData<PaymentsControllerListResponse>;
+export type PaymentsControllerListError = OpenApiError<typeof paymentsControllerList>;
+
+export const paymentsControllerCreate = (body: CreatePaymentsBodyDto, options?: ApiClientRequestOptions) =>
+  client.POST(paymentsControllerCreatePath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type PaymentsControllerCreateResponse = OpenApiData<typeof paymentsControllerCreate>;
+export type PaymentsControllerCreateData = EnvelopeData<PaymentsControllerCreateResponse>;
+export type PaymentsControllerCreateError = OpenApiError<typeof paymentsControllerCreate>;
+
 export const getBaseHealthControllerGetHealthQueryKey = () => ['get', baseHealthControllerGetHealthPath] as const;
 export const getBaseHealthControllerGetPrivateHealthQueryKey = () =>
   ['get', baseHealthControllerGetPrivateHealthPath] as const;
 export const getBaseHealthControllerGetLivenessQueryKey = () => ['get', baseHealthControllerGetLivenessPath] as const;
 export const getBaseHealthControllerGetReadinessQueryKey = () => ['get', baseHealthControllerGetReadinessPath] as const;
 export const getProfileControllerMeQueryKey = () => ['get', profileControllerMePath] as const;
+export const getPaymentsControllerListQueryKey = () => ['get', paymentsControllerListPath] as const;
+export const getPaymentsControllerCreateMutationKey = () => ['post', paymentsControllerCreatePath] as const;

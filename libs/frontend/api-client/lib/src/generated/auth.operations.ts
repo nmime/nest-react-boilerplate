@@ -32,6 +32,7 @@ export const client = createClient<paths>();
 export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
 export type AuthenticatedUserViewDto = components['schemas']['AuthenticatedUserViewDto'];
 export type AuthSessionViewDto = components['schemas']['AuthSessionViewDto'];
+export type CreatePaymentsBodyDto = components['schemas']['CreatePaymentsBodyDto'];
 export type DiscordAuthorizationRequestDto = components['schemas']['DiscordAuthorizationRequestDto'];
 export type DiscordAuthorizationRequestResultDto = components['schemas']['DiscordAuthorizationRequestResultDto'];
 export type ExternalAuthIdentityDto = components['schemas']['ExternalAuthIdentityDto'];
@@ -42,6 +43,7 @@ export type LoginDto = components['schemas']['LoginDto'];
 export type LogoutPayloadDto = components['schemas']['LogoutPayloadDto'];
 export type MePayloadDto = components['schemas']['MePayloadDto'];
 export type PasswordResetConfirmDto = components['schemas']['PasswordResetConfirmDto'];
+export type PaymentsResponseDto = components['schemas']['PaymentsResponseDto'];
 export type ProblemPresentationRuntimePayloadDto = components['schemas']['ProblemPresentationRuntimePayloadDto'];
 export type ProblemPresentationRuntimeViewDto = components['schemas']['ProblemPresentationRuntimeViewDto'];
 export type ProviderIdentitiesPayloadDto = components['schemas']['ProviderIdentitiesPayloadDto'];
@@ -82,6 +84,8 @@ export const authControllerUpdatePreferencesPath = '/auth/me/preferences' as con
 export const authControllerLocalesPath = '/auth/locales' as const;
 export const authControllerLogoutPath = '/auth/logout' as const;
 export const problemPresentationsControllerListPath = '/auth/problem-presentations' as const;
+export const paymentsControllerListPath = '/payments' as const;
+export const paymentsControllerCreatePath = '/payments' as const;
 
 export const baseHealthControllerGetHealth = (options?: ApiClientRequestOptions) =>
   client.GET(baseHealthControllerGetHealthPath, toOpenApiFetchOptions(options));
@@ -295,6 +299,21 @@ export type ProblemPresentationsControllerListResponse = OpenApiData<typeof prob
 export type ProblemPresentationsControllerListData = EnvelopeData<ProblemPresentationsControllerListResponse>;
 export type ProblemPresentationsControllerListError = OpenApiError<typeof problemPresentationsControllerList>;
 
+export const paymentsControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(paymentsControllerListPath, toOpenApiFetchOptions(options));
+export type PaymentsControllerListResponse = OpenApiData<typeof paymentsControllerList>;
+export type PaymentsControllerListData = EnvelopeData<PaymentsControllerListResponse>;
+export type PaymentsControllerListError = OpenApiError<typeof paymentsControllerList>;
+
+export const paymentsControllerCreate = (body: CreatePaymentsBodyDto, options?: ApiClientRequestOptions) =>
+  client.POST(paymentsControllerCreatePath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type PaymentsControllerCreateResponse = OpenApiData<typeof paymentsControllerCreate>;
+export type PaymentsControllerCreateData = EnvelopeData<PaymentsControllerCreateResponse>;
+export type PaymentsControllerCreateError = OpenApiError<typeof paymentsControllerCreate>;
+
 export const getBaseHealthControllerGetHealthQueryKey = () => ['get', baseHealthControllerGetHealthPath] as const;
 export const getBaseHealthControllerGetPrivateHealthQueryKey = () =>
   ['get', baseHealthControllerGetPrivateHealthPath] as const;
@@ -329,3 +348,5 @@ export const getAuthControllerLocalesQueryKey = () => ['get', authControllerLoca
 export const getAuthControllerLogoutMutationKey = () => ['post', authControllerLogoutPath] as const;
 export const getProblemPresentationsControllerListQueryKey = () =>
   ['get', problemPresentationsControllerListPath] as const;
+export const getPaymentsControllerListQueryKey = () => ['get', paymentsControllerListPath] as const;
+export const getPaymentsControllerCreateMutationKey = () => ['post', paymentsControllerCreatePath] as const;

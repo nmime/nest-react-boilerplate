@@ -587,6 +587,93 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
       ],
     },
   },
+  payments: {
+    id: 'payments',
+    label: 'Payments',
+    activation: 'nest-module',
+    requiresCapabilities: [],
+    requiresApps: [],
+    conflictsWith: [],
+    requiresDurableDatabase: true,
+    ownedProjects: ['@app/backend-feature-payments-shared', '@app/backend-feature-payments-main'],
+    providerOwnedProjects: {
+      postgres: ['@app/backend-postgres-main-payments'],
+      mongodb: ['@app/backend-mongodb-main-payments'],
+    },
+    dockerServices: [],
+    // The PAYMENTS_* environment variables (credentials envelope key pair + rotation window,
+    // webhook base URL, scheduler + stuck-alert tuning) are registered together with the
+    // .env*.example files that checkEnvExampleConsistency validates against this list.
+    environmentVariables: [],
+    backendWiring: [],
+    // The scaffold's DDL rides with the capability so a workspace that never selected it does
+    // not carry the table it will never write to. U3 replaces the scaffold migration with the
+    // four production tables (payment_providers, payments, payment_events,
+    // payment_webhook_receipts); U6 adds the claim-lease columns on the receipts table.
+    providerMigrations: {
+      postgres: [
+        {
+          importName: 'Migration20260823100000CreatePaymentProviders',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100000CreatePaymentProviders.ts',
+        },
+        {
+          importName: 'Migration20260823100100CreatePayments',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100100CreatePayments.ts',
+        },
+        {
+          importName: 'Migration20260823100200CreatePaymentEvents',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100200CreatePaymentEvents.ts',
+        },
+        {
+          importName: 'Migration20260823100300CreatePaymentWebhookReceipts',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260823100300CreatePaymentWebhookReceipts.ts',
+        },
+        {
+          importName: 'Migration20260827100000AddPaymentWebhookClaimLease',
+          importPath:
+            '../../../../../libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/Migration20260827100000AddPaymentWebhookClaimLease.ts',
+        },
+      ],
+    },
+    // The feature module takes its persistence as an import rather than resolving an axis itself,
+    // so the wiring for each axis carries both modules and hands one to the other.
+    providerBackendWiring: {
+      postgres: [
+        {
+          hosts: 'selected-backend',
+          importName: 'PaymentsMainModule',
+          importPath: '@app/backend-feature-payments-main',
+          additionalImports: [
+            {
+              importName: 'PaymentsPostgresModule',
+              importPath: '@app/backend-postgres-main-payments',
+            },
+          ],
+          moduleExpression:
+            'PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })',
+        },
+      ],
+      mongodb: [
+        {
+          hosts: 'selected-backend',
+          importName: 'PaymentsMainModule',
+          importPath: '@app/backend-feature-payments-main',
+          additionalImports: [
+            {
+              importName: 'PaymentsMongoModule',
+              importPath: '@app/backend-mongodb-main-payments',
+            },
+          ],
+          moduleExpression:
+            'PaymentsMainModule.forRoot({ imports: [PaymentsMongoModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })',
+        },
+      ],
+    },
+  },
   notifications: {
     id: 'notifications',
     label: 'Notifications',

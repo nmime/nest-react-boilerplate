@@ -6,10 +6,12 @@
 import { Global, Module } from '@nestjs/common';
 import { S3Module } from '@app/backend-common-s3';
 import { NotificationMainModule } from '@app/backend-feature-notification-main';
+import { PaymentsMainModule } from '@app/backend-feature-payments-main';
 import { PostgresMainModule } from '@app/backend-postgres-main';
 import { AuthPostgresModule } from '@app/backend-postgres-main-auth';
 import { FeatureFlagsPostgresModule } from '@app/backend-postgres-main-feature-flags';
 import { NotificationPostgresModule } from '@app/backend-postgres-main-notification';
+import { PaymentsPostgresModule } from '@app/backend-postgres-main-payments';
 
 @Global()
 @Module({
@@ -18,6 +20,7 @@ import { NotificationPostgresModule } from '@app/backend-postgres-main-notificat
     FeatureFlagsPostgresModule,
     NotificationMainModule.forRoot({ enableScheduler: false, exposeHttp: false }),
     NotificationPostgresModule,
+    PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } }),
     PostgresMainModule.forRoot(),
     S3Module.forRoot(),
   ],
@@ -26,6 +29,7 @@ import { NotificationPostgresModule } from '@app/backend-postgres-main-notificat
     FeatureFlagsPostgresModule,
     NotificationMainModule,
     NotificationPostgresModule,
+    PaymentsMainModule,
     PostgresMainModule,
     S3Module,
   ],

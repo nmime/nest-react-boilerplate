@@ -3,7 +3,11 @@ import { type ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { describe, expect, it } from 'vitest';
 import { HealthRouteMetadataKey } from '@app/backend-common-health';
-import { DefaultAuthTenantId, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
+import {
+  DefaultAuthTenantId,
+  PublicAuthMetadataKey,
+  type AuthenticatedRequest,
+} from '@app/backend-feature-auth-shared';
 import { AdminAuthenticationGuard } from './admin-authentication.guard';
 
 const contextFor = (request: AuthenticatedRequest, handler: () => undefined = () => undefined) =>
@@ -41,9 +45,12 @@ describe(AdminAuthenticationGuard.name, () => {
     ).toThrow(UnauthorizedException);
   });
 
-  it('keeps shared health routes available to probes', () => {
+  it.each([
+    ['health', HealthRouteMetadataKey],
+    ['public webhook', PublicAuthMetadataKey],
+  ])('keeps %s routes available without an admin session', (_label, metadataKey) => {
     const handler = () => undefined;
-    Reflect.defineMetadata(HealthRouteMetadataKey, true, handler);
+    Reflect.defineMetadata(metadataKey, true, handler);
 
     expect(new AdminAuthenticationGuard(new Reflector()).canActivate(contextFor({}, handler))).toBe(true);
   });

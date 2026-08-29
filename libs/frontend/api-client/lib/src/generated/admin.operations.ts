@@ -60,6 +60,8 @@ export type CreateAdminNotificationBroadcastDto = components['schemas']['CreateA
 export type CreateAdminNotificationSegmentDto = components['schemas']['CreateAdminNotificationSegmentDto'];
 export type CreateAdminNotificationTemplateDto = components['schemas']['CreateAdminNotificationTemplateDto'];
 export type CreateAdminRoleDto = components['schemas']['CreateAdminRoleDto'];
+export type CreatePaymentsBodyDto = components['schemas']['CreatePaymentsBodyDto'];
+export type PaymentsResponseDto = components['schemas']['PaymentsResponseDto'];
 export type PreviewAdminNotificationTemplateDto = components['schemas']['PreviewAdminNotificationTemplateDto'];
 export type ResetAdminProblemPresentationDto = components['schemas']['ResetAdminProblemPresentationDto'];
 export type ResetAdminProblemPresentationResultDto = components['schemas']['ResetAdminProblemPresentationResultDto'];
@@ -135,6 +137,8 @@ export const adminNotificationsControllerScheduleBroadcastPath =
 export const adminNotificationsControllerPauseBroadcastPath = '/admin/notification-broadcasts/{id}/pause' as const;
 export const adminNotificationsControllerResumeBroadcastPath = '/admin/notification-broadcasts/{id}/resume' as const;
 export const adminNotificationsControllerCancelBroadcastPath = '/admin/notification-broadcasts/{id}/cancel' as const;
+export const paymentsControllerListPath = '/payments' as const;
+export const paymentsControllerCreatePath = '/payments' as const;
 
 export const baseHealthControllerGetHealth = (options?: ApiClientRequestOptions) =>
   client.GET(baseHealthControllerGetHealthPath, toOpenApiFetchOptions(options));
@@ -891,6 +895,21 @@ export type AdminNotificationsControllerCancelBroadcastError = OpenApiError<
   typeof adminNotificationsControllerCancelBroadcast
 >;
 
+export const paymentsControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(paymentsControllerListPath, toOpenApiFetchOptions(options));
+export type PaymentsControllerListResponse = OpenApiData<typeof paymentsControllerList>;
+export type PaymentsControllerListData = EnvelopeData<PaymentsControllerListResponse>;
+export type PaymentsControllerListError = OpenApiError<typeof paymentsControllerList>;
+
+export const paymentsControllerCreate = (body: CreatePaymentsBodyDto, options?: ApiClientRequestOptions) =>
+  client.POST(paymentsControllerCreatePath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type PaymentsControllerCreateResponse = OpenApiData<typeof paymentsControllerCreate>;
+export type PaymentsControllerCreateData = EnvelopeData<PaymentsControllerCreateResponse>;
+export type PaymentsControllerCreateError = OpenApiError<typeof paymentsControllerCreate>;
+
 export const getBaseHealthControllerGetHealthQueryKey = () => ['get', baseHealthControllerGetHealthPath] as const;
 export const getBaseHealthControllerGetPrivateHealthQueryKey = () =>
   ['get', baseHealthControllerGetPrivateHealthPath] as const;
@@ -991,3 +1010,5 @@ export const getAdminNotificationsControllerResumeBroadcastMutationKey = () =>
   ['post', adminNotificationsControllerResumeBroadcastPath] as const;
 export const getAdminNotificationsControllerCancelBroadcastMutationKey = () =>
   ['post', adminNotificationsControllerCancelBroadcastPath] as const;
+export const getPaymentsControllerListQueryKey = () => ['get', paymentsControllerListPath] as const;
+export const getPaymentsControllerCreateMutationKey = () => ['post', paymentsControllerCreatePath] as const;

@@ -161,7 +161,6 @@
     "jiti": "2.7.0",
     "jsonc-eslint-parser": "3.1.0",
     "nx": "23.1.0",
-    "prettier": "3.9.6",
     "react-native-web": "0.21.2",
     "sharp": "0.35.3",
     "supertest": "7.2.2",
@@ -172,7 +171,7 @@
     "yaml": "2.9.0"
   },
   "nrb": {
-    "configHash": "7174e8c6c43fb781f49657c3d9af29b8b49b0b993a9ce59e159df46a7403d73f",
-    "graphDigest": "a3ec02b32112657a3bb0ea269e8fe0f0e49a8943473088af299175e73ec3079b"
+    "configHash": "fb2597bd18a10d9424f7d5309d38dced332783cd3a7efc76289abfd7cd751e5f",
+    "graphDigest": "300d74ec37830bf405dfb243024643edeb6058215926ba2c79786e7ec283bd01"
   }
 }

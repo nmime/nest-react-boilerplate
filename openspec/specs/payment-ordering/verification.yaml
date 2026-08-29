@@ -1,0 +1,159 @@
+version: 3
+capability: payment-ordering
+owners:
+  product: runtime-maintainers
+  verification: backend-maintainers
+  security: security-maintainers
+  operations: platform-operations
+requirements:
+  - id: REQ-PAYMENT-ORDER-001
+    projects:
+      - '@app/backend-feature-payments-shared'
+      - '@app/backend-feature-payments-main'
+      - '@app/backend-feature-payments-admin'
+    risk: high
+    profiles:
+      - domain
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: State-machine edges and the late-paid-after-close escalation are backend-only invariants; the journey profile is proven by the fullstack-e2e playwright suite (mock provider) at lane main.
+      alternativeEvidence:
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/payments/shared/lib/src/index.spec.ts
+        target: '@app/backend-feature-payments-shared:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/payments-main.module.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/payments/admin/lib/src/payments-admin.module.spec.ts
+        target: '@app/backend-feature-payments-admin:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/payment-ordering/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-PAYMENT-ORDER-002
+    projects:
+      - '@app/backend-feature-payments-shared'
+    risk: normal
+    profiles:
+      - domain
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Exact-ratio money and the FX snapshot rule are arithmetic invariants asserted in Vitest, not stakeholder journeys; the journey profile is proven by the fullstack-e2e playwright suite (mock provider) at lane main.
+      alternativeEvidence:
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/payments/shared/lib/src/alias.spec.ts
+        target: '@app/backend-feature-payments-shared:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/payment-ordering/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-PAYMENT-ORDER-003
+    projects:
+      - '@app/backend-feature-payments-shared'
+      - '@app/backend-feature-payments-main'
+      - '@app/backend-postgres-main-payments'
+      - '@app/backend-mongodb-main-payments'
+    risk: normal
+    profiles:
+      - domain
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Idempotent creation with one payment id is proven by repeat-create assertions and the unique-constraint wall, not a browser journey; the journey profile is proven by the fullstack-e2e playwright suite (mock provider) at lane main.
+      alternativeEvidence:
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/payments/shared/lib/src/payment-persistence.spec.ts
+        target: '@app/backend-feature-payments-shared:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/migrations/payments-schema.migration.spec.ts
+        target: '@app/backend-postgres-main-payments:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/repositories/payments.repository.spec.ts
+        target: '@app/backend-postgres-main-payments:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/mongodb/main/payments/lib/src/migrations/Migration20260823100000InitializePayments.spec.ts
+        target: '@app/backend-mongodb-main-payments:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/mongodb/main/payments/lib/src/payments-mongo.repository.spec.ts
+        target: '@app/backend-mongodb-main-payments:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/payment-ordering/spec.md
+        lanes:
+          - pr
+          - main
+  - id: REQ-PAYMENT-ORDER-004
+    projects:
+      - '@app/backend-feature-payments-shared'
+      - '@app/backend-feature-payments-main'
+      - '@app/backend-postgres-main-payments'
+    risk: normal
+    profiles:
+      - domain
+      - documentation
+    cucumber:
+      disposition: not-applicable
+      reason: Expiry and underpaid settlement are time-driven backend policies asserted against reconciler and provider-status outcomes; the journey profile is proven by the fullstack-e2e playwright suite (mock provider) at lane main.
+      alternativeEvidence:
+        - vitest
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/payments/main/lib/src/payments.service.spec.ts
+        target: '@app/backend-feature-payments-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/payments/lib/src/infrastructure/data-access/entities/payments.entity.spec.ts
+        target: '@app/backend-postgres-main-payments:test'
+        lanes:
+          - pr
+          - main
+      - kind: documentation
+        file: openspec/specs/payment-ordering/spec.md
+        lanes:
+          - pr
+          - main

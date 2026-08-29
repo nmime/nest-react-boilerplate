@@ -4,6 +4,7 @@ import { HealthRouteMetadataKey } from '@app/backend-common-health';
 import {
   assertRequestTenantMatchesPrincipal,
   type AuthenticatedRequest,
+  PublicAuthMetadataKey,
   readSessionPrincipal,
 } from '@app/backend-feature-auth-shared';
 
@@ -17,7 +18,7 @@ export class AdminAuthenticationGuard implements CanActivate {
   constructor(private readonly metadata: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    if (this.isHealthRoute(context)) {
+    if (this.isExcludedRoute(context)) {
       return true;
     }
 
@@ -33,12 +34,10 @@ export class AdminAuthenticationGuard implements CanActivate {
     return true;
   }
 
-  private isHealthRoute(context: ExecutionContext): boolean {
-    return (
-      this.metadata.getAllAndOverride<boolean | undefined>(HealthRouteMetadataKey, [
-        context.getHandler(),
-        context.getClass(),
-      ]) ?? false
+  private isExcludedRoute(context: ExecutionContext): boolean {
+    return [HealthRouteMetadataKey, PublicAuthMetadataKey].some(
+      (key) =>
+        this.metadata.getAllAndOverride<boolean | undefined>(key, [context.getHandler(), context.getClass()]) ?? false,
     );
   }
 }

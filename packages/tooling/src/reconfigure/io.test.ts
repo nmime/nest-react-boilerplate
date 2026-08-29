@@ -79,38 +79,43 @@ describe('tenant change guard', () => {
   });
 
   it('supports MongoDB migration-ledger probes and refuses incomplete or ambiguous configuration', async () => {
-    await assertTenantChangeAllowed('.', filesystem(), {
-      mongodbUri: 'mongodb://localhost/app',
-      mongodbDatabase: 'app',
-      runMongoProbe: async () => 'fresh',
-    });
-    await assert.rejects(
-      assertTenantChangeAllowed('.', filesystem(), {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-tenant-guard-mongo-'));
+    try {
+      await assertTenantChangeAllowed(root, filesystem(), {
         mongodbUri: 'mongodb://localhost/app',
         mongodbDatabase: 'app',
-        runMongoProbe: async () => 'applied',
-      }),
-      /applied migrations/u,
-    );
-    await assert.rejects(
-      assertTenantChangeAllowed('.', filesystem(), { mongodbUri: 'mongodb://localhost/app' }),
-      /incomplete/u,
-    );
-    await assert.rejects(
-      assertTenantChangeAllowed('.', filesystem(), {
-        databaseUrl: 'postgres://localhost/app',
-        mongodbUri: 'mongodb://localhost/app',
-        mongodbDatabase: 'app',
-      }),
-      /both PostgreSQL and MongoDB/u,
-    );
-    await assert.rejects(
-      assertTenantChangeAllowed('.', filesystem(), {
-        mongodbUri: 'mongodb://localhost/other',
-        mongodbDatabase: 'app',
-      }),
-      /disagree/u,
-    );
+        runMongoProbe: async () => 'fresh',
+      });
+      await assert.rejects(
+        assertTenantChangeAllowed(root, filesystem(), {
+          mongodbUri: 'mongodb://localhost/app',
+          mongodbDatabase: 'app',
+          runMongoProbe: async () => 'applied',
+        }),
+        /applied migrations/u,
+      );
+      await assert.rejects(
+        assertTenantChangeAllowed(root, filesystem(), { mongodbUri: 'mongodb://localhost/app' }),
+        /incomplete/u,
+      );
+      await assert.rejects(
+        assertTenantChangeAllowed(root, filesystem(), {
+          databaseUrl: 'postgres://localhost/app',
+          mongodbUri: 'mongodb://localhost/app',
+          mongodbDatabase: 'app',
+        }),
+        /both PostgreSQL and MongoDB/u,
+      );
+      await assert.rejects(
+        assertTenantChangeAllowed(root, filesystem(), {
+          mongodbUri: 'mongodb://localhost/other',
+          mongodbDatabase: 'app',
+        }),
+        /disagree/u,
+      );
+    } finally {
+      rmSync(root, { force: true, recursive: true });
+    }
   });
 
   it('refuses applied migrations, missing psql, failed probes, and ambiguous output', async () => {

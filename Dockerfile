@@ -222,7 +222,7 @@ USER node
 EXPOSE 80
 CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
-FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:44e36330f74d4f3a1d4e222acca9e23b401fb87811a7597024502bb759c4dd49 AS frontend
+FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:45ce1e2e699234253d1def7baa96218a5d00b498d1ba0cbb1a17b6bdf73d1351 AS frontend
 ARG NX_PROJECT
 ARG RUNTIME_PROJECT
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin

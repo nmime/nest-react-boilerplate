@@ -74,6 +74,7 @@ pnpm nrb init \
 pnpm nrb setup
 
 cp .env.example .env
+cp .env.local.example .env.local
 # Replace placeholder secrets in .env from the environment's secret manager.
 # PostgreSQL preset/default:
 pnpm run dev:db

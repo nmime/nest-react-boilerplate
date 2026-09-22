@@ -97,6 +97,7 @@ pnpm install --frozen-lockfile
 
 pnpm nrb setup
 cp .env.example .env
+cp .env.local.example .env.local
 
 pnpm run dev:db
 pnpm run db:migrate

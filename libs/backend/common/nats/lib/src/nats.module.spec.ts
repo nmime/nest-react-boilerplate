@@ -39,6 +39,21 @@ describe('NatsModule.forRoot', () => {
     await expect(moduleRef.close()).resolves.toBeUndefined();
   });
 
+  it('treats the documented empty NATS_SERVERS value as no configured servers', async () => {
+    vi.stubEnv('NATS_SERVERS', '');
+
+    try {
+      const moduleRef = await Test.createTestingModule({
+        imports: [NatsModule.forRoot()],
+      }).compile();
+
+      expect(moduleRef.get(NatsInjectToken, { strict: false })).toBeNull();
+      await expect(moduleRef.close()).resolves.toBeUndefined();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('uses an injected client connection verbatim and drains it on shutdown', async () => {
     const drain = vi.fn(() => Promise.resolve(undefined));
     const client = mockConnection({ drain });

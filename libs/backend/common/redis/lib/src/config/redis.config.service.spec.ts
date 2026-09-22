@@ -110,6 +110,15 @@ describe('RedisConfigService', () => {
     expect(config.connectionConfig).toBeUndefined();
   });
 
+  it('treats the documented empty REDIS_HOSTS value as no configured hosts', () => {
+    process.env.REDIS_HOSTS = '';
+
+    const config = new RedisConfigService({});
+
+    expect(config.hosts).toEqual([]);
+    expect(config.connectionConfig).toBeUndefined();
+  });
+
   it('prefers explicit options over the environment for every field', () => {
     process.env.REDIS_MODE = 'cluster';
     process.env.REDIS_URL = 'redis://env';

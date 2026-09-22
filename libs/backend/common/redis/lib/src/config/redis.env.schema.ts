@@ -30,6 +30,9 @@ export const redisEnvSchema = Joi.object<RedisEnvironment>({
   REDIS_URL: Joi.string().empty('').optional(),
   REDIS_HOSTS: Joi.alternatives()
     .try(Joi.array().items(redisHostSchema), Joi.string().custom(parseHostsConfig, 'Redis hosts list'))
+    // `REDIS_HOSTS=` is the documented local default; `parseHostsConfig` already maps an
+    // empty string to an empty list, so the schema must not reject it before the parser runs.
+    .empty('')
     .default([]),
   REDIS_PASSWORD: Joi.string().empty('').optional(),
   REDIS_DB: Joi.number().integer().optional(),

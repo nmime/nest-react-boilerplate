@@ -665,6 +665,20 @@ export function resolveTrustProxy(
   return resolveTrustProxyValue(typeof optionsValue === 'string' ? optionsValue : envValue);
 }
 
+/** `@fastify/proxy-addr` trust predicate: `(address, hop) => trusted`. */
+export type TrustProxyFunction = (address: string, hop: number) => boolean;
+
+/**
+ * Fastify 5.12 removed numeric `trustProxy` (GHSA-3m5p-2c4r-xxw2): `@fastify/proxy-addr` now
+ * rejects a hop count with "unsupported trust argument", so the documented
+ * `TRUST_PROXY=<hops>` setting would abort the process at boot. Express the same hop-count
+ * semantics through the `TrustProxyFunction` Fastify still accepts, which keeps every shipped
+ * value (`false`, `true`, and the single-server topology's hop count) working.
+ */
+export function toFastifyTrustProxy(value: boolean | number | string): boolean | string | TrustProxyFunction {
+  return typeof value === 'number' ? (_address: string, hop: number) => hop < value : value;
+}
+
 export function resolveBackendEnvironmentConfig(
   options: BootstrapNestApiOptions,
   env: NodeJS.ProcessEnv = process.env,
@@ -889,7 +903,7 @@ async function createAndStartNestApi(
     new FastifyAdapter({
       bodyLimit: config.bodyLimit,
       logger: false,
-      trustProxy: config.trustProxy,
+      trustProxy: toFastifyTrustProxy(config.trustProxy),
     }),
     {
       bufferLogs: true,

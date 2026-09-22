@@ -5,6 +5,9 @@
  * Every export here is derived from the OpenAPI document, so `pnpm api:clients:check`
  * fails when a renamed or removed operation leaves this module stale. Hand-written
  * additions belong beside it, never inside it.
+ *
+ * Not emitted:
+ * - SEARCH /api/v1/webhooks/{provider} (unsupported by openapi-fetch)
  */
 
 import createClient from 'openapi-fetch';
@@ -76,7 +79,9 @@ export type CreateAdminNotificationSegmentDto = components['schemas']['CreateAdm
 export type CreateAdminNotificationTemplateDto = components['schemas']['CreateAdminNotificationTemplateDto'];
 export type CreateAdminRoleDto = components['schemas']['CreateAdminRoleDto'];
 export type CreateApiResponseStudioSourceDto = components['schemas']['CreateApiResponseStudioSourceDto'];
+export type CreatePaymentsBodyDto = components['schemas']['CreatePaymentsBodyDto'];
 export type DismissApiResponseStudioResponsesDto = components['schemas']['DismissApiResponseStudioResponsesDto'];
+export type PaymentsResponseDto = components['schemas']['PaymentsResponseDto'];
 export type PreviewAdminNotificationTemplateDto = components['schemas']['PreviewAdminNotificationTemplateDto'];
 export type ResetAdminProblemPresentationDto = components['schemas']['ResetAdminProblemPresentationDto'];
 export type ResetAdminProblemPresentationResultDto = components['schemas']['ResetAdminProblemPresentationResultDto'];
@@ -173,6 +178,24 @@ export const adminNotificationsControllerScheduleBroadcastPath =
 export const adminNotificationsControllerPauseBroadcastPath = '/admin/notification-broadcasts/{id}/pause' as const;
 export const adminNotificationsControllerResumeBroadcastPath = '/admin/notification-broadcasts/{id}/resume' as const;
 export const adminNotificationsControllerCancelBroadcastPath = '/admin/notification-broadcasts/{id}/cancel' as const;
+export const paymentsControllerListPath = '/payments' as const;
+export const paymentsControllerCreatePath = '/payments' as const;
+export const paymentsWebhooksControllerRocketPaymentPath = '/api/v1/webhooks/x-rocket' as const;
+export const paymentsWebhooksControllerCryptoBotPath = '/api/v1/webhooks/cryptobot' as const;
+export const paymentsWebhooksControllerHeleketPath = '/api/v1/webhooks/heleket' as const;
+export const paymentsWebhooksControllerNowPaymentsPath = '/api/v1/webhooks/nowpayments' as const;
+export const paymentsWebhooksControllerYooKassaPath = '/api/v1/webhooks/yookassa' as const;
+export const paymentsWebhooksControllerCloudPaymentsPostPath = '/api/v1/webhooks/cloudpayments' as const;
+export const paymentsWebhooksControllerCloudPaymentsGetPath = '/api/v1/webhooks/cloudpayments' as const;
+export const paymentsWebhooksControllerStripePath = '/api/v1/webhooks/stripe' as const;
+export const paymentsWebhooksControllerAdyenPath = '/api/v1/webhooks/adyen' as const;
+export const paymentsWebhooksControllerUnknownGetPath = '/api/v1/webhooks/{provider}' as const;
+export const paymentsWebhooksControllerUnknownPostPath = '/api/v1/webhooks/{provider}' as const;
+export const paymentsWebhooksControllerUnknownPutPath = '/api/v1/webhooks/{provider}' as const;
+export const paymentsWebhooksControllerUnknownDeletePath = '/api/v1/webhooks/{provider}' as const;
+export const paymentsWebhooksControllerUnknownPatchPath = '/api/v1/webhooks/{provider}' as const;
+export const paymentsWebhooksControllerUnknownOptionsPath = '/api/v1/webhooks/{provider}' as const;
+export const paymentsWebhooksControllerUnknownHeadPath = '/api/v1/webhooks/{provider}' as const;
 
 export const baseHealthControllerGetHealth = (options?: ApiClientRequestOptions) =>
   client.GET(baseHealthControllerGetHealthPath, toOpenApiFetchOptions(options));
@@ -1114,6 +1137,157 @@ export type AdminNotificationsControllerCancelBroadcastError = OpenApiError<
   typeof adminNotificationsControllerCancelBroadcast
 >;
 
+export const paymentsControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(paymentsControllerListPath, toOpenApiFetchOptions(options));
+export type PaymentsControllerListResponse = OpenApiData<typeof paymentsControllerList>;
+export type PaymentsControllerListData = EnvelopeData<PaymentsControllerListResponse>;
+export type PaymentsControllerListError = OpenApiError<typeof paymentsControllerList>;
+
+export const paymentsControllerCreate = (body: CreatePaymentsBodyDto, options?: ApiClientRequestOptions) =>
+  client.POST(paymentsControllerCreatePath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+  });
+export type PaymentsControllerCreateResponse = OpenApiData<typeof paymentsControllerCreate>;
+export type PaymentsControllerCreateData = EnvelopeData<PaymentsControllerCreateResponse>;
+export type PaymentsControllerCreateError = OpenApiError<typeof paymentsControllerCreate>;
+
+export const paymentsWebhooksControllerRocketPayment = (options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerRocketPaymentPath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerRocketPaymentResponse = OpenApiData<
+  typeof paymentsWebhooksControllerRocketPayment
+>;
+export type PaymentsWebhooksControllerRocketPaymentData = EnvelopeData<PaymentsWebhooksControllerRocketPaymentResponse>;
+export type PaymentsWebhooksControllerRocketPaymentError = OpenApiError<typeof paymentsWebhooksControllerRocketPayment>;
+
+export const paymentsWebhooksControllerCryptoBot = (options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerCryptoBotPath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerCryptoBotResponse = OpenApiData<typeof paymentsWebhooksControllerCryptoBot>;
+export type PaymentsWebhooksControllerCryptoBotData = EnvelopeData<PaymentsWebhooksControllerCryptoBotResponse>;
+export type PaymentsWebhooksControllerCryptoBotError = OpenApiError<typeof paymentsWebhooksControllerCryptoBot>;
+
+export const paymentsWebhooksControllerHeleket = (options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerHeleketPath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerHeleketResponse = OpenApiData<typeof paymentsWebhooksControllerHeleket>;
+export type PaymentsWebhooksControllerHeleketData = EnvelopeData<PaymentsWebhooksControllerHeleketResponse>;
+export type PaymentsWebhooksControllerHeleketError = OpenApiError<typeof paymentsWebhooksControllerHeleket>;
+
+export const paymentsWebhooksControllerNowPayments = (options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerNowPaymentsPath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerNowPaymentsResponse = OpenApiData<typeof paymentsWebhooksControllerNowPayments>;
+export type PaymentsWebhooksControllerNowPaymentsData = EnvelopeData<PaymentsWebhooksControllerNowPaymentsResponse>;
+export type PaymentsWebhooksControllerNowPaymentsError = OpenApiError<typeof paymentsWebhooksControllerNowPayments>;
+
+export const paymentsWebhooksControllerYooKassa = (options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerYooKassaPath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerYooKassaResponse = OpenApiData<typeof paymentsWebhooksControllerYooKassa>;
+export type PaymentsWebhooksControllerYooKassaData = EnvelopeData<PaymentsWebhooksControllerYooKassaResponse>;
+export type PaymentsWebhooksControllerYooKassaError = OpenApiError<typeof paymentsWebhooksControllerYooKassa>;
+
+export const paymentsWebhooksControllerCloudPaymentsPost = (options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerCloudPaymentsPostPath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerCloudPaymentsPostResponse = OpenApiData<
+  typeof paymentsWebhooksControllerCloudPaymentsPost
+>;
+export type PaymentsWebhooksControllerCloudPaymentsPostData =
+  EnvelopeData<PaymentsWebhooksControllerCloudPaymentsPostResponse>;
+export type PaymentsWebhooksControllerCloudPaymentsPostError = OpenApiError<
+  typeof paymentsWebhooksControllerCloudPaymentsPost
+>;
+
+export const paymentsWebhooksControllerCloudPaymentsGet = (options?: ApiClientRequestOptions) =>
+  client.GET(paymentsWebhooksControllerCloudPaymentsGetPath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerCloudPaymentsGetResponse = OpenApiData<
+  typeof paymentsWebhooksControllerCloudPaymentsGet
+>;
+export type PaymentsWebhooksControllerCloudPaymentsGetData =
+  EnvelopeData<PaymentsWebhooksControllerCloudPaymentsGetResponse>;
+export type PaymentsWebhooksControllerCloudPaymentsGetError = OpenApiError<
+  typeof paymentsWebhooksControllerCloudPaymentsGet
+>;
+
+export const paymentsWebhooksControllerStripe = (options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerStripePath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerStripeResponse = OpenApiData<typeof paymentsWebhooksControllerStripe>;
+export type PaymentsWebhooksControllerStripeData = EnvelopeData<PaymentsWebhooksControllerStripeResponse>;
+export type PaymentsWebhooksControllerStripeError = OpenApiError<typeof paymentsWebhooksControllerStripe>;
+
+export const paymentsWebhooksControllerAdyen = (options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerAdyenPath, toOpenApiFetchOptions(options));
+export type PaymentsWebhooksControllerAdyenResponse = OpenApiData<typeof paymentsWebhooksControllerAdyen>;
+export type PaymentsWebhooksControllerAdyenData = EnvelopeData<PaymentsWebhooksControllerAdyenResponse>;
+export type PaymentsWebhooksControllerAdyenError = OpenApiError<typeof paymentsWebhooksControllerAdyen>;
+
+export const paymentsWebhooksControllerUnknownGet = (provider: string, options?: ApiClientRequestOptions) =>
+  client.GET(paymentsWebhooksControllerUnknownGetPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { provider } },
+  });
+export type PaymentsWebhooksControllerUnknownGetResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownGet>;
+export type PaymentsWebhooksControllerUnknownGetData = EnvelopeData<PaymentsWebhooksControllerUnknownGetResponse>;
+export type PaymentsWebhooksControllerUnknownGetError = OpenApiError<typeof paymentsWebhooksControllerUnknownGet>;
+
+export const paymentsWebhooksControllerUnknownPost = (provider: string, options?: ApiClientRequestOptions) =>
+  client.POST(paymentsWebhooksControllerUnknownPostPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { provider } },
+  });
+export type PaymentsWebhooksControllerUnknownPostResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownPost>;
+export type PaymentsWebhooksControllerUnknownPostData = EnvelopeData<PaymentsWebhooksControllerUnknownPostResponse>;
+export type PaymentsWebhooksControllerUnknownPostError = OpenApiError<typeof paymentsWebhooksControllerUnknownPost>;
+
+export const paymentsWebhooksControllerUnknownPut = (provider: string, options?: ApiClientRequestOptions) =>
+  client.PUT(paymentsWebhooksControllerUnknownPutPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { provider } },
+  });
+export type PaymentsWebhooksControllerUnknownPutResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownPut>;
+export type PaymentsWebhooksControllerUnknownPutData = EnvelopeData<PaymentsWebhooksControllerUnknownPutResponse>;
+export type PaymentsWebhooksControllerUnknownPutError = OpenApiError<typeof paymentsWebhooksControllerUnknownPut>;
+
+export const paymentsWebhooksControllerUnknownDelete = (provider: string, options?: ApiClientRequestOptions) =>
+  client.DELETE(paymentsWebhooksControllerUnknownDeletePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { provider } },
+  });
+export type PaymentsWebhooksControllerUnknownDeleteResponse = OpenApiData<
+  typeof paymentsWebhooksControllerUnknownDelete
+>;
+export type PaymentsWebhooksControllerUnknownDeleteData = EnvelopeData<PaymentsWebhooksControllerUnknownDeleteResponse>;
+export type PaymentsWebhooksControllerUnknownDeleteError = OpenApiError<typeof paymentsWebhooksControllerUnknownDelete>;
+
+export const paymentsWebhooksControllerUnknownPatch = (provider: string, options?: ApiClientRequestOptions) =>
+  client.PATCH(paymentsWebhooksControllerUnknownPatchPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { provider } },
+  });
+export type PaymentsWebhooksControllerUnknownPatchResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownPatch>;
+export type PaymentsWebhooksControllerUnknownPatchData = EnvelopeData<PaymentsWebhooksControllerUnknownPatchResponse>;
+export type PaymentsWebhooksControllerUnknownPatchError = OpenApiError<typeof paymentsWebhooksControllerUnknownPatch>;
+
+export const paymentsWebhooksControllerUnknownOptions = (provider: string, options?: ApiClientRequestOptions) =>
+  client.OPTIONS(paymentsWebhooksControllerUnknownOptionsPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { provider } },
+  });
+export type PaymentsWebhooksControllerUnknownOptionsResponse = OpenApiData<
+  typeof paymentsWebhooksControllerUnknownOptions
+>;
+export type PaymentsWebhooksControllerUnknownOptionsData =
+  EnvelopeData<PaymentsWebhooksControllerUnknownOptionsResponse>;
+export type PaymentsWebhooksControllerUnknownOptionsError = OpenApiError<
+  typeof paymentsWebhooksControllerUnknownOptions
+>;
+
+export const paymentsWebhooksControllerUnknownHead = (provider: string, options?: ApiClientRequestOptions) =>
+  client.HEAD(paymentsWebhooksControllerUnknownHeadPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { provider } },
+  });
+export type PaymentsWebhooksControllerUnknownHeadResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownHead>;
+export type PaymentsWebhooksControllerUnknownHeadData = EnvelopeData<PaymentsWebhooksControllerUnknownHeadResponse>;
+export type PaymentsWebhooksControllerUnknownHeadError = OpenApiError<typeof paymentsWebhooksControllerUnknownHead>;
+
 export const getBaseHealthControllerGetHealthQueryKey = () => ['get', baseHealthControllerGetHealthPath] as const;
 export const getBaseHealthControllerGetPrivateHealthQueryKey = () =>
   ['get', baseHealthControllerGetPrivateHealthPath] as const;
@@ -1238,3 +1412,37 @@ export const getAdminNotificationsControllerResumeBroadcastMutationKey = () =>
   ['post', adminNotificationsControllerResumeBroadcastPath] as const;
 export const getAdminNotificationsControllerCancelBroadcastMutationKey = () =>
   ['post', adminNotificationsControllerCancelBroadcastPath] as const;
+export const getPaymentsControllerListQueryKey = () => ['get', paymentsControllerListPath] as const;
+export const getPaymentsControllerCreateMutationKey = () => ['post', paymentsControllerCreatePath] as const;
+export const getPaymentsWebhooksControllerRocketPaymentMutationKey = () =>
+  ['post', paymentsWebhooksControllerRocketPaymentPath] as const;
+export const getPaymentsWebhooksControllerCryptoBotMutationKey = () =>
+  ['post', paymentsWebhooksControllerCryptoBotPath] as const;
+export const getPaymentsWebhooksControllerHeleketMutationKey = () =>
+  ['post', paymentsWebhooksControllerHeleketPath] as const;
+export const getPaymentsWebhooksControllerNowPaymentsMutationKey = () =>
+  ['post', paymentsWebhooksControllerNowPaymentsPath] as const;
+export const getPaymentsWebhooksControllerYooKassaMutationKey = () =>
+  ['post', paymentsWebhooksControllerYooKassaPath] as const;
+export const getPaymentsWebhooksControllerCloudPaymentsPostMutationKey = () =>
+  ['post', paymentsWebhooksControllerCloudPaymentsPostPath] as const;
+export const getPaymentsWebhooksControllerCloudPaymentsGetQueryKey = () =>
+  ['get', paymentsWebhooksControllerCloudPaymentsGetPath] as const;
+export const getPaymentsWebhooksControllerStripeMutationKey = () =>
+  ['post', paymentsWebhooksControllerStripePath] as const;
+export const getPaymentsWebhooksControllerAdyenMutationKey = () =>
+  ['post', paymentsWebhooksControllerAdyenPath] as const;
+export const getPaymentsWebhooksControllerUnknownGetQueryKey = () =>
+  ['get', paymentsWebhooksControllerUnknownGetPath] as const;
+export const getPaymentsWebhooksControllerUnknownPostMutationKey = () =>
+  ['post', paymentsWebhooksControllerUnknownPostPath] as const;
+export const getPaymentsWebhooksControllerUnknownPutMutationKey = () =>
+  ['put', paymentsWebhooksControllerUnknownPutPath] as const;
+export const getPaymentsWebhooksControllerUnknownDeleteMutationKey = () =>
+  ['delete', paymentsWebhooksControllerUnknownDeletePath] as const;
+export const getPaymentsWebhooksControllerUnknownPatchMutationKey = () =>
+  ['patch', paymentsWebhooksControllerUnknownPatchPath] as const;
+export const getPaymentsWebhooksControllerUnknownOptionsMutationKey = () =>
+  ['options', paymentsWebhooksControllerUnknownOptionsPath] as const;
+export const getPaymentsWebhooksControllerUnknownHeadMutationKey = () =>
+  ['head', paymentsWebhooksControllerUnknownHeadPath] as const;

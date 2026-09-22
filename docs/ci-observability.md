@@ -40,7 +40,6 @@ flowchart TD
   fast[Fast PR gate<br/>pnpm run ci:pr]
   spec[Exact-SHA specification evidence]
   nonruntime[Non-runtime validation gates<br/>onboarding/scaffolds, migrations, configs<br/>OpenAPI, clients, contracts, property tests]
-  buncompat[Bun compatibility contract<br/>pnpm run bun:check]
   mongo[MongoDB migrations, transactions, and adapters]
   quality[Nx quality gates<br/>format, lint, typecheck, unit coverage]
   browser[Static/browser e2e coverage<br/>Playwright Chromium]
@@ -52,7 +51,6 @@ flowchart TD
   start --> fast
   fast --> spec
   fast --> nonruntime
-  fast --> buncompat
   fast --> mongo
   spec --> quality
   nonruntime --> quality
@@ -64,7 +62,6 @@ flowchart TD
   fast --> summary
   spec --> summary
   nonruntime --> summary
-  buncompat --> summary
   mongo --> summary
   quality --> summary
   browser --> summary
@@ -91,7 +88,6 @@ release branch or a consolidator PR:
 | Native SAST                      | `ci.yml` / `Fast PR gate (ci:pr)`                               | `pnpm run test:security:sast`                                                      | Included in `ci:pr`; no separate native-security job                       |
 | Exact-SHA specification evidence | `ci.yml` / `Exact-SHA specification evidence`                   | `pnpm run spec:verify -- --lane pr\|main` against the base ref                     | `exact-sha-specification-evidence` artifact                                |
 | Onboarding/scaffold contract     | `ci.yml` / `Non-runtime validation gates`                       | `pnpm run onboarding:verify`                                                       | Exact preset closures plus generated app/library builds and tests          |
-| Bun compatibility                | `ci.yml` / `Bun compatibility contract`                         | `pnpm run bun:check` per selected-closure matrix                                   | bun-compat job result and logs                                             |
 | MongoDB validation               | `ci.yml` / `MongoDB migrations, transactions, and adapters`     | MongoDB migration ledger, transaction/adapter, and provider-wiring component tests | mongodb-validation job result and logs                                     |
 | Docker smoke                     | `ci.yml` / `Docker smoke stack`                                 | `pnpm run test:docker-smoke`                                                       | Docker smoke job result and logs                                           |
 | Fullstack Playwright             | `quality-presets.yml` / `Modern QA presets`                     | `pnpm run test:fullstack` against compiled images                                  | `quality-preset-results` artifact (nightly/dispatch, not the PR path)      |

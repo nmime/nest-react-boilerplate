@@ -245,55 +245,6 @@ non-runtime-validation:
     - pnpm run deploy:validate:gitops
   timeout: 30m
 
-bun-compat:
-  extends: .node
-  stage: test
-  needs:
-    - fast-check
-  parallel:
-    matrix:
-      - BUN_CLOSURE: provider-free
-        SETUP_ARGS: '--replace --app landing-app --non-interactive'
-      - BUN_CLOSURE: standalone-site
-        SETUP_ARGS: '--replace --app site-app --non-interactive'
-      - BUN_CLOSURE: standalone-user-frontend
-        SETUP_ARGS: '--replace --app user-app --capability postgres --non-interactive'
-      - BUN_CLOSURE: standalone-admin-frontend
-        SETUP_ARGS: '--replace --app admin-app --capability postgres --non-interactive'
-      - BUN_CLOSURE: standalone-mobile
-        SETUP_ARGS: '--replace --app mobile-app --capability postgres --non-interactive'
-      - BUN_CLOSURE: standalone-user-api
-        SETUP_ARGS: '--replace --app user-app-api --capability postgres --non-interactive'
-      - BUN_CLOSURE: standalone-admin-api
-        SETUP_ARGS: '--replace --app admin-app-api --capability postgres --non-interactive'
-      - BUN_CLOSURE: standalone-discord-api
-        SETUP_ARGS: '--replace --app discord-app-api --capability postgres --non-interactive'
-      - BUN_CLOSURE: standalone-telegram-api
-        SETUP_ARGS: '--replace --app telegram-bot-api --capability postgres --non-interactive'
-      - BUN_CLOSURE: preset-minimal
-        SETUP_ARGS: '--preset minimal --non-interactive'
-      - BUN_CLOSURE: preset-web
-        SETUP_ARGS: '--preset web --non-interactive'
-      - BUN_CLOSURE: preset-fullstack
-        SETUP_ARGS: '--preset fullstack --non-interactive'
-      - BUN_CLOSURE: preset-enterprise
-        SETUP_ARGS: '--preset enterprise --non-interactive'
-      - BUN_CLOSURE: preset-bots
-        SETUP_ARGS: '--preset bots --non-interactive'
-      - BUN_CLOSURE: mongodb-core
-        SETUP_ARGS: '--replace --app auth-app-api --app user-app-api --capability mongodb --non-interactive'
-      - BUN_CLOSURE: mongodb-bots
-        SETUP_ARGS: '--replace --app auth-app-api --app user-app-api --app discord-app-api --app telegram-bot-api --capability mongodb --non-interactive'
-  script:
-    - apk add --no-cache bash curl unzip
-    - curl -fsSL https://bun.sh/install | bash -s -- "bun-v$(cat .bun-version)"
-    - export PATH="$HOME/.bun/bin:$PATH"
-    - pnpm run tooling:install
-    - pnpm nrb setup $SETUP_ARGS
-    - pnpm nrb closure install
-    - pnpm run bun:check
-  timeout: 60m
-
 full-check:
   extends: .node
   stage: test
@@ -698,7 +649,6 @@ ci-status-summary:
     - job: fast-check
     - job: spec-evidence
     - job: non-runtime-validation
-    - job: bun-compat
     - job: full-check
     - job: component-tests
     - job: mongodb-validation

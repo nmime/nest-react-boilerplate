@@ -425,7 +425,6 @@ worktree.
 | ------------------------------ | ----------------------------------------------------------------------- |
 | `tooling:static-check`         | TS-first static validation for repo tooling.                            |
 | `tooling:changed-format-check` | Run Prettier on changed files only.                                     |
-| `tooling:bun-compat`           | Run the pinned Bun compatibility contract across builds, tests, smokes. |
 
 ## Git commands
 

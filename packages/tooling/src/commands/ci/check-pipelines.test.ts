@@ -44,7 +44,7 @@ describe('shipped CI gate descriptor', () => {
   });
 });
 
-// Validators that scan pipeline *text* — the Bun parity check, the world-class ops gate, the
+// Validators that scan pipeline *text* — the world-class ops gate, the
 // GitOps config validator — used to name `.github/workflows/...` themselves, which made every
 // one of them dead code (or a false failure) on any other forge. These two helpers are how they
 // ask the descriptor instead.

@@ -4,7 +4,7 @@
 
 It uses the official NATS.js v3 mono-repo packages from [`nats-io/nats.js`](https://github.com/nats-io/nats.js/). The v3 client is split into runtime and feature packages instead of the legacy single `nats` package:
 
-- `@nats-io/transport-node` for the Node/Bun TCP transport and `connect()`.
+- `@nats-io/transport-node` for the Node TCP transport and `connect()`.
 - `@nats-io/nats-core` for core types such as `Msg`, `PublishOptions`, and `RequestOptions`.
 - `@nats-io/jetstream` for JetStream clients and managers.
 - `@nats-io/kv` for key-value buckets.

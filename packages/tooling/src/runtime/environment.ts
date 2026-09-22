@@ -1,27 +1,9 @@
 export interface JavaScriptRuntimeInfo {
-  name: 'bun' | 'node';
+  name: 'node';
   version: string;
-  nodeCompatibilityVersion?: string;
 }
 
-export interface JavaScriptRuntimeVersions {
-  bun?: string;
-  node?: string;
-}
-
-export function detectJavaScriptRuntime(
-  versions: JavaScriptRuntimeVersions = process.versions,
-  processVersion = process.version,
-): JavaScriptRuntimeInfo {
-  const bunVersion = versions.bun?.trim();
-  if (bunVersion) {
-    return {
-      name: 'bun',
-      version: bunVersion,
-      ...(versions.node ? { nodeCompatibilityVersion: versions.node } : {}),
-    };
-  }
-
+export function detectJavaScriptRuntime(processVersion = process.version): JavaScriptRuntimeInfo {
   return {
     name: 'node',
     version: processVersion.startsWith('v') ? processVersion.slice(1) : processVersion,

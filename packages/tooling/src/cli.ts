@@ -16,7 +16,6 @@ import { runBranchCleanup } from './commands/git/branch-cleanup';
 import { runGitConventions } from './commands/git/conventions';
 import { runWebpCommand } from './commands/images/webp';
 import { runChangedFormatCheck, runStaticCheck } from './commands/tooling/static-check';
-import { runBunCompatibilityCommand } from './commands/tooling/bun-compat';
 import { runSpecImpact } from './commands/spec/impact';
 import { runSpecReport } from './commands/spec/report';
 import { runSpecTrace } from './commands/spec/trace';
@@ -163,11 +162,6 @@ register(
   'spec:report',
   'Render a human-readable assurance dossier from its JSON evidence.',
   ({ argv, workspaceRoot }) => runSpecReport({ argv, workspaceRoot }),
-);
-register(
-  'tooling:bun-compat',
-  'Run the pinned Bun compatibility contract across builds, tests, and runtime smokes.',
-  runBunCompatibilityCommand,
 );
 register(
   'tooling:static-check',

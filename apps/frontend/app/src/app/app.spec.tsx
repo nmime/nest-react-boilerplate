@@ -388,7 +388,7 @@ describe('User app shell', () => {
     expectFetchRequest(fetchMock, '/auth/me', {
       'Accept-Language': 'en',
     });
-    expectFetchRequest(fetchMock, process.versions.bun ? '/profile/me' : 'https://user-api/profile/me', {
+    expectFetchRequest(fetchMock, 'https://user-api/profile/me', {
       'Accept-Language': 'en',
     });
   });
@@ -476,7 +476,7 @@ describe('User app shell', () => {
     expectFetchRequest(fetchMock, '/auth/me', {
       'Accept-Language': 'ru',
     });
-    expectFetchRequest(fetchMock, process.versions.bun ? '/profile/me' : 'https://user-api/profile/me', {
+    expectFetchRequest(fetchMock, 'https://user-api/profile/me', {
       'Accept-Language': 'ru',
     });
   });

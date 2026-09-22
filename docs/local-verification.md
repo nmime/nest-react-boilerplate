@@ -51,31 +51,6 @@ deployed-service prerequisites to that job.
 
 ## Current CI/local parity gates
 
-The supported alternative-runtime lane is reproducible locally with the exact
-Bun version in `.bun-version`. It requires a current setup-selected closure and
-selected pnpm lock:
-
-```bash
-pnpm nrb setup --replace --app site-app --non-interactive
-pnpm nrb closure install
-pnpm run bun:check
-```
-
-This runs only targets and runtime artifacts available in the selected closure.
-It rebuilds canonical deployment artifacts through Node/pnpm, installs their
-production dependencies in isolated temporary directories, and runs every
-selected Vike or backend runtime under Node and Bun. Every API and bot process
-must pass startup, liveness, readiness, runtime-identity, and lifecycle probes;
-notification consumers and schedulers use headless process probes. CI covers
-every preset, standalone user/admin/Discord/Telegram selections, provider-free
-static output, and MongoDB core/bot custom selections. Provider-backed local
-selections require Docker Compose and fail rather than using memory persistence.
-Bot selections start their setup-selected Redis service for production replay
-protection and readiness.
-Expo/Metro export, Cucumber acceptance, and the fullstack `node:test` suite are
-part of the selected contract but run as explicit Node children. The canonical
-Node coverage and pnpm lockfile gates remain separate and mandatory.
-
 For documentation-only ops/QA/deployment changes, the focused parity slice is:
 
 ```bash
@@ -91,7 +66,7 @@ git diff --check
 
 The corresponding CI green surface includes the supported lockfile audit, the
 Gitleaks secret scan, the `Fast PR gate (ci:pr)` job, Exact-SHA specification
-evidence, the Non-runtime validation gates, the Bun compatibility contract,
+evidence, the Non-runtime validation gates,
 MongoDB validation, the Nx quality gates, Docker smoke, CodeQL, the nightly
 Quality presets workflow (visual matrix plus Modern QA presets, which own the
 world-class runtime/ops gates and fullstack e2e), and any external GitGuardian
@@ -155,7 +130,6 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 - `pnpm run check`: full aggregate for formatting, tooling static validation, migrations, contracts, QA presets, lint, typecheck, and unit tests.
 - CI `Non-runtime validation gates`: focused PR/push job that runs `onboarding:verify`, `db:migrations:check`, `test:scripts`, `lib:configs:check`, `frontend:fsd:check`, `api:toast-config:check`, `audit:licenses`, `audit:full`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, `test:property`, `deploy:validate:pm2`, and `deploy:validate:gitops` after `ci:pr` and lockfile installation.
 - `pnpm run tooling:static-check`: deterministic static syntax/import/reference validation for repo tooling scripts without running destructive or runtime-heavy commands.
-- `pnpm run bun:check`: selected-closure Node/Bun deployment-artifact parity; durable provider selections require Docker Compose.
 - `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation.
 - `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.
 - `node scripts/validate-helm-rate-limit-config.mjs`: focused Helm values and ConfigMap assertions for Redis-backed API rate limiting.

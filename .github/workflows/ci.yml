@@ -21,7 +21,6 @@ env:
   NX_DAEMON: 'false'
   NX_CACHE_DIRECTORY: .nx/cache
   NODE_VERSION_FILE: .nvmrc
-  BUN_VERSION_FILE: .bun-version
   PNPM_VERSION: 11.15.1
   HELM_VERSION: v4.2.3
 
@@ -320,80 +319,6 @@ jobs:
           path: non-runtime-validation-summary.md
           if-no-files-found: ignore
 
-  bun-compat:
-    name: Bun compatibility contract (${{ matrix.closure }})
-    runs-on: ubuntu-22.04
-    needs: fast-check
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - closure: provider-free
-            setup_args: --replace --app landing-app --non-interactive
-          - closure: standalone-site
-            setup_args: --replace --app site-app --non-interactive
-          - closure: standalone-user-frontend
-            setup_args: --replace --app user-app --capability postgres --non-interactive
-          - closure: standalone-admin-frontend
-            setup_args: --replace --app admin-app --capability postgres --non-interactive
-          - closure: standalone-mobile
-            setup_args: --replace --app mobile-app --capability postgres --non-interactive
-          - closure: standalone-user-api
-            setup_args: --replace --app user-app-api --capability postgres --non-interactive
-          - closure: standalone-admin-api
-            setup_args: --replace --app admin-app-api --capability postgres --non-interactive
-          - closure: standalone-discord-api
-            setup_args: --replace --app discord-app-api --capability postgres --non-interactive
-          - closure: standalone-telegram-api
-            setup_args: --replace --app telegram-bot-api --capability postgres --non-interactive
-          - closure: preset-minimal
-            setup_args: --preset minimal --non-interactive
-          - closure: preset-web
-            setup_args: --preset web --non-interactive
-          - closure: preset-fullstack
-            setup_args: --preset fullstack --non-interactive
-          - closure: preset-enterprise
-            setup_args: --preset enterprise --non-interactive
-          - closure: preset-bots
-            setup_args: --preset bots --non-interactive
-          - closure: mongodb-core
-            setup_args: --replace --app auth-app-api --app user-app-api --capability mongodb --non-interactive
-          - closure: mongodb-bots
-            setup_args: --replace --app auth-app-api --app user-app-api --app discord-app-api --app telegram-bot-api --capability mongodb --non-interactive
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version-file: ${{ env.BUN_VERSION_FILE }}
-
-      - name: Install explicit bootstrap/tooling dependencies
-        run: pnpm run tooling:install
-
-      - name: Materialize selected runtime closure
-        run: |
-          pnpm nrb setup ${{ matrix.setup_args }}
-          pnpm nrb closure install
-
-      - name: Restore Nx computation cache
-        uses: ./.github/actions/nx-cache
-        with:
-          scope: bun-${{ matrix.closure }}
-
-      - name: Run Bun compatibility contract
-        run: pnpm run bun:check
-
   quality:
     name: Nx quality gates
     runs-on: ubuntu-22.04
@@ -673,7 +598,6 @@ jobs:
       - fast-check
       - spec-evidence
       - non-runtime-validation
-      - bun-compat
       - quality
       - mongodb-validation
       - e2e
@@ -697,7 +621,6 @@ jobs:
             echo "| Fast PR gate (ci:pr) | ${{ needs.fast-check.result }} |"
             echo "| Exact-SHA specification evidence | ${{ needs.spec-evidence.result }} |"
             echo "| Non-runtime validation gates | ${{ needs.non-runtime-validation.result }} |"
-            echo "| Bun compatibility contract | ${{ needs.bun-compat.result }} |"
             echo "| Nx quality gates | ${{ needs.quality.result }} |"
             echo "| MongoDB migrations, transactions, and adapters | ${{ needs.mongodb-validation.result }} |"
             echo "| Static/browser e2e coverage | ${{ needs.e2e.result }} |"
@@ -721,7 +644,6 @@ jobs:
             ${{ needs.fast-check.result }}
             ${{ needs.spec-evidence.result }}
             ${{ needs.non-runtime-validation.result }}
-            ${{ needs.bun-compat.result }}
             ${{ needs.quality.result }}
             ${{ needs.mongodb-validation.result }}
             ${{ needs.e2e.result }}

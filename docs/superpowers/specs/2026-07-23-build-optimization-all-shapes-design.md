@@ -25,7 +25,7 @@ across every delivery shape:
 - **GitOps** — both ArgoCD and Flux entrypoints; digest-pinned two-stage
   promotion via PR; semantic-release.
 - **CI** — 13-job GitHub Actions pipeline + GitLab mirror; Nx GitHub-Actions
-  cache; `nx affected` on PRs; Bun-compat gate.
+  cache; `nx affected` on PRs; dependency and bundle-budget gates.
 
 This is a polish-and-verify effort, not a rescue. The audit surfaced a small
 set of concrete, worthwhile candidates:

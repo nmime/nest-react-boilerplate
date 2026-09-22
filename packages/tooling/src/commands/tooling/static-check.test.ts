@@ -6,7 +6,6 @@ import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { supportedLocales } from "@app/common-i18n-runtime";
 import {
-  checkBunPackageManagerParity,
   checkCommandImportSmoke,
   checkTranslationKeyDrift,
   checkExportedAllCapsConstantConventions,
@@ -74,79 +73,6 @@ describe("static-check worker heap cap environment", () => {
         },
       );
     });
-  });
-});
-
-describe("static-check Bun and pnpm dependency parity", () => {
-  it("accepts Bun runtime execution over pnpm-owned dependency state", () => {
-    const workspaceRoot = createWorkspace();
-    try {
-      writeText(
-        workspaceRoot,
-        "package.json",
-        JSON.stringify({ packageManager: "pnpm@11.11.0", scripts: { check: "bun run --bun ./check.ts" } }),
-      );
-      writeText(workspaceRoot, "pnpm-workspace.yaml", "packages: []\n");
-      assert.deepEqual(checkBunPackageManagerParity(workspaceRoot), []);
-    } finally {
-      removeWorkspace(workspaceRoot);
-    }
-  });
-
-  it("rejects Bun package-manager state, commands, and duplicate workspaces", () => {
-    const workspaceRoot = createWorkspace();
-    try {
-      writeText(
-        workspaceRoot,
-        "package.json",
-        JSON.stringify({ scripts: { install: "bun install" }, workspaces: ["apps/*"] }),
-      );
-      writeText(workspaceRoot, "bun.lock", "{}\n");
-      const failures = checkBunPackageManagerParity(workspaceRoot);
-      assert.equal(failures.length, 3);
-      assert.ok(failures.every((failure) => failure.command === "bun pnpm dependency parity"));
-    } finally {
-      removeWorkspace(workspaceRoot);
-    }
-  });
-
-  // The scan used to hardcode .github/workflows, so a product hosted anywhere else could invoke
-  // `bun install` in its pipeline and this gate would report a clean workspace. Every pipeline the
-  // CI gate descriptor names is now in scope, whichever forge declares it.
-  it("scans the pipeline files every configured forge declares, not only GitHub workflows", () => {
-    const workspaceRoot = createWorkspace();
-    try {
-      writeText(workspaceRoot, "package.json", JSON.stringify({ packageManager: "pnpm@11.11.0" }));
-      writeText(workspaceRoot, "pnpm-workspace.yaml", "packages: []\n");
-      writeText(
-        workspaceRoot,
-        "scripts/ci/gates.json",
-        JSON.stringify({
-          forges: {
-            gitlab: {
-              pipeline: ".gitlab-ci.yml",
-              jobStyle: "gitlab",
-              aggregateJob: "ci-status-summary",
-              releasePipeline: "ci/release.yml",
-            },
-          },
-          lanes: {},
-          gates: [],
-          supplyChain: [],
-        }),
-      );
-      writeText(workspaceRoot, ".gitlab-ci.yml", "script:\n  - bun install\n");
-      writeText(workspaceRoot, "ci/release.yml", "script:\n  - bunx cosign\n");
-
-      const failures = checkBunPackageManagerParity(workspaceRoot);
-
-      assert.deepEqual(
-        failures.map((failure) => failure.file).sort(),
-        [".gitlab-ci.yml", "ci/release.yml"],
-      );
-    } finally {
-      removeWorkspace(workspaceRoot);
-    }
   });
 });
 
@@ -1510,8 +1436,6 @@ describe("static-check package script tooling command guard", () => {
               "pnpm --filter @repo/tooling tooling tooling changed-format-check",
             "check": "pnpm nrb closure run test -- --coverage",
             "dev:db": "pnpm nrb dev database",
-            "bun:check":
-              "bun run --bun packages/tooling/bin/repo-tooling.mjs tooling bun-compat",
             "docker:selected":
               "pnpm --filter @repo/tooling tooling docker selected up --no-build",
             "nrb": "pnpm --filter @repo/tooling tooling",

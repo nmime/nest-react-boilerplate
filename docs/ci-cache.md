@@ -28,7 +28,7 @@ To enable **Nx Cloud** (no `nx.json` secret required):
 1. Run `pnpm exec nx connect` once — this adds a non-secret `nxCloudId` to `nx.json`.
 2. Add the access token as the protected repository secret `NX_CLOUD_ACCESS_TOKEN`.
 3. Expose it to each compute job (`fast-check`, `non-runtime-validation`,
-   `bun-compat`, `quality`, `e2e`, `visual-regression`) with a job-level env — never
+   `quality`, `e2e`, `visual-regression`) with a job-level env — never
    the workflow top-level `env` (the `secrets` context is not available there) and
    never `.github/actions/nx-cache` (the composite action must stay secret-free):
 

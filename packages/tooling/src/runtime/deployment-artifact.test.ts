@@ -366,13 +366,11 @@ void describe('deployment artifact closure', () => {
     assert.deepEqual(manifest.dependencies, { pg: '1.0.0', jiti: '1.0.0' });
   });
 
-  void it('removes NODE_PATH for both Node and Bun artifact processes', () => {
-    const base = { NODE_PATH: '/workspace/libs/backend/node_modules', PATH: '/usr/bin', BUN_RUNTIME: '1' };
-    const nodeEnvironment = isolatedRuntimeEnvironment(base);
-    const bunEnvironment = isolatedRuntimeEnvironment(base);
-    assert.equal(nodeEnvironment.NODE_PATH, undefined);
-    assert.equal(bunEnvironment.NODE_PATH, undefined);
-    assert.equal(nodeEnvironment.PATH, '/usr/bin');
-    assert.equal(bunEnvironment.BUN_RUNTIME, '1');
+  void it('removes NODE_PATH from the artifact process environment', () => {
+    const base = { NODE_PATH: '/workspace/libs/backend/node_modules', PATH: '/usr/bin', EXTRA_ENV: '1' };
+    const environment = isolatedRuntimeEnvironment(base);
+    assert.equal(environment.NODE_PATH, undefined);
+    assert.equal(environment.PATH, '/usr/bin');
+    assert.equal(environment.EXTRA_ENV, '1');
   });
 });

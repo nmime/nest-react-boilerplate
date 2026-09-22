@@ -11,7 +11,6 @@
     "build": "VITE_API_BASE_URL_MODE=same-origin pnpm nrb closure run build",
     "build:all": "VITE_API_BASE_URL_MODE=same-origin nx run-many -t build",
     "tooling:install": "node scripts/install-tooling-dependencies.mjs",
-    "bun:check": "bun run --bun packages/tooling/bin/repo-tooling.mjs tooling bun-compat",
     "storybook": "storybook dev -p 6006 -c libs/frontend/ui-web/lib/.storybook",
     "storybook:build": "storybook build -c libs/frontend/ui-web/lib/.storybook -o dist/storybook/frontend-ui-web",
     "ui:registry:add": "pnpm --filter @repo/tooling tooling ui registry add",

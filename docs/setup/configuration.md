@@ -174,7 +174,7 @@ pnpm --filter @repo/tooling tooling doctor
 
 | Check               | Status              | Description                                                                                         |
 | ------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `runtime-version`   | pass/fail           | JavaScript runtime version must match the repository Node.js or Bun contract.                       |
+| `runtime-version`   | pass/fail           | JavaScript runtime version must match the repository Node.js contract.                              |
 | `pnpm`              | pass/fail           | pnpm must be exactly `11.15.1`.                                                                     |
 | `docker`            | pass/skip           | Docker availability (optional for E2E).                                                             |
 | `manifests`         | pass/fail           | `package.json`, `tsconfig.base.json` present.                                                       |

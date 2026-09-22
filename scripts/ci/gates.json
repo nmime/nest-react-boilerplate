@@ -313,14 +313,6 @@
       "jobs": { "github": "non-runtime-validation", "gitlab": "non-runtime-validation" }
     },
     {
-      "id": "bun-compatibility",
-      "description": "Pinned Bun compatibility contract across every setup-selected closure.",
-      "commands": ["pnpm run bun:check"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
-      "jobs": { "github": "bun-compat", "gitlab": "bun-compat" }
-    },
-    {
       "id": "format-check",
       "description": "Prettier over the whole workspace.",
       "commands": ["pnpm run format:check"],

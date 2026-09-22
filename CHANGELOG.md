@@ -89,7 +89,7 @@ repository should delete this file; see
 
 ### Bug Fixes
 
-- **tooling:** resolve backend deps in Bun smoke ([817663c](https://github.com/nmime/nest-react-boilerplate/commit/817663cfe6fbe2150260808c6c5464dd6062fa37))
+- **tooling:** resolve backend deps in the runtime smoke ([817663c](https://github.com/nmime/nest-react-boilerplate/commit/817663cfe6fbe2150260808c6c5464dd6062fa37))
 
 ## [1.15.2](https://github.com/nmime/nest-react-boilerplate/compare/v1.15.1...v1.15.2) (2026-07-22)
 

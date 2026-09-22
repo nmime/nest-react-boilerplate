@@ -72,7 +72,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Production Readiness](production-readiness.md) — checklists for launch.
 - [Release Hardening](release-hardening.md) — pre-release audit and verification steps.
 - [Local Verification](local-verification.md) — reproducible workstation checks.
-- [Bun Runtime Support](bun-runtime-research.md) — pinned Bun 1.3.14 compatibility contract, evidence, and adoption boundaries.
 - [CI Observability](ci-observability.md) — GitHub Actions pipelines and quality gates.
 - [CI Lanes](ci-lanes.md) — forge-neutral gate inventory and how GitHub and GitLab render it.
 - [CI Cache](ci-cache.md) — cache ownership, keys, restore behavior, and troubleshooting.

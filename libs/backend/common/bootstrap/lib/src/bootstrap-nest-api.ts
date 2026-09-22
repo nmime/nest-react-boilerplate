@@ -38,6 +38,9 @@ import { problemInstanceForRequestId, problemTypeForCode } from '@app/common-pro
 import { withOpenTelemetryLifecycle } from './open-telemetry-lifecycle';
 import { DefaultDevelopmentCorsOrigins } from './default-development-cors-origins';
 
+/** Fastify trust-proxy setting: `true`/`false`, a positive hop count, or a raw string form. */
+export type TrustProxySetting = boolean | number | string;
+
 export interface BootstrapNestApiOptions {
   appName: string;
   /** Explicit port this service listens on. */
@@ -55,7 +58,7 @@ export interface BootstrapNestApiOptions {
    * Trust-proxy setting for Fastify: `true`/`false`, or a positive integer
    * hop count to step through `x-forwarded-for`. Wins over `TRUST_PROXY`.
    */
-  trustProxy?: boolean | number | string;
+  trustProxy?: TrustProxySetting;
   /** Maximum accepted request body in bytes. Overrides `HTTP_BODY_LIMIT_BYTES`. */
   bodyLimit?: number;
   /**

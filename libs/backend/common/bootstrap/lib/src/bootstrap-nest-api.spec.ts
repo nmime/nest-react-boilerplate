@@ -1,4 +1,5 @@
 // @requirements REQ-RUNTIME-LIFECYCLE-004
+/* eslint-disable sonarjs/no-hardcoded-ip -- 10.0.0.1 is a deterministic private-address fixture for trust-proxy hop counting. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RedisClientLike } from '@app/backend-common-redis';
 

@@ -6,13 +6,40 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { S3ConfigService } from './config';
 import { AwsS3ObjectStorageClient, createAwsS3Client } from './s3.aws-client';
 
 describe('createAwsS3Client', () => {
+  const s3EnvKeys = [
+    'S3_ACCESS_KEY',
+    'S3_BUCKET',
+    'S3_ENDPOINT',
+    'S3_FORCE_PATH_STYLE',
+    'S3_REGION',
+    'S3_SECRET_KEY',
+  ] as const;
+  const savedS3Env = new Map<string, string | undefined>();
+
   beforeEach(() => {
     vi.unstubAllEnvs();
+    for (const key of s3EnvKeys) {
+      savedS3Env.set(key, process.env[key]);
+      delete process.env[key];
+    }
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    for (const key of s3EnvKeys) {
+      const value = savedS3Env.get(key);
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+    savedS3Env.clear();
   });
 
   it('creates an AWS client from the canonical S3 environment contract', async () => {

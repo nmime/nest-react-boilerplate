@@ -175,7 +175,6 @@ describe('DiscordAppApiModule wiring', () => {
       expect(withoutReturnUrl.stateExpiresAt).toBe('2026-07-03T00:00:00.000Z');
       expect(createDiscordAuthorizationRequest).toHaveBeenCalledTimes(2);
       expect(createDiscordAuthorizationRequest).toHaveBeenLastCalledWith({
-        tenantId,
         intent: 'link',
         returnUrl: undefined,
         principal: { subject: discordUserId, tenantId },

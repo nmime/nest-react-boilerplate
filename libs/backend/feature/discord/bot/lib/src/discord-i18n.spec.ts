@@ -56,7 +56,9 @@ describe('Discord i18n helpers', () => {
       expect(new Set<string>(Object.values(DiscordApiLocale)).has(tag)).toBe(true);
     }
     expect(unpublishableDiscordLocales(['ru', 'pt-br', 'uz-cyrl'])).toEqual(['uz-cyrl']);
-    expect(unpublishableDiscordLocales()).toEqual([]);
+    // `zh` is a supported workspace locale, but Discord carries no bare `zh` tag
+    // (only `zh-CN`/`zh-TW`), so it is unpublished until a `zh=zh-CN` override is declared.
+    expect(unpublishableDiscordLocales()).toEqual(['zh']);
   });
 
   it('republishes a locale Discord does not carry under a declared override', () => {

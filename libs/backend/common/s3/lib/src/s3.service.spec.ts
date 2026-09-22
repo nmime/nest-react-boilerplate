@@ -1,11 +1,33 @@
 // @requirements REQ-RUNTIME-STORAGE-007
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { S3ConfigService } from './config';
 import { ObjectStorageOperationFailedException } from './exception';
 import { S3Service } from './s3.service';
 import { InMemoryObjectStorageClient, type ObjectStorageClient } from './s3.storage';
 
 describe('S3Service', () => {
+  const s3EnvKeys = ['S3_ACCESS_KEY', 'S3_BUCKET', 'S3_ENDPOINT', 'S3_FORCE_PATH_STYLE', 'S3_REGION', 'S3_SECRET_KEY'] as const;
+  const savedS3Env = new Map<string, string | undefined>();
+
+  beforeEach(() => {
+    for (const key of s3EnvKeys) {
+      savedS3Env.set(key, process.env[key]);
+      delete process.env[key];
+    }
+  });
+
+  afterEach(() => {
+    for (const key of s3EnvKeys) {
+      const value = savedS3Env.get(key);
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+    savedS3Env.clear();
+  });
+
   it('delegates put/get/list/delete to the underlying client', async () => {
     const service = new S3Service(new InMemoryObjectStorageClient(), new S3ConfigService({ bucket: 'media' }));
 

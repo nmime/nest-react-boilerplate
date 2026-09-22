@@ -14,6 +14,11 @@ describe('Landing app', () => {
   });
 
   it('renders neutral template copy and preserves reference links', () => {
+    // Isolate the SSR reference-link render from the host `.env.local`
+    // (VITE_AUTH_API_BASE_URL), so the docs action keeps its default `/auth/docs`.
+    vi.stubEnv('VITE_AUTH_API_BASE_URL', '');
+    vi.stubEnv('VITE_API_BASE_URL_MODE', '');
+
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain('Nest React Boilerplate');

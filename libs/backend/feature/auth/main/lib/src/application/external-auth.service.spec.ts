@@ -138,6 +138,7 @@ describe('ExternalAuthService', () => {
     process.env.EXTERNAL_AUTH_AUTO_PROVISION_ENABLED = 'true';
     delete process.env.AUTH_TELEGRAM_ENABLED;
     delete process.env.AUTH_DISCORD_ENABLED;
+    delete process.env.DISCORD_AUTH_ENABLED;
     delete process.env.AUTH_ALLOWED_RETURN_URLS;
     delete process.env.TELEGRAM_TMA_MAX_AGE_SECONDS;
     delete process.env.EXTERNAL_AUTH_LINK_TOKEN_TTL_SECONDS;

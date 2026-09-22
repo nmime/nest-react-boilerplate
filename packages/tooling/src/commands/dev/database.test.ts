@@ -88,6 +88,9 @@ describe('dev database', () => {
       assert.deepEqual(calls[0]?.args.slice(-3), ['up', '-d', 'postgres']);
       assert.equal(calls[0]?.args.includes('mongodb'), false);
       assert.equal(calls[0]?.args.includes('mongodb-init'), false);
+      // `docker/docker-compose.yml` interpolates the selected closure context for every
+      // service, so the database-only run must supply it too.
+      assert.equal(calls[0]?.options?.env?.NRB_CLOSURE_CONTEXT, join(root, '.nrb', 'closure'));
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

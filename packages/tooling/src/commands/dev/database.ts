@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { spawn, type SpawnOptions } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { parseGeneratedEnvironment } from '../../setup/environment.js';
 import type { SelectedClosureManifest } from '../../setup/closure.js';
 import { validateCurrentClosure } from '../../setup/closure-workspace.js';
@@ -41,7 +41,14 @@ export async function resolveDevDatabaseRuntime(
   return {
     provider,
     environmentPath,
-    environment: { ...baseEnvironment, ...generatedEnvironment },
+    environment: {
+      ...baseEnvironment,
+      ...generatedEnvironment,
+      // `docker/docker-compose.yml` requires the selected closure build context at
+      // interpolation time (the `x-nrb-build` anchor), even for infrastructure-only
+      // services such as `postgres`. Supply the same context `docker selected` uses.
+      NRB_CLOSURE_CONTEXT: resolve(workspaceRoot, '.nrb/closure'),
+    },
   };
 }
 

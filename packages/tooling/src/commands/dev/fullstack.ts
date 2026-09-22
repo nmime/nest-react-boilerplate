@@ -80,6 +80,10 @@ export function resolveFullstackRuntime(
     environment: {
       ...baseEnvironment,
       ...generatedEnvironment,
+      // `docker/docker-compose.yml` interpolates the selected closure build context
+      // (the `x-nrb-build` anchor) for every service, including `postgres` only runs.
+      // Mirror `docker selected` so the fullstack helper never fails on a fresh clone.
+      NRB_CLOSURE_CONTEXT: join(workspaceRoot, '.nrb', 'closure'),
       SESSION_SECRET: baseEnvironment.SESSION_SECRET ?? 'local-dev-session-secret-change-me',
       VITE_AUTH_API_BASE_URL: baseEnvironment.VITE_AUTH_API_BASE_URL ?? 'http://localhost:3003',
       VITE_USER_API_BASE_URL: baseEnvironment.VITE_USER_API_BASE_URL ?? 'http://localhost:3002',

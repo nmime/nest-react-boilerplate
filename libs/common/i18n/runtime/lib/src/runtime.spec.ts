@@ -62,8 +62,9 @@ describe('locale catalog surface', () => {
           ['common/shared.json', { a: 'а' }],
           ['common/errors.json', { b: 'б' }],
         ],
+        zh: [['common/shared.json', { a: '中' }]],
       }),
-    ).toEqual({ en: { a: '1' }, ru: { a: 'а', b: 'б' } });
+    ).toEqual({ en: { a: '1' }, ru: { a: 'а', b: 'б' }, zh: { a: '中' } });
   });
 
   it('merges catalog files and refuses duplicate keys', () => {

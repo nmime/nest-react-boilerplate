@@ -292,10 +292,10 @@ application stack with staging-specific secrets, databases, and domain names.
 ### CI/CD — Deploying to Staging
 
 There is no automated staging pipeline; staging shares the production deploy
-path. Deployment runs from the manual `deploy` workflow
-(`.github/workflows/deploy.yml`), triggered via `workflow_dispatch`:
+path. Deployment runs from the manual deploy path (`pnpm run deploy`), which the
+shipped pipeline does not trigger:
 
-- **Trigger:** manual `workflow_dispatch` with a full 40-character `git_sha`
+- **Trigger:** a full 40-character `git_sha`
   that is an ancestor of `origin/main` and whose selected-and-enabled deployment
   image set already exists with immutable digests.
 - **Image tag:** `sha-<git_sha>`.
@@ -304,7 +304,7 @@ path. Deployment runs from the manual `deploy` workflow
 - **Namespace:** `nest-react-boilerplate`.
 - **GitOps:** commits the updated deploy tags to a `gitops/sha-<git_sha>`
   branch for Argo CD / Flux to reconcile.
-- **Rollback:** re-run the workflow with the previous known-good Git SHA.
+- **Rollback:** re-run the deploy with the previous known-good Git SHA.
 
 ### Running Staging Locally
 

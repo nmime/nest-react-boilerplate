@@ -33,11 +33,10 @@ This repository includes the following checked-in security jobs. A job being
 present does not prove that a hosting project has enabled required pipelines,
 protected branches, or merge blocking.
 
-| Platform | Checked-in coverage                                                                                                         | Enforcement notes                                                                                                                           |
-| -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub   | Gitleaks, native secret/SAST tests, CodeQL, `audit:ci`, Dependabot, and release-image Trivy scanning                        | CI, CodeQL, dependency audit, and Trivy commands are blocking; repository rules still determine whether merges require them.                |
-| GitHub   | Weekly OpenSSF Scorecard (`.github/workflows/scorecard.yml`) with results published to the Security tab                     | Advisory signal; not a merge gate by itself.                                                                                                |
-| GitLab   | Blocking Gitleaks and `audit:ci`, plus GitLab Secret Detection, Dependency Scanning, SAST, and Container Scanning templates | The checked-in jobs do not use `allow_failure`; availability of GitLab-managed scanner templates depends on the hosting tier/configuration. |
+| Platform | Checked-in coverage                                                                                                             | Enforcement notes                                                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub   | CODEOWNERS, Dependabot, CodeQL configuration (`.github/codeql/codeql-config.yml`), and GitHub's own code-scanning default setup | No Actions workflow ships: the merge-blocking scans run in `.gitlab-ci.yml`. Repository rules still determine whether merges require anything. |
+| GitLab   | Blocking Gitleaks and `audit:ci`, plus GitLab Secret Detection, Dependency Scanning, SAST, and Container Scanning templates     | The checked-in jobs do not use `allow_failure`; availability of GitLab-managed scanner templates depends on the hosting tier/configuration.    |
 
 ## Secured components
 

@@ -91,11 +91,11 @@ is referenced, not edited, by this repository.
 
 ## Image immutability
 
-Release images are built by `.github/workflows/release-images.yml` and pushed to
-GHCR as `ghcr.io/<owner>/<repo>/<image>:sha-<git-sha>`. The workflow also emits
+Release images are built by the `release-images` job in `.gitlab-ci.yml` and
+pushed as `<registry>/<owner>/<repo>/<image>:sha-<git-sha>`. The job also emits
 BuildKit provenance/SBOM attestations, uploads SPDX SBOM artifacts, scans image
-digests with Trivy, and signs pushed digests with cosign keyless signing via
-GitHub OIDC.
+digests with Trivy, and signs pushed digests with cosign keyless signing via the
+forge OIDC identity.
 
 Production Helm values intentionally avoid `latest`. Prefer setting
 `*.image.digest` to the pushed digest, or set every `*.image.tag` to the
@@ -130,7 +130,7 @@ app's generated lockfile. Compose still passes the
 legacy `NX_PROJECT` arg per service — the `${NX_BUILD_PROJECTS:-$NX_PROJECT}`
 fallback keeps that path working unchanged.
 
-`.github/workflows/release-images.yml` builds every planned image in one shared
+The `release-images` job builds every planned image in one shared
 `docker buildx bake` invocation (rather than a per-image matrix job), then loops
 over the build's `--metadata-file` digests to run the SBOM/Trivy/cosign steps
 above per image. Tag releases force a complete selected-closure build so every

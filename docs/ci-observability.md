@@ -1,27 +1,26 @@
 # CI observability
 
-This repository keeps CI results visible from multiple places so failures remain diagnosable even when the GitHub check-run API is unavailable to a local token or automation account.
+This repository keeps CI results visible from multiple places so failures remain diagnosable even when the GitLab pipeline API is unavailable to a local token or automation account.
 
-## PR gate order
+## Merge-request gate order
 
-The `CI` workflow starts with a dedicated `Fast PR gate (ci:pr)` job. It runs:
+Every merge-request pipeline opens with the cheap jobs. `fast-check` runs the git
+conventions check against the merge-request base and then the aggregate PR gate:
 
 ```bash
 pnpm run ci:pr
 ```
 
-That command covers tooling/static checks, documentation-contract checks
+`ci:pr` covers tooling/static checks, documentation-contract checks
 (`docs:check`), locale artifact freshness (`i18n:catalogs:check`),
 specification validation (`spec:validate`), changed-file formatting, native
-secret and SAST scans, and the production dependency audit. The later Nx
-quality job owns full formatting, lint, typecheck, unit/component coverage,
-and builds.
+secret and SAST scans, and the production dependency audit.
 
-The `Helm render validation` job runs workflow hardening and CI gate parity
-checks, then materializes the selected Helm deployment with `pnpm nrb setup`
-and validates it through `pnpm run deploy:validate:helm` with
-`REQUIRE_HELM=true`. The dependency-free deployment configuration assertions
-run inside that bundle rather than as separate steps:
+`helm-validation` runs the CI gate-parity check and then materializes the
+selected Helm deployment with `pnpm nrb setup` and validates it through
+`pnpm run deploy:validate:helm` with `REQUIRE_HELM=true`. The dependency-free
+deployment configuration assertions run inside that bundle rather than as
+separate steps:
 
 ```bash
 node scripts/validate-deployment-config.mjs --mode=helm
@@ -30,107 +29,112 @@ node scripts/validate-helm-rate-limit-config.mjs
 
 Those assertions keep Docker Compose, Helm, environment examples, nginx routing, runtime hardening, production secret handling, and Helm Redis (`@redis/client`) rate-limit drift visible in the same early CI surface as the Helm render gate.
 
+`full-check` owns the expensive sweep — full formatting, lint, typecheck,
+unit/component coverage, builds, and the bundle budget. On a merge request it
+runs `nx affected` against GitLab's diff-base SHA; on the default branch it runs
+the `:all` variants.
+
 ## CI pipeline map
 
 ```mermaid
 flowchart TD
-  start([Pull request, push to main, or workflow dispatch])
-  gitleaks[Gitleaks Secret Scan]
-  helm[Helm render validation<br/>pnpm run deploy:validate:helm<br/>REQUIRE_HELM=true]
-  fast[Fast PR gate<br/>pnpm run ci:pr]
-  spec[Exact-SHA specification evidence]
-  nonruntime[Non-runtime validation gates<br/>onboarding/scaffolds, migrations, configs<br/>OpenAPI, clients, contracts, property tests]
-  mongo[MongoDB migrations, transactions, and adapters]
-  quality[Nx quality gates<br/>format, lint, typecheck, unit coverage]
-  browser[Static/browser e2e coverage<br/>Playwright Chromium]
-  visual[Storybook interaction and visual regression]
-  docker[Docker smoke stack<br/>pnpm run test:docker-smoke]
-  summary[CI status summary<br/>step summary and artifact]
+  start([Merge request, default-branch push, tag, schedule, or manual run])
+  gitleaks[gitleaks]
+  depreview[dependency-review]
+  helm[helm-validation]
+  fast[fast-check]
+  spec[spec-evidence]
+  nonruntime[non-runtime-validation]
+  full[full-check]
+  component[component-tests]
+  mongo[mongodb-validation]
+  browser[e2e-tests]
+  storybook[storybook-tests]
+  docker[docker-smoke-test]
+  summary[ci-status-summary]
   start --> gitleaks
+  start --> depreview
   start --> helm
   start --> fast
+  start --> mongo
+  start --> storybook
+  start --> browser
+  start --> docker
   fast --> spec
   fast --> nonruntime
-  fast --> mongo
-  spec --> quality
-  nonruntime --> quality
-  quality --> browser
-  quality --> visual
-  quality --> docker
+  fast --> full
+  fast --> component
+  docker --> ops[ops-gates]
   gitleaks --> summary
   helm --> summary
   fast --> summary
   spec --> summary
   nonruntime --> summary
+  full --> summary
+  component --> summary
   mongo --> summary
-  quality --> summary
   browser --> summary
-  visual --> summary
+  storybook --> summary
   docker --> summary
 ```
 
-The runtime QA/ops gates (`pnpm run test:world-class` against a live runtime
-stack) and the compiled-image fullstack e2e (`pnpm run test:fullstack`) are
-not `ci.yml` jobs: both run in the `Modern QA presets` job of
-`quality-presets.yml` (nightly cron and manual dispatch).
+The runtime QA/ops gates (`pnpm run quality:presets` against a live runtime
+stack) and the compiled-image fullstack e2e (`pnpm run test:fullstack`) are not
+merge-request jobs: they run in `ops-gates`, `docker-fullstack`, and
+`docker-fullstack-mongodb` on scheduled or manual pipelines.
 
 ## Current green gate inventory
 
 The expected green CI surface is intentionally broader than a single `check`
-command. Treat these workflows/jobs as the supported signal set when reviewing a
-release branch or a consolidator PR:
+command. Treat these jobs as the supported signal set when reviewing a release
+branch or a consolidator merge request:
 
-| Surface                          | Workflow/job                                                    | Command or provider                                                                | Evidence                                                                   |
+| Surface                          | Job                                                             | Command or provider                                                                | Evidence                                                                   |
 | -------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Supported lockfile audit         | `dependency-review.yml` / `Supported lockfile audit`            | `pnpm run audit:ci` after `pnpm install --frozen-lockfile`                         | Step summary and `dependency-review-summary` artifact                      |
-| Gitleaks secret scan             | `ci.yml` / `Gitleaks Secret Scan`                               | gitleaks over the tracked tree                                                     | Gitleaks job result                                                        |
-| Secret scan                      | `ci.yml` / `Fast PR gate (ci:pr)`                               | `pnpm run test:security:secrets`                                                   | Included in `ci:pr`; no separate native-security job                       |
-| Native SAST                      | `ci.yml` / `Fast PR gate (ci:pr)`                               | `pnpm run test:security:sast`                                                      | Included in `ci:pr`; no separate native-security job                       |
-| Exact-SHA specification evidence | `ci.yml` / `Exact-SHA specification evidence`                   | `pnpm run spec:verify -- --lane pr\|main` against the base ref                     | `exact-sha-specification-evidence` artifact                                |
-| Onboarding/scaffold contract     | `ci.yml` / `Non-runtime validation gates`                       | `pnpm run onboarding:verify`                                                       | Exact preset closures plus generated app/library builds and tests          |
-| MongoDB validation               | `ci.yml` / `MongoDB migrations, transactions, and adapters`     | MongoDB migration ledger, transaction/adapter, and provider-wiring component tests | mongodb-validation job result and logs                                     |
-| Docker smoke                     | `ci.yml` / `Docker smoke stack`                                 | `pnpm run test:docker-smoke`                                                       | Docker smoke job result and logs                                           |
-| Fullstack Playwright             | `quality-presets.yml` / `Modern QA presets`                     | `pnpm run test:fullstack` against compiled images                                  | `quality-preset-results` artifact (nightly/dispatch, not the PR path)      |
-| Runtime QA/ops                   | `quality-presets.yml` / `Modern QA presets`                     | `pnpm run quality:presets` with a live runtime stack                               | `quality-preset-results` artifact (nightly/dispatch, not the PR path)      |
-| CodeQL                           | `codeql.yml` / `Analyze JavaScript/TypeScript`                  | GitHub CodeQL action                                                               | Security tab plus `codeql-summary` artifact                                |
-| Image release supply chain       | `release-images.yml` / `Build, scan, and sign *`                | Buildx, SBOM, Trivy SARIF, cosign                                                  | SBOM artifacts, uploaded SARIF, signed image digests                       |
+| Supported lockfile audit         | `dependency-review` (merge requests)                            | `pnpm run audit:ci` after `pnpm install --frozen-lockfile`                         | Job result                                                                 |
+| Gitleaks secret scan             | `gitleaks`                                                      | gitleaks over the tracked tree                                                     | `gl-security-report.json` secret-detection artifact                        |
+| Secret scan                      | `fast-check`                                                    | `pnpm run test:security:secrets`                                                   | Included in `ci:pr`; no separate native-security job                       |
+| Native SAST                      | `fast-check`                                                    | `pnpm run test:security:sast`                                                      | Included in `ci:pr`; no separate native-security job                       |
+| GitLab-managed scanners          | `include: Security/*` templates                                 | SAST, Dependency Scanning, Secret Detection, Container Scanning                    | GitLab security reports                                                    |
+| Exact-SHA specification evidence | `spec-evidence`                                                 | `pnpm run spec:verify -- --lane pr\|main` against the base ref                     | `test-results/spec-evidence/` artifact                                     |
+| Onboarding/scaffold contract     | `non-runtime-validation`                                        | `pnpm run onboarding:verify`                                                       | Exact preset closures plus generated app/library builds and tests          |
+| MongoDB validation               | `mongodb-validation`                                            | MongoDB migration ledger, transaction/adapter, and provider-wiring component tests | mongodb-validation job result and logs                                     |
+| Docker smoke                     | `docker-smoke-test`                                             | `pnpm run docker:prod:config:check`, `node scripts/validate-compose-modes.mjs`     | Docker smoke job result and logs                                           |
+| Fullstack Playwright             | `docker-fullstack` / `docker-fullstack-mongodb`                 | `pnpm run test:fullstack` against compiled images                                  | Scheduled/manual lanes, not the merge-request path                         |
+| Runtime QA/ops                   | `ops-gates`                                                     | `pnpm run quality:presets` with a live runtime stack                               | Scheduled/manual lanes, not the merge-request path                         |
+| CodeQL                           | Not shipped                                                     | GitHub's default code-scanning setup reads `.github/codeql/codeql-config.yml`      | Security tab; no pipeline job carries it                                   |
+| Image release supply chain       | `release-images`                                                | Buildx, Syft SBOM, Trivy SARIF, cosign                                             | SBOM/SARIF/attestation artifacts, signed image digests                     |
 | GitGuardian external monitoring  | External GitGuardian integration, when enabled for the org/repo | Provider-managed secret detection                                                  | GitGuardian dashboard/alerts; not a replacement for the native secret scan |
 
-### Scheduled and dispatch workflows
+### Scheduled and manually dispatched jobs
 
-These workflows run on schedules or manual dispatch instead of the PR path, so
-they never appear in PR gate order. Treat them as the durable background signal
-set for visual regression, assurance evidence, and supply-chain scoring:
+These jobs run on schedules or manual dispatch instead of the merge-request
+path, so they never appear in MR gate order. Treat them as the durable
+background signal set for visual regression and assurance evidence:
 
-| Workflow                        | File                         | Trigger                            | What it proves                                                                                                                                                                             |
-| ------------------------------- | ---------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Quality presets                 | `quality-presets.yml`        | nightly cron + `workflow_dispatch` | Storybook visual browser/mobile matrix drift against reviewed baselines, plus the Modern QA presets job (world-class runtime/ops gates and compiled-image Docker smoke and fullstack e2e). |
-| OpenSSF Scorecard               | `scorecard.yml`              | weekly cron + `main` push          | Supply-chain posture score with results published to the Security tab.                                                                                                                     |
-| Nightly specification assurance | `spec-assurance-nightly.yml` | nightly cron + `workflow_dispatch` | Fresh exact-SHA requirement evidence across nightly lanes with a runtime stack.                                                                                                            |
-| Runtime specification assurance | `spec-assurance-runtime.yml` | `workflow_dispatch`                | On-demand runtime exact-SHA assurance dossier.                                                                                                                                             |
-
-Use the same [Workflow status pages](#workflow-status-pages) pattern to follow
-run history for these files.
+| Job                        | Trigger                   | What it proves                                                                                                                                                                             |
+| -------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `visual-regression-matrix` | nightly cron + manual run | Storybook visual browser/mobile matrix drift against reviewed baselines, plus the Modern QA presets job (world-class runtime/ops gates and compiled-image Docker smoke and fullstack e2e). |
+| `spec-evidence-nightly`    | nightly cron + manual run | Fresh exact-SHA requirement evidence across nightly lanes with a runtime stack.                                                                                                            |
+| `spec-evidence-runtime`    | manual run                | On-demand runtime exact-SHA assurance dossier.                                                                                                                                             |
 
 ## Status summaries
 
-The CI workflow has a final `CI status summary` job with `if: always()`. It writes a Markdown table of every CI job result to the GitHub step summary and uploads the same table as the `ci-status-summary` artifact.
+GitLab starts a job only once every job in its `needs:` list has succeeded, so
+the final `ci-status-summary` job reaching `success` is itself the proof that
+every merge-required gate passed. It also re-runs
+`node scripts/ci/check-pipelines.mjs`, so a gate added to `scripts/ci/gates.json`
+without a job in `.gitlab-ci.yml` fails the pipeline instead of passing silently.
+Naming every job in the protected-branch rule instead would silently stop
+covering whatever is added next.
 
-CodeQL and Dependency Review also write step summaries and upload small Markdown artifacts. Use these summaries when the Checks tab, check-run API, or local personal access token permissions do not expose detailed check results.
+## Pipeline run history
 
-## Workflow status pages
-
-Use the GitHub Actions workflow pages for current run history and badges when repository readers have authenticated access:
-
-- CI: `.github/workflows/ci.yml`
-- CodeQL: `.github/workflows/codeql.yml`
-- Dependency review: `.github/workflows/dependency-review.yml`
-- Quality presets: `.github/workflows/quality-presets.yml`
-- OpenSSF Scorecard: `.github/workflows/scorecard.yml`
-- Nightly specification assurance: `.github/workflows/spec-assurance-nightly.yml`
-- Runtime specification assurance: `.github/workflows/spec-assurance-runtime.yml`
-
-Workflow-level links are preferred so private-repository readers can click through to the authenticated run history.
+Use the GitLab pipeline pages for current run history when repository readers
+have authenticated access. Every merge-blocking lane lives in `.gitlab-ci.yml`,
+and `scripts/ci/gates.json` names the job that executes each one. Pipeline-level
+links are preferred so private-repository readers can click through to the
+authenticated run history.
 
 ## Dependabot labels
 

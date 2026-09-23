@@ -210,15 +210,9 @@ requirements:
         lanes:
           - pr
           - main
-      - kind: static
-        file: scripts/validate-github-workflows.mjs
-        script: ci:workflows:check
-        forges:
-          - github
-        reason: The scaffolded workflow shape it checks only exists on a checkout that ships GitHub Actions.
-        lanes:
-          - pr
-          - main
+      # scripts/validate-github-workflows.mjs was the static evidence here. The scaffolded workflow
+      # shape it checks only exists on a checkout that ships GitHub Actions, which this template no
+      # longer does, so the descriptor declares no such forge and the entry would be invalid.
       - kind: operations
         file: packages/tooling/src/commands/qa/world-class-gates.ts
         script: test:world-class

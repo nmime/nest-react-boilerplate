@@ -97,26 +97,20 @@ requirements:
         lanes:
           - pr
           - main
-      - kind: security
-        file: scripts/validate-github-workflows.mjs
-        script: ci:workflows:check
-        forges:
-          - github
-        reason: Action pinning and workflow permissions are GitHub concepts with no GitLab analogue.
-        lanes:
-          - pr
-          - main
-      # The workflow validator above proves GitHub Actions hardening and is GitHub-only by
-      # nature. The gate inventory below is what proves the release supply chain itself —
-      # signing, SBOM, scan, and immutable digests — on every forge the product configures,
-      # so this requirement keeps its evidence on a checkout that ships no GitHub workflow.
+      # scripts/validate-github-workflows.mjs used to be the security evidence here. It hardens
+      # GitHub Actions, which is a concept with no GitLab analogue, so it stands down as
+      # not-applicable and the descriptor no longer declares that forge — evidence scoped to a
+      # forge the descriptor does not declare is invalid.
       - kind: operations
         file: scripts/ci/check-pipelines.mjs
         script: ci:pipelines:check
         lanes:
           - pr
           - main
-      - kind: static
+      # The release-lane parity assertions fail when any declared supply-chain control — keyless
+      # signature, SBOM, vulnerability gate, immutable digest — has no implementation in the
+      # pipeline that cuts the release, so they carry this requirement's security evidence.
+      - kind: security
         file: packages/tooling/src/commands/ci/pipeline-parity.test.ts
         target: '@repo/tooling:test'
         lanes:

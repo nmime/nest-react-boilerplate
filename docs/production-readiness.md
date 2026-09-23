@@ -28,13 +28,12 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 
 ## Supply-chain gates
 
-- [ ] GitHub Actions remain pinned to full commit SHAs with an adjacent version
-      comment for reviewability.
-- [ ] Routine GitHub Actions minor/patch updates may be grouped by Dependabot;
-      major action updates are reviewed separately for Node runtime, hosted
-      runner, and input/behavior changes.
-- [ ] CodeQL, dependency review, SBOM generation, Trivy scanning, and cosign
-      signing gates remain enabled for release workflows.
+- [ ] Pipeline steps remain pinned: `include:` refs to a commit SHA and `image:`
+      to a digest, with an adjacent version comment for reviewability.
+- [ ] Routine pipeline dependency updates may be grouped by Dependabot; major
+      updates are reviewed separately for runtime and input/behavior changes.
+- [ ] Dependency scanning, SBOM generation, Trivy scanning, and cosign signing
+      gates remain enabled for release pipelines.
 
 ## Configuration and secrets
 

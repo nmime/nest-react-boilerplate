@@ -139,15 +139,16 @@ Unexpected new package build scripts should be treated as a supply-chain review 
 The rule is forge-neutral: a pipeline step is a dependency, so pin it by
 immutable digest and keep the human-readable version beside it for review.
 
-- Pin third-party and first-party GitHub Actions to full 40-character commit SHAs in workflow `uses:` entries.
-- Keep the human-readable version tag in a trailing comment (for example, `# v4`) so dependency-bot action updates remain easy to review.
-- On GitLab, pin `include:` refs to a commit SHA and pin `image:` to a digest for the same reason.
-- Prefer pinned runner images such as `ubuntu-22.04` over floating labels such as `ubuntu-latest` for CI and release reproducibility.
+- Pin `include:` refs to a commit SHA and `image:` to a digest.
+- Keep the human-readable version beside the pin so dependency-bot updates remain easy to review.
+- A product that adds GitHub Actions pins every `uses:` entry to a full 40-character commit SHA for the same reason.
+- Prefer a pinned runner/container image tag, or a digest, over a floating tag
+  such as `latest` for CI and release reproducibility.
 
 ## Security gates
 
-- Pull requests run Dependency Review and fail on moderate-or-higher vulnerable dependency additions.
-- Mainline/release workflows run CodeQL, `pnpm audit`, container SBOM generation, Trivy scanning, and keyless image signing.
+- Merge requests run GitLab Dependency Scanning and fail on moderate-or-higher vulnerable dependency additions.
+- Mainline/release pipelines run `pnpm audit`, container SBOM generation, Trivy scanning, and keyless image signing.
 - Production releases should record the image digest and may also use the
   commit-addressed `sha-<git-sha>` tag. Protect tags from mutation; the digest,
   not the tag's spelling, is the immutable artifact identity.

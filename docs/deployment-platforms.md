@@ -4,15 +4,19 @@ This boilerplate supports deployment from GitHub or GitLab.
 
 ## CI/CD comparison
 
-| Feature            | GitHub                             | GitLab                             |
-| ------------------ | ---------------------------------- | ---------------------------------- |
-| CI config          | `.github/workflows/`               | `.gitlab-ci.yml`                   |
-| MR/PR templates    | `.github/PULL_REQUEST_TEMPLATE.md` | `.gitlab/merge_request_templates/` |
-| Issue templates    | `.github/ISSUE_TEMPLATE/`          | `.gitlab/issue_templates/`         |
-| Dependency updates | Dependabot                         | GitLab Dependency Scanning         |
-| GitOps promotion   | Manual promotion PR workflow       | Product-owned pipeline/MR          |
-| Releases           | Native GitHub Actions              | Native GitLab CI                   |
-| Container registry | GHCR                               | GitLab Container Registry          |
+| Feature            | GitHub                                                  | GitLab                             |
+| ------------------ | ------------------------------------------------------- | ---------------------------------- |
+| CI config          | None shipped (`.gitlab-ci.yml` is the template default) | `.gitlab-ci.yml`                   |
+| MR/PR templates    | `.github/PULL_REQUEST_TEMPLATE.md`                      | `.gitlab/merge_request_templates/` |
+| Issue templates    | `.github/ISSUE_TEMPLATE/`                               | `.gitlab/issue_templates/`         |
+| Dependency updates | Dependabot                                              | GitLab Dependency Scanning         |
+| GitOps promotion   | Product-owned pipeline/MR                               | Product-owned pipeline/MR          |
+| Releases           | Product-owned pipeline                                  | Native GitLab CI                   |
+| Container registry | GHCR                                                    | GitLab Container Registry          |
+
+The template ships the GitLab rendering only. GitHub is still the hosting forge
+for templates, CODEOWNERS, and Dependabot, but it ships no Actions workflow, and
+`scripts/ci/gates.json` therefore declares GitLab as its only forge.
 
 ## Helm values
 
@@ -27,9 +31,8 @@ migrator outside the fresh selected closure.
 
 ## GitOps reconciliation
 
-The promotion workflow (`.github/workflows/deploy.yml`) is GitHub-specific and
-opens a reviewed image-tag PR. Argo CD and Flux manifests are provider-agnostic.
-For GitLab:
+No promotion pipeline is shipped. Argo CD and Flux manifests are
+provider-agnostic, so a product wires its own promotion lane:
 
 1. Build and verify full-SHA image digests for the fresh selected closure.
 2. Intersect that inventory with enabled Helm deployment ownership and update

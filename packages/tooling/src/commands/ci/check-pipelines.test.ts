@@ -40,7 +40,12 @@ describe('shipped CI gate descriptor', () => {
     const contract = loadCiContract(workspaceRoot);
     const sources = collectForgeSources(resolve(workspaceRoot, 'packages'), contract);
 
-    assert.deepEqual(Object.values(sources), [undefined, undefined]);
+    assert.ok(Object.keys(contract.forges).length > 0, 'the descriptor must declare a forge to test');
+    assert.deepEqual(
+      Object.entries(sources).map(([forgeId, source]) => [forgeId, source === undefined]),
+      Object.keys(contract.forges).map((forgeId) => [forgeId, true]),
+      'every declared forge reports as not configured when its pipeline is absent',
+    );
   });
 });
 
@@ -53,8 +58,11 @@ describe('descriptor-driven pipeline discovery', () => {
     const files = declaredPipelineFiles(workspaceRoot);
 
     assert.ok(files.includes('.gitlab-ci.yml'), 'the GitLab pipeline must be in scope');
-    assert.ok(files.includes('.github/workflows/ci.yml'), 'the GitHub pipeline must be in scope');
-    assert.ok(files.includes('.github/workflows/quality-presets.yml'), 'lane executor files must be in scope too');
+    assert.deepEqual(
+      files.filter((file) => file.startsWith('.github/')),
+      [],
+      'the descriptor must not name a pipeline this checkout no longer ships',
+    );
     assert.deepEqual([...files].sort(), files, 'the order must be stable for reproducible reports');
   });
 
@@ -67,13 +75,14 @@ describe('descriptor-driven pipeline discovery', () => {
 
     assert.deepEqual(
       forges.map(({ id }) => id).sort(),
-      ['github', 'gitlab'],
-      'both shipped forges are configured in this repository',
+      ['gitlab'],
+      'GitLab is the only forge this repository ships, and the descriptor must say so',
     );
-    const github = forges.find(({ id }) => id === 'github');
-    assert.equal(github?.jobStyle, 'github');
-    assert.equal(github?.promotionPipeline, '.github/workflows/deploy.yml');
-    assert.equal(forges.find(({ id }) => id === 'gitlab')?.promotionPipeline, undefined);
+    assert.equal(forges[0]?.jobStyle, 'gitlab');
+    assert.equal(forges[0]?.pipeline, '.gitlab-ci.yml');
+    assert.equal(forges[0]?.releasePipeline, '.gitlab-ci.yml');
+    assert.equal(forges[0]?.provenancePipeline, '.gitlab-ci.yml');
+    assert.equal(forges[0]?.promotionPipeline, undefined, 'no promotion pipeline is shipped');
   });
 
   it('omits a forge whose pipeline file this checkout does not contain', () => {

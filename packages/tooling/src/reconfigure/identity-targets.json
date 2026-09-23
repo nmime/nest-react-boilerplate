@@ -259,11 +259,6 @@
       ".helm/templates/backup-cronjob.yaml",
       ".helm/templates/prometheusrule.yaml",
       ".github/ISSUE_TEMPLATE/config.yml",
-      ".github/workflows/argo-sync.yml",
-      ".github/workflows/deploy.yml",
-      ".github/workflows/quality-presets.yml",
-      ".github/workflows/release.yml",
-      ".github/workflows/spec-assurance-nightly.yml",
       ".agents/skills/update-boilerplate-base/SKILL.md"
     ],
     "brand-session-tenant": [
@@ -628,11 +623,6 @@
       "apps/backend/admin/admin-app-api/contracts/openapi/admin-app-api.json",
       ".nrb/closure/package.json",
       ".nrb/closure/pnpm-lock.yaml",
-      ".github/workflows/ci.yml",
-      ".github/workflows/deploy.yml",
-      ".github/workflows/quality-presets.yml",
-      ".github/workflows/release-images.yml",
-      ".github/workflows/spec-assurance-nightly.yml",
       ".agents/skills/activate-capability/SKILL.md",
       ".agents/skills/initialize-product/SKILL.md",
       ".agents/skills/maintain-generators/SKILL.md",
@@ -1017,10 +1007,7 @@
       ".helm/templates/NOTES.txt",
       ".helm/templates/_helpers.tpl",
       ".helm/templates/deployment.yaml",
-      ".helm/templates/prometheusrule.yaml",
-      ".github/workflows/ci.yml",
-      ".github/workflows/quality-presets.yml",
-      ".github/workflows/spec-assurance-nightly.yml"
+      ".helm/templates/prometheusrule.yaml"
     ],
     "runtime-ports": [
       ".env.example",
@@ -1243,9 +1230,7 @@
       ".helm/templates/configmap.yaml",
       ".helm/templates/coroot.yaml",
       ".helm/templates/network-policy.yaml",
-      ".helm/templates/otel-collector.yaml",
-      ".github/workflows/quality-presets.yml",
-      ".github/workflows/spec-assurance-nightly.yml"
+      ".helm/templates/otel-collector.yaml"
     ]
   }
 }

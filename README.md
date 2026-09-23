@@ -12,7 +12,6 @@
   </p>
 
   <p>
-    <a href="https://github.com/nmime/nest-react-boilerplate/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/nmime/nest-react-boilerplate/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white&color=22c55e" /></a>
     <a href="https://github.com/nmime/nest-react-boilerplate/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/nmime/nest-react-boilerplate?style=for-the-badge&logo=semanticrelease&logoColor=white&color=8b5cf6" /></a>
     <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
     <img alt="pnpm 11.15.1" src="https://img.shields.io/badge/pnpm-11.15.1-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
@@ -178,7 +177,7 @@ flowchart LR
 
 | Layer            | Technology and responsibility                                                                        |
 | ---------------- | ---------------------------------------------------------------------------------------------------- |
-| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.15.1, and Node.js 24                                                     |
+| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.15.1, and Node.js 24                                                      |
 | 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
 | 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
 | 🩷 **Data**      | PostgreSQL + MikroORM or native MongoDB, explicit migrations, Redis, NATS, S3/MinIO adapters         |

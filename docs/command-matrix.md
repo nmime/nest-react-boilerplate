@@ -146,7 +146,7 @@ These public root scripts are part of the supported DX/CI contract even when the
 Formatting uses Prettier defaults intentionally: the repository has `.prettierignore` but no explicit Prettier config, so `pnpm run format`, `pnpm run format:check`, and `pnpm run format:changed` should be interpreted as stock Prettier behavior with `--ignore-unknown`.
 
 Redundant deployment, test, audit, and quality aliases were removed once their
-references were checked against `.github/workflows/**` and the documentation.
+references were checked against `.gitlab-ci.yml` and the documentation.
 `pnpm run docs:check` now fails on any documented namespaced command that no
 longer exists, in both the `pnpm run <name>` and bare `pnpm <name>` spellings.
 

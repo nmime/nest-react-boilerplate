@@ -25,6 +25,28 @@ Compose/Helm wiring, tests, and documentation together.
 
 Never commit a populated `.env` file or real secret material.
 
+## Ambient loading: what a template key reaches
+
+Nx loads `.env.local`, `.local.env`, and `.env` from the workspace root into the
+environment of **every** command it runs, and `nx:run-commands` children inherit
+that environment. A key declared in `.env` or `.env.local` is therefore not a
+setting for one target — it is ambient configuration for the whole workspace.
+
+That is the right default for runtime values (database URLs, ports, cookie
+names), and the wrong one for flags a library sniffs to decide _how_ it is being
+run. Two rules follow:
+
+- **Never declare a runner-detection or mode flag in a template.** `CI`,
+  `VITEST`, `NODE_OPTIONS`, and `JEST_WORKER_ID` change library behaviour when
+  present, and a value like `CI=false` is a _truthy string_: it turns CI
+  behaviour on for every local command. A CI runner sets its own flags; the
+  pipeline does this in `.gitlab-ci.yml`.
+- **Every target that needs a mode sets it itself.** `NODE_ENV` stays in
+  `.env`/`.env.local` because the local runtime genuinely reads it (cookie name,
+  logger format), so the build entry points export `NODE_ENV=production`
+  explicitly rather than inheriting whatever the shell or the template left
+  behind. Test targets already do the same with `NODE_ENV=test`.
+
 ## Settings this boilerplate does not know about
 
 A product built on this repository has its own backend settings, and the maps

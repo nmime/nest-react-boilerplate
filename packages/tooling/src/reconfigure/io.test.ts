@@ -28,13 +28,28 @@ function filesystem(paths: string[] = []): FilesystemAdapter {
   };
 }
 
+/**
+ * The guard reads the ambient environment after the explicit options, and Nx loads the workspace
+ * `.env`/`.env.local` into every command it runs. Pinning that source empty keeps each case about
+ * the fixture checkout under test instead of about the host that happens to run the suite.
+ */
+const isolatedAmbientEnvironment: NodeJS.ProcessEnv = {};
+
+function assertTenantChangeAllowedIn(
+  root: string,
+  fs: FilesystemAdapter,
+  options: Parameters<typeof assertTenantChangeAllowed>[2] = {},
+) {
+  return assertTenantChangeAllowed(root, fs, { ...options, ambientEnvironment: isolatedAmbientEnvironment });
+}
+
 describe('tenant change guard', () => {
   it('allows a checkout with no seed marker and no configured database', async () => {
     // Isolated root: a host checkout's .env may configure a live database, and
     // an empty databaseUrl must mean "unconfigured", not "read the host env".
     const root = mkdtempSync(join(tmpdir(), 'nrb-tenant-guard-empty-'));
     try {
-      await assertTenantChangeAllowed(root, filesystem(), { databaseUrl: '' });
+      await assertTenantChangeAllowedIn(root, filesystem(), { databaseUrl: '' });
     } finally {
       rmSync(root, { force: true, recursive: true });
     }
@@ -47,7 +62,7 @@ describe('tenant change guard', () => {
     try {
       for (const marker of ['.nrb/seeded', '.nrb/seed.json', '.nrb/seed-state.json']) {
         await assert.rejects(
-          assertTenantChangeAllowed(root, filesystem([marker]), {
+          assertTenantChangeAllowedIn(root, filesystem([marker]), {
             databaseUrl: 'postgres://localhost/app',
             runPostgresProbe: () => {
               throw new Error('probe must not run');
@@ -66,9 +81,9 @@ describe('tenant change guard', () => {
     // "both PostgreSQL and MongoDB are configured" guard before URL validation runs.
     const root = mkdtempSync(join(tmpdir(), 'nrb-tenant-guard-url-'));
     try {
-      await assert.rejects(assertTenantChangeAllowed(root, filesystem(), { databaseUrl: 'not a url' }), /malformed/u);
+      await assert.rejects(assertTenantChangeAllowedIn(root, filesystem(), { databaseUrl: 'not a url' }), /malformed/u);
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), { databaseUrl: 'mongodb://localhost/app' }),
+        assertTenantChangeAllowedIn(root, filesystem(), { databaseUrl: 'mongodb://localhost/app' }),
         /unsupported protocol/u,
       );
     } finally {
@@ -79,7 +94,7 @@ describe('tenant change guard', () => {
   it('allows a successful fresh-database probe', async () => {
     const root = mkdtempSync(join(tmpdir(), 'nrb-tenant-guard-fresh-'));
     try {
-      await assertTenantChangeAllowed(root, filesystem(), {
+      await assertTenantChangeAllowedIn(root, filesystem(), {
         databaseUrl: 'postgres://localhost/app',
         runPostgresProbe: () => ({ status: 0, stdout: 'fresh\n', stderr: '' }),
       });
@@ -93,7 +108,7 @@ describe('tenant change guard', () => {
     try {
       writeFileSync(join(root, '.env'), 'DATABASE_URL=postgres://localhost/app\n');
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), {
+        assertTenantChangeAllowedIn(root, filesystem(), {
           databaseUrl: '',
           runPostgresProbe: () => ({ status: 0, stdout: 'applied\n', stderr: '' }),
         }),
@@ -107,13 +122,13 @@ describe('tenant change guard', () => {
   it('supports MongoDB migration-ledger probes and refuses incomplete or ambiguous configuration', async () => {
     const root = mkdtempSync(join(tmpdir(), 'nrb-tenant-guard-mongo-'));
     try {
-      await assertTenantChangeAllowed(root, filesystem(), {
+      await assertTenantChangeAllowedIn(root, filesystem(), {
         mongodbUri: 'mongodb://localhost/app',
         mongodbDatabase: 'app',
         runMongoProbe: async () => 'fresh',
       });
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), {
+        assertTenantChangeAllowedIn(root, filesystem(), {
           mongodbUri: 'mongodb://localhost/app',
           mongodbDatabase: 'app',
           runMongoProbe: async () => 'applied',
@@ -121,11 +136,11 @@ describe('tenant change guard', () => {
         /applied migrations/u,
       );
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), { mongodbUri: 'mongodb://localhost/app' }),
+        assertTenantChangeAllowedIn(root, filesystem(), { mongodbUri: 'mongodb://localhost/app' }),
         /incomplete/u,
       );
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), {
+        assertTenantChangeAllowedIn(root, filesystem(), {
           databaseUrl: 'postgres://localhost/app',
           mongodbUri: 'mongodb://localhost/app',
           mongodbDatabase: 'app',
@@ -133,7 +148,7 @@ describe('tenant change guard', () => {
         /both PostgreSQL and MongoDB/u,
       );
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), {
+        assertTenantChangeAllowedIn(root, filesystem(), {
           mongodbUri: 'mongodb://localhost/other',
           mongodbDatabase: 'app',
         }),
@@ -150,28 +165,28 @@ describe('tenant change guard', () => {
     const root = mkdtempSync(join(tmpdir(), 'nrb-tenant-guard-probe-'));
     try {
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), {
+        assertTenantChangeAllowedIn(root, filesystem(), {
           databaseUrl: 'postgres://localhost/app',
           runPostgresProbe: () => ({ status: 0, stdout: 'applied\n', stderr: '' }),
         }),
         /applied migrations/u,
       );
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), {
+        assertTenantChangeAllowedIn(root, filesystem(), {
           databaseUrl: 'postgres://localhost/app',
           runPostgresProbe: () => ({ status: null, stdout: '', stderr: '', error: new Error('spawn psql ENOENT') }),
         }),
         /could not be checked.*ENOENT/u,
       );
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), {
+        assertTenantChangeAllowedIn(root, filesystem(), {
           databaseUrl: 'postgres://localhost/app',
           runPostgresProbe: () => ({ status: 2, stdout: '', stderr: 'connection refused' }),
         }),
         /failed migration-state probe.*connection refused/u,
       );
       await assert.rejects(
-        assertTenantChangeAllowed(root, filesystem(), {
+        assertTenantChangeAllowedIn(root, filesystem(), {
           databaseUrl: 'postgres://localhost/app',
           runPostgresProbe: () => ({ status: 0, stdout: '', stderr: '' }),
         }),

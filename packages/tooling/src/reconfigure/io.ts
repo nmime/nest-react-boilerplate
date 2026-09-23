@@ -79,6 +79,13 @@ export interface TenantChangeGuardOptions {
   databaseUrl?: string;
   mongodbUri?: string;
   mongodbDatabase?: string;
+  /**
+   * Ambient environment consulted after the explicit options. It is a parameter rather than a
+   * direct `process.env` read so a caller — a spec above all — can pin it: Nx loads the workspace
+   * `.env`/`.env.local` into every command it runs, so an unpinned read lets the host checkout's
+   * database configuration decide an assertion about a fixture checkout.
+   */
+  ambientEnvironment?: NodeJS.ProcessEnv;
   runPostgresProbe?: (databaseUrl: string) => { status: number | null; stdout: string; stderr: string; error?: Error };
   runMongoProbe?: (mongodbUri: string, database: string) => Promise<'fresh' | 'applied'>;
 }
@@ -96,11 +103,12 @@ export async function assertTenantChangeAllowed(
     }
   }
   const environment = readEnvironmentFile(workspaceRoot);
-  const databaseUrl = firstConfigured(options.databaseUrl, process.env.DATABASE_URL, environment.DATABASE_URL);
-  const mongodbUri = firstConfigured(options.mongodbUri, process.env.MONGODB_URI, environment.MONGODB_URI);
+  const ambient = options.ambientEnvironment ?? process.env;
+  const databaseUrl = firstConfigured(options.databaseUrl, ambient.DATABASE_URL, environment.DATABASE_URL);
+  const mongodbUri = firstConfigured(options.mongodbUri, ambient.MONGODB_URI, environment.MONGODB_URI);
   const mongodbDatabase = firstConfigured(
     options.mongodbDatabase,
-    process.env.MONGODB_DATABASE,
+    ambient.MONGODB_DATABASE,
     environment.MONGODB_DATABASE,
   );
   if (databaseUrl && mongodbUri) {
@@ -194,9 +202,8 @@ async function assertFreshMongoDatabase(
   const connectionUrlModule = requireMongoPackage('mongodb-connection-string-url') as {
     default?: new (uri: string) => MongoConnectionString;
   };
-  const ConnectionString = connectionUrlModule.default ?? (connectionUrlModule as unknown as new (
-    uri: string,
-  ) => MongoConnectionString);
+  const ConnectionString =
+    connectionUrlModule.default ?? (connectionUrlModule as unknown as new (uri: string) => MongoConnectionString);
   let parsed: MongoConnectionString;
   try {
     parsed = new ConnectionString(mongodbUri);

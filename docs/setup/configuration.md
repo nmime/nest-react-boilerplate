@@ -174,7 +174,7 @@ pnpm --filter @repo/tooling tooling doctor
 
 | Check               | Status              | Description                                                                                         |
 | ------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `runtime-version`   | pass/fail           | JavaScript runtime version must match the repository Node.js or Bun contract.                       |
+| `runtime-version`   | pass/fail           | JavaScript runtime version must match the repository Node.js contract.                              |
 | `pnpm`              | pass/fail           | pnpm must be exactly `11.15.1`.                                                                     |
 | `docker`            | pass/skip           | Docker availability (optional for E2E).                                                             |
 | `manifests`         | pass/fail           | `package.json`, `tsconfig.base.json` present.                                                       |
@@ -292,10 +292,10 @@ application stack with staging-specific secrets, databases, and domain names.
 ### CI/CD — Deploying to Staging
 
 There is no automated staging pipeline; staging shares the production deploy
-path. Deployment runs from the manual `deploy` workflow
-(`.github/workflows/deploy.yml`), triggered via `workflow_dispatch`:
+path. Deployment runs from the manual deploy path (`pnpm run deploy`), which the
+shipped pipeline does not trigger:
 
-- **Trigger:** manual `workflow_dispatch` with a full 40-character `git_sha`
+- **Trigger:** a full 40-character `git_sha`
   that is an ancestor of `origin/main` and whose selected-and-enabled deployment
   image set already exists with immutable digests.
 - **Image tag:** `sha-<git_sha>`.
@@ -304,7 +304,7 @@ path. Deployment runs from the manual `deploy` workflow
 - **Namespace:** `nest-react-boilerplate`.
 - **GitOps:** commits the updated deploy tags to a `gitops/sha-<git_sha>`
   branch for Argo CD / Flux to reconcile.
-- **Rollback:** re-run the workflow with the previous known-good Git SHA.
+- **Rollback:** re-run the deploy with the previous known-good Git SHA.
 
 ### Running Staging Locally
 

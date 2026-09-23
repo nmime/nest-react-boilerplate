@@ -14,8 +14,8 @@ describe('presentUserProfile', () => {
     expect(presentUserProfile({ ...baseProfile, locale: 'ru' }).locale).toBe('ru');
   });
 
-  it('normalizes an unsupported auth locale (zh) to undefined instead of leaking it', () => {
-    expect(presentUserProfile({ ...baseProfile, locale: 'zh' }).locale).toBeUndefined();
+  it('normalizes an unsupported auth locale (fr) to undefined instead of leaking it', () => {
+    expect(presentUserProfile({ ...baseProfile, locale: 'fr' }).locale).toBeUndefined();
   });
 
   it('normalizes region-qualified locales down to the supported base locale', () => {

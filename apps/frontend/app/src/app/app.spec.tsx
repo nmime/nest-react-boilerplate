@@ -228,6 +228,14 @@ describe('User app shell', () => {
   });
 
   it('renders a neutral account home through the shared shell', async () => {
+    // Pin the neutral configuration these assertions describe: the host
+    // environment (VITE_PRODUCT_NAME, VITE_*_API_BASE_URL) must not decide the
+    // brand name or leak API origins into this render.
+    vi.stubEnv('VITE_API_BASE_URL_MODE', '');
+    vi.stubEnv('VITE_AUTH_API_BASE_URL', '');
+    vi.stubEnv('VITE_USER_API_BASE_URL', '');
+    vi.stubEnv('VITE_PRODUCT_NAME', '');
+
     const { container } = render(<App />);
     await screen.findByText('Account essentials');
     const html = container.innerHTML;
@@ -363,6 +371,8 @@ describe('User app shell', () => {
         throw new Error('storage blocked');
       },
     });
+    // Neutral brand as above: the assertion pins the boilerplate default.
+    vi.stubEnv('VITE_PRODUCT_NAME', '');
 
     const { container } = render(<App />);
     await screen.findByText('Account essentials');
@@ -370,6 +380,9 @@ describe('User app shell', () => {
   });
 
   it('loads a profile after login establishes a cookie session', async () => {
+    // Explicit origins only resolve outside same-origin API mode; pin the mode
+    // so the configured base URL is what the client actually calls.
+    vi.stubEnv('VITE_API_BASE_URL_MODE', '');
     vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api/');
     const fetchMock = setFetch(
       jsonResponse({ data: { user: {} } }),
@@ -388,7 +401,7 @@ describe('User app shell', () => {
     expectFetchRequest(fetchMock, '/auth/me', {
       'Accept-Language': 'en',
     });
-    expectFetchRequest(fetchMock, process.versions.bun ? '/profile/me' : 'https://user-api/profile/me', {
+    expectFetchRequest(fetchMock, 'https://user-api/profile/me', {
       'Accept-Language': 'en',
     });
   });
@@ -458,6 +471,7 @@ describe('User app shell', () => {
 
   it('uses saved user locale before profile calls and ignores stale local storage', async () => {
     window.localStorage.setItem('boilerplate.locale', 'en');
+    vi.stubEnv('VITE_API_BASE_URL_MODE', '');
     vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api/');
     const fetchMock = setFetch(
       jsonResponse({ data: { user: {} } }),
@@ -476,7 +490,7 @@ describe('User app shell', () => {
     expectFetchRequest(fetchMock, '/auth/me', {
       'Accept-Language': 'ru',
     });
-    expectFetchRequest(fetchMock, process.versions.bun ? '/profile/me' : 'https://user-api/profile/me', {
+    expectFetchRequest(fetchMock, 'https://user-api/profile/me', {
       'Accept-Language': 'ru',
     });
   });

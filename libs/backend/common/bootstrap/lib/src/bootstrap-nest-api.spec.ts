@@ -1,4 +1,5 @@
 // @requirements REQ-RUNTIME-LIFECYCLE-004
+/* eslint-disable sonarjs/no-hardcoded-ip -- 10.0.0.1 is a deterministic private-address fixture for trust-proxy hop counting. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RedisClientLike } from '@app/backend-common-redis';
 
@@ -466,7 +467,7 @@ describe('bootstrapNestApi', () => {
     });
   });
 
-  it('passes a TRUST_PROXY hop count through to Fastify', async () => {
+  it('converts a TRUST_PROXY hop count into the trust function Fastify 5.12 accepts', async () => {
     process.env.TRUST_PROXY = '42';
 
     await bootstrapNestApi(TestModule, {
@@ -477,8 +478,13 @@ describe('bootstrapNestApi', () => {
     expect(mocks.fastifyAdapter).toHaveBeenCalledWith({
       bodyLimit: DefaultRequestBodyLimitBytes,
       logger: false,
-      trustProxy: 42,
+      trustProxy: expect.any(Function),
     });
+    const [{ trustProxy }] = mocks.fastifyAdapter.mock.calls[0] as [
+      { trustProxy: (address: string, hop: number) => boolean },
+    ];
+    expect(trustProxy('10.0.0.1', 41)).toBe(true);
+    expect(trustProxy('10.0.0.1', 42)).toBe(false);
   });
 
   it('disables trust proxy when TRUST_PROXY is non-numeric garbage', async () => {
@@ -508,7 +514,7 @@ describe('bootstrapNestApi', () => {
     expect(mocks.fastifyAdapter).toHaveBeenCalledWith({
       bodyLimit: DefaultRequestBodyLimitBytes,
       logger: false,
-      trustProxy: 2,
+      trustProxy: expect.any(Function),
     });
   });
 

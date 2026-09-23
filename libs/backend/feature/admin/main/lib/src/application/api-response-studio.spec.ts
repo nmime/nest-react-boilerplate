@@ -681,8 +681,12 @@ describe('ApiResponseStudioService executable boundaries', () => {
     const fetcher = {
       fetchJson: vi.fn(async () => root),
       fetchJsonReference: vi.fn(async (url: string) => {
-        if (url === schemasUrl) return schemas;
-        if (url === sharedUrl) return shared;
+        if (url === schemasUrl) {
+          return schemas;
+        }
+        if (url === sharedUrl) {
+          return shared;
+        }
         throw new Error(`unexpected external URL: ${url}`);
       }),
     };

@@ -32,6 +32,9 @@ export const analyticsEnvSchema = Joi.object<AnalyticsEnvironment>({
   ANALYTICS_PROVIDER: providerSchema.empty('').optional(),
   ANALYTICS_PROVIDERS: Joi.alternatives()
     .try(Joi.array().items(providerSchema), Joi.string().custom(parseProvidersConfig, 'analytics providers list'))
+    // `ANALYTICS_PROVIDERS=` is the documented local default and means "no explicit list";
+    // treat the empty string as unset instead of failing provider validation.
+    .empty('')
     .optional(),
   ANALYTICS_GA4_MEASUREMENT_ID: Joi.string().empty('').default(''),
   ANALYTICS_GA4_API_SECRET: Joi.string().empty('').default(''),

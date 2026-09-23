@@ -3,9 +3,9 @@
 Supply-chain posture, SLSA alignment, SBOM generation, and dependency management for the Nest React Boilerplate platform.
 
 **Forge coupling.** The controls in this document are forge-neutral; the
-reference implementation is GitHub Actions. Three sections describe that
-implementation rather than the control — [Dependency update
-automation](#dependency-update-automation), [CI gates for supply
+reference implementation is the GitLab pipeline in `.gitlab-ci.yml`. Three
+sections describe that implementation rather than the control — [Dependency
+update automation](#dependency-update-automation), [CI gates for supply
 chain](#ci-gates-for-supply-chain), and the `cosign verify` invocation under
 [Image signing with Sigstore/cosign](#image-signing-with-sigstorecosign).
 A project on another forge replaces those three and keeps the rest.
@@ -14,23 +14,23 @@ A project on another forge replaces those three and keeps the rest.
 
 [SLSA](https://slsa.dev/) (Supply-chain Levels for Software Artifacts) defines a framework for securing the software supply chain. The table below reports only controls visible in this repository. It does not claim a SLSA level or infer GitHub organization and repository settings that are configured outside Git.
 
-| Control                      | Checked-in status | Evidence or remaining boundary                                                                                                                                                              |
-| ---------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Build inputs**             | Implemented       | CI uses a frozen pnpm lockfile, pinned action SHAs, and explicit Node/pnpm versions. Most jobs use `ubuntu-22.04`; the Gitleaks and release-note jobs still use `ubuntu-latest`.            |
-| **Build provenance**         | Implemented       | `release-images.yml` enables Docker Buildx `provenance: mode=max` and addresses every published image by digest after the build.                                                            |
-| **Build isolation**          | Partial           | Release builds run in GitHub-hosted jobs, but dependency installation and base-image resolution can use the network. The repository does not claim a hermetic build.                        |
-| **Source integrity**         | External setting  | Branch protection, required reviews, tag protection, and rulesets are GitHub settings. Maintainers must verify them in repository settings; checked-in workflow files cannot prove them.    |
-| **Dependency audit**         | Implemented       | `dependency-review.yml` installs the frozen lockfile and runs `pnpm run audit:ci` for production dependencies at the moderate severity threshold.                                           |
-| **SBOM generation**          | Implemented       | Docker Buildx embeds SBOM metadata and `anchore/sbom-action` uploads a separate SPDX JSON artifact for each release image.                                                                  |
-| **Vulnerability scanning**   | Implemented       | Trivy scans every release image for CRITICAL/HIGH OS and library findings with `exit-code: '1'`; CodeQL and native secret/SAST gates run separately.                                        |
-| **Image signing**            | Implemented       | `sigstore/cosign-installer` signs each release image digest through GitHub OIDC.                                                                                                            |
-| **Workflow least privilege** | Partial           | Workflows declare scoped permissions and actions are SHA-pinned. Release publishing grants package, identity-token, security-event, and attestation permissions; host approval is external. |
+| Control                      | Checked-in status | Evidence or remaining boundary                                                                                                                                                                                        |
+| ---------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Build inputs**             | Implemented       | CI uses a frozen pnpm lockfile, pinned container images and pipeline includes, and explicit Node/pnpm versions.                                                                                                       |
+| **Build provenance**         | Implemented       | The `release-images` job enables Docker Buildx `provenance: mode=max` and addresses every published image by digest after the build.                                                                                  |
+| **Build isolation**          | Partial           | Release builds run in GitLab CI jobs, but dependency installation and base-image resolution can use the network. The repository does not claim a hermetic build.                                                      |
+| **Source integrity**         | External setting  | Protected branches, required reviews, tag protection, and protected variables are hosting-forge settings. Maintainers must verify them there; checked-in pipeline files cannot prove them.                            |
+| **Dependency audit**         | Implemented       | The `dependency-review` job installs the frozen lockfile and runs `pnpm run audit:ci` for production dependencies at the moderate severity threshold.                                                                 |
+| **SBOM generation**          | Implemented       | Docker Buildx embeds SBOM metadata and the release job runs Syft to write a separate SPDX JSON artifact for each release image.                                                                                       |
+| **Vulnerability scanning**   | Implemented       | Trivy scans every release image for CRITICAL/HIGH OS and library findings with `--exit-code 1`; GitLab's SAST, Dependency, Secret, and Container Scanning templates plus the native secret/SAST gates run separately. |
+| **Image signing**            | Implemented       | cosign signs each release image digest through the GitLab CI OIDC identity (`id_tokens: SIGSTORE_ID_TOKEN`).                                                                                                          |
+| **Pipeline least privilege** | Partial           | Jobs run under a scoped CI job token; release publishing needs the registry credentials and a Sigstore identity token, and host approval is external.                                                                 |
 
 ### Host and build controls still to verify or add
 
-1. **Verify host rules** — confirm branch protection/rulesets, required reviews and checks, environment approvals, and release-tag restrictions in GitHub.
-2. **Choose a target SLSA level** — assess the release workflow against the current SLSA specification and record evidence before claiming conformance.
-3. **Reduce mutable build inputs** — pin runner images where practical and use immutable base-image digests if the product's release policy requires them.
+1. **Verify host rules** — confirm protected branches, required reviews and checks, environment approvals, and release-tag restrictions in the hosting forge.
+2. **Choose a target SLSA level** — assess the release pipeline against the current SLSA specification and record evidence before claiming conformance.
+3. **Reduce mutable build inputs** — pin runner/container images where practical and use immutable base-image digests if the product's release policy requires them.
 4. **Add hermetic controls if required** — prefetch and verify dependencies/base images, then prevent network access during the actual build step.
 
 ## SBOM generation
@@ -51,20 +51,17 @@ syft ./apps/backend/admin/admin-app-api \
   --output cyclonedx-json > sbom-admin-app-api.cdx.json
 ```
 
-### In CI (release-images.yml)
+### In CI (the `release-images` job)
 
-The release workflow generates SBOMs automatically:
+The release pipeline generates SBOMs automatically, one SPDX JSON file per
+published image digest:
 
 ```yaml
-- name: Generate SBOM artifact
-  uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
-  with:
-    image: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}@${{ steps.build.outputs.digest }}
-    format: spdx-json
-    output-file: sbom-${{ matrix.name }}.spdx.json
+- syft "$ref" -o "spdx-json=sboms/sbom-${name}.spdx.json"
 ```
 
-SBOM artifacts are uploaded per-service. Download them from the workflow run artifacts tab.
+SBOM artifacts are uploaded per-service. Download them from the pipeline job's
+artifacts tab.
 
 ### Storing SBOMs
 
@@ -134,8 +131,9 @@ These prevent accidental installs with incompatible toolchain versions that migh
 ## Dependency update automation
 
 The control is "grouped, scheduled, reviewable dependency updates". The
-reference implementation is Dependabot; Renovate is the equivalent on GitLab
-and provides the same groupings.
+repository's reference implementation is Dependabot, configured in
+`.github/dependabot.yml`; Renovate provides the same groupings and is the
+equivalent a product can run on its own forge.
 
 Dependabot runs automated dependency updates with grouped PRs:
 
@@ -156,37 +154,38 @@ Edit `.github/dependabot.yml` to add/remove groupings or change schedules. Keep 
 
 ## CI gates for supply chain
 
-| Workflow                | Gate                            | What it checks                                      |
-| ----------------------- | ------------------------------- | --------------------------------------------------- |
-| `dependency-review.yml` | `Supported lockfile audit`      | `pnpm audit` on production deps; fails on moderate+ |
-| `ci.yml`                | `Fast PR gate (ci:pr)`          | Secret scanning, SAST (already inside `ci:pr`)      |
-| `codeql.yml`            | `Analyze JavaScript/TypeScript` | CodeQL semantic analysis                            |
-| `release-images.yml`    | `Trivy vulnerability scan`      | Container image vuln scan (CRITICAL, HIGH)          |
-| `release-images.yml`    | `Cosign keyless sign`           | Image signing attestation                           |
+| Job                 | Gate                                         | What it checks                                      |
+| ------------------- | -------------------------------------------- | --------------------------------------------------- |
+| `dependency-review` | `Supported lockfile audit`                   | `pnpm audit` on production deps; fails on moderate+ |
+| `fast-check`        | `Fast PR gate (ci:pr)`                       | Secret scanning, SAST (already inside `ci:pr`)      |
+| GitLab templates    | SAST, Dependency, Secret, Container Scanning | GitLab-managed security scanners                    |
+| `release-images`    | `Trivy vulnerability scan`                   | Container image vuln scan (CRITICAL, HIGH)          |
+| `release-images`    | `Cosign keyless sign`                        | Image signing attestation                           |
 
 ## Recommendations
 
 ### Image signing with Sigstore/cosign
 
-Already implemented in `release-images.yml`. To verify images locally:
+Already implemented in the `release-images` job. To verify images locally:
 
 ```bash
-# Verify a signed image
+# Owner, project, and ref are this boilerplate's identity; a fork substitutes its
+# own. See docs/product-identity.md. GitLab's OIDC subject is
+# `project_path:<namespace>/<project>:ref_type:<tag|branch>:ref:<ref>`, so the
+# certificate identity names the project and the ref rather than a pipeline file.
 cosign verify \
-  # Owner and repository are this boilerplate's identity; a fork substitutes
-  # its own. See docs/product-identity.md.
-  --certificate-identity-regexp='^https://github\.com/nmime/nest-react-boilerplate/\.github/workflows/release-images\.yml@refs/(tags/v.*|heads/main)$' \
-  --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
-  ghcr.io/nmime/nest-react-boilerplate/admin-app-api@sha256:<digest>
+  --certificate-identity-regexp='^project_path:<namespace>/<project>:ref_type:(tag|branch):ref:.*$' \
+  --certificate-oidc-issuer=https://gitlab.com \
+  <registry>/<namespace>/<project>/admin-app-api@sha256:<digest>
 ```
 
 ### Provenance evolution
 
-The current release workflow emits BuildKit max-mode provenance. If the project adopts a formal SLSA target, select a supported generator for the repository's artifact type and validate the resulting attestation against that target. Do not copy a language-specific reusable workflow without first confirming that it supports this multi-image Docker build.
+The current release pipeline emits BuildKit max-mode provenance. If the project adopts a formal SLSA target, select a supported generator for the repository's artifact type and validate the resulting attestation against that target. Do not copy a language-specific reusable pipeline without first confirming that it supports this multi-image Docker build.
 
 ### Additional hardening
 
-1. **Tag protection** — Require tag creation through the release workflow only (no manual `git push origin vX.Y.Z`).
+1. **Tag protection** — Require tag creation through the release pipeline only (no manual `git push origin vX.Y.Z`).
 2. **Renovate as Dependabot alternative** — Renovate offers more granular grouping, automerge policies, and better monorepo support.
-3. **Artifact attestation** — Use GitHub's native artifact attestation (`gh attestation`) alongside cosign for dual verification.
-4. **Supply chain transparency** — Publish SBOMs to a public endpoint (e.g., GitHub releases assets) for downstream consumers.
+3. **Verify before promotion** — promote only a digest whose signature, provenance, and scan attestations verify (`cosign verify-attestation --type slsaprovenance1`, `--type spdxjson`, and the scan predicate), not a tag.
+4. **Supply chain transparency** — Publish SBOMs to a public endpoint (e.g. the release's artifact store or an OCI artifact) for downstream consumers.

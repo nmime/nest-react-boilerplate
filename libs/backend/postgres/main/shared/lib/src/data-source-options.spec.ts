@@ -62,11 +62,23 @@ describe('Postgres MikroORM options', () => {
       slowQueryThreshold: 250,
     });
 
-    const service = new PostgresDatabaseConfigService();
-    expect(service.poolMin).toBe(DefaultPostgresPoolMin);
-    expect(service.poolMax).toBe(DefaultPostgresPoolMax);
-    expect(service.poolIdleTimeoutMs).toBe(DefaultPostgresPoolIdleTimeoutMs);
-    expect(service.slowQueryMs).toBeUndefined();
+    const previousEnv = process.env;
+    process.env = { ...previousEnv };
+    for (const key of Object.keys(process.env)) {
+      if (key.startsWith('POSTGRES_') || key === 'DATABASE_URL') {
+        delete process.env[key];
+      }
+    }
+
+    try {
+      const service = new PostgresDatabaseConfigService();
+      expect(service.poolMin).toBe(DefaultPostgresPoolMin);
+      expect(service.poolMax).toBe(DefaultPostgresPoolMax);
+      expect(service.poolIdleTimeoutMs).toBe(DefaultPostgresPoolIdleTimeoutMs);
+      expect(service.slowQueryMs).toBeUndefined();
+    } finally {
+      process.env = previousEnv;
+    }
   });
 
   it('rejects non-numeric pool and slow-query values', () => {

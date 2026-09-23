@@ -30,13 +30,10 @@ test('Compose init secrets are the shared inventory, not a second list', () => {
   assert.equal(initSecrets, generatableSecrets);
 });
 
-test('both forges pin the same Helm release', () => {
+test('the GitLab pipeline pins the Helm release', () => {
   const version = helmVersion.replace(/^v/u, '');
-  assert.match(read('.github/workflows/deploy.yml'), new RegExp(`HELM_VERSION: ${helmVersion}`));
-  assert.match(read('.github/workflows/ci.yml'), new RegExp(`HELM_VERSION: ${helmVersion}`));
-  assert.match(read('.github/workflows/release-images.yml'), new RegExp(`HELM_VERSION: ${helmVersion}`));
   assert.match(read('.gitlab-ci.yml'), new RegExp(`helm-v${version}-linux-amd64\\.tar\\.gz`));
-  assert.doesNotMatch(read('.gitlab-ci.yml'), /helm-v4\.2\.2/);
+  assert.doesNotMatch(read('.gitlab-ci.yml'), /helm-v4\\.2\\.2/);
 });
 
 test('Mongo images share one pin', () => {
@@ -54,8 +51,8 @@ test('Mongo images share one pin', () => {
 
 test('image promotion is the Node updater only', () => {
   assert.equal(existsSync(join(rootDir, 'scripts/update-deploy-tags.py')), false);
-  assert.match(read('.github/workflows/deploy.yml'), /node scripts\/update-deploy-tags\.mjs/);
-  assert.doesNotMatch(read('.github/workflows/deploy.yml'), /update-deploy-tags\.py/);
+  assert.match(read('scripts/deploy.mjs'), /update-deploy-tags\.mjs/);
+  assert.doesNotMatch(read('scripts/deploy.mjs'), /update-deploy-tags\.py/);
 });
 
 test('helm plan applies the selection overlay last', () => {

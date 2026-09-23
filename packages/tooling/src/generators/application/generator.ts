@@ -487,8 +487,7 @@ async function bootstrap(): Promise<void> {
     logger: ["error", "warn", "log"],
   });
   application.enableShutdownHooks();
-  const runtime = typeof Reflect.get(process.versions, "bun") === "string" ? "bun" : "node";
-  nestModule.Logger.log(\`Application context successfully started (runtime=\${runtime})\`, "Bootstrap");
+  nestModule.Logger.log("Application context successfully started", "Bootstrap");
 }
 
 void bootstrap();

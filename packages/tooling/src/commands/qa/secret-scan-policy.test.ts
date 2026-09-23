@@ -206,8 +206,12 @@ describe("product secret scan allowlist", () => {
     assert.equal(isProductAllowedSecretScanValue(loadProductSecretScanAllowlist(), registered, "libs/backend/marketplace/lib/src/orders.spec.ts"), false);
   });
 
-  it("reads an absent file as no registrations and ships none of its own", () => {
+  it("reads an absent file as no registrations and ships only the reviewed fixtures", () => {
     assert.deepEqual(loadProductSecretScanAllowlist(join(workspaceRoot, "config/secret-scan.allowlist.absent.json")), []);
-    assert.deepEqual(loadProductSecretScanAllowlist(), []);
+    assert.deepEqual(
+      loadProductSecretScanAllowlist().map((entry) => entry.id),
+      ["better-auth-runtime-contract-fixture", "xrocket-invoice-address-example"],
+      "the shipped allowlist must carry exactly the two reviewed fixtures, so a stray registration is caught",
+    );
   });
 });

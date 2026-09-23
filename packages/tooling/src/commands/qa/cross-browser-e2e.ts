@@ -6,7 +6,10 @@ import { packageManagerInvocation, parseArgs, run, writeJson } from "./runtime-u
 const args = parseArgs();
 const all = [...crossBrowserProjects];
 const dryRun = args.flags.has("dry-run");
-const config = args.options.get("config") ?? process.env.PLAYWRIGHT_EXTENDED_CONFIG ?? "playwright.extended.config.ts";
+// An empty declaration is not a value: the environment templates document these knobs by declaring
+// them empty, and Nx loads `.env` into every command, so `??` would hand an empty config path to
+// the runner instead of falling back to the default.
+const config = args.options.get("config") || process.env.PLAYWRIGHT_EXTENDED_CONFIG || "playwright.extended.config.ts";
 const projectOption = args.options.get("project");
 const selected = projectOption ? [projectOption] : process.argv.filter((value) => value.startsWith("--project=")).map((value) => value.slice("--project=".length));
 const projects = selected.length ? selected : (process.env.PLAYWRIGHT_MATRIX_PROJECTS?.split(",").map((value) => value.trim()).filter(Boolean) ?? all);

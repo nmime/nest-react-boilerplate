@@ -15,6 +15,7 @@ const jiti = createJiti(import.meta.url);
 const { renderClosureCaddyfile, renderClosureSingleDomainCaddyfile } = await jiti.import(
   '../packages/tooling/src/setup/closure-materializer.ts',
 );
+const { defaultRuntimeConfig } = await jiti.import('../packages/tooling/src/setup/schema.ts');
 const read = (path) => readFileSync(join(rootDir, path), 'utf8');
 const base = read('docker/docker-compose.prod.yml');
 const bundled = read('docker/docker-compose.prod.bundled-db.yml');
@@ -286,14 +287,17 @@ const closureContextFixture = join(temporaryDirectory, 'normalized-closure');
 mkdirSync(closureContextFixture);
 for (const file of normalizedClosureContextFiles) writeFileSync(join(closureContextFixture, file), `${file}\n`);
 const closureCaddyfileFixture = join(temporaryDirectory, 'Caddyfile.per-app-domains');
-writeFileSync(
-  closureCaddyfileFixture,
-  renderClosureCaddyfile({ releaseImages: ['migrator', ...productionApps].sort() }),
-);
+// The renderers take a closure manifest, so the fixture carries the runtime block a real
+// `.nrb/closure/closure.json` always has; without it they cannot derive the container port.
+const closureCaddyFixture = {
+  releaseImages: ['migrator', ...productionApps].sort(),
+  runtime: { ...defaultRuntimeConfig },
+};
+writeFileSync(closureCaddyfileFixture, renderClosureCaddyfile(closureCaddyFixture));
 const closureSingleDomainCaddyfileFixture = join(temporaryDirectory, 'Caddyfile.single-domain');
 writeFileSync(
   closureSingleDomainCaddyfileFixture,
-  renderClosureSingleDomainCaddyfile({ releaseImages: ['migrator', ...productionApps].sort() }),
+  renderClosureSingleDomainCaddyfile(closureCaddyFixture),
 );
 const mongoUriFile = join(temporaryDirectory, 'mongodb_uri.txt');
 const mongoMigrationUriFile = join(temporaryDirectory, 'mongodb_migration_uri.txt');

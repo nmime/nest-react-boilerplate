@@ -1,14 +1,14 @@
 # CI lanes
 
 The list of gates that must pass before a change merges lives in
-[`scripts/ci/gates.json`](../scripts/ci/gates.json), not in either forge YAML
-file. GitHub Actions and GitLab CI are handwritten renderings of that
-descriptor. `node scripts/ci/check-pipelines.mjs` fails when a configured forge
-drops a gate, misses the aggregate job, or loses a release supply-chain control.
+[`scripts/ci/gates.json`](../scripts/ci/gates.json), not in the forge YAML file.
+`.gitlab-ci.yml` is the one rendering the template ships.
+`node scripts/ci/check-pipelines.mjs` fails when a configured forge drops a
+gate, misses the aggregate job, or loses a release supply-chain control.
 
 Add a gate to the descriptor first, then wire the same command into every forge
-that should run it. A forge that cannot run a gate must say so with `forges`
-plus `reason`.
+that should run it. A product that adds a second forge wires it into both; a
+forge that cannot run a gate must say so with `forges` plus `reason`.
 
 ## Lanes
 

@@ -44,7 +44,9 @@ describe('RFC 9457 problem details contract', () => {
   it('validates the frontend presentation vocabulary', () => {
     expect(isProblemPresentationDisplay('toast')).toBe(true);
     expect(isProblemPresentationDisplay('silent')).toBe(true);
-    expect(isProblemPresentationDisplay('modal')).toBe(false);
+    expect(isProblemPresentationDisplay('modal')).toBe(true);
+    expect(isProblemPresentationDisplay('custom')).toBe(true);
+    expect(isProblemPresentationDisplay('banner')).toBe(false);
     expect(isProblemPresentationSeverity('error')).toBe(true);
     expect(isProblemPresentationSeverity('success')).toBe(true);
     expect(isProblemPresentationSeverity('critical')).toBe(false);

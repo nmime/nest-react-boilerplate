@@ -157,6 +157,7 @@ Local development is separate from production Compose:
 
 ```bash
 cp .env.example .env
+cp .env.local.example .env.local
 pnpm run dev:db
 pnpm run db:migrate
 pnpm run dev:fullstack

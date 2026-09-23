@@ -1,6 +1,14 @@
 # CI computation cache
 
-The CI workflow uses `.github/actions/nx-cache` to persist Nx task outputs in
+Two renderings exist, and only one ships in this template.
+
+- **Shipped:** the `.node` template in `.gitlab-ci.yml` persists the pnpm store
+  and `.nx/cache`. That is the cache every job in this repository uses.
+- **Standing by:** `.github/actions/nx-cache` is the GitHub Actions rendering,
+  kept for a product that adds that forge. It is not invoked by anything in this
+  checkout, and `pnpm run ci:workflows:check` reports it as not applicable here.
+
+The GitHub rendering uses `.github/actions/nx-cache` to persist Nx task outputs in
 the GitHub Actions cache service. It is intentionally a remote cache without a
 separate Nx Cloud, S3, or MinIO credential: the workflow receives no cache
 token, and GitHub applies the repository and branch cache-access rules.
@@ -28,7 +36,7 @@ To enable **Nx Cloud** (no `nx.json` secret required):
 1. Run `pnpm exec nx connect` once — this adds a non-secret `nxCloudId` to `nx.json`.
 2. Add the access token as the protected repository secret `NX_CLOUD_ACCESS_TOKEN`.
 3. Expose it to each compute job (`fast-check`, `non-runtime-validation`,
-   `bun-compat`, `quality`, `e2e`, `visual-regression`) with a job-level env — never
+   `quality`, `e2e`, `visual-regression`) with a job-level env — never
    the workflow top-level `env` (the `secrets` context is not available there) and
    never `.github/actions/nx-cache` (the composite action must stay secret-free):
 
@@ -84,10 +92,11 @@ must stay satisfied:
   new table could be added and the guard replayed green from cache. Its
   `project.json` now declares
   `{workspaceRoot}/libs/backend/postgres/main/**/*.entity.ts`.
-- **Platform must be in the hash.** GitHub runs `ubuntu-22.04` (glibc), GitLab
-  runs `node:24.18.0-alpine` (musl). `nx.json`'s `sharedGlobals` therefore
-  includes a runtime input of node version, platform and arch, so the two
-  providers cannot replay each other's binary-bearing outputs.
+- **Platform must be in the hash.** The retired GitHub rendering ran
+  `ubuntu-22.04` (glibc); the shipped GitLab jobs run `node:24.18.0-alpine`
+  (musl). `nx.json`'s `sharedGlobals` therefore includes a runtime input of node
+  version, platform and arch, so two providers cannot replay each other's
+  binary-bearing outputs.
 
 Fork pull requests receive no secrets, so these variables are empty there and Nx
 falls back to the local cache. That is intended; a fork's slower run is not a

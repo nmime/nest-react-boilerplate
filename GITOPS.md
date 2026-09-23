@@ -84,9 +84,9 @@ target bypasses that plan.
 ## Common prerequisites
 
 - a Kubernetes cluster compatible with the selected Helm version;
-- release images published under full-SHA tags by
-  `.github/workflows/release-images.yml`; promotion pins selected workloads to
-  their registry digest automatically;
+- release images published under full-SHA tags by the `release-images` job in
+  `.gitlab-ci.yml`; promotion pins selected workloads to their registry digest
+  automatically;
 - a target namespace Secret named by `secrets.existingSecret` containing at
   least `SESSION_SECRET`, `BETTER_AUTH_SECRET`, and the selected provider
   credential: `DATABASE_URL` for PostgreSQL or a replica-set `MONGODB_URI` for
@@ -128,9 +128,9 @@ namespace, and retries transient sync failures. For a private Git repository,
 configure repository credentials in Argo CD; do not add credentials to this
 manifest.
 
-The optional `.github/workflows/argo-sync.yml` is a manual operational shortcut.
-It uses a version-pinned, checksum-verified Argo CD CLI and requires
-`ARGOCD_SERVER` plus `ARGOCD_AUTH_TOKEN` repository secrets.
+`scripts/` ships no Argo CD sync shortcut. A product that wants one adds a
+pipeline job that uses a version-pinned, checksum-verified Argo CD CLI and reads
+`ARGOCD_SERVER` plus `ARGOCD_AUTH_TOKEN` from protected CI variables.
 
 ## Flux
 

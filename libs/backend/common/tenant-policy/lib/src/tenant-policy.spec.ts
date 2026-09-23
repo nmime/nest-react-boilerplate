@@ -129,7 +129,7 @@ describe('TenantScopedTablesByDomain', () => {
   });
 
   it('groups tables under a domain that owns a migration set', () => {
-    expect(Object.keys(TenantScopedTablesByDomain)).toEqual(['auth', 'notification']);
+    expect(Object.keys(TenantScopedTablesByDomain)).toEqual(['auth', 'notification', 'payments']);
   });
 
   it('policies the tenant registry separately, since its own id is the tenant', () => {

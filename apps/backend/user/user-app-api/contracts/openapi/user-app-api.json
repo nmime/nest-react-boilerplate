@@ -800,6 +800,266 @@
         ],
         "tags": ["Payments"]
       }
+    },
+    "/api/v1/webhooks/x-rocket": {
+      "post": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
+    },
+    "/api/v1/webhooks/cryptobot": {
+      "post": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
+    },
+    "/api/v1/webhooks/heleket": {
+      "post": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
+    },
+    "/api/v1/webhooks/nowpayments": {
+      "post": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
+    },
+    "/api/v1/webhooks/yookassa": {
+      "post": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
+    },
+    "/api/v1/webhooks/cloudpayments": {
+      "post": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      },
+      "get": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
+    },
+    "/api/v1/webhooks/stripe": {
+      "post": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
+    },
+    "/api/v1/webhooks/adyen": {
+      "post": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
+    },
+    "/api/v1/webhooks/{provider}": {
+      "get": {
+        "operationId": "PaymentsWebhooksController_unknown_get",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      },
+      "post": {
+        "operationId": "PaymentsWebhooksController_unknown_post",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      },
+      "put": {
+        "operationId": "PaymentsWebhooksController_unknown_put",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      },
+      "delete": {
+        "operationId": "PaymentsWebhooksController_unknown_delete",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      },
+      "patch": {
+        "operationId": "PaymentsWebhooksController_unknown_patch",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      },
+      "options": {
+        "operationId": "PaymentsWebhooksController_unknown_options",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      },
+      "head": {
+        "operationId": "PaymentsWebhooksController_unknown_head",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      },
+      "search": {
+        "operationId": "PaymentsWebhooksController_unknown_search",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": ["PaymentsWebhooks"]
+      }
     }
   },
   "info": {

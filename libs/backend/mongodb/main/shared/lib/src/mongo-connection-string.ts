@@ -1,4 +1,4 @@
-// Bun 1.3.14 misreads this package's generated ESM wrapper; its CJS export is equivalent under Node.
+// Load this package's CJS export through createRequire; its generated ESM wrapper is unreliable here.
 import { createRequire } from 'node:module';
 import type MongoConnectionStringType from 'mongodb-connection-string-url';
 

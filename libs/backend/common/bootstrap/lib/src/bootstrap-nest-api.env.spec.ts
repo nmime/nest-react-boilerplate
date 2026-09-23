@@ -6,6 +6,7 @@ import {
   MaximumRequestBodyLimitBytes,
   resolveBackendEnvironmentConfig,
   resolveTrustProxy,
+  toFastifyTrustProxy,
 } from './bootstrap-nest-api';
 
 describe('resolveBackendEnvironmentConfig', () => {
@@ -325,5 +326,15 @@ describe('resolveTrustProxy', () => {
     );
 
     expect(config.trustProxy).toBe(42);
+  });
+
+  it('converts a resolved hop count into the trust function Fastify 5.12 accepts', () => {
+    const trust = toFastifyTrustProxy(42);
+
+    expect(typeof trust).toBe('function');
+    expect((trust as (address: string, hop: number) => boolean)('127.0.0.1', 41)).toBe(true);
+    expect((trust as (address: string, hop: number) => boolean)('127.0.0.1', 42)).toBe(false);
+    expect(toFastifyTrustProxy(true)).toBe(true);
+    expect(toFastifyTrustProxy('127.0.0.1,10.0.0.0/8')).toBe('127.0.0.1,10.0.0.0/8');
   });
 });

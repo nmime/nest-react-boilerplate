@@ -1030,6 +1030,7 @@ describe('createTelegramBot', () => {
     expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
       '✓ English',
       'Russian',
+      'Chinese',
       '‹ Back',
     ]);
 

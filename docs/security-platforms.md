@@ -19,7 +19,9 @@
 
 - CODEOWNERS in .github/CODEOWNERS
 - Dependabot in .github/dependabot.yml
-- CodeQL in .github/workflows/codeql.yml
+- CodeQL configuration in .github/codeql/codeql-config.yml (the template ships no
+  CodeQL workflow: enable GitHub's default setup, or wire a job into your own
+  pipeline)
 - Security advisories via Settings → Security
 
 ### GitLab

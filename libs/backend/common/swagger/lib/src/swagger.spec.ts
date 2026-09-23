@@ -1,6 +1,6 @@
 // @requirements REQ-API-RESPONSE-006
 import { HttpStatus } from '@nestjs/common';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getProblemDetailsSchema, problemDetailsOpenApiSchema } from '@app/backend-common-exception';
 import {
   ApiOkDataResponse,
@@ -49,6 +49,35 @@ vi.mock('@nestjs/swagger', () => ({
 const testValue = <T>(value: unknown): T => value as T;
 
 describe('common swagger', () => {
+  const openApiEnvKeys = [
+    'OPENAPI_ALLOW_PRODUCTION',
+    'OPENAPI_DESCRIPTION',
+    'OPENAPI_ENABLED',
+    'OPENAPI_PATH',
+    'OPENAPI_TITLE',
+    'OPENAPI_VERSION',
+  ] as const;
+  const savedOpenApiEnv = new Map<string, string | undefined>();
+
+  beforeEach(() => {
+    for (const key of openApiEnvKeys) {
+      savedOpenApiEnv.set(key, process.env[key]);
+      delete process.env[key];
+    }
+  });
+
+  afterEach(() => {
+    for (const key of openApiEnvKeys) {
+      const value = savedOpenApiEnv.get(key);
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+    savedOpenApiEnv.clear();
+  });
+
   it('reads boolean flags and resolves environment overrides', () => {
     expect(readBoolean(undefined)).toBeUndefined();
     expect(readBoolean('true')).toBe(true);

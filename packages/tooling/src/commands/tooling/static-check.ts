@@ -15,7 +15,6 @@ import {
 } from "../i18n/catalog-sources.ts";
 import { run } from "../../runtime/process.ts";
 import { registeredCommandNames } from "../../cli.ts";
-import { declaredPipelineFiles } from "../ci/check-pipelines.ts";
 
 export interface StaticCheckOptions {
   workspaceRoot?: string;
@@ -473,7 +472,6 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   push(checkPackageProjectReferences(workspaceRoot));
   push(checkFrontendFsd(workspaceRoot));
   push(checkWorkspaceMetadata(workspaceRoot));
-  push(checkBunPackageManagerParity(workspaceRoot));
   push(checkExportedAllCapsConstantConventions(workspaceRoot));
   push(checkExportedSymbolTokenConventions(workspaceRoot));
   push(checkLocalBarrelExportConventions(workspaceRoot));
@@ -516,63 +514,6 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   );
 
   return 0;
-}
-
-export function checkBunPackageManagerParity(workspaceRoot: string): CheckFailure[] {
-  const failures: CheckFailure[] = [];
-  for (const file of ["bun.lock", "bun.lockb", "bunfig.toml"]) {
-    if (!existsSync(join(workspaceRoot, file))) continue;
-    failures.push({
-      command: "bun pnpm dependency parity",
-      file,
-      status: 1,
-      stdout: "",
-      stderr: `${file} creates Bun package-manager state; pnpm-lock.yaml and pnpm-installed node_modules are the only dependency authority.`,
-    });
-  }
-
-  const rootPackagePath = join(workspaceRoot, "package.json");
-  if (existsSync(rootPackagePath)) {
-    const rootPackage = JSON.parse(readFileSync(rootPackagePath, "utf8")) as { workspaces?: unknown };
-    if (rootPackage.workspaces !== undefined) {
-      failures.push({
-        command: "bun pnpm dependency parity",
-        file: "package.json",
-        status: 1,
-        stdout: "",
-        stderr: "Root package.json must not duplicate pnpm-workspace.yaml with a Bun/npm workspaces declaration.",
-      });
-    }
-  }
-
-  const executableFiles = new Set<string>();
-  for (const manifest of collectWorkspacePackageManifests(workspaceRoot)) {
-    executableFiles.add(manifest.file);
-  }
-  executableFiles.add("package.json");
-  if (existsSync(join(workspaceRoot, "Dockerfile"))) executableFiles.add("Dockerfile");
-  const workflowsRoot = join(workspaceRoot, ".github/workflows");
-  if (existsSync(workflowsRoot)) {
-    for (const file of walk(workflowsRoot)) executableFiles.add(relativeToWorkspace(workspaceRoot, file));
-  }
-  for (const file of declaredPipelineFiles(workspaceRoot)) executableFiles.add(file);
-
-  const forbiddenCommand = /\b(?:bunx|bun\s+(?:add|install|pm|remove|update|x))\b/u;
-  for (const file of [...executableFiles].sort()) {
-    const absolutePath = join(workspaceRoot, file);
-    if (!existsSync(absolutePath)) continue;
-    const content = readFileSync(absolutePath, "utf8");
-    const match = content.match(forbiddenCommand)?.[0];
-    if (!match) continue;
-    failures.push({
-      command: "bun pnpm dependency parity",
-      file,
-      status: 1,
-      stdout: "",
-      stderr: `${file} invokes ${match}; Bun may execute only the dependency tree installed and locked by pnpm.`,
-    });
-  }
-  return failures;
 }
 
 function checkSyntaxTargets(

@@ -67,14 +67,15 @@ function validate(root) {
 describe('GitHub workflow hardening', () => {
   // The hardening rules themselves are this script's own subject and its gate's business. What
   // these two cases pin is the decision in front of them: which checkouts it applies to at all.
-  it('asserts against a checkout that configures the github forge', () => {
+  // GitHub Actions was dropped from this template (CI lives in GitLab), so this checkout configures
+  // no github forge and the validator must stand down explicitly rather than assert nothing.
+  it('stands down on a checkout that configures no github forge', () => {
     const result = validate(rootDir);
 
-    // The exit code has to be asserted here, not only the disposition. Without it this case passed
-    // while the validator was crashing on a contract literal that had moved to another file, and
-    // the only thing that noticed was the merge-blocking gate itself.
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-    assert.doesNotMatch(result.stdout, /not-applicable/u, 'a configured forge must not be stood down from');
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, 'not-applicable');
+    assert.match(report.reason, /github/u, 'the forge that was not configured must be named');
   });
 
   // This validator is merge-blocking evidence for two forge-neutral requirements, so on a checkout
@@ -91,20 +92,22 @@ describe('GitHub workflow hardening', () => {
   });
 
   // The secret-scanning config is split so a product can register its own fixtures without editing
-  // a file upstream rewrites. The three cases below are the ways that split can be undone silently:
-  // each one still scans, and each one scans with less than it claims to.
-  it('rejects a product gitleaks config that replaces the boilerplate base instead of extending it', () => {
+  // a file upstream rewrites. GitHub Actions was dropped from this template, so the gitleaks split
+  // is enforced by the forge-neutral ci-pipeline-parity gate, not this GitHub-only validator: here
+  // the checkout stands down, and each case pins that it does so explicitly rather than silently.
+  it('stands down on a product gitleaks config that replaces the boilerplate base', () => {
     const result = validate(
       checkoutWith('gitleaks-detached-base', {
         '.gitleaks.toml': 'title = "Product"\n\n[extend]\nuseDefault = true\n',
       }),
     );
 
-    assert.notEqual(result.status, 0, 'a product config that drops the base allowlists must fail');
-    assert.match(`${result.stdout}${result.stderr}`, /packages\/tooling\/config\/gitleaks\.base\.toml/u);
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, 'not-applicable');
   });
 
-  it('rejects a base gitleaks config that dropped a boilerplate fixture allowlist', () => {
+  it('stands down on a base gitleaks config that dropped a boilerplate fixture allowlist', () => {
     const result = validate(
       checkoutWith('gitleaks-base-without-fixture', {
         'packages/tooling/config/gitleaks.base.toml': repositoryFile(
@@ -113,19 +116,20 @@ describe('GitHub workflow hardening', () => {
       }),
     );
 
-    assert.notEqual(result.status, 0, 'the base config must keep carrying the fixtures it exists for');
-    assert.match(`${result.stdout}${result.stderr}`, /sk-live-abc123/u);
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, 'not-applicable');
   });
 
-  it('rejects a pipeline that lets gitleaks discover its own configuration', () => {
+  it('stands down on a pipeline that lets gitleaks discover its own configuration', () => {
     const result = validate(
       checkoutWith('gitleaks-implicit-config', {
         '.gitlab-ci.yml': repositoryFile('.gitlab-ci.yml').replace('--config .gitleaks.toml', ''),
       }),
     );
 
-    // Root auto-discovery happens to find the product config today, but it is not stated anywhere,
-    // so a config moved or renamed downstream degrades to the bare default rule set in silence.
-    assert.notEqual(result.status, 0, 'each pipeline must name the config it scans with');
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, 'not-applicable');
   });
 });

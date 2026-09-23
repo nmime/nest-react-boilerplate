@@ -23,7 +23,6 @@ pnpm nrb closure run build
 pnpm nrb closure materialize --all-reference --provider postgres
 pnpm --filter @repo/tooling tooling spec validate
 pnpm --filter @repo/tooling tooling spec verify --lane pr --base origin/main --head HEAD
-pnpm run bun:check
 ```
 
 New commands should be implemented under `packages/tooling/src/commands` and registered in `packages/tooling/src/cli.ts`. Product-facing command names should also be listed in `docs/command-matrix.md`. The package uses `jiti` so command implementations stay in TypeScript without a build step for local workspace usage.
@@ -117,4 +116,4 @@ explicit behavior command; HTTP-only probes remain canary/reliability evidence.
 - `pnpm run branch:cleanup:check` previews merged-branch cleanup. `pnpm run branch:cleanup -- --apply` is required to delete local merged branches; remote deletion additionally requires `--remote`. Protected branches (`main`, `master`, `develop`, `release/*`, `hotfix/*`, production/staging names, and `origin/HEAD`) are never candidates.
 - `pnpm run git:conventions` validates typed branch names, Conventional Commit subjects, linear history, and agent attribution. Human and trusted dependency-bot identities are accepted; known assistant identities must be replaced by exact `nmime` author/committer ownership. Use `--branch <name> --range <revision-range>` for CI or history audits.
 
-Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, and `.npmrc` strictness. Use Node 24.18.0 and pnpm 11.15.1 for the canonical toolchain. Bun 1.3.14 is pinned through `.bun-version`; after `pnpm nrb closure install`, `pnpm run bun:check` runs every selected server deployment artifact through real isolated startup/readiness/lifecycle or headless process probes under Node and Bun. Bun is a runtime only, never a second package manager.
+Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, and `.npmrc` strictness. Use Node 24.18.0 and pnpm 11.15.1 for the canonical toolchain.

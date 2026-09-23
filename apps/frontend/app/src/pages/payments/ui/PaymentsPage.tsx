@@ -3,7 +3,7 @@ export interface PaymentsPageProps {
   description?: string;
 }
 
-export function PaymentsPage({ title, description }: PaymentsPageProps) {
+export function PaymentsPage({ title, description }: Readonly<PaymentsPageProps>) {
   return (
     <main>
       <h1>{title}</h1>

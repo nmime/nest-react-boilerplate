@@ -24,6 +24,9 @@ const optionalPositiveInteger = Joi.number().integer().positive().optional();
 export const natsEnvSchema = Joi.object<NatsEnvironment>({
   NATS_SERVERS: Joi.alternatives()
     .try(Joi.array().items(Joi.string().required()), Joi.string().custom(parseServersConfig, 'NATS server list'))
+    // `NATS_SERVERS=` is the documented local default; `parseServersConfig` already maps an
+    // empty string to an empty list, so the schema must not reject it before the parser runs.
+    .empty('')
     .default([]),
   NATS_NAME: optionalString,
   NATS_USER: optionalString,

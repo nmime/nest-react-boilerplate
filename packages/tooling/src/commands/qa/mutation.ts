@@ -125,8 +125,8 @@ export function runMutation(options: MutationOptions = {}): number {
   const runtime = options.runtime ?? { commandExists, run };
   const args = parseArgs(options.argv ?? []);
   const config =
-    args.options.get("config") ??
-    process.env.STRYKER_CONFIG ??
+    args.options.get("config") ||
+    process.env.STRYKER_CONFIG ||
     "stryker.config.mjs";
   const reportPath =
     args.options.get("report") ?? "test-results/mutation/command.json";

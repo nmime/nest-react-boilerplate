@@ -25,7 +25,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/landing",
-        "command": "VITE_API_BASE_URL_MODE=same-origin astro build"
+        "command": "NODE_ENV=production VITE_API_BASE_URL_MODE=same-origin astro build"
       },
       "inputs": [
         "production",

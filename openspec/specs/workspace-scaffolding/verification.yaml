@@ -149,7 +149,7 @@ requirements:
       - domain
     cucumber:
       disposition: not-applicable
-      reason: Repository command safety and cross-runtime Bun orchestration, including canonical child runtime identity and a bounded provider lifecycle, require direct static and executable tooling assertions.
+      reason: Repository command safety and deterministic orchestration, including canonical child runtime identity and a bounded provider lifecycle, require direct static and executable tooling assertions.
       alternativeEvidence:
         - static
         - vitest
@@ -162,18 +162,6 @@ requirements:
           - main
       - kind: vitest
         file: packages/tooling/src/commands/project/setup.test.ts
-        target: '@repo/tooling:test'
-        lanes:
-          - pr
-          - main
-      - kind: static
-        file: packages/tooling/src/commands/tooling/bun-compat.ts
-        target: '@repo/tooling:static-check'
-        lanes:
-          - pr
-          - main
-      - kind: vitest
-        file: packages/tooling/src/commands/tooling/bun-compat.test.ts
         target: '@repo/tooling:test'
         lanes:
           - pr
@@ -222,15 +210,9 @@ requirements:
         lanes:
           - pr
           - main
-      - kind: static
-        file: scripts/validate-github-workflows.mjs
-        script: ci:workflows:check
-        forges:
-          - github
-        reason: The scaffolded workflow shape it checks only exists on a checkout that ships GitHub Actions.
-        lanes:
-          - pr
-          - main
+      # scripts/validate-github-workflows.mjs was the static evidence here. The scaffolded workflow
+      # shape it checks only exists on a checkout that ships GitHub Actions, which this template no
+      # longer does, so the descriptor declares no such forge and the entry would be invalid.
       - kind: operations
         file: packages/tooling/src/commands/qa/world-class-gates.ts
         script: test:world-class

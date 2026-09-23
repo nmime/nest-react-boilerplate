@@ -59,6 +59,9 @@ export const TenantScopedTablesByDomain = {
   // feature-flags set's own array is referenced only by its tests.
   auth: [
     'admin_audit_logs',
+    'api_response_studio_history',
+    'api_response_studio_responses',
+    'api_response_studio_sources',
     'auth_external_identities',
     'auth_link_tokens',
     'auth_login_events',
@@ -76,6 +79,7 @@ export const TenantScopedTablesByDomain = {
     'transactional_outbox_events',
   ],
   notification: ['notification_broadcasts', 'notification_segments', 'notifications'],
+  payments: ['payments'],
 } as const satisfies Record<string, readonly string[]>;
 
 /**
@@ -90,6 +94,7 @@ export const TenantScopedTablesByDomain = {
  */
 export const TenantSharedTierTablesByDomain = {
   notification: ['notification_templates'],
+  payments: ['payment_providers'],
 } as const satisfies Record<string, readonly string[]>;
 
 /** Every strictly tenant-scoped table, for tests that assert complete coverage. */

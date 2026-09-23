@@ -83,10 +83,6 @@ const nxCacheDocs = readFileSync(new URL('docs/ci-cache.md', workspaceUrl), 'utf
 const fullstackCompose = readFileSync(new URL('apps/e2e/fullstack/src/compose.ts', workspaceUrl), 'utf8');
 const fullstackSelectionSource = readFileSync(new URL('apps/e2e/fullstack/src/selection.ts', workspaceUrl), 'utf8');
 const fullstackSpec = readFileSync(new URL('apps/e2e/fullstack/src/fullstack.spec.ts', workspaceUrl), 'utf8');
-const bunCompatibilityCommand = readFileSync(
-  new URL('packages/tooling/src/commands/tooling/bun-compat.ts', workspaceUrl),
-  'utf8',
-);
 const developmentCompose = readFileSync(new URL('docker/docker-compose.yml', workspaceUrl), 'utf8');
 assert.ok(
   nxCacheAction.includes('actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9'),
@@ -95,7 +91,7 @@ assert.ok(
 assert.ok(nxCacheAction.includes('path: .nx/cache'), 'Nx cache composite action must cache only Nx task outputs');
 assert.ok(!nxCacheAction.includes('secrets.'), 'Nx cache composite action must not receive secrets');
 assert.ok(ci.includes('NX_CACHE_DIRECTORY: .nx/cache'), 'CI must use the explicit Nx cache directory');
-for (const scope of ['fast', 'spec-evidence', 'non-runtime', 'bun', 'quality', 'e2e', 'mongodb']) {
+for (const scope of ['fast', 'spec-evidence', 'non-runtime', 'quality', 'e2e', 'mongodb']) {
   assert.ok(ci.includes(`scope: ${scope}`), `CI must restore the remote Nx cache for ${scope}`);
 }
 assert.ok(
@@ -764,23 +760,6 @@ for (const forbidden of [
 }
 for (const required of [
   'non-runtime-validation',
-  'bun-compat',
-  'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6',
-  'bun-version-file: ${{ env.BUN_VERSION_FILE }}',
-  'pnpm run bun:check',
-  'closure: provider-free',
-  'closure: standalone-user-api',
-  'closure: standalone-admin-api',
-  'closure: standalone-discord-api',
-  'closure: standalone-telegram-api',
-  'closure: preset-minimal',
-  'closure: preset-web',
-  'closure: preset-fullstack',
-  'closure: preset-enterprise',
-  'closure: preset-bots',
-  'closure: mongodb-core',
-  'closure: mongodb-bots',
-  'pnpm nrb closure install',
   'pnpm run db:migrations:check',
   'pnpm run lib:configs:check',
   'pnpm run api:contracts:check',
@@ -829,30 +808,9 @@ assert.ok(
   !releaseImagesWorkflow.includes('run: pnpm install --frozen-lockfile'),
   'release-images.yml must not retain a masking full-workspace install in product build lanes',
 );
-const bunJob = ci.slice(ci.indexOf('  bun-compat:'), ci.indexOf('  quality:'));
-for (const frontendClosure of [
-  'provider-free',
-  'standalone-site',
-  'standalone-user-frontend',
-  'standalone-admin-frontend',
-  'standalone-mobile',
-]) {
-  assert.ok(bunJob.includes(`closure: ${frontendClosure}`), `Bun matrix must isolate ${frontendClosure}`);
-}
-assert.ok(
-  bunJob.indexOf('pnpm run tooling:install') < bunJob.indexOf('pnpm nrb closure install'),
-  'Bun lanes must bootstrap tooling before replacing it with the clean selected closure tree',
-);
 for (const script of ['lint', 'typecheck']) {
   assert.ok(scripts[script]?.includes('nrb closure run'), `${script} must default to the selected closure`);
   assert.ok(scripts[`${script}:all`]?.includes('--all'), `${script}:all must remain an explicit all-project sweep`);
-}
-for (const forbidden of ['bun add', 'bun install', 'bun pm', 'bun remove', 'bun update', 'bunx']) {
-  assert.ok(!ci.includes(forbidden), `ci.yml must keep pnpm as the package manager: ${forbidden}`);
-  assert.ok(
-    !bunCompatibilityCommand.includes(forbidden),
-    `Bun compatibility must keep pnpm as the package manager: ${forbidden}`,
-  );
 }
 for (const required of [
   'pnpm run tooling:static-check',

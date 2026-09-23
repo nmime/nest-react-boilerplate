@@ -94,11 +94,19 @@ void describe('fullstack selected closure', () => {
     const originalMongoUri = process.env.MONGODB_URI;
     const originalMongoDatabase = process.env.MONGODB_DATABASE;
     const originalDockerMongoUri = process.env.DOCKER_MONGODB_URI;
+    const originalDatabaseEngine = process.env.DATABASE_ENGINE;
+    const originalAuthPersistence = process.env.AUTH_PERSISTENCE;
+    const originalDatabaseUrl = process.env.DATABASE_URL;
+    const originalContainerDatabaseUrl = process.env.CONTAINER_DATABASE_URL;
     process.env.NRB_WORKSPACE_ROOT = root;
     process.env.MONGODB_PORT = '47123';
     process.env.MONGODB_URI = 'mongodb://mongodb.localhost:27017/stale?replicaSet=rs0&retryWrites=true';
     process.env.MONGODB_DATABASE = 'fullstack_test';
     delete process.env.DOCKER_MONGODB_URI;
+    delete process.env.DATABASE_ENGINE;
+    delete process.env.AUTH_PERSISTENCE;
+    delete process.env.DATABASE_URL;
+    delete process.env.CONTAINER_DATABASE_URL;
     try {
       const { composeEnv, databaseProvider, stackServices, urls } = await import(
         `../src/compose.ts?fixture=${Date.now()}`
@@ -123,6 +131,10 @@ void describe('fullstack selected closure', () => {
       restoreEnv('MONGODB_URI', originalMongoUri);
       restoreEnv('MONGODB_DATABASE', originalMongoDatabase);
       restoreEnv('DOCKER_MONGODB_URI', originalDockerMongoUri);
+      restoreEnv('DATABASE_ENGINE', originalDatabaseEngine);
+      restoreEnv('AUTH_PERSISTENCE', originalAuthPersistence);
+      restoreEnv('DATABASE_URL', originalDatabaseUrl);
+      restoreEnv('CONTAINER_DATABASE_URL', originalContainerDatabaseUrl);
     }
   });
 });

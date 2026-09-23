@@ -231,7 +231,7 @@ Use `pnpm run test:e2e:coverage` to run the selected API e2e suites, the two
 instrumented Vite browser suites, and the three renderer-specific smoke targets.
 Playwright Chromium must be installed first with
 `pnpm exec playwright install chromium` locally, or
-`pnpm exec playwright install --with-deps chromium` on GitHub Actions.
+`pnpm exec playwright install --with-deps chromium` in CI.
 
 ## Deployable outputs
 

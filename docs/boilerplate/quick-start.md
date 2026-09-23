@@ -131,7 +131,15 @@ or an accidental all-services development stack.
 
 ```bash
 cp .env.example .env
+cp .env.local.example .env.local
 ```
+
+`.env.example` carries the deployment-shaped defaults (production `NODE_ENV`,
+public hostnames, `__Host-` cookies) and `.env.local.example` carries the local
+overrides (`NODE_ENV=development`, `localhost` URLs, in-memory rate limiting).
+Nx loads `.env.local` before `.env`, so both files are required: with `.env`
+alone every backend API refuses to start with `SESSION_SECRET must be configured
+in production`.
 
 Review `.env` and replace placeholder secrets with real values from your secret manager. Never commit real `.env` files.
 

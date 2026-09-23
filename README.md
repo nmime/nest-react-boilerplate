@@ -12,11 +12,9 @@
   </p>
 
   <p>
-    <a href="https://github.com/nmime/nest-react-boilerplate/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/nmime/nest-react-boilerplate/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white&color=22c55e" /></a>
     <a href="https://github.com/nmime/nest-react-boilerplate/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/nmime/nest-react-boilerplate?style=for-the-badge&logo=semanticrelease&logoColor=white&color=8b5cf6" /></a>
     <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
     <img alt="pnpm 11.15.1" src="https://img.shields.io/badge/pnpm-11.15.1-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
-    <img alt="Bun 1.3.14 supported runtime" src="https://img.shields.io/badge/Bun_1.3.14-supported_runtime-FBF0DF?style=for-the-badge&logo=bun&logoColor=black" />
     <img alt="Nx 23" src="https://img.shields.io/badge/Nx-23-143055?style=for-the-badge&logo=nx&logoColor=white" />
     <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-0EA5E9?style=for-the-badge" /></a>
   </p>
@@ -85,7 +83,6 @@ pnpm exec nx show projects
 | Node.js     | `>=24 <25` — pinned by `.nvmrc`                                               |
 | pnpm        | `11.15.1` through Corepack                                                    |
 | Docker      | Local PostgreSQL or one-node MongoDB replica set and broader Compose profiles |
-| Bun         | `1.3.14` — supported alternative runtime                                      |
 
 ### Start the selected stack
 
@@ -97,6 +94,7 @@ pnpm install --frozen-lockfile
 
 pnpm nrb setup
 cp .env.example .env
+cp .env.local.example .env.local
 
 pnpm run dev:db
 pnpm run db:migrate
@@ -179,7 +177,7 @@ flowchart LR
 
 | Layer            | Technology and responsibility                                                                        |
 | ---------------- | ---------------------------------------------------------------------------------------------------- |
-| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.15.1, Node.js 24, and Bun 1.3.14 runtime support                          |
+| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.15.1, and Node.js 24                                                      |
 | 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
 | 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
 | 🩷 **Data**      | PostgreSQL + MikroORM or native MongoDB, explicit migrations, Redis, NATS, S3/MinIO adapters         |

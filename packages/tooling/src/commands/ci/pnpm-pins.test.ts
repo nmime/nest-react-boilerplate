@@ -61,14 +61,14 @@ describe('pnpm pin extraction', () => {
 });
 
 describe('descriptor-driven pnpm pin sources', () => {
-  it('reads every pipeline the shipped descriptor declares, on both forges', () => {
+  it('reads every pipeline the shipped descriptor declares', () => {
     const names = pnpmPinSources(workspaceRoot).map(({ name }) => name);
 
     assert.ok(names.includes('.gitlab-ci.yml'), 'the GitLab pipeline pins pnpm too');
-    assert.ok(names.includes('.github/workflows/ci.yml'), 'the GitHub pipeline must stay in scope');
-    assert.ok(
-      names.includes('.github/workflows/dependency-review.yml'),
-      'a forge with a pipeline directory is scanned whole, so a workflow the descriptor does not name still cannot drift',
+    assert.deepEqual(
+      names.filter((name) => name.startsWith('.github/')),
+      [],
+      'a forge this checkout no longer ships must not be scanned for pins',
     );
   });
 

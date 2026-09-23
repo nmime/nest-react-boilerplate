@@ -1,5 +1,5 @@
 // @requirements REQ-RUNTIME-MESSAGING-006
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { RedisConfigService } from './config';
 import { RedisMode } from './const';
 import { RedisClientAdapter } from './redis-client.factory';
@@ -170,6 +170,21 @@ describe('InMemoryRedisClient', () => {
 });
 
 describe('RedisConfigService', () => {
+  let savedEnv: Record<string, string | undefined>;
+
+  beforeEach(() => {
+    savedEnv = { ...process.env };
+    for (const key of Object.keys(process.env)) {
+      if (key.startsWith('REDIS_')) {
+        delete process.env[key];
+      }
+    }
+  });
+
+  afterEach(() => {
+    process.env = savedEnv;
+  });
+
   it('builds sentinel connection config', () => {
     const config = new RedisConfigService({
       mode: RedisMode.Sentinel,

@@ -19,7 +19,7 @@
       "cache": true,
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "node scripts/build.mjs && tsc --project tsconfig.server-build.json && node scripts/link-server-node-modules.mjs"
+        "command": "NODE_ENV=production node scripts/build.mjs && NODE_ENV=production tsc --project tsconfig.server-build.json && node scripts/link-server-node-modules.mjs"
       },
       "inputs": [
         "production",

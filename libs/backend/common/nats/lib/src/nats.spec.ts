@@ -175,7 +175,7 @@ describe('NATS foundation', () => {
     expect(() => config.connectionConfig).toThrow('NATS_TOKEN is mutually exclusive with NATS_USER/NATS_PASS.');
   });
 
-  it('maps local config names to official v3 Node/Bun transport options', () => {
+  it('maps local config names to official v3 Node transport options', () => {
     expect(
       toNatsConnectionOptions({
         servers: ['nats://nats:4222'],

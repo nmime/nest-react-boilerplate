@@ -15,6 +15,7 @@ corepack enable
 corepack prepare pnpm@11.15.1 --activate
 pnpm install --frozen-lockfile
 cp .env.example .env
+cp .env.local.example .env.local
 ```
 
 ## Branch, commit, and PR workflow

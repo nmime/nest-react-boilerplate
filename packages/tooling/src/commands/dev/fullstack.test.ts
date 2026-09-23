@@ -155,6 +155,7 @@ describe("dev fullstack selection", () => {
 
       assert.equal(calls.length, 3);
       assert.deepEqual(calls[0]?.args.slice(-4), ["up", "-d", "--wait", "postgres"]);
+      assert.equal(calls[0]?.environment?.NRB_CLOSURE_CONTEXT, join(root, ".nrb", "closure"));
       assert.equal(calls[1]?.environment?.DATABASE_ENGINE, "postgres");
       assert.equal(calls[2]?.command, "pnpm");
     } finally {

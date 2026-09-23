@@ -33,7 +33,6 @@
         {
           "externalDependencies": ["vitest", "typescript"]
         },
-        "{workspaceRoot}/.github/workflows/**/*",
         "{workspaceRoot}/.gitlab-ci.yml",
         "{workspaceRoot}/{apps,libs}/**/project.json",
         "{workspaceRoot}/openspec/**/*",
@@ -54,7 +53,6 @@
         {
           "externalDependencies": ["typescript"]
         },
-        "{workspaceRoot}/.github/workflows/**/*",
         "{workspaceRoot}/.gitlab-ci.yml",
         "{workspaceRoot}/{apps,libs}/**/project.json",
         "{workspaceRoot}/openspec/**/*",

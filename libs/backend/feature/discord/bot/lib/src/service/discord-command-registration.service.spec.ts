@@ -43,7 +43,7 @@ describe('Discord command registration', () => {
   it('keeps every published localization key inside Discord locale vocabulary', () => {
     const vocabulary = new Set<string>(Object.values(DiscordApiLocale));
     const service = new DiscordCommandRegistrationService(new DiscordBotConfig());
-    const snapshot = service.dryRun({ ...baseEnv, DISCORD_LOCALE_OVERRIDES: 'uz-cyrl=ru' });
+    const snapshot = service.dryRun({ ...baseEnv, DISCORD_LOCALE_OVERRIDES: 'uz-cyrl=ru,zh=zh-CN' });
 
     expect(snapshot.unpublishedLocales).toEqual([]);
     const localizationKeys = snapshot.commands.flatMap((command) =>

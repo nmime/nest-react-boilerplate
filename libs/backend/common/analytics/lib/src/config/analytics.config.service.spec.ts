@@ -41,6 +41,14 @@ describe('AnalyticsConfigService', () => {
     expect(service.plugins.map((plugin) => plugin.name)).toEqual(['noop']);
   });
 
+  it('treats the documented empty ANALYTICS_PROVIDERS value as no explicit list', () => {
+    vi.stubEnv('ANALYTICS_PROVIDERS', '');
+
+    const service = new AnalyticsConfigService();
+
+    expect(service.plugins.map((plugin) => plugin.name)).toEqual(['noop']);
+  });
+
   it('creates GA4, PostHog, and Umami plugins when credentials are present', () => {
     vi.stubEnv('ANALYTICS_PROVIDERS', 'ga4,posthog,umami');
     vi.stubEnv('ANALYTICS_GA4_MEASUREMENT_ID', 'G-TEST');

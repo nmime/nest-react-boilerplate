@@ -338,7 +338,7 @@ issuance. For Telegram, also create the bot/OIDC/webhook secret files and set
 per-app callback is:
 
 ```text
-https://user-app.example.com/api/auth/oauth2/callback/telegram
+https://user-app.example.com/api/auth/callback/telegram
 ```
 
 The TMA URL is `https://user-app.example.com/telegram-mini-app` and the webhook

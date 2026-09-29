@@ -1,10 +1,10 @@
 # Local verification, artifacts, and fallback CI policy
 
-GitHub-hosted Actions may be unavailable for this repository/account. When that happens, a trusted local or CI runner with repository access is the source of truth.
+The checked-in CI descriptor declares GitLab as the supported forge. GitHub hosts this repository and dependency pull requests, but there are no checked-in GitHub Actions workflows. Historical GitHub runs are not evidence for current commits. Use the declared GitLab pipeline or a trusted local runner for current verification.
 
 ## Canonical local gate
 
-Run the full gate from a clean `main` checkout with Node.js `>=24 <25` and pnpm `11.15.1`:
+Run the full gate at the completed topic-branch revision, with a clean tracked worktree with Node.js `>=24 <25` and pnpm `12.8.1`:
 
 ```bash
 pnpm run tooling:install
@@ -39,15 +39,11 @@ runs through `test:fullstack` after Docker smoke succeeds.
 
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
 
-The PR/push CI workflow exposes a focused `Non-runtime validation gates` job
-after `ci:pr` and dependency installation. It hard-gates sixteen gates:
-onboarding and application scaffold generation, migration freshness,
-repository script spec coverage, library configuration standards, frontend FSD
-boundaries, generated toast configuration, dependency licences, the full
-dependency audit, generated OpenAPI contract and client freshness, OpenAPI
-lint, consumer contracts, bounded OpenAPI fuzz case generation, property-based
-invariants, and PM2/GitOps deployment configuration validation, without adding
-deployed-service prerequisites to that job.
+The merge-gate inventory lives in `scripts/ci/gates.json`; `.gitlab-ci.yml`
+implements its declared jobs. `pnpm run ci:pipelines:check` verifies that
+inventory and release provenance. Host-level protection and runner execution
+are separate proof boundaries: checked-in pipeline configuration does not mean
+that a remote pipeline ran or passed.
 
 ## Current CI/local parity gates
 
@@ -55,7 +51,7 @@ For documentation-only ops/QA/deployment changes, the focused parity slice is:
 
 ```bash
 CI=true pnpm install --frozen-lockfile
-pnpm run ci:workflows:check
+pnpm run ci:pipelines:check
 pnpm run tooling:static-check
 pnpm run docs:check
 pnpm run deploy:validate
@@ -64,23 +60,18 @@ pnpm run format:changed
 git diff --check
 ```
 
-The corresponding CI green surface includes the supported lockfile audit, the
-Gitleaks secret scan, the `Fast PR gate (ci:pr)` job, Exact-SHA specification
-evidence, the Non-runtime validation gates,
-MongoDB validation, the Nx quality gates, Docker smoke, CodeQL, the nightly
-Quality presets workflow (visual matrix plus Modern QA presets, which own the
-world-class runtime/ops gates and fullstack e2e), and any external GitGuardian
-integration configured outside this repository. Keep local failures grouped by
-command and distinguish task-related failures from runner or optional-tool
-availability.
+Report static checks, local tests, browser/runtime execution, and forge CI
+separately. A queued pipeline, an absent check, or a historical green run does
+not establish current success. Keep failures grouped by command and distinguish
+compatibility failures from unavailable runners or optional tools.
 
 ## Pass 3 targeted validation
 
 When validating auth/session and preference-token fix-forward work, use the same Node and pnpm versions as CI, install from the lockfile, then run the fast aggregate plus the focused projects/specs that cover the risky paths:
 
 ```bash
-nvm use 24.18.0
-pnpm --version # 11.15.1
+nvm use 24.21.0
+pnpm --version # 12.8.1
 pnpm install --frozen-lockfile
 pnpm run check:fast
 pnpm exec nx run @app/backend-common-bootstrap:test
@@ -128,7 +119,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 
 - `pnpm run onboarding:verify`: non-deploying fresh-install proof that runs the doctor, resolves all five preset closures, and generates/builds/tests all application renderers and library runtimes.
 - `pnpm run check`: full aggregate for formatting, tooling static validation, migrations, contracts, QA presets, lint, typecheck, and unit tests.
-- CI `Non-runtime validation gates`: focused PR/push job that runs `onboarding:verify`, `db:migrations:check`, `test:scripts`, `lib:configs:check`, `frontend:fsd:check`, `api:toast-config:check`, `audit:licenses`, `audit:full`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, `test:property`, `deploy:validate:pm2`, and `deploy:validate:gitops` after `ci:pr` and lockfile installation.
+- GitLab `non-runtime-validation`: the configured PR/push job runs onboarding, migration/config checks, script tests, contracts/clients, OpenAPI checks, property tests, license and dependency audits, and local PM2/GitOps configuration validation. Read `.gitlab-ci.yml` for the exact command list; configuration alone does not prove execution on a hosted runner.
 - `pnpm run tooling:static-check`: deterministic static syntax/import/reference validation for repo tooling scripts without running destructive or runtime-heavy commands.
 - `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation.
 - `node scripts/validate-deployment-config.mjs`: static assertions for Docker, Helm, environment examples, nginx routing, production secret handling, and Redis rate-limit configuration.

@@ -41,7 +41,7 @@ default:
 variables:
   CI: 'true'
   NX_DAEMON: 'false'
-  PNPM_VERSION: '11.15.1'
+  PNPM_VERSION: '12.8.1'
   NODE_VERSION_FILE: .nvmrc
   # One stable Nx cache directory, so a cache entry means the same thing on every
   # provider a product adds.
@@ -70,7 +70,7 @@ variables:
 # Write access is restricted to the default branch: an MR pipeline that could
 # write cache entries main later reads is a supply-chain write primitive.
 .node:
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   variables:
     NX_SELF_HOSTED_REMOTE_CACHE_SERVER: $NX_REMOTE_CACHE_URL
     NX_SELF_HOSTED_REMOTE_CACHE_ACCESS_TOKEN: $NX_REMOTE_CACHE_TOKEN_READ
@@ -118,7 +118,7 @@ gitleaks:
 
 helm-validation:
   stage: validate
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   services:
     - docker:27.5.1-dind
   before_script:
@@ -178,7 +178,7 @@ fast-check:
 
 spec-evidence:
   stage: test
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   needs:
     - fast-check
   variables:
@@ -280,7 +280,7 @@ full-check:
 
 component-tests:
   stage: test
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   needs:
     - fast-check
   services:
@@ -300,7 +300,7 @@ component-tests:
 
 mongodb-validation:
   stage: test
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   services:
     - docker:27.5.1-dind
   variables:
@@ -336,7 +336,7 @@ e2e-tests:
 
 docker-smoke-test:
   stage: build
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   services:
     - docker:27.5.1-dind
   before_script:
@@ -355,7 +355,7 @@ docker-smoke-test:
 
 docker-fullstack:
   stage: e2e
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   services:
     - docker:27.5.1-dind
   before_script:
@@ -378,7 +378,7 @@ docker-fullstack:
 
 docker-fullstack-mongodb:
   stage: e2e
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   services:
     - docker:27.5.1-dind
   before_script:
@@ -423,7 +423,7 @@ storybook-tests:
 # `storybook-tests:`, and this job legitimately pins COMPOSE_PROFILES.
 ops-gates:
   stage: e2e
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   needs:
     - docker-smoke-test
   services:
@@ -526,7 +526,7 @@ visual-regression-matrix:
 # executor of the `nightly` lane.
 spec-evidence-nightly:
   stage: reports
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   services:
     - docker:27.5.1-dind
   variables:
@@ -623,7 +623,7 @@ spec-evidence-runtime:
 
 dependency-review:
   stage: security
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   before_script:
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate
@@ -640,7 +640,7 @@ dependency-review:
 # instead would silently stop covering whatever is added next.
 ci-status-summary:
   stage: reports
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   needs:
     - job: gitleaks
       optional: true
@@ -676,7 +676,7 @@ ci-status-summary:
 # if one goes missing here.
 release-images:
   stage: release
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   services:
     - docker:27.5.1-dind
   id_tokens:
@@ -801,7 +801,7 @@ release-images:
 
 release:
   stage: release
-  image: node:24.18.0-alpine
+  image: node:24.21.0-alpine
   before_script:
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate

@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ACCESSIBILITY-003
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
@@ -14,6 +15,7 @@ const PortalInteractionHarness = () => {
   return (
     <div className="grid max-w-xl gap-5">
       <UiDialog
+        closeLabel="Закрыть"
         description="Verify focus management in a real browser."
         title="Edit workspace"
         trigger={<UiButton>Open dialog</UiButton>}
@@ -74,7 +76,7 @@ export const DialogSelectAndMenu: Story = {
     const dialogTrigger = canvas.getByRole('button', { name: 'Open dialog' });
     await userEvent.click(dialogTrigger);
     await expect(portal.getByRole('dialog', { name: 'Edit workspace' })).toBeVisible();
-    await expect(portal.getByRole('button', { name: 'Close' })).toHaveFocus();
+    await expect(portal.getByRole('button', { name: 'Закрыть' })).toHaveFocus();
     await userEvent.keyboard('{Escape}');
     await expect(portal.queryByRole('dialog', { name: 'Edit workspace' })).not.toBeInTheDocument();
     await expect(dialogTrigger).toHaveFocus();

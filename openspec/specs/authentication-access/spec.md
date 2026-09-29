@@ -134,6 +134,9 @@ URLs, nonces, and provider subjects to the initiating authenticated boundary.
 - Authenticated identity linking derives user and tenant ownership from the trusted principal.
 - Caller-provided tenant fields cannot select identity-link ownership.
 - One provider identity cannot be linked to conflicting owners silently.
+- Generic OAuth sign-in uses the social-provider API and callback path.
+- Telegram OIDC derives its provider subject from verified `sub` claims;
+  mapping local profile fields cannot redefine that identity.
 
 **Failure behavior:**
 
@@ -144,6 +147,12 @@ URLs, nonces, and provider subjects to the initiating authenticated boundary.
 
 - **WHEN** a social authentication callback carries a cross-origin return URL
 - **THEN** the client and backend reject or replace it with a safe destination
+
+#### Scenario: Telegram discovery identity
+
+- **WHEN** Telegram OIDC returns an ID token with a valid signature, issuer, audience, and numeric subject
+- **THEN** social sign-in binds the account to that verified subject
+- **AND** invalid or unverifiable discovery/token identity is rejected
 
 #### Scenario: Anonymous identity link
 

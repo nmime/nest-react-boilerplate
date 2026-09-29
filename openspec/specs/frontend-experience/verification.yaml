@@ -97,6 +97,24 @@ requirements:
         - playwright
     evidence:
       - kind: vitest
+        file: libs/frontend/ui-web/lib/src/component/admin-primitives.spec.tsx
+        target: '@app/frontend-ui-web:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/frontend/ui-web/lib/src/component/form-controls.stories.tsx
+        script: test:storybook
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/frontend/ui-web/lib/src/component/portal-interactions.stories.tsx
+        script: test:storybook
+        lanes:
+          - pr
+          - main
+      - kind: vitest
         file: libs/frontend/ui-web/lib/src/component/design-system-contract.spec.tsx
         target: '@app/frontend-ui-web:test'
         lanes:

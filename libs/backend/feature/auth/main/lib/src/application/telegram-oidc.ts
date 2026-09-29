@@ -64,7 +64,7 @@ export function createTelegramOidcConfig(options: TelegramOidcOptions): GenericO
   return {
     providerId: TelegramOidcProviderId,
     discoveryUrl: options.discoveryUrl ?? TelegramOidcDiscoveryUrl,
-    issuer: options.issuer ?? TelegramOidcIssuer,
+    requireIdTokenVerification: true,
     clientId: options.clientId,
     clientSecret: options.clientSecret,
     authentication: 'basic',
@@ -84,7 +84,7 @@ export function createTelegramOidcConfig(options: TelegramOidcOptions): GenericO
       const username = claims.preferred_username;
 
       return {
-        id: claims.sub,
+        sub: claims.sub,
         email: telegramSyntheticEmail(claims.sub),
         emailVerified: false,
         name: claims.name ?? (username ? `@${username}` : `Telegram user ${claims.sub}`),

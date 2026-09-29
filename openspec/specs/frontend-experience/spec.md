@@ -62,6 +62,10 @@ operation, focus behavior, contrast, reduced motion, and responsive layouts.
 
 - Interactive controls remain operable without pointer input.
 - Responsive layouts preserve the supported narrow viewport floor.
+- Choice controls preserve caller-provided accessible descriptions alongside
+  their own help text. Hidden labels remain available to assistive technology
+  without hiding visible help text.
+- Dialog dismissal retains an accessible, caller-localizable action name.
 
 **Failure behavior:**
 
@@ -71,6 +75,18 @@ operation, focus behavior, contrast, reduced motion, and responsive layouts.
 
 - **WHEN** a user operates an interactive control with the keyboard
 - **THEN** focus and action behavior remain visible and equivalent
+
+#### Scenario: Choice control with external help
+
+- **WHEN** a checkbox or switch receives both an external description and
+  component help text
+- **THEN** assistive technology can read both descriptions and its label
+
+#### Scenario: Localized dialog dismissal
+
+- **WHEN** a caller supplies a translated close action
+- **THEN** the dialog exposes that name and closes through the same focus-safe
+  dismissal behavior
 
 ### Requirement: [REQ-FRONTEND-SHELL-004] Product shells preserve routing and state ownership
 

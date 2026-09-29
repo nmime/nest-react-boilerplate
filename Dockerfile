@@ -3,8 +3,8 @@
 ARG TARGETPLATFORM
 ARG TARGETARCH
 
-ARG NODE_VERSION=24.18.0-alpine
-ARG PNPM_VERSION=11.15.1
+ARG NODE_VERSION=24.21.0-alpine
+ARG PNPM_VERSION=12.8.1
 
 FROM node:${NODE_VERSION} AS workspace
 ARG PNPM_VERSION
@@ -222,7 +222,7 @@ USER node
 EXPOSE 80
 CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
-FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:44e36330f74d4f3a1d4e222acca9e23b401fb87811a7597024502bb759c4dd49 AS frontend
+FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:ed04ec1ff34502c339ee5c3ae3f855442398edc1d05591e2b98981dcbbd20b1e AS frontend
 ARG NX_PROJECT
 ARG RUNTIME_PROJECT
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin

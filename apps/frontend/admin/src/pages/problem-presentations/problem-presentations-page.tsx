@@ -565,11 +565,13 @@ export const ProblemPresentationsPage = ({
                                   onClick={() => {
                                     setEditTarget(row);
                                     setEditorDraft(presentationOf(row));
-                                    setEditorEnumChoices(row.enumChoices.map((choice) => ({
-                                      ...choice,
-                                      values: [...choice.values],
-                                      enabledValues: [...choice.enabledValues],
-                                    })));
+                                    setEditorEnumChoices(
+                                      row.enumChoices.map((choice) => ({
+                                        ...choice,
+                                        values: [...choice.values],
+                                        enabledValues: [...choice.enabledValues],
+                                      })),
+                                    );
                                   }}
                                   size="sm"
                                   variant="secondary"
@@ -618,7 +620,10 @@ export const ProblemPresentationsPage = ({
       {sources.isLoading ? <p role="status">{t('admin.apiResponseStudio.loading.sources')}</p> : null}
       {sources.error ? (
         <div className="admin-studio-error">
-          <UiNotification message={errorText(sources.error, 'admin.apiResponseStudio.error.sources', t)} tone="warning" />
+          <UiNotification
+            message={errorText(sources.error, 'admin.apiResponseStudio.error.sources', t)}
+            tone="warning"
+          />
           <UiButton onClick={() => void sources.refetch()} size="sm" variant="secondary">
             {t('ui.runtime.retry')}
           </UiButton>
@@ -702,7 +707,10 @@ export const ProblemPresentationsPage = ({
       {history.isLoading ? <p role="status">{t('admin.apiResponseStudio.loading.history')}</p> : null}
       {history.error ? (
         <div className="admin-studio-error">
-          <UiNotification message={errorText(history.error, 'admin.apiResponseStudio.error.history', t)} tone="warning" />
+          <UiNotification
+            message={errorText(history.error, 'admin.apiResponseStudio.error.history', t)}
+            tone="warning"
+          />
           <UiButton onClick={() => void history.refetch()} size="sm" variant="secondary">
             {t('ui.runtime.retry')}
           </UiButton>
@@ -972,6 +980,7 @@ export const ProblemPresentationsPage = ({
       ) : null}
       {viewerTarget ? (
         <UiDialog
+          closeLabel={t('admin.apiResponseStudio.action.close')}
           description={t('admin.apiResponseStudio.viewer.description')}
           onOpenChange={(open) => {
             if (!open) {

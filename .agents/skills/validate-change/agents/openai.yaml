@@ -1,4 +1,4 @@
 interface:
   display_name: 'Validate Change'
   short_description: 'Select and run proportional change validation'
-  default_prompt: 'Use $validate-change to validate this repository change proportionally.'
+  default_prompt: 'Use $validate-change to run the final risk-based quality gate and report exact-revision evidence, failures, and unverified lanes.'

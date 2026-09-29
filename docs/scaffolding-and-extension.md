@@ -55,7 +55,7 @@ Run from a clean branch created from current `main`:
 ```bash
 nvm use
 corepack enable
-corepack prepare pnpm@11.15.1 --activate
+corepack prepare pnpm@12.8.1 --activate
 pnpm install --frozen-lockfile
 pnpm nrb doctor
 

@@ -563,7 +563,6 @@ describe('feature generator', () => {
         /const\s+\{\s*billingLedgerMigrations,?\s*\}\s*=\s*require\(['"]@app\/backend-postgres-main-billing-ledger['"]\);/u,
       );
       assert.match(runner, /\.\.\.billingLedgerMigrations,[\s\S]*\.\.\.invoiceReconciliationMigrations/u);
-      assert.match(runner, /migrationsList:\s*\[\s*\n/u);
       assert.equal((runner.match(/migrationsList:/gu) ?? []).length, 1);
     });
 

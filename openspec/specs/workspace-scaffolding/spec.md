@@ -48,6 +48,8 @@ product code.
   the opposite durable provider.
 - Bot application selections retain Redis for replay protection independently
   of whether deployment owns the service or connects to an external instance.
+- Provider-backed payments are wired only into selected durable backend hosts;
+  stateless bot hosts retain their database-independent capabilities.
 - Managed full-stack MongoDB uses the selected port consistently for the
   server, replica-set identity, migrations, and application connection URI.
 
@@ -59,6 +61,12 @@ product code.
 
 - **WHEN** the same application selection is applied again
 - **THEN** setup converges without replacing existing owned roots
+
+#### Scenario: Payments with a stateless bot
+
+- **WHEN** a workspace selects payments and a stateless Telegram bot host
+- **THEN** the bot's generated source and dependency closure exclude payment persistence
+- **AND** selected durable hosts retain payment wiring
 
 ### Requirement: [REQ-SCAFFOLD-GENERATORS-003] All ownership generators are deterministic
 
@@ -124,10 +132,19 @@ offline-capable where documented, and avoid hidden mutation or network effects.
 
 - Public root scripts remain thin stable entrypoints.
 - Mutating commands provide explicit apply intent and bounded targets.
+- Nested package-manager invocations support JavaScript/Corepack entrypoints
+  and native pnpm executables without parsing binaries as JavaScript or
+  invoking an unnecessary shell.
 
 **Failure behavior:**
 
 - Ambiguous paths, unsafe targets, or unsupported options return non-zero.
+
+#### Scenario: Native package-manager runtime
+
+- **GIVEN** tooling was launched by a native pnpm executable
+- **WHEN** it invokes a nested validation command
+- **THEN** it executes that package manager directly with the original arguments
 
 #### Scenario: Unsafe repository command
 

@@ -643,7 +643,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     providerBackendWiring: {
       postgres: [
         {
-          hosts: 'selected-backend',
+          hosts: 'durable-backend',
           importName: 'PaymentsMainModule',
           importPath: '@app/backend-feature-payments-main',
           additionalImports: [
@@ -658,7 +658,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
       ],
       mongodb: [
         {
-          hosts: 'selected-backend',
+          hosts: 'durable-backend',
           importName: 'PaymentsMainModule',
           importPath: '@app/backend-feature-payments-main',
           additionalImports: [

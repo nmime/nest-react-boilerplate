@@ -16,6 +16,7 @@ export type TranslationKey =
   | 'admin.apiResponseStudio.action.applyBulk'
   | 'admin.apiResponseStudio.action.bulkEdit'
   | 'admin.apiResponseStudio.action.cancel'
+  | 'admin.apiResponseStudio.action.close'
   | 'admin.apiResponseStudio.action.disable'
   | 'admin.apiResponseStudio.action.dismiss'
   | 'admin.apiResponseStudio.action.docs'

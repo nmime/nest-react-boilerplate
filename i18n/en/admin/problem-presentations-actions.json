@@ -34,6 +34,7 @@
   "admin.apiResponseStudio.action.export": "Export",
   "admin.apiResponseStudio.action.save": "Save response",
   "admin.apiResponseStudio.action.cancel": "Cancel",
+  "admin.apiResponseStudio.action.close": "Close",
   "admin.apiResponseStudio.action.reload": "Reload latest data",
   "admin.apiResponseStudio.action.previous": "Previous",
   "admin.apiResponseStudio.action.next": "Next"

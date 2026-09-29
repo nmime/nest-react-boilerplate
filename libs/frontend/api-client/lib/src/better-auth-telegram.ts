@@ -54,9 +54,9 @@ export const requestTelegramOidcAuthorization = (
   input: TelegramOidcAuthorizationInput,
 ): Promise<BetterAuthRedirectResponse> =>
   postJson(
-    '/api/auth/sign-in/oauth2',
+    '/api/auth/sign-in/social',
     {
-      providerId: 'telegram',
+      provider: 'telegram',
       callbackURL: input.callbackURL,
       errorCallbackURL: input.errorCallbackURL ?? input.callbackURL,
       disableRedirect: true,

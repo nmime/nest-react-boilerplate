@@ -20,6 +20,9 @@ description: Review local branches, pull requests, or merge requests for correct
 - For docs changes, verify links, commands, package manager/runtime versions, and source-backed claims.
 - For frontend changes, check Feature-Sliced Design boundaries, app ownership, responsive behavior, and expected smoke/Storybook coverage.
 - For backend changes, check controller/DTO contracts, validation, health/readiness behavior, logging/secrets, migrations, and test coverage.
+- Identify the exact reviewed commit and distinguish source review, local
+  checks, forge CI, browser/runtime proof, and maintainer approval. A self-review
+  or an empty findings list cannot stand in for an independent approval.
 
 ## Specification assurance
 

@@ -8,11 +8,11 @@
  * - UNIT: the `payments` catalog entry (activation, durable-database
  *   requirement, project ownership, DDL, provider backend wiring for both
  *   persistence axes);
- * - COMPONENT: `hosts: 'selected-backend'` resolves the wiring into exactly the
+ * - COMPONENT: `hosts: 'durable-backend'` resolves the wiring into exactly the
  *   backends the selection names, and the entry stays host-neutral for a
  *   product that selects the unselected backends;
  * - E2E: the committed generated `capabilities.generated.ts` of each selected
- *   backend carries exactly that wiring, the two unselected backends carry none,
+ *   backend carries exactly that wiring, the stateless backend carries none,
  *   `PaymentsAdminModule` is hand-imported only in admin-app-api, the scaffold
  *   migration is in the capability migration registry, and replanning the
  *   committed selection converges to zero operations.
@@ -38,16 +38,11 @@ const SELECTED_BACKENDS = [
   'user-app-api',
   'notification-consumer',
   'notification-scheduler',
-  // The committed selection turns payments on with every backend selected, and the
-  // capability wires `hosts: 'selected-backend'`, so the bot hosts carry the shared
-  // webhook-ingress module in their generated capabilities modules too (6de5ed04).
-  'telegram-bot-api',
   'discord-app-api',
 ] as const;
 
-// No selected backend is payments-free anymore; the loops below iterate this list so a
-// future payments-free backend only needs an entry here.
-const UNSELECTED_BACKENDS: readonly string[] = [];
+// Selected stateless hosts cannot own payment persistence.
+const STATELESS_BACKENDS: readonly string[] = ['telegram-bot-api'];
 
 const GENERATED_MODULE_PATHS: Record<string, string> = {
   'admin-app-api': 'apps/backend/admin/admin-app-api/src/capabilities.generated.ts',
@@ -73,7 +68,7 @@ const PAYMENTS_MODULE_EXPRESSION =
   'PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })';
 
 const POSTGRES_WIRING = {
-  hosts: 'selected-backend',
+  hosts: 'durable-backend',
   importName: 'PaymentsMainModule',
   importPath: '@app/backend-feature-payments-main',
   additionalImports: [{ importName: 'PaymentsPostgresModule', importPath: '@app/backend-postgres-main-payments' }],
@@ -134,7 +129,7 @@ describe('payments capability — catalog entry', () => {
     });
   });
 
-  it('wires the postgres axis into every selected backend with the persistence module handed in as an import', () => {
+  it('wires the postgres axis into every selected durable backend with the persistence module handed in as an import', () => {
     const wiring = capabilityCatalog['payments'].providerBackendWiring;
     assert.ok(wiring);
     assert.deepEqual(wiring.postgres, [POSTGRES_WIRING]);
@@ -145,7 +140,7 @@ describe('payments capability — catalog entry', () => {
     assert.ok(wiring);
     assert.equal(wiring.mongodb?.length, 1);
     const mongo = wiring.mongodb?.[0];
-    assert.equal(mongo?.hosts, 'selected-backend');
+    assert.equal(mongo?.hosts, 'durable-backend');
     assert.equal(mongo?.importName, 'PaymentsMainModule');
     assert.equal(mongo?.importPath, '@app/backend-feature-payments-main');
     assert.deepEqual(mongo?.additionalImports, [
@@ -163,7 +158,10 @@ describe('payments capability — catalog entry', () => {
 });
 
 describe('payments capability — planner wiring list', () => {
-  const summary = planSummaryFixture({ apps: [...SELECTED_BACKENDS], capabilities: ['payments', 'postgres'] });
+  const summary = planSummaryFixture({
+    apps: [...SELECTED_BACKENDS, ...STATELESS_BACKENDS] as AppId[],
+    capabilities: ['payments', 'postgres'],
+  });
 
   for (const appId of SELECTED_BACKENDS) {
     it(`wires ${appId} with the payments postgres expression`, () => {
@@ -178,8 +176,8 @@ describe('payments capability — planner wiring list', () => {
     });
   }
 
-  for (const appId of UNSELECTED_BACKENDS) {
-    it(`leaves ${appId} unwired when the selection does not name it`, () => {
+  for (const appId of STATELESS_BACKENDS) {
+    it(`leaves ${appId} unwired because it is stateless`, () => {
       const { content } = generateBackendCapabilityModule(appId as AppId, summary);
       assert.doesNotMatch(content, /Payments/u);
     });
@@ -209,7 +207,7 @@ describe('payments capability — committed workspace wiring list', () => {
     });
   }
 
-  for (const appId of UNSELECTED_BACKENDS) {
+  for (const appId of STATELESS_BACKENDS) {
     it(`carries no payments wiring in ${appId}'s generated capability module`, () => {
       const content = readFileSync(new URL(GENERATED_MODULE_PATHS[appId], workspaceRoot), 'utf8');
       assert.doesNotMatch(content, /Payments/u);
@@ -222,7 +220,7 @@ describe('payments capability — committed workspace wiring list', () => {
     assert.match(admin, /\n {4}PaymentsAdminModule,\n/u);
     assert.match(admin, /APP_GUARD/u);
     assert.match(admin, /APP_INTERCEPTOR/u);
-    for (const appId of [...SELECTED_BACKENDS.filter((id) => id !== 'admin-app-api'), ...UNSELECTED_BACKENDS]) {
+    for (const appId of [...SELECTED_BACKENDS.filter((id) => id !== 'admin-app-api'), ...STATELESS_BACKENDS]) {
       const root = readFileSync(new URL(ROOT_MODULE_PATHS[appId], workspaceRoot), 'utf8');
       assert.doesNotMatch(root, /PaymentsAdminModule/u);
     }

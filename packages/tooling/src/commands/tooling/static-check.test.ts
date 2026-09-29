@@ -1282,7 +1282,7 @@ describe("static-check Node version guard", () => {
     const workspaceRoot = createWorkspace();
 
     try {
-      writeText(workspaceRoot, "Dockerfile", "ARG NODE_VERSION=24.18.0-alpine\n");
+      writeText(workspaceRoot, "Dockerfile", "ARG NODE_VERSION=24.21.0-alpine\n");
 
       assert.deepEqual(checkStaleReferences(workspaceRoot), []);
     } finally {

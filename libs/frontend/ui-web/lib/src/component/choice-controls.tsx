@@ -30,12 +30,21 @@ export const UiCheckbox = forwardRef<ComponentRef<typeof CheckboxPrimitive.Root>
     const generatedId = useId();
     const controlId = id ?? generatedId;
     const descriptionId = description ? `${controlId}-description` : undefined;
+    const describedBy = [props['aria-describedby'], descriptionId].filter(Boolean).join(' ');
 
     return (
       <div className="xr-choice">
-        <Checkbox {...props} aria-describedby={descriptionId} className={className} id={controlId} ref={ref} />
+        <Checkbox
+          {...props}
+          aria-describedby={describedBy || undefined}
+          className={className}
+          id={controlId}
+          ref={ref}
+        />
         <div className={cn('xr-choice__copy', labelHidden && !description && 'sr-only')}>
-          <UiLabel htmlFor={controlId}>{label}</UiLabel>
+          <UiLabel className={cn(labelHidden && 'sr-only')} htmlFor={controlId}>
+            {label}
+          </UiLabel>
           {description ? (
             <p className="xr-choice__description" id={descriptionId}>
               {description}
@@ -71,10 +80,11 @@ export const UiSwitch = forwardRef<ComponentRef<typeof SwitchPrimitive.Root>, Ui
     const generatedId = useId();
     const controlId = id ?? generatedId;
     const descriptionId = description ? `${controlId}-description` : undefined;
+    const describedBy = [props['aria-describedby'], descriptionId].filter(Boolean).join(' ');
 
     return (
       <div className="xr-choice">
-        <Switch {...props} aria-describedby={descriptionId} className={className} id={controlId} ref={ref} />
+        <Switch {...props} aria-describedby={describedBy || undefined} className={className} id={controlId} ref={ref} />
         <div className="xr-choice__copy">
           <UiLabel htmlFor={controlId}>{label}</UiLabel>
           {description ? (

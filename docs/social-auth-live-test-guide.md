@@ -48,7 +48,7 @@ Provide secrets through the secret manager and non-secrets through the test tick
 - Better Auth secret key name: `<SECRET_KEY_BETTER_AUTH_SECRET>`
 - Better Auth public URL: `<https://user-app.example.test>` for same-origin proxy mode, or `<https://auth-app-api.example.test>` for split-origin mode
 - Better Auth trusted origins: `<https://user-app.example.test>`
-- Registered Telegram OIDC callback: `<BETTER_AUTH_URL/api/auth/oauth2/callback/telegram>`
+- Registered Telegram OIDC callback: `<BETTER_AUTH_URL/api/auth/callback/telegram>`
 - Bot username: `<bot_username>`
 - Mini App/Web App URL: `<https://frontend.example.test/telegram-mini-app>`
 - Frontend API mode: `VITE_API_BASE_URL_MODE=same-origin` when the frontend proxy serves both `/api/auth/*` and `/auth/*`, or explicit `VITE_AUTH_API_BASE_URL` / `VITE_USER_API_BASE_URL` origins for split-origin deployments.

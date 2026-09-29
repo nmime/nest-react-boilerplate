@@ -11,8 +11,8 @@ file as the next policy layer.
   assigns another repository.
 - Verify the target repo, branch, and current `main` SHA before edits, commits,
   pushes, or deployment work.
-- Use Node.js `>=24 <25` and pnpm `11.15.1`
-  (`packageManager: pnpm@11.15.1`). Prefer Corepack and
+- Use Node.js `>=24 <25` and pnpm `12.8.1`
+  (`packageManager: pnpm@12.8.1`). Prefer Corepack and
   `pnpm install --frozen-lockfile`.
 - Do not expose secrets, tokens, real `.env*` values, Docker secret files,
   credentials, or full environment dumps in logs, diffs, issues, PRs, generated
@@ -41,6 +41,9 @@ file as the next policy layer.
   authenticated credentials.
 - Do not force-push `main`. Create focused topic branches from current `main`
   and leave integration to the assigned maintainer or consolidator.
+- Obtain maintainer approval for each specific merge to `main` or production
+  write. Prepare and review the topic branch first; pending approval leaves
+  those targets read-only.
 
 ## Request Context (CLS)
 
@@ -252,6 +255,10 @@ All exceptions flow through the `@app/backend-common-exception` library.
   [docs/api-lifecycle-policy.md](../api-lifecycle-policy.md).
 
 ## Validation Expectations
+
+Run the final quality gate after implementation is complete. Use targeted
+diagnostics during development when necessary instead of repeatedly running
+the full gate. Do not equate queued or unfinished pipelines with a pass.
 
 Pick the smallest command set that proves the change, then broaden when touching
 shared/public APIs.

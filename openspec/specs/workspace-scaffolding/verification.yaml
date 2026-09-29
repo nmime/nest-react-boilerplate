@@ -166,6 +166,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: vitest
+        file: packages/tooling/src/runtime/process.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
   - id: REQ-SCAFFOLD-QUALITY-006
     projects:
       - '@repo/tooling'

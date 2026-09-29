@@ -93,7 +93,7 @@ must stay satisfied:
   `project.json` now declares
   `{workspaceRoot}/libs/backend/postgres/main/**/*.entity.ts`.
 - **Platform must be in the hash.** The retired GitHub rendering ran
-  `ubuntu-22.04` (glibc); the shipped GitLab jobs run `node:24.18.0-alpine`
+  `ubuntu-22.04` (glibc); the shipped GitLab jobs run `node:24.21.0-alpine`
   (musl). `nx.json`'s `sharedGlobals` therefore includes a runtime input of node
   version, platform and arch, so two providers cannot replay each other's
   binary-bearing outputs.

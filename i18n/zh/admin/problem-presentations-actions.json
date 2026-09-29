@@ -34,6 +34,7 @@
   "admin.apiResponseStudio.action.export": "导出",
   "admin.apiResponseStudio.action.save": "保存响应",
   "admin.apiResponseStudio.action.cancel": "取消",
+  "admin.apiResponseStudio.action.close": "关闭",
   "admin.apiResponseStudio.action.reload": "重新加载最新数据",
   "admin.apiResponseStudio.action.previous": "上一页",
   "admin.apiResponseStudio.action.next": "下一页"

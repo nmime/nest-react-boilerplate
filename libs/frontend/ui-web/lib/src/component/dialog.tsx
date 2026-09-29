@@ -169,6 +169,7 @@ AlertDialogDescription.displayName = 'AlertDialogDescription';
 export interface UiDialogProps {
   children: ReactNode;
   className?: string;
+  closeLabel?: string;
   description?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -179,6 +180,7 @@ export interface UiDialogProps {
 export const UiDialog = ({
   children,
   className,
+  closeLabel = 'Close',
   description,
   onOpenChange,
   open,
@@ -195,7 +197,7 @@ export const UiDialog = ({
       <div className="xr-dialog__body">{children}</div>
       <DialogClose asChild>
         <UiButton className="xr-dialog__close" variant="secondary">
-          Close
+          {closeLabel}
         </UiButton>
       </DialogClose>
     </DialogContent>

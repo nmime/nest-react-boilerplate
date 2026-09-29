@@ -311,6 +311,19 @@ describe('admin UI primitives', () => {
     expect(onOpenChange).toHaveBeenLastCalledWith(false);
   });
 
+  it('dismisses a dialog through a localized action name', () => {
+    const onOpenChange = vi.fn();
+    render(
+      <UiDialog closeLabel="Закрыть" description="Описание" onOpenChange={onOpenChange} open title="Просмотр">
+        <p>Содержимое</p>
+      </UiDialog>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Закрыть' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+  });
+
   it('supports confirm dialog confirm, cancel, and open-change callbacks', () => {
     const onConfirm = vi.fn();
     const onOpenChange = vi.fn();
@@ -438,6 +451,43 @@ describe('admin UI primitives', () => {
         name: 'Disabled switch',
       }).disabled,
     ).toBe(true);
+  });
+
+  it('preserves external descriptions when choice controls add their own help text', () => {
+    const { rerender } = render(
+      <>
+        <p id="external-help">Changes are saved automatically</p>
+        <UiCheckbox aria-describedby="external-help" description="Select this record" label="Selection" labelHidden />
+        <UiSwitch aria-describedby="external-help" description="Send updates" label="Notifications" />
+      </>,
+    );
+
+    for (const [role, name, help] of [
+      ['checkbox', 'Selection', 'Select this record'],
+      ['switch', 'Notifications', 'Send updates'],
+    ] as const) {
+      const control = screen.getByRole(role, { name });
+      const descriptionIds = control.getAttribute('aria-describedby')?.split(' ') ?? [];
+      expect(descriptionIds).toContain('external-help');
+      expect(descriptionIds.map((id) => document.getElementById(id)?.textContent)).toEqual([
+        'Changes are saved automatically',
+        help,
+      ]);
+    }
+    expect(screen.getByText('Selection').className).toContain('sr-only');
+    expect(screen.getByText('Select this record').parentElement?.className).not.toContain('sr-only');
+
+    rerender(
+      <>
+        <p id="external-help">Changes are saved automatically</p>
+        <UiCheckbox aria-describedby="external-help" label="Selection" />
+        <UiSwitch aria-describedby="external-help" label="Notifications" />
+      </>,
+    );
+    expect(screen.getByRole('checkbox', { name: 'Selection' }).getAttribute('aria-describedby')).toBe('external-help');
+    expect(screen.getByRole('switch', { name: 'Notifications' }).getAttribute('aria-describedby')).toBe(
+      'external-help',
+    );
   });
 
   it('supports textarea disabled, invalid, change, and default rows', () => {

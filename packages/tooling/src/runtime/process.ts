@@ -75,6 +75,9 @@ export function packageManagerInvocation(
   const env = options.env ?? process.env;
   const packageManagerPath = env.npm_execpath?.trim();
   if (packageManagerPath) {
+    if (!/\.[cm]?js$/iu.test(packageManagerPath)) {
+      return { command: packageManagerPath, args };
+    }
     return {
       command: options.nodeExecutable ?? process.execPath,
       args: [packageManagerPath, ...args],

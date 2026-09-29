@@ -54,10 +54,8 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
           (telegramUser.username ? `@${telegramUser.username}` : `Telegram user ${providerSubject}`);
         const avatarUrl = optionalText(telegramUser.photo_url);
 
-        let account = await ctx.context.internalAdapter.findAccountByProviderId(
-          providerSubject,
-          TelegramOidcProviderId,
-        );
+        const accountKey = { accountId: providerSubject, providerId: TelegramOidcProviderId };
+        let account = await ctx.context.internalAdapter.findAccountByKey(accountKey);
         let user = account ? await ctx.context.internalAdapter.findUserById(account.userId) : null;
 
         if (account && !user) {
@@ -71,11 +69,10 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
 
         if (!user) {
           try {
-            user = await ctx.context.internalAdapter.createUser({
-              email,
-              name: displayName,
-              image: avatarUrl,
-            });
+            user = await ctx.context.internalAdapter.createUser(
+              { email, name: displayName, image: avatarUrl },
+              { method: 'telegram-tma' },
+            );
           } catch (error) {
             // Parallel launches can race on the synthetic email. Re-read the
             // winner before treating the request as failed.
@@ -97,10 +94,7 @@ export const telegramPlugin = (options: TelegramPluginOptions = {}): BetterAuthP
           } catch (error) {
             // The provider/account unique key is the authority during
             // concurrent TMA launches.
-            account = await ctx.context.internalAdapter.findAccountByProviderId(
-              providerSubject,
-              TelegramOidcProviderId,
-            );
+            account = await ctx.context.internalAdapter.findAccountByKey(accountKey);
             if (!account) {
               throw error;
             }

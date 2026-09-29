@@ -60,7 +60,7 @@ describe('Telegram OIDC', () => {
       authentication: 'basic',
       clientId,
       discoveryUrl: TelegramOidcDiscoveryUrl,
-      issuer: TelegramOidcIssuer,
+      requireIdTokenVerification: true,
       pkce: true,
       providerId: TelegramOidcProviderId,
       responseType: 'code',
@@ -87,7 +87,7 @@ describe('Telegram OIDC', () => {
     await expect(config.getUserInfo?.({ idToken } as never)).resolves.toEqual({
       email: 'telegram-777@telegram.invalid',
       emailVerified: false,
-      id: '777',
+      sub: '777',
       image: 'https://cdn.example.test/ada.png',
       name: 'Ada Lovelace',
     });

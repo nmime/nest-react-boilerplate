@@ -612,18 +612,18 @@ describe('social auth and TMA UI', () => {
     await waitFor(() => {
       expect(
         fetchMock.mock.calls.some(([input]) =>
-          (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/oauth2'),
+          (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/social'),
         ),
       ).toBe(true);
     });
     const request = fetchMock.mock.calls.find(([input]) =>
-      (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/oauth2'),
+      (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/social'),
     )?.[0] as Request;
-    expect(new URL(request.url).pathname).toBe('/api/auth/sign-in/oauth2');
+    expect(new URL(request.url).pathname).toBe('/api/auth/sign-in/social');
     expect(JSON.parse(await request.clone().text())).toMatchObject({
       callbackURL: 'https://app.local.test/auth/telegram/callback',
       disableRedirect: true,
-      providerId: 'telegram',
+      provider: 'telegram',
     });
     expect(window.location.pathname).toBe('/auth');
   });

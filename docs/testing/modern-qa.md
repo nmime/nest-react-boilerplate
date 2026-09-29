@@ -227,4 +227,4 @@ directory it was invoked from. `scripts/validate-github-workflows.mjs` gates all
 
 Optional validators that are executed through `pnpm dlx` or Docker default to fixed versions so CI and local reproductions are deterministic. Upgrade them intentionally by changing the defaults in the relevant tooling script, or temporarily override with `SPECTRAL_CLI_VERSION`, `LIGHTHOUSE_VERSION`, `GITLEAKS_DOCKER_IMAGE`, `SEMGREP_DOCKER_IMAGE`, or the Stryker package version in the mutation command.
 
-Docker builds default to the Node 24.18.0 image configured in the Dockerfile, matching the repository Node `>=24 <25` engine range and CI's `node-version-file`; update these together when upgrading Node.
+Docker builds default to the Node 24.21.0 image configured in the Dockerfile, matching the repository Node `>=24 <25` engine range and CI's `node-version-file`; update these together when upgrading Node.

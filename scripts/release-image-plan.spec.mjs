@@ -26,7 +26,7 @@ test('derives application release image ownership and metadata from the setup ca
   );
   assert.equal(
     releaseImages.find(({ name }) => name === 'auth-app-api').buildArgs,
-    'NX_PROJECT=auth-app-api\nBUILD_OUTPUT=dist/apps/backend/auth/auth-app-api\nPNPM_VERSION=11.15.1',
+    'NX_PROJECT=auth-app-api\nBUILD_OUTPUT=dist/apps/backend/auth/auth-app-api\nPNPM_VERSION=12.8.1',
   );
 });
 
@@ -152,7 +152,7 @@ test('serializes only selected affected images to a GitHub matrix without projec
     {
       name: 'site-app',
       target: 'site-runtime',
-      buildArgs: 'NX_PROJECT=site-app\nPNPM_VERSION=11.15.1',
+      buildArgs: 'NX_PROJECT=site-app\nPNPM_VERSION=12.8.1',
     },
   ]);
 });

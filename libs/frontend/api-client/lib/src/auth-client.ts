@@ -1,6 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
 import type { BetterAuthClientOptions } from 'better-auth';
-import { genericOAuthClient, multiSessionClient } from 'better-auth/client/plugins';
+import { multiSessionClient } from 'better-auth/client/plugins';
 import { telegramClient } from './telegram-client';
 
 const getRuntimeEnvironment = (): Readonly<Record<string, string | undefined>> => {
@@ -38,7 +38,7 @@ export const resolveBetterAuthBaseUrl = (
 
 const options: BetterAuthClientOptions = {
   baseURL: resolveBetterAuthBaseUrl(),
-  plugins: [genericOAuthClient(), multiSessionClient(), telegramClient],
+  plugins: [multiSessionClient(), telegramClient],
 };
 
 export const authClient = createAuthClient(options);

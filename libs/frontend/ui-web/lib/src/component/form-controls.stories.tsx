@@ -1,3 +1,4 @@
+// @requirements REQ-FRONTEND-ACCESSIBILITY-003
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
@@ -96,4 +97,30 @@ export const ValidationAndDisabled: Story = {
       />
     </section>
   ),
+};
+
+export const AccessibleChoiceDescriptions: Story = {
+  render: () => (
+    <section aria-label="Choice descriptions" style={frameStyle}>
+      <p id="choice-policy">Changes are saved automatically.</p>
+      <UiCheckbox aria-describedby="choice-policy" description="Select this record." label="Selection" labelHidden />
+      <UiSwitch aria-describedby="choice-policy" description="Send updates." label="Notifications" />
+    </section>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const checkbox = canvas.getByRole('checkbox', { name: 'Selection' });
+    const switchControl = canvas.getByRole('switch', { name: 'Notifications' });
+    await expect(checkbox).toHaveAccessibleDescription('Changes are saved automatically. Select this record.');
+    await expect(switchControl).toHaveAccessibleDescription('Changes are saved automatically. Send updates.');
+    await expect(canvas.getByText('Select this record.')).toBeVisible();
+    await expect(canvas.getByText('Selection').getBoundingClientRect().width).toBeLessThanOrEqual(1);
+    checkbox.focus();
+    await userEvent.keyboard(' ');
+    await expect(checkbox).toBeChecked();
+    await userEvent.tab();
+    await expect(switchControl).toHaveFocus();
+    await userEvent.keyboard(' ');
+    await expect(switchControl).toBeChecked();
+  },
 };

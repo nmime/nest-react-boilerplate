@@ -29,6 +29,9 @@ description: Choose and run proportional repository validation using the Testing
 - Run Docker/Testcontainers checks when the changed contract depends on real infrastructure. A missing Docker engine is an unverified lane, not a pass.
 - Regenerate source-derived artifacts only from their canonical source and inspect the diff.
 - Always run `git diff --check`. Run `pnpm run agent:verify` when agent guidance, setup, generators, or ownership rules change.
+- Use targeted diagnostics while developing. Run the final quality gate after
+  implementation and generated artifacts are complete, with a validation map
+  that covers every changed consumer. Fix failures and rerun the affected lanes.
 
 ## Specification assurance
 
@@ -39,3 +42,7 @@ completeness, ownership, evidence meaning, and exact-SHA provenance are checked.
 ## Report
 
 List each command and outcome, distinguish code failures from environment blockers, and state the exact unverified boundary. Never update baselines, snapshots, or golden files merely to silence a failure.
+
+Record the verified commit. Report running or unexecuted pipelines separately;
+they cannot establish a pass. Main merges and production writes require the
+maintainer's explicit approval for each action after the result is reviewable.

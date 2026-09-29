@@ -75,7 +75,7 @@ provider-specific SQL or MongoDB validator/index/ledger rules.
 
 ## 5. Product-specific callback handling
 
-Better Auth owns its provider callback under `/api/auth/callback/<provider>` or `/api/auth/oauth2/callback/<provider>` for generic OAuth. Its registered callback origin must equal `BETTER_AUTH_URL` and the frontend Better Auth base (user-app in same-origin mode, auth-app-api in split-origin mode), because state/session cookies are host-scoped. Do not add a second controller that exchanges the same code. To establish the tenant/RBAC application session, add a narrow projection route under `/auth/<provider>/session` that:
+Better Auth owns its provider callback under `/api/auth/callback/<provider>` for built-in and generic OAuth providers. Its registered callback origin must equal `BETTER_AUTH_URL` and the frontend Better Auth base (user-app in same-origin mode, auth-app-api in split-origin mode), because state/session cookies are host-scoped. Do not add a second controller that exchanges the same code. To establish the tenant/RBAC application session, add a narrow projection route under `/auth/<provider>/session` that:
 
 1. Reads the Better Auth cookie through the injected Better Auth instance.
 2. Requires a live Better Auth session.

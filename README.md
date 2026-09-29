@@ -14,7 +14,7 @@
   <p>
     <a href="https://github.com/nmime/nest-react-boilerplate/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/nmime/nest-react-boilerplate?style=for-the-badge&logo=semanticrelease&logoColor=white&color=8b5cf6" /></a>
     <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
-    <img alt="pnpm 11.15.1" src="https://img.shields.io/badge/pnpm-11.15.1-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
+    <img alt="pnpm 12.8.1" src="https://img.shields.io/badge/pnpm-12.8.1-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
     <img alt="Nx 23" src="https://img.shields.io/badge/Nx-23-143055?style=for-the-badge&logo=nx&logoColor=white" />
     <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-0EA5E9?style=for-the-badge" /></a>
   </p>
@@ -81,7 +81,7 @@ pnpm exec nx show projects
 | Requirement | Supported version or role                                                     |
 | ----------- | ----------------------------------------------------------------------------- |
 | Node.js     | `>=24 <25` — pinned by `.nvmrc`                                               |
-| pnpm        | `11.15.1` through Corepack                                                    |
+| pnpm        | `12.8.1` through Corepack                                                     |
 | Docker      | Local PostgreSQL or one-node MongoDB replica set and broader Compose profiles |
 
 ### Start the selected stack
@@ -89,7 +89,7 @@ pnpm exec nx show projects
 ```bash
 nvm use
 corepack enable
-corepack prepare pnpm@11.15.1 --activate
+corepack prepare pnpm@12.8.1 --activate
 pnpm install --frozen-lockfile
 
 pnpm nrb setup
@@ -177,7 +177,7 @@ flowchart LR
 
 | Layer            | Technology and responsibility                                                                        |
 | ---------------- | ---------------------------------------------------------------------------------------------------- |
-| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 11.15.1, and Node.js 24                                                      |
+| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 12.8.1, and Node.js 24                                                       |
 | 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
 | 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
 | 🩷 **Data**      | PostgreSQL + MikroORM or native MongoDB, explicit migrations, Redis, NATS, S3/MinIO adapters         |

@@ -23,13 +23,13 @@ describe('Better Auth Telegram API', () => {
     ).resolves.toEqual({ redirect: true, url: 'https://oauth.telegram.org/auth?request=request-id' });
 
     const [url, options] = fetchImpl.mock.calls[0] ?? [];
-    expect(url).toBe('https://auth-app-api.example.com/api/auth/sign-in/oauth2');
+    expect(url).toBe('https://auth-app-api.example.com/api/auth/sign-in/social');
     expect(options).toMatchObject({ credentials: 'include', method: 'POST' });
     expect(JSON.parse(options?.body as string)).toEqual({
       callbackURL: 'https://user-app.example.com/auth/telegram/callback',
       disableRedirect: true,
       errorCallbackURL: 'https://user-app.example.com/auth/telegram/callback',
-      providerId: 'telegram',
+      provider: 'telegram',
     });
   });
 

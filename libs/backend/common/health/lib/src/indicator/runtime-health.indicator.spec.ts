@@ -4,18 +4,18 @@ import { detectRuntimeDetails, RuntimeHealthIndicator } from './runtime-health.i
 
 describe('RuntimeHealthIndicator', () => {
   it('reports Node with its actual version', () => {
-    expect(detectRuntimeDetails({ node: '24.18.0' })).toEqual({ runtime: 'node', version: '24.18.0' });
+    expect(detectRuntimeDetails({ node: '24.21.0' })).toEqual({ runtime: 'node', version: '24.21.0' });
   });
 
   it('reports the runtime identity through the health indicator', () => {
-    const indicator = new RuntimeHealthIndicator({ node: '24.18.0' });
+    const indicator = new RuntimeHealthIndicator({ node: '24.21.0' });
 
     expect(indicator.check({ appName: 'auth-app-api', kind: 'ready' })).toMatchObject({
       status: 'ok',
       details: {
         app: 'auth-app-api',
         runtime: 'node',
-        version: '24.18.0',
+        version: '24.21.0',
       },
     });
   });

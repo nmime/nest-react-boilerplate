@@ -11,6 +11,7 @@ import {
 import { createServer } from 'node:http';
 import { extname, join, normalize, relative, resolve, sep } from 'node:path';
 import { spawn } from 'node:child_process';
+import { packageManagerInvocation } from '../../runtime/process.js';
 
 const workspaceRoot = resolve('.');
 const outputDir = resolve(workspaceRoot, 'test-results/storybook-visual');
@@ -382,8 +383,8 @@ try {
   }
   const command = ['exec', 'playwright', 'test', '-c', generated.configPath, generated.specPath];
   if (updateBaselines) command.push('--update-snapshots');
-  const packageManagerPath = process.env.npm_execpath;
-  const child = spawn(packageManagerPath ? process.execPath : 'pnpm', packageManagerPath ? [packageManagerPath, ...command] : command, {
+  const invocation = packageManagerInvocation(command);
+  const child = spawn(invocation.command, invocation.args, {
     stdio: 'inherit',
     env: { ...process.env, STORYBOOK_VISUAL_BASE_URL: baseUrl },
   });

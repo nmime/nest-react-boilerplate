@@ -3,7 +3,7 @@
   "configHash": "698b1783439b3a1d385cf1380377dd6175c71e64271f8f177b71f875469fb10c",
   "files": {
     ".nrb/capabilities.env": "90a0cfc749a9d700c5098ae1895307ba90278dbe72d0a13717467c85e6bcf6af",
-    ".nrb/capabilities.json": "6b7f4313b4e791ed52dcb1f17638ccba2769c968cf67028d4a868233828a029d",
+    ".nrb/capabilities.json": "a97f4c02d496003df726d80741c387756454f315cfbf0249cfe907f5e4f18eb1",
     ".nrb/summary.md": "e8c482da1223e6c9de76cc89d5c1250f84fd9a31793efd0c72c512bcec1e1432",
     ".nrb/workspace.json": "aa4e537fe137534a35a7ee952ceabab2abdf3dfa79d1f7b302ae6ba451505e67",
     "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
@@ -17,11 +17,11 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "246996904b9efb90c0d9d8eb20db91d7b35abbb549ec75082f20544b932318a8",
     "apps/backend/telegram/telegram-bot-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
-    "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "bd8a3b5d6fcb9af2650a7a25df72fdc3f121a0389eccfa2decd0958820272291",
+    "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "e114c6ee25948d7ba246cabe7a81de6a6e74fa68aba52ad03c5315983337b69d",
     "apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/user/user-app-api/src/capabilities.generated.ts": "e4a368f3bca434b72bc256a0dfd31b4ba99011a2d3975251b8c700a774a54259",
     "nrb.config.json": "b93407243b641eed474b967738974462ac7671975f19ae7568869df90cbff527",
     "packages/tooling/src/commands/db/capability-migrations.generated.ts": "e1c5df42fb621f054b49f3bd9c4c42ec920ac3db91958281f9c77d00a6408513"
   },
-  "digest": "338a9200cf61b0a2a90327d53248f573c472600187271730818249426783c15b"
+  "digest": "a64be00b9b3f5e2e289a06df44ee852018c92b3df94f798feccf834b298f5721"
 }

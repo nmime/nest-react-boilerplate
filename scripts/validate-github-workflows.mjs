@@ -380,7 +380,7 @@ for (const required of [
   // Root auto-discovery finds the product config today, but nothing states it, so a config renamed
   // or relocated downstream degrades the job to the bare default rule set without a word.
   `--config ${gitleaksProductConfigPath}`,
-  'node:24.18.0-alpine',
+  'node:24.21.0-alpine',
   'mcr.microsoft.com/playwright:v1.61.1-noble',
   'docker:27.5.1-dind',
   'postgres:17.6-alpine',

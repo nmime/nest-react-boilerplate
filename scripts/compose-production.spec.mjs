@@ -369,7 +369,7 @@ test(
           `${mountedFile}:${target}:ro`,
           '--entrypoint',
           '/bin/sh',
-          'node:24.18.0-alpine',
+          'node:24.21.0-alpine',
           '/entrypoint',
           'sh',
           '-ec',

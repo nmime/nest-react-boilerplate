@@ -105,19 +105,13 @@ minimumReleaseAgeExclude:
 
 ### Workspace overrides
 
-Critical transitive dependencies are pinned to safe versions in `pnpm-workspace.yaml`:
+Critical transitive dependencies are pinned in `pnpm-workspace.yaml` and
+reviewed with their supported API line. See the current
+[dependency policy and compatibility holds](dependency-management.md#pnpm-workspace-overrides)
+for versions, upstream fixes, peer exceptions, and package extensions.
 
-| Package            | Pinned to       | Reason                                             |
-| ------------------ | --------------- | -------------------------------------------------- |
-| `@fastify/static`  | `10.1.2`        | CVE-2026-7120 and CVE-2026-15074                   |
-| `better-auth`      | `1.6.23`        | Multiple CVEs in `1.4.21`                          |
-| `brace-expansion`  | `5.0.9`         | CVE-2026-14257                                     |
-| `drizzle-orm`      | `0.45.2`        | SQL injection in `0.41.0`                          |
-| `js-yaml`          | `5.2.2`         | GHSA-pm4m-ph32-ghv5                                |
-| `typescript`       | `6.0.3`         | Workspace consistency until NestJS/Nx support TS 7 |
-| `follow-redirects` | security-pinned | CVE in older versions                              |
-| `axios`            | security-pinned | Multiple CVEs in older versions                    |
-| `ws`               | security-pinned | Remote code execution in older versions            |
+The current workspace suppresses no GHSA advisories. The former `image-size`
+exclusions were removed after an upstream patched release became available.
 
 ### .npmrc settings
 
@@ -143,10 +137,9 @@ Dependabot runs automated dependency updates with grouped PRs:
 | `nx`              | Weekly   | `nx` and `@nx/*` packages           |
 | `nestjs`          | Weekly   | `@nestjs/*` packages                |
 | `opentelemetry`   | Weekly   | `@opentelemetry/*` packages         |
-| `github-actions`  | Weekly   | GitHub Actions versions             |
 | `docker`          | Weekly   | Docker base images (`/`, `/docker`) |
 
-There is no dedicated major-only npm group; major updates surface as individual PRs. npm dependency PRs are labeled `dependencies, security` and use the `deps:` commit prefix (github-actions uses `ci:`, docker uses `docker:`). All PRs must pass the full CI gate before merging.
+There is no dedicated major-only npm group; major updates surface as individual PRs. npm dependency PRs are labeled `dependencies, security`; npm and Docker updates use the `chore:` commit prefix. Run the final quality gate after development and obtain maintainer approval before each merge.
 
 ### Updating dependency-bot groupings
 
@@ -154,13 +147,20 @@ Edit `.github/dependabot.yml` to add/remove groupings or change schedules. Keep 
 
 ## CI gates for supply chain
 
-| Job                 | Gate                                         | What it checks                                      |
-| ------------------- | -------------------------------------------- | --------------------------------------------------- |
-| `dependency-review` | `Supported lockfile audit`                   | `pnpm audit` on production deps; fails on moderate+ |
-| `fast-check`        | `Fast PR gate (ci:pr)`                       | Secret scanning, SAST (already inside `ci:pr`)      |
-| GitLab templates    | SAST, Dependency, Secret, Container Scanning | GitLab-managed security scanners                    |
-| `release-images`    | `Trivy vulnerability scan`                   | Container image vuln scan (CRITICAL, HIGH)          |
-| `release-images`    | `Cosign keyless sign`                        | Image signing attestation                           |
+The declared forge and gate inventory are in `scripts/ci/gates.json` and the
+pipeline is `.gitlab-ci.yml`. GitHub Actions are not shipped by this template;
+historical Action job names and runs do not establish current CI evidence.
+
+| Gate                    | Evidence                                                            |
+| ----------------------- | ------------------------------------------------------------------- |
+| Dependency audit        | `pnpm run audit:ci` and `pnpm run audit:full`                       |
+| Repository scanning     | Secret scanning and SAST tooling, plus declared GitLab scanner jobs |
+| Release vulnerabilities | Trivy fails on CRITICAL/HIGH findings                               |
+| Digest provenance       | BuildKit provenance, SBOM, and keyless Cosign signing/attestations  |
+
+Validate declared pipeline parity with `pnpm run ci:pipelines:check`. Separately
+verify that the host ran the checks for the reviewed SHA before claiming remote
+CI success or release readiness.
 
 ## Recommendations
 

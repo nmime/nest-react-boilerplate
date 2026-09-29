@@ -250,6 +250,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/application/telegram-oidc-runtime.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
       - kind: component
         file: libs/backend/mongodb/main/auth/lib/src/auth-mongo.repository.component-spec.ts
         target: '@app/backend-mongodb-main-auth:component-test'

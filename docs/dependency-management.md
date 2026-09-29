@@ -4,17 +4,31 @@ Use this policy to keep dependency updates low-risk and reproducible.
 
 ## Compatibility matrix
 
-| Constraint | Version | Rationale                                                                       |
-| ---------- | ------- | ------------------------------------------------------------------------------- |
-| Node.js    | 24.18.0 | Current Node 24 LTS baseline; engines accept `>=24 <25`                         |
-| pnpm       | 11.15.1 | Workspace packageManager field; Docker aligned                                  |
-| TypeScript | 6.0.3   | Pinned until NestJS/Nx support TS 7; workspace override enforces single version |
-| React      | 19.2.3  | All frontend apps and libs; matches the Expo 57 supported runtime               |
-| Nx         | 23.1.0  | All @nx/* packages aligned                                                      |
-| Vitest     | 4.1.10  | All workspace consumers                                                         |
-| Vite       | 8.1.5   | All workspace consumers                                                         |
-| Astro      | 7.1.3   | Landing app and generated Astro applications                                    |
-| Expo SDK   | 57.0.x  | Mobile app (Babel 7.x required — Babel 8 deferred until Expo compatibility)     |
+| Constraint | Version | Rationale                                                                                                  |
+| ---------- | ------- | ---------------------------------------------------------------------------------------------------------- |
+| Node.js    | 24.21.0 | Current Node 24 LTS baseline; engines accept `>=24 <25`                                                    |
+| pnpm       | 12.8.1  | Root package-manager pin; Docker, CI, doctor, and environment templates aligned                            |
+| TypeScript | 6.0.3   | typescript-eslint still requires `<6.1.0`; compiler-dependent Nx transforms remain on TS 6                 |
+| React      | 19.2.3  | Expo 57's supported React/React DOM runtime                                                                |
+| NestJS     | 12.1.1  | Core, common, testing, and platform adapters aligned; companion packages use their compatible v12 releases |
+| Nx         | 23.2.1  | All directly owned `@nx/*` packages aligned                                                                |
+| Vitest     | 4.1.11  | Current supported line for Nx 23.2.1 and the quarantined Storybook 10.6.0 release                          |
+| Vite       | 8.3.1   | All workspace consumers aligned                                                                            |
+| Storybook  | 10.6.0  | Shared addons and React renderer aligned                                                                   |
+| Astro      | 7.3.5   | Landing app and generated Astro applications; MDX 8 and React integration 7                                |
+| Expo SDK   | 57.0.25 | Mature SDK 57 release; native runtime follows its published bundled-module matrix                          |
+
+Nx React's optional Express 4 development-server peer is declared on that
+consumer through a package extension; Nest's Express 5 adapter stays separate.
+Metro configuration is aligned with React Native 0.86.3. Do not suppress those
+peer mismatches with an unrestricted allowed-version rule.
+
+Metro stays on the 0.84 API line with the 0.84.5 patch that replaces its
+vulnerable image-size parser. Better Auth 1.7.6 uses social sign-in for generic
+OAuth, explicit account-key lookups, and verified discovery subjects. See the
+[Better Auth 1.7 upgrade guide](https://better-auth.com/docs/guides/1-7-upgrade-guide).
+The temporary issuer-column requirement in 1.7.0–1.7.2 was removed upstream;
+this template upgrades directly from 1.6 without adding that column.
 
 ## Package updates
 
@@ -74,50 +88,59 @@ manager or lockfile is supported.
 
 `pnpm-workspace.yaml` enforces single versions for security-critical and widely-used packages:
 
-- `better-auth`: pinned to **1.6.23** — overrides the stale `@better-auth/cli@1.4.21` transitive dependency to prevent installing `better-auth@1.4.21` (multiple CVEs). Single version enforced.
-- `drizzle-orm`: pinned to **0.45.2** — overrides the stale CLI transitive to prevent SQL injection in `drizzle-orm@0.41.0`. Single version enforced.
-- `typescript`: pinned to **6.0.3** across all workspaces until NestJS/Nx support TS 7.
-- `bson`: pinned to **7.2.0** because 7.3.1 calls `node:v8.isBuildingSnapshot()`,
-  which the pinned Node 24 runtime does not expose. Remove the override after the
-  upstream fix ships.
-- `@fastify/static`: pinned to **10.1.2** for CVE-2026-7120 and
-  CVE-2026-15074. Nest 11.1.28's peer metadata stops at 9.x, so
-  `peerDependencyRules.allowedVersions` records the exact tested 10.1.2 edge
-  until Nest widens that declaration.
-- Storybook packages stay version-aligned. `@storybook/csf-plugin` 10.5.4
-  publishes `esbuild` as an optional wildcard peer; the scoped
-  `peerDependencyRules.allowedVersions` entry records the tested 0.28.1 edge
-  after the vulnerable-esbuild override rewrites the lockfile peer snapshot.
-- `brace-expansion`: vulnerable 1.x/2.x/4.x/5.x resolutions are pinned to **5.0.9**
-  for CVE-2026-14257.
-- `js-yaml`: vulnerable 5.0.0–5.2.1 resolutions are pinned to **5.2.2** for
-  GHSA-pm4m-ph32-ghv5; the existing 3.x/4.x pins remain separate.
-- `rxjs`, `tslib`, NestJS core/platform packages, `lodash`, `picomatch`,
-  `path-to-regexp`, `serialize-javascript`, `postcss`, `follow-redirects`,
-  `axios`, `fast-uri`, `svgo`, `yaml`, `ajv`, `ws`, `tmp`, `uuid`, `qs`,
-  `undici`, `happy-dom`, `esbuild`, `form-data`, `http-proxy-middleware`,
-  `@opentelemetry/core`, `multer`: all security-pinned per advisory.
+- `better-auth` and `drizzle-orm` remain single-version dependencies. The unused,
+  deprecated `@better-auth/cli` dependency has been removed; repository schema
+  and migration commands remain the owned entrypoints.
+- `typescript` stays on 6.0.3 and `@types/node` on the newest supported Node 24
+  line. A package's latest major is not necessarily compatible with the runtime.
+- The obsolete BSON 7.2.0 hold has been removed: BSON 7.3.3 guards access to
+  `startupSnapshot.isBuildingSnapshot`, including on Node 24.
+- Nest 12 accepts `@fastify/static` 10.x directly, so the old Nest 11 peer
+  exception is removed. The plugin is pinned to 10.1.5.
+- Security overrides cover patched supported API lines for `fast-uri`, `qs`,
+  `js-yaml`, `svgo`, `undici`, `ip-address`, and other transitive dependencies.
+  Keep selectors broad enough to cover the advisory's vulnerable range while
+  preserving consumers' supported APIs.
+- `image-size` 2.0.4 supplies an upstream patch. Its former audit exclusions
+  have been removed; this workspace suppresses no GHSA advisories.
+- Expo's worklets, reanimated, and screen dependencies are resolved from the
+  SDK 57 matrix instead of unconstrained transitive peers. Worklets 0.10.1
+  still requires a scoped extension for undeclared Babel imports; Tamagui
+  2.7.7 retains the scoped React DOM dependency declarations.
+- `minimumReleaseAge: 1440` stays active. The expired version-specific
+  exclusions have been removed. Check current publication dates when refreshing
+  the lockfile; do not disable quarantine to select a just-published release.
 
-## Deferred major updates
+## Compatibility holds
 
-| Package               | Current | Latest  | Blocker                                                     | Revisit trigger                                  |
-| --------------------- | ------- | ------- | ----------------------------------------------------------- | ------------------------------------------------ |
-| TypeScript            | 6.0.3   | 7.0.2   | typescript-eslint 8.65 declares TypeScript `<6.1.0`         | typescript-eslint release with a TS 7 peer range |
-| Babel                 | 7.29.x  | 8.x     | Rollup, Jest, and Babel 7 plugins reject Babel 8            | All Babel consumers publish Babel 8 peer ranges  |
-| @types/node           | 24.13.3 | 26.x    | Node 24 runtime; type definitions match the runtime major   | Runtime upgrade to Node 26                       |
-| React / React DOM     | 19.2.3  | 19.2.8  | Expo SDK 57 requires exactly 19.2.3                         | Expo package matrix moves to the newer patch     |
-| gesture-handler       | 2.32.0  | 3.1.0   | Expo SDK 57 requires `~2.32.0`                              | Expo package matrix includes 3.x                 |
-| reanimated            | 4.5.0   | 4.5.2   | Expo SDK 57 requires exactly 4.5.0                          | Expo package matrix moves to the newer patch     |
-| safe-area-context     | 5.7.0   | 5.8.0   | Expo SDK 57 requires `~5.7.0`                               | Expo package matrix moves to 5.8.x               |
-| react-native-screens  | 4.25.2  | 4.26.2  | Expo SDK 57 requires exactly 4.25.2                         | Expo package matrix moves to 4.26.x              |
-| react-native-worklets | 0.10.0  | 0.11.1  | Expo SDK 57 requires 0.10.0 in its supported package matrix | Expo package matrix includes 0.11.x              |
-| happy-dom             | 20.10.6 | 20.11.0 | Vitest 4.1.10 declares the 20.10.6 peer version             | Vitest accepts the newer happy-dom release       |
+Checked against published package metadata on 2026-09-30. Refresh the metadata
+before lifting a hold; the table records constraints, not permanent bans.
 
-`@fastify/static` 10.1.2 is the security-patched baseline used directly by the
-Vike server and by Swagger. NestJS 11's static-package peer is optional; the
-Fastify adapter does not import that plugin, while Swagger explicitly accepts
-10.x. `peerDependencyRules.allowedVersions` records that exact reviewed peer
-exception until Nest widens its optional range.
+| Family                | Selected          | Available newer line | Constraint                                                                                                     |
+| --------------------- | ----------------- | -------------------- | -------------------------------------------------------------------------------------------------------------- |
+| TypeScript            | 6.0.3             | 7.0.2                | typescript-eslint 8.71.0 declares `<6.1.0`; Nest Swagger 12 also declares TS 5/6                               |
+| Babel core            | 7.29.7            | 8.0.6                | Nx 23.2.1 and Expo's Babel plugin stack still consume Babel 7                                                  |
+| Node types            | 24.19.0           | 26.6.3               | Match the supported Node 24 runtime                                                                            |
+| React / React DOM     | 19.2.3            | 19.3.0               | Expo 57.0.25's bundled-native-module matrix specifies 19.2.3                                                   |
+| React Native          | 0.86.3            | 0.87.1               | Expo 57.0.25 specifies 0.86.3                                                                                  |
+| Gesture handler       | 2.32.0            | 3.3.0                | Expo specifies `~2.32.0`                                                                                       |
+| Safe area context     | 5.7.0             | 5.10.0               | Expo specifies `~5.7.0`                                                                                        |
+| Reanimated / worklets | 4.5.1 / 0.10.1    | 4.5.5 / 0.13.0       | Use Expo's exact native matrix                                                                                 |
+| MobX / React binding  | 6.16.1 / 4.1.1    | 7.0.5 / 5.1.0        | mobx-tanstack-query 7.3.0 declares MobX `^6.12.4`; upgrading only the binding breaks that edge                 |
+| Vitest family         | 4.1.11            | 5.0.2                | Nx's Vitest plugin and Storybook 10.6.0 declare Vitest 3/4 peers                                               |
+| Expo / router         | 57.0.25 / 57.0.23 | 57.0.26 / 57.0.24    | New patches are still inside the 24-hour release quarantine at refresh time                                    |
+| Storybook family      | 10.6.0            | 10.6.1               | New patch is inside the release quarantine; its expanded Vitest peer alone does not establish Nx compatibility |
+
+`arctic` 3.7.0 is deprecated and has no newer stable release. The existing
+Discord OAuth adapter still consumes it. Replacing that adapter is a separate
+security-sensitive migration requiring callback, state/PKCE, token, and denial
+proof; do not silently substitute a different OAuth implementation in a version
+refresh.
+
+For major migrations, read the official [Nest migration guide](https://docs.nestjs.com/migration-guide),
+[Nx migrations](https://nx.dev/docs/features/automate-updating-dependencies),
+[Vitest migration guide](https://vitest.dev/guide/migration/), and
+[pnpm 12 release notes](https://github.com/pnpm/pnpm/releases/tag/v12.0.0).
 
 ## Build scripts
 
@@ -176,7 +199,7 @@ image resolution.
 - **Registry drift**: 12 package entries remain, represented by the 11 incompatible runtime/peer rows listed above
 - **Deduplication**: `better-auth` → 1 version (was 2), `drizzle-orm` → 1 version (was 2)
 - **Release plugins**: provider publishing, commit analysis, and release-note
-  generation run through `release.config.mjs` on Node 24.18.0 and
+  generation run through `release.config.mjs` on Node 24.21.0 and
   semantic-release 25. Releases tag the exact successful CI SHA; changelog/git
   mutation plugins are intentionally absent so protected default branches
   receive only reviewed changes.

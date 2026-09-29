@@ -34,6 +34,7 @@
   "admin.apiResponseStudio.action.export": "Экспорт",
   "admin.apiResponseStudio.action.save": "Сохранить ответ",
   "admin.apiResponseStudio.action.cancel": "Отмена",
+  "admin.apiResponseStudio.action.close": "Закрыть",
   "admin.apiResponseStudio.action.reload": "Загрузить актуальные данные",
   "admin.apiResponseStudio.action.previous": "Назад",
   "admin.apiResponseStudio.action.next": "Вперёд"

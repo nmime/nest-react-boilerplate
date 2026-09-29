@@ -5,12 +5,14 @@
         "admin-app",
         "admin-app-api",
         "auth-app-api",
+        "discord-app-api",
         "landing-app",
         "migrator",
         "mobile-app",
         "notification-consumer",
         "notification-scheduler",
         "site-app",
+        "telegram-bot-api",
         "user-app",
         "user-app-api"
       ]
@@ -21,11 +23,11 @@
       "dockerfile": "Dockerfile",
       "target": "frontend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "admin-app",
         "FRONTEND_OUTPUT": "dist/apps/frontend/admin",
         "VITE_API_BASE_URL_MODE": "same-origin",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -35,10 +37,10 @@
       "dockerfile": "Dockerfile",
       "target": "backend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "admin-app-api",
         "BUILD_OUTPUT": "dist/apps/backend/admin/admin-app-api",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -48,10 +50,23 @@
       "dockerfile": "Dockerfile",
       "target": "backend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "auth-app-api",
         "BUILD_OUTPUT": "dist/apps/backend/auth/auth-app-api",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
+      },
+      "contexts": {
+        "nrb-closure": ".nrb/closure"
+      }
+    },
+    "discord-app-api": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
+        "RUNTIME_PROJECT": "discord-app-api",
+        "BUILD_OUTPUT": "dist/apps/backend/discord/discord-app-api",
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -61,11 +76,11 @@
       "dockerfile": "Dockerfile",
       "target": "frontend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "landing-app",
         "FRONTEND_OUTPUT": "dist/apps/frontend/landing",
         "VITE_API_BASE_URL_MODE": "same-origin",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -75,7 +90,7 @@
       "dockerfile": "Dockerfile",
       "target": "migrator",
       "args": {
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -85,11 +100,11 @@
       "dockerfile": "Dockerfile",
       "target": "frontend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "mobile-app",
         "FRONTEND_OUTPUT": "dist/apps/frontend/mobile",
         "VITE_API_BASE_URL_MODE": "same-origin",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -99,10 +114,10 @@
       "dockerfile": "Dockerfile",
       "target": "backend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "notification-consumer",
         "BUILD_OUTPUT": "dist/apps/backend/notification/notification-consumer",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -112,10 +127,10 @@
       "dockerfile": "Dockerfile",
       "target": "backend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "notification-scheduler",
         "BUILD_OUTPUT": "dist/apps/backend/notification/notification-scheduler",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -125,9 +140,22 @@
       "dockerfile": "Dockerfile",
       "target": "site-runtime",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "site-app",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
+      },
+      "contexts": {
+        "nrb-closure": ".nrb/closure"
+      }
+    },
+    "telegram-bot-api": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
+        "RUNTIME_PROJECT": "telegram-bot-api",
+        "BUILD_OUTPUT": "dist/apps/backend/telegram/telegram-bot-api",
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -137,11 +165,11 @@
       "dockerfile": "Dockerfile",
       "target": "frontend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "user-app",
         "FRONTEND_OUTPUT": "dist/apps/frontend/app",
         "VITE_API_BASE_URL_MODE": "same-origin",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"
@@ -151,10 +179,10 @@
       "dockerfile": "Dockerfile",
       "target": "backend",
       "args": {
-        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,user-app,user-app-api",
+        "NX_BUILD_PROJECTS": "admin-app,admin-app-api,auth-app-api,discord-app-api,landing-app,mobile-app,notification-consumer,notification-scheduler,site-app,telegram-bot-api,user-app,user-app-api",
         "RUNTIME_PROJECT": "user-app-api",
         "BUILD_OUTPUT": "dist/apps/backend/user/user-app-api",
-        "PNPM_VERSION": "11.15.1"
+        "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
         "nrb-closure": ".nrb/closure"

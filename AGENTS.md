@@ -38,7 +38,7 @@ Rules for adapters:
 - Work only in this repository unless a maintainer explicitly assigns another.
 - Before edits, commits, pushes, or deployment work, verify the target repo,
   current branch, `HEAD`, and current `main` SHA.
-- Use **Node.js >=24 <25** and pnpm 11.15.1; prefer Corepack and
+- Use **Node.js >=24 <25** and pnpm 12.8.1; prefer Corepack and
   `pnpm install --frozen-lockfile`.
 - Do not expose secrets, tokens, real `.env*` values, Docker secret files,
   credentials, or full environment dumps.
@@ -68,6 +68,9 @@ Rules for adapters:
 - Do not add `Co-authored-by`, `Signed-off-by`, Splox, Executor, bot,
   automation, or assistant trailers.
 - Do not force-push `main`; create focused topic branches from current `main`.
+- Keep `main` and production read-only until the maintainer approves each
+  specific merge or production write. Finish implementation and present the
+  reviewed result before requesting that approval.
 - Name topic branches `<type>/<kebab-case>` using `feat`, `fix`, `docs`,
   `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`, `release`, or
   `hotfix`. Never use `codex`, `claude`, or another assistant/vendor identity
@@ -181,6 +184,9 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 - Testing: [docs/testing.md](docs/testing.md)
 
 ## Validation
+
+Run the final quality gate after development is complete. During implementation,
+use targeted diagnostics when needed; do not repeatedly run the full gate.
 
 Pick the smallest command set that proves the change, then broaden when touching
 shared/public APIs. Always run `git diff --check`; for docs, run Prettier on the

@@ -4,19 +4,19 @@ Get the Nest React Boilerplate running locally in under five minutes.
 
 ## Prerequisites
 
-| Requirement      | Version                  | How to check       |
-| ---------------- | ------------------------ | ------------------ |
-| Node.js          | `>=24 <25`               | `node --version`   |
-| pnpm             | `11.15.1` (via Corepack) | `pnpm --version`   |
-| Docker & Compose | any recent version       | `docker --version` |
-| Git              | any recent version       | `git --version`    |
+| Requirement      | Version                 | How to check       |
+| ---------------- | ----------------------- | ------------------ |
+| Node.js          | `>=24 <25`              | `node --version`   |
+| pnpm             | `12.8.1` (via Corepack) | `pnpm --version`   |
+| Docker & Compose | any recent version      | `docker --version` |
+| Git              | any recent version      | `git --version`    |
 
 ### Install Node.js and pnpm
 
 ```bash
 nvm use          # reads .nvmrc for the pinned patch version
 corepack enable
-corepack prepare pnpm@11.15.1 --activate
+corepack prepare pnpm@12.8.1 --activate
 ```
 
 ## 1. Clone and install
@@ -38,8 +38,8 @@ pnpm --filter @repo/tooling tooling doctor
 Expected output (fresh clone with the committed reference selection):
 
 ```
-  ✓ runtime-version      Node.js v24.18.0
-  ✓ pnpm                 pnpm 11.15.1
+  ✓ runtime-version      Node.js v24.21.0
+  ✓ pnpm                 pnpm 12.8.1
   ○ docker               Docker not available — optional for E2E tests
   ✓ manifests            package.json, tsconfig.base.json present
   ✓ lock-file            pnpm-lock.yaml present

@@ -25,6 +25,23 @@ void describe('process runtime', () => {
     );
   });
 
+  for (const [platform, executable] of [
+    ['darwin', '/corepack/pnpm-native'],
+    ['linux', '/usr/local/bin/pnpm'],
+    ['win32', 'C:\\corepack\\pnpm.exe'],
+  ] as const) {
+    void it(`executes a native package manager directly on ${platform}`, () => {
+      assert.deepEqual(
+        packageManagerInvocation(['exec', 'nx', '--version'], {
+          env: { npm_execpath: executable },
+          nodeExecutable: '/node',
+          platform,
+        }),
+        { command: executable, args: ['exec', 'nx', '--version'] },
+      );
+    });
+  }
+
   void it('terminates a child process at its configured deadline', () => {
     const result = run(process.execPath, ['-e', 'setTimeout(() => undefined, 10_000)'], { timeoutMs: 50 });
 

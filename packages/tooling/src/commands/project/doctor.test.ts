@@ -18,14 +18,14 @@ import {
 describe("project doctor runtime policy", () => {
   it("accepts Node 24 and rejects releases outside the supported major", () => {
     assert.equal(checkNodeVersion("v24.0.0").status, "pass");
-    assert.equal(checkNodeVersion("v24.18.0").status, "pass");
+    assert.equal(checkNodeVersion("v24.21.0").status, "pass");
     assert.equal(checkNodeVersion("v25.0.0").status, "fail");
     assert.equal(checkNodeVersion("v23.11.0").status, "fail");
     assert.equal(checkNodeVersion("invalid").status, "fail");
   });
 
   it("accepts the exact pinned pnpm version", () => {
-    assert.equal(checkPnpmVersion("11.15.1").status, "pass");
+    assert.equal(checkPnpmVersion("12.8.1").status, "pass");
     assert.equal(checkPnpmVersion("11.12.0").status, "fail");
   });
 

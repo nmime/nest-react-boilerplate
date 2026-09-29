@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest';
 import { BaseHealthController, HealthService } from '@app/backend-common-health';
 import { RedisInjectToken } from '@app/backend-common-redis';
 import { TelegramBotInstanceInjectToken, type TelegramBotInstance } from '@app/backend-feature-telegram-bot';
-import { PostgresMainModule } from '@app/backend-postgres-main';
 import { TelegramWebhookController } from './telegram-webhook.controller';
 import { TelegramPollingService } from './telegram-polling.service';
 import { TelegramBotApiModule } from './telegram-bot-api.module';
@@ -26,7 +25,7 @@ describe('TelegramBotApiModule', () => {
 
     try {
       const compiledModule = await Test.createTestingModule({
-        imports: [TelegramBotApiModule.register(), PostgresMainModule.forRoot()],
+        imports: [TelegramBotApiModule.register()],
       }).compile();
       moduleRef = compiledModule;
 
@@ -61,7 +60,7 @@ describe('TelegramBotApiModule', () => {
 
     try {
       const compiledModule = await Test.createTestingModule({
-        imports: [TelegramBotApiModule.register(), PostgresMainModule.forRoot()],
+        imports: [TelegramBotApiModule.register()],
       }).compile();
       moduleRef = compiledModule;
 

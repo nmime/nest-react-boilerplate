@@ -18,13 +18,13 @@ Telegram web sign-in uses Telegram's current OpenID Connect authorization-code f
 
 ```text
 # Default same-origin deployment
-https://user-app.example.com/api/auth/oauth2/callback/telegram
+https://user-app.example.com/api/auth/callback/telegram
 
 # Split-origin deployment
-https://auth-app-api.example.com/api/auth/oauth2/callback/telegram
+https://auth-app-api.example.com/api/auth/callback/telegram
 ```
 
-The user SPA starts the flow with `POST /api/auth/sign-in/oauth2`, returns to `/auth/telegram/callback`, and calls `POST /auth/telegram/oidc/session`. The last endpoint accepts only a valid Better Auth session that contains a numeric Telegram account id, then projects that identity into the tenant/RBAC auth model and issues the application session. Link intent data stays in `sessionStorage`; it is not placed in the provider callback URL. `BETTER_AUTH_URL`, the registered Telegram callback origin, and the frontend Better Auth base must always be the same host so the state/session cookies are present on callback.
+The user SPA starts the flow with `POST /api/auth/sign-in/social`, returns to `/auth/telegram/callback`, and calls `POST /auth/telegram/oidc/session`. The last endpoint accepts only a valid Better Auth session that contains a numeric Telegram account id, then projects that identity into the tenant/RBAC auth model and issues the application session. Link intent data stays in `sessionStorage`; it is not placed in the provider callback URL. `BETTER_AUTH_URL`, the registered Telegram callback origin, and the frontend Better Auth base must always be the same host so the state/session cookies are present on callback.
 
 Use the maintained `@tma.js` stack for Telegram Mini App client work. Deprecated Telegram Web App helper packages are intentionally banned by static checks; extend the guard tests before changing the approved SDK policy.
 

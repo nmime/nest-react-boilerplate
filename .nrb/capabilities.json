@@ -222,12 +222,11 @@
         "apps/backend/discord/discord-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
-        "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
         {
-          "hosts": "selected-backend",
+          "hosts": "durable-backend",
           "moduleExpression": "PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })",
           "imports": [
             {

@@ -5,6 +5,13 @@
 Provides component-test lifecycle helpers and reusable PostgreSQL, Redis, NATS,
 SeaweedFS, MySQL, and generic Testcontainers without starting them in unit tests.
 
+The `@app/backend-common-component-test-runtime` entrypoint exposes Docker
+availability probes without loading database-specific container helpers.
+Component suites for a MongoDB selection use that entrypoint and mark their
+test-only import with `nx-ignore-next-line`, so production builds retain only
+the selected database provider. The existing main entrypoint still exports the
+full set of provider test helpers for maintainer test runs.
+
 ## Commands
 
 ```bash

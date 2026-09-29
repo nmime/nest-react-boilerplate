@@ -50,6 +50,8 @@ product code.
   of whether deployment owns the service or connects to an external instance.
 - Provider-backed payments are wired only into selected durable backend hosts;
   stateless bot hosts retain their database-independent capabilities.
+- Component-only Docker availability probes do not introduce PostgreSQL test
+  helpers into a selected MongoDB production build graph.
 - Managed full-stack MongoDB uses the selected port consistently for the
   server, replica-set identity, migrations, and application connection URI.
 

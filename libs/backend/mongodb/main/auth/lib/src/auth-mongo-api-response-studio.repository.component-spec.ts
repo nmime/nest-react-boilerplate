@@ -3,7 +3,8 @@
 // @requirements REQ-API-RESPONSE-STUDIO-004
 import { randomUUID } from 'node:crypto';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
-import { hasDockerRuntime } from '@app/backend-common-component-test';
+// nx-ignore-next-line -- This component-only probe is not a production build dependency.
+import { hasDockerRuntime } from '@app/backend-common-component-test-runtime';
 import type { ApiResponseStudioParsedVariant } from '@app/backend-feature-auth-shared';
 import { MongoClient } from 'mongodb';
 import type { ResultAsync } from 'neverthrow';

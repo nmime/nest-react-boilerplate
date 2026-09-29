@@ -1,7 +1,8 @@
 // @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005
 import { randomUUID } from 'node:crypto';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
-import { hasDockerRuntime } from '@app/backend-common-component-test';
+// nx-ignore-next-line -- This component-only probe is not a production build dependency.
+import { hasDockerRuntime } from '@app/backend-common-component-test-runtime';
 import {
   NotificationAudienceSnapshotStatus,
   NotificationBroadcastStatus,

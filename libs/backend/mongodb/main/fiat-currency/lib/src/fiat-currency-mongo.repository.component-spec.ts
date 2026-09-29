@@ -1,6 +1,7 @@
 // @requirements REQ-FIAT-HISTORY-003
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
-import { hasDockerRuntime } from '@app/backend-common-component-test';
+// nx-ignore-next-line -- This component-only probe is not a production build dependency.
+import { hasDockerRuntime } from '@app/backend-common-component-test-runtime';
 import { MongoClient } from 'mongodb';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {

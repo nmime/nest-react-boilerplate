@@ -1,7 +1,8 @@
 // @requirements REQ-AUTH-TENANT-004 REQ-AUTH-IDENTITY-005 REQ-AUTH-PERSISTENCE-007
 import { randomUUID } from 'node:crypto';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
-import { hasDockerRuntime } from '@app/backend-common-component-test';
+// nx-ignore-next-line -- This component-only probe is not a production build dependency.
+import { hasDockerRuntime } from '@app/backend-common-component-test-runtime';
 import { AuthProvider, AuthProviderChannel, DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import { MongoClient } from 'mongodb';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';

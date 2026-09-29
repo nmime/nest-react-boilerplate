@@ -223,6 +223,8 @@ from validated source and render deterministic, secret-safe runtime topology.
 - **WHEN** the runtime artifact is staged
 - **THEN** it retains the selected package-manager versions and integrity metadata
 - **AND** its application dependency document stays pruned to the application
+- **AND** it retains the selected overrides, settings, package-extension checksum, and workspace policy
+- **AND** standalone backend installs enforce that policy with a frozen lockfile
 - **AND** a frozen production install needs no lockfile reconciliation
 
 #### Scenario: Deployment validation

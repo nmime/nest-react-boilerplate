@@ -138,11 +138,31 @@ function writeBackendOutputs(root: string, provider: 'postgres' | 'mongodb' = 'p
     join(app, 'package.json'),
     JSON.stringify({
       name: 'auth-app-api',
+      packageManager: 'pnpm@12.8.1',
       main: 'apps/backend/auth/auth-app-api/src/main.js',
       dependencies: { [provider === 'postgres' ? 'pg' : 'mongodb']: '1.0.0' },
     }),
   );
-  writeFileSync(join(app, 'pnpm-lock.yaml'), 'lockfileVersion: 9\n');
+  writeFileSync(
+    join(app, 'pnpm-lock.yaml'),
+    JSON.stringify({
+      lockfileVersion: '9.0',
+      importers: {
+        '.': {
+          dependencies: { [provider === 'postgres' ? 'pg' : 'mongodb']: { specifier: '1.0.0', version: '1.0.0' } },
+        },
+      },
+    }),
+  );
+  mkdirSync(join(root, '.nrb/closure'), { recursive: true });
+  writeFileSync(join(root, '.nrb/closure/pnpm-workspace.yaml'), "packages:\n  - '.'\n");
+  writeFileSync(
+    join(root, '.nrb/closure/pnpm-lock.yaml'),
+    `${JSON.stringify({
+      lockfileVersion: '9.0',
+      importers: { '.': { packageManagerDependencies: { pnpm: { specifier: '12.8.1', version: '12.8.1' } } } },
+    })}\n---\nlockfileVersion: '9.0'\n`,
+  );
 }
 
 void describe('deployment artifact closure', () => {
@@ -190,7 +210,7 @@ void describe('deployment artifact closure', () => {
     assert.ok(!artifact.outputPaths.some((path) => path.includes('user-app-api')));
     assert.deepEqual(deploymentInstallPlan(artifact), {
       command: 'pnpm',
-      args: ['install', '--prod', '--prefer-offline', '--no-frozen-lockfile', '--ignore-scripts', '--ignore-workspace'],
+      args: ['install', '--prod', '--prefer-offline', '--frozen-lockfile', '--ignore-scripts'],
       cwd: artifactRoot,
     });
   });
@@ -246,12 +266,28 @@ void describe('deployment artifact closure', () => {
       importers: { '.': { dependencies: { pg: { specifier: '1.0.0', version: '1.0.0' } } } },
       packages: { 'pg@1.0.0': { resolution: { integrity: 'sha512-pruned-application-integrity' } } },
     };
+    const selectedPolicy = {
+      settings: { autoInstallPeers: true, excludeLinksFromLockfile: false },
+      overrides: { pg: '1.0.0' },
+      packageExtensionsChecksum: 'sha256-selected-package-extensions',
+    };
     mkdirSync(join(root, '.nrb/closure'), { recursive: true });
     writeFileSync(
       join(root, '.nrb/closure/pnpm-lock.yaml'),
-      `${JSON.stringify(environment)}\n---\n${JSON.stringify({ ...application, packages: { 'unselected-browser@1.0.0': {} } })}\n`,
+      `${JSON.stringify(environment)}\n---\n${JSON.stringify({ ...application, ...selectedPolicy, packages: { 'unselected-browser@1.0.0': {} } })}\n`,
     );
-    writeFileSync(join(app, 'pnpm-lock.yaml'), `${JSON.stringify(application)}\n`);
+    const generatedApplication = {
+      ...application,
+      importers: {
+        '.': {
+          dependencies: {
+            ...application.importers['.'].dependencies,
+            dataloader: { specifier: '2.2.3', version: '2.2.3' },
+          },
+        },
+      },
+    };
+    writeFileSync(join(app, 'pnpm-lock.yaml'), `${JSON.stringify(generatedApplication)}\n`);
 
     const stage = (): void => {
       stageDeploymentArtifact({
@@ -264,8 +300,9 @@ void describe('deployment artifact closure', () => {
       const documents = parseAllDocuments(readFileSync(join(artifactRoot, 'pnpm-lock.yaml'), 'utf8'));
       assert.deepEqual(
         documents.map((document) => document.toJSON()),
-        [environment, application],
+        [environment, { ...application, ...selectedPolicy }],
       );
+      assert.equal(readFileSync(join(artifactRoot, 'pnpm-workspace.yaml'), 'utf8'), "packages:\n  - '.'\n");
     };
     stage();
     // Future Nx versions may already retain this document; staging must replace

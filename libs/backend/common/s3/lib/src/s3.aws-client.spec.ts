@@ -47,8 +47,8 @@ describe('createAwsS3Client', () => {
       new S3ConfigService({
         endpoint: 'http://127.0.0.1:9000',
         region: 'us-east-1',
-        accessKey: 'minioadmin',
-        secretKey: 'minioadmin',
+        accessKey: 'local-s3-development',
+        secretKey: 'local-s3-development',
         forcePathStyle: true,
       }),
     );

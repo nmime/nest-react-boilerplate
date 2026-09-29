@@ -94,8 +94,7 @@ const {
   startGenericServiceContainer,
   stopGenericServiceContainer,
 } = await import('./generic-service-container');
-const { DefaultMinioApiPort, DefaultMinioConsolePort, createMinioContainer, startMinioContainer } =
-  await import('./minio-container');
+const { DefaultS3ApiPort, DefaultS3AdminPort, createS3Container, startS3Container } = await import('./s3-container');
 const { DefaultMysqlTestPort, createMysqlContainer, startMysqlContainer } = await import('./mysql-container');
 const { DefaultNatsClientPort, DefaultNatsMonitoringPort, createNatsContainer, startNatsContainer } =
   await import('./nats-container');
@@ -163,30 +162,41 @@ describe('service container helpers', () => {
     expect(stop).toHaveBeenCalledOnce();
   });
 
-  it('builds MinIO containers and maps API plus console URLs', async () => {
-    createMinioContainer({
-      image: 'minio:test',
-      rootPassword: 'custom-password',
-      rootUser: 'custom-user',
+  it('builds SeaweedFS containers and maps API plus authenticated admin URLs', async () => {
+    createS3Container({
+      image: 's3:test',
+      secretKey: 'custom-password',
+      accessKey: 'custom-user',
       startupTimeoutMs: 45_000,
     });
 
     expect(lastContainer()).toMatchObject({
-      command: ['server', '/data', '--console-address', ':9001'],
+      command: [
+        'mini',
+        '-dir=/data',
+        '-s3.port=9000',
+        '-admin.port=9001',
+        '-webdav=false',
+        '-s3.port.iceberg=0',
+        '-s3.port.lance=0',
+        '-disableHttp=true',
+      ],
       environment: {
-        MINIO_ROOT_PASSWORD: 'custom-password',
-        MINIO_ROOT_USER: 'custom-user',
+        AWS_SECRET_ACCESS_KEY: 'custom-password',
+        AWS_ACCESS_KEY_ID: 'custom-user',
+        WEED_ADMIN_USER: 'custom-user',
+        WEED_ADMIN_PASSWORD: 'custom-password',
       },
-      exposedPorts: [DefaultMinioApiPort, DefaultMinioApiPort, DefaultMinioConsolePort],
-      image: 'minio:test',
+      exposedPorts: [DefaultS3ApiPort, DefaultS3ApiPort, DefaultS3AdminPort],
+      image: 's3:test',
       startupTimeoutMs: 45_000,
     });
 
-    const started = await startMinioContainer();
+    const started = await startS3Container();
     expect(started).toMatchObject({
-      consoleUrl: 'http://127.0.0.1:19001',
+      adminUrl: 'http://127.0.0.1:19001',
       port: 19_000,
-      rootUser: 'component_test',
+      accessKey: 'component_test',
       url: 'http://127.0.0.1:19000',
     });
   });

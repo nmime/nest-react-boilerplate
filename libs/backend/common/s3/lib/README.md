@@ -13,13 +13,13 @@ default; an operation can explicitly choose another product-owned bucket.
 
 ## Configuration
 
-| Variable                          | Purpose                                                          |
-| --------------------------------- | ---------------------------------------------------------------- |
-| `S3_ENDPOINT`                     | Optional custom endpoint, including MinIO.                       |
-| `S3_REGION`                       | SDK region; defaults to `us-east-1`.                             |
-| `S3_BUCKET`                       | Product's default bucket name.                                   |
-| `S3_ACCESS_KEY` / `S3_SECRET_KEY` | Optional static credential pair; configure both or neither.      |
-| `S3_FORCE_PATH_STYLE`             | Enables path-style addressing for providers such as local MinIO. |
+| Variable                          | Purpose                                                              |
+| --------------------------------- | -------------------------------------------------------------------- |
+| `S3_ENDPOINT`                     | Optional custom endpoint, including SeaweedFS.                       |
+| `S3_REGION`                       | SDK region; defaults to `us-east-1`.                                 |
+| `S3_BUCKET`                       | Product's default bucket name.                                       |
+| `S3_ACCESS_KEY` / `S3_SECRET_KEY` | Optional static credential pair; configure both or neither.          |
+| `S3_FORCE_PATH_STYLE`             | Enables path-style addressing for providers such as local SeaweedFS. |
 
 ## Commands
 
@@ -28,21 +28,28 @@ pnpm exec nx run @app/backend-common-s3:build
 pnpm exec nx run @app/backend-common-s3:test
 ```
 
-The normal suite keeps the live-server spec skipped. To prove the adapter
-against local MinIO, start the Compose `s3` profile and run:
+The normal unit suite skips the live-server spec. The component lane starts
+its own isolated SeaweedFS container with test-only credentials, creates a bucket,
+verifies put/get/list/delete and missing-object behavior, rejects invalid signed
+and anonymous writes, checks the admin login redirect, and cleans up its container:
 
 ```bash
-S3_INTEGRATION_TEST=true \
-S3_ENDPOINT=http://127.0.0.1:9000 \
-S3_REGION=us-east-1 \
-S3_ACCESS_KEY=minioadmin \
-S3_SECRET_KEY=minioadmin \
-S3_FORCE_PATH_STYLE=true \
-pnpm exec nx run @app/backend-common-s3:test
+pnpm exec nx run @app/backend-common-s3:component-test --skip-nx-cache
 ```
 
-The live spec creates an isolated bucket, verifies put/get/list/delete and the
-missing-object result, then removes the bucket.
+The local Compose `s3` profile uses the same digest-pinned SeaweedFS image. It
+creates `S3_BUCKET` on startup, maps S3 on loopback port 9000 and the authenticated
+admin UI on loopback port 9001, and disables unused WebDAV, Iceberg, Lance and
+filer/master HTTP gateways. Its example credentials are for local development;
+production configuration selects an external, properly secured S3 provider.
+
+The retired MinIO volume is never mounted by SeaweedFS. Existing product forks
+must copy objects through the S3 API into a fresh store before switching endpoints;
+the two servers have incompatible on-disk formats. Migrate `runtime.minio` to
+`runtime.s3`, runtime port keys `minio` / `minio-console` to `s3` / `s3-admin`, and
+Compose port overrides to `S3_PORT` / `S3_ADMIN_PORT`; server credentials now use
+the canonical `S3_ACCESS_KEY` / `S3_SECRET_KEY` pair. Regenerate setup artifacts
+from the migrated configuration. No deployed data is automatically rewritten.
 
 ## Docs
 

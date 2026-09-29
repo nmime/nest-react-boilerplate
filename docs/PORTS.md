@@ -19,16 +19,16 @@ Generated from `nrb.config.json` by `nrb reconfigure`. Do not edit by hand.
 
 ## Infrastructure ports
 
-| Service         |  Port | Environment          | Role                 |
-| --------------- | ----: | -------------------- | -------------------- |
-| `postgres`      |  5432 | `POSTGRES_PORT`      | Database             |
-| `redis`         |  6379 | `REDIS_PORT`         | Cache / sessions     |
-| `mongodb`       | 27017 | `MONGODB_PORT`       | Alternative database |
-| `nats`          |  4222 | `NATS_PORT`          | Messaging            |
-| `nats-monitor`  |  8222 | `NATS_MONITOR_PORT`  | NATS metrics         |
-| `minio`         |  9000 | `MINIO_PORT`         | Object storage       |
-| `minio-console` |  9001 | `MINIO_CONSOLE_PORT` | Object storage UI    |
-| `edge`          |  8080 | `EDGE_PORT`          | Reverse proxy / edge |
+| Service        |  Port | Environment         | Role                 |
+| -------------- | ----: | ------------------- | -------------------- |
+| `postgres`     |  5432 | `POSTGRES_PORT`     | Database             |
+| `redis`        |  6379 | `REDIS_PORT`        | Cache / sessions     |
+| `mongodb`      | 27017 | `MONGODB_PORT`      | Alternative database |
+| `nats`         |  4222 | `NATS_PORT`         | Messaging            |
+| `nats-monitor` |  8222 | `NATS_MONITOR_PORT` | NATS metrics         |
+| `s3`           |  9000 | `S3_PORT`           | Object storage       |
+| `s3-admin`     |  9001 | `S3_ADMIN_PORT`     | Object storage UI    |
+| `edge`         |  8080 | `EDGE_PORT`         | Reverse proxy / edge |
 
 ## Observability ports
 
@@ -62,8 +62,8 @@ Staging uses the configured offset **+100**.
 | `mongodb`          |        27117 |     27017 | Alternative database       |
 | `nats`             |         4322 |      4222 | Messaging                  |
 | `nats-monitor`     |         8322 |      8222 | NATS metrics               |
-| `minio`            |         9100 |      9000 | Object storage             |
-| `minio-console`    |         9101 |      9001 | Object storage UI          |
+| `s3`               |         9100 |      9000 | Object storage             |
+| `s3-admin`         |         9101 |      9001 | Object storage UI          |
 | `otlp-grpc`        |         4417 |      4317 | OTLP gRPC                  |
 | `otlp-http`        |         4418 |      4318 | OTLP HTTP                  |
 | `edge`             |         8180 |      8080 | Reverse proxy / edge       |

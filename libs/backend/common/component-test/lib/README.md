@@ -3,7 +3,7 @@
 ## Purpose
 
 Provides component-test lifecycle helpers and reusable PostgreSQL, Redis, NATS,
-MinIO, MySQL, and generic Testcontainers without starting them in unit tests.
+SeaweedFS, MySQL, and generic Testcontainers without starting them in unit tests.
 
 ## Commands
 

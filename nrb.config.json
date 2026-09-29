@@ -92,8 +92,8 @@
       "mongodb": 27017,
       "nats": 4222,
       "nats-monitor": 8222,
-      "minio": 9000,
-      "minio-console": 9001,
+      "s3": 9000,
+      "s3-admin": 9001,
       "otlp-grpc": 4317,
       "otlp-http": 4318,
       "edge": 8080,
@@ -108,9 +108,9 @@
       "user": "postgres",
       "password": "postgres"
     },
-    "minio": {
-      "accessKey": "minioadmin",
-      "secretKey": "minioadmin"
+    "s3": {
+      "accessKey": "local-s3-development",
+      "secretKey": "local-s3-development"
     },
     "localSecrets": {
       "session": "local-session-secret-change-me-32-chars",

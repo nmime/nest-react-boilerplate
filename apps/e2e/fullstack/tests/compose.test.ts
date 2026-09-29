@@ -48,7 +48,7 @@ void describe('fullstack selected closure', () => {
     const selection = resolveFullstackSelection({
       provider: 'mongodb',
       roots: ['auth-app-api', 'discord-app-api', 'fullstack-e2e', 'user-app'],
-      services: ['auth-app-api', 'discord-app-api', 'minio', 'mongodb', 'mongodb-init', 'mongodb-migrate', 'user-app'],
+      services: ['auth-app-api', 'discord-app-api', 's3', 'mongodb', 'mongodb-init', 'mongodb-migrate', 'user-app'],
     });
     assert.deepEqual(selection.applicationServices, ['auth-app-api', 'discord-app-api', 'user-app']);
     assert.deepEqual(selection.profiles, ['auth-app-api', 'discord-app-api', 'mongodb', 's3', 'user-app']);
@@ -350,7 +350,7 @@ void it('delegates selected image compilation without treating infrastructure se
     JSON.stringify({
       provider: 'postgres',
       roots: ['fullstack-e2e', 'user-app'],
-      services: ['migrate', 'postgres', 'redis', 'minio', 'user-app'],
+      services: ['migrate', 'postgres', 'redis', 's3', 'user-app'],
     }),
   );
   writeFileSync(

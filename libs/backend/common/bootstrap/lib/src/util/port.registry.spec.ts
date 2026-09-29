@@ -29,8 +29,8 @@ const infrastructurePorts: Record<string, number> = {
   redis: 6379,
   nats: 4222,
   'nats-monitor': 8222,
-  minio: 9000,
-  'minio-console': 9001,
+  s3: 9000,
+  's3-admin': 9001,
 };
 
 const allPorts = { ...servicePorts, ...infrastructurePorts };

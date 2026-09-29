@@ -264,7 +264,7 @@ export function createTemplateDefaultConfig(desired: NrbConfig): NrbConfig {
       stagingOffset: defaultRuntimeConfig.stagingOffset,
       containerPort: defaultRuntimeConfig.containerPort,
       postgres: { ...defaultRuntimeConfig.postgres },
-      minio: { ...defaultRuntimeConfig.minio },
+      s3: { ...defaultRuntimeConfig.s3 },
       localSecrets: { ...defaultRuntimeConfig.localSecrets },
     },
     session: { ...defaultSessionConfig },

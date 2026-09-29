@@ -181,8 +181,8 @@ export const defaultRuntimePorts = {
   mongodb: 27017,
   nats: 4222,
   'nats-monitor': 8222,
-  minio: 9000,
-  'minio-console': 9001,
+  s3: 9000,
+  's3-admin': 9001,
   'otlp-grpc': 4317,
   'otlp-http': 4318,
   edge: 8080,
@@ -197,7 +197,7 @@ export const defaultRuntimeConfig = {
   stagingOffset: 100,
   containerPort: 80,
   postgres: { user: 'postgres', password: 'postgres' },
-  minio: { accessKey: 'minioadmin', secretKey: 'minioadmin' },
+  s3: { accessKey: 'local-s3-development', secretKey: 'local-s3-development' },
   localSecrets: {
     session: 'local-session-secret-change-me-32-chars',
     betterAuth: 'local-better-auth-secret-change-me-32-chars',
@@ -395,13 +395,13 @@ const runtimeSchema = z
       })
       .strict()
       .default({ ...defaultRuntimeConfig.postgres }),
-    minio: z
+    s3: z
       .object({
-        accessKey: z.string().min(1).default(defaultRuntimeConfig.minio.accessKey),
-        secretKey: z.string().min(1).default(defaultRuntimeConfig.minio.secretKey),
+        accessKey: z.string().min(1).default(defaultRuntimeConfig.s3.accessKey),
+        secretKey: z.string().min(1).default(defaultRuntimeConfig.s3.secretKey),
       })
       .strict()
-      .default({ ...defaultRuntimeConfig.minio }),
+      .default({ ...defaultRuntimeConfig.s3 }),
     localSecrets: z
       .object({
         session: z.string().min(1).default(defaultRuntimeConfig.localSecrets.session),
@@ -417,7 +417,7 @@ const runtimeSchema = z
     stagingOffset: defaultRuntimeConfig.stagingOffset,
     containerPort: defaultRuntimeConfig.containerPort,
     postgres: { ...defaultRuntimeConfig.postgres },
-    minio: { ...defaultRuntimeConfig.minio },
+    s3: { ...defaultRuntimeConfig.s3 },
     localSecrets: { ...defaultRuntimeConfig.localSecrets },
   });
 
@@ -672,7 +672,7 @@ export function migrateV1ToV2(raw: Record<string, unknown>): Record<string, unkn
       stagingOffset: defaultRuntimeConfig.stagingOffset,
       containerPort: defaultRuntimeConfig.containerPort,
       postgres: { ...defaultRuntimeConfig.postgres },
-      minio: { ...defaultRuntimeConfig.minio },
+      s3: { ...defaultRuntimeConfig.s3 },
       localSecrets: { ...defaultRuntimeConfig.localSecrets },
     };
   }

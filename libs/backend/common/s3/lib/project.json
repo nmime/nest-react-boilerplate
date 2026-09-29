@@ -31,6 +31,14 @@
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/backend/common/s3/lib"]
+    },
+    "component-test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/backend/common/s3/lib",
+        "command": "NODE_ENV=test S3_INTEGRATION_TEST=true vitest run --config vitest.config.mts src/s3.live.integration.spec.ts"
+      }
     }
   }
 }

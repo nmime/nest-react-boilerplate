@@ -152,6 +152,13 @@ failure conversion without leaking data across owners.
 
 - Invalid keys or unavailable storage return bounded typed failures.
 
+#### Scenario: Bundled S3 storage authenticates real object operations
+
+- **WHEN** the selected bundled S3 service starts from its maintained, pinned image
+- **THEN** the AWS SDK adapter creates an isolated bucket and round-trips bytes and metadata through put, get, list, and delete
+- **AND** invalid credentials and anonymous object writes are rejected
+- **AND** storage management routes require authentication and unused gateways are disabled
+
 #### Scenario: Escaping storage key
 
 - **WHEN** a storage key attempts to escape its namespace

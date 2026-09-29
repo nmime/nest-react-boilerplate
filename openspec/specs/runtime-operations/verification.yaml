@@ -202,6 +202,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: component
+        file: libs/backend/common/s3/lib/src/s3.live.integration.spec.ts
+        target: '@app/backend-common-s3:component-test'
+        lanes:
+          - pr
+          - main
   - id: REQ-RUNTIME-DATABASE-008
     projects:
       - '@app/backend-mongodb-main'

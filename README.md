@@ -180,9 +180,9 @@ flowchart LR
 | 🟦 **Workspace** | Nx 23, TypeScript, pnpm 12.8.1, and Node.js 24                                                       |
 | 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
 | 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
-| 🩷 **Data**      | PostgreSQL + MikroORM or native MongoDB, explicit migrations, Redis, NATS, S3/MinIO adapters         |
+| 🩷 **Data**      | PostgreSQL + MikroORM or native MongoDB, explicit migrations, Redis, NATS, S3/SeaweedFS adapters     |
 | 🟨 **Contracts** | OpenAPI, generated clients, RFC 9457 Problem Details, typed public extensions                        |
-| 🟧 **Delivery**  | Docker Compose, Dockerfiles, Kubernetes/Helm, GitHub Actions, release and operations runbooks        |
+| 🟧 **Delivery**  | Docker Compose, Dockerfiles, Kubernetes/Helm, selected CI rendering, release and operations runbooks |
 
 Explore the full boundary model in [Architecture](docs/architecture.md) and the focused [Architecture Deep Dives](docs/architecture/README.md).
 
@@ -196,7 +196,7 @@ Explore the full boundary model in [Architecture](docs/architecture.md) and the 
 | NATS           | 🟢 Wired           | Messaging backbone for workers and event-driven features                                  |
 | Telegram       | 🟢 Wired           | Better Auth OIDC, signed TMA sessions, webhook/polling bot runtime, and Open App menus    |
 | Discord        | 🟢 Wired           | Slash commands, interactions endpoint, and OAuth 2.0 social authentication                |
-| S3 / MinIO     | 🟢 Wired           | AWS SDK v3 adapter, injectable test adapter, and local MinIO profile                      |
+| S3 / SeaweedFS | 🟢 Wired           | AWS SDK v3 adapter, injectable test adapter, and local SeaweedFS profile                  |
 | PostHog        | 🟢 Wired           | Disabled-by-default analytics provider with an explicit API-key contract                  |
 | OpenTelemetry  | 🟢 Wired on Node   | OTLP traces and metrics with a Prometheus-exporting collector path                        |
 | Email provider | 🟡 Extension point | Better Auth lifecycle ownership is ready; the product chooses its vendor                  |

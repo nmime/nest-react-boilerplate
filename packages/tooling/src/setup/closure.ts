@@ -159,7 +159,7 @@ export function buildSelectedClosure(graph: ProjectGraphLike, input: ClosureInpu
     stagingOffset: defaultRuntimeConfig.stagingOffset,
     containerPort: defaultRuntimeConfig.containerPort,
     postgres: { ...defaultRuntimeConfig.postgres },
-    minio: { ...defaultRuntimeConfig.minio },
+    s3: { ...defaultRuntimeConfig.s3 },
     localSecrets: { ...defaultRuntimeConfig.localSecrets },
   };
   const session = input.session ?? { ...defaultSessionConfig };
@@ -196,7 +196,7 @@ export function buildSelectedClosure(graph: ProjectGraphLike, input: ClosureInpu
   }
   const targets = collectTargets(graph, roots, projects);
   const services = collectServices(input.apps, input.capabilities).filter((service) => {
-    const ownershipKey = service === 'minio' ? 's3' : service === 'nats' || service === 'redis' ? service : undefined;
+    const ownershipKey = service === 's3' ? 's3' : service === 'nats' || service === 'redis' ? service : undefined;
     return ownershipKey === undefined || deployment.infrastructure[ownershipKey] === 'bundled';
   });
   const releaseImages = [

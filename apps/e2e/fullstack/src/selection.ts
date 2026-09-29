@@ -194,7 +194,7 @@ function profileForService(service: string): string {
   if (service === 'mongodb' || service === 'mongodb-init' || service === 'mongodb-migrate') {
     return 'mongodb';
   }
-  if (service === 'minio') {
+  if (service === 's3') {
     return 's3';
   }
   return service;

@@ -125,7 +125,7 @@ unset means the guarded lane is skipped:
 | Variable              | Gate                                                                                          |
 | --------------------- | --------------------------------------------------------------------------------------------- |
 | `RUN_DATABASE_E2E`    | When `true`, enables database-backed API e2e suites (e.g. `admin-app-api` health e2e).        |
-| `S3_INTEGRATION_TEST` | When `true`, runs S3/MinIO integration specs against a live object store.                     |
+| `S3_INTEGRATION_TEST` | When `true`, runs S3/SeaweedFS integration specs against a live object store.                 |
 | `TEST_API_PORT`       | Overrides the ephemeral port used by `bootstrapNestApi` test servers in bootstrap unit tests. |
 
 Set them only in CI job environments or local verification runs that need the

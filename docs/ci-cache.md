@@ -10,7 +10,7 @@ Two renderings exist, and only one ships in this template.
 
 The GitHub rendering uses `.github/actions/nx-cache` to persist Nx task outputs in
 the GitHub Actions cache service. It is intentionally a remote cache without a
-separate Nx Cloud, S3, or MinIO credential: the workflow receives no cache
+separate Nx Cloud, S3, or SeaweedFS credential: the workflow receives no cache
 token, and GitHub applies the repository and branch cache-access rules.
 
 Each job has a stable cache scope (`quality`, `e2e`, and so on) to avoid racing
@@ -70,7 +70,7 @@ The supported path is the HTTP cache, configured entirely by environment:
 | `NX_SELF_HOSTED_REMOTE_CACHE_SERVER`       | Base URL. Nx calls `GET`/`PUT` on `<base>/v1/cache/<hash>` with `application/octet-stream`. |
 | `NX_SELF_HOSTED_REMOTE_CACHE_ACCESS_TOKEN` | Bearer token.                                                                               |
 
-**A bucket URL will not work.** MinIO and S3 do not implement that protocol; a
+**A bucket URL will not work.** SeaweedFS and S3 do not implement that protocol; a
 raw bucket endpoint 404s or 403s on every retrieve and store, and Nx degrades to
 local-only _without failing the build_. Run a small cache server in front of the
 bucket.

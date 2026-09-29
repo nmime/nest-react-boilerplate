@@ -223,8 +223,8 @@ function buildRuntimeCredentialReplacements(
   };
   add(previous.postgres.user, next.postgres.user, 'runtime:postgres:user');
   add(previous.postgres.password, next.postgres.password, 'runtime:postgres:password');
-  add(previous.minio.accessKey, next.minio.accessKey, 'runtime:minio:accessKey');
-  add(previous.minio.secretKey, next.minio.secretKey, 'runtime:minio:secretKey');
+  add(previous.s3.accessKey, next.s3.accessKey, 'runtime:s3:accessKey');
+  add(previous.s3.secretKey, next.s3.secretKey, 'runtime:s3:secretKey');
   add(previous.localSecrets.session, next.localSecrets.session, 'runtime:localSecrets:session');
   add(previous.localSecrets.betterAuth, next.localSecrets.betterAuth, 'runtime:localSecrets:betterAuth');
   add(previous.localSecrets.discordCustomId, next.localSecrets.discordCustomId, 'runtime:localSecrets:discordCustomId');
@@ -241,7 +241,7 @@ export function buildOrderedReplacements(previous: NrbConfig, next: NrbConfig): 
   // Identity (includes brand + derived slug-api) — longest-first within this family
   all.push(...buildIdentityReplacements(previous.identity, next.identity));
 
-  // Runtime credentials (postgres/minio/localSecrets)
+  // Runtime credentials (postgres/s3/localSecrets)
   all.push(...buildRuntimeCredentialReplacements(previous.runtime, next.runtime));
 
   // Session

@@ -62,7 +62,7 @@ variables:
 #
 # The remote cache is env-only by design — docs/ci-cache.md forbids a token in
 # nx.json, source, or image build args. Nx 23 resolves it from
-# NX_SELF_HOSTED_REMOTE_CACHE_SERVER; note that a plain S3/MinIO bucket URL does
+# NX_SELF_HOSTED_REMOTE_CACHE_SERVER; note that a plain S3/SeaweedFS bucket URL does
 # NOT work, because Nx speaks GET/PUT on <base>/v1/cache/<hash>. When the
 # variables are unset (forks, or before the cache server exists) Nx falls back to
 # the local cache silently, which is intended.

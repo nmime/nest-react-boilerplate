@@ -487,7 +487,7 @@ export function buildConfig(
       ...overrides.runtime,
       ports: { ...defaultRuntimePorts, ...overrides.runtime?.ports },
       postgres: { ...defaultRuntimeConfig.postgres, ...overrides.runtime?.postgres },
-      minio: { ...defaultRuntimeConfig.minio, ...overrides.runtime?.minio },
+      s3: { ...defaultRuntimeConfig.s3, ...overrides.runtime?.s3 },
       localSecrets: { ...defaultRuntimeConfig.localSecrets, ...overrides.runtime?.localSecrets },
     },
     session: {

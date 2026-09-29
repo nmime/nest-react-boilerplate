@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "configHash": "698b1783439b3a1d385cf1380377dd6175c71e64271f8f177b71f875469fb10c",
+  "configHash": "5a2dd196b284c8045769eb207da4870fbe55e2c8bd2f6e3c00513c161ffb0036",
   "capabilities": [
     {
       "id": "authz",
@@ -347,7 +347,7 @@
         "@app/backend-common-s3"
       ],
       "dockerServices": [
-        "minio"
+        "s3"
       ],
       "environmentVariables": [
         "S3_ACCESS_KEY",

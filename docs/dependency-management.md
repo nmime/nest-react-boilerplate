@@ -188,13 +188,13 @@ floating major-only tags. These tags improve reviewability but are still
 registry-mutable; pin digests as well if the product requires immutable base
 image resolution.
 
-| Service    | Pinned tag                     | Source                   |
-| ---------- | ------------------------------ | ------------------------ |
-| PostgreSQL | `17.11-alpine`                 | Docker Hub `postgres`    |
-| MongoDB    | `8.0.32-noble`                 | Docker Hub `mongo`       |
-| Redis      | `7.4.11-alpine`                | Docker Hub `redis`       |
-| NATS       | `2.15.0-alpine`                | Docker Hub `nats`        |
-| MinIO      | `RELEASE.2025-09-07T16-13-09Z` | Docker Hub `minio/minio` |
+| Service    | Pinned tag             | Source                           |
+| ---------- | ---------------------- | -------------------------------- |
+| PostgreSQL | `17.11-alpine`         | Docker Hub `postgres`            |
+| MongoDB    | `8.0.32-noble`         | Docker Hub `mongo`               |
+| Redis      | `7.4.11-alpine`        | Docker Hub `redis`               |
+| NATS       | `2.15.0-alpine`        | Docker Hub `nats`                |
+| SeaweedFS  | `4.47` (digest pinned) | Docker Hub `chrislusf/seaweedfs` |
 
 Database component tests use the same PostgreSQL and MongoDB versions as the
 bundled deployment configurations. Native device execution remains a separate

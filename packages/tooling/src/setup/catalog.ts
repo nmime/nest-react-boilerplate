@@ -873,7 +873,7 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
     requiresApps: [],
     conflictsWith: [],
     ownedProjects: ['@app/backend-common-s3'],
-    dockerServices: ['minio'],
+    dockerServices: ['s3'],
     environmentVariables: [
       'S3_ENDPOINT',
       'S3_BUCKET',

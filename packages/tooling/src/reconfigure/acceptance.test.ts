@@ -66,8 +66,8 @@ function memoryFilesystem(initial: Record<string, string>): FilesystemAdapter & 
 function sensitiveValues(configValue: NrbConfig): string[] {
   return [
     configValue.runtime.postgres.password,
-    configValue.runtime.minio.accessKey,
-    configValue.runtime.minio.secretKey,
+    configValue.runtime.s3.accessKey,
+    configValue.runtime.s3.secretKey,
     configValue.runtime.localSecrets.session,
     configValue.runtime.localSecrets.betterAuth,
     configValue.runtime.localSecrets.discordCustomId,
@@ -260,7 +260,7 @@ describe('reconfigure acceptance', () => {
       runtime: {
         ...base.runtime,
         postgres: { user: 'postgres', password: 'prev-postgres-password' },
-        minio: { accessKey: 'prev-minio-access', secretKey: 'prev-minio-secret' },
+        s3: { accessKey: 'prev-s3-access', secretKey: 'prev-s3-secret' },
       },
     });
     const desired = parseNrbConfig({
@@ -268,7 +268,7 @@ describe('reconfigure acceptance', () => {
       runtime: {
         ...config().runtime,
         postgres: { user: 'postgres', password: 'next-postgres-password' },
-        minio: { accessKey: 'next-minio-access', secretKey: 'next-minio-secret' },
+        s3: { accessKey: 'next-s3-access', secretKey: 'next-s3-secret' },
         localSecrets: {
           session: 'next-session-secret',
           betterAuth: 'next-better-auth-secret',

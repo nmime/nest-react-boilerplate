@@ -15,7 +15,7 @@ describe('common component-test exports', () => {
   it('exports generic service containers', () => {
     expect(componentTest.createRedisContainer).toBeDefined();
     expect(componentTest.createNatsContainer).toBeDefined();
-    expect(componentTest.createMinioContainer).toBeDefined();
+    expect(componentTest.createS3Container).toBeDefined();
   });
 
   it('does not export removed queue container helpers', () => {

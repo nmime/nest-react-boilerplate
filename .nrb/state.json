@@ -1,11 +1,12 @@
 {
   "version": 1,
-  "configHash": "698b1783439b3a1d385cf1380377dd6175c71e64271f8f177b71f875469fb10c",
+  "configHash": "5a2dd196b284c8045769eb207da4870fbe55e2c8bd2f6e3c00513c161ffb0036",
   "files": {
     ".nrb/capabilities.env": "90a0cfc749a9d700c5098ae1895307ba90278dbe72d0a13717467c85e6bcf6af",
-    ".nrb/capabilities.json": "a97f4c02d496003df726d80741c387756454f315cfbf0249cfe907f5e4f18eb1",
-    ".nrb/summary.md": "e8c482da1223e6c9de76cc89d5c1250f84fd9a31793efd0c72c512bcec1e1432",
-    ".nrb/workspace.json": "aa4e537fe137534a35a7ee952ceabab2abdf3dfa79d1f7b302ae6ba451505e67",
+    ".nrb/capabilities.json": "15d2785343c5895e551bb284178e684c24b15eeb3f5a32c38542904eef57f421",
+    ".nrb/identity.json": "4a56968c59642172f09bd5bf1c70b91c5d4cc6d708b6c83148a87101e1c1d916",
+    ".nrb/summary.md": "15c5a6c36bdeb43e73ad3066e4824ee20757f9d96e573d6854a8f5a8cdc5d32a",
+    ".nrb/workspace.json": "90dde55d7139e41bc9e91e0ba7eb9eed26a22783e92c7b40d81091884c8ef7f1",
     "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "584eb91d05e14897b43209dce43ce0ef40e1f5bd2594a0e4648c020441ad0dc3",
     "apps/backend/auth/auth-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
@@ -20,8 +21,8 @@
     "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "e114c6ee25948d7ba246cabe7a81de6a6e74fa68aba52ad03c5315983337b69d",
     "apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/user/user-app-api/src/capabilities.generated.ts": "e4a368f3bca434b72bc256a0dfd31b4ba99011a2d3975251b8c700a774a54259",
-    "nrb.config.json": "b93407243b641eed474b967738974462ac7671975f19ae7568869df90cbff527",
+    "nrb.config.json": "f7945ee8758ecd0b25da7046cb6f6972993ed93f0b71634b72afcc07fa6249d1",
     "packages/tooling/src/commands/db/capability-migrations.generated.ts": "e1c5df42fb621f054b49f3bd9c4c42ec920ac3db91958281f9c77d00a6408513"
   },
-  "digest": "a64be00b9b3f5e2e289a06df44ee852018c92b3df94f798feccf834b298f5721"
+  "digest": "4ba4d60598d7f97dfe6a5d55ab9c1c2c3eb02786187e6c877ad55439e9ba9319"
 }

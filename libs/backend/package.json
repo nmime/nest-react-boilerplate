@@ -79,6 +79,7 @@
     "@types/supertest": "7.2.1",
     "light-my-request": "6.6.0",
     "supertest": "7.3.0",
-    "testcontainers": "12.2.0"
+    "testcontainers": "12.2.0",
+    "yaml": "2.9.1"
   }
 }

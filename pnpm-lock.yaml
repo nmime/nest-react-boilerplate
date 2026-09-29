@@ -1013,6 +1013,9 @@ importers:
       testcontainers:
         specifier: 12.2.0
         version: 12.2.0(supports-color@10.2.2)
+      yaml:
+        specifier: 2.9.1
+        version: 2.9.1
 
   libs/frontend:
     dependencies:

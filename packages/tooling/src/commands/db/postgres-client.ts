@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { relative, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 
 // Keep the fallback tag identical to the Compose runtime image. Docker can then
 // reuse the image that the runtime stack already pulled instead of performing a
@@ -235,7 +235,8 @@ export function createLocalInvocation({ connectionString, operation, outputPath 
 }
 
 export function createDockerInvocation({ connectionString, cwd, image, operation, outputPath }: { connectionString: string; cwd: string; image: string; operation: PostgresOperation; outputPath: string }): PostgresInvocation {
-  const containerPath = toContainerWorkspacePath(cwd, outputPath);
+  const absoluteArchive = resolve(cwd, outputPath);
+  const containerPath = `/backup/${basename(absoluteArchive)}`;
   const script =
     operation === "backup"
       ? 'exec pg_dump --format=custom --no-owner --no-acl --file "$1" "$DATABASE_URL"'
@@ -247,9 +248,9 @@ export function createDockerInvocation({ connectionString, cwd, image, operation
     "--network",
     "host",
     "--volume",
-    `${cwd}:/workspace`,
+    `${dirname(absoluteArchive)}:/backup${operation === "restore" ? ":ro" : ""}`,
     "--workdir",
-    "/workspace",
+    "/backup",
     "--env",
     "DATABASE_URL",
     image,
@@ -328,16 +329,4 @@ function forwardOutput(result: InvocationResult): void {
 
 function quoteForShell(value: string): string {
   return `'${String(value).replace(/'/gu, "'\\''")}'`;
-}
-
-function toContainerWorkspacePath(cwd: string, path: string): string {
-  const absoluteCwd = resolve(cwd);
-  const absolutePath = resolve(absoluteCwd, path);
-  const relativePath = relative(absoluteCwd, absolutePath);
-
-  if (relativePath === "") return "/workspace";
-  if (relativePath.startsWith("..") || resolve(absolutePath) === absolutePath && relativePath.startsWith("..")) {
-    return path;
-  }
-  return `/workspace/${relativePath.replace(/\\/gu, "/")}`;
 }

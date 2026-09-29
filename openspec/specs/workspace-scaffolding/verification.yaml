@@ -289,6 +289,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: vitest
+        file: packages/tooling/src/commands/db/postgres-client.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
       - kind: component
         file: packages/tooling/src/commands/db/migration.integration.test.ts
         target: '@repo/tooling:test'

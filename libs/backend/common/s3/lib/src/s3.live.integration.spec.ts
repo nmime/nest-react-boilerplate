@@ -1,17 +1,54 @@
 // @requirements REQ-RUNTIME-STORAGE-007
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { CreateBucketCommand, DeleteBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { startS3Container } from '@app/backend-common-component-test';
+import { GenericContainer, Wait, type StartedTestContainer } from 'testcontainers';
+import { parse } from 'yaml';
 import { S3ConfigService } from './config';
 import { AwsS3ObjectStorageClient, createAwsS3Client } from './s3.aws-client';
 
 const integrationEnabled = process.env.S3_INTEGRATION_TEST === 'true';
 
 describe.runIf(integrationEnabled)('AWS S3 adapter with a live S3-compatible server', () => {
-  let service: Awaited<ReturnType<typeof startS3Container>> | undefined;
+  let service:
+    | {
+        container: StartedTestContainer;
+        url: string;
+        adminUrl: string;
+        accessKey: string;
+        secretKey: string;
+      }
+    | undefined;
   beforeAll(async () => {
-    service = await startS3Container();
+    // Read the canonical bundled configuration without importing test helpers
+    // whose PostgreSQL dependencies do not belong to a selected MongoDB product.
+    const compose = parse(
+      readFileSync(new URL('../../../../../../docker/docker-compose.yml', import.meta.url), 'utf8'),
+    ) as {
+      services: { s3: { image: string; command: string[] } };
+    };
+    const accessKey = 'component_test';
+    const secretKey = randomUUID();
+    const container = await new GenericContainer(compose.services.s3.image)
+      .withCommand(compose.services.s3.command)
+      .withEnvironment({
+        AWS_ACCESS_KEY_ID: accessKey,
+        AWS_SECRET_ACCESS_KEY: secretKey,
+        WEED_ADMIN_USER: accessKey,
+        WEED_ADMIN_PASSWORD: secretKey,
+      })
+      .withExposedPorts(9000, 9001)
+      .withWaitStrategy(Wait.forHttp('/healthz', 9000))
+      .withStartupTimeout(120_000)
+      .start();
+    service = {
+      container,
+      accessKey,
+      secretKey,
+      url: `http://${container.getHost()}:${container.getMappedPort(9000)}`,
+      adminUrl: `http://${container.getHost()}:${container.getMappedPort(9001)}`,
+    };
   }, 120_000);
   afterAll(async () => {
     await service?.container.stop();

@@ -243,6 +243,12 @@ checks.
 
 - Invalid history, migration, database, or environment state stops the command.
 
+#### Scenario: PostgreSQL Docker archive outside the workspace
+
+- **WHEN** an explicitly requested backup or restore uses an archive path outside the repository
+- **THEN** the Docker fallback mounts the archive's parent directory at a known container path
+- **AND** restore mounts the archive read-only and credentials remain outside process arguments
+
 #### Scenario: Destructive intent missing
 
 - **WHEN** a destructive-capable command lacks explicit apply intent

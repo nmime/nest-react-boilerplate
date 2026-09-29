@@ -77,9 +77,23 @@ describe("postgres backup/restore client selection", () => {
 
     assert.match(commandLine, /postgres:17\.11-alpine/);
     assert.match(commandLine, /--env DATABASE_URL/);
-    assert.match(commandLine, /\/workspace\/test-results\/dr\/postgres.dump/);
+    assert.match(commandLine, /\/backup\/postgres.dump/);
     assert.equal(commandLine.includes(new URL(databaseUrl).password), false);
     assert.equal(invocation.env.DATABASE_URL, databaseUrl);
+  });
+
+  it("maps absolute archives outside the repository and restores from a read-only mount", () => {
+    for (const operation of ["backup", "restore"] as const) {
+      const invocation = createDockerInvocation({
+        connectionString: databaseUrl, cwd: "/repo", image: DefaultPostgresClientImage,
+        operation, outputPath: "/tmp/audit archives/roundtrip.dump",
+      });
+      const volume = invocation.args[invocation.args.indexOf("--volume") + 1];
+      assert.equal(volume, `/tmp/audit archives:/backup${operation === "restore" ? ":ro" : ""}`);
+      assert.equal(invocation.args.at(-1), "/backup/roundtrip.dump");
+      assert.ok(!invocation.args.includes("/repo:/workspace"));
+      assert.ok(!invocation.args.some((argument) => argument.includes(new URL(databaseUrl).password)));
+    }
   });
 
   it("resets the public schema before restoring partitioned tables", () => {

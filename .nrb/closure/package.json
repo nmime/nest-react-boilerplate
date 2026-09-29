@@ -142,6 +142,7 @@
     "vite": "8.3.1",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.11",
+    "yaml": "2.9.1",
     "zod": "4.6.5"
   },
   "devDependencies": {
@@ -182,11 +183,10 @@
     "tsconfig-paths": "4.2.0",
     "typescript-eslint": "8.71.0",
     "typescript-transform-paths": "4.0.0",
-    "vite-plugin-istanbul": "9.0.1",
-    "yaml": "2.9.1"
+    "vite-plugin-istanbul": "9.0.1"
   },
   "nrb": {
     "configHash": "5a2dd196b284c8045769eb207da4870fbe55e2c8bd2f6e3c00513c161ffb0036",
-    "graphDigest": "e337f2414b1c3c4ecc6075538edecdf32db51154dc9e470024e4a5147beab46a"
+    "graphDigest": "21e07eea200aa1fa71223f6331fd5170bf42260f3422c17f89e6fd18a89eeae4"
   }
 }

@@ -4,7 +4,6 @@
   "files": {
     ".nrb/capabilities.env": "90a0cfc749a9d700c5098ae1895307ba90278dbe72d0a13717467c85e6bcf6af",
     ".nrb/capabilities.json": "15d2785343c5895e551bb284178e684c24b15eeb3f5a32c38542904eef57f421",
-    ".nrb/identity.json": "4a56968c59642172f09bd5bf1c70b91c5d4cc6d708b6c83148a87101e1c1d916",
     ".nrb/summary.md": "15c5a6c36bdeb43e73ad3066e4824ee20757f9d96e573d6854a8f5a8cdc5d32a",
     ".nrb/workspace.json": "90dde55d7139e41bc9e91e0ba7eb9eed26a22783e92c7b40d81091884c8ef7f1",
     "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
@@ -24,5 +23,5 @@
     "nrb.config.json": "f7945ee8758ecd0b25da7046cb6f6972993ed93f0b71634b72afcc07fa6249d1",
     "packages/tooling/src/commands/db/capability-migrations.generated.ts": "e1c5df42fb621f054b49f3bd9c4c42ec920ac3db91958281f9c77d00a6408513"
   },
-  "digest": "4ba4d60598d7f97dfe6a5d55ab9c1c2c3eb02786187e6c877ad55439e9ba9319"
+  "digest": "3641c99865db68f303759170cd0b17ff3d2b4eb80b5afa3c78888a978c2aaa65"
 }

@@ -40,7 +40,7 @@ describe('postgres test container helpers', () => {
   it('creates a configured PostgreSQL container without starting it', () => {
     const unitCredential = createTestCredential('unit');
     const container = createPostgresContainer({
-      image: 'postgres:17-alpine',
+      image: 'postgres:17.11-alpine',
       database: 'unit_db',
       username: 'unit_user',
       password: unitCredential,

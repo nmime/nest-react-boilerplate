@@ -295,10 +295,7 @@ const closureCaddyFixture = {
 };
 writeFileSync(closureCaddyfileFixture, renderClosureCaddyfile(closureCaddyFixture));
 const closureSingleDomainCaddyfileFixture = join(temporaryDirectory, 'Caddyfile.single-domain');
-writeFileSync(
-  closureSingleDomainCaddyfileFixture,
-  renderClosureSingleDomainCaddyfile(closureCaddyFixture),
-);
+writeFileSync(closureSingleDomainCaddyfileFixture, renderClosureSingleDomainCaddyfile(closureCaddyFixture));
 const mongoUriFile = join(temporaryDirectory, 'mongodb_uri.txt');
 const mongoMigrationUriFile = join(temporaryDirectory, 'mongodb_migration_uri.txt');
 const mongoBackupRestoreUriFile = join(temporaryDirectory, 'mongodb_backup_restore_uri.txt');

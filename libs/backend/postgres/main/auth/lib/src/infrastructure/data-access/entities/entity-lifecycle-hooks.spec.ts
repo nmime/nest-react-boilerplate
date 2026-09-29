@@ -1,9 +1,13 @@
 // @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-API-RESPONSE-STUDIO-003
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
 import {
   AdminAuditLogEntity,
   AdminAuditLogEntitySchema,
+  ApiResponseStudioHistoryEntitySchema,
+  ApiResponseStudioResponseEntitySchema,
+  ApiResponseStudioSourceEntitySchema,
   AuthLinkTokenEntity,
   AuthLinkTokenEntitySchema,
   AuthMethodEntity,
@@ -30,6 +34,19 @@ import {
 const invokeLifecycleHook = (hook: unknown): unknown => (hook as (() => unknown) | undefined)?.();
 
 describe('entity timestamp lifecycle hooks', () => {
+  it('timestamps Studio records and preserves an immutable history creation time', () => {
+    for (const schema of [ApiResponseStudioSourceEntitySchema, ApiResponseStudioResponseEntitySchema]) {
+      schema.init();
+      expect(invokeLifecycleHook(schema.meta.properties.createdAt.onCreate)).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onCreate)).toBeInstanceOf(Date);
+      expect(invokeLifecycleHook(schema.meta.properties.updatedAt.onUpdate)).toBeInstanceOf(Date);
+    }
+    ApiResponseStudioHistoryEntitySchema.init();
+    expect(invokeLifecycleHook(ApiResponseStudioHistoryEntitySchema.meta.properties.createdAt.onCreate)).toBeInstanceOf(
+      Date,
+    );
+    expect(ApiResponseStudioHistoryEntitySchema.meta.properties.createdAt.onUpdate).toBeUndefined();
+  });
   it('drives created-only hooks for join, catalog, and log entities', () => {
     AdminAuditLogEntitySchema.init();
     AuthPermissionEntitySchema.init();

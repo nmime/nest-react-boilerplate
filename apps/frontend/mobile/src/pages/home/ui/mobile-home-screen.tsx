@@ -19,7 +19,7 @@ export function MobileHomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView role="main" style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.page}>
         <View style={styles.header}>
@@ -28,7 +28,7 @@ export function MobileHomeScreen() {
             {t('mobile.appName')}
           </Text>
           <Text style={styles.subtitle}>{t('mobile.subtitle')}</Text>
-          <View accessibilityRole="radiogroup" style={styles.langRow}>
+          <View role="group" accessibilityLabel={t('common.language')} style={styles.langRow}>
             {mobileLocaleOptions.map((option) => {
               const selected = activeLocale === option.locale;
               return (

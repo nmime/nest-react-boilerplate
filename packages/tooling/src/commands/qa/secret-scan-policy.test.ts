@@ -210,7 +210,7 @@ describe("product secret scan allowlist", () => {
     assert.deepEqual(loadProductSecretScanAllowlist(join(workspaceRoot, "config/secret-scan.allowlist.absent.json")), []);
     assert.deepEqual(
       loadProductSecretScanAllowlist().map((entry) => entry.id),
-      ["better-auth-runtime-contract-fixture", "xrocket-invoice-address-example"],
+      ["public-local-example-keys-in-gitleaks-policy", "better-auth-runtime-contract-fixture", "payment-invoice-address-example"],
       "the shipped allowlist must carry exactly the two reviewed fixtures, so a stray registration is caught",
     );
   });

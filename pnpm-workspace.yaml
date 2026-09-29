@@ -129,6 +129,13 @@ packageExtensions:
 # Newly published versions require an explicit, reviewed package/version exception.
 minimumReleaseAge: 1440
 
+# Preserve registry provenance and reject untrusted transitive Git/tarball sources.
+trustPolicy: no-downgrade
+# Existing registry-signed releases predating provenance adoption remain installable;
+# trust downgrades in releases from the last week still fail closed.
+trustPolicyIgnoreAfter: 10080
+blockExoticSubdeps: true
+
 # Keep dependency reconciliation explicit. The pnpm resolver otherwise attempts an
 # implicit install before every script, which makes local and CI runs mutate
 # node_modules instead of failing with an actionable install instruction.

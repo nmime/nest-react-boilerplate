@@ -89,3 +89,12 @@ describe('requestContextFromRequest', () => {
     expect(requestContextFromRequest({})).toEqual({});
   });
 });
+
+it('bounds the first user-agent header and falls back to the socket address', () => {
+  expect(
+    requestContextFromRequest({
+      headers: { 'user-agent': ['a'.repeat(600), 'ignored'] },
+      socket: { remoteAddress: 'client-address' },
+    } as AuthenticatedRequest),
+  ).toMatchObject({ userAgent: 'a'.repeat(512), ipAddress: 'client-address' });
+});

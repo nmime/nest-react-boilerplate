@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { readFileSync } from "node:fs";
-import { relative } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, relative, resolve } from "node:path";
 import { collectFiles, commandExists, defaultIgnore, parseArgs, run, textFileFilter, workspaceRoot, writeJson } from "./runtime-utils.ts";
 import {
   dockerGitleaksInvocation,
@@ -21,9 +22,36 @@ const dryRun = args.flags.has("dry-run");
 const engine = args.options.get("engine") ?? process.env.SECRET_SCAN_ENGINE ?? "native";
 const failOnUnavailableExternal = (process.env.SECRET_SCAN_FAIL_ON_UNAVAILABLE_EXTERNAL ?? "true") !== "false";
 const reportPath = args.options.get("report") ?? "test-results/security-secrets/report.json";
-const gitleaksImage = args.options.get("gitleaks-image") ?? process.env.GITLEAKS_DOCKER_IMAGE ?? "zricethezav/gitleaks:v8.30.0";
+const gitleaksImage = args.options.get("gitleaks-image") ?? process.env.GITLEAKS_DOCKER_IMAGE ?? "zricethezav/gitleaks:v8.30.1";
 const gitleaksConfig = args.options.get("gitleaks-config") ?? process.env.GITLEAKS_CONFIG ?? productGitleaksConfigPath;
 const findings = [];
+function runGitleaksScan(container: boolean): ReturnType<typeof run> {
+  // Match the native gate's source scope. Generated builds and reports otherwise make a scan
+  // change merely because another quality gate ran first. Preserve relative source paths so
+  // product/base fixture allowlists still apply, including to uncommitted source files.
+  const source = mkdtempSync(join(tmpdir(), "nrb-secret-scan-"));
+  try {
+    for (const file of collectFiles(workspaceRoot)) {
+      const relativePath = relative(workspaceRoot, file);
+      if (isSecretScanIgnoredPath(relativePath)) continue;
+      const destination = join(source, relativePath);
+      mkdirSync(dirname(destination), { recursive: true });
+      copyFileSync(file, destination);
+    }
+    mkdirSync(resolve(source, dirname(reportPath)), { recursive: true });
+    const invocation = container
+      ? dockerGitleaksInvocation({ config: gitleaksConfig, image: gitleaksImage, reportPath, workspace: source })
+      : nativeGitleaksInvocation({ config: gitleaksConfig, reportPath });
+    const result = run(invocation.command, invocation.args, { cwd: source });
+    const engineReport = resolve(source, gitleaksEngineReportPath(reportPath));
+    if (existsSync(engineReport) && engineReport !== resolve(gitleaksEngineReportPath(reportPath))) {
+      copyFileSync(engineReport, gitleaksEngineReportPath(reportPath));
+    }
+    return result;
+  } finally {
+    rmSync(source, { recursive: true, force: true });
+  }
+}
 const patterns = [
   { id: "private-key", severity: "critical", regex: /-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----/g },
   { id: "aws-access-key", severity: "critical", regex: /\bAKIA[0-9A-Z]{16}\b/g },
@@ -35,13 +63,12 @@ const patterns = [
 ];
 
 if (engine === "gitleaks" && !dryRun) {
+  mkdirSync(dirname(reportPath), { recursive: true });
   if (commandExists("gitleaks")) {
-    const invocation = nativeGitleaksInvocation({ config: gitleaksConfig, reportPath });
-    const result = run(invocation.command, invocation.args);
+    const result = runGitleaksScan(false);
     if (result.status !== 0) findings.push({ rule: "gitleaks", severity: "critical", message: "gitleaks reported findings", stderr: result.stderr.slice(-2000) });
   } else if (commandExists("docker")) {
-    const invocation = dockerGitleaksInvocation({ config: gitleaksConfig, image: gitleaksImage, reportPath, workspace: process.cwd() });
-    const result = run(invocation.command, invocation.args);
+    const result = runGitleaksScan(true);
     if (result.status !== 0) findings.push({ rule: "gitleaks-docker", severity: "critical", message: "gitleaks reported findings", stderr: result.stderr.slice(-2000) });
   } else if (failOnUnavailableExternal) findings.push({ rule: "gitleaks", severity: "high", message: "SECRET_SCAN_ENGINE=gitleaks requested but gitleaks/Docker is unavailable" });
 }

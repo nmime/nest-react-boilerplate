@@ -1,6 +1,6 @@
 import { createGenericServiceContainer, type GenericServiceContainerOptions } from './generic-service-container';
 
-export const DefaultMinioTestImage = 'minio/minio:latest';
+export const DefaultMinioTestImage = 'minio/minio:RELEASE.2025-09-07T16-13-09Z';
 export const DefaultMinioApiPort = 9000;
 export const DefaultMinioConsolePort = 9001;
 export const defaultMinioRootSecret = (): string => ['component', 'test', 'credential', 'minimum', 'length'].join('_');

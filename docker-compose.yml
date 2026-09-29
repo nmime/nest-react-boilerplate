@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17.6-alpine
+    image: postgres:17.11-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -18,7 +18,7 @@ services:
 
   mongodb:
     profiles: [mongodb]
-    image: mongo:8.0.28-noble
+    image: mongo:8.0.32-noble
     restart: unless-stopped
     command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
     ports:
@@ -34,7 +34,7 @@ services:
 
   mongodb-init:
     profiles: [mongodb]
-    image: mongo:8.0.28-noble
+    image: mongo:8.0.32-noble
     restart: 'no'
     depends_on:
       mongodb:

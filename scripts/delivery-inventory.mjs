@@ -7,8 +7,8 @@
  * asserts the public-app rows stay identical to the TypeScript setup catalog.
  */
 export const helmVersion = 'v4.2.3';
-export const mongoImage = 'mongo:8.0.28-noble';
-export const postgresImage = 'postgres:17.6-alpine';
+export const mongoImage = 'mongo:8.0.32-noble';
+export const postgresImage = 'postgres:17.11-alpine';
 
 export const productionAppIds = Object.freeze([
   'admin-app',

@@ -212,7 +212,7 @@ describe('service container helpers', () => {
     createRedisContainer();
     expect(lastContainer()).toMatchObject({
       exposedPorts: [DefaultRedisTestPort],
-      image: 'redis:7-alpine',
+      image: 'redis:7.4.11-alpine',
     });
 
     createRedisContainer({ image: 'redis:test', internalPort: 6380 });

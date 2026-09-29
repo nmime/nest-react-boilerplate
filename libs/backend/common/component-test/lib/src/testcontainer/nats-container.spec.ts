@@ -17,7 +17,7 @@ describe('nats test container helpers', () => {
   });
 
   it('exposes default NATS test container constants', () => {
-    expect(DefaultNatsTestImage).toBe('nats:2.10-alpine');
+    expect(DefaultNatsTestImage).toBe('nats:2.15.0-alpine');
     expect(DefaultNatsClientPort).toBe(4222);
     expect(DefaultNatsMonitoringPort).toBe(8222);
   });
@@ -28,7 +28,7 @@ describe('nats test container helpers', () => {
 
   it('creates a configured NATS container without starting it', () => {
     const container = createNatsContainer({
-      image: 'nats:2.10-alpine',
+      image: 'nats:2.15.0-alpine',
       startupTimeoutMs: 30_000,
     });
 

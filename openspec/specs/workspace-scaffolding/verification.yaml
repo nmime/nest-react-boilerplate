@@ -210,6 +210,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: security
+        file: packages/tooling/src/commands/qa/security-scanners.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: packages/tooling/src/commands/qa/browser-matrix.test.ts
         target: '@repo/tooling:test'

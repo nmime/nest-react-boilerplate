@@ -7,6 +7,7 @@ import { MongoClient } from 'mongodb';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { ResultAsync } from 'neverthrow';
 import { initializeMongoAuthPersistence, AuthMongoCollections } from './auth-mongo.collections';
+import { Migration20260930090000RepairProblemPresentationValidator } from './migrations';
 import { MongoAuthUserRepository } from './auth-mongo-user.repository';
 import { MongoAuthTokenRepository } from './auth-mongo-token.repository';
 import { MongoAuthRoleRepository, MongoAuthUserRoleRepository } from './auth-mongo-rbac.repository';
@@ -25,7 +26,7 @@ describeIfDocker('Mongo auth repositories on a replica set', () => {
   let client: MongoClient;
 
   beforeAll(async () => {
-    container = await new MongoDBContainer('mongo:7.0.26-jammy').start();
+    container = await new MongoDBContainer('mongo:8.0.32-noble').start();
     const separator = container.getConnectionString().includes('?') ? '&' : '?';
     client = new MongoClient(`${container.getConnectionString()}${separator}directConnection=true&replicaSet=rs0`);
     await client.connect();
@@ -358,6 +359,12 @@ describeIfDocker('Mongo auth repositories on a replica set', () => {
         severity: 'error',
         expectedRevision: 0,
         actorUserId: randomUUID(),
+        textsEn: ['English response'],
+        textsRu: ['Русский ответ'],
+        textsZh: ['中文回复'],
+        support: true,
+        customDescription: 'Localized recovery',
+        figmaOnly: true,
       }),
     );
 
@@ -381,6 +388,42 @@ describeIfDocker('Mongo auth repositories on a replica set', () => {
     expect(results.filter((result) => result.isErr())[0]).toMatchObject({
       error: { code: 'revision_conflict' },
     });
+  });
+
+  it('upgrades a stored legacy presentation validator and keeps unknown fields forbidden', async () => {
+    const { database, presentations } = repositories();
+    const collectionInfo = await database
+      .listCollections({ name: AuthMongoCollections.presentations }, { nameOnly: false })
+      .next();
+    const legacy = structuredClone(
+      collectionInfo && 'options' in collectionInfo ? collectionInfo.options?.validator : undefined,
+    ) as { $jsonSchema: { properties: Record<string, unknown> } } | undefined;
+    if (!legacy) {
+      throw new Error('Expected the existing presentation validator.');
+    }
+    for (const field of ['messageZh', 'textsEn', 'textsRu', 'textsZh', 'support', 'customDescription', 'figmaOnly']) {
+      delete legacy.$jsonSchema.properties[field];
+    }
+    await database.command({ collMod: AuthMongoCollections.presentations, validator: legacy });
+    await Migration20260930090000RepairProblemPresentationValidator.up(database);
+    await Migration20260930090000RepairProblemPresentationValidator.verify(database);
+    const saved = await unwrap(
+      presentations.save({
+        ruleId: 'auth-app-api:POST:/auth/login:401',
+        display: 'toast',
+        severity: 'error',
+        expectedRevision: 0,
+        actorUserId: randomUUID(),
+        textsZh: ['中文回复'],
+        support: true,
+      }),
+    );
+    expect(saved.textsZh).toEqual(['中文回复']);
+    await expect(
+      database
+        .collection<{ _id: string }>(AuthMongoCollections.presentations)
+        .updateOne({ _id: saved.id }, { $set: { unknownField: 'forbidden' } }),
+    ).rejects.toThrow('Document failed validation');
   });
 });
 

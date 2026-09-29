@@ -11,6 +11,7 @@ export interface ApiResponseStudioHttpResponse {
   readonly status: number;
   readonly headers: Readonly<Record<string, string | undefined>>;
   readonly body: AsyncIterable<Uint8Array>;
+  dispose?: () => Promise<void>;
 }
 export interface ApiResponseStudioHttpPort {
   request(input: {
@@ -80,7 +81,9 @@ export const createPinnedLookup =
     const requestedFamily = options.family === 4 || options.family === 6 ? options.family : undefined;
     const matching = requestedFamily ? resolved.filter((entry) => entry.family === requestedFamily) : resolved;
     if (matching.length === 0) {
-      const error = new Error('No validated source address is available for the requested family.') as NodeJS.ErrnoException;
+      const error = new Error(
+        'No validated source address is available for the requested family.',
+      ) as NodeJS.ErrnoException;
       error.code = 'ENOTFOUND';
       callback(error, options.all ? [] : '', requestedFamily);
       return;
@@ -89,10 +92,7 @@ export const createPinnedLookup =
       callback(null, matching);
       return;
     }
-    const first = matching[0];
-    if (!first) {
-      return;
-    }
+    const first = matching[0] as LookupAddress;
     callback(null, first.address, first.family);
   };
 
@@ -129,9 +129,14 @@ export class UndiciHttpPort implements ApiResponseStudioHttpPort {
           ]),
         ),
         body: response.body,
+        dispose: async () => {
+          response.body.destroy();
+          await dispatcher.close();
+        },
       };
-    } finally {
+    } catch (error) {
       await dispatcher.close();
+      throw error;
     }
   }
 }
@@ -177,8 +182,9 @@ export class SafeOpenApiFetcher {
       const timeout = setTimeout(() => {
         controller.abort();
       }, options.timeoutMs);
+      let response: ApiResponseStudioHttpResponse | undefined;
       try {
-        const response = await this.http.request({
+        response = await this.http.request({
           url: current,
           addresses,
           signal: controller.signal,
@@ -232,6 +238,7 @@ export class SafeOpenApiFetcher {
         return document;
       } finally {
         clearTimeout(timeout);
+        await response?.dispose?.();
       }
     }
     throw new Error('OpenAPI source redirect is invalid.');

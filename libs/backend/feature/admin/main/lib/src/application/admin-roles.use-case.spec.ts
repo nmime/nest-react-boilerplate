@@ -436,3 +436,38 @@ describe('AdminRolesUseCase', () => {
     );
   });
 });
+
+it('refuses roles removed between catalog reads and mutations', async () => {
+  const { roles, useCase } = createDeps();
+  roles.updateRole.mockReturnValue(okAsync(null));
+  await expect(useCase.updateRole(principal, 'role-admin', {})).rejects.toThrow('not found');
+  roles.findById.mockReturnValue(okAsync(null));
+  await expect(useCase.setRolePermissions(principal, 'role-admin', { permissions: [] })).rejects.toThrow('not found');
+  roles.findById.mockReturnValue(okAsync(role({ isSystem: false })));
+  roles.setRolePermissions.mockReturnValue(okAsync(null));
+  await expect(useCase.setRolePermissions(principal, 'role-admin', { permissions: [] })).rejects.toThrow('not found');
+  roles.listRolesWithPermissions.mockReturnValue(okAsync([]));
+  await expect(useCase.updateRole(principal, 'missing', {})).rejects.toThrow('not found');
+});
+it('requires seeded grants and emits role audit details using the transactional result', async () => {
+  const { roles, auditLogs, useCase } = createDeps(true);
+  roles.findPermissionsByKeys.mockReturnValue(okAsync([]));
+  await expect(
+    useCase.createRole(principal, { key: 'support', permissions: [AdminUsersReadPermission] }),
+  ).rejects.toThrow('missing database rows');
+  roles.findPermissionsByKeys.mockImplementation((keys) => okAsync(keys.map((key) => ({ key }))));
+  auditLogs.recordTransactionally.mockImplementation(async (input) => {
+    const result = await input.operation({ transaction: 'audit' });
+    const audit = (input as unknown as { audit: (result: unknown) => unknown }).audit(result);
+    expect(audit).toMatchObject({
+      tenantId,
+      actorUserId: principal.subject,
+      action: 'admin.role.update',
+      resource: 'admin.roles',
+      targetUserId: 'role-admin',
+      metadata: context,
+    });
+    return result;
+  });
+  await useCase.updateRole(principal, 'role-admin', { label: 'Operations', description: ' Details ' }, context);
+});

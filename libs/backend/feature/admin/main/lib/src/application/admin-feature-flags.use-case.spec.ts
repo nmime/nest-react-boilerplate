@@ -93,3 +93,18 @@ describe('AdminFeatureFlagsUseCase', () => {
     expect(fixture.auditLogs.recordTransactionally).toHaveBeenCalledOnce();
   });
 });
+
+it.each(['Invalid-Key', 'a'.repeat(161)])('rejects invalid key %s before a transaction', async (key) => {
+  const fixture = createFixture();
+  await expect(fixture.useCase.upsert(principal, key, { value: true })).rejects.toThrow('dotted lowercase');
+  expect(fixture.auditLogs.recordTransactionally).not.toHaveBeenCalled();
+});
+it.each([false, 'variant', 2.5])('audits existing flags and preserves unspecified settings for %s', async (value) => {
+  const fixture = createFixture();
+  fixture.featureFlags.findByKey.mockReturnValue(okAsync(fixture.entity));
+  await fixture.useCase.upsert(principal, 'checkout.newflow', { value });
+  expect(fixture.featureFlags.upsert).toHaveBeenCalledWith(
+    { key: 'checkout.newflow', tenantId: principal.tenantId, value },
+    expect.anything(),
+  );
+});

@@ -28,10 +28,7 @@
     "the",
     "your"
   ],
-  "reviewedTechnicalTerms": [
-    "/account link",
-    "/account status"
-  ],
+  "reviewedTechnicalTerms": ["/account link", "/account status"],
   "untranslatedKeys": [
     "admin.audit.filter.uuidPlaceholder",
     "admin.loginAnalytics.column.geo",

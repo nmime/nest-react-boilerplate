@@ -5,11 +5,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthMongoCollectionDefinitions, AuthMongoCollections } from '../auth-mongo.collections';
 import { Migration20260812120000AddAuthUserAccountRecovery } from './Migration20260812120000AddAuthUserAccountRecovery';
 import { Migration20260828110000CreateApiResponseStudio } from './Migration20260828110000CreateApiResponseStudio';
+import { Migration20260930090000RepairProblemPresentationValidator } from './Migration20260930090000RepairProblemPresentationValidator';
 import { authMongoMigrations } from './index';
 
 const definition = (name: string) => {
   const value = AuthMongoCollectionDefinitions.find((item) => item.name === name);
-  if (!value) {throw new Error(`Missing collection definition ${name}.`);}
+  if (!value) {
+    throw new Error(`Missing collection definition ${name}.`);
+  }
   return value;
 };
 
@@ -111,6 +114,35 @@ describe('API Response Studio MongoDB migration', () => {
     expect(
       Migration20260828110000CreateApiResponseStudio.id > Migration20260812120000AddAuthUserAccountRecovery.id,
     ).toBe(true);
-    expect(authMongoMigrations.at(-1)).toBe(Migration20260828110000CreateApiResponseStudio);
+    expect(authMongoMigrations).toContain(Migration20260828110000CreateApiResponseStudio);
+  });
+
+  it('repairs the stored legacy validator in a new ordered migration without rewriting documents', async () => {
+    const { command, database, updateMany } = createExistingDatabase();
+    await Migration20260930090000RepairProblemPresentationValidator.up(database);
+    expect(authMongoMigrations.at(-1)).toBe(Migration20260930090000RepairProblemPresentationValidator);
+    expect(
+      Migration20260930090000RepairProblemPresentationValidator.id > Migration20260828110000CreateApiResponseStudio.id,
+    ).toBe(true);
+    expect(command).toHaveBeenCalledExactlyOnceWith({
+      collMod: AuthMongoCollections.presentations,
+      validator: definition(AuthMongoCollections.presentations).validator,
+      validationAction: 'error',
+      validationLevel: 'strict',
+    });
+    expect(updateMany).not.toHaveBeenCalled();
+    const schema = definition(AuthMongoCollections.presentations).validator['$jsonSchema'];
+    expect(schema).toMatchObject({
+      additionalProperties: false,
+      properties: {
+        messageZh: { bsonType: 'string' },
+        textsEn: { bsonType: 'array' },
+        textsRu: { bsonType: 'array' },
+        textsZh: { bsonType: 'array' },
+        support: { bsonType: 'bool' },
+        customDescription: { bsonType: 'string' },
+        figmaOnly: { bsonType: 'bool' },
+      },
+    });
   });
 });

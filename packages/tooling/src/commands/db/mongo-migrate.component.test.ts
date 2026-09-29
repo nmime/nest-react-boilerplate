@@ -7,6 +7,7 @@ import { MongoClient } from "mongodb";
 import { AuthMongoCollectionDefinitions } from "../../../../../libs/backend/mongodb/main/auth/lib/src/auth-mongo.collections.ts";
 import { FeatureFlagCollectionName } from "../../../../../libs/backend/mongodb/main/feature-flags/lib/src/feature-flag-mongo.collection.ts";
 import { NotificationMongoCollectionDefinitions } from "../../../../../libs/backend/mongodb/main/notification/lib/src/notification-mongo.collections.ts";
+import { TenantOwnedNotificationMongoCollectionDefinitions } from "../../../../../libs/backend/mongodb/main/notification/lib/src/notification-mongo.tenant-collections.ts";
 import {
   MongoMigrationLedgerCollection,
   runMongoMigrations,
@@ -24,7 +25,7 @@ describe("complete MongoDB migration ledger", { skip: dockerAvailable ? false : 
   let client: MongoClient;
 
   before(async () => {
-    container = await new MongoDBContainer("mongo:7.0.26-jammy").start();
+    container = await new MongoDBContainer("mongo:8.0.32-noble").start();
     const separator = container.getConnectionString().includes("?") ? "&" : "?";
     client = new MongoClient(`${container.getConnectionString()}${separator}directConnection=true&replicaSet=rs0`);
     await client.connect();
@@ -93,7 +94,7 @@ describe("complete MongoDB migration ledger", { skip: dockerAvailable ? false : 
     await assert.rejects(verifyMongoMigrations(database, mongoMigrations), /incompatible validator/u);
 
     await featureFlagMongoMigrations[0].up(database);
-    const definition = NotificationMongoCollectionDefinitions.find(({ indexes }) => indexes.length > 0);
+    const definition = TenantOwnedNotificationMongoCollectionDefinitions.find(({ indexes }) => indexes.length > 0);
     assert.ok(definition);
     const indexName = definition.indexes[0]?.name;
     assert.equal(typeof indexName, "string");

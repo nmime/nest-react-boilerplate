@@ -214,7 +214,7 @@ async function startNatsContainer(options: { jetStream?: boolean } = {}): Promis
   const clientPort = 4222;
   const monitoringPort = 8222;
   const start = async (): Promise<StartedNatsRuntimeContainer> => {
-    const container = await new GenericContainer('nats:2.10-alpine')
+    const container = await new GenericContainer('nats:2.15.0-alpine')
       .withExposedPorts(clientPort, monitoringPort)
       .withCommand(options.jetStream ? ['-js', '-m', `${monitoringPort}`] : ['-m', `${monitoringPort}`])
       .withWaitStrategy(Wait.forListeningPorts().withStartupTimeout(120_000))

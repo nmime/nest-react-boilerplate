@@ -145,6 +145,8 @@ SHALL avoid DOM-only dependencies and preserve native accessibility and export.
 
 - Shared native code remains importable on supported platforms.
 - Browser-only globals are guarded outside web-only boundaries.
+- Expo web exports render in Chromium and WebKit, support keyboard language
+  changes, and pass accessibility and horizontal overflow checks.
 
 **Failure behavior:**
 

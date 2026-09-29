@@ -116,6 +116,7 @@ outbox records SHALL preserve confidentiality, uniqueness, and recoverability.
 **Invariants:**
 
 - Encrypted payloads are not persisted in plaintext.
+- AES-GCM payload decryption requires the complete 16-byte authentication tag.
 - A retry preserves delivery identity and attempt history.
 
 **Failure behavior:**
@@ -126,6 +127,11 @@ outbox records SHALL preserve confidentiality, uniqueness, and recoverability.
 
 - **WHEN** a protected delivery payload cannot be encrypted
 - **THEN** no plaintext delivery record is persisted
+
+#### Scenario: Truncated payload authentication tag
+
+- **WHEN** an encrypted notification carries a shortened or oversized tag
+- **THEN** both database adapters reject decryption without returning sensitive data
 
 ### Requirement: [REQ-NOTIFY-PREFERENCE-006] Recipient preferences govern optional delivery
 

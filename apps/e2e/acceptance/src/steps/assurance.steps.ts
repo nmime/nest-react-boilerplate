@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Given, Then, When } from '@cucumber/cucumber';
+import { parse } from 'yaml';
 import type { AcceptanceWorld } from '../support/world.ts';
 
 // Executable acceptance evidence for REQ-ASSURANCE-TRACE-001 and
@@ -134,6 +135,19 @@ When("every configured forge's release pipeline is inspected", function (this: A
 Then('each release is cut from the exact revision its gates verified', function (this: AcceptanceWorld) {
   assertProvenanceControl('release-exact-revision');
   assertProvenanceControl('release-follows-verified-gates');
+  for (const [forgeId, forge] of configuredForges()) {
+    if (forgeId !== 'gitlab' || !forge.provenancePipeline) continue;
+    const pipeline = parse(readFileSync(resolve(process.cwd(), forge.provenancePipeline), 'utf8')) as {
+      stages: string[];
+      release: { stage: string; needs?: unknown; when?: string };
+      'ci-status-summary': { stage: string };
+    };
+    assert.ok(
+      pipeline.stages.indexOf(pipeline.release.stage) > pipeline.stages.indexOf(pipeline['ci-status-summary'].stage),
+    );
+    assert.equal(pipeline.release.needs, undefined, 'Release must preserve the earlier-stage success barrier.');
+    assert.notEqual(pipeline.release.when, 'always', 'Failed gates must prevent release.');
+  }
 });
 
 Then('a revision the default branch has moved past is refused', function (this: AcceptanceWorld) {

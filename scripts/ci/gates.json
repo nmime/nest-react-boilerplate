@@ -501,6 +501,12 @@
       "evidence": ["git rev-parse HEAD"]
     },
     {
+      "id": "release-follows-verified-gates",
+      "requirement": "The release stage follows the reports fan-in and has no needs override that bypasses earlier quality stages.",
+      "scope": "provenance",
+      "evidence": ["stage: reports", "stage: release"]
+    },
+    {
       "id": "release-refuses-stale-head",
       "requirement": "The current default-branch head is re-read from the remote before a release is published, so a revision it has already moved past is refused.",
       "scope": "provenance",

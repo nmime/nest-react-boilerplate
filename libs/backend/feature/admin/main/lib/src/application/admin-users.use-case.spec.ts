@@ -119,3 +119,19 @@ describe('AdminUsersUseCase', () => {
     expect(adminUserMutations.mutateAccessPolicyWithAudit).not.toHaveBeenCalled();
   });
 });
+
+it('permits an empty policy and rejects roles unknown within the actor tenant', async () => {
+  const { roles, useCase, adminUserMutations } = createDeps();
+  await useCase.updateUserAccessPolicy(principal, 'user-id', { roles: [], permissions: [], reason: 'Reset' }, context);
+  expect(roles.findByKeys).not.toHaveBeenCalled();
+  expect(roles.findPermissionsByKeys).not.toHaveBeenCalled();
+  await expect(
+    useCase.updateUserAccessPolicy(
+      principal,
+      'user-id',
+      { roles: ['support'], permissions: [], reason: 'Reset' },
+      context,
+    ),
+  ).rejects.toThrow('Unknown role keys');
+  expect(adminUserMutations.mutateAccessPolicyWithAudit).toHaveBeenCalledOnce();
+});

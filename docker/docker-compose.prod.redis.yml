@@ -6,7 +6,7 @@ x-redis-backend-env: &redis-backend-env
 
 services:
   redis:
-    image: redis:7.4.3-alpine
+    image: redis:7.4.11-alpine
     restart: unless-stopped
     logging:
       driver: json-file

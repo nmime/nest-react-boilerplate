@@ -117,7 +117,7 @@ pnpm run test:docker-smoke
 
 1. Check Docker Compose output for service failures.
 2. Verify `.env` has correct database credentials.
-3. Check that PostgreSQL image can pull: `docker pull postgres:17.6-alpine`.
+3. Check that PostgreSQL image can pull: `docker pull postgres:17.11-alpine`.
 
 ### Testcontainers suites fail without a Docker daemon
 

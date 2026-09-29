@@ -211,6 +211,18 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: security
+        file: libs/backend/mongodb/main/notification/lib/src/notification-payload-crypto.service.spec.ts
+        target: '@app/backend-mongodb-main-notification:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/mongodb/main/notification/lib/src/notification-mongo.module.spec.ts
+        target: '@app/backend-mongodb-main-notification:test'
+        lanes:
+          - pr
+          - main
       - kind: component
         file: libs/backend/postgres/main/notification/lib/src/repositories/notification-concurrency.component-spec.ts
         target: '@app/backend-postgres-main-notification:component-test'

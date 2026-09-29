@@ -217,11 +217,18 @@ requirements:
       - tooling
     cucumber:
       disposition: not-applicable
-      reason: Native export and DOM-boundary safety are compile-time and renderer-specific contracts rather than Gherkin examples.
+      reason: Native export and DOM-boundary safety combine compile-time contracts with real Expo web browser checks rather than Gherkin examples.
       alternativeEvidence:
         - static
         - vitest
+        - playwright
     evidence:
+      - kind: playwright
+        file: apps/frontend/mobile/scripts/smoke-expo-web-browser.mjs
+        target: mobile-app:e2e
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: apps/frontend/mobile/src/mobile-app-providers.spec.tsx
         target: mobile-app:test

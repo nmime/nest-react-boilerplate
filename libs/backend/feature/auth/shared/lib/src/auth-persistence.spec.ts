@@ -5,6 +5,17 @@ import { AdminAuditLogTransactionError, NodeAesGcmProviderTokenCrypto } from './
 describe('auth persistence runtime helpers', () => {
   const key = Buffer.alloc(32, 7);
 
+  it.each([4, 8, 12, 15, 17])('rejects a provider-token authentication tag of %i bytes', (length) => {
+    const crypto = new NodeAesGcmProviderTokenCrypto(() => ({ keyId: 'key-1', key }));
+    const encrypted = crypto.encrypt({ plaintext: 'protected-token', aad: 'user-1:telegram' });
+    const authTag = Buffer.concat([Buffer.from(encrypted.authTag, 'base64'), Buffer.alloc(1)])
+      .subarray(0, length)
+      .toString('base64');
+    expect(() => crypto.decrypt({ ...encrypted, authTag, aad: 'user-1:telegram' })).toThrow(
+      'Invalid authentication tag length',
+    );
+  });
+
   it('encrypts and decrypts provider tokens with authenticated context', () => {
     const crypto = new NodeAesGcmProviderTokenCrypto(() => ({ keyId: 'key-1', key }));
 

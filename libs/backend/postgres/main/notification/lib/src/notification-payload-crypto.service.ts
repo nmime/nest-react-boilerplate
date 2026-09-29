@@ -37,7 +37,7 @@ export class NotificationPayloadCryptoService {
 
   decrypt(input: EncryptedNotificationPayload, aad: string): NotificationSensitiveData {
     const key = this.requireKey();
-    const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(input.iv, 'base64'));
+    const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(input.iv, 'base64'), { authTagLength: 16 });
     decipher.setAAD(Buffer.from(aad, 'utf8'));
     decipher.setAuthTag(Buffer.from(input.authTag, 'base64'));
     const plaintext = Buffer.concat([

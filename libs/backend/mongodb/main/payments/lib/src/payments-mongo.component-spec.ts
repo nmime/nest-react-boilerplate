@@ -58,7 +58,7 @@ async function createHarness(): Promise<MongoHarness | null> {
 
   try {
     const { MongoDBContainer } = await import('@testcontainers/mongodb');
-    const container = await new MongoDBContainer('mongo:7.0.26-jammy').start();
+    const container = await new MongoDBContainer('mongo:8.0.32-noble').start();
     const client = new MongoClient(container.getConnectionString(), { serverSelectionTimeoutMS: 10_000 });
     await client.connect();
     return {

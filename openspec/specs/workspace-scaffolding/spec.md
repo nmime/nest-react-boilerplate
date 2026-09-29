@@ -163,6 +163,12 @@ blockers.
 
 - A required skip cannot become a passing result.
 - Reports identify their command and evidence boundary.
+- External scanners receive writable report directories on a fresh checkout.
+- Gitleaks scans the current source tree, including uncommitted source, with the
+  native scanner's generated-output exclusions and preserves relative paths.
+- External scanner reports retain complete finding records beside their summaries.
+- Semgrep findings cause the security gate to fail even when a successful scan
+  would otherwise return a zero exit status.
 - Real-user journey, observability, and concurrency gates pass only after an
   explicitly configured authoritative argv command executes successfully.
 - URL-only reachability remains canary or reliability evidence.
@@ -181,6 +187,17 @@ blockers.
 
 - **WHEN** a required CI quality tool cannot execute
 - **THEN** the gate fails or reports an explicit non-passing blocker
+
+#### Scenario: External scanner finding
+
+- **WHEN** Semgrep detects a finding in the selected rules
+- **THEN** the security gate returns a non-zero status
+
+#### Scenario: Fresh secret scan
+
+- **GIVEN** the report directory does not exist
+- **WHEN** Gitleaks completes a clean scan
+- **THEN** its detailed report and the gate summary are preserved separately
 
 ### Requirement: [REQ-SCAFFOLD-AGENTS-007] Agent skills are valid and discoverable
 

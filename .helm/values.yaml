@@ -565,7 +565,7 @@ backups:
   ttlSecondsAfterFinished: 86400
   image:
     repository: postgres
-    tag: '17.6-alpine'
+    tag: '17.11-alpine'
     pullPolicy: IfNotPresent
   mongodbImage:
     repository: mongo

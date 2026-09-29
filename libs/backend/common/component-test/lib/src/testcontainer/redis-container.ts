@@ -5,7 +5,7 @@ import {
   type StartedServiceContainer,
 } from './generic-service-container';
 
-export const DefaultRedisTestImage = 'redis:7-alpine';
+export const DefaultRedisTestImage = 'redis:7.4.11-alpine';
 export const DefaultRedisTestPort = 6379;
 
 export type RedisContainerOptions = Partial<

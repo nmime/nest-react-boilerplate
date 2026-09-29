@@ -156,7 +156,7 @@ x-frontend-runtime-env: &frontend-runtime-env
 services:
   redis:
     profiles: [redis]
-    image: redis:7.4.3-alpine
+    image: redis:7.4.11-alpine
     restart: unless-stopped
     ports:
       - '127.0.0.1:${REDIS_PORT:-6379}:6379'
@@ -170,7 +170,7 @@ services:
 
   nats:
     profiles: [nats]
-    image: nats:2.10.25-alpine
+    image: nats:2.15.0-alpine
     restart: unless-stopped
     ports:
       - '127.0.0.1:${NATS_PORT:-4222}:4222'
@@ -202,7 +202,7 @@ services:
 
   postgres:
     profiles: [postgres]
-    image: postgres:17.6-alpine
+    image: postgres:17.11-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -220,7 +220,7 @@ services:
 
   mongodb:
     profiles: [mongodb]
-    image: mongo:8.0.28-noble
+    image: mongo:8.0.32-noble
     restart: unless-stopped
     command: ['mongod', '--replSet', 'rs0', '--bind_ip_all', '--port', '${MONGODB_PORT:-27017}']
     ports:
@@ -243,7 +243,7 @@ services:
 
   mongodb-init:
     profiles: [mongodb]
-    image: mongo:8.0.28-noble
+    image: mongo:8.0.32-noble
     restart: 'no'
     depends_on:
       mongodb:

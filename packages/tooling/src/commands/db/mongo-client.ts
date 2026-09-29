@@ -5,7 +5,7 @@ import { createMongoMigrationEnvironment, parseMongoUri } from "./mongo-migrate.
 import { isTruthyEnv } from "./env-loader.ts";
 
 export const DefaultMongoDatabaseToolsVersion = "100.17.0";
-export const DefaultMongoDatabaseToolsImage = "mongo:8.0.28-noble";
+export const DefaultMongoDatabaseToolsImage = "mongo:8.0.32-noble";
 
 type SpawnSync = typeof spawnSync;
 export type MongoArchiveOperation = "backup" | "restore";

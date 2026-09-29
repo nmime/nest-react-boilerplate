@@ -193,3 +193,9 @@ describe('AdminApiResponseStudioController', () => {
     await expect(controller.dashboard(principal)).rejects.toThrow(`${code} message`);
   });
 });
+
+it('loads sources under the authenticated tenant', async () => {
+  const { controller, studio } = createController();
+  await expect(controller.sources(principal)).resolves.toEqual({ data: { items: [] } });
+  expect(studio.listSources).toHaveBeenCalledWith(tenantId);
+});

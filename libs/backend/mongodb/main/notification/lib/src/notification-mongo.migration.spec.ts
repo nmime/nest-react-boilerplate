@@ -3,8 +3,50 @@ import type { Db } from 'mongodb';
 import { describe, expect, it, vi } from 'vitest';
 import { NotificationMongoCollections } from './notification-mongo.documents';
 import { Migration20260826190100NotificationTenantOwnership } from './migrations';
+import { initializeMongoNotificationPersistence } from './notification-mongo.collections';
 
 describe('Mongo notification tenant ownership migration', () => {
+  it.each([undefined, null, 'unavailable', {}, { code: 13 }])(
+    'propagates collection creation failures rather than changing validators: %j',
+    async (failure) => {
+      const database = {
+        createCollection: vi.fn().mockRejectedValue(failure),
+        command: vi.fn(),
+        collection: vi.fn(),
+      } as unknown as Db;
+      await expect(initializeMongoNotificationPersistence(database)).rejects.toBe(failure);
+      expect(database.command).not.toHaveBeenCalled();
+      expect(database.collection).not.toHaveBeenCalled();
+    },
+  );
+
+  it('modifies validators only when a collection already exists and then creates its indexes', async () => {
+    const createIndexes = vi.fn().mockResolvedValue([]);
+    const database = {
+      createCollection: vi.fn().mockRejectedValue({ code: 48 }),
+      command: vi.fn().mockResolvedValue({ ok: 1 }),
+      collection: vi.fn(() => ({ createIndexes })),
+    } as unknown as Db;
+    await initializeMongoNotificationPersistence(database);
+    expect(database.command).toHaveBeenCalledTimes(13);
+    expect(createIndexes).toHaveBeenCalledTimes(13);
+    expect(database.command).toHaveBeenCalledWith(
+      expect.objectContaining({ validationAction: 'error', validationLevel: 'strict' }),
+    );
+  });
+
+  it('creates strict validators and indexes for a fresh database', async () => {
+    const createIndexes = vi.fn().mockResolvedValue([]);
+    const database = {
+      createCollection: vi.fn().mockResolvedValue({}),
+      command: vi.fn(),
+      collection: vi.fn(() => ({ createIndexes })),
+    } as unknown as Db;
+    await initializeMongoNotificationPersistence(database);
+    expect(database.createCollection).toHaveBeenCalledTimes(13);
+    expect(database.command).not.toHaveBeenCalled();
+    expect(createIndexes).toHaveBeenCalledTimes(13);
+  });
   it('backfills broadcast tenant ownership', async () => {
     const first = {
       _id: 'broadcast-notification',

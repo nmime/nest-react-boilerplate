@@ -69,13 +69,13 @@ describe("postgres backup/restore client selection", () => {
     const invocation = createDockerInvocation({
       connectionString: databaseUrl,
       cwd: "/repo",
-      image: "postgres:17.6-alpine",
+      image: "postgres:17.11-alpine",
       operation: "backup",
       outputPath: "test-results/dr/postgres.dump",
     });
     const commandLine = [invocation.command, ...invocation.args].join(" ");
 
-    assert.match(commandLine, /postgres:17\.6-alpine/);
+    assert.match(commandLine, /postgres:17\.11-alpine/);
     assert.match(commandLine, /--env DATABASE_URL/);
     assert.match(commandLine, /\/workspace\/test-results\/dr\/postgres.dump/);
     assert.equal(commandLine.includes(new URL(databaseUrl).password), false);
@@ -91,7 +91,7 @@ describe("postgres backup/restore client selection", () => {
     const docker = createDockerInvocation({
       connectionString: databaseUrl,
       cwd: "/repo",
-      image: "postgres:17.6-alpine",
+      image: "postgres:17.11-alpine",
       operation: "restore",
       outputPath: "test-results/dr/postgres.dump",
     });

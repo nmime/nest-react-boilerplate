@@ -381,7 +381,7 @@ for (const expected of [
   'wildcard DNS',
   'docker/docker-compose.prod.telegram.yml',
   'docker/docker-compose.prod.discord.yml',
-  'user-app.example.com/api/auth/oauth2/callback/telegram',
+  'user-app.example.com/api/auth/callback/telegram',
   'pnpm run docker:prod:config:check',
   'pnpm nrb closure install',
   '.nrb/closure/',

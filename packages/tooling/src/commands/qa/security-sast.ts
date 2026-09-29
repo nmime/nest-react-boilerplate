@@ -8,9 +8,20 @@ const dryRun = args.flags.has("dry-run");
 const engine = args.options.get("engine") ?? process.env.SECURITY_SAST_ENGINE ?? "native";
 const failOnUnavailableExternal = (process.env.SECURITY_SAST_FAIL_ON_UNAVAILABLE_EXTERNAL ?? "true") !== "false";
 const reportPath = args.options.get("report") ?? "test-results/security-sast/report.json";
-const semgrepImage = args.options.get("semgrep-image") ?? process.env.SEMGREP_DOCKER_IMAGE ?? "semgrep/semgrep:1.145.0";
+const semgrepReportPath = `${reportPath.replace(/\.json$/u, "")}.semgrep.json`;
+const semgrepImage = args.options.get("semgrep-image") ?? process.env.SEMGREP_DOCKER_IMAGE ?? "semgrep/semgrep:1.178.0";
 interface SastFinding { rule: string; severity: string; message?: string; file?: string; line?: number; stdout?: string; stderr?: string; }
 const findings: SastFinding[] = [];
+function recordSemgrepResult(result: ReturnType<typeof run>, rule: string): void {
+  try {
+    writeJson(semgrepReportPath, JSON.parse(result.stdout));
+  } catch {
+    findings.push({ rule, severity: "high", message: "Semgrep did not produce a valid JSON report", stderr: result.stderr.slice(-2000) });
+  }
+  if (result.status !== 0) {
+    findings.push({ rule, severity: "high", message: result.status === 1 ? "Semgrep reported findings" : "Semgrep execution failed", stderr: result.stderr.slice(-2000) });
+  }
+}
 const rules = [
   { id: "eval", severity: "high", regex: /\beval\s*\(/g, message: "Avoid eval; use explicit parsers or dispatch tables." },
   { id: "new-function", severity: "high", regex: /\bnew\s+Function\s*\(/g, message: "Avoid dynamic code generation." },
@@ -23,11 +34,11 @@ const rules = [
 
 if (engine === "semgrep" && !dryRun) {
   if (commandExists("semgrep")) {
-    const result = run("semgrep", ["--config", "p/owasp-top-ten", "--config", "p/javascript", "--json", "."]);
-    if (result.status !== 0) findings.push({ rule: "semgrep", severity: "high", message: "semgrep reported findings", stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-2000) });
+    const result = run("semgrep", ["--error", "--config", "p/owasp-top-ten", "--config", "p/javascript", "--json", "."]);
+    recordSemgrepResult(result, "semgrep");
   } else if (commandExists("docker")) {
-    const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, semgrepImage, "semgrep", "--config", "p/owasp-top-ten", "--config", "p/javascript", "--json", "/src"]);
-    if (result.status !== 0) findings.push({ rule: "semgrep-docker", severity: "high", message: "semgrep reported findings", stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-2000) });
+    const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/src`, semgrepImage, "semgrep", "--error", "--config", "p/owasp-top-ten", "--config", "p/javascript", "--json", "/src"]);
+    recordSemgrepResult(result, "semgrep-docker");
   } else if (failOnUnavailableExternal) findings.push({ rule: "semgrep", severity: "high", message: "SECURITY_SAST_ENGINE=semgrep requested but semgrep/Docker is unavailable" });
 }
 
@@ -51,7 +62,7 @@ for (const file of collectFiles(workspaceRoot, { include: isProductionSource }))
 
 const failSeverities = new Set((process.env.SECURITY_SAST_FAIL_SEVERITIES ?? "critical,high").split(",").map((item) => item.trim()).filter(Boolean));
 const failing = dryRun ? [] : findings.filter((finding) => failSeverities.has(finding.severity));
-writeJson(reportPath, { status: failing.length ? "failed" : "ok", engine, dryRun, semgrepImage, failOnUnavailableExternal, failSeverities: [...failSeverities], findings });
+writeJson(reportPath, { status: failing.length ? "failed" : "ok", engine, dryRun, semgrepImage, semgrepReport: semgrepReportPath, failOnUnavailableExternal, failSeverities: [...failSeverities], findings });
 if (dryRun) {
   console.log(JSON.stringify({ status: "dry-run", engine, rules: rules.map((rule) => rule.id), report: reportPath }));
   process.exit(0);

@@ -330,7 +330,7 @@ export class NodeAesGcmProviderTokenCrypto implements ProviderTokenCrypto {
 
   decrypt(input: ProviderTokenCiphertext & { aad?: string }): string {
     const { key } = this.keyResolver();
-    const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(input.iv, 'base64'));
+    const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(input.iv, 'base64'), { authTagLength: 16 });
     if (input.aad) {
       decipher.setAAD(Buffer.from(input.aad, 'utf8'));
     }

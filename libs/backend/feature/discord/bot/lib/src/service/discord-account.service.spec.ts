@@ -98,12 +98,10 @@ describe('DiscordAccountService', () => {
     });
 
     const reachable = new DiscordAccountService({
-      createDiscordAuthorizationRequest: vi
-        .fn()
-        .mockResolvedValue({
-          authorizationUrl: 'https://discord.com/oauth2/authorize?state=abc',
-          stateExpiresAt: '2030-01-01T00:00:00.000Z',
-        }),
+      createDiscordAuthorizationRequest: vi.fn().mockResolvedValue({
+        authorizationUrl: 'https://discord.com/oauth2/authorize?state=abc',
+        stateExpiresAt: '2030-01-01T00:00:00.000Z',
+      }),
       listProviderIdentities: vi.fn().mockResolvedValue([]),
     });
     await expect(

@@ -11,4 +11,14 @@ const jiti = createJiti(import.meta.url, {
 const { main } = await jiti.import('../src/cli.ts');
 
 const exitCode = await main(process.argv.slice(2));
+// Pipes are asynchronous on macOS/Linux. Drain large JSON plans before the
+// explicit exit that releases Nx's background handles.
+await Promise.all(
+  [process.stdout, process.stderr].map(
+    (stream) =>
+      new Promise((resolveFlush, reject) => {
+        stream.write('', (error) => (error ? reject(error) : resolveFlush()));
+      }),
+  ),
+);
 process.exit(exitCode);

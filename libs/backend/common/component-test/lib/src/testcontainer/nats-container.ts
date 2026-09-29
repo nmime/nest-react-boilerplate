@@ -5,7 +5,7 @@ import {
   type StartedServiceContainer,
 } from './generic-service-container';
 
-export const DefaultNatsTestImage = 'nats:2.10-alpine';
+export const DefaultNatsTestImage = 'nats:2.15.0-alpine';
 export const DefaultNatsClientPort = 4222;
 export const DefaultNatsMonitoringPort = 8222;
 

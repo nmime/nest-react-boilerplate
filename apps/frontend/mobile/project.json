@@ -143,7 +143,7 @@
       "cache": false,
       "options": {
         "cwd": "apps/frontend/mobile",
-        "command": "node scripts/export-expo.mjs --platform all"
+        "command": "node scripts/export-expo.mjs --platform all && node --test scripts/smoke-expo-web-browser.mjs"
       },
       "inputs": ["production"],
       "outputs": ["{workspaceRoot}/dist/apps/frontend/mobile", "{workspaceRoot}/dist/apps/frontend/mobile-android"]

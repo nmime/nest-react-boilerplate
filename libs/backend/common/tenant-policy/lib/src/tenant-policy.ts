@@ -160,9 +160,9 @@ export function tenantSharedTierRowLevelSecurityUpSql(table: string): string[] {
   return enablePolicySql(table, `${predicate} or "tenant_id" is null`, predicate);
 }
 
-/** Reverses either up path for one table. */
+/** Reverses either up path; a table added after this migration is a safe no-op. */
 export function tenantRowLevelSecurityDownSql(table: string): string[] {
-  return [
+  const statements = [
     `drop policy if exists "${table}_tenant_isolation" on "${table}";`,
     `drop policy if exists "${table}_tenant_system" on "${table}";`,
     `alter table "${table}" no force row level security;`,
@@ -170,6 +170,10 @@ export function tenantRowLevelSecurityDownSql(table: string): string[] {
     `revoke all on "${table}" from "${TenantAppRole}";`,
     `revoke all on "${table}" from "${TenantSystemRole}";`,
   ];
+  const relationName = `"${table.replaceAll('"', '""')}"`.replaceAll("'", "''");
+  return statements.map(
+    (statement) => `do $nrb$ begin if to_regclass('${relationName}') is not null then ${statement} end if; end $nrb$;`,
+  );
 }
 
 /** Fail-closed policy for {@link TenantRegistryTable}, keyed on `id`. */

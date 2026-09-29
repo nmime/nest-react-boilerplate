@@ -19,7 +19,7 @@ x-postgres-env: &postgres-env
 
 services:
   postgres:
-    image: postgres:17.6-alpine
+    image: postgres:17.11-alpine
     restart: unless-stopped
     logging:
       driver: json-file

@@ -30,7 +30,9 @@ Android and iOS targets require the matching local native toolchain. Use the
 The export targets run Expo and validate their output in the same fail-closed,
 cross-platform Node wrapper. `mobile-app:e2e` performs the web and Android
 exports sequentially and verifies both the web entrypoint and Android
-Metro/Hermes bundle.
+Metro/Hermes bundle. It then opens the web export in desktop Chromium, mobile
+Chromium, and mobile WebKit, exercises EN/RU/ZH language controls through the
+keyboard, and checks axe accessibility, overflow, and browser runtime errors.
 It does not claim APK installation, signing, simulator launch, or device startup;
 those remain responsibilities of the native `android` and `ios` targets.
 

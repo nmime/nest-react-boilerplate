@@ -1,13 +1,16 @@
 import { Migration20260726000200InitializeAuthPersistence } from './Migration20260726000200InitializeAuthPersistence';
 import { Migration20260812120000AddAuthUserAccountRecovery } from './Migration20260812120000AddAuthUserAccountRecovery';
 import { Migration20260828110000CreateApiResponseStudio } from './Migration20260828110000CreateApiResponseStudio';
+import { Migration20260930090000RepairProblemPresentationValidator } from './Migration20260930090000RepairProblemPresentationValidator';
 
 export * from './Migration20260726000200InitializeAuthPersistence';
 export * from './Migration20260812120000AddAuthUserAccountRecovery';
 export * from './Migration20260828110000CreateApiResponseStudio';
+export * from './Migration20260930090000RepairProblemPresentationValidator';
 
 export const authMongoMigrations = [
   Migration20260726000200InitializeAuthPersistence,
   Migration20260812120000AddAuthUserAccountRecovery,
   Migration20260828110000CreateApiResponseStudio,
+  Migration20260930090000RepairProblemPresentationValidator,
 ] as const;

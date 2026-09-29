@@ -34,7 +34,7 @@ describeIfDocker('Mongo notification persistence on a replica set', () => {
   let client: MongoClient;
 
   beforeAll(async () => {
-    container = await new MongoDBContainer('mongo:7.0.26-jammy').start();
+    container = await new MongoDBContainer('mongo:8.0.32-noble').start();
     const separator = container.getConnectionString().includes('?') ? '&' : '?';
     client = new MongoClient(`${container.getConnectionString()}${separator}directConnection=true&replicaSet=rs0`);
     await client.connect();

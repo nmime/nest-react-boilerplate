@@ -220,8 +220,14 @@ defaults, so the product file must not declare `useDefault`: a config declares e
 `useDefault`, and replacing `path` silently drops the base rules and every allowlist with them. Both
 pipelines and `pnpm run test:security:secrets` name the config explicitly rather than relying on root
 discovery — override it with `--gitleaks-config` or `GITLEAKS_CONFIG` — and the container branch sets
-its working directory to the workspace, because gitleaks resolves `[extend] path` against the
-directory it was invoked from. `scripts/validate-github-workflows.mjs` gates all of this.
+its working directory to a temporary copy of the current source tree, because gitleaks resolves
+`[extend] path` against the directory it was invoked from. The copy includes uncommitted source
+and uses the native scan's generated-output exclusions. Running a build first therefore does not
+change the source scan's scope. Both branches preserve relative source paths and the redacted
+engine report beside the summary. `ci:pipelines:check` validates the canonical GitLab pipeline.
+
+Semgrep runs with `--error`, so findings fail the gate. Its complete JSON report is retained beside
+the summary as `report.semgrep.json`; scanner execution errors and invalid reports also fail.
 
 ## Pinned optional validator versions
 

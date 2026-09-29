@@ -32,7 +32,9 @@ export class NotificationMongoPayloadCryptoService {
   }
 
   decrypt(input: EncryptedNotificationPayload, aad: string): NotificationSensitiveData {
-    const decipher = createDecipheriv('aes-256-gcm', this.requireKey(), Buffer.from(input.iv, 'base64'));
+    const decipher = createDecipheriv('aes-256-gcm', this.requireKey(), Buffer.from(input.iv, 'base64'), {
+      authTagLength: 16,
+    });
     decipher.setAAD(Buffer.from(aad, 'utf8'));
     decipher.setAuthTag(Buffer.from(input.authTag, 'base64'));
     return JSON.parse(

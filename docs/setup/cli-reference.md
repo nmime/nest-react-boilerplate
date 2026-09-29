@@ -421,10 +421,10 @@ worktree.
 
 ## Tooling commands
 
-| Command                        | Description                                                             |
-| ------------------------------ | ----------------------------------------------------------------------- |
-| `tooling:static-check`         | TS-first static validation for repo tooling.                            |
-| `tooling:changed-format-check` | Run Prettier on changed files only.                                     |
+| Command                        | Description                                  |
+| ------------------------------ | -------------------------------------------- |
+| `tooling:static-check`         | TS-first static validation for repo tooling. |
+| `tooling:changed-format-check` | Run Prettier on changed files only.          |
 
 ## Git commands
 

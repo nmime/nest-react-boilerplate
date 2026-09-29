@@ -14,6 +14,15 @@ useDefault = true
 id = "generic-api-key"
 
 [[rules.allowlists]]
+description = "Public local-only example keys decode to nrb-local-provider-token-key and nrb-local-notification-payload"
+condition = "AND"
+paths = ['''^\.env\.local\.example$''']
+regexes = [
+  '''bnJiLWxvY2FsLXByb3ZpZGVyLXRva2VuLWtleSEhISE=''',
+  '''bnJiLWxvY2FsLW5vdGlmaWNhdGlvbi1wYXlsb2FkISE=''',
+]
+
+[[rules.allowlists]]
 description = "Notification idempotency-key test fixtures"
 condition = "AND"
 paths = [
@@ -49,6 +58,7 @@ description = "Authentication test secret placeholder"
 condition = "AND"
 paths = [
   '''^libs/backend/feature/auth/main/lib/src/application/better-auth\.config\.spec\.ts$''',
+  '''^libs/backend/feature/auth/main/lib/src/application/telegram-oidc-runtime\.spec\.ts$''',
 ]
 regexes = [
   '''test-secret-placeholder-min-32-chars-long''',
@@ -68,6 +78,12 @@ regexes = [
 
 [[rules]]
 id = "discord-client-id"
+
+[[rules.allowlists]]
+description = "Synthetic Discord snowflake seeded only into the local notification integration harness"
+condition = "AND"
+paths = ['''^scripts/integration-harness/notify/check\.mjs$''']
+regexes = ['''111222333444555666''']
 
 [[rules.allowlists]]
 description = "Discord snowflake test fixtures"

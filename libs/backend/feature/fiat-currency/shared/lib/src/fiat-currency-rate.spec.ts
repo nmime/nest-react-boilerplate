@@ -145,6 +145,19 @@ describe('convertFiatMoney', () => {
       ),
     ).toThrow(RangeError);
   });
+
+  it.each([
+    [
+      { code: 'EUR', usdPerUnit: '99999.9999999997' },
+      { code: 'BHD', usdPerUnit: '0.0000000013' },
+    ],
+    [
+      { code: 'BHD', usdPerUnit: '0.0000000013' },
+      { code: 'EUR', usdPerUnit: '99999.9999999997' },
+    ],
+  ])('rejects valid stored quotes when the combined exact cross rate exceeds safe integers', (from, to) => {
+    expect(() => convertFiatMoney(Money.of(100, from.code), from, to)).toThrow(/held exactly/u);
+  });
 });
 
 describe('fiatMoneyToUsd', () => {

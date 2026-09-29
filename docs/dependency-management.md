@@ -35,6 +35,11 @@ this template upgrades directly from 1.6 without adding that column.
 - Keep `pnpm-lock.yaml` committed and install with `pnpm install --frozen-lockfile` in CI and release builds.
 - pnpm's implicit dependency reconciliation is disabled with `verifyDepsBeforeRun: false` in `pnpm-workspace.yaml`. Run `pnpm install` explicitly when manifests change; ordinary scripts must not mutate `node_modules` or the lockfile.
 - Prefer grouped minor/patch Dependabot PRs for routine updates; review major updates one ecosystem at a time.
+- Dependabot version updates wait seven days. pnpm requires a one-day release age,
+  rejects exotic transitive sources, and refuses provenance downgrades for releases
+  from the last week. Established registry-signed packages older than that week
+  remain installable through `trustPolicyIgnoreAfter`, including pre-provenance
+  Chokidar, Semver, UA Parser, and TypeScript transform releases.
 - Run `pnpm run format:check`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:coverage`, and `pnpm run audit` before merging dependency PRs.
 - Regenerate API contracts/clients only when dependency changes affect generated output, then commit the generated diff in the same PR.
 
@@ -185,12 +190,22 @@ image resolution.
 
 | Service    | Pinned tag                     | Source                   |
 | ---------- | ------------------------------ | ------------------------ |
-| PostgreSQL | `17.6-alpine`                  | Docker Hub `postgres`    |
-| Redis      | `7.4.3-alpine`                 | Docker Hub `redis`       |
-| NATS       | `2.10.25-alpine`               | Docker Hub `nats`        |
+| PostgreSQL | `17.11-alpine`                 | Docker Hub `postgres`    |
+| MongoDB    | `8.0.32-noble`                 | Docker Hub `mongo`       |
+| Redis      | `7.4.11-alpine`                | Docker Hub `redis`       |
+| NATS       | `2.15.0-alpine`                | Docker Hub `nats`        |
 | MinIO      | `RELEASE.2025-09-07T16-13-09Z` | Docker Hub `minio/minio` |
 
-## Audit results (2026-07-26)
+Database component tests use the same PostgreSQL and MongoDB versions as the
+bundled deployment configurations. Native device execution remains a separate
+acceptance check from the Expo web and Android bundle exports.
+
+Release plugins publish through `release.config.mjs` on Node 24.21.0 and
+semantic-release 25. Releases tag the exact successful CI SHA; changelog/git
+mutation plugins are intentionally absent so protected default branches receive
+only reviewed changes.
+
+## Historical audit results (2026-07-26)
 
 - **Production audit**: 0 vulnerabilities (exit 0)
 - **Development audit**: 0 vulnerabilities (exit 0)
@@ -198,8 +213,3 @@ image resolution.
 - **Frozen lockfile install**: exit 0
 - **Registry drift**: 12 package entries remain, represented by the 11 incompatible runtime/peer rows listed above
 - **Deduplication**: `better-auth` → 1 version (was 2), `drizzle-orm` → 1 version (was 2)
-- **Release plugins**: provider publishing, commit analysis, and release-note
-  generation run through `release.config.mjs` on Node 24.21.0 and
-  semantic-release 25. Releases tag the exact successful CI SHA; changelog/git
-  mutation plugins are intentionally absent so protected default branches
-  receive only reviewed changes.

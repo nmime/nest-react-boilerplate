@@ -25,8 +25,8 @@ export class ApiResponseStudioSourceEntity {
   lastSyncStatus: 'never' | 'success' | 'failed' = 'never';
   lastSyncError = '';
   lastSyncSummary: ApiResponseStudioSyncSummary | null = null;
-  createdByUserId = '';
-  updatedByUserId = '';
+  createdByUserId!: string;
+  updatedByUserId!: string;
   createdAt = new Date();
   updatedAt = new Date();
 }
@@ -34,7 +34,7 @@ export class ApiResponseStudioSourceEntity {
 export class ApiResponseStudioResponseEntity {
   id: string = randomUUID();
   tenantId = DefaultAuthTenantId;
-  sourceId = '';
+  sourceId!: string;
   stableKey = '';
   tag = '';
   method: ApiResponseStudioMethod = 'GET';
@@ -59,7 +59,7 @@ export class ApiResponseStudioResponseEntity {
   comments = '';
   texts: ApiResponseStudioTexts = { en: [], ru: [], zh: [] };
   revision = 1;
-  updatedByUserId = '';
+  updatedByUserId!: string;
   createdAt = new Date();
   updatedAt = new Date();
 }
@@ -70,7 +70,7 @@ export class ApiResponseStudioHistoryEntity {
   sourceId: string | null = null;
   responseId: string | null = null;
   action = '';
-  actorUserId = '';
+  actorUserId!: string;
   before: Record<string, unknown> = {};
   after: Record<string, unknown> = {};
   metadata: Record<string, unknown> = {};

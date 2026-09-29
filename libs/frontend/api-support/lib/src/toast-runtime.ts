@@ -398,10 +398,14 @@ export const resolveApiProblemPresentation = (
   if (!rule || (rule.display !== 'modal' && rule.display !== 'custom')) {
     return null;
   }
+  return presentationForRule(rule, rule.display);
+};
+
+const presentationForRule = (rule: ApiToastRule, display: 'custom' | 'modal'): ApiProblemPresentation => {
   const overrideId = rule.id.replace(/:override:\d+$/u, '');
   const override = problemPresentationOverrides.get(overrideId);
   return {
-    display: rule.display,
+    display,
     ruleId: overrideId,
     severity: rule.toast.category,
     support: override?.support === true,
@@ -479,10 +483,7 @@ export class ApiToastRuntime {
       return null;
     }
     if (rule.display === 'modal' || rule.display === 'custom') {
-      const presentation = resolveApiProblemPresentation(context, rules);
-      if (presentation) {
-        this.eventHub?.emit({ type: 'presentation', presentation });
-      }
+      this.eventHub?.emit({ type: 'presentation', presentation: presentationForRule(rule, rule.display) });
       return null;
     }
     if (rule.display !== 'toast') {

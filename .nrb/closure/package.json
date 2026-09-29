@@ -88,6 +88,7 @@
     "@vitest/browser-playwright": "4.1.11",
     "arctic": "3.7.0",
     "astro": "7.3.5",
+    "axe-core": "4.13.0",
     "babel-preset-expo": "57.0.13",
     "better-auth": "1.7.6",
     "cacheable": "2.5.0",
@@ -163,7 +164,6 @@
     "@typescript-eslint/parser": "8.71.0",
     "@vitest/coverage-v8": "4.1.11",
     "ajv": "8.20.0",
-    "axe-core": "4.13.0",
     "eslint": "10.11.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-jsx-a11y": "6.10.2",
@@ -187,6 +187,6 @@
   },
   "nrb": {
     "configHash": "698b1783439b3a1d385cf1380377dd6175c71e64271f8f177b71f875469fb10c",
-    "graphDigest": "50889d7f67d15bde4617e9de3b98fc4ca324c5fcbfb1dea53c7abfe58894fbbf"
+    "graphDigest": "65346bc9d400e108050bf43cdddd2e42190301869485e0519c54beb0160371a5"
   }
 }

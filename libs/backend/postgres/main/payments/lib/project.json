@@ -3,17 +3,11 @@
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/postgres/main/payments/lib/src",
   "projectType": "library",
-  "tags": [
-    "platform:backend",
-    "type:data-access",
-    "scope:payments"
-  ],
+  "tags": ["platform:backend", "type:data-access", "scope:payments"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/backend/postgres/main/payments",
         "main": "libs/backend/postgres/main/payments/lib/src/index.ts",
@@ -33,14 +27,10 @@
         "default",
         "^production",
         {
-          "externalDependencies": [
-            "vitest"
-          ]
+          "externalDependencies": ["vitest"]
         }
       ],
-      "outputs": [
-        "{workspaceRoot}/coverage/libs/backend/postgres/main/payments/lib"
-      ]
+      "outputs": ["{workspaceRoot}/coverage/libs/backend/postgres/main/payments/lib"]
     },
     "component-test": {
       "executor": "nx:run-commands",
@@ -53,11 +43,7 @@
         "default",
         "^production",
         {
-          "externalDependencies": [
-            "vitest",
-            "testcontainers",
-            "@testcontainers/postgresql"
-          ]
+          "externalDependencies": ["vitest", "testcontainers", "@testcontainers/postgresql"]
         }
       ]
     }

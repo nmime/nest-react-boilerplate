@@ -295,6 +295,86 @@ describe('resolveApiToastRules', () => {
   });
 });
 
+describe('problem presentation payload compatibility', () => {
+  afterEach(() => {
+    configureProblemPresentationOverrides([]);
+  });
+
+  const rules = [
+    { id: 'payload', display: 'modal', match: { status: 500 }, toast: { category: 'error', title: 'Failed' } },
+  ] satisfies ApiToastRule[];
+
+  it('keeps legacy locale arrays and discards blank or non-string lines', () => {
+    configureProblemPresentationOverrides([
+      {
+        ruleId: 'payload',
+        display: 'modal',
+        severity: 'warning',
+        textsEn: [null, '', 'English'],
+        textsRu: ['Русский'],
+        textsZh: ['中文'],
+        updatedByUserId: 'operator-123',
+        updatedAt: '2026-09-30T00:00:00Z',
+        revision: 2,
+      },
+    ]);
+    for (const [locale, text] of [
+      ['en', 'English'],
+      ['ru', 'Русский'],
+      ['zh', '中文'],
+    ] as const) {
+      configureApiLocale({ locale });
+      expect(resolveApiProblemPresentation({ status: 500 }, applyProblemPresentationOverrides(rules))).toMatchObject({
+        lines: [text],
+        severity: 'warning',
+      });
+    }
+  });
+
+  it('uses scalar translations when locale arrays are empty and accepts a presentation with no copy', () => {
+    configureProblemPresentationOverrides([
+      {
+        ruleId: 'payload',
+        display: 'modal',
+        severity: 'error',
+        texts: { en: [], ru: [false, ' '], zh: null },
+        messageEn: 'English',
+        messageRu: 'Русский',
+        messageZh: '中文',
+      },
+    ]);
+    for (const [locale, text] of [
+      ['en', 'English'],
+      ['ru', 'Русский'],
+      ['zh', '中文'],
+    ] as const) {
+      configureApiLocale({ locale });
+      expect(resolveApiProblemPresentation({ status: 500 }, applyProblemPresentationOverrides(rules))?.lines).toEqual([
+        text,
+      ]);
+    }
+    configureProblemPresentationOverrides([{ ruleId: 'payload', display: 'modal', severity: 'error' }]);
+    expect(resolveApiProblemPresentation({ status: 500 }, applyProblemPresentationOverrides(rules))?.lines).toEqual([]);
+    configureProblemPresentationOverrides([]);
+    expect(resolveApiProblemPresentation({ status: 500 }, rules)).toMatchObject({
+      lines: [],
+      support: false,
+      figmaOnly: false,
+    });
+    expect(new ApiToastRuntime().showForApiResult({ status: 500 }, rules)).toBeNull();
+  });
+
+  it.each(['en', 'ru', 'zh'] as const)('accepts a partial %s translation payload', (locale) => {
+    configureProblemPresentationOverrides([
+      { ruleId: 'payload', display: 'modal', severity: 'error', texts: { [locale]: ['Localized'] } },
+    ]);
+    configureApiLocale({ locale });
+    expect(resolveApiProblemPresentation({ status: 500 }, applyProblemPresentationOverrides(rules))?.lines).toEqual([
+      'Localized',
+    ]);
+  });
+});
+
 describe('ApiToastRuntime defaults', () => {
   it('resolves default toast copy from the current frontend locale', () => {
     configureApiLocale({ locale: 'ru' });
@@ -356,7 +436,13 @@ describe('ApiToastRuntime defaults', () => {
         clearAuthRequired: () => undefined,
         clearPresentation: () => undefined,
         emit: (event) => emitted.push(event),
-        getState: () => ({ authRequired: false, lastError: null, presentation: null, redirectTo: null, status: 'online' }),
+        getState: () => ({
+          authRequired: false,
+          lastError: null,
+          presentation: null,
+          redirectTo: null,
+          status: 'online',
+        }),
         reset: () => undefined,
         subscribe: () => () => undefined,
       },

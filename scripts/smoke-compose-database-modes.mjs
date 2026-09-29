@@ -223,7 +223,7 @@ try {
     'POSTGRES_PASSWORD',
     '--env',
     'POSTGRES_DB',
-    'postgres:17.6-alpine',
+    'postgres:17.11-alpine',
   ]);
   compose(externalProject, externalFiles, ['create', '--no-build', 'migrate']);
   run(['network', 'connect', `${externalProject}_app`, externalContainer]);
@@ -286,7 +286,7 @@ try {
     externalMongoContainer,
     '--network',
     `${externalMongoProject}_app`,
-    'mongo:8.0.28-noble',
+    'mongo:8.0.32-noble',
     '--replSet',
     'rs0',
     '--bind_ip_all',

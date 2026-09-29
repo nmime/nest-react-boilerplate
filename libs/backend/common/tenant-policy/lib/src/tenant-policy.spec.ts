@@ -232,6 +232,10 @@ describe('tenantRowLevelSecurityDownSql', () => {
     expect(sql).toContain('alter table "widgets" no force row level security;');
     expect(sql).toContain('alter table "widgets" disable row level security;');
     expect(sql).toContain(`revoke all on "widgets" from "${TenantAppRole}";`);
+    expect(tenantRowLevelSecurityDownSql('widgets')).toHaveLength(6);
+    for (const statement of tenantRowLevelSecurityDownSql('widgets')) {
+      expect(statement).toContain(`if to_regclass('"widgets"') is not null then`);
+    }
   });
 });
 

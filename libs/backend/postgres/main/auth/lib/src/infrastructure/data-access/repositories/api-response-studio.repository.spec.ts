@@ -7,6 +7,7 @@ import type { ResultAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
 import {
   AdminAuditLogEntity,
+  ApiResponseStudioHistoryEntity,
   ApiResponseStudioResponseEntity,
   ApiResponseStudioSourceEntity,
   TransactionalOutboxEventEntity,
@@ -79,6 +80,7 @@ const response = (
 interface ManagerOptions {
   readonly sources?: ApiResponseStudioSourceEntity[];
   readonly responses?: ApiResponseStudioResponseEntity[];
+  readonly history?: ApiResponseStudioHistoryEntity[];
   readonly failFlush?: boolean;
 }
 
@@ -86,13 +88,22 @@ const createEntityManager = (options: ManagerOptions = {}) => {
   const sources = options.sources ?? [source()];
   const responses = options.responses ?? [];
   const persisted: unknown[] = [];
-  const find = vi.fn((entity: unknown, where: Record<string, unknown>) => {
-    const rows = entity === ApiResponseStudioSourceEntity ? sources : responses;
+  const rowsByEntity = new Map<
+    unknown,
+    Array<ApiResponseStudioSourceEntity | ApiResponseStudioResponseEntity | ApiResponseStudioHistoryEntity>
+  >([
+    [ApiResponseStudioSourceEntity, sources],
+    [ApiResponseStudioResponseEntity, responses],
+    [ApiResponseStudioHistoryEntity, options.history ?? []],
+  ]);
+  const find = vi.fn((entity: unknown, where: { tenantId?: string; sourceId?: string; id?: { $in: string[] } }) => {
+    const rows = rowsByEntity.get(entity) ?? [];
     return Promise.resolve(
       rows.filter(
         (row) =>
           (!where['tenantId'] || row.tenantId === where['tenantId']) &&
-          (!where['sourceId'] || ('sourceId' in row && row.sourceId === where['sourceId'])),
+          (!where['sourceId'] || ('sourceId' in row && row.sourceId === where['sourceId'])) &&
+          (!where['id'] || where['id'].$in.includes(row.id)),
       ),
     );
   });
@@ -109,7 +120,9 @@ const createEntityManager = (options: ManagerOptions = {}) => {
   });
   const flush = vi.fn(() => (options.failFlush ? Promise.reject(new Error('flush failed')) : Promise.resolve()));
   const transaction = { find, findOne, persist, flush };
-  const transactional = vi.fn(<T>(callback: (em: typeof transaction) => Promise<T>): Promise<T> => callback(transaction));
+  const transactional = vi.fn(<T>(callback: (em: typeof transaction) => Promise<T>): Promise<T> =>
+    callback(transaction),
+  );
   const entityManager = { find, findOne, transactional } as unknown as EntityManager;
   return { entityManager, find, findOne, flush, persisted, transactional };
 };
@@ -138,6 +151,302 @@ const sync = (
   });
 
 describe('ApiResponseStudioRepository', () => {
+  it('creates sources with normalized defaults and updates explicit false values under a revision lock', async () => {
+    const manager = createEntityManager();
+    const repository = new ApiResponseStudioRepository(manager.entityManager);
+    const created = await unwrap(
+      repository.createSource({
+        tenantId: tenantA,
+        actorUserId,
+        name: ' Name ',
+        slug: ' NAME ',
+        jsonUrl: ' https://example.com/spec ',
+      }),
+    );
+    expect(created).toMatchObject({
+      name: 'Name',
+      slug: 'name',
+      jsonUrl: 'https://example.com/spec',
+      docsUrl: '',
+      enabled: true,
+      manualOnly: true,
+    });
+    const explicit = await unwrap(
+      repository.createSource({
+        tenantId: tenantA,
+        actorUserId,
+        name: 'Explicit',
+        slug: 'explicit',
+        jsonUrl: 'https://example.com/spec',
+        docsUrl: ' https://example.com/docs ',
+        enabled: false,
+        manualOnly: false,
+      }),
+    );
+    expect(explicit).toMatchObject({ enabled: false, manualOnly: false, docsUrl: 'https://example.com/docs' });
+    const updated = await unwrap(
+      repository.updateSource({
+        tenantId: tenantA,
+        id: sourceId,
+        expectedRevision: 1,
+        actorUserId,
+        name: ' Updated ',
+        slug: ' UPDATED ',
+        jsonUrl: ' https://example.com/new ',
+        docsUrl: ' https://example.com/new-docs ',
+        enabled: false,
+        manualOnly: false,
+      }),
+    );
+    expect(updated).toMatchObject({ name: 'Updated', slug: 'updated', enabled: false, manualOnly: false, revision: 2 });
+    const unchangedFields = await unwrap(
+      repository.updateSource({ tenantId: tenantA, id: sourceId, expectedRevision: 2, actorUserId }),
+    );
+    expect(unchangedFields).toMatchObject({ name: 'Updated', enabled: false, manualOnly: false, revision: 3 });
+    expect(manager.flush).toHaveBeenCalledTimes(4);
+    expect(manager.persisted.filter((row) => row instanceof TransactionalOutboxEventEntity)).toHaveLength(4);
+  });
+
+  it('refuses missing or cross-tenant sources and stale source writes', async () => {
+    const manager = createEntityManager();
+    const repository = new ApiResponseStudioRepository(manager.entityManager);
+    expect(await unwrap(repository.findSource(tenantA, sourceId))).toMatchObject({ tenantId: tenantA });
+    expect(await unwrap(repository.findSource(tenantB, sourceId))).toBeNull();
+    const missing = await repository.updateSource({
+      tenantId: tenantB,
+      id: sourceId,
+      expectedRevision: 1,
+      actorUserId,
+    });
+    expect(missing._unsafeUnwrapErr().code).toBe('not_found');
+    const stale = await repository.updateSource({ tenantId: tenantA, id: sourceId, expectedRevision: 2, actorUserId });
+    expect(stale._unsafeUnwrapErr().code).toBe('revision_conflict');
+    const missingSync = await repository.sync({
+      tenantId: tenantB,
+      sourceId,
+      expectedRevision: 1,
+      variants: [],
+      actorUserId,
+    });
+    expect(missingSync._unsafeUnwrapErr().code).toBe('not_found');
+    expect((await sync(repository, [], 2))._unsafeUnwrapErr().code).toBe('revision_conflict');
+    expect(manager.persisted).toHaveLength(0);
+  });
+
+  it('summarizes active translations and pending changes without counting dismissed changes', async () => {
+    const rows = [
+      response('new', variant('new', '400'), { changeState: 'new', texts: { en: [], ru: [], zh: [] } }),
+      response('modified', variant('modified', 'ERR'), { changeState: 'modified' }),
+      response('deleted', variant('deleted', 'NET'), { deleted: true, changeState: 'deleted' }),
+      response('dismissed', variant('dismissed', '400'), { changeState: 'new', changeDismissed: true }),
+    ];
+    const repository = new ApiResponseStudioRepository(createEntityManager({ responses: rows }).entityManager);
+    const dashboard = await unwrap(repository.dashboard(tenantA));
+    expect(dashboard.totals).toEqual({ sources: 1, enabledSources: 1, responses: 3, pendingChanges: 3 });
+    expect(dashboard.sources[0]).toMatchObject({
+      totalResponses: 4,
+      activeResponses: 3,
+      newResponses: 1,
+      modifiedResponses: 1,
+      deletedResponses: 1,
+      missingEn: 1,
+      missingRu: 1,
+      missingZh: 1,
+    });
+  });
+
+  it('filters tenant-scoped responses and bounds pagination consistently with count', async () => {
+    const rows = [
+      response('match', variant('match', '400'), { changeState: 'new', texts: { en: [], ru: [], zh: [] } }),
+      response('other', variant('other', 'NET'), {
+        sourceId: 'other-source',
+        display: 'toast',
+        changeState: 'modified',
+      }),
+      response('deleted', variant('deleted', 'ERR'), { deleted: true }),
+      response('foreign', variant('foreign', '400'), { tenantId: tenantB }),
+    ];
+    const repository = new ApiResponseStudioRepository(createEntityManager({ responses: rows }).entityManager);
+    const query = {
+      sourceId,
+      exact: 'match',
+      status: '400' as const,
+      method: 'post',
+      display: 'modal' as const,
+      changeState: 'new' as const,
+      missingLanguage: 'en' as const,
+      search: ' Payments ',
+      offset: -2,
+      limit: 0,
+    };
+    expect((await unwrap(repository.listResponses(tenantA, query))).map((row) => row.id)).toEqual(['match']);
+    expect(await unwrap(repository.countResponses(tenantA, query))).toBe(1);
+    expect(await unwrap(repository.countResponses(tenantA, { includeDeleted: true }))).toBe(3);
+    expect(await unwrap(repository.countResponses(tenantA, { search: 'nonexistent' }))).toBe(0);
+    expect(
+      (await unwrap(repository.listResponses(tenantA, { includeDeleted: true, offset: 1, limit: 900 }))).map(
+        (row) => row.id,
+      ),
+    ).toEqual(['other', 'deleted']);
+  });
+
+  it('resets presentation data and dismisses changes while preserving source response identity', async () => {
+    const row = response('reset', variant('reset', '400'));
+    const manager = createEntityManager({ responses: [row] });
+    const repository = new ApiResponseStudioRepository(manager.entityManager);
+    const reset = await unwrap(
+      repository.resetResponse({ tenantId: tenantA, id: row.id, expectedRevision: 4, actorUserId }),
+    );
+    expect(reset).toMatchObject({
+      display: 'toast',
+      severity: 'error',
+      support: false,
+      customDescription: '',
+      figmaOnly: false,
+      comments: '',
+      texts: { en: [], ru: [], zh: [] },
+      revision: 5,
+      stableKey: 'reset',
+    });
+    const dismissed = await unwrap(
+      repository.dismissChanges({ tenantId: tenantA, items: [{ id: row.id, expectedRevision: 5 }], actorUserId }),
+    );
+    expect(dismissed[0]).toMatchObject({ changeDismissed: true, revision: 6 });
+    expect(manager.persisted.filter((item) => item instanceof ApiResponseStudioHistoryEntity)).toHaveLength(2);
+    expect(
+      (
+        await repository.resetResponse({ tenantId: tenantB, id: row.id, expectedRevision: 6, actorUserId })
+      )._unsafeUnwrapErr().code,
+    ).toBe('not_found');
+  });
+
+  it('applies complete and partial bulk patches only to requested rows', async () => {
+    const first = response('first', variant('first', '400'));
+    const second = response('second', variant('second', 'NET'));
+    const manager = createEntityManager({ responses: [first, second] });
+    const repository = new ApiResponseStudioRepository(manager.entityManager);
+    const updated = await unwrap(
+      repository.bulkUpdate({
+        tenantId: tenantA,
+        items: [{ id: first.id, expectedRevision: 4 }],
+        actorUserId,
+        patch: {
+          display: 'custom',
+          severity: 'info',
+          support: false,
+          customDescription: 'Bulk',
+          figmaOnly: false,
+          comments: 'Changed',
+          texts: { en: ['Bulk'], ru: [], zh: [] },
+        },
+      }),
+    );
+    expect(updated[0]).toMatchObject({
+      display: 'custom',
+      severity: 'info',
+      support: false,
+      revision: 5,
+      texts: { en: ['Bulk'], ru: [], zh: [] },
+    });
+    expect(second.revision).toBe(4);
+    await unwrap(
+      repository.bulkUpdate({
+        tenantId: tenantA,
+        items: [{ id: first.id, expectedRevision: 5 }],
+        actorUserId,
+        patch: {},
+      }),
+    );
+    expect(first).toMatchObject({ customDescription: 'Bulk', comments: 'Changed', revision: 6 });
+    expect(
+      (
+        await repository.bulkUpdate({
+          tenantId: tenantA,
+          items: [{ id: 'missing', expectedRevision: 1 }],
+          actorUserId,
+          patch: {},
+        })
+      )._unsafeUnwrapErr().code,
+    ).toBe('revision_conflict');
+  });
+
+  it('records newly discovered and modified responses and skips already deleted records', async () => {
+    const existing = response('existing', variant('existing', '400'));
+    const deleted = response('deleted', variant('deleted', 'NET'), { deleted: true });
+    const manager = createEntityManager({ responses: [existing, deleted] });
+    const repository = new ApiResponseStudioRepository(manager.entityManager);
+    const settled = await unwrap(
+      repository.sync({
+        tenantId: tenantA,
+        sourceId,
+        expectedRevision: 1,
+        actorUserId,
+        variants: [variant('existing', '400', 'changed'), variant('new', 'ERR')],
+      }),
+    );
+    expect(settled.summary).toEqual({ created: 1, modified: 1, deleted: 0, unchanged: 0 });
+    expect(existing).toMatchObject({ changeState: 'modified', revision: 5 });
+    expect(deleted.revision).toBe(4);
+    expect(manager.persisted.find((row) => row instanceof ApiResponseStudioResponseEntity)).toMatchObject({
+      stableKey: 'new',
+      tenantId: tenantA,
+    });
+  });
+
+  it('filters mutation history by owner, response, action and inclusive time bounds', async () => {
+    const entry = Object.assign(new ApiResponseStudioHistoryEntity(), {
+      tenantId: tenantA,
+      sourceId,
+      responseId: 'response',
+      action: 'update',
+      actorUserId,
+      createdAt: at,
+    });
+    const foreign = Object.assign(new ApiResponseStudioHistoryEntity(), { ...entry, tenantId: tenantB });
+    const repository = new ApiResponseStudioRepository(
+      createEntityManager({ history: [entry, foreign] }).entityManager,
+    );
+    expect(
+      await unwrap(
+        repository.history(tenantA, {
+          sourceId,
+          responseId: 'response',
+          action: 'update',
+          actorUserId,
+          createdFrom: at,
+          createdTo: at,
+          offset: -1,
+          limit: 0,
+        }),
+      ),
+    ).toHaveLength(1);
+    for (const query of [
+      { sourceId: 'other' },
+      { responseId: 'other' },
+      { action: 'other' },
+      { actorUserId: 'other' },
+      { createdFrom: new Date(at.getTime() + 1) },
+      { createdTo: new Date(at.getTime() - 1) },
+    ]) {
+      expect(await unwrap(repository.history(tenantA, query))).toEqual([]);
+    }
+  });
+
+  it('reports failed transaction flushes without returning a successful mutation', async () => {
+    const manager = createEntityManager({ failFlush: true });
+    const repository = new ApiResponseStudioRepository(manager.entityManager);
+    expect(
+      (
+        await repository.createSource({
+          tenantId: tenantA,
+          actorUserId,
+          name: 'Fail',
+          slug: 'fail',
+          jsonUrl: 'https://example.com/spec',
+        })
+      )._unsafeUnwrapErr(),
+    ).toMatchObject({ code: 'repository_error', message: 'flush failed' });
+  });
   it('scopes every source and response read by tenant identity', async () => {
     const manager = createEntityManager({
       sources: [source(tenantA), Object.assign(source(tenantB), { id: '00000000-0000-4000-8000-000000000099' })],
@@ -253,9 +562,7 @@ describe('ApiResponseStudioRepository', () => {
     );
     expect(updated.enumChoices).toEqual([{ property: 'reason', values: ['A', 'B'], enabledValues: ['B'] }]);
 
-    const preserved = await unwrap(
-      repository.updateResponse({ ...presentation, expectedRevision: updated.revision }),
-    );
+    const preserved = await unwrap(repository.updateResponse({ ...presentation, expectedRevision: updated.revision }));
     expect(preserved.enumChoices).toEqual(updated.enumChoices);
   });
 

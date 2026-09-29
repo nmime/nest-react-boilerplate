@@ -13,6 +13,8 @@ import {
   createPostgresContainerMikroOrmOptions,
   hasDockerRuntime,
   startPostgresContainer,
+  startRedisContainer,
+  stopGenericServiceContainer,
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
 import {
@@ -25,6 +27,7 @@ import {
   authMigrationOptions,
 } from '@app/backend-postgres-main-auth';
 import { PostgresMainModule } from '@app/backend-postgres-main';
+import { RedisModule } from '@app/backend-common-redis';
 import { type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -63,17 +66,18 @@ const describeIfDocker = dockerAvailable ? describe : describe.skip;
 @Global()
 @Module({})
 class TestPostgresAuthCapabilitiesModule {
-  static forRoot(options: Parameters<typeof PostgresMainModule.forRoot>[0]): DynamicModule {
+  static forRoot(options: Parameters<typeof PostgresMainModule.forRoot>[0], redisUrl: string): DynamicModule {
     return {
       module: TestPostgresAuthCapabilitiesModule,
-      imports: [PostgresMainModule.forRoot(options), AuthPostgresModule],
-      exports: [PostgresMainModule, AuthPostgresModule],
+      imports: [PostgresMainModule.forRoot(options), AuthPostgresModule, RedisModule.forRoot({ url: redisUrl })],
+      exports: [PostgresMainModule, AuthPostgresModule, RedisModule],
     };
   }
 }
 
 describeIfDocker('AuthMainModule postgres component', () => {
   let container: StartedPostgreSqlContainer | undefined;
+  let redis: Awaited<ReturnType<typeof startRedisContainer>> | undefined;
   let moduleRef: TestingModule | undefined;
   let app: NestFastifyApplication | undefined;
   let orm: MikroORM;
@@ -82,6 +86,7 @@ describeIfDocker('AuthMainModule postgres component', () => {
     process.env.SESSION_SECRET = sessionSecret;
     process.env.AUTH_PERSISTENCE = 'postgres';
     container = await startPostgresContainer();
+    redis = await startRedisContainer();
     process.env.DATABASE_URL = container.getConnectionUri();
 
     moduleRef = await Test.createTestingModule({
@@ -101,6 +106,7 @@ describeIfDocker('AuthMainModule postgres component', () => {
               migrations: authMigrationOptions,
             },
           ),
+          redis.url,
         ),
         AuthPostgresModule,
         BetterAuthModule.forRoot(),
@@ -134,6 +140,7 @@ describeIfDocker('AuthMainModule postgres component', () => {
       await moduleRef?.close();
     }
     await stopPostgresContainer(container);
+    await stopGenericServiceContainer(redis);
     delete process.env.SESSION_SECRET;
     delete process.env.AUTH_PERSISTENCE;
     if (originalDatabaseUrl === undefined) {

@@ -3,6 +3,7 @@
 // @requirements REQ-API-RESPONSE-STUDIO-004
 import { randomUUID } from 'node:crypto';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
+import { hasDockerRuntime } from '@app/backend-common-component-test';
 import type { ApiResponseStudioParsedVariant } from '@app/backend-feature-auth-shared';
 import { MongoClient } from 'mongodb';
 import type { ResultAsync } from 'neverthrow';
@@ -44,7 +45,7 @@ async function unwrap<T, E extends { message: string }>(result: ResultAsync<T, E
 }
 
 const externalMongoUri = process.env.API_RESPONSE_STUDIO_MONGODB_URI;
-const dockerAvailable = Boolean(process.env.DOCKER_HOST || process.env.TESTCONTAINERS_HOST_OVERRIDE || process.env.CI);
+const dockerAvailable = hasDockerRuntime();
 const componentAvailable = Boolean(externalMongoUri || dockerAvailable);
 const describeIfAvailable = componentAvailable ? describe : describe.skip;
 if (!componentAvailable) {
@@ -63,7 +64,7 @@ describeIfAvailable('MongoApiResponseStudioRepository on a replica set', () => {
     if (externalMongoUri) {
       client = new MongoClient(externalMongoUri);
     } else {
-      container = await new MongoDBContainer('mongo:7.0.26-jammy').start();
+      container = await new MongoDBContainer('mongo:8.0.32-noble').start();
       const separator = container.getConnectionString().includes('?') ? '&' : '?';
       client = new MongoClient(`${container.getConnectionString()}${separator}directConnection=true&replicaSet=rs0`);
     }

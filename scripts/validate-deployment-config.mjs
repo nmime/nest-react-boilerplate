@@ -736,7 +736,7 @@ assert.ok(
   'production base Compose must omit the unselected Redis secret.',
 );
 const prodRedisService = section(prodRedisCompose, '  redis:', '\n\n  admin-app-api:');
-has(prodRedisService, 'image: redis:7.4.3-alpine', 'production Compose Redis image');
+has(prodRedisService, 'image: redis:7.4.11-alpine', 'production Compose Redis image');
 has(prodRedisService, 'redis-server', 'production Compose starts Redis server explicitly');
 has(prodRedisService, 'redis-cli', 'production Compose Redis healthcheck command');
 has(prodRedisService, 'ping', 'production Compose Redis ping healthcheck');

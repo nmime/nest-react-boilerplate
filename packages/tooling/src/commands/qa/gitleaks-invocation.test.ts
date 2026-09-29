@@ -39,13 +39,13 @@ describe("gitleaks invocation", () => {
     const native = nativeGitleaksInvocation({ config: productGitleaksConfigPath, reportPath: summaryReport });
     const docker = dockerGitleaksInvocation({
       config: productGitleaksConfigPath,
-      image: "zricethezav/gitleaks:v8.30.0",
+      image: "zricethezav/gitleaks:v8.30.1",
       reportPath: summaryReport,
       workspace: "/host/repo",
     });
 
     assert.equal(docker.command, "docker");
-    assert.deepEqual(docker.args.slice(0, 7), ["run", "--rm", "-v", "/host/repo:/repo", "-w", "/repo", "zricethezav/gitleaks:v8.30.0"]);
+    assert.deepEqual(docker.args.slice(0, 7), ["run", "--rm", "-v", "/host/repo:/repo", "-w", "/repo", "zricethezav/gitleaks:v8.30.1"]);
     // `--redact` and `--no-git` are the parts that must not diverge between the two branches, and
     // the container branch used to report nothing at all because it was given no report path.
     for (const flag of ["--redact", "--no-git", "--report-format"]) {

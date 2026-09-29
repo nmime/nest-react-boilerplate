@@ -76,6 +76,7 @@ validate credentials and one-time artifacts before granting authenticated state.
 - Verification and reset artifacts are scoped, expiring, single-purpose, and globally unique by token hash.
 - Verification and reset confirmation derive ownership from the persisted artifact, never a caller-provided tenant field.
 - Authentication failures do not reveal whether an account exists.
+- Provider-token AES-GCM envelopes require a complete 16-byte authentication tag.
 
 **Failure behavior:**
 
@@ -86,6 +87,11 @@ validate credentials and one-time artifacts before granting authenticated state.
 
 - **WHEN** an already consumed verification artifact is submitted
 - **THEN** authentication state remains unchanged
+
+#### Scenario: Truncated provider-token authentication tag
+
+- **WHEN** a stored encrypted provider token carries a shortened or oversized tag
+- **THEN** decryption fails before returning a token
 
 #### Scenario: Caller-selected token tenant
 

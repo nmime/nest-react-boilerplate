@@ -59,8 +59,8 @@ describe("MongoDB migration environment", () => {
     };
     const nestCommon = workspace.dependencies?.["@nestjs/common"];
     const nestCore = workspace.dependencies?.["@nestjs/core"];
-    assert.equal(manifest.dependencies?.mongodb, "7.0.0");
-    assert.equal(manifest.dependencies?.["mongodb-connection-string-url"], "7.0.2");
+    assert.equal(manifest.dependencies?.mongodb, workspace.dependencies?.mongodb);
+    assert.equal(manifest.dependencies?.["mongodb-connection-string-url"], workspace.dependencies?.["mongodb-connection-string-url"]);
     assert.equal(typeof nestCommon, "string");
     assert.equal(nestCommon, nestCore);
     assert.equal(manifest.dependencies?.["@nestjs/common"], nestCommon);

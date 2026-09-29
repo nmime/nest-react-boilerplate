@@ -40,7 +40,9 @@ describe('Telegram OIDC social-provider runtime', () => {
             response.end(JSON.stringify({ keys: [jwk] }));
           } else if (request.url === '/token') {
             const chunks: Buffer[] = [];
-            for await (const chunk of request) chunks.push(Buffer.from(chunk));
+            for await (const chunk of request) {
+              chunks.push(Buffer.from(chunk));
+            }
             exchanges.push({
               authorization: request.headers.authorization,
               body: new URLSearchParams(Buffer.concat(chunks).toString()),
@@ -76,12 +78,14 @@ describe('Telegram OIDC social-provider runtime', () => {
       server.listen(0, '127.0.0.1');
       await once(server, 'listening');
       const address = server.address();
-      if (!address || typeof address === 'string') throw new Error('Missing test provider address');
+      if (!address || typeof address === 'string') {
+        throw new Error('Missing test provider address');
+      }
       issuer = `http://127.0.0.1:${address.port}`;
       try {
         const auth = betterAuth({
           baseURL: authOrigin,
-          secret: 'telegram-runtime-secret-at-least-thirty-two-characters',
+          secret: 'test-secret-placeholder-min-32-chars-long',
           database: memoryAdapter(database),
           plugins: [
             genericOAuth({
@@ -126,9 +130,8 @@ describe('Telegram OIDC social-provider runtime', () => {
         );
         expect(exchanges).toHaveLength(1);
         expect(exchanges[0]?.body.get('code_verifier')).toBeTruthy();
-        expect(exchanges[0]?.authorization).toBe(
-          `Basic ${Buffer.from(`${clientId}:test-client-secret`).toString('base64')}`,
-        );
+        const encodedCredentials = Buffer.from(`${clientId}:test-client-secret`).toString('base64');
+        expect(exchanges[0]?.authorization).toBe(`Basic ${encodedCredentials}`);
         if (outcome === 'valid') {
           expect(callback.headers.get('location')).toBe(callbackURL);
           expect(callback.headers.get('set-cookie')).toContain('better-auth.session_token=');
@@ -143,7 +146,15 @@ describe('Telegram OIDC social-provider runtime', () => {
           expect(database.user).toHaveLength(0);
         }
       } finally {
-        await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+        await new Promise<void>((resolve, reject) => {
+          server.close((error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        });
       }
     },
   );

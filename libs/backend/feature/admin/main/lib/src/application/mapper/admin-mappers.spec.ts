@@ -130,3 +130,13 @@ describe('toPermissionView', () => {
     });
   });
 });
+
+it('renders avatar metadata while safely handling an identity without email', () => {
+  const user = baseUser({ avatarUrl: 'https://example.test/avatar.png', avatarStatus: 'provider' });
+  Reflect.set(user, 'email', undefined);
+  expect(toAdminUserView(user)).toMatchObject({
+    email: '',
+    avatarUrl: 'https://example.test/avatar.png',
+    avatarStatus: 'provider',
+  });
+});

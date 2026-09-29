@@ -265,7 +265,7 @@ describeIfDocker('AuthUserRepository component', () => {
 
     const mutation = await adminUserMutations.mutateAccessPolicyWithAudit({
       targetUserId: onlyPowerfulAdmin.id,
-      actorUserId: '00000000-0000-4000-8000-000000000099',
+      actorUserId: nonPowerfulUser.id,
       action: 'admin.user.access_policy.update',
       policy: {
         roles: ['member'],

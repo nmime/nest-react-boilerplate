@@ -1,8 +1,10 @@
 // @requirements REQ-SCAFFOLD-SELECTION-002
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
 
 import {
@@ -337,3 +339,41 @@ function restoreEnv(key: string, value: string | undefined): void {
   }
   process.env[key] = value;
 }
+
+void it('delegates selected image compilation without treating infrastructure services as product images', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'nrb-fullstack-images-'));
+  roots.push(root);
+  mkdirSync(join(root, '.nrb'));
+  mkdirSync(join(root, 'scripts'));
+  writeFileSync(
+    join(root, '.nrb/closure.json'),
+    JSON.stringify({
+      provider: 'postgres',
+      roots: ['fullstack-e2e', 'user-app'],
+      services: ['migrate', 'postgres', 'redis', 'minio', 'user-app'],
+    }),
+  );
+  writeFileSync(
+    join(root, 'scripts/build-images.mjs'),
+    `import { writeFileSync } from 'node:fs'; writeFileSync('invocation.json', JSON.stringify(process.argv.slice(2)));`,
+  );
+  const composePath = new URL('../src/compose.ts', import.meta.url).href;
+  const child = spawnSync(
+    process.execPath,
+    [
+      '--import',
+      join(dirname(createRequire(import.meta.url).resolve('jiti/package.json')), 'lib/jiti-register.mjs'),
+      '--input-type=module',
+      '-e',
+      `const { buildStackImages, stackServices } = (await import(${JSON.stringify(composePath)})).default; if (!stackServices.includes('postgres')) throw new Error('Fixture did not select PostgreSQL.'); await buildStackImages();`,
+    ],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 30_000,
+      env: { ...process.env, NRB_WORKSPACE_ROOT: root, NRB_IMAGE_COMPILE: '1' },
+    },
+  );
+  assert.equal(child.status, 0, child.stderr);
+  assert.deepEqual(JSON.parse(readFileSync(join(root, 'invocation.json'), 'utf8')), []);
+});

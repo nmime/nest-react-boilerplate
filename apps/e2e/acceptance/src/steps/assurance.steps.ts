@@ -136,7 +136,9 @@ Then('each release is cut from the exact revision its gates verified', function 
   assertProvenanceControl('release-exact-revision');
   assertProvenanceControl('release-follows-verified-gates');
   for (const [forgeId, forge] of configuredForges()) {
-    if (forgeId !== 'gitlab' || !forge.provenancePipeline) continue;
+    if (forgeId !== 'gitlab' || !forge.provenancePipeline) {
+      continue;
+    }
     const pipeline = parse(readFileSync(resolve(process.cwd(), forge.provenancePipeline), 'utf8')) as {
       stages: string[];
       release: { stage: string; needs?: unknown; when?: string };

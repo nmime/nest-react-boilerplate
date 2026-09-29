@@ -68,6 +68,12 @@ product code.
 - **THEN** the bot's generated source and dependency closure exclude payment persistence
 - **AND** selected durable hosts retain payment wiring
 
+#### Scenario: Fullstack compiles only selected product images
+
+- **WHEN** a selected fullstack closure includes external infrastructure services
+- **THEN** image compilation delegates to the canonical selected-image build driver
+- **AND** database, cache, and object-store service names are never passed as product image names
+
 ### Requirement: [REQ-SCAFFOLD-GENERATORS-003] All ownership generators are deterministic
 
 Application, library, feature, and setup generators SHALL produce canonical,

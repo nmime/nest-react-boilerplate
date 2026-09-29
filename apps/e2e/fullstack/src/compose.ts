@@ -247,19 +247,16 @@ export async function upStack(): Promise<void> {
 export async function buildStackImages(): Promise<void> {
   writeStdoutLine(`fullstack compose project=${composeEnv.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`);
   if (process.env.NRB_IMAGE_COMPILE === '1' || process.env.NRB_IMAGE_COMPILE === 'true') {
-    await buildServices(stackServices);
+    await buildSelectedImages();
     return;
   }
   writeStdoutLine('fullstack: skipping image compile (set NRB_IMAGE_COMPILE=1 to bake)');
 }
 
-async function buildServices(services: string[]): Promise<void> {
-  const bakeNames = [
-    ...new Set(
-      services.map((service) => (service === 'migrate' || service === 'mongodb-migrate' ? 'migrator' : service)),
-    ),
-  ];
-  const args = ['scripts/build-images.mjs', '--only', bakeNames.join(',')];
+async function buildSelectedImages(): Promise<void> {
+  // The canonical driver owns the selected release-image inventory. Compose
+  // service names also include external infrastructure, which must be pulled.
+  const args = ['scripts/build-images.mjs'];
   try {
     await run(process.execPath, args);
   } catch (error) {

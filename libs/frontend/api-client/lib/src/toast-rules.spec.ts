@@ -2,6 +2,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { parseGeneratedToastRules } from './toast-rules/generated-config';
+import compactAuthConfig from './generated/toast/auth-app-api.toast-rules.frontend.generated.json';
+
 import { adminApiToastRules, apiToastRuleCatalog, authApiToastRules, userApiToastRules } from './toast-rules';
 
 const moduleSource = (name: string): string => readFileSync(join(import.meta.dirname, 'toast-rules', name), 'utf8');
@@ -46,4 +49,78 @@ describe('per-service toast rule modules', () => {
       [...new Set(apiToastRuleCatalog.map((rule) => rule.app))].sort((left, right) => left.localeCompare(right)),
     ).toEqual(['admin-app-api', 'auth-app-api', 'user-app-api']);
   });
+});
+
+interface SourceRule {
+  id: string;
+  enabled: boolean;
+  endpoint: { app: string; operationId: string | null; path: string; method: string; tags: string[] };
+  status: number | string;
+  errorCode: string | null;
+  display: { mode: string; category: string; text: { default: string } };
+}
+
+it.each([
+  ['admin', adminApiToastRules],
+  ['auth', authApiToastRules],
+  ['user', userApiToastRules],
+] as const)(
+  'preserves every %s rule and presentation against the canonical backend catalog',
+  (service, runtimeRules) => {
+    const source = JSON.parse(
+      readFileSync(
+        join(
+          import.meta.dirname,
+          `../../../../../apps/backend/${service}/${service}-app-api/contracts/toast/${service}-app-api.toast-rules.generated.json`,
+        ),
+        'utf8',
+      ),
+    ) as { rules: SourceRule[] };
+    expect(runtimeRules).toHaveLength(source.rules.length);
+    for (const rule of source.rules) {
+      expect(runtimeRules.find((candidate) => candidate.id === rule.id)).toMatchObject({
+        display: rule.enabled ? rule.display.mode : 'silent',
+        match: {
+          endpoint: rule.endpoint.path,
+          method: rule.endpoint.method,
+          ...(typeof rule.status === 'number' ? { status: rule.status } : {}),
+          ...(rule.errorCode ? { code: rule.errorCode } : {}),
+        },
+        toast: {
+          category: rule.display.category,
+          messageSource: 'problem',
+          titleKey:
+            typeof rule.status === 'number' && rule.status >= 500
+              ? 'ui.runtime.serverUnavailable.title'
+              : 'ui.runtime.requestFailed.title',
+        },
+      });
+      expect(apiToastRuleCatalog.find((candidate) => candidate.id === rule.id)).toEqual({
+        id: rule.id,
+        app: rule.endpoint.app,
+        errorCode: rule.errorCode,
+        operationId: rule.endpoint.operationId,
+        path: rule.endpoint.path,
+        method: rule.endpoint.method,
+        status: rule.status,
+        tags: rule.endpoint.tags,
+        defaultDisplay: rule.enabled ? rule.display.mode : 'silent',
+        defaultMessage: rule.display.text.default,
+        defaultSeverity: rule.display.category,
+      });
+    }
+  },
+);
+
+it('retains fail-closed runtime parsing for malformed generated rules', () => {
+  const valid = compactAuthConfig.rules[0]!;
+  expect(
+    parseGeneratedToastRules({
+      ...compactAuthConfig,
+      rules: [
+        { ...valid, id: '' },
+        { ...valid, toast: { category: 'invalid' } },
+      ],
+    }),
+  ).toEqual([]);
 });

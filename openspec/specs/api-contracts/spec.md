@@ -119,6 +119,12 @@ paths in application code.
 - **WHEN** a generated client receives a Problem Details response
 - **THEN** the wrapper preserves its safe typed public fields
 
+#### Scenario: Compact generated browser presentation rules
+
+- **WHEN** frontend presentation rules are generated from reviewed API contracts
+- **THEN** shared defaults and catalog fields are stored once and reconstructed without changing rule matching or presentation
+- **AND** an application that does not consume the cross-service catalog can omit it from its production bundle
+
 ### Requirement: [REQ-API-RESPONSE-006] Response serialization is consistent
 
 Success, error, health, static, and documented API responses SHALL preserve

@@ -93,7 +93,7 @@ describe("api toast config tooling", () => {
       assert.equal(rules[1].match.fallbackVariant, "POST_ERR");
       assert.equal(rules[1].enabled, true);
       const frontend = buildFrontendToastConfig(contract, rules);
-      assert.deepEqual(frontend.rules[0]?.toast, {
+      assert.deepEqual({ ...frontend.defaults.toast, ...frontend.rules[0]?.toast }, {
         category: "success",
         messageSource: "problem",
         titleKey: "ui.runtime.requestFailed.title",

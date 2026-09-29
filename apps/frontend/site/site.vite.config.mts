@@ -19,6 +19,21 @@ export default defineConfig({
     host: 'localhost',
   },
   plugins: [react(), vike()],
+  environments: {
+    client: {
+      build: {
+        rolldownOptions: {
+          output: {
+            codeSplitting: {
+              groups: [
+                { name: 'react-vendor', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/u, priority: 20 },
+              ],
+            },
+          },
+        },
+      },
+    },
+  },
   build: {
     outDir: '../../../dist/apps/frontend/site/client',
     emptyOutDir: true,

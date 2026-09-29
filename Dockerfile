@@ -32,7 +32,7 @@ COPY .npmrc .nxignore nx.json tsconfig.base.json tsconfig.lint.json eslint.confi
 RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
   node -e "const fs=require('node:fs'); const p='pnpm-workspace.yaml'; fs.writeFileSync(p, fs.readFileSync(p,'utf8').replace(/^minimumReleaseAge:\\s*\\d+/mu, 'minimumReleaseAge: 0'));" \
   && printf '%s\n' 'fetch-timeout=900000' 'fetch-retries=5' 'network-concurrency=8' >> .npmrc \
-  && pnpm fetch --frozen-lockfile
+  && pnpm fetch
 RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
   pnpm install --frozen-lockfile --offline \
   && chown -R node:node /workspace

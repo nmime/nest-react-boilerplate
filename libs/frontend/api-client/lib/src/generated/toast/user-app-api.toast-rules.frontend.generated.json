@@ -1,10 +1,17 @@
 {
   "$schema": "https://nmime.dev/schemas/api-toast-rules-frontend.schema.json",
-  "version": 1,
+  "version": 2,
   "generatedBy": "@repo/tooling api toast-config generate",
   "source": {
     "openapi": "apps/backend/user/user-app-api/contracts/openapi/user-app-api.json",
     "app": "user-app-api"
+  },
+  "defaults": {
+    "toast": {
+      "category": "error",
+      "messageSource": "problem",
+      "titleKey": "ui.runtime.requestFailed.title"
+    }
   },
   "rules": [
     {
@@ -16,21 +23,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_delete",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "DELETE",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks unknown delete completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks unknown delete completed successfully."
       }
     },
     {
@@ -41,22 +39,12 @@
         "method": "DELETE",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_delete",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "DELETE",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown delete failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks unknown delete failed before an HTTP response was available."
       }
     },
     {
@@ -68,21 +56,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_delete",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "DELETE",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown delete could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks unknown delete could not reach the service."
       }
     },
     {
@@ -94,21 +74,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_get",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "GET",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks unknown get completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks unknown get completed successfully."
       }
     },
     {
@@ -119,22 +90,12 @@
         "method": "GET",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_get",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "GET",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown get failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks unknown get failed before an HTTP response was available."
       }
     },
     {
@@ -146,21 +107,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_get",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "GET",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown get could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks unknown get could not reach the service."
       }
     },
     {
@@ -172,21 +125,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_head",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "HEAD",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks unknown head completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks unknown head completed successfully."
       }
     },
     {
@@ -197,22 +141,12 @@
         "method": "HEAD",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_head",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "HEAD",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown head failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks unknown head failed before an HTTP response was available."
       }
     },
     {
@@ -224,21 +158,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_head",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "HEAD",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown head could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks unknown head could not reach the service."
       }
     },
     {
@@ -250,21 +176,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_options",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "OPTIONS",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks unknown options completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks unknown options completed successfully."
       }
     },
     {
@@ -275,22 +192,12 @@
         "method": "OPTIONS",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_options",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "OPTIONS",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown options failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks unknown options failed before an HTTP response was available."
       }
     },
     {
@@ -302,21 +209,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_options",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "OPTIONS",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown options could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks unknown options could not reach the service."
       }
     },
     {
@@ -328,21 +227,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_patch",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "PATCH",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks unknown patch completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks unknown patch completed successfully."
       }
     },
     {
@@ -353,22 +243,12 @@
         "method": "PATCH",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_patch",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "PATCH",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown patch failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks unknown patch failed before an HTTP response was available."
       }
     },
     {
@@ -380,21 +260,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_patch",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "PATCH",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown patch could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks unknown patch could not reach the service."
       }
     },
     {
@@ -406,21 +278,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_post",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks unknown post completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks unknown post completed successfully."
       }
     },
     {
@@ -431,22 +294,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_post",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown post failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks unknown post failed before an HTTP response was available."
       }
     },
     {
@@ -458,21 +311,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_post",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown post could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks unknown post could not reach the service."
       }
     },
     {
@@ -484,21 +329,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_put",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "PUT",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks unknown put completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks unknown put completed successfully."
       }
     },
     {
@@ -509,22 +345,12 @@
         "method": "PUT",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_put",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "PUT",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown put failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks unknown put failed before an HTTP response was available."
       }
     },
     {
@@ -536,21 +362,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_unknown_put",
-        "path": "/api/v1/webhooks/{provider}",
-        "method": "PUT",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks unknown put could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks unknown put could not reach the service."
       }
     },
     {
@@ -562,21 +380,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_adyen",
-        "path": "/api/v1/webhooks/adyen",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks adyen completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks adyen completed successfully."
       }
     },
     {
@@ -587,22 +396,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_adyen",
-        "path": "/api/v1/webhooks/adyen",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks adyen failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks adyen failed before an HTTP response was available."
       }
     },
     {
@@ -614,21 +413,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_adyen",
-        "path": "/api/v1/webhooks/adyen",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks adyen could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks adyen could not reach the service."
       }
     },
     {
@@ -640,21 +431,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
-        "path": "/api/v1/webhooks/cloudpayments",
-        "method": "GET",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks cloud Payments Get completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks cloud Payments Get completed successfully."
       }
     },
     {
@@ -665,22 +447,12 @@
         "method": "GET",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
-        "path": "/api/v1/webhooks/cloudpayments",
-        "method": "GET",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks cloud Payments Get failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed before an HTTP response was available."
       }
     },
     {
@@ -692,21 +464,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
-        "path": "/api/v1/webhooks/cloudpayments",
-        "method": "GET",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks cloud Payments Get could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks cloud Payments Get could not reach the service."
       }
     },
     {
@@ -718,21 +482,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
-        "path": "/api/v1/webhooks/cloudpayments",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks cloud Payments Post completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks cloud Payments Post completed successfully."
       }
     },
     {
@@ -743,22 +498,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
-        "path": "/api/v1/webhooks/cloudpayments",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks cloud Payments Post failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed before an HTTP response was available."
       }
     },
     {
@@ -770,21 +515,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
-        "path": "/api/v1/webhooks/cloudpayments",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks cloud Payments Post could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks cloud Payments Post could not reach the service."
       }
     },
     {
@@ -796,21 +533,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cryptoBot",
-        "path": "/api/v1/webhooks/cryptobot",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks crypto Bot completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks crypto Bot completed successfully."
       }
     },
     {
@@ -821,22 +549,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cryptoBot",
-        "path": "/api/v1/webhooks/cryptobot",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks crypto Bot failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks crypto Bot failed before an HTTP response was available."
       }
     },
     {
@@ -848,21 +566,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_cryptoBot",
-        "path": "/api/v1/webhooks/cryptobot",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks crypto Bot could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks crypto Bot could not reach the service."
       }
     },
     {
@@ -874,21 +584,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_heleket",
-        "path": "/api/v1/webhooks/heleket",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks heleket completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks heleket completed successfully."
       }
     },
     {
@@ -899,22 +600,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_heleket",
-        "path": "/api/v1/webhooks/heleket",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks heleket failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks heleket failed before an HTTP response was available."
       }
     },
     {
@@ -926,21 +617,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_heleket",
-        "path": "/api/v1/webhooks/heleket",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks heleket could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks heleket could not reach the service."
       }
     },
     {
@@ -952,21 +635,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_nowPayments",
-        "path": "/api/v1/webhooks/nowpayments",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks now Payments completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks now Payments completed successfully."
       }
     },
     {
@@ -977,22 +651,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_nowPayments",
-        "path": "/api/v1/webhooks/nowpayments",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks now Payments failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks now Payments failed before an HTTP response was available."
       }
     },
     {
@@ -1004,21 +668,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_nowPayments",
-        "path": "/api/v1/webhooks/nowpayments",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks now Payments could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks now Payments could not reach the service."
       }
     },
     {
@@ -1030,21 +686,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_stripe",
-        "path": "/api/v1/webhooks/stripe",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks stripe completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks stripe completed successfully."
       }
     },
     {
@@ -1055,22 +702,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_stripe",
-        "path": "/api/v1/webhooks/stripe",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks stripe failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks stripe failed before an HTTP response was available."
       }
     },
     {
@@ -1082,21 +719,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_stripe",
-        "path": "/api/v1/webhooks/stripe",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks stripe could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks stripe could not reach the service."
       }
     },
     {
@@ -1108,21 +737,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_rocketPayment",
-        "path": "/api/v1/webhooks/x-rocket",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks rocket Payment completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks rocket Payment completed successfully."
       }
     },
     {
@@ -1133,22 +753,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_rocketPayment",
-        "path": "/api/v1/webhooks/x-rocket",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks rocket Payment failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks rocket Payment failed before an HTTP response was available."
       }
     },
     {
@@ -1160,21 +770,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_rocketPayment",
-        "path": "/api/v1/webhooks/x-rocket",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks rocket Payment could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks rocket Payment could not reach the service."
       }
     },
     {
@@ -1186,21 +788,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_yooKassa",
-        "path": "/api/v1/webhooks/yookassa",
-        "method": "POST",
-        "status": 200,
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments Webhooks yoo Kassa completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments Webhooks yoo Kassa completed successfully."
       }
     },
     {
@@ -1211,22 +804,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_yooKassa",
-        "path": "/api/v1/webhooks/yookassa",
-        "method": "POST",
         "status": "ERR",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks yoo Kassa failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments Webhooks yoo Kassa failed before an HTTP response was available."
       }
     },
     {
@@ -1238,21 +821,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsWebhooksController_yooKassa",
-        "path": "/api/v1/webhooks/yookassa",
-        "method": "POST",
         "status": "NET",
         "tags": ["PaymentsWebhooks"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments Webhooks yoo Kassa could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments Webhooks yoo Kassa could not reach the service."
       }
     },
     {
@@ -1264,21 +839,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getHealth",
-        "path": "/health",
-        "method": "GET",
-        "status": 200,
         "tags": ["BaseHealth"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Base Health get Health completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Base Health get Health completed successfully."
       }
     },
     {
@@ -1289,22 +855,12 @@
         "method": "GET",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getHealth",
-        "path": "/health",
-        "method": "GET",
         "status": "ERR",
         "tags": ["BaseHealth"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Base Health get Health failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Base Health get Health failed before an HTTP response was available."
       }
     },
     {
@@ -1316,21 +872,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getHealth",
-        "path": "/health",
-        "method": "GET",
         "status": "NET",
         "tags": ["BaseHealth"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Base Health get Health could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Base Health get Health could not reach the service."
       }
     },
     {
@@ -1342,21 +890,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getPrivateHealth",
-        "path": "/health/private",
-        "method": "GET",
-        "status": 200,
         "tags": ["BaseHealth"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Base Health get Private Health completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Base Health get Private Health completed successfully."
       }
     },
     {
@@ -1367,22 +906,12 @@
         "method": "GET",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getPrivateHealth",
-        "path": "/health/private",
-        "method": "GET",
         "status": "ERR",
         "tags": ["BaseHealth"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Base Health get Private Health failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Base Health get Private Health failed before an HTTP response was available."
       }
     },
     {
@@ -1394,21 +923,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getPrivateHealth",
-        "path": "/health/private",
-        "method": "GET",
         "status": "NET",
         "tags": ["BaseHealth"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Base Health get Private Health could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Base Health get Private Health could not reach the service."
       }
     },
     {
@@ -1420,21 +941,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getLiveness",
-        "path": "/live",
-        "method": "GET",
-        "status": 200,
         "tags": ["BaseHealth"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Base Health get Liveness completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Base Health get Liveness completed successfully."
       }
     },
     {
@@ -1445,22 +957,12 @@
         "method": "GET",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getLiveness",
-        "path": "/live",
-        "method": "GET",
         "status": "ERR",
         "tags": ["BaseHealth"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Base Health get Liveness failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Base Health get Liveness failed before an HTTP response was available."
       }
     },
     {
@@ -1472,21 +974,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getLiveness",
-        "path": "/live",
-        "method": "GET",
         "status": "NET",
         "tags": ["BaseHealth"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Base Health get Liveness could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Base Health get Liveness could not reach the service."
       }
     },
     {
@@ -1498,21 +992,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_list",
-        "path": "/payments",
-        "method": "GET",
-        "status": 200,
         "tags": ["Payments"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments list completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments list completed successfully."
       }
     },
     {
@@ -1523,22 +1008,11 @@
         "method": "GET",
         "status": 400
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_list",
-        "path": "/payments",
-        "method": "GET",
-        "status": 400,
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments list failed: Bad Request.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments list failed: Bad Request."
       }
     },
     {
@@ -1549,22 +1023,11 @@
         "method": "GET",
         "status": 401
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_list",
-        "path": "/payments",
-        "method": "GET",
-        "status": 401,
         "tags": ["Payments"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments list failed: Unauthorized.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments list failed: Unauthorized."
       }
     },
     {
@@ -1575,22 +1038,11 @@
         "method": "GET",
         "status": 403
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_list",
-        "path": "/payments",
-        "method": "GET",
-        "status": 403,
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments list failed: Forbidden.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments list failed: Forbidden."
       }
     },
     {
@@ -1601,22 +1053,11 @@
         "method": "GET",
         "status": 429
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_list",
-        "path": "/payments",
-        "method": "GET",
-        "status": 429,
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments list failed: Too Many Requests.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments list failed: Too Many Requests."
       }
     },
     {
@@ -1628,21 +1069,12 @@
         "status": 500
       },
       "toast": {
-        "category": "error",
-        "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_list",
-        "path": "/payments",
-        "method": "GET",
-        "status": 500,
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments list failed: Internal Server Error.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments list failed: Internal Server Error."
       }
     },
     {
@@ -1653,22 +1085,12 @@
         "method": "GET",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_list",
-        "path": "/payments",
-        "method": "GET",
         "status": "ERR",
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments list failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments list failed before an HTTP response was available."
       }
     },
     {
@@ -1680,21 +1102,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_list",
-        "path": "/payments",
-        "method": "GET",
         "status": "NET",
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments list could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments list could not reach the service."
       }
     },
     {
@@ -1706,21 +1120,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_create",
-        "path": "/payments",
-        "method": "POST",
-        "status": 200,
         "tags": ["Payments"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments create completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Payments create completed successfully."
       }
     },
     {
@@ -1731,22 +1136,11 @@
         "method": "POST",
         "status": 400
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_create",
-        "path": "/payments",
-        "method": "POST",
-        "status": 400,
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments create failed: Bad Request.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments create failed: Bad Request."
       }
     },
     {
@@ -1757,22 +1151,11 @@
         "method": "POST",
         "status": 401
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_create",
-        "path": "/payments",
-        "method": "POST",
-        "status": 401,
         "tags": ["Payments"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Payments create failed: Unauthorized.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments create failed: Unauthorized."
       }
     },
     {
@@ -1783,22 +1166,11 @@
         "method": "POST",
         "status": 403
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_create",
-        "path": "/payments",
-        "method": "POST",
-        "status": 403,
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments create failed: Forbidden.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments create failed: Forbidden."
       }
     },
     {
@@ -1809,22 +1181,11 @@
         "method": "POST",
         "status": 429
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_create",
-        "path": "/payments",
-        "method": "POST",
-        "status": 429,
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments create failed: Too Many Requests.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments create failed: Too Many Requests."
       }
     },
     {
@@ -1836,21 +1197,12 @@
         "status": 500
       },
       "toast": {
-        "category": "error",
-        "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_create",
-        "path": "/payments",
-        "method": "POST",
-        "status": 500,
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments create failed: Internal Server Error.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments create failed: Internal Server Error."
       }
     },
     {
@@ -1861,22 +1213,12 @@
         "method": "POST",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_create",
-        "path": "/payments",
-        "method": "POST",
         "status": "ERR",
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments create failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Payments create failed before an HTTP response was available."
       }
     },
     {
@@ -1888,21 +1230,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "PaymentsController_create",
-        "path": "/payments",
-        "method": "POST",
         "status": "NET",
         "tags": ["Payments"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Payments create could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Payments create could not reach the service."
       }
     },
     {
@@ -1914,21 +1248,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "ProfileController_me",
-        "path": "/profile/me",
-        "method": "GET",
-        "status": 200,
         "tags": ["Profile"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Profile me completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Profile me completed successfully."
       }
     },
     {
@@ -1939,22 +1264,11 @@
         "method": "GET",
         "status": 400
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "ProfileController_me",
-        "path": "/profile/me",
-        "method": "GET",
-        "status": 400,
         "tags": ["Profile"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Profile me failed: Bad Request.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Profile me failed: Bad Request."
       }
     },
     {
@@ -1965,22 +1279,11 @@
         "method": "GET",
         "status": 401
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "ProfileController_me",
-        "path": "/profile/me",
-        "method": "GET",
-        "status": 401,
         "tags": ["Profile"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Profile me failed: Unauthorized.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Profile me failed: Unauthorized."
       }
     },
     {
@@ -1991,22 +1294,11 @@
         "method": "GET",
         "status": 403
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "ProfileController_me",
-        "path": "/profile/me",
-        "method": "GET",
-        "status": 403,
         "tags": ["Profile"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Profile me failed: Forbidden.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Profile me failed: Forbidden."
       }
     },
     {
@@ -2017,22 +1309,11 @@
         "method": "GET",
         "status": 429
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "ProfileController_me",
-        "path": "/profile/me",
-        "method": "GET",
-        "status": 429,
         "tags": ["Profile"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Profile me failed: Too Many Requests.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Profile me failed: Too Many Requests."
       }
     },
     {
@@ -2044,21 +1325,12 @@
         "status": 500
       },
       "toast": {
-        "category": "error",
-        "messageSource": "problem",
         "titleKey": "ui.runtime.serverUnavailable.title"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "ProfileController_me",
-        "path": "/profile/me",
-        "method": "GET",
-        "status": 500,
         "tags": ["Profile"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Profile me failed: Internal Server Error.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Profile me failed: Internal Server Error."
       }
     },
     {
@@ -2069,22 +1341,12 @@
         "method": "GET",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "ProfileController_me",
-        "path": "/profile/me",
-        "method": "GET",
         "status": "ERR",
         "tags": ["Profile"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Profile me failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Profile me failed before an HTTP response was available."
       }
     },
     {
@@ -2096,21 +1358,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "ProfileController_me",
-        "path": "/profile/me",
-        "method": "GET",
         "status": "NET",
         "tags": ["Profile"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Profile me could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Profile me could not reach the service."
       }
     },
     {
@@ -2122,21 +1376,12 @@
         "status": 200
       },
       "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "success"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getReadiness",
-        "path": "/ready",
-        "method": "GET",
-        "status": 200,
         "tags": ["BaseHealth"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Base Health get Readiness completed successfully.",
-        "defaultSeverity": "success"
+        "defaultMessage": "Base Health get Readiness completed successfully."
       }
     },
     {
@@ -2147,22 +1392,12 @@
         "method": "GET",
         "kind": "unknown"
       },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
+      "toast": {},
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getReadiness",
-        "path": "/ready",
-        "method": "GET",
         "status": "ERR",
         "tags": ["BaseHealth"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Base Health get Readiness failed before an HTTP response was available.",
-        "defaultSeverity": "error"
+        "defaultMessage": "Base Health get Readiness failed before an HTTP response was available."
       }
     },
     {
@@ -2174,21 +1409,13 @@
         "kind": "network"
       },
       "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
+        "category": "warning"
       },
       "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
         "operationId": "BaseHealthController_getReadiness",
-        "path": "/ready",
-        "method": "GET",
         "status": "NET",
         "tags": ["BaseHealth"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Base Health get Readiness could not reach the service.",
-        "defaultSeverity": "warning"
+        "defaultMessage": "Base Health get Readiness could not reach the service."
       }
     }
   ]

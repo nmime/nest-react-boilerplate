@@ -155,12 +155,10 @@ export function generateToastConfigs({ workspaceRoot = process.cwd(), contracts,
 export function buildFrontendToastConfig(contract: DiscoveredContract, rules: ToastRule[]) {
   return {
     $schema: "https://nmime.dev/schemas/api-toast-rules-frontend.schema.json",
-    version: 1,
+    version: 2,
     generatedBy: "@repo/tooling api toast-config generate",
-    source: {
-      openapi: contract.relativePath,
-      app: contract.app,
-    },
+    source: { openapi: contract.relativePath, app: contract.app },
+    defaults: { toast: { category: "error", messageSource: "problem", titleKey: "ui.runtime.requestFailed.title" } },
     rules: rules.map((rule) => ({
       display: rule.enabled ? rule.display.mode : "silent",
       id: rule.id,
@@ -173,24 +171,14 @@ export function buildFrontendToastConfig(contract: DiscoveredContract, rules: To
         ...(rule.status === "NET" ? { kind: "network" } : {}),
       },
       toast: {
-        category: rule.display.category,
-        messageSource: "problem",
-        titleKey:
-          typeof rule.status === "number" && rule.status >= 500
-            ? "ui.runtime.serverUnavailable.title"
-            : "ui.runtime.requestFailed.title",
+        ...(rule.display.category !== "error" ? { category: rule.display.category } : {}),
+        ...(typeof rule.status === "number" && rule.status >= 500 ? { titleKey: "ui.runtime.serverUnavailable.title" } : {}),
       },
       catalog: {
-        app: rule.endpoint.app,
-        errorCode: rule.errorCode,
         operationId: rule.endpoint.operationId,
-        path: rule.endpoint.path,
-        method: rule.endpoint.method,
-        status: rule.status,
+        ...(typeof rule.status !== "number" ? { status: rule.status } : {}),
         tags: rule.endpoint.tags,
-        defaultDisplay: rule.enabled ? rule.display.mode : "silent",
         defaultMessage: rule.display.text.default,
-        defaultSeverity: rule.display.category,
       },
     })),
   };

@@ -23,6 +23,18 @@ export default defineConfig({
     port: 4202,
   },
   vite: {
+    build: {
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            groups: [
+              { name: 'state-vendor', test: /[\\/]node_modules[\\/](mobx|mobx-react-lite)[\\/]/u, priority: 30 },
+              { name: 'react-vendor', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/u, priority: 20 },
+            ],
+          },
+        },
+      },
+    },
     cacheDir: '../../../node_modules/.vite/apps/frontend/landing-astro',
     resolve: {
       tsconfigPaths: true,

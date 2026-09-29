@@ -29,6 +29,12 @@ accessibility states.
 - **WHEN** the product stack is exercised through a supported browser
 - **THEN** navigation, authentication, and safe error handling remain usable
 
+#### Scenario: Production bundle budgets
+
+- **WHEN** browser renderer production bundles are built after dependency upgrades
+- **THEN** they retain the reviewed JavaScript, stylesheet, and largest-chunk budgets
+- **AND** splitting shared framework code preserves hydration and runtime behavior
+
 ### Requirement: [REQ-FRONTEND-I18N-002] Locale and design contracts stay synchronized
 
 Frontend deployables SHALL consume owned translation catalogs and shared

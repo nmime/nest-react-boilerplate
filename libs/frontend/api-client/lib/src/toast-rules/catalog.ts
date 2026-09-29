@@ -18,19 +18,29 @@ export interface ApiToastRuleCatalogItem {
   readonly tags: readonly string[];
 }
 
-interface GeneratedCatalogRule {
-  readonly catalog: Omit<ApiToastRuleCatalogItem, 'id'>;
-  readonly id: string;
-}
+import type { GeneratedToastConfig } from './generated-config';
 
-const catalogFrom = (rules: readonly unknown[]): ApiToastRuleCatalogItem[] =>
-  (rules as readonly GeneratedCatalogRule[]).map((rule) => ({ id: rule.id, ...rule.catalog }));
+const catalogFrom = (config: GeneratedToastConfig): ApiToastRuleCatalogItem[] =>
+  config.rules.map((rule) => ({
+    id: rule.id,
+    app: config.source.app,
+    defaultDisplay: rule.display as ApiToastDisplay,
+    defaultMessage: rule.catalog.defaultMessage,
+    defaultSeverity: (rule.toast.category ?? config.defaults.toast.category) as ApiToastCategory,
+    errorCode: rule.match.code ?? null,
+    method: rule.match.method,
+    operationId: rule.catalog.operationId,
+    path: rule.match.endpoint,
+    status: rule.match.status ?? rule.catalog.status ?? 'default',
+    tags: rule.catalog.tags,
+  }));
 
-// The admin problem-presentations screen is the only consumer that needs every service at once, so
-// this cross-app view lives apart from the per-service rule sets and is annotated pure: the user
-// app pays for none of it.
-export const apiToastRuleCatalog: readonly ApiToastRuleCatalogItem[] = /* @__PURE__ */ [
-  ...catalogFrom(adminToastConfig.rules),
-  ...catalogFrom(authToastConfig.rules),
-  ...catalogFrom(userToastConfig.rules),
+const allServiceCatalogs = (): ApiToastRuleCatalogItem[] => [
+  ...catalogFrom(adminToastConfig),
+  ...catalogFrom(authToastConfig),
+  ...catalogFrom(userToastConfig),
 ];
+
+// Pure annotations apply to calls, not array literals. A user-only build can
+// discard this initializer and the unconsumed admin service's generated data.
+export const apiToastRuleCatalog: readonly ApiToastRuleCatalogItem[] = /* @__PURE__ */ allServiceCatalogs();

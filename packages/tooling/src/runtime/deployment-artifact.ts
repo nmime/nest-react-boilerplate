@@ -9,6 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { parseAllDocuments } from 'yaml';
 
 import { appCatalog, type ReleaseImageEntry } from '../setup/catalog.js';
 import {
@@ -304,6 +305,7 @@ export function stageDeploymentArtifact(options: {
     requireFile(generatedLock, `Generated backend pnpm lock is missing for ${options.project}`);
     const manifest = JSON.parse(readFileSync(generatedManifest, 'utf8')) as {
       main?: unknown;
+      packageManager?: unknown;
       dependencies?: Record<string, string>;
     };
     if (typeof manifest.main !== 'string' || manifest.main.length === 0) {
@@ -320,7 +322,7 @@ export function stageDeploymentArtifact(options: {
       join(artifactRoot, 'package.json'),
       `${JSON.stringify({ ...manifest, dependencies: selectedDependencies }, null, 2)}\n`,
     );
-    cpSync(generatedLock, join(artifactRoot, 'pnpm-lock.yaml'));
+    stageBackendLockfile(workspaceRoot, generatedLock, artifactRoot, manifest.packageManager);
     const i18n = join(workspaceRoot, 'i18n');
     if (existsSync(i18n)) {
       copyConfinedOutput(i18n, join(artifactRoot, 'i18n'));
@@ -373,6 +375,45 @@ export function stageDeploymentArtifact(options: {
   }
 
   throw new Error(`Deployment project "${options.project}" is not a server runtime image.`);
+}
+
+function stageBackendLockfile(
+  workspaceRoot: string,
+  generatedLock: string,
+  artifactRoot: string,
+  packageManager: unknown,
+): void {
+  const destination = join(artifactRoot, 'pnpm-lock.yaml');
+  if (typeof packageManager !== 'string') {
+    cpSync(generatedLock, destination);
+    return;
+  }
+
+  // Nx prunes the application document but currently drops pnpm 12's separate
+  // environment document. Restore the selected package-manager integrity data;
+  // copying the whole selected lock would undo the runtime dependency pruning.
+  const selectedLock = confinedPath(workspaceRoot, '.nrb/closure/pnpm-lock.yaml', 'selected pnpm lock');
+  requireFile(selectedLock, 'Selected pnpm lock is missing');
+  const selectedDocuments = parseAllDocuments(readFileSync(selectedLock, 'utf8'));
+  const generatedDocuments = parseAllDocuments(readFileSync(generatedLock, 'utf8'));
+  const errors = [...selectedDocuments, ...generatedDocuments].flatMap((document) => document.errors);
+  if (errors.length > 0) {
+    throw new Error(`Cannot stage invalid pnpm lockfile: ${errors[0]?.message}`);
+  }
+  const isEnvironment = (document: (typeof selectedDocuments)[number]): boolean =>
+    document.hasIn(['importers', '.', 'packageManagerDependencies']);
+  const environment = selectedDocuments.find(isEnvironment);
+  if (!environment) {
+    throw new Error('Selected pnpm lock is missing package-manager integrity metadata.');
+  }
+  const application = generatedDocuments.filter((document) => !isEnvironment(document));
+  if (application.length !== 1) {
+    throw new Error('Generated backend pnpm lock must contain exactly one application dependency document.');
+  }
+  writeFileSync(
+    destination,
+    `${environment.toString({ directives: true })}${application[0]?.toString({ directives: true })}`,
+  );
 }
 
 export function deploymentInstallPlan(artifact: StagedDeploymentArtifact): DeploymentInstallPlan {

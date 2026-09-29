@@ -4,6 +4,7 @@ import { lstatSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, w
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
+import { parseAllDocuments } from 'yaml';
 
 import type { SelectedClosureManifest } from '../setup/closure.js';
 import { defaultOperationalFields } from '../setup/test-fixtures.js';
@@ -225,6 +226,57 @@ void describe('deployment artifact closure', () => {
       dependencies: Record<string, string>;
     };
     assert.deepEqual(staged.dependencies, { pg: '1.0.0' });
+  });
+
+  void it('preserves selected pnpm integrity metadata without restoring unrelated runtime dependencies', () => {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-artifact-lock-source-'));
+    const artifactRoot = mkdtempSync(join(tmpdir(), 'nrb-artifact-lock-stage-'));
+    roots.push(root, artifactRoot);
+    writeBackendOutputs(root);
+    const app = join(root, 'dist/apps/backend/auth/auth-app-api');
+    const manifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8')) as Record<string, unknown>;
+    writeFileSync(join(app, 'package.json'), JSON.stringify({ ...manifest, packageManager: 'pnpm@12.8.1' }));
+    const environment = {
+      lockfileVersion: '9.0',
+      importers: { '.': { packageManagerDependencies: { pnpm: { specifier: '12.8.1', version: '12.8.1' } } } },
+      packages: { 'pnpm@12.8.1': { resolution: { integrity: 'sha512-selected-package-manager-integrity' } } },
+    };
+    const application = {
+      lockfileVersion: '9.0',
+      importers: { '.': { dependencies: { pg: { specifier: '1.0.0', version: '1.0.0' } } } },
+      packages: { 'pg@1.0.0': { resolution: { integrity: 'sha512-pruned-application-integrity' } } },
+    };
+    mkdirSync(join(root, '.nrb/closure'), { recursive: true });
+    writeFileSync(
+      join(root, '.nrb/closure/pnpm-lock.yaml'),
+      `${JSON.stringify(environment)}\n---\n${JSON.stringify({ ...application, packages: { 'unselected-browser@1.0.0': {} } })}\n`,
+    );
+    writeFileSync(join(app, 'pnpm-lock.yaml'), `${JSON.stringify(application)}\n`);
+
+    const stage = (): void => {
+      stageDeploymentArtifact({
+        workspaceRoot: root,
+        artifactRoot,
+        graph: graph(),
+        closure: closure(),
+        project: 'auth-app-api',
+      });
+      const documents = parseAllDocuments(readFileSync(join(artifactRoot, 'pnpm-lock.yaml'), 'utf8'));
+      assert.deepEqual(
+        documents.map((document) => document.toJSON()),
+        [environment, application],
+      );
+    };
+    stage();
+    // Future Nx versions may already retain this document; staging must replace
+    // it with the selected metadata rather than append a third document.
+    writeFileSync(join(app, 'pnpm-lock.yaml'), `${JSON.stringify(environment)}\n---\n${JSON.stringify(application)}\n`);
+    stage();
+
+    writeFileSync(join(root, '.nrb/closure/pnpm-lock.yaml'), JSON.stringify(application));
+    assert.throws(stage, /missing package-manager integrity metadata/u);
+    writeFileSync(join(app, 'pnpm-lock.yaml'), 'broken: [\n');
+    assert.throws(stage, /invalid pnpm lockfile/u);
   });
 
   void it('links selected app roots to the flattened source dependency closure', () => {

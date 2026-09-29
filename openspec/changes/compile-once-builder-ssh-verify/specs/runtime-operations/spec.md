@@ -35,6 +35,15 @@ from validated source and render deterministic, secret-safe runtime topology.
 
 - Missing tools, invalid manifests, or unsafe secret placement blocks readiness.
 
+#### Scenario: Frozen runtime dependency installation
+
+- **GIVEN** an application build emits a pruned dependency lockfile
+- **AND** the selected pnpm lockfile includes a separate package-manager document
+- **WHEN** the runtime artifact is staged
+- **THEN** it retains the selected package-manager versions and integrity metadata
+- **AND** its application dependency document stays pruned to the application
+- **AND** a frozen production install needs no lockfile reconciliation
+
 #### Scenario: Deployment validation
 
 - **WHEN** the supported deployment profiles are rendered

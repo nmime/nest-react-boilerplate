@@ -267,6 +267,12 @@ requirements:
         - security
     evidence:
       - kind: operations
+        file: packages/tooling/src/runtime/deployment-artifact.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
         file: scripts/deploy.spec.mjs
         script: test:scripts
         lanes:

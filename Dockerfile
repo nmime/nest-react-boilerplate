@@ -57,7 +57,7 @@ RUN node packages/tooling/bin/run-ts-command.mjs \
 WORKDIR /migrator
 RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
   pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
-  && node --input-type=commonjs -e "const common=require('@nestjs/common/package.json'); const core=require('@nestjs/core/package.json'); if (common.version!==core.version) { throw new Error('Nest version mismatch: @nestjs/common@'+common.version+' vs @nestjs/core@'+core.version); }"
+  && node --input-type=commonjs -e "const fs=require('node:fs'); const readVersion=(name)=>JSON.parse(fs.readFileSync('node_modules/'+name+'/package.json','utf8')).version; const common={version:readVersion('@nestjs/common')}; const core={version:readVersion('@nestjs/core')}; if (common.version!==core.version) { throw new Error('Nest version mismatch: @nestjs/common@'+common.version+' vs @nestjs/core@'+core.version); }"
 
 FROM node:${NODE_VERSION} AS migrator
 ENV CONTAINER=true \

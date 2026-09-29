@@ -885,8 +885,12 @@ has(fullstackCompose, '...stackServices', 'Full-stack e2e starts every selected 
 has(fullstackCompose, 'DATABASE_ENGINE: databaseProvider', 'Full-stack e2e passes the selected database engine');
 has(fullstackCompose, 'DATABASE_URL:', 'Full-stack e2e configures the PostgreSQL connection path');
 has(fullstackCompose, 'MONGODB_URI:', 'Full-stack e2e configures the MongoDB connection path');
-has(fullstackCompose, 'async function buildServices', 'Full-stack e2e retries transient image-build failures');
-has(fullstackCompose, "'compose', '--parallel'", 'Full-stack e2e batches image builds through Compose parallel mode');
+has(fullstackCompose, 'async function buildSelectedImages', 'Full-stack e2e retries transient image-build failures');
+has(
+  fullstackCompose,
+  "const args = ['scripts/build-images.mjs'];",
+  'Full-stack e2e compiles the selected product image inventory through the canonical Bake driver',
+);
 has(fullstackCompose, 'const composeParallelLimit', 'Full-stack e2e caps Compose build concurrency');
 const smokeSessionSecretDefault = dockerSmoke.match(/SESSION_SECRET:[\s\S]*?\?\?\s*"([^"]+)"/)?.[1];
 assert.ok(smokeSessionSecretDefault, 'Docker smoke script must set a SESSION_SECRET default');

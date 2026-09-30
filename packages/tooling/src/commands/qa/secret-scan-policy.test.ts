@@ -213,12 +213,26 @@ describe("product secret scan allowlist", () => {
     assert.equal(isProductAllowedSecretScanValue(loadProductSecretScanAllowlist(), registered, "libs/backend/marketplace/lib/src/orders.spec.ts"), false);
   });
 
+  it("limits every shipped exemption to its exact public value and owning file", () => {
+    const entries = loadProductSecretScanAllowlist();
+    const literal = (pattern: RegExp) => pattern.source.slice(1, -1).replaceAll(/\\(.)/gu, "$1");
+    for (const entry of entries) {
+      const file = literal(entry.path);
+      for (const pattern of entry.values) {
+        const value = literal(pattern);
+        assert.equal(isProductAllowedSecretScanValue(entries, value, file), true, entry.id);
+        assert.equal(isProductAllowedSecretScanValue(entries, `${value}-unreviewed`, file), false, entry.id);
+        assert.equal(isProductAllowedSecretScanValue(entries, value, `${file}.unreviewed`), false, entry.id);
+      }
+    }
+  });
+
   it("reads an absent file as no registrations and ships only the reviewed fixtures", () => {
     assert.deepEqual(loadProductSecretScanAllowlist(join(workspaceRoot, "config/secret-scan.allowlist.absent.json")), []);
     assert.deepEqual(
       loadProductSecretScanAllowlist().map((entry) => entry.id),
-      ["public-local-example-keys-in-gitleaks-policy", "better-auth-runtime-contract-fixture", "payment-invoice-address-example"],
-      "the shipped allowlist must carry exactly the two reviewed fixtures, so a stray registration is caught",
+      ["public-local-example-keys-in-gitleaks-policy", "better-auth-runtime-contract-fixture", "payment-invoice-address-example", "reviewed-public-health-e2e-spec", "reviewed-public-telegram-bot-api-module-spec", "reviewed-public-otel-runtime-spec", "reviewed-public-auth-login-analytics-service-spec", "reviewed-public-better-auth-config-spec", "reviewed-public-telegram-spec", "reviewed-public-telegram-oidc-runtime-spec", "reviewed-public-auth-bridge-spec", "reviewed-public-bot-spec", "reviewed-public-data-source-options-spec", "reviewed-public-env-loader-test", "reviewed-public-seed-safety-test", "reviewed-public-native-datastores", "reviewed-public-native-datastores-spec", "reviewed-public-native-runtime-env-spec", "reviewed-public-nginx-runtime-component-spec", "reviewed-public-otel-privacy-component-spec"],
+      "the shipped allowlist must carry exactly the reviewed fixtures, so a stray registration is caught",
     );
   });
 });

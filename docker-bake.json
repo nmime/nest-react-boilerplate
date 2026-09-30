@@ -30,8 +30,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/admin-app:local"
+      ]
     },
     "admin-app-api": {
       "dockerfile": "Dockerfile",
@@ -43,8 +46,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/admin-app-api:local"
+      ]
     },
     "auth-app-api": {
       "dockerfile": "Dockerfile",
@@ -56,8 +62,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/auth-app-api:local"
+      ]
     },
     "discord-app-api": {
       "dockerfile": "Dockerfile",
@@ -69,8 +78,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/discord-app-api:local"
+      ]
     },
     "landing-app": {
       "dockerfile": "Dockerfile",
@@ -83,8 +95,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/landing-app:local"
+      ]
     },
     "migrator": {
       "dockerfile": "Dockerfile",
@@ -93,8 +108,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/migrator:local"
+      ]
     },
     "mobile-app": {
       "dockerfile": "Dockerfile",
@@ -107,8 +125,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/mobile-app:local"
+      ]
     },
     "notification-consumer": {
       "dockerfile": "Dockerfile",
@@ -120,8 +141,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/notification-consumer:local"
+      ]
     },
     "notification-scheduler": {
       "dockerfile": "Dockerfile",
@@ -133,8 +157,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/notification-scheduler:local"
+      ]
     },
     "site-app": {
       "dockerfile": "Dockerfile",
@@ -145,8 +172,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/site-app:local"
+      ]
     },
     "telegram-bot-api": {
       "dockerfile": "Dockerfile",
@@ -158,8 +188,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/telegram-bot-api:local"
+      ]
     },
     "user-app": {
       "dockerfile": "Dockerfile",
@@ -172,8 +205,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/user-app:local"
+      ]
     },
     "user-app-api": {
       "dockerfile": "Dockerfile",
@@ -185,8 +221,11 @@
         "PNPM_VERSION": "12.8.1"
       },
       "contexts": {
-        "nrb-closure": ".nrb/closure"
-      }
+        "nrb-closure": "/Users/nmi/IT/Projects/nest-react-boilerplate/.nrb/closure"
+      },
+      "tags": [
+        "nrb/user-app-api:local"
+      ]
     }
   }
 }

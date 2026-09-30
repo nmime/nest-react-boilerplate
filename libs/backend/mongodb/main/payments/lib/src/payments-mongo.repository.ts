@@ -256,7 +256,8 @@ export class PaymentsMongoPersistence extends PaymentsPersistence {
 
   constructor(
     @Inject(MongoDatabaseToken) database: Db,
-    @Optional() @Inject(PaymentsMongoOrderedWriteObserverInjectToken)
+    @Optional()
+    @Inject(PaymentsMongoOrderedWriteObserverInjectToken)
     private readonly orderedWriteObserver?: PaymentsMongoOrderedWriteObserver,
   ) {
     super();

@@ -24,6 +24,12 @@ pnpm run frontend:fsd:check
 providers. Keep SSR routing, production server behavior, and renderer smoke
 coverage in the site build and e2e targets.
 
+The isolated production artifact keeps the selected pnpm policy and installs
+its runtime contract with a frozen lockfile. Staging omits React Native optional
+peer edges declared optional by their package metadata, so a combined web/native
+selection does not ship Metro or Android build tooling in SSR. Required peers and
+other optional dependencies, including platform bindings, remain locked.
+
 ## Docs
 
 - [Frontend app rules](../AGENTS.md)

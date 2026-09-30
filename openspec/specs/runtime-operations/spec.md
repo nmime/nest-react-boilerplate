@@ -237,6 +237,9 @@ from validated source and render deterministic, secret-safe runtime topology.
 - **AND** a frozen production install needs no lockfile reconciliation
 - **AND** SSR and migrator importers contain only their declared runtime dependencies,
   including required migration tools whose selected lock entries were development dependencies
+- **AND** SSR staging removes locked React Native optional-peer edges only when package metadata
+  declares the peer optional, retaining required dependencies, other optional dependencies,
+  selected versions, integrity metadata, workspace policy, and native application locks
 
 #### Scenario: Deployment validation
 

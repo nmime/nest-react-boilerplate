@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
-import { Document, parseAllDocuments } from 'yaml';
+import { Document, isMap, isScalar, parseAllDocuments } from 'yaml';
 
 import { appCatalog, type ReleaseImageEntry } from '../setup/catalog.js';
 import {
@@ -378,6 +378,7 @@ export function stageDeploymentArtifact(options: {
       )}\n`,
     );
     stageFrozenRuntimeLockfile(workspaceRoot, undefined, artifactRoot, packageManager, dependencies);
+    pruneSiteOptionalNativePeers(artifactRoot);
     const entry = confinedPath(artifactRoot, 'dist/apps/frontend/site/server/index.js', 'site runtime entry');
     requireFile(entry, 'Staged site runtime entry is missing');
     return { project: options.project, artifactRoot, entry, outputPaths, kind: 'site' };
@@ -487,6 +488,28 @@ export function deploymentInstallPlan(artifact: StagedDeploymentArtifact): Deplo
     args: [...common, '--frozen-lockfile', '--ignore-scripts'],
     cwd: artifact.artifactRoot,
   };
+}
+
+function pruneSiteOptionalNativePeers(artifactRoot: string): void {
+  const path = join(artifactRoot, 'pnpm-lock.yaml');
+  const documents = parseAllDocuments(readFileSync(path, 'utf8'));
+  const application = documents.find((document) => !document.hasIn(['importers', '.', 'packageManagerDependencies']));
+  const snapshots = application?.get('snapshots', true);
+  if (!application || !isMap(snapshots)) {
+    return;
+  }
+  // A shared web/native selection locks MobX's optional native peer. SSR never
+  // loads it; retain locked versions and integrity while pruning only that edge.
+  for (const { key } of snapshots.items) {
+    if (!isScalar(key) || typeof key.value !== 'string') {
+      throw new Error('Runtime pnpm snapshot keys must be package names.');
+    }
+    const packageName = key.value.split('(')[0];
+    if (application.getIn(['packages', packageName, 'peerDependenciesMeta', 'react-native', 'optional']) === true) {
+      application.deleteIn(['snapshots', key.value, 'optionalDependencies', 'react-native']);
+    }
+  }
+  writeFileSync(path, documents.map((document) => document.toString({ directives: true })).join(''));
 }
 
 export function isolatedRuntimeEnvironment(environment: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {

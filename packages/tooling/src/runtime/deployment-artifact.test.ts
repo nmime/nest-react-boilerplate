@@ -434,6 +434,54 @@ void describe('deployment artifact closure', () => {
     assert.throws(stage, /Selected package manifest is missing/u);
   });
 
+  void it('prunes only declared optional native peer edges from the isolated SSR lock', () => {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-site-native-peer-source-'));
+    const artifactRoot = mkdtempSync(join(tmpdir(), 'nrb-site-native-peer-stage-'));
+    roots.push(root, artifactRoot);
+    mkdirSync(join(root, 'apps/frontend/site'), { recursive: true });
+    mkdirSync(join(root, 'dist/apps/frontend/site/server'), { recursive: true });
+    writeFileSync(join(root, 'apps/frontend/site/runtime-dependencies.json'), JSON.stringify(['fastify']));
+    writeFileSync(join(root, 'dist/apps/frontend/site/server/index.js'), 'process.exitCode = 0;\n');
+    writeSelectedRuntimeLock(root, ['fastify']);
+    const lockPath = join(root, '.nrb/closure/pnpm-lock.yaml');
+    const documents = parseAllDocuments(readFileSync(lockPath, 'utf8'));
+    const application = documents[1]!;
+    application.set('packages', {
+      'optional-peer@1.0.0': { peerDependenciesMeta: { 'react-native': { optional: true } } },
+      'required-peer@1.0.0': { peerDependencies: { 'react-native': '*' } },
+    });
+    application.set('snapshots', {
+      'optional-peer@1.0.0(react-native@1.0.0)': {
+        dependencies: { react: '1.0.0' },
+        optionalDependencies: { 'react-native': '1.0.0', 'react-dom': '1.0.0', '@rolldown/binding-linux-x64': '1.0.0' },
+      },
+      'required-peer@1.0.0': { dependencies: { 'react-native': '1.0.0' } },
+    });
+    const selectedLock = documents.map((document) => document.toString({ directives: true })).join('');
+    writeFileSync(lockPath, selectedLock);
+    stageDeploymentArtifact({
+      workspaceRoot: root,
+      artifactRoot,
+      graph: siteGraph(),
+      closure: siteClosure(),
+      project: 'site-app',
+    });
+    const staged = parseAllDocuments(readFileSync(join(artifactRoot, 'pnpm-lock.yaml'), 'utf8'))[1]!;
+    assert.deepEqual(staged.toJSON().snapshots, {
+      'optional-peer@1.0.0(react-native@1.0.0)': {
+        dependencies: { react: '1.0.0' },
+        optionalDependencies: { 'react-dom': '1.0.0', '@rolldown/binding-linux-x64': '1.0.0' },
+      },
+      'required-peer@1.0.0': { dependencies: { 'react-native': '1.0.0' } },
+    });
+    assert.deepEqual(staged.toJSON().packages, application.toJSON().packages);
+    assert.equal(readFileSync(lockPath, 'utf8'), selectedLock);
+    assert.equal(
+      readFileSync(join(artifactRoot, 'pnpm-workspace.yaml'), 'utf8'),
+      readFileSync(join(root, '.nrb/closure/pnpm-workspace.yaml'), 'utf8'),
+    );
+  });
+
   void it('rejects missing generated backend manifests and locks', () => {
     const root = mkdtempSync(join(tmpdir(), 'nrb-artifact-source-'));
     const artifactRoot = mkdtempSync(join(tmpdir(), 'nrb-artifact-stage-'));

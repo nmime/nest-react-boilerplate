@@ -546,3 +546,11 @@ using it as runtime metadata would ship Vitest, browser fixtures, and other
 development tools. Metadata restoration never performs another installation
 or expands the selected installed dependency tree. Migrator runtime loaders
 remain an explicit separate dependency contract.
+
+Backend artifacts also remove resolved optional peers for canonical development
+packages and native-only React Native. A shared source/test selection can
+otherwise install Better Auth's optional Vitest peer even when Vitest is absent
+from the generated direct dependencies. Pruning applies only when the locked
+package explicitly marks that peer optional; required peers, declared runtime
+dependencies, production declarations, versions, integrity and source/native
+locks are preserved. The explicit migrator loader contract stays separate.

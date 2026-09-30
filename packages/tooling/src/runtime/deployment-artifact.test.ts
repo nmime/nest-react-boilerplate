@@ -128,6 +128,7 @@ function siteGraph() {
 }
 
 function writeBackendOutputs(root: string, provider: 'postgres' | 'mongodb' = 'postgres'): void {
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ packageManager: 'pnpm@12.8.1' }));
   const app = join(root, 'dist/apps/backend/auth/auth-app-api');
   const main = join(app, 'apps/backend/auth/auth-app-api/src');
   mkdirSync(main, { recursive: true });
@@ -476,6 +477,63 @@ void describe('deployment artifact closure', () => {
     });
     assert.deepEqual(staged.toJSON().packages, application.toJSON().packages);
     assert.equal(readFileSync(lockPath, 'utf8'), selectedLock);
+    assert.equal(
+      readFileSync(join(artifactRoot, 'pnpm-workspace.yaml'), 'utf8'),
+      readFileSync(join(root, '.nrb/closure/pnpm-workspace.yaml'), 'utf8'),
+    );
+  });
+
+  void it('prunes optional backend development peers while preserving required and production peers', () => {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-backend-dev-peer-source-'));
+    const artifactRoot = mkdtempSync(join(tmpdir(), 'nrb-backend-dev-peer-stage-'));
+    roots.push(root, artifactRoot);
+    writeBackendOutputs(root);
+    const canonicalManifest = {
+      packageManager: 'pnpm@12.8.1',
+      dependencies: { typescript: '1.0.0' },
+      devDependencies: { vitest: '1.0.0', typescript: '1.0.0' },
+    };
+    writeFileSync(join(root, 'package.json'), JSON.stringify(canonicalManifest));
+    const generatedLock = join(root, 'dist/apps/backend/auth/auth-app-api/pnpm-lock.yaml');
+    const application = parseAllDocuments(readFileSync(generatedLock, 'utf8'))[0]!;
+    const packages = {
+      'optional-peer@1.0.0': {
+        resolution: { integrity: 'sha512-optional' },
+        peerDependenciesMeta: { vitest: { optional: true }, typescript: { optional: true } },
+      },
+      'required-peer@1.0.0': { peerDependencies: { vitest: '*' } },
+    };
+    const snapshots = {
+      'optional-peer@1.0.0(vitest@1.0.0)': {
+        dependencies: { pg: '1.0.0' },
+        optionalDependencies: { vitest: '1.0.0', typescript: '1.0.0', '@rolldown/binding-linux-x64': '1.0.0' },
+      },
+      'required-peer@1.0.0': { dependencies: { vitest: '1.0.0' }, optionalDependencies: { vitest: '1.0.0' } },
+    };
+    application.set('packages', packages);
+    application.set('snapshots', snapshots);
+    const originalLock = application.toString();
+    writeFileSync(generatedLock, originalLock);
+    const selectedLock = readFileSync(join(root, '.nrb/closure/pnpm-lock.yaml'), 'utf8');
+    stageDeploymentArtifact({
+      workspaceRoot: root,
+      artifactRoot,
+      graph: graph(),
+      closure: closure(),
+      project: 'auth-app-api',
+    });
+    const staged = parseAllDocuments(readFileSync(join(artifactRoot, 'pnpm-lock.yaml'), 'utf8'))[1]!.toJSON();
+    assert.deepEqual(staged.packages, packages);
+    assert.deepEqual(staged.snapshots, {
+      ...snapshots,
+      'optional-peer@1.0.0(vitest@1.0.0)': {
+        dependencies: { pg: '1.0.0' },
+        optionalDependencies: { typescript: '1.0.0', '@rolldown/binding-linux-x64': '1.0.0' },
+      },
+    });
+    assert.equal(readFileSync(generatedLock, 'utf8'), originalLock);
+    assert.equal(readFileSync(join(root, '.nrb/closure/pnpm-lock.yaml'), 'utf8'), selectedLock);
+    assert.deepEqual(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')), canonicalManifest);
     assert.equal(
       readFileSync(join(artifactRoot, 'pnpm-workspace.yaml'), 'utf8'),
       readFileSync(join(root, '.nrb/closure/pnpm-workspace.yaml'), 'utf8'),

@@ -58,6 +58,8 @@ from validated source and render deterministic, secret-safe runtime topology.
 - **THEN** it restores the canonical source package manifest before Nx runtime manifest generation
 - **AND** that metadata restoration performs no additional dependency resolution or installation
 - **AND** the generated backend runtime manifest excludes canonical development-only tools
+- **AND** backend runtime locks remove optional peers for canonical development-only tools and native-only React Native only where package metadata explicitly marks them optional
+- **AND** required peers, explicit runtime dependencies, production declarations, selected versions, integrity metadata, and source locks remain intact
 - **AND** runtime staging retains selected exact versions and frozen policy while required migrator loaders remain explicit
 
 #### Scenario: Bounded local image loading

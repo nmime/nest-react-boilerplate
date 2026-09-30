@@ -330,6 +330,16 @@ export function stageDeploymentArtifact(options: {
       manifest.packageManager,
       selectedDependencies,
     );
+    const canonicalManifestPath = confinedPath(workspaceRoot, 'package.json', 'canonical source package manifest');
+    requireFile(canonicalManifestPath, 'Canonical source package manifest is missing');
+    const canonicalManifest = JSON.parse(readFileSync(canonicalManifestPath, 'utf8')) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+    const developmentPeers = Object.keys(canonicalManifest.devDependencies ?? {}).filter(
+      (name) => canonicalManifest.dependencies?.[name] === undefined && selectedDependencies[name] === undefined,
+    );
+    pruneOptionalRuntimePeers(artifactRoot, new Set([...developmentPeers, 'react-native']));
     const i18n = join(workspaceRoot, 'i18n');
     if (existsSync(i18n)) {
       copyConfinedOutput(i18n, join(artifactRoot, 'i18n'));
@@ -378,7 +388,7 @@ export function stageDeploymentArtifact(options: {
       )}\n`,
     );
     stageFrozenRuntimeLockfile(workspaceRoot, undefined, artifactRoot, packageManager, dependencies);
-    pruneSiteOptionalNativePeers(artifactRoot);
+    pruneOptionalRuntimePeers(artifactRoot, new Set(['react-native']));
     const entry = confinedPath(artifactRoot, 'dist/apps/frontend/site/server/index.js', 'site runtime entry');
     requireFile(entry, 'Staged site runtime entry is missing');
     return { project: options.project, artifactRoot, entry, outputPaths, kind: 'site' };
@@ -490,7 +500,7 @@ export function deploymentInstallPlan(artifact: StagedDeploymentArtifact): Deplo
   };
 }
 
-function pruneSiteOptionalNativePeers(artifactRoot: string): void {
+function pruneOptionalRuntimePeers(artifactRoot: string, peers: ReadonlySet<string>): void {
   const path = join(artifactRoot, 'pnpm-lock.yaml');
   const documents = parseAllDocuments(readFileSync(path, 'utf8'));
   const application = documents.find((document) => !document.hasIn(['importers', '.', 'packageManagerDependencies']));
@@ -498,15 +508,18 @@ function pruneSiteOptionalNativePeers(artifactRoot: string): void {
   if (!application || !isMap(snapshots)) {
     return;
   }
-  // A shared web/native selection locks MobX's optional native peer. SSR never
-  // loads it; retain locked versions and integrity while pruning only that edge.
+  // Shared source/test/native selection can resolve optional peers irrelevant
+  // to this runtime. Preserve required peers, versions and integrity metadata;
+  // remove only edges whose owning package explicitly marks that peer optional.
   for (const { key } of snapshots.items) {
     if (!isScalar(key) || typeof key.value !== 'string') {
       throw new Error('Runtime pnpm snapshot keys must be package names.');
     }
     const packageName = key.value.split('(')[0];
-    if (application.getIn(['packages', packageName, 'peerDependenciesMeta', 'react-native', 'optional']) === true) {
-      application.deleteIn(['snapshots', key.value, 'optionalDependencies', 'react-native']);
+    for (const peer of peers) {
+      if (application.getIn(['packages', packageName, 'peerDependenciesMeta', peer, 'optional']) === true) {
+        application.deleteIn(['snapshots', key.value, 'optionalDependencies', peer]);
+      }
     }
   }
   writeFileSync(path, documents.map((document) => document.toString({ directives: true })).join(''));

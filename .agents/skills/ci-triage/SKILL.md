@@ -21,6 +21,11 @@ description: Diagnose repository workflow, check, and pipeline failures from the
 4. Do not mark a failure flaky without evidence from repeated runs or known issue history.
 5. Diagnose and report the cause first. Implement a fix only when the task also
    requests remediation; keep it scoped to the failing surface.
+6. Compare `scripts/ci/gates.json`, shipped workflow jobs, and the target branch's
+   actual required check contexts. A context from an unconfigured forge is an
+   integration blocker. Obtain the authoritative forge decision, render its
+   complete required inventory, and execute the checks. Never post a fabricated
+   green status, bypass protection, or weaken requirements to claim CI success.
 
 ## Specification lifecycle
 

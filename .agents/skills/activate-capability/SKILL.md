@@ -18,6 +18,11 @@ description: Integrate an optional repository capability into explicitly selecte
 4. Make activation repeatable: a second identical setup must not duplicate config, modules, imports, services, or dependencies.
 5. Make de-selection behavior explicit when supported; never silently delete user-owned code or data.
 6. Add catalog, plan, repeatability, and doctor coverage plus source-backed CLI docs.
+7. Prove generated framework composition: the selected module must provide and
+   export its public port, not merely exist as an empty wrapper. For Nest
+   interfaces and optional diagnostic hooks, use explicit injection tokens and
+   `@Optional()` where appropriate; TypeScript `?` does not make Nest injection
+   optional. Verify production decorator metadata and selected-provider startup.
 
 ## Specification lifecycle
 

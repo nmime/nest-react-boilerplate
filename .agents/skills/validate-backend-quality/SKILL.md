@@ -27,11 +27,13 @@ description: Select and run risk-based quality gates for backend APIs, consumers
 2. For public APIs, test validation, auth, success, safe RFC 9457 failures, media
    types, localization, request IDs, and response schemas. Run OpenAPI and
    generated-client freshness plus affected consumer tests.
-3. Use integration or Testcontainers tests for PostgreSQL, Redis, NATS,
+3. Use integration or Testcontainers tests for PostgreSQL, MongoDB replica sets, S3, Redis, NATS,
    transactions, framework composition, and real adapter behavior. A missing
    Docker engine is an unverified lane, not a pass.
 4. For migrations, prove fresh apply, upgrade from the prior schema, affected
-   queries/constraints, and safe rollback when one exists. Inspect generated SQL.
+   queries/constraints, complete canonical ledger, and idempotent replay. Inspect
+   PostgreSQL SQL and safe rollback when one exists; verify MongoDB validators,
+   indexes, and corrective roll-forward behavior.
 5. For consumers and schedulers, prove duplicate delivery, idempotency,
    acknowledgement, retry/backoff, poison or terminal failure, concurrency,
    timeout, startup failure, and graceful shutdown as applicable.

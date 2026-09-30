@@ -220,6 +220,10 @@ catalog and workflow selector, and point to current repository sources.
 
 - Skill metadata, default prompts, and referenced files remain synchronized.
 - Behavior-changing skills include the specification lifecycle.
+- Migration skills cover the explicitly selected PostgreSQL or MongoDB provider;
+  capability and deployment skills require real composition and artifact proof.
+- CI diagnosis distinguishes configured forge jobs from protected-branch contexts
+  and never substitutes a fabricated successful status for an executed check.
 
 **Failure behavior:**
 

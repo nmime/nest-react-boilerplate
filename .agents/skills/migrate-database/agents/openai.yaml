@@ -1,4 +1,4 @@
 interface:
   display_name: 'Migrate Database'
   short_description: 'Create and verify safe database migrations'
-  default_prompt: 'Use $migrate-database to implement this database migration safely.'
+  default_prompt: 'Use $migrate-database to implement and verify this migration for the explicitly selected provider, including canonical ledger coverage and fresh/replay proof.'

@@ -22,6 +22,14 @@ description: Prepare Docker, Helm, GitOps, or single-server deployment configura
 4. Preserve rolling compatibility across application, schema, queue/event contracts, and generated clients.
 5. Validate chart/value composition, container startup assumptions, dependency ordering, shutdown grace, and observable failure signals.
 6. Update runbooks and environment matrices from the actual configuration.
+7. Verify backend, SSR, and migrator artifacts with fresh frozen production
+   installs that retain the selected package-manager integrity and workspace
+   policy. Record source SHA, selected closure/configuration hashes, and exact
+   image IDs. Starting older local tags does not prove a newly compiled image.
+8. Scan application and bundled infrastructure images separately. Preserve raw
+   findings and scanner errors; source reachability assessment is distinct from
+   a patched dependency or a clean scan. Never generalize one provider's scan
+   to a different provider's release images.
 
 ## Specification lifecycle
 

@@ -444,6 +444,13 @@ only the normalized `.nrb/closure` path. Setting the context to `.`, omitting
 it, or pointing it at an arbitrary directory cannot substitute the root
 workspace manifests.
 
+The driver loads at most two images per sequential Bake batch while retaining
+the full selected `NX_BUILD_PROJECTS` union in every batch. This keeps the shared
+compile layer reusable and bounds temporary staging and extraction space.
+For constrained local runners, use `NRB_IMAGE_BUILD_BATCH_SIZE=1` or
+`node scripts/build-images.mjs --batch-size 1`. A failed batch stops the build
+before the next batch starts.
+
 Backend and Vike runtime stages copy only the selected runtime's transitive
 built outputs into an isolated deployment directory; they do not copy the full
 workspace `dist` tree. The migrator likewise installs only the selected
@@ -510,3 +517,23 @@ allowing container logs to consume the disk.
 The base model retains reference observability service definitions, but product
 commands target only closure-selected application and capability services.
 Platform-owned observability remains a separate explicit deployment decision.
+
+The reference monitoring images are immutable pins checked by the delivery
+inventory. Run `pnpm run test:observability-stack` to validate their native
+configuration parsers, start an isolated monitoring stack, and prove that an
+OTLP metric reaches Prometheus and Grafana. The smoke command uses random
+loopback ports and deletes only its own project and temporary data.
+
+The collector's official image contains no shell or `wget`. Its health extension
+listens on port 13133 inside the monitoring network; check it with
+`docker compose exec prometheus wget -qO- http://otel-collector:13133/` using the
+same Compose file/project arguments as the monitoring deployment. Helm uses
+native HTTP liveness and readiness probes. The metric smoke proves collection
+and query separately from process readiness.
+
+Alertmanager's default receivers deliberately send no notifications. Configure
+product-owned webhook/email integrations in `docker/alertmanager/alertmanager.yml`
+and validate with `amtool check-config` before enabling alert delivery. The file
+is native Alertmanager YAML, so shell environment placeholders are not expanded.
+Grafana provisions only the bundled Prometheus and Alertmanager datasources;
+add Loki/Tempo provisioning when those external services are actually deployed.

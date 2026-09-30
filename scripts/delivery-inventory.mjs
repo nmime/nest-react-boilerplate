@@ -10,6 +10,15 @@ export const helmVersion = 'v4.2.3';
 export const mongoImage = 'mongo:8.0.32-noble';
 export const postgresImage = 'postgres:17.11-alpine';
 
+export const observabilityImages = Object.freeze({
+  'otel-collector':
+    'otel/opentelemetry-collector-contrib:0.161.0@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1',
+  prometheus: 'prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e',
+  alertmanager: 'prom/alertmanager:v0.34.1@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a',
+  grafana: 'grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572',
+  coroot: 'ghcr.io/coroot/coroot:1.27.0@sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb',
+});
+
 export const productionAppIds = Object.freeze([
   'admin-app',
   'admin-app-api',

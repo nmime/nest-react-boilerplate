@@ -17,7 +17,8 @@ processors:
   resource:
     attributes:
       - key: deployment.environment
-        from_env: NODE_ENV
+        value: ${env:NODE_ENV}
+        action: upsert
 
 exporters:
   prometheus:

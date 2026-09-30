@@ -156,9 +156,9 @@ has(
   'site runtime stages only its selected-closure deployment artifact',
 );
 has(
-  dockerfile,
-  'pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts',
-  'site runtime installs only staged production dependencies',
+  dockerfile.match(/FROM builder AS site-deps[\s\S]*?(?=\nFROM )/u)?.[0] ?? '',
+  'pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts',
+  'site runtime installs only staged production dependencies from its frozen lockfile',
 );
 has(
   dockerfile,

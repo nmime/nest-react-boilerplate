@@ -43,8 +43,22 @@ from validated source and render deterministic, secret-safe runtime topology.
 - **THEN** it retains the selected package-manager versions and integrity metadata
 - **AND** its application dependency document stays pruned to the application
 - **AND** it retains the selected overrides, settings, package-extension checksum, and workspace policy
-- **AND** standalone backend installs enforce that policy with a frozen lockfile
+- **AND** standalone backend, SSR, and migrator installs enforce that policy with a frozen lockfile
 - **AND** a frozen production install needs no lockfile reconciliation
+- **AND** SSR and migrator importers contain only their declared runtime dependencies,
+  including required migration tools whose selected lock entries were development dependencies
+- **AND** SSR staging removes locked React Native optional-peer edges only when package metadata
+  declares the peer optional, retaining required dependencies, other optional dependencies,
+  selected versions, integrity metadata, workspace policy, and native application locks
+
+#### Scenario: Bounded local image loading
+
+- **GIVEN** the canonical driver selects multiple release images
+- **WHEN** it loads images through Bake
+- **THEN** sequential batches load at most two images by default
+- **AND** a positive explicit batch size can lower that limit
+- **AND** every batch retains the same complete selected compile union and plan
+- **AND** a failed batch prevents subsequent batches from running
 
 #### Scenario: Deployment validation
 

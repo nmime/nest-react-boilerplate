@@ -1,8 +1,8 @@
+# Product operators must configure real notification integrations explicitly.
+# Alertmanager does not expand shell-style environment variables in this file.
+# These valid empty receivers retain and group alerts without sending them.
 global:
   resolve_timeout: 5m
-  smtp_smarthost: ${ALERTMANAGER_SMARTHOST:-localhost:25}
-  smtp_from: ${ALERTMANAGER_SMTP_FROM:-alertmanager@example.com}
-  smtp_require_tls: false
 
 route:
   group_by: ['alertname', 'service']
@@ -11,34 +11,19 @@ route:
   repeat_interval: 4h
   receiver: 'default'
   routes:
-    - match:
-        severity: critical
+    - matchers: ['severity="critical"']
       receiver: 'critical-alerts'
       repeat_interval: 1h
-    - match:
-        severity: warning
+    - matchers: ['severity="warning"']
       receiver: 'warning-alerts'
       repeat_interval: 4h
 
 receivers:
   - name: 'default'
-    webhook_configs:
-      - url: ${ALERTMANAGER_DEFAULT_WEBHOOK_URL:-}
-        send_resolved: true
-
   - name: 'critical-alerts'
-    webhook_configs:
-      - url: ${ALERTMANAGER_CRITICAL_WEBHOOK_URL:-}
-        send_resolved: true
-
   - name: 'warning-alerts'
-    webhook_configs:
-      - url: ${ALERTMANAGER_WARNING_WEBHOOK_URL:-}
-        send_resolved: true
 
 inhibit_rules:
-  - source_match:
-      severity: critical
-    target_match:
-      severity: warning
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
     equal: ['alertname', 'service']

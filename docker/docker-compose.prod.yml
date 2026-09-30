@@ -415,8 +415,10 @@ services:
 
   # Observability: OpenTelemetry Collector
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.113.0
+    image: otel/opentelemetry-collector-contrib:0.161.0@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1
     command: ['--config=/etc/otelcol/config.yaml']
+    environment:
+      NODE_ENV: production
     volumes:
       - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
     ports:
@@ -432,18 +434,15 @@ services:
         published: '${OTEL_PROMETHEUS_PORT:-9464}'
         host_ip: 127.0.0.1
         protocol: tcp
-    healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:13133/ || exit 1']
-      interval: 10s
-      timeout: 5s
-      retries: 6
+    # The official collector has no shell or wget. Probe its health_check HTTP
+    # endpoint from the monitoring network; Helm uses native HTTP probes.
     restart: unless-stopped
     logging: *default-logging
     networks: [app]
 
   # Observability: Prometheus
   prometheus:
-    image: prom/prometheus:v3.3.0
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -472,7 +471,7 @@ services:
 
   # Observability: Alertmanager
   alertmanager:
-    image: prom/alertmanager:v0.28.1
+    image: prom/alertmanager:v0.34.1@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
@@ -495,10 +494,10 @@ services:
 
   # Observability: Grafana
   grafana:
-    image: grafana/grafana:11.4.0
+    image: grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD_FILE: /run/secrets/grafana_admin_password
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
       GF_AUTH_ANONYMOUS_ENABLED: 'false'
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
     volumes:

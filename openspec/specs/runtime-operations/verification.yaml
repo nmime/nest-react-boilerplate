@@ -146,6 +146,11 @@ requirements:
         script: test:observability
         lanes:
           - nightly
+      - kind: operations
+        file: scripts/smoke-observability.mjs
+        script: test:observability-stack
+        lanes:
+          - runtime
   - id: REQ-RUNTIME-MESSAGING-006
     projects:
       - notification-consumer

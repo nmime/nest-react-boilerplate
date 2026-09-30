@@ -76,6 +76,7 @@
     "deploy:validate": "node scripts/deploy-validate.mjs",
     "test:docker-smoke": "pnpm --filter @repo/tooling tooling docker smoke",
     "test:compose-deployment-modes": "node scripts/smoke-compose-database-modes.mjs",
+    "test:observability-stack": "node scripts/smoke-observability.mjs",
     "bake:generate": "node scripts/generate-bake-file.mjs",
     "bake:generate:all": "node scripts/generate-bake-file.mjs --all-reference --provider postgres",
     "test:single-server-deployment": "node --test scripts/single-server-deployment.spec.mjs",

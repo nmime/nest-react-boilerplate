@@ -486,7 +486,7 @@ monitoring:
     enabled: false
     image:
       repository: otel/opentelemetry-collector-contrib
-      tag: 0.113.0
+      tag: 0.161.0@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1
       pullPolicy: IfNotPresent
     replicas: 1
     resources:
@@ -658,7 +658,7 @@ coroot:
   replicas: 1
   image:
     repository: ghcr.io/coroot/coroot
-    tag: latest
+    tag: 1.27.0@sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb
     pullPolicy: IfNotPresent
   prometheusUrl: 'http://vmcluster-vmsingle.monitoring.svc.cluster.local:8429'
   service:

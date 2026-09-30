@@ -1,7 +1,7 @@
 // @requirements REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { bakeNameForComposeService, planImageBuild, publishedImageRef } from './build-images.mjs';
+import { bakeNameForComposeService, imageBuildBatches, planImageBuild, publishedImageRef } from './build-images.mjs';
 import { imageCompileRequested } from './image-compile.mjs';
 import { releaseImages } from './release-image-plan.mjs';
 
@@ -41,6 +41,38 @@ test('production tags are added next to the local load tag', () => {
     'nrb/migrator:local',
     publishedImageRef('migrator', 'ghcr.io/acme/acme', 'sha-0123456789abcdef0123456789abcdef01234567'),
   ]);
+});
+
+test('bounded image loads retain one complete compile plan and every selected image', () => {
+  const names = ['auth-app-api', 'user-app-api', 'site-app', 'user-app', 'migrator'];
+  const plan = planImageBuild({ names, closureContext });
+  const original = JSON.stringify(plan);
+  const batches = imageBuildBatches(plan);
+  assert.deepEqual(
+    batches.map((args) => args.slice(5)),
+    [names.slice(0, 2), names.slice(2, 4), names.slice(4)],
+  );
+  assert.deepEqual(
+    batches.flatMap((args) => args.slice(5)),
+    names,
+  );
+  for (const args of batches)
+    assert.deepEqual(args.slice(0, 5), ['buildx', 'bake', '-f', 'docker-bake.json', '--load']);
+  assert.equal(
+    plan.config.target['auth-app-api'].args.NX_BUILD_PROJECTS,
+    'auth-app-api,user-app-api,site-app,user-app',
+  );
+  assert.equal(
+    plan.config.target['site-app'].args.NX_BUILD_PROJECTS,
+    plan.config.target['auth-app-api'].args.NX_BUILD_PROJECTS,
+  );
+  assert.equal(JSON.stringify(plan), original);
+  assert.equal(imageBuildBatches(plan, 1).length, names.length);
+  assert.equal(imageBuildBatches(plan, 99).length, 1);
+  for (const invalid of [0, -1, 1.5, Infinity, NaN, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.throws(() => imageBuildBatches(plan, invalid), /positive safe integer/u);
+  }
+  assert.throws(() => imageBuildBatches({ names: [], args: [] }), /selected image/u);
 });
 
 test('image compile is off unless NRB_IMAGE_COMPILE is set', () => {

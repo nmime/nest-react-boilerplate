@@ -115,6 +115,15 @@ redaction, batching, and failure isolation.
 - **WHEN** an exporter cannot accept telemetry
 - **THEN** product execution remains bounded and the failure is observable
 
+#### Scenario: Reference monitoring stack accepts and exposes telemetry
+
+- **WHEN** the reference monitoring stack starts from its immutable image pins
+- **THEN** each native configuration parser accepts the mounted configuration
+- **AND** a real OTLP metric is scraped by Prometheus and queryable through Grafana
+- **AND** Grafana provisions one dashboard provider and only deployed datasources
+- **AND** Alertmanager groups alerts without claiming notification delivery until real receivers are configured
+- **AND** collector readiness is checked through HTTP rather than a shell absent from its image
+
 ### Requirement: [REQ-RUNTIME-MESSAGING-006] Messaging preserves delivery semantics
 
 NATS, Redis, WebSocket, consumer, and scheduler boundaries SHALL implement
@@ -240,6 +249,15 @@ from validated source and render deterministic, secret-safe runtime topology.
 - **AND** SSR staging removes locked React Native optional-peer edges only when package metadata
   declares the peer optional, retaining required dependencies, other optional dependencies,
   selected versions, integrity metadata, workspace policy, and native application locks
+
+#### Scenario: Bounded local image loading
+
+- **GIVEN** the canonical driver selects multiple release images
+- **WHEN** it loads images through Bake
+- **THEN** sequential batches load at most two images by default
+- **AND** a positive explicit batch size can lower that limit
+- **AND** every batch retains the same complete selected compile union and plan
+- **AND** a failed batch prevents subsequent batches from running
 
 #### Scenario: Deployment validation
 

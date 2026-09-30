@@ -8,6 +8,7 @@
  *
  *   node scripts/build-images.mjs
  *   node scripts/build-images.mjs --only migrator,auth-app-api
+ *   node scripts/build-images.mjs --batch-size 1
  *   node scripts/build-images.mjs --registry ghcr.io/acme/acme --tag sha-<git-sha>
  */
 import { writeFileSync } from 'node:fs';
@@ -62,6 +63,19 @@ export function planImageBuild({
   };
 }
 
+export function imageBuildBatches(plan, batchSize = 2) {
+  if (!Number.isSafeInteger(batchSize) || batchSize < 1) {
+    throw new Error('Image build batch size must be a positive safe integer.');
+  }
+  if (plan.names.length === 0) throw new Error('At least one selected image is required.');
+  const prefix = plan.args.slice(0, -plan.names.length);
+  const batches = [];
+  for (let index = 0; index < plan.names.length; index += batchSize) {
+    batches.push([...prefix, ...plan.names.slice(index, index + batchSize)]);
+  }
+  return batches;
+}
+
 function parseArguments(argv) {
   const options = {
     only: undefined,
@@ -70,6 +84,7 @@ function parseArguments(argv) {
     allReference: false,
     provider: undefined,
     dryRun: false,
+    batchSize: Number(process.env.NRB_IMAGE_BUILD_BATCH_SIZE ?? '2'),
   };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -88,6 +103,8 @@ function parseArguments(argv) {
     else if (argument === '--provider') options.provider = take('--provider');
     else if (argument.startsWith('--provider=')) options.provider = argument.slice('--provider='.length);
     else if (argument === '--dry-run') options.dryRun = true;
+    else if (argument === '--batch-size') options.batchSize = Number(take('--batch-size'));
+    else if (argument.startsWith('--batch-size=')) options.batchSize = Number(argument.slice('--batch-size='.length));
     else throw new Error(`Unknown argument: ${argument}`);
   }
   return options;
@@ -116,14 +133,19 @@ async function main() {
     registry: options.registry,
     tag: options.tag,
   });
+  // Every batch reads the same full plan and compile union. Bound concurrent
+  // staging/extraction without producing another builder tree per application.
+  const batches = imageBuildBatches(plan, options.batchSize);
   writeFileSync(join(rootDir, plan.bakeFile), `${JSON.stringify(plan.config, null, 2)}\n`);
   if (options.dryRun) {
-    console.log(JSON.stringify({ status: 'planned', names: plan.names, tags: plan.tags }, null, 2));
+    console.log(JSON.stringify({ status: 'planned', names: plan.names, tags: plan.tags, batches }, null, 2));
     return;
   }
-  const result = spawnSync('docker', plan.args, { cwd: rootDir, stdio: 'inherit' });
-  if (result.error) throw result.error;
-  if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
+  for (const args of batches) {
+    const result = spawnSync('docker', args, { cwd: rootDir, stdio: 'inherit' });
+    if (result.error) throw result.error;
+    if ((result.status ?? 1) !== 0) process.exit(result.status ?? 1);
+  }
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {

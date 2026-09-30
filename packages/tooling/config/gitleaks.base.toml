@@ -90,6 +90,7 @@ description = "Discord snowflake test fixtures"
 condition = "AND"
 paths = [
   '''^apps/backend/discord/discord-app-api/src/discord-app-api\.module\.spec\.ts$''',
+  '''^libs/backend/feature/auth/main/lib/src/application/external-auth\.service\.spec\.ts$''',
   '''^libs/backend/feature/discord/bot/lib/src/service/discord-command-registration\.service\.spec\.ts$''',
   '''^libs/backend/feature/discord/bot/lib/src/service/discord-config\.spec\.ts$''',
 ]

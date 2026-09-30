@@ -13,6 +13,8 @@ overrides:
   # Expo 57 owns this version; unconstrained optional peers must not fork it.
   'react': '19.2.3'
   'react-dom': '19.2.3'
+  # September 17 mature fix for GHSA-m9gg-hp2v-232j and GHSA-f596-whhp-79r4.
+  '@grpc/grpc-js@<1.14.5': '1.14.5'
   '@fastify/static': '10.1.5'
   'better-call': '1.4.0'
   'better-auth': '1.7.6'

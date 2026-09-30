@@ -221,3 +221,9 @@ only reviewed changes.
 - **Frozen lockfile install**: exit 0
 - **Registry drift**: 12 package entries remain, represented by the 11 incompatible runtime/peer rows listed above
 - **Deduplication**: `better-auth` → 1 version (was 2), `drizzle-orm` → 1 version (was 2)
+
+The September 30 advisory refresh identified gRPC 1.14.4 in OpenTelemetry and
+Docker tooling. The workspace pins its mature 1.14.5 fix for
+[certificate authorization](https://github.com/advisories/GHSA-m9gg-hp2v-232j)
+and [handler error disclosure](https://github.com/advisories/GHSA-f596-whhp-79r4).
+No advisory ignore entries are used.

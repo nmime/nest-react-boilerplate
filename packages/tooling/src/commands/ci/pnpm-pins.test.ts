@@ -67,8 +67,8 @@ describe('descriptor-driven pnpm pin sources', () => {
     assert.ok(names.includes('.gitlab-ci.yml'), 'the GitLab pipeline pins pnpm too');
     assert.deepEqual(
       names.filter((name) => name.startsWith('.github/')),
-      [],
-      'a forge this checkout no longer ships must not be scanned for pins',
+      ['.github/workflows/ci.yml', '.github/workflows/deploy.yml', '.github/workflows/quality-presets.yml', '.github/workflows/release-images.yml', '.github/workflows/release.yml', '.github/workflows/spec-assurance-nightly.yml', '.github/workflows/spec-assurance-runtime.yml'],
+      'every configured GitHub lane must be scanned for package-manager pins',
     );
   });
 

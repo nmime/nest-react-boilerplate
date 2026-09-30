@@ -504,9 +504,15 @@ describe('PaymentsMongoPersistence', () => {
     ['expired', 'expiredAt'],
     ['refunded', 'refundedAt'],
     ['failed', undefined],
+    ['processing', undefined],
   ] as const)('commits receipt-event-payment in order for %s', async (toStatus, timestampField) => {
     const before = payment({ status: toStatus === 'refunded' ? 'paid' : 'processing' });
-    const after = payment({ status: toStatus, version: 2, ...(timestampField ? { [timestampField]: now } : {}) });
+    const after = payment({
+      status: toStatus,
+      version: 2,
+      ...(timestampField ? { [timestampField]: now } : {}),
+      ...(toStatus === 'processing' ? { partialAmount: '3.00' } : {}),
+    });
     const receipt = {
       _id: 'receipt-1',
       providerCode: 'stripe',
@@ -529,6 +535,7 @@ describe('PaymentsMongoPersistence', () => {
       type: 'state_change',
       fromStatus: toStatus === 'refunded' ? 'paid' : 'processing',
       toStatus,
+      ...(toStatus === 'processing' ? { partialAmount: '3.00' } : {}),
       actor: 'webhook',
       reason: null,
       providerEvidence: null,
@@ -584,6 +591,7 @@ describe('PaymentsMongoPersistence', () => {
       },
       paymentId,
       toStatus,
+      ...(toStatus === 'processing' ? { partialAmount: '3.00' } : {}),
       actor: 'webhook',
       transitionedAt: now,
     });
@@ -605,7 +613,7 @@ describe('PaymentsMongoPersistence', () => {
       }),
     );
     expect(committed).toMatchObject({
-      payment: { status: toStatus, version: 2 },
+      payment: { status: toStatus, version: 2, ...(toStatus === 'processing' ? { partialAmount: '3.00' } : {}) },
       receipt: { processingStatus: 'applied' },
     });
   });
@@ -876,4 +884,34 @@ describe('PaymentsMongoPersistence', () => {
     );
     await expect(persistence.claimPaymentOutbox({ count: 10, publishedAt }, publish)).resolves.toBe(0);
   });
+});
+
+describe('ordered webhook transition authority', () => {
+  it.each(['cross-provider', 'terminal-reopen', 'partial-without-amount'] as const)(
+    'rejects %s before an event or payment write',
+    async (kind) => {
+      const payments = collection({
+        findOne: vi
+          .fn()
+          .mockResolvedValue(payment({ status: kind === 'terminal-reopen' ? 'cancelled' : 'processing' })),
+      });
+      const events = collection();
+      const persistence = persistenceWith(allCollections({ payments, payment_events: events }));
+      await expect(
+        persistence.commitWebhookPaymentTransition({
+          receipt: {
+            providerCode: kind === 'cross-provider' ? 'yookassa' : 'stripe',
+            idempotencyKey: 'owned',
+            rawBody: '{}',
+            signatureValid: 'valid',
+          },
+          paymentId,
+          toStatus: kind === 'partial-without-amount' ? 'processing' : 'paid',
+          actor: 'webhook',
+        }),
+      ).rejects.toThrow('ownership or state transition');
+      expect(events.updateOne).not.toHaveBeenCalled();
+      expect(payments.updateOne).not.toHaveBeenCalled();
+    },
+  );
 });

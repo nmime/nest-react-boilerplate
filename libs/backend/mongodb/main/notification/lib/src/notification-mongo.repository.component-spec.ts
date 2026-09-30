@@ -2,7 +2,9 @@
 import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import type { S3Service } from '@app/backend-common-s3';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- Component-only atomicity test composes the real admin audit service with this provider.
 import { AuditLogAdminPersistenceError, AuditLogAdminService } from '@app/backend-feature-audit-log-admin';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- Component-only atomicity test drives real admin mutations; production persistence stays independent.
 import {
   NotificationAdminService,
   NotificationConfigService,
@@ -85,16 +87,18 @@ describeIfDocker('Mongo notification persistence on a replica set', () => {
       const { database, broadcasts, notifications } = repositories();
       const audit = new AuditLogAdminService(new MongoAdminAuditLogRepository(database, client));
       const uploadedObjects: string[] = [];
+      const segmentResolvers = {} as unknown as NotificationSegmentResolverRegistry; // Static audiences never call dynamic resolvers.
       const admin = new NotificationAdminService(
         new NotificationConfigService(new ConfigService()),
         broadcasts,
         notifications,
         {
-          putObject: async ({ key }: { key: string }) => {
+          putObject: ({ key }: { key: string }) => {
             uploadedObjects.push(key);
+            return Promise.resolve();
           },
         } as unknown as S3Service,
-        {} as NotificationSegmentResolverRegistry,
+        segmentResolvers,
       );
       const tenantId = randomUUID();
       const actorId = randomUUID();
@@ -112,7 +116,11 @@ describeIfDocker('Mongo notification persistence on a replica set', () => {
         expect(template.versions).toHaveLength(1);
         await admin.publishTemplate(template.id, tenantId, actorId, transaction);
         await admin.updateTemplate(template.id, tenantId, { actorId, name: 'Updated template' }, transaction);
-        template = (await admin.publishTemplate(template.id, tenantId, actorId, transaction))!;
+        const published = await admin.publishTemplate(template.id, tenantId, actorId, transaction);
+        if (!published?.currentVersionId) {
+          throw new Error('Owned template was not published.');
+        }
+        template = published;
         expect(template.versions).toHaveLength(2);
         await admin.testSend(
           {
@@ -146,7 +154,7 @@ describeIfDocker('Mongo notification persistence on a replica set', () => {
             tenantId,
             actorId,
             name: 'Atomic broadcast',
-            templateVersionId: template.currentVersionId!,
+            templateVersionId: published.currentVersionId,
             channel: NotificationChannel.Bot,
             provider: NotificationDeliveryProvider.TelegramBot,
             segmentIds: [segment.id],
@@ -186,7 +194,7 @@ describeIfDocker('Mongo notification persistence on a replica set', () => {
       if (!collectionInfo || !('options' in collectionInfo) || !collectionInfo.options) {
         throw new Error('Owned audit fixture collection metadata is unavailable.');
       }
-      const original = collectionInfo.options.validator ?? {};
+      const original: unknown = collectionInfo.options.validator ?? {};
       await database.command({
         collMod: failedCollection,
         validator: { $expr: { $eq: [1, 0] } },

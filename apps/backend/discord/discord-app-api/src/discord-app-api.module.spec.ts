@@ -227,6 +227,13 @@ describe('DiscordAppApiModule wiring', () => {
         principal: { subject: discordUserId, tenantId },
       });
       expect(withoutReturnUrl.stateExpiresAt).toBe('2026-07-03T00:00:00.000Z');
+      await expect(
+        port.createDiscordAuthorizationRequest({
+          tenantId,
+          intent: 'link',
+          principal: { subject: discordUserId, tenantId: 'different-tenant' },
+        }),
+      ).rejects.toThrow('discord_tenant_mismatch');
       expect(createDiscordAuthorizationRequest).toHaveBeenCalledTimes(2);
       expect(createDiscordAuthorizationRequest).toHaveBeenLastCalledWith({
         intent: 'link',

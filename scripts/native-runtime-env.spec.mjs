@@ -43,7 +43,7 @@ test('build sanitization excludes plaintext, secret paths, inherited keys, and c
     AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE: '/private/path',
     PROVIDER_API_KEY: 'private',
     OTEL_EXPORTER_OTLP_HEADERS: 'Authorization=private',
-    NATS_URL: 'nats://owned:private@127.0.0.1',
+    NATS_SERVERS: 'nats://owned:private@127.0.0.1',
     VITE_API_BASE_URL_MODE: 'same-origin',
     PATH: '/usr/bin',
   };

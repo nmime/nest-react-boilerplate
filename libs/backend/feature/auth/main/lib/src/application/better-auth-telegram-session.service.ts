@@ -10,11 +10,10 @@ export interface BetterAuthTelegramProfile {
   avatarUrl: string | null;
 }
 
+type RequestHeaderValue = string | string[] | undefined;
 const TelegramSubjectPattern = /^\d+$/u;
 
-export function toBetterAuthHeaders(
-  values: Readonly<Record<string, string | string[] | undefined>> | undefined,
-): Headers {
+export function toBetterAuthHeaders(values: Readonly<Record<string, RequestHeaderValue>> | undefined): Headers {
   const headers = new Headers();
   for (const [name, value] of Object.entries(values ?? {})) {
     if (typeof value === 'string') {
@@ -31,7 +30,7 @@ export class BetterAuthTelegramSessionService {
   constructor(@Inject(BetterAuthInstanceToken) private readonly betterAuth: Auth) {}
 
   async requireTelegramProfile(
-    requestHeaders: Readonly<Record<string, string | string[] | undefined>> | undefined,
+    requestHeaders: Readonly<Record<string, RequestHeaderValue>> | undefined,
   ): Promise<BetterAuthTelegramProfile> {
     const headers = toBetterAuthHeaders(requestHeaders);
     const session = await this.betterAuth.api.getSession({
@@ -56,9 +55,7 @@ export class BetterAuthTelegramSessionService {
     };
   }
 
-  async revokeSession(
-    requestHeaders: Readonly<Record<string, string | string[] | undefined>> | undefined,
-  ): Promise<string[]> {
+  async revokeSession(requestHeaders: Readonly<Record<string, RequestHeaderValue>> | undefined): Promise<string[]> {
     const headers = toBetterAuthHeaders(requestHeaders);
     const response = await this.betterAuth.api.signOut({
       headers,

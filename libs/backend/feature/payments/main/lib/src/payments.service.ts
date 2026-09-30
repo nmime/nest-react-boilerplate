@@ -6,11 +6,12 @@ import { PaymentCustomerUnavailableException } from './providers/provider-errors
 /* v8 ignore next -- Nest's bare class-decorator helper has one synthetic branch. */
 @Injectable()
 export class PaymentsService {
-  async list(): Promise<PaymentsDto[]> {
-    throw new PaymentCustomerUnavailableException();
+  list(): Promise<PaymentsDto[]> {
+    return Promise.reject(new PaymentCustomerUnavailableException());
   }
 
-  async create(_input: CreatePaymentsDto): Promise<PaymentsDto> {
-    throw new PaymentCustomerUnavailableException();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- The unavailable customer facade retains the controller contract until U9 owns orchestration.
+  create(_input: CreatePaymentsDto): Promise<PaymentsDto> {
+    return Promise.reject(new PaymentCustomerUnavailableException());
   }
 }

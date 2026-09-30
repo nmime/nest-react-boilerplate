@@ -116,3 +116,17 @@ describe('useSessionPreferenceControls', () => {
     });
   });
 });
+
+it('keeps explicitly unconfigured clients local and never sends a preferences mutation', async () => {
+  authControllerUpdatePreferences.mockClear();
+  const { result } = renderHook(() => useSessionPreferenceControls({ persistenceEnabled: false }), {
+    wrapper: createWrapper(),
+  });
+  await act(async () => {
+    await result.current.persistUserLocale('zh');
+    await result.current.persistUserTheme('dark');
+  });
+  expect(result.current.userLocale).toBe('zh');
+  expect(result.current.userTheme).toBe('dark');
+  expect(authControllerUpdatePreferences).not.toHaveBeenCalled();
+});

@@ -33,6 +33,11 @@ const setSession = (store: PostgresSessionStore, sessionId: string, session: Ses
   });
 
 describe('PostgresSessionStore', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
   it('uses the URI TLS policy and the supplied session environment instead of ambient flags', async () => {
     const store = new PostgresSessionStore('postgres://database/app?sslmode=verify-full', 3600, 0, {
       POSTGRES_SSL: 'false',
@@ -42,11 +47,6 @@ describe('PostgresSessionStore', () => {
       ssl: { rejectUnauthorized: true },
     });
     await store.close();
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.useRealTimers();
   });
 
   it('initializes, persists, reads, and destroys sessions through PostgreSQL', async () => {

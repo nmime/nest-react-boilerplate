@@ -170,7 +170,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
       ) {
         throw new Error('notification_invalid_transaction');
       }
-      return this.createInTransaction(transaction, params);
+      return this.createInTransaction(transaction as EntityManager, params);
     }
     return this.entityManager.transactional((em) => this.createInTransaction(em, params));
   }

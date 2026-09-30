@@ -1,7 +1,7 @@
 // @requirements REQ-FRONTEND-NATIVE-006
 import { createApiClientRegistry } from '@app/frontend-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { resolveMobileApiConfig } from './shared/mobile-api-config';
+import { resolveMobileApiConfig } from './shared';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -9,6 +9,10 @@ describe('native API configuration and transport', () => {
   it('keeps an unconfigured native shell local-only and preserves web same-origin cookies', () => {
     expect(resolveMobileApiConfig('android', {})).toBeNull();
     expect(resolveMobileApiConfig('ios', { baseUrl: '  ' })).toBeNull();
+    expect(resolveMobileApiConfig('web', { baseUrl: 'same-origin' })).toMatchObject({
+      baseUrls: { admin: '', auth: '', user: '' },
+      credentials: 'include',
+    });
     expect(resolveMobileApiConfig('web', {})).toMatchObject({
       baseUrls: { admin: '', auth: '', user: '' },
       credentials: 'include',

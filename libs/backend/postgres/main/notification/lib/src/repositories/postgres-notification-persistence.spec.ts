@@ -1,7 +1,7 @@
 // @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-PERSISTENCE-005
 import 'reflect-metadata';
 import { LockMode } from '@mikro-orm/core';
-import type { EntityManager } from '@mikro-orm/postgresql';
+import { MikroORM, type EntityManager } from '@mikro-orm/postgresql';
 import { afterEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { InvalidNotificationTemplateError } from '@app/backend-feature-notification-shared';
 import {
@@ -991,3 +991,39 @@ function createTransactionEntityManager() {
   );
   return transaction;
 }
+
+it('rejects inactive and foreign transaction managers before reads, and reuses the active owner', async () => {
+  const owner = new MikroORM<EntityManager>({
+    entities: [],
+    dbName: 'owned-unused-fixture',
+    discovery: { warnWhenNoEntities: false },
+  });
+  const foreign = new MikroORM<EntityManager>({
+    entities: [],
+    dbName: 'foreign-unused-fixture',
+    discovery: { warnWhenNoEntities: false },
+  });
+  const broadcasts = new PostgresNotificationBroadcastPersistence(owner.em, notificationPayloadCrypto());
+  const deliveries = new PostgresNotificationPersistence(owner.em, notificationPayloadCrypto());
+  const find = vi.spyOn(owner.em, 'findOne').mockResolvedValue(null);
+  const active = vi.spyOn(owner.em, 'isInTransaction').mockReturnValue(false);
+  vi.spyOn(foreign.em, 'isInTransaction').mockReturnValue(true);
+  try {
+    for (const token of [{}, owner.em, foreign.em]) {
+      await expect(broadcasts.getSegment('owned-id', 'owned-tenant', token)).rejects.toThrow(
+        'notification_invalid_transaction',
+      );
+      await expect(deliveries.create({} as never, token)).rejects.toThrow('notification_invalid_transaction');
+    }
+    expect(find).not.toHaveBeenCalled();
+    active.mockReturnValue(true);
+    await expect(broadcasts.getSegment('owned-id', 'owned-tenant', owner.em)).resolves.toBeNull();
+    await expect(
+      deliveries.create({ code: 'owned-missing', tenantId: 'owned-tenant' } as never, owner.em),
+    ).rejects.toThrow();
+    expect(find).toHaveBeenCalled();
+  } finally {
+    await owner.close(true);
+    await foreign.close(true);
+  }
+});

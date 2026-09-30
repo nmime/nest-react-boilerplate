@@ -196,7 +196,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/admin/notification-broadcasts",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:320",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:350",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -213,7 +213,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/admin/notification-broadcasts/:id",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:349",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:386",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -231,7 +231,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/admin/notification-segment-resolvers",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:206",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:221",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -248,7 +248,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/admin/notification-segment-uploads/:id",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:300",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:330",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -266,7 +266,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/admin/notification-segments",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:213",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:228",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -283,7 +283,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/admin/notification-segments/:id",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:244",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:262",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -318,7 +318,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/admin/notification-templates/:id",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:113",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:120",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -628,7 +628,7 @@
       "kind": "http",
       "method": "PATCH",
       "path": "/admin/notification-broadcasts/:id",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:356",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:393",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -646,7 +646,7 @@
       "kind": "http",
       "method": "PATCH",
       "path": "/admin/notification-segments/:id",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:251",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:269",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -664,7 +664,7 @@
       "kind": "http",
       "method": "PATCH",
       "path": "/admin/notification-templates/:id",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:120",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:127",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -772,7 +772,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-broadcasts",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:330",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:360",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -790,7 +790,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-broadcasts/:id/approve",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:389",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:431",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -808,7 +808,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-broadcasts/:id/cancel",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:450",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:492",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -826,7 +826,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-broadcasts/:id/collect-audience",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:377",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:419",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -844,7 +844,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-broadcasts/:id/pause",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:426",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:468",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -862,7 +862,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-broadcasts/:id/resume",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:438",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:480",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -880,7 +880,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-broadcasts/:id/schedule",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:413",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:455",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -898,7 +898,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-broadcasts/:id/send",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:401",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:443",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -916,7 +916,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-segments",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:225",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:240",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -934,7 +934,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-segments/:id/archive",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:307",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:337",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -952,7 +952,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-segments/:id/estimate",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:273",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:296",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -970,7 +970,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-segments/:id/uploads",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:280",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:303",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -1006,7 +1006,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-templates/:id/archive",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:151",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:163",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -1024,7 +1024,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-templates/:id/preview",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:158",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:170",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -1042,7 +1042,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-templates/:id/publish",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:144",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:156",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -1060,7 +1060,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/admin/notification-templates/:id/test-send",
-      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:179",
+      "source": "libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.ts:191",
       "authClassification": "session-rbac",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/admin/lib/src/notification-admin-api.module.spec.ts",
@@ -1772,7 +1772,7 @@
       "kind": "http",
       "method": "DELETE",
       "path": "/auth/provider-identities/:identityId",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:291",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:321",
       "authClassification": "session",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -1808,7 +1808,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/auth/discord/callback",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:251",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:277",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -1826,7 +1826,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/auth/locales",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:411",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:441",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -1843,7 +1843,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/auth/me",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:365",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:395",
       "authClassification": "session",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -1877,7 +1877,7 @@
       "kind": "http",
       "method": "GET",
       "path": "/auth/provider-identities",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:279",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:309",
       "authClassification": "session",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -1980,7 +1980,7 @@
       "kind": "http",
       "method": "PATCH",
       "path": "/auth/me/locale",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:381",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:411",
       "authClassification": "session",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -1998,7 +1998,7 @@
       "kind": "http",
       "method": "PATCH",
       "path": "/auth/me/preferences",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:396",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:426",
       "authClassification": "session",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2160,7 +2160,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/discord/authorization-request",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:236",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:254",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2178,7 +2178,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/email-verification-token",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:324",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:354",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2196,7 +2196,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/email-verification/confirm",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:342",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:372",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2213,8 +2213,62 @@
       "project": "auth-app-api",
       "kind": "http",
       "method": "POST",
+      "path": "/auth/internal/telegram-bot/link",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/telegram-bot-auth-bridge.controller.ts:159",
+      "authClassification": "service-credential",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/telegram-bot-auth-bridge.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/internal/telegram-bot/locale",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/telegram-bot-auth-bridge.controller.ts:175",
+      "authClassification": "service-credential",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/telegram-bot-auth-bridge.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
+      "path": "/auth/internal/telegram-bot/resolve",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/telegram-bot-auth-bridge.controller.ts:143",
+      "authClassification": "service-credential",
+      "coverageClassification": "covered-component",
+      "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/telegram-bot-auth-bridge.controller.spec.ts",
+      "smoke": {
+        "baseUrlEnv": "AUTH_API_BASE_URL",
+        "classification": "manual-fixture",
+        "expectedStatusClasses": [
+          "2xx",
+          "4xx"
+        ]
+      }
+    },
+    {
+      "project": "auth-app-api",
+      "kind": "http",
+      "method": "POST",
       "path": "/auth/link-tokens",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:303",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:333",
       "authClassification": "session",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2232,7 +2286,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/login",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:144",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:148",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2250,8 +2304,8 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/logout",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:418",
-      "authClassification": "session",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:448",
+      "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
       "smoke": {
@@ -2268,7 +2322,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/password-reset-token",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:334",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:364",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2286,7 +2340,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/password-reset/confirm",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:356",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:386",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2304,7 +2358,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/register",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:107",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:111",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2322,7 +2376,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/telegram/bot-link",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:229",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:233",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2340,7 +2394,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/telegram/oidc/session",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:204",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:208",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2358,7 +2412,7 @@
       "kind": "http",
       "method": "POST",
       "path": "/auth/telegram/tma",
-      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:179",
+      "source": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.ts:183",
       "authClassification": "public",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts",
@@ -2725,42 +2779,6 @@
     {
       "project": "notification-consumer",
       "kind": "http",
-      "method": "ALL",
-      "path": "/api/v1/webhooks/:provider",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:91",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "GET",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:70",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
       "method": "GET",
       "path": "/health",
       "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
@@ -2814,23 +2832,6 @@
       "project": "notification-consumer",
       "kind": "http",
       "method": "GET",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:40",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "rbac-allowed-denied",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "GET",
       "path": "/ready",
       "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
       "authClassification": "public",
@@ -2841,168 +2842,6 @@
         "classification": "automatic",
         "expectedStatusClasses": [
           "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/adyen",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:85",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:64",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cryptobot",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:40",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/heleket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:46",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/nowpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:52",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/stripe",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:79",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/x-rocket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:32",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/yookassa",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:58",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "http",
-      "method": "POST",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:47",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "manual-fixture",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
         ]
       }
     },
@@ -3025,42 +2864,6 @@
       "authClassification": "background",
       "coverageClassification": "covered-component",
       "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-consumer.service.spec.ts"
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "openapi-json",
-      "method": "GET",
-      "path": "/docs/openapi.json",
-      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
-      "authClassification": "public",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-consumer",
-      "kind": "swagger-ui",
-      "method": "GET",
-      "path": "/docs",
-      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
-      "authClassification": "public",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_CONSUMER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
     },
     {
       "project": "notification-scheduler",
@@ -3095,42 +2898,6 @@
     {
       "project": "notification-scheduler",
       "kind": "http",
-      "method": "ALL",
-      "path": "/api/v1/webhooks/:provider",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:91",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "GET",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:70",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
       "method": "GET",
       "path": "/health",
       "source": "libs/backend/common/health/lib/src/base-health.controller.ts:13",
@@ -3184,23 +2951,6 @@
       "project": "notification-scheduler",
       "kind": "http",
       "method": "GET",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:40",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "rbac-allowed-denied",
-        "expectedStatusClasses": [
-          "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "GET",
       "path": "/ready",
       "source": "libs/backend/common/health/lib/src/base-health.controller.ts:32",
       "authClassification": "public",
@@ -3211,168 +2961,6 @@
         "classification": "automatic",
         "expectedStatusClasses": [
           "2xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/adyen",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:85",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cloudpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:64",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/cryptobot",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:40",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/heleket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:46",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/nowpayments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:52",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/stripe",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:79",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/x-rocket",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:32",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/api/v1/webhooks/yookassa",
-      "source": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.ts:58",
-      "authClassification": "verified-provider",
-      "coverageClassification": "covered-component",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments-webhooks.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "signed-provider",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "http",
-      "method": "POST",
-      "path": "/payments",
-      "source": "libs/backend/feature/payments/main/lib/src/payments.controller.ts:47",
-      "authClassification": "session",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/feature/payments/main/lib/src/payments.controller.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "manual-fixture",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
         ]
       }
     },
@@ -3395,42 +2983,6 @@
       "authClassification": "background",
       "coverageClassification": "covered-unit",
       "testEvidence": "libs/backend/feature/notification/main/lib/src/service/notification-provider-readiness.service.spec.ts"
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "openapi-json",
-      "method": "GET",
-      "path": "/docs/openapi.json",
-      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
-      "authClassification": "public",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
-    },
-    {
-      "project": "notification-scheduler",
-      "kind": "swagger-ui",
-      "method": "GET",
-      "path": "/docs",
-      "source": "libs/backend/common/swagger/lib/src/swagger.util.ts:76",
-      "authClassification": "public",
-      "coverageClassification": "covered-unit",
-      "testEvidence": "libs/backend/common/swagger/lib/src/swagger.spec.ts",
-      "smoke": {
-        "baseUrlEnv": "NOTIFICATION_SCHEDULER_BASE_URL",
-        "classification": "public-conditional",
-        "expectedStatusClasses": [
-          "2xx",
-          "4xx"
-        ]
-      }
     },
     {
       "project": "site-app",

@@ -51,19 +51,15 @@ export class LogoutModel {
   }
 
   async signOut({ onSignedOut }: SignOutOptions = {}): Promise<void> {
-    let succeeded = false;
     try {
       // Let the backend destroy the server-side session before clearing UI state.
       await this.mutation.mutate();
-      succeeded = true;
     } finally {
       this.authStore.clearSession();
       clearApiAuthRequired();
       await this.clearServerState();
     }
-    if (succeeded) {
-      onSignedOut?.();
-    }
+    onSignedOut?.();
   }
 
   destroy(): void {

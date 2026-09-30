@@ -1329,7 +1329,7 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     ) {
       throw new Error('notification_invalid_transaction');
     }
-    return transaction;
+    return transaction as EntityManager;
   }
 
   private inTransaction<T>(transaction: unknown, operation: (em: EntityManager) => Promise<T>): Promise<T> {

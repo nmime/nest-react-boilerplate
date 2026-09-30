@@ -319,8 +319,13 @@ describe('createTelegramBot', () => {
       },
       {
         fetch: async (input, init) => {
-          expect(JSON.parse(String(init?.body)).providerSubject).toBe('100');
-          if (String(input).endsWith('/link')) linked = true;
+          if (typeof init?.body !== 'string' || typeof input !== 'string') {
+            throw new Error('Expected a JSON bridge request with a string endpoint.');
+          }
+          expect(JSON.parse(init.body).providerSubject).toBe('100');
+          if (input.endsWith('/link')) {
+            linked = true;
+          }
           return new Response(JSON.stringify(linked ? profile : null), {
             headers: { 'content-type': 'application/json' },
           });

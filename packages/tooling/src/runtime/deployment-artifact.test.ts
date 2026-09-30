@@ -654,10 +654,9 @@ void describe('deployment artifact closure', () => {
       ],
     );
     writeFileSync(join(root, '.nrb/closure/pnpm-lock.yaml'), JSON.stringify(application));
-    assert.throws(
-      () => stageSelectedMigratorManifest(root, artifactRoot, closure('postgres')),
-      /missing package-manager integrity metadata/u,
-    );
+    assert.throws(() => {
+      stageSelectedMigratorManifest(root, artifactRoot, closure('postgres'));
+    }, /missing package-manager integrity metadata/u);
   });
 
   void it('removes NODE_PATH from the artifact process environment', () => {

@@ -319,3 +319,23 @@ describe('Postgres MikroORM options', () => {
     );
   });
 });
+
+describe('TLS negotiation failure boundaries', () => {
+  it('rejects unsupported protocols and negotiation tokens without echoing credentials', () => {
+    expect(() => createPostgresConnectionOptions('https://user:private@db.example/app', {})).toThrow(
+      'Invalid PostgreSQL connection URL.',
+    );
+    expect(() => createPostgresConnectionOptions(undefined, { PGSSLNEGOTIATION: 'unknown' })).toThrow(
+      'Invalid PostgreSQL TLS negotiation policy.',
+    );
+    expect(createPostgresConnectionOptions(undefined, { PGSSLNEGOTIATION: ' ' })).toEqual({ ssl: false });
+    expect(createPostgresConnectionOptions(undefined, { POSTGRES_SSL: true, PGSSLNEGOTIATION: ' direct ' })).toEqual({
+      ssl: { rejectUnauthorized: true },
+      sslnegotiation: 'direct',
+    });
+    expect(createPostgresConnectionOptions('postgres://db.example/app?ssl=true', {})).toEqual({
+      connectionString: 'postgres://db.example/app',
+      ssl: { rejectUnauthorized: true },
+    });
+  });
+});

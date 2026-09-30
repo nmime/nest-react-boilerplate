@@ -46,8 +46,12 @@ export function privateExportSpan(span: ExportSpan): ExportSpan {
   const attributes = selectAttributes(span.attributes);
   const method = attributes['http.request.method'] ?? attributes['http.method'];
   const route = attributes['http.route'];
+  let name = span.name;
+  if (typeof method === 'string') {
+    name = typeof route === 'string' ? `${method} ${route}` : method;
+  }
   return {
-    name: typeof method === 'string' ? `${method}${typeof route === 'string' ? ` ${route}` : ''}` : span.name,
+    name,
     kind: span.kind,
     spanContext: () => span.spanContext(),
     parentSpanContext: span.parentSpanContext,

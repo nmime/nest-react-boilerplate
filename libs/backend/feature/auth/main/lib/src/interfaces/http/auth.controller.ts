@@ -288,7 +288,7 @@ export class AuthController {
         principal: request.user ?? request.auth ?? null,
         browserNonce:
           typeof request.session?.[DiscordBrowserNonceKey] === 'string'
-            ? (request.session[DiscordBrowserNonceKey] as string)
+            ? request.session[DiscordBrowserNonceKey]
             : null,
       });
       await establishExternalSessionIfPresent(request, result);
@@ -446,6 +446,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(LogoutPayloadDto)
   async logout(

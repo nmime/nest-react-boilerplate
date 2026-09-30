@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { MikroORM } from '@mikro-orm/postgresql';
+import { MikroORM, type EntityManager } from '@mikro-orm/postgresql';
 import type { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createPostgresMikroOrmOptions, PostgresSessionStore } from '@app/backend-postgres-main';
@@ -21,7 +21,9 @@ function providerConstructor(): new () => ProviderPool {
     (candidate): candidate is new () => ProviderPool =>
       typeof candidate === 'function' && candidate.name === 'PostgresBetterAuthDatabaseProvider',
   );
-  if (!provider) throw new Error('Expected the selected PostgreSQL Better Auth pool owner.');
+  if (!provider) {
+    throw new Error('Expected the selected PostgreSQL Better Auth pool owner.');
+  }
   return provider;
 }
 
@@ -29,7 +31,7 @@ function certificate(directory: string, name: string) {
   const cert = join(directory, `${name}.crt`);
   const key = join(directory, `${name}.key`);
   execFileSync(
-    'openssl',
+    '/usr/bin/openssl',
     [
       'req',
       '-x509',
@@ -68,7 +70,9 @@ describe('PostgreSQL credential-store TLS', () => {
     wrongCertificate = wrong.cert;
     encrypted = await new PostgreSqlContainer('postgres:17.11-alpine')
       .withCopyFilesToContainer([
+        // eslint-disable-next-line sonarjs/publicly-writable-directories -- This absolute path is inside the owned disposable container; only PostgreSQL reads its certificate.
         { source: trusted.cert, target: '/tmp/nrb-server.crt' },
+        // eslint-disable-next-line sonarjs/publicly-writable-directories -- The owned container command sets the generated key to postgres-only mode 0600 before startup.
         { source: trusted.key, target: '/tmp/nrb-server.key' },
       ])
       .withCommand([
@@ -85,28 +89,33 @@ describe('PostgreSQL credential-store TLS', () => {
     try {
       await Promise.all([encrypted?.stop(), plaintext?.stop()]);
     } finally {
-      if (directory) rmSync(directory, { recursive: true, force: true });
+      if (directory) {
+        rmSync(directory, { recursive: true, force: true });
+      }
     }
   });
 
   const connection = (container: StartedPostgreSqlContainer, ca?: string) => {
     const url = new URL(container.getConnectionUri());
     url.searchParams.set('sslmode', 'verify-full');
-    if (ca) url.searchParams.set('sslrootcert', ca);
+    if (ca) {
+      url.searchParams.set('sslrootcert', ca);
+    }
     return url.toString();
   };
 
   const orm = (databaseUrl: string) =>
-    MikroORM.init({
+    new MikroORM<EntityManager>({
       ...createPostgresMikroOrmOptions({}, { DATABASE_URL: databaseUrl, POSTGRES_SSL: 'false' }),
       discovery: { warnWhenNoEntities: false },
-      connect: false,
     });
 
   it('encrypts ORM, provider-session, and first-party-session connections using the URI CA', async () => {
-    if (!encrypted) throw new Error('Owned TLS fixture failed to initialize.');
+    if (!encrypted) {
+      throw new Error('Owned TLS fixture failed to initialize.');
+    }
     const databaseUrl = connection(encrypted, trustedCertificate);
-    const database = await orm(databaseUrl);
+    const database = orm(databaseUrl);
     process.env = { ...originalEnvironment, DATABASE_URL: databaseUrl, POSTGRES_SSL: 'false' };
     const Provider = providerConstructor();
     const provider = new Provider();
@@ -128,9 +137,11 @@ describe('PostgreSQL credential-store TLS', () => {
 
   it.each(['wrong-ca', 'plaintext-server'] as const)('rejects %s across all three consumers', async (failure) => {
     const container = failure === 'wrong-ca' ? encrypted : plaintext;
-    if (!container) throw new Error('Owned TLS fixture failed to initialize.');
+    if (!container) {
+      throw new Error('Owned TLS fixture failed to initialize.');
+    }
     const databaseUrl = connection(container, failure === 'wrong-ca' ? wrongCertificate : trustedCertificate);
-    const database = await orm(databaseUrl);
+    const database = orm(databaseUrl);
     process.env = { ...originalEnvironment, DATABASE_URL: databaseUrl, POSTGRES_SSL: 'false' };
     const Provider = providerConstructor();
     const provider = new Provider();

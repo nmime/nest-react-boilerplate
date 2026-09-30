@@ -35,7 +35,7 @@
   "admin.loginAnalytics.column.outcome": "结果",
   "admin.loginAnalytics.column.provider": "身份提供商",
   "admin.loginAnalytics.column.user": "用户",
-  "admin.loginAnalytics.column.geo": "GeoIP",
+  "admin.loginAnalytics.column.geo": "IP 地理位置",
   "admin.loginAnalytics.column.locale": "语言/时区",
   "admin.loginAnalytics.column.occurred": "发生时间",
   "admin.loginAnalytics.detail.title": "事件详细信息",

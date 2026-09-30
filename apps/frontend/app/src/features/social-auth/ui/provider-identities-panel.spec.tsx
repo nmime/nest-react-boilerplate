@@ -81,7 +81,15 @@ describe('ProviderIdentitiesPanel', () => {
     );
     function ClearSession() {
       const store = useAuthShellStore();
-      return <button onClick={() => store.clearSession()}>Become guest</button>;
+      return (
+        <button
+          onClick={() => {
+            store.clearSession();
+          }}
+        >
+          Become guest
+        </button>
+      );
     }
     const client = new QueryClient();
     render(
@@ -94,12 +102,16 @@ describe('ProviderIdentitiesPanel', () => {
         </ApiClientProvider>
       </FrontendStateProvider>,
     );
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledOnce();
+    });
     fireEvent.click(screen.getByText('Become guest'));
     resolveRead(
       jsonResponse({ data: { items: [{ id: 'private', provider: 'telegram', email: 'late@example.test' }] } }),
     );
-    await waitFor(() => expect(client.getQueryData([...providerIdentitiesQueryKey(), null])).toBeDefined());
+    await waitFor(() => {
+      expect(client.getQueryData([...providerIdentitiesQueryKey(), null])).toBeDefined();
+    });
     expect(screen.getByText('user.state.unauthenticated')).toBeTruthy();
     expect(screen.queryByText('late@example.test')).toBeNull();
     expect(screen.queryByRole('button', { name: 'auth.social.button.unlinkTelegram' })).toBeNull();

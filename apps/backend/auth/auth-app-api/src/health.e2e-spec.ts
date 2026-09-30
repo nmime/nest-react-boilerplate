@@ -13,7 +13,10 @@ import { AuthAppApiModule } from './auth-app-api.module';
 import { AuthAppApiCapabilitiesModule } from './capabilities.generated';
 
 const mockAuth = {
-  api: {},
+  api: {
+    signOut: () => Promise.resolve(new Response(null, { status: 200 })),
+    getSession: () => Promise.resolve(null),
+  },
   handler: async () => new Response('ok'),
 } as any;
 
@@ -387,14 +390,14 @@ describe('auth-app-api e2e', () => {
         authorization: 'Bearer header.payload.signature',
       },
     });
-    expect(bearerOnlyLogout.statusCode).toBe(401);
+    expect(bearerOnlyLogout.statusCode).toBe(200);
 
     const sessionOnlyLogout = await app.inject({
       method: 'POST',
       url: '/auth/logout',
       headers: { cookie: registerCookieHeader },
     });
-    expect(sessionOnlyLogout.statusCode).toBe(201);
+    expect(sessionOnlyLogout.statusCode).toBe(200);
     expect(sessionOnlyLogout.json()).toEqual({ data: { loggedOut: true } });
 
     const sessionAfterLogout = await app.inject({

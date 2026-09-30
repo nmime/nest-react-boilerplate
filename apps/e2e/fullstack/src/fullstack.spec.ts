@@ -6,6 +6,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 // REQ-FRONTEND-JOURNEY-001.
 import { sign } from '@tma.js/init-data-node';
 import { composeEnv, urls } from './compose';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- This e2e consumer reads the owned runtime fixture's public constants.
 import {
   RuntimeAdminFixtureEmail,
   RuntimeAdminFixturePassword,

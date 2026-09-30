@@ -65,7 +65,9 @@ describe('payments postgres migrations against PostgreSQL', () => {
     try {
       await orm?.close(true);
     } finally {
-      if (container) await stopPostgresContainer(container);
+      if (container) {
+        await stopPostgresContainer(container);
+      }
     }
   });
 
@@ -323,7 +325,7 @@ describe('payments postgres migrations against PostgreSQL', () => {
         kind: 'fiat',
         enabled: false,
         priority: 100,
-        supportedCurrencies: ['USD'],
+        supportedCurrencies: [{ code: 'USD', kind: 'fiat' }],
         config: {},
         baseUrl: 'https://provider.invalid',
         version: 'fixture',

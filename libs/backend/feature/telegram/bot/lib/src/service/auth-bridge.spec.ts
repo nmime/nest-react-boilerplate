@@ -27,12 +27,22 @@ async function withServer(
   const server = createServer(handler);
   await new Promise<void>((done) => server.listen(0, '127.0.0.1', done));
   const address = server.address();
-  if (!address || typeof address === 'string') throw new Error('Owned bridge fixture did not bind.');
+  if (!address || typeof address === 'string') {
+    throw new Error('Owned bridge fixture did not bind.');
+  }
   try {
     await check(`http://127.0.0.1:${address.port}/api/v1/auth/internal/telegram-bot`);
   } finally {
     server.closeAllConnections();
-    await new Promise<void>((done, reject) => server.close((error) => (error ? reject(error) : done())));
+    await new Promise<void>((done, reject) =>
+      server.close((error) => {
+        if (error) {
+          reject(error);
+        } else {
+          done();
+        }
+      }),
+    );
   }
 }
 
@@ -40,6 +50,7 @@ describe('Telegram stateless auth bridge transport', () => {
   it('is opt-in and rejects incomplete, plaintext remote, credential-bearing and production loopback configuration', () => {
     expect(resolveTelegramAuthBridgeConfig({})).toBeUndefined();
     for (const config of [
+      { TELEGRAM_BOT_AUTH_URL: 'not-a-url', TELEGRAM_BOT_AUTH_SECRET: secret },
       { TELEGRAM_BOT_AUTH_URL: 'https://auth.example.test/internal' },
       { TELEGRAM_BOT_AUTH_SECRET: secret },
       { TELEGRAM_BOT_AUTH_URL: 'http://remote.example.test', TELEGRAM_BOT_AUTH_SECRET: secret },
@@ -186,4 +197,50 @@ describe('Telegram stateless auth bridge transport', () => {
       },
     );
   }, 10_000);
+});
+
+describe('bridge failure authority', () => {
+  it('normalizes the root endpoint, rejects invalid senders before transport, and has no invented link URL', async () => {
+    expect(
+      resolveTelegramAuthBridgeConfig({
+        TELEGRAM_BOT_AUTH_URL: 'https://auth.example.test///',
+        TELEGRAM_BOT_AUTH_SECRET: secret,
+      })?.url,
+    ).toBe('https://auth.example.test');
+    const transport = async () => new Response('null', { headers: { 'content-type': 'application/json' } });
+    const auth = createTelegramAuthBridge({ url: 'https://auth.example.test', secret }, { fetch: transport });
+    expect(await auth.createLinkInstructions(identity)).toBeNull();
+    await expect(auth.findLinkedUser({ ...identity, providerSubject: 'forged-subject' })).rejects.toThrow(
+      'Invalid Telegram bot sender',
+    );
+    const nullLocale = createTelegramAuthBridge(
+      { url: 'https://auth.example.test', secret },
+      {
+        fetch: async () =>
+          new Response(JSON.stringify({ ...profile, locale: null }), {
+            headers: { 'content-type': 'application/json' },
+          }),
+      },
+    );
+    expect(await nullLocale.consumeLinkPayload('a'.repeat(43), identity)).toEqual({ kind: 'link' });
+  });
+
+  it.each(['non-json', 'rejected', 'empty'] as const)(
+    'refuses %s responses with a generic private error',
+    async (kind) => {
+      const auth = createTelegramAuthBridge(
+        { url: 'https://auth.example.test', secret },
+        {
+          fetch: async () =>
+            kind === 'empty'
+              ? new Response(null, { headers: { 'content-type': 'application/json' } })
+              : new Response('private response', {
+                  status: kind === 'rejected' ? 401 : 200,
+                  headers: { 'content-type': kind === 'non-json' ? 'text/plain' : 'application/json' },
+                }),
+        },
+      );
+      await expect(auth.findLinkedUser(identity)).rejects.toThrow('Telegram account service is unavailable.');
+    },
+  );
 });

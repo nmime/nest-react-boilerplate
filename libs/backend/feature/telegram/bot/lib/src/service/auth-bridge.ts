@@ -41,7 +41,14 @@ export function resolveTelegramAuthBridgeConfig(
       'TELEGRAM_BOT_AUTH_URL requires HTTPS without URL credentials, query, or fragment; local development may use loopback HTTP.',
     );
   }
-  return { url: url.toString().replace(/\/+$/u, ''), secret };
+  while (url.pathname.endsWith('/')) {
+    url.pathname = url.pathname.slice(0, -1);
+    if (url.pathname === '/') {
+      break;
+    }
+  }
+  const normalized = url.toString();
+  return { url: normalized.endsWith('/') ? normalized.slice(0, -1) : normalized, secret };
 }
 
 /** The host is stateless: all ownership is re-resolved by the auth service. */
@@ -96,8 +103,8 @@ export function createTelegramAuthBridge(
       }
       return { kind: 'link', ...(profile.locale ? { locale: profile.locale } : {}) };
     },
-    async createLinkInstructions() {
-      return options.appUrl ?? null;
+    createLinkInstructions() {
+      return Promise.resolve(options.appUrl ?? null);
     },
     findLinkedUser(identity) {
       return request('resolve', identity);
@@ -129,7 +136,7 @@ async function readBoundedBody(response: Response): Promise<string> {
   if (!response.body) {
     throw new Error('Empty bridge response.');
   }
-  const reader = response.body.getReader();
+  const reader: ReadableStreamDefaultReader<Uint8Array> = response.body.getReader();
   const parts: Uint8Array[] = [];
   let size = 0;
   try {

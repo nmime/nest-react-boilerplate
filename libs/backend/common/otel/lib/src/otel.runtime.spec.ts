@@ -25,14 +25,18 @@ describe('OpenTelemetry runtime export', () => {
       const chunks: Buffer[] = [];
       request.on('data', (chunk: Buffer) => chunks.push(chunk));
       request.on('end', () => {
-        if (request.url === '/v1/traces') payloads.push(Buffer.concat(chunks).toString('utf8'));
+        if (request.url === '/v1/traces') {
+          payloads.push(Buffer.concat(chunks).toString('utf8'));
+        }
         response.writeHead(200, { connection: 'close' });
         response.end('{}');
       });
     });
     await new Promise<void>((resolve) => receiver.listen(0, '127.0.0.1', resolve));
     const address = receiver.address();
-    if (!address || typeof address === 'string') throw new Error('Receiver did not bind a TCP port');
+    if (!address || typeof address === 'string') {
+      throw new Error('Receiver did not bind a TCP port');
+    }
     try {
       const factory = fileURLToPath(new URL('./factory/otel-sdk-config.factory.ts', import.meta.url));
       const endpoint = `http://127.0.0.1:${address.port}`;
@@ -125,7 +129,15 @@ describe('OpenTelemetry runtime export', () => {
       expect(body).toContain('owned-request-id');
       expect(body).toContain('postgresql');
     } finally {
-      await new Promise<void>((resolve, reject) => receiver.close((error) => (error ? reject(error) : resolve())));
+      await new Promise<void>((resolve, reject) =>
+        receiver.close((error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        }),
+      );
     }
   }, 30_000);
 

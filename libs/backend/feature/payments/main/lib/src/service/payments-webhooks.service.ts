@@ -105,11 +105,13 @@ export class PaymentsWebhooksService {
       });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- A third-party provider can violate its declared port type; malformed evidence must be rejected before receipt claims.
     const signature = verification?.result;
     this.metrics.received({ providerCode: request.providerCode, signature });
     if (
       resolved.provider.providerCode !== request.providerCode ||
       resolved.record.code !== request.providerCode ||
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Provider evidence is untrusted runtime data despite the adapter's declared return type.
       !verification ||
       !['valid', 'none'].includes(verification.result) ||
       (verification.result === 'none' && !unsignedProviders.has(request.providerCode)) ||
@@ -237,16 +239,17 @@ export class PaymentsWebhooksService {
         ...(payment.providerPaymentId ? { providerPaymentId: payment.providerPaymentId } : {}),
       });
     } catch (error) {
-      await this.markReceiptError(receipt.id, receivedAt, error);
+      await this.markReceiptError(receipt.id, receivedAt);
       throw new WebhookProcessingException({ cause: asError(error), meta: { stage: 'provider_status' } });
     }
 
     if (
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- A provider adapter must not settle a payment with absent runtime evidence.
       !current ||
       !isNormalizedProviderStatus(current.status) ||
       (current.status === 'paid' && !matchesPaidEvidence(payment, event, current, request.providerCode, receivedAt))
     ) {
-      await this.markReceiptError(receipt.id, receivedAt, new Error('Provider payment evidence does not match'));
+      await this.markReceiptError(receipt.id, receivedAt);
       throw new WebhookProcessingException({ meta: { stage: 'provider_evidence' } });
     }
     const target = normalizeTransition(current.status, current.paidAmount);
@@ -266,7 +269,7 @@ export class PaymentsWebhooksService {
         paidCurrency: current.paidCurrency,
       }).applied
     ) {
-      await this.markReceiptError(receipt.id, receivedAt, new Error('Illegal provider payment transition'));
+      await this.markReceiptError(receipt.id, receivedAt);
       throw new WebhookProcessingException({ meta: { stage: 'provider_transition' } });
     }
     try {
@@ -291,7 +294,7 @@ export class PaymentsWebhooksService {
       });
       return true;
     } catch (error) {
-      await this.markReceiptError(receipt.id, receivedAt, error);
+      await this.markReceiptError(receipt.id, receivedAt);
       throw new WebhookProcessingException({ cause: asError(error), meta: { stage: 'transition_commit' } });
     }
   }
@@ -313,8 +316,9 @@ export class PaymentsWebhooksService {
         (payment.providerPaymentId &&
           event.providerPaymentIdHint &&
           payment.providerPaymentId !== event.providerPaymentIdHint)
-      )
+      ) {
         return null;
+      }
       return payment;
     } catch (error) {
       throw new WebhookProcessingException({ cause: asError(error), meta: { stage: 'payment_lookup' } });
@@ -334,7 +338,7 @@ export class PaymentsWebhooksService {
     }
   }
 
-  private async markReceiptError(id: string, processedAt: Date, _error: unknown): Promise<void> {
+  private async markReceiptError(id: string, processedAt: Date): Promise<void> {
     try {
       await this.persistence.updateWebhookReceipt(id, {
         processingStatus: 'error',
@@ -399,16 +403,18 @@ function matchesPaidEvidence(
     current.paidAmount === undefined ||
     current.paidCurrency !== payment.currency ||
     (event.paidCurrency !== undefined && event.paidCurrency !== payment.currency)
-  )
+  ) {
     return false;
+  }
   if (
     providerCode === 'x' + 'rocket' &&
     (!(current.finalizedAt instanceof Date) ||
       !Number.isFinite(current.finalizedAt.getTime()) ||
       current.finalizedAt.getTime() <= 0 ||
       current.finalizedAt.getTime() > now.getTime())
-  )
+  ) {
     return false;
+  }
   try {
     const expected = formatPaymentAmount(parsePaymentAmount(payment.amount, payment.currency));
     const actual = formatPaymentAmount(parsePaymentAmount(current.paidAmount, payment.currency));
@@ -438,14 +444,19 @@ function normalizeTransition(
 }
 
 function isWebhookEvent(value: unknown): value is NormalizedWebhookEvent {
-  if (!value || typeof value !== 'object') return false;
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
   const event = value as Record<string, unknown>;
-  if (typeof event['providerStatusRaw'] !== 'string' || !event['providerStatusRaw'].trim()) return false;
+  if (typeof event['providerStatusRaw'] !== 'string' || !event['providerStatusRaw'].trim()) {
+    return false;
+  }
   for (const key of ['paymentIdHint', 'providerPaymentIdHint', 'paidAmount', 'paidCurrency', 'txid']) {
-    if (event[key] !== undefined && (typeof event[key] !== 'string' || !(event[key] as string).trim())) return false;
+    if (event[key] !== undefined && (typeof event[key] !== 'string' || !event[key].trim())) {
+      return false;
+    }
   }
   return ['eventTime', 'finalizedAt'].every(
-    (key) =>
-      event[key] === undefined || (event[key] instanceof Date && Number.isFinite((event[key] as Date).getTime())),
+    (key) => event[key] === undefined || (event[key] instanceof Date && Number.isFinite(event[key].getTime())),
   );
 }

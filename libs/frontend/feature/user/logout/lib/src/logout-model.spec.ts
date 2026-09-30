@@ -53,7 +53,7 @@ describe('LogoutModel', () => {
       resolveRead = resolve;
     });
     const queryKey = authApi.getAuthControllerProviderIdentitiesQueryKey();
-    const result = queryClient.fetchQuery({ queryKey, queryFn: () => pending }).catch(() => undefined);
+    const result = queryClient.query<unknown>({ queryKey, queryFn: () => pending }).catch(() => undefined);
     await model.signOut();
     resolveRead({ items: [{ email: 'private@example.test' }] });
     await result;

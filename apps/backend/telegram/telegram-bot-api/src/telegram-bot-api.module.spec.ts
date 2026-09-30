@@ -91,3 +91,23 @@ function restoreEnv(name: string, value: string | undefined): void {
 
   process.env[name] = value;
 }
+
+it('composes the opt-in stateless account bridge on the actual bot host', async () => {
+  const previous = process.env;
+  process.env = {
+    ...previous,
+    TELEGRAM_BOT_TOKEN: '123:test',
+    TELEGRAM_BOT_MODE: 'polling',
+    TELEGRAM_BOT_MENU_BUTTON_ENABLED: 'false',
+    TELEGRAM_BOT_AUTH_URL: 'https://auth.example.test/api/v1/auth/internal/telegram-bot',
+    TELEGRAM_BOT_AUTH_SECRET: 'owned-host-bridge-service-credential-32-characters',
+  };
+  let moduleRef: TestingModule | undefined;
+  try {
+    moduleRef = await Test.createTestingModule({ imports: [TelegramBotApiModule.register()] }).compile();
+    expect(moduleRef.get<TelegramBotInstance>(TelegramBotInstanceInjectToken).config.mode).toBe('polling');
+  } finally {
+    await moduleRef?.close();
+    process.env = previous;
+  }
+});

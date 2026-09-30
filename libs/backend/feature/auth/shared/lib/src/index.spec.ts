@@ -8,7 +8,6 @@ import {
   UserProfileReadPermission,
   toAuthenticatedUserView,
   UserRole,
-  AdminRole,
 } from './index';
 
 describe('auth shared', () => {

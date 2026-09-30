@@ -11,6 +11,8 @@ requirements:
       - '@app/backend-feature-payments-shared'
       - '@app/backend-feature-payments-main'
       - '@app/backend-feature-payments-admin'
+      - '@app/backend-postgres-main-payments'
+      - '@app/backend-mongodb-main-payments'
     risk: high
     profiles:
       - domain
@@ -21,6 +23,14 @@ requirements:
       alternativeEvidence:
         - vitest
     evidence:
+      - kind: component
+        file: libs/backend/postgres/main/payments/lib/src/payments-migrations.component-spec.ts
+        target: '@app/backend-postgres-main-payments:component-test'
+        lanes: [main, runtime]
+      - kind: component
+        file: libs/backend/mongodb/main/payments/lib/src/payments-mongo.component-spec.ts
+        target: '@app/backend-mongodb-main-payments:component-test'
+        lanes: [main, runtime]
       - kind: vitest
         file: libs/backend/feature/payments/shared/lib/src/index.spec.ts
         target: '@app/backend-feature-payments-shared:test'

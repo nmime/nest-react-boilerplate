@@ -2,7 +2,9 @@
 import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import type { S3Service } from '@app/backend-common-s3';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- Component-only atomicity test composes the real admin audit service with this provider.
 import { AuditLogAdminPersistenceError, AuditLogAdminService } from '@app/backend-feature-audit-log-admin';
+// eslint-disable-next-line @nx/enforce-module-boundaries -- Component-only atomicity test drives real admin mutations; production persistence stays independent.
 import {
   NotificationAdminService,
   NotificationConfigService,
@@ -98,16 +100,18 @@ describeIfDocker('notification persistence concurrency', () => {
       const broadcasts = broadcastPersistence(em);
       const audit = new AuditLogAdminService(new AdminAuditLogRepository(em));
       const uploadedObjects: string[] = [];
+      const segmentResolvers = {} as unknown as NotificationSegmentResolverRegistry; // Static audiences never call dynamic resolvers.
       const admin = new NotificationAdminService(
         new NotificationConfigService(new ConfigService()),
         broadcasts,
         deliveryPersistence(em),
         {
-          putObject: async ({ key }: { key: string }) => {
+          putObject: ({ key }: { key: string }) => {
             uploadedObjects.push(key);
+            return Promise.resolve();
           },
         } as unknown as S3Service,
-        {} as NotificationSegmentResolverRegistry,
+        segmentResolvers,
       );
       const tenantId = randomUUID();
       const actorId = randomUUID();
@@ -125,7 +129,11 @@ describeIfDocker('notification persistence concurrency', () => {
         expect(template.versions).toHaveLength(1);
         await admin.publishTemplate(template.id, tenantId, actorId, transaction);
         await admin.updateTemplate(template.id, tenantId, { actorId, name: 'Updated template' }, transaction);
-        template = (await admin.publishTemplate(template.id, tenantId, actorId, transaction))!;
+        const published = await admin.publishTemplate(template.id, tenantId, actorId, transaction);
+        if (!published?.currentVersionId) {
+          throw new Error('Owned template was not published.');
+        }
+        template = published;
         expect(template.versions).toHaveLength(2);
         await admin.testSend(
           {
@@ -159,7 +167,7 @@ describeIfDocker('notification persistence concurrency', () => {
             tenantId,
             actorId,
             name: 'Atomic broadcast',
-            templateVersionId: template.currentVersionId!,
+            templateVersionId: published.currentVersionId,
             channel: NotificationChannel.Bot,
             provider: NotificationDeliveryProvider.TelegramBot,
             segmentIds: [segment.id],
@@ -195,15 +203,14 @@ describeIfDocker('notification persistence concurrency', () => {
           },
           operation,
         );
-      const tableNames = notificationEntities.map((schema) => schema.meta.tableName!);
+      const tableNames = notificationEntities.map((schema) => schema.meta.tableName);
       const counts = async () => {
         const result: Record<string, number> = {};
         for (const tableName of tableNames) {
           // These names come exclusively from the checked-in entity schemas.
-          // eslint-disable-next-line no-await-in-loop
-          result[tableName] = (
-            await rows<{ count: number }>(em, `select count(*)::int as count from "${tableName}"`, [])
-          )[0]!.count;
+
+          result[tableName] =
+            (await rows<{ count: number }>(em, `select count(*)::int as count from "${tableName}"`, []))[0]?.count ?? 0;
         }
         return result;
       };
@@ -223,9 +230,9 @@ describeIfDocker('notification persistence concurrency', () => {
       em.clear();
       expect(await broadcasts.getBroadcast(committed.id, tenantId)).toMatchObject({ name: 'Updated broadcast' });
       const after = await counts();
-      expect(after['admin_audit_logs']).toBe(baseline['admin_audit_logs']! + 1);
-      expect(after['transactional_outbox_events']).toBe(baseline['transactional_outbox_events']! + 1);
-      expect(after['notification_deliveries']).toBe(baseline['notification_deliveries']! + 1);
+      expect(after['admin_audit_logs']).toBe((baseline['admin_audit_logs'] ?? 0) + 1);
+      expect(after['transactional_outbox_events']).toBe((baseline['transactional_outbox_events'] ?? 0) + 1);
+      expect(after['notification_deliveries']).toBe((baseline['notification_deliveries'] ?? 0) + 1);
     },
   );
 

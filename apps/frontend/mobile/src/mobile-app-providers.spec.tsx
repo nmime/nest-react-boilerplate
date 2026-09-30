@@ -45,8 +45,9 @@ describe('MobileAppProviders', () => {
       'EXPO_PUBLIC_ADMIN_API_URL',
       'EXPO_PUBLIC_AUTH_API_URL',
       'EXPO_PUBLIC_USER_API_URL',
-    ])
+    ]) {
       vi.stubEnv(name, '');
+    }
     const transport = vi.fn<typeof fetch>();
     function PersistProbe() {
       const { persistUserLocale, userLocale } = useMobileRuntime();
@@ -66,7 +67,9 @@ describe('MobileAppProviders', () => {
       </MobileAppProviders>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'persist' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'ru' })).toBeTruthy());
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'ru' })).toBeTruthy();
+    });
     expect(transport).not.toHaveBeenCalled();
   });
 

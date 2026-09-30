@@ -65,14 +65,22 @@ describe('useProviderIdentitiesModel', () => {
         requestOptions: {},
       } as never,
     });
-    await waitFor(() => expect(authControllerProviderIdentities).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(authControllerProviderIdentities).toHaveBeenCalledOnce();
+    });
     authStore.markAuthenticated({ subject: 'second', tenantId: 'tenant' });
-    await waitFor(() => expect(model.identitiesQuery.data).toEqual({ items: [{ email: 'second@example.test' }] }));
+    await waitFor(() => {
+      expect(model.identitiesQuery.data).toEqual({ items: [{ email: 'second@example.test' }] });
+    });
     resolveFirst(ok({ items: [{ email: 'late-first@example.test' }] }));
-    await waitFor(() => expect(queryClient.getQueryData(firstKey)).toBeUndefined());
+    await waitFor(() => {
+      expect(queryClient.getQueryData(firstKey)).toBeUndefined();
+    });
     expect(model.identitiesQuery.data).toEqual({ items: [{ email: 'second@example.test' }] });
     authStore.clearSession();
-    await waitFor(() => expect(model.identitiesQuery.data).toBeUndefined());
+    await waitFor(() => {
+      expect(model.identitiesQuery.data).toBeUndefined();
+    });
     model.destroy();
     queryClient.clear();
   });

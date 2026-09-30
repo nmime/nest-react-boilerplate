@@ -298,8 +298,7 @@ export class ExternalAuthService {
     const codeVerifier = generateCodeVerifier();
     const intent = input.intent ?? ExternalAuthIntent.Login;
     if (
-      !input.binding ||
-      (input.binding.kind !== 'browser' && input.binding.kind !== 'discord-interaction') ||
+      !hasDiscordBindingKind(input.binding) ||
       (input.binding.kind === 'browser' && input.binding.nonce.length < 32) ||
       (input.binding.kind === 'discord-interaction' &&
         (intent !== ExternalAuthIntent.Link || !input.principal || !/^\d+$/u.test(input.binding.providerSubject)))
@@ -345,8 +344,7 @@ export class ExternalAuthService {
       throw new UnauthorizedException('invalid_state');
     }
     if (
-      !stored.binding ||
-      (stored.binding.kind !== 'browser' && stored.binding.kind !== 'discord-interaction') ||
+      !hasDiscordBindingKind(stored.binding) ||
       (stored.binding.kind === 'browser' &&
         (!input.browserNonce || stored.binding.nonceHash !== hashOpaqueToken(input.browserNonce))) ||
       (stored.binding.kind === 'discord-interaction' &&
@@ -678,4 +676,13 @@ export class ExternalAuthService {
       // Non-fatal: avatar sync failure should not block auth flow.
     }
   }
+}
+
+/** Persisted states and transport adapters remain runtime boundaries even with static types. */
+function hasDiscordBindingKind(value: unknown): boolean {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const kind = (value as Record<string, unknown>).kind;
+  return kind === 'browser' || kind === 'discord-interaction';
 }

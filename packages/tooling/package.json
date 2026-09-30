@@ -31,7 +31,7 @@
     "@nx/devkit": "23.2.1",
     "@playwright/test": "1.63.0",
     "@swc-node/register": "1.12.1",
-    "@swc/core": "1.16.2",
+    "@swc/core": "1.16.12",
     "@testcontainers/postgresql": "12.2.0",
     "@types/istanbul-lib-coverage": "2.0.6",
     "@types/istanbul-lib-report": "3.0.3",

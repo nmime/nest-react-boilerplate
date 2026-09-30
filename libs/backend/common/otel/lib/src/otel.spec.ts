@@ -1,5 +1,5 @@
 // @requirements REQ-RUNTIME-OBSERVABILITY-005
-import { SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatusCode, SpanKind } from '@opentelemetry/api';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createOpenTelemetrySdkConfig,
@@ -17,6 +17,9 @@ import {
   type TraceSpan,
   type TracerLike,
 } from './index';
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
+import { privateExportSpan, PrivacyTraceExporter } from './factory/privacy-trace-exporter';
 import { OpenTelemetryTracer } from './tracer/open-telemetry.tracer';
 
 class RecordingTracer implements TracerLike {
@@ -320,5 +323,117 @@ describe('OpenTelemetryTracer', () => {
       tracer.endSpan(foreignSpan);
     }).not.toThrow();
     expect(foreignSpan.endedAt).toBeInstanceOf(Date);
+  });
+});
+
+describe('privacy exporter isolation', () => {
+  const fixture = (): Parameters<typeof privateExportSpan>[0] => ({
+    name: 'internal-operation',
+    kind: SpanKind.SERVER,
+    spanContext: () => ({ traceId: '1'.repeat(32), spanId: '2'.repeat(16), traceFlags: 1 }),
+    parentSpanContext: undefined,
+    startTime: [1, 0],
+    endTime: [2, 0],
+    duration: [1, 0],
+    ended: true,
+    status: { code: SpanStatusCode.ERROR, message: 'private failure details' },
+    attributes: {
+      'http.method': 'POST',
+      'http.route': '/accounts/:id',
+      'http.status_code': 503,
+      'request.id': 'owned-correlation',
+      'server.port': 3000,
+      'network.transport': true,
+      'http.request.body': 'private business data',
+      'db.statement': 'private SQL',
+      'server.address': 'x'.repeat(513),
+      'rpc.method': ['private', 'array'],
+    },
+    links: [
+      {
+        context: { traceId: '3'.repeat(32), spanId: '4'.repeat(16), traceFlags: 1 },
+        attributes: { 'request.id': 'linked-correlation', secret: 'private link' },
+      },
+      { context: { traceId: '5'.repeat(32), spanId: '6'.repeat(16), traceFlags: 1 } },
+    ],
+    events: [
+      {
+        name: 'exception',
+        time: [1, 0],
+        attributes: { 'exception.type': 'Error', 'exception.message': 'private details' },
+      },
+      { name: 'exception', time: [1, 0] },
+      { name: 'business-payload', time: [1, 0], attributes: { secret: 'private event' } },
+    ],
+    resource: resourceFromAttributes({
+      'service.name': 'owned-api',
+      'service.version': 'test',
+      'host.name': 'private host',
+    }),
+    instrumentationScope: { name: 'owned-instrumentation', version: '1' },
+    droppedAttributesCount: 0,
+    droppedEventsCount: 0,
+    droppedLinksCount: 0,
+  });
+
+  it('exports only safe metadata, preserving correlation and the source span for other processors', () => {
+    const span = fixture();
+    const safe = privateExportSpan(span);
+    expect(safe.name).toBe('POST /accounts/:id');
+    expect(safe.spanContext()).toEqual(span.spanContext());
+    expect(safe.status).toEqual({ code: SpanStatusCode.ERROR });
+    expect(safe.attributes).toEqual({
+      'http.method': 'POST',
+      'http.route': '/accounts/:id',
+      'http.status_code': 503,
+      'request.id': 'owned-correlation',
+      'server.port': 3000,
+      'network.transport': true,
+    });
+    expect(safe.resource.attributes).toEqual({ 'service.name': 'owned-api', 'service.version': 'test' });
+    expect(safe.events).toHaveLength(2);
+    expect(safe.events[0]?.attributes).toEqual({ 'exception.type': 'Error' });
+    expect(safe.events[1]?.attributes).toEqual({});
+    expect(safe.links[0]?.attributes).toEqual({ 'request.id': 'linked-correlation' });
+    expect(safe.links[1]?.attributes).toEqual({});
+    expect(span.attributes['db.statement']).toBe('private SQL');
+    expect(span.status.message).toBe('private failure details');
+    expect(JSON.stringify(safe)).not.toContain('private');
+  });
+
+  it('uses the HTTP method without a raw URL and keeps non-HTTP operation names', () => {
+    const span = fixture();
+    expect(
+      privateExportSpan({ ...span, attributes: { 'http.request.method': 'GET', 'url.full': 'private URL' } }).name,
+    ).toBe('GET');
+    expect(privateExportSpan({ ...span, attributes: { 'db.operation.name': 'find' } }).name).toBe('internal-operation');
+  });
+
+  it('forwards completion, flush and shutdown through the underlying exporter', async () => {
+    const exportSpans = vi.fn<ConstructorParameters<typeof PrivacyTraceExporter>[0]['export']>();
+    const flush = vi.fn(() => Promise.resolve());
+    const shutdown = vi.fn(() => Promise.resolve());
+    const callback = vi.fn();
+    const exporter = new PrivacyTraceExporter({ export: exportSpans, forceFlush: flush, shutdown });
+    exporter.export([fixture()], callback);
+    expect(exportSpans).toHaveBeenCalledWith([expect.objectContaining({ name: 'POST /accounts/:id' })], callback);
+    await exporter.forceFlush();
+    await exporter.shutdown();
+    expect(flush).toHaveBeenCalledOnce();
+    expect(shutdown).toHaveBeenCalledOnce();
+  });
+
+  it('never serializes Redis argument values into database statements', () => {
+    const redis = createOpenTelemetryInstrumentations().find(
+      (instrumentation) => instrumentation instanceof RedisInstrumentation,
+    );
+    if (!(redis instanceof RedisInstrumentation)) {
+      throw new Error('Redis instrumentation is missing.');
+    }
+    const serialize = redis.getConfig().dbStatementSerializer;
+    if (!serialize) {
+      throw new Error('Redis privacy serializer is missing.');
+    }
+    expect(serialize('SET', ['private-account', 'private-value'])).toBe('SET');
   });
 });

@@ -3,8 +3,10 @@ import {
   NotificationBroadcastStatus,
   NotificationChannel,
   NotificationDeliveryProvider,
+  NotificationTemplateEngine,
 } from '@app/common-notifications';
-import type { Db, MongoClient } from 'mongodb';
+import { MongoClient, type Db } from 'mongodb';
+import { notificationTransactionSession } from './mongo-runtime';
 import { describe, expect, it, vi } from 'vitest';
 import { NotificationMongoCollections, type NotificationBroadcastDocument } from './notification-mongo.documents';
 import {
@@ -139,3 +141,114 @@ function buildSendingBroadcast(): NotificationBroadcastDocument {
     updatedAt: now,
   };
 }
+
+it('accepts only an active caller-owned Mongo transaction and never ends it', async () => {
+  expect(notificationTransactionSession()).toBeUndefined();
+  expect(() => notificationTransactionSession({})).toThrow('notification_invalid_transaction');
+  const client = new MongoClient('mongodb://127.0.0.1:27017/owned-unused-fixture');
+  const session = client.startSession();
+  try {
+    expect(() => notificationTransactionSession(session)).toThrow('notification_invalid_transaction');
+    session.startTransaction();
+    expect(notificationTransactionSession(session)).toBe(session);
+    expect(session.inTransaction()).toBe(true);
+    expect(session.hasEnded).toBe(false);
+    await session.endSession();
+    expect(() => notificationTransactionSession(session)).toThrow('notification_invalid_transaction');
+  } finally {
+    await session.endSession();
+    await client.close();
+  }
+});
+
+it('passes an active caller transaction into reads and rejects invalid tokens before database calls', async () => {
+  const client = new MongoClient('mongodb://127.0.0.1:27017/owned-unused-fixture');
+  const session = client.startSession();
+  const findOne = vi.fn(() => Promise.resolve(null));
+  const database = { collection: () => ({ findOne }) } as unknown as Db;
+  const persistence = new MongoNotificationBroadcastPersistence(database, client, notificationPayloadCrypto());
+  try {
+    await expect(persistence.getTemplate('owned-id', 'owned-tenant', {})).rejects.toThrow(
+      'notification_invalid_transaction',
+    );
+    expect(findOne).not.toHaveBeenCalled();
+    session.startTransaction();
+    await expect(persistence.getTemplate('owned-id', 'owned-tenant', session)).resolves.toBeNull();
+    expect(findOne).toHaveBeenCalledWith({ _id: 'owned-id', tenantId: { $in: ['owned-tenant', null] } }, { session });
+    expect(session.inTransaction()).toBe(true);
+  } finally {
+    await session.endSession();
+    await client.close();
+  }
+});
+
+it('reuses the caller transaction for every template, version and channel write without committing it', async () => {
+  const client = new MongoClient('mongodb://127.0.0.1:27017/owned-unused-fixture');
+  const session = client.startSession();
+  const startSession = vi.spyOn(client, 'startSession');
+  const calls: Array<{ operation: string; session: unknown }> = [];
+  const collections = new Map<string, Record<string, unknown>>();
+  const database = {
+    collection: (name: string) => {
+      let collection = collections.get(name);
+      if (!collection) {
+        const records: unknown[] = [];
+        collection = {
+          findOne: (_filter: unknown, options: { session?: unknown }) => {
+            calls.push({ operation: 'read', session: options.session });
+            return Promise.resolve(null);
+          },
+          insertOne: (record: unknown, options: { session?: unknown }) => {
+            records.push(record);
+            calls.push({ operation: 'write', session: options.session });
+            return Promise.resolve({ acknowledged: true });
+          },
+          insertMany: (rows: unknown[], options: { session?: unknown }) => {
+            records.push(...rows);
+            calls.push({ operation: 'write', session: options.session });
+            return Promise.resolve({ acknowledged: true });
+          },
+          find: (_filter: unknown, options: { session?: unknown }) => {
+            calls.push({ operation: 'read', session: options.session });
+            return {
+              sort: () => ({ toArray: () => Promise.resolve(records) }),
+              toArray: () => Promise.resolve(records),
+            };
+          },
+        };
+        collections.set(name, collection);
+      }
+      return collection;
+    },
+  } as unknown as Db;
+  const persistence = new MongoNotificationBroadcastPersistence(database, client, notificationPayloadCrypto());
+  try {
+    session.startTransaction();
+    const template = await persistence.createAdminTemplate(
+      {
+        tenantId: 'owned-tenant',
+        actorId: 'owned-actor',
+        code: 'owned-code',
+        name: 'Owned template',
+        channels: [
+          {
+            channel: NotificationChannel.Bot,
+            engine: NotificationTemplateEngine.StringFormat,
+            content: { body: { en: 'Owned content' } },
+          },
+        ],
+      },
+      session,
+    );
+    expect(template).toMatchObject({ tenantId: 'owned-tenant', code: 'owned-code', name: 'Owned template' });
+    expect(template.versions).toHaveLength(1);
+    expect(calls.filter((call) => call.operation === 'write')).toHaveLength(3);
+    expect(calls.every((call) => call.session === session)).toBe(true);
+    expect(startSession).not.toHaveBeenCalled();
+    expect(session.inTransaction()).toBe(true);
+    expect(session.hasEnded).toBe(false);
+  } finally {
+    await session.endSession();
+    await client.close();
+  }
+});

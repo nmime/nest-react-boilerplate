@@ -76,3 +76,15 @@ describe('useLogout', () => {
     }).not.toThrow();
   });
 });
+
+it('keeps logout failure retryable, clears private shell state and does not report success navigation', async () => {
+  authControllerLogout.mockRejectedValueOnce(new Error('owned transport failure'));
+  const navigate = vi.fn();
+  const { result } = renderHook(() => useLogout({ navigate }), { wrapper: createWrapper() });
+  result.current.signOut();
+  await waitFor(() => {
+    expect(clearSession).toHaveBeenCalled();
+    expect(result.current.model.mutation.isError).toBe(true);
+  });
+  expect(navigate).not.toHaveBeenCalled();
+});

@@ -511,6 +511,8 @@ describe('PaymentsWebhooksService', () => {
       null,
       { result: 'unknown', events: [], idempotencyKey: 'unknown' },
       { result: 'valid', idempotencyKey: 'bad-event', events: [null] },
+      { result: 'valid', idempotencyKey: 'bad-status', events: [{ providerStatusRaw: '' }] },
+      { result: 'valid', idempotencyKey: 'bad-hint', events: [{ providerStatusRaw: 'paid', paymentIdHint: 42 }] },
       {
         result: 'valid',
         idempotencyKey: 'bad-time',

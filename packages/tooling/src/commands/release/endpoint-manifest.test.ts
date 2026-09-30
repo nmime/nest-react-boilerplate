@@ -30,8 +30,12 @@ describe("canonical endpoint manifest", () => {
       "libs/backend/feature/auth/main/lib/src/application/better-auth-runtime-contract.spec.ts",
     );
     assert.doesNotMatch(endpointManifestText(manifest), /uncovered/u);
+    const internalBridge = manifest.rows.filter((row) => row.path.startsWith("/auth/internal/telegram-bot/"));
+    assert.equal(internalBridge.length, 3);
+    assert.ok(internalBridge.every((row) => row.project === "auth-app-api" && row.authClassification === "service-credential" && row.coverageClassification === "covered-component"));
+    assert.ok(!manifest.rows.some((row) => ["notification-consumer", "notification-scheduler"].includes(row.project) && ["swagger-ui", "openapi-json"].includes(row.kind)));
     const webhookRows = manifest.rows.filter((row) => row.path.startsWith('/api/v1/webhooks/'));
-    assert.equal(webhookRows.length, 50);
+    assert.equal(webhookRows.length, 30);
     assert.ok(webhookRows.every((row) => row.authClassification === 'verified-provider'));
     assert.ok(webhookRows.every((row) => row.coverageClassification === 'covered-component'));
     assert.ok(
@@ -41,7 +45,7 @@ describe("canonical endpoint manifest", () => {
     );
     assert.deepEqual(
       [...new Set(webhookRows.map((row) => row.project))].sort(),
-      ['admin-app-api', 'auth-app-api', 'notification-consumer', 'notification-scheduler', 'user-app-api'],
+      ['admin-app-api', 'auth-app-api', 'user-app-api'],
     );
   });
 

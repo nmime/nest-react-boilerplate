@@ -12,11 +12,11 @@ Use this policy to keep dependency updates low-risk and reproducible.
 | React      | 19.2.3  | Expo 57's supported React/React DOM runtime                                                                |
 | NestJS     | 12.1.1  | Core, common, testing, and platform adapters aligned; companion packages use their compatible v12 releases |
 | Nx         | 23.2.1  | All directly owned `@nx/*` packages aligned                                                                |
-| Vitest     | 4.1.11  | Current supported line for Nx 23.2.1 and the quarantined Storybook 10.6.0 release                          |
+| Vitest     | 4.1.11  | Current supported line for Nx 23.2.1; Storybook 10.6.1 also accepts this line                              |
 | Vite       | 8.3.1   | All workspace consumers aligned                                                                            |
-| Storybook  | 10.6.0  | Shared addons and React renderer aligned                                                                   |
+| Storybook  | 10.6.1  | Shared addons and React renderer aligned                                                                   |
 | Astro      | 7.3.5   | Landing app and generated Astro applications; MDX 8 and React integration 7                                |
-| Expo SDK   | 57.0.25 | Mature SDK 57 release; native runtime follows its published bundled-module matrix                          |
+| Expo SDK   | 57.0.26 | Mature SDK 57 release; native runtime follows its published bundled-module matrix                          |
 
 Nx React's optional Express 4 development-server peer is declared on that
 consumer through a package extension; Nest's Express 5 adapter stays separate.
@@ -121,20 +121,26 @@ manager or lockfile is supported.
 Checked against published package metadata on 2026-09-30. Refresh the metadata
 before lifting a hold; the table records constraints, not permanent bans.
 
-| Family                | Selected          | Available newer line | Constraint                                                                                                     |
-| --------------------- | ----------------- | -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| TypeScript            | 6.0.3             | 7.0.2                | typescript-eslint 8.71.0 declares `<6.1.0`; Nest Swagger 12 also declares TS 5/6                               |
-| Babel core            | 7.29.7            | 8.0.6                | Nx 23.2.1 and Expo's Babel plugin stack still consume Babel 7                                                  |
-| Node types            | 24.19.0           | 26.6.3               | Match the supported Node 24 runtime                                                                            |
-| React / React DOM     | 19.2.3            | 19.3.0               | Expo 57.0.25's bundled-native-module matrix specifies 19.2.3                                                   |
-| React Native          | 0.86.3            | 0.87.1               | Expo 57.0.25 specifies 0.86.3                                                                                  |
-| Gesture handler       | 2.32.0            | 3.3.0                | Expo specifies `~2.32.0`                                                                                       |
-| Safe area context     | 5.7.0             | 5.10.0               | Expo specifies `~5.7.0`                                                                                        |
-| Reanimated / worklets | 4.5.1 / 0.10.1    | 4.5.5 / 0.13.0       | Use Expo's exact native matrix                                                                                 |
-| MobX / React binding  | 6.16.1 / 4.1.1    | 7.0.5 / 5.1.0        | mobx-tanstack-query 7.3.0 declares MobX `^6.12.4`; upgrading only the binding breaks that edge                 |
-| Vitest family         | 4.1.11            | 5.0.2                | Nx's Vitest plugin and Storybook 10.6.0 declare Vitest 3/4 peers                                               |
-| Expo / router         | 57.0.25 / 57.0.23 | 57.0.26 / 57.0.24    | New patches are still inside the 24-hour release quarantine at refresh time                                    |
-| Storybook family      | 10.6.0            | 10.6.1               | New patch is inside the release quarantine; its expanded Vitest peer alone does not establish Nx compatibility |
+| Family                | Selected       | Available newer line | Constraint                                                                                     |
+| --------------------- | -------------- | -------------------- | ---------------------------------------------------------------------------------------------- |
+| TypeScript            | 6.0.3          | 7.0.2                | typescript-eslint 8.71.0 declares `<6.1.0`; Nest Swagger 12 also declares TS 5/6               |
+| Babel core            | 7.29.7         | 8.0.6                | Nx 23.2.1 and Expo's Babel plugin stack still consume Babel 7                                  |
+| Node types            | 24.19.0        | 26.6.3               | Match the supported Node 24 runtime                                                            |
+| React / React DOM     | 19.2.3         | 19.3.0               | Expo 57.0.26's bundled-native-module matrix specifies 19.2.3                                   |
+| React Native          | 0.86.3         | 0.87.1               | Expo 57.0.26 specifies 0.86.3                                                                  |
+| Gesture handler       | 2.32.0         | 3.3.0                | Expo specifies `~2.32.0`                                                                       |
+| Safe area context     | 5.7.0          | 5.10.0               | Expo specifies `~5.7.0`                                                                        |
+| Reanimated / worklets | 4.5.1 / 0.10.1 | 4.5.5 / 0.13.0       | Use Expo's exact native matrix                                                                 |
+| MobX / React binding  | 6.16.1 / 4.1.1 | 7.0.5 / 5.1.0        | mobx-tanstack-query 7.3.0 declares MobX `^6.12.4`; upgrading only the binding breaks that edge |
+| Vitest family         | 4.1.11         | 5.0.2                | Nx's Vitest plugin declares Vitest 3/4 peers; Storybook 10.6.1 also permits Vitest 5           |
+
+The final registry refresh at `2026-09-30T19:01Z` upgraded Storybook and its
+owned addons to 10.6.1, SWC to 1.16.12, Discord API types to 0.38.56, and
+Expo/router to 57.0.26/57.0.24 after their release quarantine expired. SWC
+1.16.13 was published on September 30 at 09:51 UTC and remains quarantined
+until October 1 at 09:51 UTC. React and React DOM stay on Expo SDK 57's
+supported runtime, including its scoped Tamagui renderer peers; React 19.3
+types are held with their matching runtime.
 
 `arctic` 3.7.0 is deprecated and has no newer stable release. The existing
 Discord OAuth adapter still consumes it. Replacing that adapter is a separate

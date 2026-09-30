@@ -27,6 +27,7 @@ export const EndpointAuthClassifications = [
   "private-network",
   "public",
   "session",
+  "service-credential",
   "session-rbac",
   "signed-provider",
   "verified-provider",
@@ -133,14 +134,6 @@ const controllerOwnerRules: ControllerOwnerRule[] = [
     prefixes: ["libs/backend/feature/user/main/lib/src/", "libs/backend/feature/payments/main/lib/src/"],
   },
   {
-    project: "notification-consumer",
-    prefixes: ["libs/backend/feature/payments/main/lib/src/"],
-  },
-  {
-    project: "notification-scheduler",
-    prefixes: ["libs/backend/feature/payments/main/lib/src/"],
-  },
-  {
     project: "discord-app-api",
     prefixes: ["apps/backend/discord/discord-app-api/src/discord-interactions.controller.ts"],
   },
@@ -159,6 +152,8 @@ const httpApiProjects = [
   "telegram-bot-api",
   "user-app-api",
 ] as const;
+
+const swaggerApiProjects = httpApiProjects.filter((project) => !["notification-consumer", "notification-scheduler"].includes(project));
 
 const healthSource = "libs/backend/common/health/lib/src/base-health.controller.ts";
 const swaggerSource = "libs/backend/common/swagger/lib/src/swagger.util.ts";
@@ -208,6 +203,11 @@ const evidenceRules: Array<{
     matches: (row) => row.kind === "openapi-json" || row.kind === "swagger-ui",
     classification: "covered-unit",
     evidence: "libs/backend/common/swagger/lib/src/swagger.spec.ts",
+  },
+  {
+    matches: (row) => row.source.includes("telegram-bot-auth-bridge.controller.ts"),
+    classification: "covered-component",
+    evidence: "libs/backend/feature/auth/main/lib/src/interfaces/http/telegram-bot-auth-bridge.controller.spec.ts",
   },
   {
     matches: (row) => row.source.includes("payments-webhooks.controller.ts"),
@@ -676,7 +676,7 @@ function discoverDocumentationEndpoints(
   workspaceRoot: string,
 ): DiscoveredEndpoint[] {
   const swaggerLine = lineOf(readFileSync(resolve(workspaceRoot, swaggerSource), "utf8"), "SwaggerModule.setup");
-  return httpApiProjects.flatMap((project) => [
+  return swaggerApiProjects.flatMap((project) => [
     {
       project,
       kind: "swagger-ui" as const,
@@ -842,6 +842,7 @@ function classifyAuth(endpoint: DiscoveredEndpoint): EndpointAuthClassification 
     return "public";
   }
   if (endpoint.kind === "openapi-json" || endpoint.kind === "swagger-ui") return "public";
+  if (endpoint.source.includes("telegram-bot-auth-bridge.controller.ts")) return "service-credential";
   if (endpoint.path === "/api/auth/*") return "delegated-public-provider";
   if (endpoint.path.endsWith("/health/private")) return "private-network";
   if (/\/(?:health|live|ready)$/u.test(endpoint.path)) return "public";

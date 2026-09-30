@@ -378,3 +378,45 @@ describe('PaymentsPostgresPersistence', () => {
     expect(transaction.flush).toHaveBeenCalledOnce();
   });
 });
+
+describe('locked webhook transition authority', () => {
+  it.each(['cross-provider', 'terminal-reopen', 'partial-without-amount'] as const)(
+    'rejects %s before an event or payment write',
+    async (kind) => {
+      const row = payment({ status: kind === 'terminal-reopen' ? 'cancelled' : 'processing' });
+      const transaction = {
+        findOne: vi.fn().mockImplementation((entity: unknown) =>
+          Promise.resolve(
+            entity === PaymentEntity
+              ? row
+              : new PaymentWebhookReceiptEntity({
+                  providerCode: 'stripe',
+                  idempotencyKey: 'owned',
+                  rawBody: '{}',
+                  signatureValid: 'valid',
+                }),
+          ),
+        ),
+        persist: vi.fn(),
+        flush: vi.fn(() => Promise.resolve()),
+      };
+      const manager = { transactional: (work: (em: typeof transaction) => Promise<unknown>) => work(transaction) };
+      await expect(
+        persistenceWith(manager).commitWebhookPaymentTransition({
+          receipt: {
+            providerCode: kind === 'cross-provider' ? 'yookassa' : 'stripe',
+            idempotencyKey: 'owned',
+            rawBody: '{}',
+            signatureValid: 'valid',
+          },
+          paymentId,
+          toStatus: kind === 'partial-without-amount' ? 'processing' : 'paid',
+          actor: 'webhook',
+        }),
+      ).rejects.toThrow('ownership or state transition');
+      expect(transaction.persist).not.toHaveBeenCalled();
+      expect(transaction.flush).not.toHaveBeenCalled();
+      expect(row.status).toBe(kind === 'terminal-reopen' ? 'cancelled' : 'processing');
+    },
+  );
+});

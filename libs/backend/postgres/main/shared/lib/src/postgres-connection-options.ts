@@ -20,29 +20,15 @@ export function createPostgresConnectionOptions(
   databaseUrl?: string,
   env: Readonly<Record<string, unknown>> = process.env,
 ): PoolConfig {
-  let url: URL | undefined;
-  if (databaseUrl) {
-    try {
-      url = new URL(databaseUrl);
-      if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
-        throw new Error('Unsupported protocol');
-      }
-    } catch {
-      // Never embed a credential-bearing URL in a configuration error.
-      throw new Error('Invalid PostgreSQL connection URL.');
-    }
-  }
-  const uriMode = url?.searchParams.get('sslmode');
-  const environmentMode = typeof env['PGSSLMODE'] === 'string' ? env['PGSSLMODE'].trim() : undefined;
-  if ((uriMode && !TlsModes.has(uriMode)) || (environmentMode && !TlsModes.has(environmentMode))) {
-    throw new Error('Invalid PostgreSQL TLS mode.');
-  }
+  const url = parseDatabaseUrl(databaseUrl);
+  const environmentMode = readTlsMode(env['PGSSLMODE']);
+  readTlsMode(url?.searchParams.get('sslmode'));
   const enabled = readTlsFlag(env['POSTGRES_SSL'], 'POSTGRES_SSL') ?? false;
   const rejectUnauthorized =
     readTlsFlag(env['POSTGRES_SSL_REJECT_UNAUTHORIZED'], 'POSTGRES_SSL_REJECT_UNAUTHORIZED') ?? true;
   let ssl: PoolConfig['ssl'];
   let sslnegotiation: string | undefined;
-  if (url && TlsQueryKeys.some((key) => url?.searchParams.has(key))) {
+  if (url && TlsQueryKeys.some((key) => url.searchParams.has(key))) {
     const parsed = parseIntoClientConfig(url.toString());
     ssl = parsed.ssl;
     sslnegotiation = url.searchParams.get('sslnegotiation') ?? undefined;
@@ -55,20 +41,10 @@ export function createPostgresConnectionOptions(
   } else {
     ssl = enabled ? { rejectUnauthorized } : false;
   }
-  ssl =
-    ssl === true
-      ? { rejectUnauthorized: true }
-      : ssl && typeof ssl === 'object'
-        ? { ...ssl, rejectUnauthorized: ssl.rejectUnauthorized ?? true }
-        : ssl;
+  ssl = normalizeSsl(ssl);
   sslnegotiation ??=
     typeof env['PGSSLNEGOTIATION'] === 'string' ? env['PGSSLNEGOTIATION'].trim() || undefined : undefined;
-  if (sslnegotiation !== undefined && sslnegotiation !== 'postgres' && sslnegotiation !== 'direct') {
-    throw new Error('Invalid PostgreSQL TLS negotiation policy.');
-  }
-  if (sslnegotiation === 'direct' && !ssl) {
-    throw new Error('Invalid PostgreSQL TLS negotiation policy.');
-  }
+  validateNegotiation(sslnegotiation, ssl);
   // pg otherwise reparses URI TLS keys and replaces the supplied ssl object,
   // including its CA. Pass only the resolved policy to the actual pool.
   for (const key of TlsQueryKeys) {
@@ -79,4 +55,51 @@ export function createPostgresConnectionOptions(
     ssl,
     ...(sslnegotiation ? { sslnegotiation } : {}),
   };
+}
+
+function parseDatabaseUrl(databaseUrl?: string): URL | undefined {
+  let url: URL | undefined;
+  if (databaseUrl) {
+    try {
+      url = new URL(databaseUrl);
+      if (!['postgres:', 'postgresql:'].includes(url.protocol)) {
+        throw new Error('Unsupported protocol');
+      }
+    } catch {
+      // Never embed a credential-bearing URL in a configuration error.
+      throw new Error('Invalid PostgreSQL connection URL.');
+    }
+  }
+  return url;
+}
+
+// eslint-disable-next-line sonarjs/function-return-type -- pg explicitly models TLS as a boolean or connection-options object; preserve that public contract.
+function normalizeSsl(ssl: PoolConfig['ssl']): PoolConfig['ssl'] {
+  if (ssl === true) {
+    return { rejectUnauthorized: true };
+  }
+  if (ssl && typeof ssl === 'object') {
+    return { ...ssl, rejectUnauthorized: ssl.rejectUnauthorized ?? true };
+  }
+  return ssl;
+}
+
+function readTlsMode(value: unknown): string | undefined {
+  const mode = typeof value === 'string' ? value.trim() : undefined;
+  if (mode && !TlsModes.has(mode)) {
+    throw new Error('Invalid PostgreSQL TLS mode.');
+  }
+  return mode;
+}
+
+function validateNegotiation(
+  mode: string | undefined,
+  ssl: PoolConfig['ssl'],
+): asserts mode is PoolConfig['sslnegotiation'] {
+  if (mode !== undefined && mode !== 'postgres' && mode !== 'direct') {
+    throw new Error('Invalid PostgreSQL TLS negotiation policy.');
+  }
+  if (mode === 'direct' && !ssl) {
+    throw new Error('Invalid PostgreSQL TLS negotiation policy.');
+  }
 }

@@ -9,7 +9,9 @@ export interface MobileApiEnvironment {
 
 function apiUrl(value: string | undefined, web: boolean): string {
   const configured = value?.trim() ?? '';
-  if (web && (!configured || configured === 'same-origin')) return '';
+  if (web && (!configured || configured === 'same-origin')) {
+    return '';
+  }
   let parsed: URL;
   try {
     parsed = new URL(configured);
@@ -35,7 +37,14 @@ export function resolveMobileApiConfig(
   sessionFetch?: typeof fetch,
 ): ApiClientRuntimeConfig | null {
   const web = platform === 'web';
-  if (!web && Object.values(environment).every((value) => !value?.trim())) return null;
+  if (
+    !web &&
+    [environment.baseUrl, environment.adminUrl, environment.authUrl, environment.userUrl].every(
+      (value) => !value?.trim(),
+    )
+  ) {
+    return null;
+  }
   return {
     baseUrls: {
       admin: apiUrl(environment.adminUrl ?? environment.baseUrl, web),
@@ -50,9 +59,13 @@ export function resolveMobileApiConfig(
 /** Expo inlines only statically written dot-property references. Never add public credentials. */
 export function readMobileApiEnvironment(): MobileApiEnvironment {
   return {
-    baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
-    adminUrl: process.env.EXPO_PUBLIC_ADMIN_API_URL,
-    authUrl: process.env.EXPO_PUBLIC_AUTH_API_URL,
-    userUrl: process.env.EXPO_PUBLIC_USER_API_URL,
+    baseUrl: publicEnvironmentValue(process.env.EXPO_PUBLIC_API_BASE_URL),
+    adminUrl: publicEnvironmentValue(process.env.EXPO_PUBLIC_ADMIN_API_URL),
+    authUrl: publicEnvironmentValue(process.env.EXPO_PUBLIC_AUTH_API_URL),
+    userUrl: publicEnvironmentValue(process.env.EXPO_PUBLIC_USER_API_URL),
   };
+}
+
+function publicEnvironmentValue(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
 }

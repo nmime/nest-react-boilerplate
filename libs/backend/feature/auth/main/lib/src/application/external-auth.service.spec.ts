@@ -75,6 +75,11 @@ const authUserRecord = (
   theme: AuthenticatedTheme.System,
   status: 'active' as const,
   lastLoginAt: null,
+  avatarUrl: null,
+  avatarHash: null,
+  avatarStatus: 'none' as const,
+  emailVerifiedAt: null,
+  credentialRevision: 0,
   ...overrides,
 });
 

@@ -16,7 +16,8 @@ sessions MUST be rejected.
   one would reject.
 - A bot's in-process auth dependency does not expose a second auth HTTP route
   tree. Successful logout revokes both the first-party and Better Auth local
-  sessions, including when the first-party session has already expired.
+  sessions, including when the first-party session has already expired. The
+  endpoint returns HTTP 200 for successful and repeated anonymous logout.
 
 **Failure behavior:**
 

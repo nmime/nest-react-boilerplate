@@ -9,15 +9,16 @@ fork made a slightly different judgement about which ones.
 
 ## What is here
 
-| Document                                                                  | Why a product does not want it                         |
-| ------------------------------------------------------------------------- | ------------------------------------------------------ |
-| [Quick Start](quick-start.md)                                             | Onboarding _to the boilerplate_, not to your product   |
-| [Launching a New Project](new-project.md)                                 | The fork procedure — spent once, on the way in         |
-| [Technology Choices](technology-choices.md)                               | Records why the boilerplate picked its stack           |
-| [Auth Production Gap Register](auth-production-roadmap.md)                | Roadmap for work the boilerplate has not built         |
-| [Billing Extension and Admin Capability Status](billing-admin-roadmap.md) | Roadmap for work the boilerplate has not built         |
-| [Admin notification broadcasts](admin-notification-broadcasts-spec.md)    | Spec for a feature the boilerplate has not built       |
-| [TypeScript 7 Upgrade](upgrade-typescript-7.md)                           | Compiler-upgrade research pinned to an upstream moment |
+| Document                                                                  | Why a product does not want it                                       |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [Quick Start](quick-start.md)                                             | Onboarding _to the boilerplate_, not to your product                 |
+| [Launching a New Project](new-project.md)                                 | The fork procedure — spent once, on the way in                       |
+| [Technology Choices](technology-choices.md)                               | Records why the boilerplate picked its stack                         |
+| [Auth Production Gap Register](auth-production-roadmap.md)                | Roadmap for work the boilerplate has not built                       |
+| [Billing Extension and Admin Capability Status](billing-admin-roadmap.md) | Roadmap for work the boilerplate has not built                       |
+| [Admin notification broadcasts](admin-notification-broadcasts-spec.md)    | Spec for a feature the boilerplate has not built                     |
+| [TypeScript 7 Upgrade](upgrade-typescript-7.md)                           | Compiler-upgrade research pinned to an upstream moment               |
+| [Template audit, 2026-09-30](template-audit-2026-09-30.md)                | Historical dependency, runtime, frontend, skills, and security proof |
 
 ## Also boilerplate-owned, outside this prefix
 

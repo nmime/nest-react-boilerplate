@@ -12,9 +12,9 @@ Expo. Vitest 4 powers unit and component tests. Coverage uses
 negative thresholds are maximum uncovered-item budgets and may only move toward
 zero.
 
-## NestJS 11
+## NestJS 12
 
-Backend APIs use NestJS 11 on Fastify 5 and remain deployable as independent app shells. Shared bootstrap, validation, and response behavior live in backend libraries instead of being duplicated across apps.
+Backend APIs use NestJS 12 on Fastify 5 and remain deployable as independent app shells. Shared bootstrap, validation, and response behavior live in backend libraries instead of being duplicated across apps.
 
 ## Security defaults
 

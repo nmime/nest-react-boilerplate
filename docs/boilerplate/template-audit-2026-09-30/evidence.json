@@ -1,0 +1,5261 @@
+{
+  "historyNormalization": {
+    "base": "4c79a30e2b851617bc05fc9f3ce68f98709b2796",
+    "originalHead": "b826b31e8ac7faaf25661012876320305de7bb3d",
+    "normalizedHead": "5d5ed8c31edfbebc32dab765e75d8b11efba9de7",
+    "sourceTreesUnchanged": true,
+    "commits": [
+      {
+        "original": "f21eb90302c2a392388c5170f3275d22276eb801",
+        "normalized": "b64ac3f6df4321af7d9119949623eed21e1af6b7",
+        "tree": "051d48c0b13ec718460667ccc26cbda9626964b0",
+        "messageChanged": true
+      },
+      {
+        "original": "9e8f5342c39bc3dfa2094c9ae3dc2262fbe3ff4a",
+        "normalized": "b981a7ac62c5f5e50a86fa2e24f0251bb4dd26af",
+        "tree": "ba869890061ab4627785b88a595a7601717c00de",
+        "messageChanged": true
+      },
+      {
+        "original": "88cb4f5a60d6a085057cd61f3af6f21207942e22",
+        "normalized": "fb7842f056db6cdb6e52de73f246acd64383125c",
+        "tree": "c147174a34cd573fec45c9267f89abdc948ed838",
+        "messageChanged": false
+      },
+      {
+        "original": "874def020d6fe2d4f22ebae2b6427af69148e7ec",
+        "normalized": "567c067a493b1760a857e9c4d407d4b5769ff89a",
+        "tree": "f4a51f4a2aeaa2fefc1a488536b401b796d28468",
+        "messageChanged": true
+      },
+      {
+        "original": "b713ffe3daee3ad8f56d7e2da129caf9ade08f29",
+        "normalized": "68619310382f970cb9842c5de3d0c4fc14ba29f0",
+        "tree": "be3bf920b50d921931dacf4e8be53be37cad991b",
+        "messageChanged": false
+      },
+      {
+        "original": "f4927ef582b26661fd15c40603f7d9cff9c265b8",
+        "normalized": "7e802e9a0740aa437be359aa166ed5055136e6cc",
+        "tree": "86dc625f7b7997dd3c48b046682185690087923c",
+        "messageChanged": false
+      },
+      {
+        "original": "be823a1630b5357b4a769f08e96a8418cec7f761",
+        "normalized": "8ede0ef6696cb2834d28ad9830732bb6347719b6",
+        "tree": "36df14454010c83b845d7df96ae5bc573532ac73",
+        "messageChanged": false
+      },
+      {
+        "original": "1abc08aab33b2e4a598ccede115542372b88f211",
+        "normalized": "034422f78a1f6e1590ac4a02952501a89ea3761f",
+        "tree": "bb92edd2c64a50c3d4a14b59eb9c35ee15d27cc8",
+        "messageChanged": true
+      },
+      {
+        "original": "77a1cef5b9592d3c14baf1fc9b2e3532fea8747d",
+        "normalized": "6357947e2934036cb48843c2a3f55ff39159e477",
+        "tree": "07d2593ad78545d35d36b742afdafd17dcecbb08",
+        "messageChanged": true
+      },
+      {
+        "original": "aac26041f9d14757549d3bc3f4d8b9b92877cb68",
+        "normalized": "73cbfc51ea3e904a6dcf27b788e447b4f23aa3d2",
+        "tree": "44520122e5259d78d8758e258291b1400410e3c1",
+        "messageChanged": false
+      },
+      {
+        "original": "f2aa6c8ba43de8d116414c55432a3e6b6a6f47d1",
+        "normalized": "c01b672891da4ccfce3e24fcde2f95157ffc1592",
+        "tree": "c80ac22ef62cc39573bb0b5b2f9e06d4d5268d58",
+        "messageChanged": false
+      },
+      {
+        "original": "78004db0c2148689e5899526847559655fc2c447",
+        "normalized": "080a72e4c14fd39613a182eacc0a94f7d1d7fb08",
+        "tree": "75cd8c49be95be2642852a7a77936799fa3bc6e8",
+        "messageChanged": false
+      },
+      {
+        "original": "39778cdc544b35ee31575be18931bea232d8297c",
+        "normalized": "aa2add718b9d6f8a53ffdccd23e89bdba139b07d",
+        "tree": "bd58c8ff559c930d94bc117ef7bbbe5db6f2e3f4",
+        "messageChanged": false
+      },
+      {
+        "original": "64e43a4f1cfa0caa71fd2acd2e9877b62d0ebdaf",
+        "normalized": "625c58d9e91ca926e6b1f16960951bc73ff114a8",
+        "tree": "ce2803acc3c518dad9fc389745b28b9cd34b60ad",
+        "messageChanged": false
+      },
+      {
+        "original": "b826b31e8ac7faaf25661012876320305de7bb3d",
+        "normalized": "5d5ed8c31edfbebc32dab765e75d8b11efba9de7",
+        "tree": "72f9957eb982157b5b904eca2af5307143e0a884",
+        "messageChanged": false
+      }
+    ]
+  },
+  "schemaVersion": 1,
+  "date": "2026-09-30",
+  "repository": "https://github.com/nmime/nest-react-boilerplate",
+  "base": "4c79a30e2b851617bc05fc9f3ce68f98709b2796",
+  "implementationSource": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+  "branch": "chore/template-audit-refresh",
+  "pullRequest": 329,
+  "githubProtection": {
+    "checks": [
+      {
+        "app_id": 15368,
+        "context": "CI status summary"
+      }
+    ],
+    "contexts": ["CI status summary"],
+    "enforceAdmins": false,
+    "review": null,
+    "strict": true
+  },
+  "scope": "Local source audit and execution; no main write, production deployment, remote CI, or independent approval",
+  "dependencyCensus": {
+    "base": "4c79a30e2b851617bc05fc9f3ce68f98709b2796",
+    "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+    "declarations": 211,
+    "uniquePackages": 124,
+    "manifests": {
+      "package.json": 85,
+      "packages/tooling/package.json": 19,
+      "apps/e2e/acceptance/package.json": 3,
+      "apps/frontend/landing/package.json": 6,
+      "apps/frontend/mobile/package.json": 7,
+      "docker/migrator-package.json": 9,
+      "libs/backend/package.json": 40,
+      "libs/frontend/package.json": 42
+    },
+    "changes": [
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@fastify/otel",
+        "before": "0.20.1",
+        "after": "0.21.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@fastify/session",
+        "before": "11.1.2",
+        "after": "11.1.3"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@fastify/static",
+        "before": "10.1.2",
+        "after": "10.1.5"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@grammyjs/menu",
+        "before": "1.3.1",
+        "after": "1.5.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/core",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/migrations",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/nestjs",
+        "before": "7.0.2",
+        "after": "7.1.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/postgresql",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@nestjs/common",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@nestjs/config",
+        "before": "4.0.4",
+        "after": "12.0.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@nestjs/core",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@nestjs/platform-fastify",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@nestjs/schedule",
+        "before": "6.1.3",
+        "after": "12.0.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@nestjs/swagger",
+        "before": "11.4.6",
+        "after": "12.0.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/exporter-metrics-otlp-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/exporter-trace-otlp-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-mongodb",
+        "before": "0.73.0",
+        "after": "0.75.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-nestjs-core",
+        "before": "0.66.0",
+        "after": "0.68.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-pg",
+        "before": "0.72.0",
+        "after": "0.74.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-redis",
+        "before": "0.68.0",
+        "after": "0.70.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-runtime-node",
+        "before": "0.33.0",
+        "after": "0.35.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/resources",
+        "before": "2.9.0",
+        "after": "2.11.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/sdk-metrics",
+        "before": "2.9.0",
+        "after": "2.11.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/sdk-node",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "better-auth",
+        "before": "1.6.23",
+        "after": "1.7.6"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "discord-api-types",
+        "before": "0.38.50",
+        "after": "0.38.55"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "drizzle-orm",
+        "before": "0.45.2",
+        "after": "0.45.3"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "grammy",
+        "before": "1.45.1",
+        "after": "1.46.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "jose",
+        "before": "6.2.3",
+        "after": "6.2.12"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "mongodb",
+        "before": "7.0.0",
+        "after": "7.7.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "openid-client",
+        "before": "6.8.4",
+        "after": "6.8.8"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "pg",
+        "before": "8.22.0",
+        "after": "8.23.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "redis",
+        "before": "6.1.0",
+        "after": "6.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "uuid",
+        "before": "14.0.1",
+        "after": "14.0.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "package": "zod",
+        "before": "^4.4.3",
+        "after": "^4.6.5"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@cucumber/cucumber",
+        "before": "13.2.0",
+        "after": "13.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@fission-ai/openspec",
+        "before": "1.6.0",
+        "after": "1.13.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nestjs/testing",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/devkit",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/eslint",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/eslint-plugin",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/js",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/nest",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/node",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/react",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/vite",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/web",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@nx/webpack",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@playwright/test",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@semantic-release/github",
+        "before": "12.0.9",
+        "after": "12.0.10"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@storybook/addon-a11y",
+        "before": "10.5.4",
+        "after": "10.6.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@storybook/addon-vitest",
+        "before": "10.5.4",
+        "after": "10.6.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@storybook/react-vite",
+        "before": "10.5.4",
+        "after": "10.6.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@swc/core",
+        "before": "1.15.46",
+        "after": "1.16.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@testcontainers/mongodb",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@testcontainers/postgresql",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@testing-library/react",
+        "before": "16.3.2",
+        "after": "16.3.3"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@types/node",
+        "before": "24.13.3",
+        "after": "24.19.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@types/pg",
+        "before": "8.20.0",
+        "after": "8.23.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@types/react",
+        "before": "19.2.17",
+        "after": "19.2.18"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@types/react-dom",
+        "before": "19.2.3",
+        "after": "19.2.7"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@typescript-eslint/eslint-plugin",
+        "before": "8.65.0",
+        "after": "8.71.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@typescript-eslint/parser",
+        "before": "8.65.0",
+        "after": "8.71.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "@vitejs/plugin-react",
+        "before": "6.0.3",
+        "after": "6.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "conventional-changelog-conventionalcommits",
+        "before": "^10.2.1",
+        "after": "^10.4.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "drizzle-kit",
+        "before": "^0.31.10",
+        "after": "^0.31.11"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "eslint",
+        "before": "10.7.0",
+        "after": "10.11.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "eslint-plugin-sonarjs",
+        "before": "4.2.0",
+        "after": "4.2.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "jsdom",
+        "before": "29.1.1",
+        "after": "30.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "jsonc-eslint-parser",
+        "before": "3.1.0",
+        "after": "3.3.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "nx",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "playwright",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "postcss",
+        "before": "8.5.25",
+        "after": "8.5.28"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "prettier",
+        "before": "3.9.6",
+        "after": "3.9.9"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "semantic-release",
+        "before": "^25.0.8",
+        "after": "^25.0.9"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "shadcn",
+        "before": "4.13.1",
+        "after": "4.21.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "storybook",
+        "before": "10.5.4",
+        "after": "10.6.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "supertest",
+        "before": "7.2.2",
+        "after": "7.3.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "testcontainers",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "tsx",
+        "before": "4.23.1",
+        "after": "4.23.15"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "typescript-eslint",
+        "before": "8.65.0",
+        "after": "8.71.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "vite",
+        "before": "8.1.5",
+        "after": "8.3.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "package": "webpack-cli",
+        "before": "7.2.1",
+        "after": "7.2.3"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/core",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "@nestjs/common",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "@nestjs/core",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "@nestjs/platform-fastify",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "@nx/devkit",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "@playwright/test",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "@swc/core",
+        "before": "1.15.46",
+        "after": "1.16.2"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "@testcontainers/postgresql",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "axe-core",
+        "before": "4.12.1",
+        "after": "4.13.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "fast-check",
+        "before": "4.9.0",
+        "after": "4.10.2"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "mongodb",
+        "before": "7.0.0",
+        "after": "7.7.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "pg",
+        "before": "8.22.0",
+        "after": "8.23.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "sharp",
+        "before": "0.35.4",
+        "after": "0.35.5"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "yaml",
+        "before": "2.9.0",
+        "after": "2.9.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "package": "zod",
+        "before": "^4.4.3",
+        "after": "^4.6.5"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "devDependencies",
+        "package": "@stryker-mutator/core",
+        "before": "9.6.1",
+        "after": "10.0.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "devDependencies",
+        "package": "@testcontainers/mongodb",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "devDependencies",
+        "package": "@types/node",
+        "before": "24.13.3",
+        "after": "24.19.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "devDependencies",
+        "package": "nx",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "apps/e2e/acceptance/package.json",
+        "section": "devDependencies",
+        "package": "@cucumber/cucumber",
+        "before": "13.2.0",
+        "after": "13.2.1"
+      },
+      {
+        "manifest": "apps/e2e/acceptance/package.json",
+        "section": "devDependencies",
+        "package": "@types/node",
+        "before": "24.13.3",
+        "after": "24.19.0"
+      },
+      {
+        "manifest": "apps/e2e/acceptance/package.json",
+        "section": "devDependencies",
+        "package": "tsx",
+        "before": "4.23.1",
+        "after": "4.23.15"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "dependencies",
+        "package": "@astrojs/mdx",
+        "before": "7.0.3",
+        "after": "8.0.2"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "dependencies",
+        "package": "@astrojs/react",
+        "before": "6.0.1",
+        "after": "7.0.0"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "dependencies",
+        "package": "@astrojs/sitemap",
+        "before": "3.7.3",
+        "after": "3.7.4"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "dependencies",
+        "package": "astro",
+        "before": "7.3.3",
+        "after": "7.3.5"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "devDependencies",
+        "package": "@astrojs/check",
+        "before": "0.9.9",
+        "after": "0.9.10"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "devDependencies",
+        "package": "@astrojs/node",
+        "before": "11.0.2",
+        "after": "11.1.6"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "dependencies",
+        "package": "expo",
+        "before": "57.0.7",
+        "after": "57.0.25"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "dependencies",
+        "package": "expo-router",
+        "before": "57.0.7",
+        "after": "57.0.23"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "dependencies",
+        "package": "react-native",
+        "before": "0.86.0",
+        "after": "0.86.3"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "devDependencies",
+        "package": "@testing-library/react",
+        "before": "16.3.2",
+        "after": "16.3.3"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "devDependencies",
+        "package": "@types/react",
+        "before": "19.2.17",
+        "after": "19.2.18"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "devDependencies",
+        "package": "babel-preset-expo",
+        "before": "57.0.3",
+        "after": "57.0.13"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "devDependencies",
+        "package": "happy-dom",
+        "before": "20.10.6",
+        "after": "20.14.5"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/core",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/migrations",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/nestjs",
+        "before": "7.0.2",
+        "after": "7.1.0"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/postgresql",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "@nestjs/common",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "@nestjs/core",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "joi",
+        "before": "18.2.3",
+        "after": "18.2.9"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "mongodb",
+        "before": "7.0.0",
+        "after": "7.7.0"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "package": "pg",
+        "before": "8.22.0",
+        "after": "8.23.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@aws-sdk/client-s3",
+        "before": "3.1092.0",
+        "after": "3.1142.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@fastify/otel",
+        "before": "0.20.1",
+        "after": "0.21.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@fastify/session",
+        "before": "11.1.2",
+        "after": "11.1.3"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@fastify/static",
+        "before": "10.1.2",
+        "after": "10.1.5"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@grammyjs/menu",
+        "before": "1.3.1",
+        "after": "1.5.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/core",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/migrations",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/nestjs",
+        "before": "7.0.2",
+        "after": "7.1.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@mikro-orm/postgresql",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@nestjs/common",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@nestjs/core",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@nestjs/platform-fastify",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@nestjs/swagger",
+        "before": "11.4.6",
+        "after": "12.0.2"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/exporter-metrics-otlp-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/exporter-trace-otlp-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-mongodb",
+        "before": "0.73.0",
+        "after": "0.75.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-nestjs-core",
+        "before": "0.66.0",
+        "after": "0.68.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-pg",
+        "before": "0.72.0",
+        "after": "0.74.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-redis",
+        "before": "0.68.0",
+        "after": "0.70.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/instrumentation-runtime-node",
+        "before": "0.33.0",
+        "after": "0.35.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/resources",
+        "before": "2.9.0",
+        "after": "2.11.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/sdk-metrics",
+        "before": "2.9.0",
+        "after": "2.11.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "@opentelemetry/sdk-node",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "discord-api-types",
+        "before": "0.38.50",
+        "after": "0.38.55"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "grammy",
+        "before": "1.45.1",
+        "after": "1.46.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "ipaddr.js",
+        "before": "2.4.0",
+        "after": "2.5.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "jose",
+        "before": "6.2.3",
+        "after": "6.2.12"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "maxmind",
+        "before": "5.0.6",
+        "after": "5.0.7"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "mongodb",
+        "before": "7.0.0",
+        "after": "7.7.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "pg",
+        "before": "8.22.0",
+        "after": "8.23.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "package": "redis",
+        "before": "6.1.0",
+        "after": "6.2.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "package": "@nestjs/testing",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "package": "@testcontainers/mongodb",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "package": "@testcontainers/postgresql",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "package": "@types/pg",
+        "before": "8.20.0",
+        "after": "8.23.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "package": "supertest",
+        "before": "7.2.2",
+        "after": "7.3.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "package": "testcontainers",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "package": "yaml",
+        "before": null,
+        "after": "2.9.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@fastify/static",
+        "before": "10.1.2",
+        "after": "10.1.5"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-alert-dialog",
+        "before": "^1.1.20",
+        "after": "^1.1.23"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-checkbox",
+        "before": "^1.3.8",
+        "after": "^1.3.11"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-dialog",
+        "before": "^1.1.20",
+        "after": "^1.1.23"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-dropdown-menu",
+        "before": "^2.1.21",
+        "after": "^2.1.24"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-label",
+        "before": "^2.1.12",
+        "after": "^2.1.15"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-select",
+        "before": "^2.3.4",
+        "after": "^2.3.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-slot",
+        "before": "^1.3.0",
+        "after": "^1.3.3"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-switch",
+        "before": "^1.3.4",
+        "after": "^1.3.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@radix-ui/react-tabs",
+        "before": "^1.1.18",
+        "after": "^1.1.21"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@tanstack/react-query",
+        "before": "^5.101.4",
+        "after": "^5.104.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "@tanstack/react-router",
+        "before": "1.170.18",
+        "after": "1.170.40"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "lucide-react",
+        "before": "^1.25.0",
+        "after": "^1.48.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "mobx-tanstack-query",
+        "before": "7.2.2",
+        "after": "7.3.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "tailwind-merge",
+        "before": "^3.6.0",
+        "after": "^3.7.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "tamagui",
+        "before": "2.5.0",
+        "after": "2.7.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "vike",
+        "before": "0.4.260",
+        "after": "0.4.267"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "package": "vike-react",
+        "before": "0.6.25",
+        "after": "0.6.29"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@astrojs/check",
+        "before": "0.9.9",
+        "after": "0.9.10"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@astrojs/mdx",
+        "before": "7.0.3",
+        "after": "8.0.2"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@astrojs/node",
+        "before": "11.0.2",
+        "after": "11.1.6"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@astrojs/react",
+        "before": "6.0.1",
+        "after": "7.0.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@astrojs/sitemap",
+        "before": "3.7.3",
+        "after": "3.7.4"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@nx/react",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@nx/vite",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@playwright/test",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@storybook/addon-vitest",
+        "before": "10.5.4",
+        "after": "10.6.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@storybook/react-vite",
+        "before": "10.5.4",
+        "after": "10.6.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@testing-library/react",
+        "before": "16.3.2",
+        "after": "16.3.3"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@testing-library/user-event",
+        "before": null,
+        "after": "14.6.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@types/react",
+        "before": "19.2.17",
+        "after": "19.2.18"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@types/react-dom",
+        "before": "19.2.3",
+        "after": "19.2.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "@vitejs/plugin-react",
+        "before": "6.0.3",
+        "after": "6.1.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "astro",
+        "before": "7.3.3",
+        "after": "7.3.5"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "axe-core",
+        "before": null,
+        "after": "4.13.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "happy-dom",
+        "before": "20.10.6",
+        "after": "20.14.5"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "jsdom",
+        "before": "29.1.1",
+        "after": "30.1.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "playwright",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "postcss",
+        "before": "8.5.21",
+        "after": "8.5.28"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "react-native-web",
+        "before": "0.21.2",
+        "after": "0.21.3"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "storybook",
+        "before": "10.5.4",
+        "after": "10.6.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "package": "vite",
+        "before": "8.1.5",
+        "after": "8.3.1"
+      }
+    ]
+  },
+  "images": {
+    "postgres": {
+      "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+      "sourceTree": "65983a51c77bf3bb33d664a5f87dd0b3c42469c6",
+      "provider": "postgres",
+      "selection": {
+        "configHash": "5a2dd196b284c8045769eb207da4870fbe55e2c8bd2f6e3c00513c161ffb0036",
+        "graphDigest": "21e07eea200aa1fa71223f6331fd5170bf42260f3422c17f89e6fd18a89eeae4",
+        "projects": 94,
+        "fileHashes": {
+          "nrb.config.json": "f7945ee8758ecd0b25da7046cb6f6972993ed93f0b71634b72afcc07fa6249d1",
+          ".nrb/closure.json": "c8b7a9b291ae0a634bdb1d83f7edd3109ad5561a188cc7d26ce419ff581c73cd",
+          ".nrb/closure/pnpm-lock.yaml": "6e209c86581cf4ced6b0c9c4b97a68c6b4e09907e737ce946452ed73806402df",
+          ".nrb/closure/package.json": "46e16f9f2f39ab7f868ae6b45df8eae08804f8c4cdb4f9ddd68a42372510abf6",
+          ".nrb/closure/pnpm-workspace.yaml": "60dcebb20145c6d2abb9c422e51e2a495b2d16a4f0fb711f3f38df1852d5d04d",
+          ".nrb/closure/lock.json": "0088e4468a27f4e7f4c70722360d326fa0d53d7783ecbd9ed02aeb9f755cdd2c"
+        }
+      },
+      "images": [
+        {
+          "tag": "nrb/discord-app-api:local",
+          "id": "sha256:f5ef6965acf537fb58e8d1b9ab107a7a2755711fb1394af0ba0b2a91df995109",
+          "repoDigests": [
+            "nrb/discord-app-api@sha256:f5ef6965acf537fb58e8d1b9ab107a7a2755711fb1394af0ba0b2a91df995109"
+          ],
+          "created": "2026-09-30T09:32:01.259338926+05:00",
+          "size": 140572811
+        },
+        {
+          "tag": "nrb/auth-app-api:local",
+          "id": "sha256:b1a69561f1010abcca1010a81022381fe653880490d42b87ef7b04454bcaff2c",
+          "repoDigests": ["nrb/auth-app-api@sha256:b1a69561f1010abcca1010a81022381fe653880490d42b87ef7b04454bcaff2c"],
+          "created": "2026-09-30T09:31:18.305976523+05:00",
+          "size": 143327825
+        },
+        {
+          "tag": "nrb/user-app-api:local",
+          "id": "sha256:457ad401306ef524027617da2ce0298af912b607f44ad8333b1968d1c4a71363",
+          "repoDigests": ["nrb/user-app-api@sha256:457ad401306ef524027617da2ce0298af912b607f44ad8333b1968d1c4a71363"],
+          "created": "2026-09-30T09:35:44.992463849+05:00",
+          "size": 138582921
+        },
+        {
+          "tag": "nrb/admin-app-api:local",
+          "id": "sha256:e9438c723a3304d82c21ab9dc3184cd3508417324838f376b0898430643a0457",
+          "repoDigests": ["nrb/admin-app-api@sha256:e9438c723a3304d82c21ab9dc3184cd3508417324838f376b0898430643a0457"],
+          "created": "2026-09-30T09:30:36.717592225+05:00",
+          "size": 139191765
+        },
+        {
+          "tag": "nrb/notification-scheduler:local",
+          "id": "sha256:652041d3d3591ec9dd67461f9ec8512569a0ca358ea7393d30578f3d9ea34f2b",
+          "repoDigests": [
+            "nrb/notification-scheduler@sha256:652041d3d3591ec9dd67461f9ec8512569a0ca358ea7393d30578f3d9ea34f2b"
+          ],
+          "created": "2026-09-30T09:34:05.025407493+05:00",
+          "size": 138163298
+        },
+        {
+          "tag": "nrb/telegram-bot-api:local",
+          "id": "sha256:aab5f6da9e226c54abe5aa59788c1cd90fe019b030d651697ce9a1b195277d52",
+          "repoDigests": [
+            "nrb/telegram-bot-api@sha256:aab5f6da9e226c54abe5aa59788c1cd90fe019b030d651697ce9a1b195277d52"
+          ],
+          "created": "2026-09-30T09:35:18.233593339+05:00",
+          "size": 134461736
+        },
+        {
+          "tag": "nrb/notification-consumer:local",
+          "id": "sha256:3901d63c9fc435e495442ceb551dc04b589fdcca99cbdeb3709e47cb35aff485",
+          "repoDigests": [
+            "nrb/notification-consumer@sha256:3901d63c9fc435e495442ceb551dc04b589fdcca99cbdeb3709e47cb35aff485"
+          ],
+          "created": "2026-09-30T09:33:36.253990054+05:00",
+          "size": 138164995
+        },
+        {
+          "tag": "nrb/site-app:local",
+          "id": "sha256:e3c9cc0e2baa9863f6bf8068db79140b3438738a083dae4e63fdbdf52a3b4b97",
+          "repoDigests": ["nrb/site-app@sha256:e3c9cc0e2baa9863f6bf8068db79140b3438738a083dae4e63fdbdf52a3b4b97"],
+          "created": "2026-09-30T09:34:54.155069738+05:00",
+          "size": 136660885
+        },
+        {
+          "tag": "nrb/migrator:local",
+          "id": "sha256:fd2f6ae04b76f7b073868455403d447d9aa3de251a800f310615673ff0a8a8ca",
+          "repoDigests": ["nrb/migrator@sha256:fd2f6ae04b76f7b073868455403d447d9aa3de251a800f310615673ff0a8a8ca"],
+          "created": "2026-09-30T09:33:05.675017438+05:00",
+          "size": 119352914
+        },
+        {
+          "tag": "nrb/landing-app:local",
+          "id": "sha256:6b7e82ce424e990eb52098fb9131f9199c7ff909d2ae06128cf662b62d70661e",
+          "repoDigests": ["nrb/landing-app@sha256:6b7e82ce424e990eb52098fb9131f9199c7ff909d2ae06128cf662b62d70661e"],
+          "created": "2026-09-30T08:59:32.4954049+05:00",
+          "size": 23618176
+        },
+        {
+          "tag": "nrb/admin-app:local",
+          "id": "sha256:0a937742d27522d2d344b6a112be2aa6c7b267076e8854163ef14400f88297d0",
+          "repoDigests": ["nrb/admin-app@sha256:0a937742d27522d2d344b6a112be2aa6c7b267076e8854163ef14400f88297d0"],
+          "created": "2026-09-30T09:29:51.923762277+05:00",
+          "size": 23725825
+        },
+        {
+          "tag": "nrb/user-app:local",
+          "id": "sha256:9ffb4d5930a693ff3be23916219a68568dcf3a608937cf1e96783ddd2a7a4e0a",
+          "repoDigests": ["nrb/user-app@sha256:9ffb4d5930a693ff3be23916219a68568dcf3a608937cf1e96783ddd2a7a4e0a"],
+          "created": "2026-09-30T08:45:21.849835258+05:00",
+          "size": 23706326
+        },
+        {
+          "tag": "nrb/mobile-app:local",
+          "id": "sha256:8b8596bdda81749b510780af182c1941c9f2b3df4f5ea0e489929ce1c9cf1ab4",
+          "repoDigests": ["nrb/mobile-app@sha256:8b8596bdda81749b510780af182c1941c9f2b3df4f5ea0e489929ce1c9cf1ab4"],
+          "created": "2026-09-30T09:00:52.40023403+05:00",
+          "size": 24260035
+        }
+      ]
+    },
+    "mongodb": {
+      "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+      "sourceTree": "65983a51c77bf3bb33d664a5f87dd0b3c42469c6",
+      "provider": "mongodb",
+      "selection": {
+        "configHash": "c80f80d0aebd869ba6c8cec6c1844399eed9c988ca4ca823e691c35dc6fb590d",
+        "graphDigest": "f68ab23a35509f49671b8708abb6f8cdaed496209fa9154c963c03619c76bd4a",
+        "projects": 92,
+        "fileHashes": {
+          "nrb.config.json": "397aa59c35aed2746cd5098a1e0ad0579172cb2f77230b4f88b787ea79137d8a",
+          ".nrb/closure.json": "bcd0a0b3f0b1c4b59321132a3ca21a1a080879524052e575355aec44ac77f556",
+          ".nrb/closure/pnpm-lock.yaml": "a9b8354be35805ba46c06ebef6db6ef7f3ce56df4845e243dd1ab545c408dad2",
+          ".nrb/closure/package.json": "6f02cb770e8852c86319c22f4369519aa4446b611b1cdaeb6498fcf3020edb08",
+          ".nrb/closure/pnpm-workspace.yaml": "60dcebb20145c6d2abb9c422e51e2a495b2d16a4f0fb711f3f38df1852d5d04d",
+          ".nrb/closure/lock.json": "a444f2c17e7ab9fb1a721afa3143a0c692cb803925beeaeab12af694888b0c58"
+        }
+      },
+      "images": [
+        {
+          "tag": "nrb/discord-app-api:local",
+          "id": "sha256:801f7e3cd4b255e1171d0b39014e51169d8ec3d1936a287422706cf2992f1c57",
+          "repoDigests": [
+            "nrb/discord-app-api@sha256:801f7e3cd4b255e1171d0b39014e51169d8ec3d1936a287422706cf2992f1c57"
+          ],
+          "created": "2026-09-30T09:52:58.65270624+05:00",
+          "size": 141065333
+        },
+        {
+          "tag": "nrb/auth-app-api:local",
+          "id": "sha256:97e57b8fb488a00236d9ac5fc1813d0a16a63954d6be9106c014e6aa94c8900f",
+          "repoDigests": ["nrb/auth-app-api@sha256:97e57b8fb488a00236d9ac5fc1813d0a16a63954d6be9106c014e6aa94c8900f"],
+          "created": "2026-09-30T09:52:23.562895182+05:00",
+          "size": 143822159
+        },
+        {
+          "tag": "nrb/user-app-api:local",
+          "id": "sha256:e528e3484eb58c40373d1ec89f98cdfa5ff7c52640ab45e1109d3a9ac91107e5",
+          "repoDigests": ["nrb/user-app-api@sha256:e528e3484eb58c40373d1ec89f98cdfa5ff7c52640ab45e1109d3a9ac91107e5"],
+          "created": "2026-09-30T09:58:42.352611675+05:00",
+          "size": 142696260
+        },
+        {
+          "tag": "nrb/admin-app-api:local",
+          "id": "sha256:3b7d44f14ce067dfdce8f0695e4f7ce0be561840b47c74abb3a99304009cbd2c",
+          "repoDigests": ["nrb/admin-app-api@sha256:3b7d44f14ce067dfdce8f0695e4f7ce0be561840b47c74abb3a99304009cbd2c"],
+          "created": "2026-09-30T09:51:54.525508933+05:00",
+          "size": 143303108
+        },
+        {
+          "tag": "nrb/notification-scheduler:local",
+          "id": "sha256:d1c4f1606b834eab5a9330286eb40ed4e908cd296405a5bdea2ea78d9f06790c",
+          "repoDigests": [
+            "nrb/notification-scheduler@sha256:d1c4f1606b834eab5a9330286eb40ed4e908cd296405a5bdea2ea78d9f06790c"
+          ],
+          "created": "2026-09-30T09:56:09.231307986+05:00",
+          "size": 142274377
+        },
+        {
+          "tag": "nrb/telegram-bot-api:local",
+          "id": "sha256:c09562563af84cbbfd88f762323c44c60a0af276d3d4f5ba31f4443c4a4adfc2",
+          "repoDigests": [
+            "nrb/telegram-bot-api@sha256:c09562563af84cbbfd88f762323c44c60a0af276d3d4f5ba31f4443c4a4adfc2"
+          ],
+          "created": "2026-09-30T09:58:00.515030711+05:00",
+          "size": 134463075
+        },
+        {
+          "tag": "nrb/notification-consumer:local",
+          "id": "sha256:587d83ce808535066f9a51fb064dcb07d95652d7d2d924facaaa67174ba79460",
+          "repoDigests": [
+            "nrb/notification-consumer@sha256:587d83ce808535066f9a51fb064dcb07d95652d7d2d924facaaa67174ba79460"
+          ],
+          "created": "2026-09-30T09:55:11.590406287+05:00",
+          "size": 142274257
+        },
+        {
+          "tag": "nrb/site-app:local",
+          "id": "sha256:13d213e1733b2f186a404946803480a798670e9e0d144676b3ea515c078dd776",
+          "repoDigests": ["nrb/site-app@sha256:13d213e1733b2f186a404946803480a798670e9e0d144676b3ea515c078dd776"],
+          "created": "2026-09-30T09:57:24.923600536+05:00",
+          "size": 136661438
+        },
+        {
+          "tag": "nrb/migrator:local",
+          "id": "sha256:97a12b48de87c06c63acd1f5aab0689ace17235097612894b7c700e8298f0ea0",
+          "repoDigests": ["nrb/migrator@sha256:97a12b48de87c06c63acd1f5aab0689ace17235097612894b7c700e8298f0ea0"],
+          "created": "2026-09-30T09:54:27.021982751+05:00",
+          "size": 119647026
+        },
+        {
+          "tag": "nrb/landing-app:local",
+          "id": "sha256:c301b1fbf251829ca6876cebab79cb406d94fdfa0bb27b0bc92bc3a2b2812ad5",
+          "repoDigests": ["nrb/landing-app@sha256:c301b1fbf251829ca6876cebab79cb406d94fdfa0bb27b0bc92bc3a2b2812ad5"],
+          "created": "2026-09-30T08:59:32.4954049+05:00",
+          "size": 23618176
+        },
+        {
+          "tag": "nrb/admin-app:local",
+          "id": "sha256:9404439be6943203ae55f18e496892cf1c2fea3771c6527a87a24d0487eb32fa",
+          "repoDigests": ["nrb/admin-app@sha256:9404439be6943203ae55f18e496892cf1c2fea3771c6527a87a24d0487eb32fa"],
+          "created": "2026-09-30T09:29:51.923762277+05:00",
+          "size": 23725825
+        },
+        {
+          "tag": "nrb/user-app:local",
+          "id": "sha256:507873cb0eb6aefc0a91f7d7bc4abbff2b01ea8cf9cb7cdb24793afe65b62c61",
+          "repoDigests": ["nrb/user-app@sha256:507873cb0eb6aefc0a91f7d7bc4abbff2b01ea8cf9cb7cdb24793afe65b62c61"],
+          "created": "2026-09-30T08:45:21.849835258+05:00",
+          "size": 23706326
+        },
+        {
+          "tag": "nrb/mobile-app:local",
+          "id": "sha256:7c36cc1ce368d0c38eeb9817b87e128b2cd0d598692c9a4263514e3c3c0ff0e9",
+          "repoDigests": ["nrb/mobile-app@sha256:7c36cc1ce368d0c38eeb9817b87e128b2cd0d598692c9a4263514e3c3c0ff0e9"],
+          "created": "2026-09-30T09:00:52.40023403+05:00",
+          "size": 24260035
+        }
+      ]
+    }
+  },
+  "standaloneFrozenArtifacts": {
+    "source": "uncommitted SSR optional-peer patch on cc8b645479d6b403b69a40d1d803e584fe88fdfb",
+    "provider": "postgres",
+    "reports": [
+      {
+        "kind": "site",
+        "dependencies": 10,
+        "installedPackages": 197,
+        "nativePeerExcluded": true,
+        "packageManager": "pnpm@12.8.1",
+        "resolverSkipped": true,
+        "lockUnchanged": true,
+        "policyUnchanged": true,
+        "moduleLoads": ["fastify", "@fastify/static", "react", "vike"],
+        "lockSha256": "0ee2014475c3967fd1d2669b9a036c6ad92efb7dd21ece5acc44636326338b76",
+        "policySha256": "60dcebb20145c6d2abb9c422e51e2a495b2d16a4f0fb711f3f38df1852d5d04d",
+        "localArtifactDirectoryOmitted": true
+      },
+      {
+        "kind": "migrator",
+        "dependencies": 18,
+        "installedPackages": 84,
+        "nativePeerExcluded": false,
+        "packageManager": "pnpm@12.8.1",
+        "resolverSkipped": true,
+        "lockUnchanged": true,
+        "policyUnchanged": true,
+        "moduleLoads": ["jiti", "@nestjs/common", "@nestjs/core", "@swc-node/register", "@mikro-orm/core", "pg"],
+        "lockSha256": "5d68f2d1b9a44cd308c4db2acdb3e81ab5b4d92dd085293a541cfb975a86a1af",
+        "policySha256": "60dcebb20145c6d2abb9c422e51e2a495b2d16a4f0fb711f3f38df1852d5d04d",
+        "localArtifactDirectoryOmitted": true
+      }
+    ],
+    "implementationCommit": "31d38948245112eb8b741846fa1faffe1f40ba38",
+    "rawReport": {
+      "file": "nrb-frozen-extra-artifacts-report.json",
+      "sha256": "b42d9080b7cef543b61d002513b049cb3568b78c72898f50092be5069da0022a",
+      "bytes": 1577
+    }
+  },
+  "observabilityStack": {
+    "status": "passed",
+    "project": "nrbobservability425691790738070820",
+    "startedAt": "2026-09-30T03:14:30.821Z",
+    "images": {
+      "otel-collector": {
+        "reference": "otel/opentelemetry-collector-contrib:0.161.0@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1",
+        "id": "sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1",
+        "architecture": "arm64"
+      },
+      "prometheus": {
+        "reference": "prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e",
+        "id": "sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e",
+        "architecture": "arm64"
+      },
+      "alertmanager": {
+        "reference": "prom/alertmanager:v0.34.1@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a",
+        "id": "sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a",
+        "architecture": "arm64"
+      },
+      "grafana": {
+        "reference": "grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572",
+        "id": "sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572",
+        "architecture": "arm64"
+      },
+      "coroot": {
+        "reference": "ghcr.io/coroot/coroot:1.27.0@sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb",
+        "id": "sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb",
+        "architecture": "arm64"
+      }
+    },
+    "checks": [
+      {
+        "description": "collector, Prometheus and Alertmanager native configuration validation",
+        "status": "passed"
+      },
+      {
+        "description": "collector HTTP readiness",
+        "status": "passed"
+      },
+      {
+        "description": "Prometheus readiness",
+        "status": "passed"
+      },
+      {
+        "description": "Alertmanager readiness",
+        "status": "passed"
+      },
+      {
+        "description": "Grafana database health",
+        "status": "passed"
+      },
+      {
+        "description": "Coroot HTTP startup (no Kubernetes discovery assertion)",
+        "status": "passed"
+      },
+      {
+        "description": "native Compose healthchecks",
+        "status": "passed"
+      },
+      {
+        "description": "OTLP metric scraped by Prometheus with resource attributes",
+        "status": "passed"
+      },
+      {
+        "description": "all four monitoring scrape targets are up",
+        "status": "passed"
+      },
+      {
+        "description": "Grafana provisions exactly the two bundled datasources",
+        "status": "passed"
+      },
+      {
+        "description": "Grafana uses the mounted secret and rejects the default password",
+        "status": "passed"
+      },
+      {
+        "description": "Grafana provisions the production dashboard",
+        "status": "passed"
+      },
+      {
+        "description": "OTLP metric query through Grafana Prometheus datasource",
+        "status": "passed"
+      },
+      {
+        "description": "Alertmanager accepts and routes an alert to an explicitly empty receiver",
+        "status": "passed"
+      }
+    ],
+    "grafanaVersion": "13.2.3",
+    "cleanup": "passed",
+    "finishedAt": "2026-09-30T03:15:36.353Z",
+    "implementationStatus": "uncommitted repair at 31d38948245112eb8b741846fa1faffe1f40ba38",
+    "implementationCommit": "6e102f9a3f64046ebfef02190a66eb932607c46d"
+  },
+  "observabilityManifestPlatforms": {
+    "otel-collector": [
+      {
+        "architecture": "386",
+        "os": "linux"
+      },
+      {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v7"
+      },
+      {
+        "architecture": "ppc64le",
+        "os": "linux"
+      },
+      {
+        "architecture": "riscv64",
+        "os": "linux"
+      },
+      {
+        "architecture": "s390x",
+        "os": "linux"
+      }
+    ],
+    "prometheus": [
+      {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v7"
+      },
+      {
+        "architecture": "ppc64le",
+        "os": "linux"
+      },
+      {
+        "architecture": "riscv64",
+        "os": "linux"
+      },
+      {
+        "architecture": "s390x",
+        "os": "linux"
+      }
+    ],
+    "alertmanager": [
+      {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v7"
+      },
+      {
+        "architecture": "ppc64le",
+        "os": "linux"
+      },
+      {
+        "architecture": "s390x",
+        "os": "linux"
+      }
+    ],
+    "grafana": [
+      {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      {
+        "architecture": "arm",
+        "os": "linux",
+        "variant": "v7"
+      }
+    ],
+    "coroot": [
+      {
+        "architecture": "amd64",
+        "os": "linux"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      },
+      {
+        "architecture": "arm64",
+        "os": "linux"
+      },
+      {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    ]
+  },
+  "runtimeClassification": {
+    "postgres": {
+      "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+      "provider": "postgres",
+      "images": [
+        {
+          "name": "discord-app-api",
+          "image": "sha256:f5ef6965acf537fb58e8d1b9ab107a7a2755711fb1394af0ba0b2a91df995109",
+          "directDependencyCount": 47,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@mikro-orm/core": "7.2.2",
+            "@mikro-orm/migrations": "7.2.2",
+            "@mikro-orm/nestjs": "7.1.0",
+            "@mikro-orm/postgresql": "7.2.2",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-pg": "0.74.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "@tma.js/init-data-node": "2.0.8",
+            "arctic": "3.7.0",
+            "better-auth": "1.7.6",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "discord-api-types": "0.38.55",
+            "discord-interactions": "4.4.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "maxmind": "5.0.7",
+            "neverthrow": "8.2.0",
+            "pg": "8.23.0",
+            "redis": "6.2.1",
+            "reflect-metadata": "0.2.2",
+            "rxjs": "7.8.2",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1",
+            "zod": "4.6.5"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "auth-app-api",
+          "image": "sha256:b1a69561f1010abcca1010a81022381fe653880490d42b87ef7b04454bcaff2c",
+          "directDependencyCount": 57,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@mikro-orm/core": "7.2.2",
+            "@mikro-orm/migrations": "7.2.2",
+            "@mikro-orm/nestjs": "7.1.0",
+            "@mikro-orm/postgresql": "7.2.2",
+            "@nats-io/jetstream": "3.4.0",
+            "@nats-io/kv": "3.4.0",
+            "@nats-io/nats-core": "3.4.0",
+            "@nats-io/obj": "3.4.0",
+            "@nats-io/services": "3.4.0",
+            "@nats-io/transport-node": "3.4.0",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-pg": "0.74.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "@tma.js/init-data-node": "2.0.8",
+            "arctic": "3.7.0",
+            "better-auth": "1.7.6",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "light-my-request": "6.6.0",
+            "maxmind": "5.0.7",
+            "neverthrow": "8.2.0",
+            "pg": "8.23.0",
+            "redis": "6.2.1",
+            "reflect-metadata": "0.2.2",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1",
+            "zod": "4.6.5"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "user-app-api",
+          "image": "sha256:457ad401306ef524027617da2ce0298af912b607f44ad8333b1968d1c4a71363",
+          "directDependencyCount": 52,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@mikro-orm/core": "7.2.2",
+            "@mikro-orm/migrations": "7.2.2",
+            "@mikro-orm/nestjs": "7.1.0",
+            "@mikro-orm/postgresql": "7.2.2",
+            "@nats-io/jetstream": "3.4.0",
+            "@nats-io/kv": "3.4.0",
+            "@nats-io/nats-core": "3.4.0",
+            "@nats-io/obj": "3.4.0",
+            "@nats-io/services": "3.4.0",
+            "@nats-io/transport-node": "3.4.0",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-pg": "0.74.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "light-my-request": "6.6.0",
+            "neverthrow": "8.2.0",
+            "pg": "8.23.0",
+            "redis": "6.2.1",
+            "reflect-metadata": "0.2.2",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "admin-app-api",
+          "image": "sha256:e9438c723a3304d82c21ab9dc3184cd3508417324838f376b0898430643a0457",
+          "directDependencyCount": 55,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@casl/ability": "7.0.1",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@mikro-orm/core": "7.2.2",
+            "@mikro-orm/migrations": "7.2.2",
+            "@mikro-orm/nestjs": "7.1.0",
+            "@mikro-orm/postgresql": "7.2.2",
+            "@nats-io/jetstream": "3.4.0",
+            "@nats-io/kv": "3.4.0",
+            "@nats-io/nats-core": "3.4.0",
+            "@nats-io/obj": "3.4.0",
+            "@nats-io/services": "3.4.0",
+            "@nats-io/transport-node": "3.4.0",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-pg": "0.74.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "ipaddr.js": "2.5.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "light-my-request": "6.6.0",
+            "neverthrow": "8.2.0",
+            "pg": "8.23.0",
+            "redis": "6.2.1",
+            "reflect-metadata": "0.2.2",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "undici": "7.30.0",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "notification-scheduler",
+          "image": "sha256:652041d3d3591ec9dd67461f9ec8512569a0ca358ea7393d30578f3d9ea34f2b",
+          "directDependencyCount": 45,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@mikro-orm/core": "7.2.2",
+            "@mikro-orm/migrations": "7.2.2",
+            "@mikro-orm/nestjs": "7.1.0",
+            "@mikro-orm/postgresql": "7.2.2",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-pg": "0.74.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "neverthrow": "8.2.0",
+            "pg": "8.23.0",
+            "redis": "6.2.1",
+            "reflect-metadata": "0.2.2",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "telegram-bot-api",
+          "image": "sha256:aab5f6da9e226c54abe5aa59788c1cd90fe019b030d651697ce9a1b195277d52",
+          "directDependencyCount": 41,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@grammyjs/auto-retry": "2.0.2",
+            "@grammyjs/conversations": "2.1.1",
+            "@grammyjs/hydrate": "1.7.0",
+            "@grammyjs/menu": "1.5.0",
+            "@grammyjs/ratelimiter": "1.2.1",
+            "@grammyjs/router": "2.0.0",
+            "@grammyjs/runner": "2.0.3",
+            "@grammyjs/transformer-throttler": "1.2.1",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "grammy": "1.46.0",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "neverthrow": "8.2.0",
+            "redis": "6.2.1",
+            "reflect-metadata": "0.2.2",
+            "rxjs": "7.8.2",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "notification-consumer",
+          "image": "sha256:3901d63c9fc435e495442ceb551dc04b589fdcca99cbdeb3709e47cb35aff485",
+          "directDependencyCount": 45,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@mikro-orm/core": "7.2.2",
+            "@mikro-orm/migrations": "7.2.2",
+            "@mikro-orm/nestjs": "7.1.0",
+            "@mikro-orm/postgresql": "7.2.2",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-pg": "0.74.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "neverthrow": "8.2.0",
+            "pg": "8.23.0",
+            "redis": "6.2.1",
+            "reflect-metadata": "0.2.2",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "site-app",
+          "image": "sha256:e3c9cc0e2baa9863f6bf8068db79140b3438738a083dae4e63fdbdf52a3b4b97",
+          "directDependencyCount": 10,
+          "dependencies": {
+            "@fastify/static": "10.1.5",
+            "@tanstack/react-query": "5.104.0",
+            "fastify": "5.12.5",
+            "mobx": "6.16.1",
+            "mobx-react-lite": "4.1.1",
+            "mobx-tanstack-query": "7.3.0",
+            "react": "19.2.3",
+            "react-dom": "19.2.3",
+            "vike": "0.4.267",
+            "vike-react": "0.6.29"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": ["vite"],
+          "installedToolChains": ["vite@8.3.1_@types+node@24.19.0_esbuild@0.28.2_jiti@2.7.0_terser@5.51.2_yaml@2.9.1"]
+        }
+      ],
+      "status": "passed",
+      "scope": "Seven backend runtime manifests, direct modules and physical pnpm package chains; SSR has an explicit build/runtime contract, and the migrator frozen install is separately verified."
+    },
+    "mongodb": {
+      "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+      "provider": "mongodb",
+      "images": [
+        {
+          "name": "discord-app-api",
+          "image": "sha256:801f7e3cd4b255e1171d0b39014e51169d8ec3d1936a287422706cf2992f1c57",
+          "directDependencyCount": 43,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-mongodb": "0.75.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "@tma.js/init-data-node": "2.0.8",
+            "arctic": "3.7.0",
+            "better-auth": "1.7.6",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "discord-api-types": "0.38.55",
+            "discord-interactions": "4.4.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "maxmind": "5.0.7",
+            "mongodb": "7.7.0",
+            "mongodb-connection-string-url": "7.0.2",
+            "neverthrow": "8.2.0",
+            "redis": "6.2.1",
+            "rxjs": "7.8.2",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1",
+            "zod": "4.6.5"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "auth-app-api",
+          "image": "sha256:97e57b8fb488a00236d9ac5fc1813d0a16a63954d6be9106c014e6aa94c8900f",
+          "directDependencyCount": 53,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@nats-io/jetstream": "3.4.0",
+            "@nats-io/kv": "3.4.0",
+            "@nats-io/nats-core": "3.4.0",
+            "@nats-io/obj": "3.4.0",
+            "@nats-io/services": "3.4.0",
+            "@nats-io/transport-node": "3.4.0",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-mongodb": "0.75.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "@tma.js/init-data-node": "2.0.8",
+            "arctic": "3.7.0",
+            "better-auth": "1.7.6",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "light-my-request": "6.6.0",
+            "maxmind": "5.0.7",
+            "mongodb": "7.7.0",
+            "mongodb-connection-string-url": "7.0.2",
+            "neverthrow": "8.2.0",
+            "redis": "6.2.1",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1",
+            "zod": "4.6.5"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "user-app-api",
+          "image": "sha256:e528e3484eb58c40373d1ec89f98cdfa5ff7c52640ab45e1109d3a9ac91107e5",
+          "directDependencyCount": 49,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@nats-io/jetstream": "3.4.0",
+            "@nats-io/kv": "3.4.0",
+            "@nats-io/nats-core": "3.4.0",
+            "@nats-io/obj": "3.4.0",
+            "@nats-io/services": "3.4.0",
+            "@nats-io/transport-node": "3.4.0",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-mongodb": "0.75.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "better-auth": "1.7.6",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "light-my-request": "6.6.0",
+            "mongodb": "7.7.0",
+            "mongodb-connection-string-url": "7.0.2",
+            "neverthrow": "8.2.0",
+            "redis": "6.2.1",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "admin-app-api",
+          "image": "sha256:3b7d44f14ce067dfdce8f0695e4f7ce0be561840b47c74abb3a99304009cbd2c",
+          "directDependencyCount": 52,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@casl/ability": "7.0.1",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@nats-io/jetstream": "3.4.0",
+            "@nats-io/kv": "3.4.0",
+            "@nats-io/nats-core": "3.4.0",
+            "@nats-io/obj": "3.4.0",
+            "@nats-io/services": "3.4.0",
+            "@nats-io/transport-node": "3.4.0",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-mongodb": "0.75.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "better-auth": "1.7.6",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "ipaddr.js": "2.5.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "light-my-request": "6.6.0",
+            "mongodb": "7.7.0",
+            "mongodb-connection-string-url": "7.0.2",
+            "neverthrow": "8.2.0",
+            "redis": "6.2.1",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "undici": "7.30.0",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "notification-scheduler",
+          "image": "sha256:d1c4f1606b834eab5a9330286eb40ed4e908cd296405a5bdea2ea78d9f06790c",
+          "directDependencyCount": 42,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-mongodb": "0.75.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "better-auth": "1.7.6",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "mongodb": "7.7.0",
+            "mongodb-connection-string-url": "7.0.2",
+            "neverthrow": "8.2.0",
+            "redis": "6.2.1",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "telegram-bot-api",
+          "image": "sha256:c09562563af84cbbfd88f762323c44c60a0af276d3d4f5ba31f4443c4a4adfc2",
+          "directDependencyCount": 40,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@grammyjs/auto-retry": "2.0.2",
+            "@grammyjs/conversations": "2.1.1",
+            "@grammyjs/hydrate": "1.7.0",
+            "@grammyjs/menu": "1.5.0",
+            "@grammyjs/ratelimiter": "1.2.1",
+            "@grammyjs/router": "2.0.0",
+            "@grammyjs/runner": "2.0.3",
+            "@grammyjs/transformer-throttler": "1.2.1",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "grammy": "1.46.0",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "neverthrow": "8.2.0",
+            "redis": "6.2.1",
+            "rxjs": "7.8.2",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "notification-consumer",
+          "image": "sha256:587d83ce808535066f9a51fb064dcb07d95652d7d2d924facaaa67174ba79460",
+          "directDependencyCount": 42,
+          "dependencies": {
+            "@aws-sdk/client-s3": "3.1142.0",
+            "@fastify/cookie": "11.1.2",
+            "@fastify/otel": "0.21.0",
+            "@fastify/session": "11.1.3",
+            "@fastify/static": "10.1.5",
+            "@nestjs/common": "12.1.1",
+            "@nestjs/config": "12.0.1",
+            "@nestjs/core": "12.1.1",
+            "@nestjs/platform-fastify": "12.1.1",
+            "@nestjs/schedule": "12.0.2",
+            "@nestjs/swagger": "12.0.2",
+            "@opentelemetry/api": "1.9.1",
+            "@opentelemetry/exporter-metrics-otlp-http": "0.222.0",
+            "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
+            "@opentelemetry/instrumentation": "0.222.0",
+            "@opentelemetry/instrumentation-http": "0.222.0",
+            "@opentelemetry/instrumentation-mongodb": "0.75.0",
+            "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
+            "@opentelemetry/instrumentation-redis": "0.70.0",
+            "@opentelemetry/instrumentation-runtime-node": "0.35.0",
+            "@opentelemetry/resources": "2.11.0",
+            "@opentelemetry/sdk-metrics": "2.11.0",
+            "@opentelemetry/sdk-node": "0.222.0",
+            "@opentelemetry/semantic-conventions": "1.43.0",
+            "better-auth": "1.7.6",
+            "cacheable": "2.5.0",
+            "class-transformer": "0.5.1",
+            "class-validator": "0.15.1",
+            "date-fns": "4.4.0",
+            "eta": "4.6.0",
+            "fastify": "5.12.5",
+            "helmet": "8.3.0",
+            "joi": "18.2.9",
+            "jose": "6.2.12",
+            "mongodb": "7.7.0",
+            "mongodb-connection-string-url": "7.0.2",
+            "neverthrow": "8.2.0",
+            "redis": "6.2.1",
+            "rxjs": "7.8.2",
+            "string-format": "2.0.0",
+            "tslib": "2.8.1",
+            "yaml": "2.9.1"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": [],
+          "installedToolChains": []
+        },
+        {
+          "name": "site-app",
+          "image": "sha256:13d213e1733b2f186a404946803480a798670e9e0d144676b3ea515c078dd776",
+          "directDependencyCount": 10,
+          "dependencies": {
+            "@fastify/static": "10.1.5",
+            "@tanstack/react-query": "5.104.0",
+            "fastify": "5.12.5",
+            "mobx": "6.16.1",
+            "mobx-react-lite": "4.1.1",
+            "mobx-tanstack-query": "7.3.0",
+            "react": "19.2.3",
+            "react-dom": "19.2.3",
+            "vike": "0.4.267",
+            "vike-react": "0.6.29"
+          },
+          "devDependencies": {},
+          "installedDirectTestTools": ["vite"],
+          "installedToolChains": ["vite@8.3.1_@types+node@24.19.0_esbuild@0.28.2_jiti@2.7.0_terser@5.51.2_yaml@2.9.1"]
+        }
+      ],
+      "status": "passed",
+      "scope": "Seven backend runtime manifests, direct modules and physical pnpm package chains; SSR has an explicit build/runtime contract, and the migrator frozen install is separately verified."
+    }
+  },
+  "standaloneBackendPeerExclusion": {
+    "source": "uncommitted backend optional-development-peer patch at c206d6b2b122f6ad1501bfc84c7ab89896ef43db",
+    "provider": "postgres",
+    "directDependencies": 46,
+    "installedPackages": 372,
+    "resolverSkipped": true,
+    "lockUnchanged": true,
+    "policyUnchanged": true,
+    "excluded": ["vitest", "testcontainers", "jsdom", "vite", "typescript", "react-native"],
+    "moduleLoads": ["better-auth", "@nestjs/common", "@nestjs/core", "@mikro-orm/core", "pg", "fastify"],
+    "lockSha256": "9a7e60b2369f52dcbffc21fddb64cac487eb0964d32fa73fcec3d27302f9176c",
+    "policySha256": "60dcebb20145c6d2abb9c422e51e2a495b2d16a4f0fb711f3f38df1852d5d04d",
+    "implementationCommit": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+    "localArtifactDirectoryOmitted": true,
+    "rawReport": {
+      "file": "nrb-backend-frozen-optional-peers-report.json",
+      "sha256": "c31db9c6c86194db98b169f3b93e50b560da77c243f4c3307ba1033db705455a",
+      "bytes": 885
+    }
+  },
+  "linuxSsrNativeExclusion": {
+    "status": "ok",
+    "platform": "linux",
+    "architecture": "arm64",
+    "nativePackages": [],
+    "jarFiles": [],
+    "image": "sha256:e3c9cc0e2baa9863f6bf8068db79140b3438738a083dae4e63fdbdf52a3b4b97",
+    "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+    "scope": "Final frozen Linux SSR runtime filesystem; provider-neutral artifact"
+  },
+  "mongodbBuildSource": {
+    "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+    "provider": "mongodb",
+    "configHash": "c80f80d0aebd869ba6c8cec6c1844399eed9c988ca4ca823e691c35dc6fb590d",
+    "graphDigest": "f68ab23a35509f49671b8708abb6f8cdaed496209fa9154c963c03619c76bd4a",
+    "projects": 92,
+    "imageBuildBatchSize": 1,
+    "selectionGenerated": true,
+    "canonicalSourceMetadata": true,
+    "optionalDevelopmentPeerExclusion": true,
+    "postgresHelperAbsent": true
+  },
+  "postgresBuildSource": {
+    "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+    "cleanBeforeBuild": true,
+    "provider": "postgres",
+    "configHash": "5a2dd196b284c8045769eb207da4870fbe55e2c8bd2f6e3c00513c161ffb0036",
+    "graphDigest": "21e07eea200aa1fa71223f6331fd5170bf42260f3422c17f89e6fd18a89eeae4",
+    "projects": 94,
+    "imageBuildBatchSize": 1,
+    "canonicalSourceMetadata": true,
+    "optionalDevelopmentPeerExclusion": true
+  },
+  "backupRestore": {
+    "status": "ok",
+    "provider": "postgres",
+    "image": "postgres:17.11-alpine",
+    "source": "disposable nrb_audit_test_source",
+    "target": "separate disposable nrb_audit_test_restore",
+    "rows": 2,
+    "backupBytes": 1841,
+    "constraintsPreserved": true,
+    "sourceUnchanged": true,
+    "cli": ["db backup", "db restore --yes"]
+  },
+  "security": {
+    "pnpm": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0
+      },
+      "audit": {
+        "file": "nrb-audit-final-source.json",
+        "sha256": "e6eb1fdad48374208c41da6bb5934cbbbdfecb109b05ac641ba6e0a7d27c57ac",
+        "bytes": 285
+      }
+    },
+    "gitleaks": {
+      "status": "ok",
+      "report": {
+        "file": "final-gitleaks.json",
+        "sha256": "3f847443f14cf957c6fdd2b91e28da0f144e976fafc0b75b8c2007fd1f7f8f01",
+        "bytes": 290
+      }
+    },
+    "externalSourceDisposition": {
+      "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+      "status": "findings-retained",
+      "findingCount": 13,
+      "errorCount": 40,
+      "review": "nginx Host forwarding retains real virtual-host semantics; Better Auth config supplies fixed baseURL and trustedOrigins. Callback response warning is text/plain. TLS bypass is an explicit unit fixture. pnpm minimum age is intentionally 1440 minutes with separately longer bot policy. npm minimum-age rule is not a pnpm workspace policy. No broad rule exclusions added.",
+      "coverageLimit": "{'Other syntax error': 15, 'Timeout': 4, 'PartialParsing': 21}; no full external-SAST coverage claim."
+    },
+    "semgrep": {
+      "status": "failed",
+      "version": "1.178.0",
+      "findings": 13,
+      "errors": 40,
+      "errorKinds": {
+        "Other syntax error": 15,
+        "Timeout": 4,
+        "PartialParsing": 21
+      },
+      "rawReport": {
+        "file": "final-external.semgrep.json",
+        "sha256": "34d746d19ad19a9b96f5ffe4297e5a0626b4553cfc6f3ba4f32275bef21130f8",
+        "bytes": 355621
+      },
+      "findingLocations": [
+        {
+          "rule": "generic.nginx.security.request-host-used.request-host-used",
+          "path": "/src/.helm/templates/configmap.yaml",
+          "line": 212,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age",
+          "path": "/src/.npmrc",
+          "line": 1,
+          "severity": "MEDIUM"
+        },
+        {
+          "rule": "package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age",
+          "path": "/src/.nrb/closure/pnpm-workspace.yaml",
+          "line": 125,
+          "severity": "MEDIUM"
+        },
+        {
+          "rule": "generic.nginx.security.request-host-used.request-host-used",
+          "path": "/src/docker/nginx-fullstack.conf",
+          "line": 118,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "generic.nginx.security.request-host-used.request-host-used",
+          "path": "/src/docker/nginx-fullstack.conf",
+          "line": 128,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "generic.nginx.security.request-host-used.request-host-used",
+          "path": "/src/docker/nginx-fullstack.conf",
+          "line": 140,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "generic.nginx.security.request-host-used.request-host-used",
+          "path": "/src/docker/nginx-fullstack.conf",
+          "line": 152,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "generic.nginx.security.request-host-used.request-host-used",
+          "path": "/src/docker/nginx-fullstack.conf",
+          "line": 160,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "generic.nginx.security.request-host-used.request-host-used",
+          "path": "/src/docker/nginx-fullstack.conf",
+          "line": 172,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "path": "/src/libs/backend/feature/auth/main/lib/src/application/better-auth-api.controller.ts",
+          "line": 121,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+          "path": "/src/libs/backend/postgres/main/shared/lib/src/data-source-options.spec.ts",
+          "line": 126,
+          "severity": "WARNING"
+        },
+        {
+          "rule": "package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age",
+          "path": "/src/pnpm-workspace.yaml",
+          "line": 130,
+          "severity": "MEDIUM"
+        },
+        {
+          "rule": "generic.nginx.security.request-host-used.request-host-used",
+          "path": "/src/scripts/generate-nginx-config.mjs",
+          "line": 38,
+          "severity": "WARNING"
+        }
+      ]
+    },
+    "postgresApplicationTrivy": {
+      "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+      "provider": "postgres",
+      "scanner": "0.74.0",
+      "severityScope": ["HIGH", "CRITICAL"],
+      "images": [
+        {
+          "name": "discord-app-api",
+          "image": "sha256:f5ef6965acf537fb58e8d1b9ab107a7a2755711fb1394af0ba0b2a91df995109",
+          "report": "trivy-postgres-discord-app-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "auth-app-api",
+          "image": "sha256:b1a69561f1010abcca1010a81022381fe653880490d42b87ef7b04454bcaff2c",
+          "report": "trivy-postgres-auth-app-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "user-app-api",
+          "image": "sha256:457ad401306ef524027617da2ce0298af912b607f44ad8333b1968d1c4a71363",
+          "report": "trivy-postgres-user-app-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "admin-app-api",
+          "image": "sha256:e9438c723a3304d82c21ab9dc3184cd3508417324838f376b0898430643a0457",
+          "report": "trivy-postgres-admin-app-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "notification-scheduler",
+          "image": "sha256:652041d3d3591ec9dd67461f9ec8512569a0ca358ea7393d30578f3d9ea34f2b",
+          "report": "trivy-postgres-notification-scheduler.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "telegram-bot-api",
+          "image": "sha256:aab5f6da9e226c54abe5aa59788c1cd90fe019b030d651697ce9a1b195277d52",
+          "report": "trivy-postgres-telegram-bot-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "notification-consumer",
+          "image": "sha256:3901d63c9fc435e495442ceb551dc04b589fdcca99cbdeb3709e47cb35aff485",
+          "report": "trivy-postgres-notification-consumer.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "site-app",
+          "image": "sha256:e3c9cc0e2baa9863f6bf8068db79140b3438738a083dae4e63fdbdf52a3b4b97",
+          "report": "trivy-postgres-site-app.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "migrator",
+          "image": "sha256:fd2f6ae04b76f7b073868455403d447d9aa3de251a800f310615673ff0a8a8ca",
+          "report": "trivy-postgres-migrator.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "landing-app",
+          "image": "sha256:6b7e82ce424e990eb52098fb9131f9199c7ff909d2ae06128cf662b62d70661e",
+          "report": "trivy-postgres-landing-app.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "admin-app",
+          "image": "sha256:0a937742d27522d2d344b6a112be2aa6c7b267076e8854163ef14400f88297d0",
+          "report": "trivy-postgres-admin-app.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "user-app",
+          "image": "sha256:9ffb4d5930a693ff3be23916219a68568dcf3a608937cf1e96783ddd2a7a4e0a",
+          "report": "trivy-postgres-user-app.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "mobile-app",
+          "image": "sha256:8b8596bdda81749b510780af182c1941c9f2b3df4f5ea0e489929ce1c9cf1ab4",
+          "report": "trivy-postgres-mobile-app.json",
+          "high": 0,
+          "critical": 0
+        }
+      ],
+      "high": 0,
+      "critical": 0,
+      "rawReports": [
+        {
+          "file": "trivy-postgres-admin-app-api.json",
+          "sha256": "c325ad5f1ebb108e60271edb44872f9c48665ff2a7b12871b106e691513693b1",
+          "bytes": 289875
+        },
+        {
+          "file": "trivy-postgres-admin-app.json",
+          "sha256": "3696d288500d0d613744d14637e582482284fe2250e16d76719042c8728abd1f",
+          "bytes": 168988
+        },
+        {
+          "file": "trivy-postgres-auth-app-api.json",
+          "sha256": "9ca5efe102ded6788b30dc15cd6c966768b8be1b9f0a671df2fb5dfbe33e7528",
+          "bytes": 311288
+        },
+        {
+          "file": "trivy-postgres-discord-app-api.json",
+          "sha256": "c41a064c810208089a58be4bf34b7a56dc297adffcff0a0eb5a31d5564158927",
+          "bytes": 297688
+        },
+        {
+          "file": "trivy-postgres-landing-app.json",
+          "sha256": "df34a31b79385a54f76f0aa7e0d7d606ddb3132ab92f588e83a1442d4997b5a0",
+          "bytes": 169009
+        },
+        {
+          "file": "trivy-postgres-migrator.json",
+          "sha256": "f1fb01c8c39b7a76c7c3ef6e508f4e25d2fac8d591d3d5a357322fe2cea743d2",
+          "bytes": 101340
+        },
+        {
+          "file": "trivy-postgres-mobile-app.json",
+          "sha256": "91b62fca364fbcd311822939617d5cf66431bd6c8e4420bdfa9a3225f2c42d84",
+          "bytes": 168999
+        },
+        {
+          "file": "trivy-postgres-notification-consumer.json",
+          "sha256": "63400d5f78355cac0f49fd8445e68260546dd45d41865f2a8d28a41f9b6dcf5b",
+          "bytes": 274435
+        },
+        {
+          "file": "trivy-postgres-notification-scheduler.json",
+          "sha256": "3fd0c328c5801b700039b39726792d22dbefc57e5ce5e2b58df100c4ca54e772",
+          "bytes": 274449
+        },
+        {
+          "file": "trivy-postgres-site-app.json",
+          "sha256": "7f9ee6b66fcdffe0a921ec7b0487bfec3eb1e6ca41fd6ecc3319feb62db9ce6a",
+          "bytes": 181780
+        },
+        {
+          "file": "trivy-postgres-telegram-bot-api.json",
+          "sha256": "8befdef52d30285905436e55e249a1653272c62e5fdf9d8d2fba8db288b34aa1",
+          "bytes": 249119
+        },
+        {
+          "file": "trivy-postgres-user-app-api.json",
+          "sha256": "5122d1b337c67b7e9ae3cdebb2576048468fcecc9fc60d8496d225095ede3507",
+          "bytes": 283118
+        },
+        {
+          "file": "trivy-postgres-user-app.json",
+          "sha256": "7ab612573479c7e9a1c99bf6b7ff851edc9aa2e3a41ca9f5b687743d5fd37985",
+          "bytes": 168971
+        }
+      ]
+    },
+    "mongodbApplicationTrivy": {
+      "source": "2e85eec83e842f5e89ca5a7ae92f15a784b7966c",
+      "provider": "mongodb",
+      "scanner": "0.74.0",
+      "severityScope": ["HIGH", "CRITICAL"],
+      "images": [
+        {
+          "name": "discord-app-api",
+          "image": "sha256:801f7e3cd4b255e1171d0b39014e51169d8ec3d1936a287422706cf2992f1c57",
+          "report": "trivy-mongodb-discord-app-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "auth-app-api",
+          "image": "sha256:97e57b8fb488a00236d9ac5fc1813d0a16a63954d6be9106c014e6aa94c8900f",
+          "report": "trivy-mongodb-auth-app-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "user-app-api",
+          "image": "sha256:e528e3484eb58c40373d1ec89f98cdfa5ff7c52640ab45e1109d3a9ac91107e5",
+          "report": "trivy-mongodb-user-app-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "admin-app-api",
+          "image": "sha256:3b7d44f14ce067dfdce8f0695e4f7ce0be561840b47c74abb3a99304009cbd2c",
+          "report": "trivy-mongodb-admin-app-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "notification-scheduler",
+          "image": "sha256:d1c4f1606b834eab5a9330286eb40ed4e908cd296405a5bdea2ea78d9f06790c",
+          "report": "trivy-mongodb-notification-scheduler.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "telegram-bot-api",
+          "image": "sha256:c09562563af84cbbfd88f762323c44c60a0af276d3d4f5ba31f4443c4a4adfc2",
+          "report": "trivy-mongodb-telegram-bot-api.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "notification-consumer",
+          "image": "sha256:587d83ce808535066f9a51fb064dcb07d95652d7d2d924facaaa67174ba79460",
+          "report": "trivy-mongodb-notification-consumer.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "site-app",
+          "image": "sha256:13d213e1733b2f186a404946803480a798670e9e0d144676b3ea515c078dd776",
+          "report": "trivy-mongodb-site-app.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "migrator",
+          "image": "sha256:97a12b48de87c06c63acd1f5aab0689ace17235097612894b7c700e8298f0ea0",
+          "report": "trivy-mongodb-migrator.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "landing-app",
+          "image": "sha256:c301b1fbf251829ca6876cebab79cb406d94fdfa0bb27b0bc92bc3a2b2812ad5",
+          "report": "trivy-mongodb-landing-app.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "admin-app",
+          "image": "sha256:9404439be6943203ae55f18e496892cf1c2fea3771c6527a87a24d0487eb32fa",
+          "report": "trivy-mongodb-admin-app.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "user-app",
+          "image": "sha256:507873cb0eb6aefc0a91f7d7bc4abbff2b01ea8cf9cb7cdb24793afe65b62c61",
+          "report": "trivy-mongodb-user-app.json",
+          "high": 0,
+          "critical": 0
+        },
+        {
+          "name": "mobile-app",
+          "image": "sha256:7c36cc1ce368d0c38eeb9817b87e128b2cd0d598692c9a4263514e3c3c0ff0e9",
+          "report": "trivy-mongodb-mobile-app.json",
+          "high": 0,
+          "critical": 0
+        }
+      ],
+      "high": 0,
+      "critical": 0,
+      "rawReports": [
+        {
+          "file": "trivy-mongodb-admin-app-api.json",
+          "sha256": "d7f6d3e018d9d5439a08c5977fae5f4545bc2ba58adfd66390fa02be405c939b",
+          "bytes": 294886
+        },
+        {
+          "file": "trivy-mongodb-admin-app.json",
+          "sha256": "5c81b7f024159bd7f79e86cfd9bbb1acc6cfee42f5665d5dc3c6ad7612569932",
+          "bytes": 168988
+        },
+        {
+          "file": "trivy-mongodb-auth-app-api.json",
+          "sha256": "581e76c121fb031f87f3229394532f3d3409555df930f02883295fba793cd593",
+          "bytes": 300342
+        },
+        {
+          "file": "trivy-mongodb-discord-app-api.json",
+          "sha256": "210d6a0c2d07a8b42202c6068240c11a655d8f3246c29f3ace5f13516a28e523",
+          "bytes": 286741
+        },
+        {
+          "file": "trivy-mongodb-landing-app.json",
+          "sha256": "b154845f0996136b48f23b4cfd1d3a54456e19e9347bd47d0695977c51928e8f",
+          "bytes": 169009
+        },
+        {
+          "file": "trivy-mongodb-migrator.json",
+          "sha256": "69dbedbb593c5e6430833d2295fb093792b2a554b407f1d9dba2bc033c0d9679",
+          "bytes": 93212
+        },
+        {
+          "file": "trivy-mongodb-mobile-app.json",
+          "sha256": "7487935a8596931e65e9f57b83a3a82886e90c5d5d0f759bf6e113d616f0c089",
+          "bytes": 168999
+        },
+        {
+          "file": "trivy-mongodb-notification-consumer.json",
+          "sha256": "c763ee98cdd9339aeec51812c651cfaf3c155831d14f948030a063bc4476e5fc",
+          "bytes": 279446
+        },
+        {
+          "file": "trivy-mongodb-notification-scheduler.json",
+          "sha256": "b4a7a7f92f411db7ea7b8b2d37548aba8a5f7163cdefd2c560ad2defd08267e8",
+          "bytes": 279461
+        },
+        {
+          "file": "trivy-mongodb-site-app.json",
+          "sha256": "2b062ad26cb7fd56d41b52e2cba4e0081c2931a85334468150e4239a26288c56",
+          "bytes": 181780
+        },
+        {
+          "file": "trivy-mongodb-telegram-bot-api.json",
+          "sha256": "01817a56f50300d91680d680b45c2a9117031cda8a3e424c85537223f4d1cb2c",
+          "bytes": 249119
+        },
+        {
+          "file": "trivy-mongodb-user-app-api.json",
+          "sha256": "966515d44919c92a69ac30fa6562e7558364a709e0351095c2e6560be6e578fa",
+          "bytes": 288129
+        },
+        {
+          "file": "trivy-mongodb-user-app.json",
+          "sha256": "a908d66cafb917e8ea715426424fa343c734e5d1515100a40f7bdcc02558b589",
+          "bytes": 168971
+        }
+      ]
+    },
+    "infrastructureTrivy": {
+      "scanner": "0.74.0",
+      "images": [
+        {
+          "name": "prometheus",
+          "reference": "prom/prometheus:v3.15.0",
+          "id": "sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e",
+          "repoDigests": ["prom/prometheus@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e"],
+          "architecture": "arm64",
+          "high": 0,
+          "critical": 0,
+          "report": "trivy-infrastructure-prometheus.json",
+          "findings": []
+        },
+        {
+          "name": "alertmanager",
+          "reference": "prom/alertmanager:v0.34.1",
+          "id": "sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a",
+          "repoDigests": ["prom/alertmanager@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a"],
+          "architecture": "arm64",
+          "high": 2,
+          "critical": 0,
+          "report": "trivy-infrastructure-alertmanager.json",
+          "findings": [
+            {
+              "id": "CVE-2026-84445",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.1",
+              "fixed": "1.82.2, 1.83.2, 1.84.0-dev.0.20260825144003-d5a41119e0e3, 1.85.0-dev.0.20260825072537-93e31b48545e",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-84445",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.1",
+              "fixed": "1.82.2, 1.83.2, 1.84.0-dev.0.20260825144003-d5a41119e0e3, 1.85.0-dev.0.20260825072537-93e31b48545e",
+              "severity": "HIGH"
+            }
+          ]
+        },
+        {
+          "name": "grafana",
+          "reference": "grafana/grafana:13.2.3",
+          "id": "sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572",
+          "repoDigests": ["grafana/grafana@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572"],
+          "architecture": "arm64",
+          "high": 8,
+          "critical": 0,
+          "report": "trivy-infrastructure-grafana.json",
+          "findings": [
+            {
+              "id": "CVE-2026-84445",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.1",
+              "fixed": "1.82.2, 1.83.2, 1.84.0-dev.0.20260825144003-d5a41119e0e3, 1.85.0-dev.0.20260825072537-93e31b48545e",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-84445",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.1",
+              "fixed": "1.82.2, 1.83.2, 1.84.0-dev.0.20260825144003-d5a41119e0e3, 1.85.0-dev.0.20260825072537-93e31b48545e",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-84445",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.1",
+              "fixed": "1.82.2, 1.83.2, 1.84.0-dev.0.20260825144003-d5a41119e0e3, 1.85.0-dev.0.20260825072537-93e31b48545e",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-84445",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.1",
+              "fixed": "1.82.2, 1.83.2, 1.84.0-dev.0.20260825144003-d5a41119e0e3, 1.85.0-dev.0.20260825072537-93e31b48545e",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-84304",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.0",
+              "fixed": "1.83.1",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-84445",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.0",
+              "fixed": "1.82.2, 1.83.2, 1.84.0-dev.0.20260825144003-d5a41119e0e3, 1.85.0-dev.0.20260825072537-93e31b48545e",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-21728",
+              "package": "github.com/grafana/tempo",
+              "installed": "v1.5.1-0.20260910130453-bcfe9f230c1d",
+              "fixed": "2.8.4, 2.9.2, 2.10.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-28377",
+              "package": "github.com/grafana/tempo",
+              "installed": "v1.5.1-0.20260910130453-bcfe9f230c1d",
+              "fixed": "2.10.3",
+              "severity": "HIGH"
+            }
+          ]
+        },
+        {
+          "name": "coroot",
+          "reference": "ghcr.io/coroot/coroot:1.27.0",
+          "id": "sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb",
+          "repoDigests": [
+            "ghcr.io/coroot/coroot@sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb"
+          ],
+          "architecture": "arm64",
+          "high": 21,
+          "critical": 0,
+          "report": "trivy-infrastructure-coroot.json",
+          "findings": [
+            {
+              "id": "CVE-2026-66046",
+              "package": "expat",
+              "installed": "2.5.0-6.el9_8.5",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-76641",
+              "package": "expat",
+              "installed": "2.5.0-6.el9_8.5",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-93990",
+              "package": "expat",
+              "installed": "2.5.0-6.el9_8.5",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-13732",
+              "package": "gdb-gdbserver",
+              "installed": "16.3-3.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-53613",
+              "package": "libblkid",
+              "installed": "2.37.4-25.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-53613",
+              "package": "libfdisk",
+              "installed": "2.37.4-25.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-53613",
+              "package": "libmount",
+              "installed": "2.37.4-25.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-53613",
+              "package": "libsmartcols",
+              "installed": "2.37.4-25.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-53613",
+              "package": "libuuid",
+              "installed": "2.37.4-25.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-54876",
+              "package": "openssl",
+              "installed": "1:3.5.8-1.el9_8",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-54876",
+              "package": "openssl-libs",
+              "installed": "1:3.5.8-1.el9_8",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-86145",
+              "package": "pcre2",
+              "installed": "10.40-6.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-89161",
+              "package": "pcre2",
+              "installed": "10.40-6.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-86145",
+              "package": "pcre2-syntax",
+              "installed": "10.40-6.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-89161",
+              "package": "pcre2-syntax",
+              "installed": "10.40-6.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-53613",
+              "package": "util-linux",
+              "installed": "2.37.4-25.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-53613",
+              "package": "util-linux-core",
+              "installed": "2.37.4-25.el9",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-43961",
+              "package": "vim-minimal",
+              "installed": "2:8.2.2637-26.el9_8.21",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-73073",
+              "package": "vim-minimal",
+              "installed": "2:8.2.2637-26.el9_8.21",
+              "fixed": null,
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.53.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-84445",
+              "package": "google.golang.org/grpc",
+              "installed": "v1.83.1",
+              "fixed": "1.82.2, 1.83.2, 1.84.0-dev.0.20260825144003-d5a41119e0e3, 1.85.0-dev.0.20260825072537-93e31b48545e",
+              "severity": "HIGH"
+            }
+          ]
+        },
+        {
+          "name": "opentelemetry-collector-contrib",
+          "reference": "otel/opentelemetry-collector-contrib:0.161.0",
+          "id": "sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1",
+          "repoDigests": [
+            "otel/opentelemetry-collector-contrib@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1"
+          ],
+          "architecture": "arm64",
+          "high": 0,
+          "critical": 0,
+          "report": "trivy-infrastructure-opentelemetry-collector-contrib.json",
+          "findings": []
+        },
+        {
+          "name": "postgres",
+          "reference": "postgres:17.11-alpine",
+          "id": "sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
+          "repoDigests": ["postgres@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24"],
+          "architecture": "arm64",
+          "high": 21,
+          "critical": 1,
+          "report": "trivy-infrastructure-postgres.json",
+          "findings": [
+            {
+              "id": "CVE-2025-68121",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.24.13, 1.25.7, 1.26.0-rc.3",
+              "severity": "CRITICAL"
+            },
+            {
+              "id": "CVE-2025-61726",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.24.12, 1.25.6",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2025-61729",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.24.11, 1.25.5",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-25679",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.8, 1.26.1",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-27145",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.11, 1.26.4",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-32280",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.9, 1.26.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-32281",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.9, 1.26.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-32283",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.9, 1.26.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33811",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33814",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39820",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39822",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.12, 1.26.5, 1.27.0-rc.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39836",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-42499",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-42504",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.11, 1.26.4",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            }
+          ],
+          "inspectedAlias": "postgres:17-alpine"
+        },
+        {
+          "name": "mongo",
+          "reference": "mongo:8.0.32-noble",
+          "id": "sha256:01354084d2ae665d2e79b79b0cdc50c2c0c98873618912d9a2c8c9cb5c3d24e6",
+          "repoDigests": ["mongo@sha256:01354084d2ae665d2e79b79b0cdc50c2c0c98873618912d9a2c8c9cb5c3d24e6"],
+          "architecture": "arm64",
+          "high": 96,
+          "critical": 1,
+          "report": "trivy-infrastructure-mongo.json",
+          "findings": [
+            {
+              "id": "CVE-2026-59869",
+              "package": "js-yaml",
+              "installed": "3.13.1",
+              "fixed": "3.15.0, 4.3.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-84375",
+              "package": "js-yaml",
+              "installed": "3.13.1",
+              "fixed": "4.3.2, 3.15.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "GHSA-5p4m-2wfm-xmqj",
+              "package": "js-yaml",
+              "installed": "3.13.1",
+              "fixed": "4.3.1, 3.15.1",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.54.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-46600",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.54.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-46600",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.54.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-46600",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.54.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-46600",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.54.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-46600",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.54.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-46600",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.54.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-46600",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56854",
+              "package": "golang.org/x/crypto",
+              "installed": "v0.54.0",
+              "fixed": "0.55.0",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-46600",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.26.5",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2025-68121",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.24.13, 1.25.7, 1.26.0-rc.3",
+              "severity": "CRITICAL"
+            },
+            {
+              "id": "CVE-2025-61726",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.24.12, 1.25.6",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2025-61729",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.24.11, 1.25.5",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-25679",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.8, 1.26.1",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-27145",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.11, 1.26.4",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-32280",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.9, 1.26.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-32281",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.9, 1.26.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-32283",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.9, 1.26.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33811",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33814",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-33818",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39820",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39821",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39822",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.12, 1.26.5, 1.27.0-rc.2",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-39836",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-42499",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.10, 1.26.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-42504",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.11, 1.26.4",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56853",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56858",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56859",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56860",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            },
+            {
+              "id": "CVE-2026-56862",
+              "package": "stdlib",
+              "installed": "v1.24.6",
+              "fixed": "1.25.13, 1.26.6, 1.27.0-rc.3",
+              "severity": "HIGH"
+            }
+          ],
+          "inspectedAlias": "mongo:8.0.32-noble"
+        },
+        {
+          "name": "redis",
+          "reference": "redis:7.4.11-alpine",
+          "id": "sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499",
+          "repoDigests": ["redis@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499"],
+          "architecture": "arm64",
+          "high": 0,
+          "critical": 0,
+          "report": "trivy-infrastructure-redis.json",
+          "findings": [],
+          "inspectedAlias": "redis:7-alpine"
+        },
+        {
+          "name": "nats",
+          "reference": "nats:2.15.0-alpine",
+          "id": "sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4",
+          "repoDigests": ["nats@sha256:ac8f88a6494bffc2c2a5289a0ca61cb28a9145c11ba5677cf24265d07f46d8d4"],
+          "architecture": "arm64",
+          "high": 0,
+          "critical": 0,
+          "report": "trivy-infrastructure-nats.json",
+          "findings": []
+        }
+      ],
+      "high": 148,
+      "critical": 2,
+      "distinctPackageAdvisoryPairs": 50,
+      "distinctPairsReport": {
+        "file": "nrb-infrastructure-trivy-unique.json",
+        "sha256": "49a3673e107de51678ffafba4450868bb04210178d9d0d556ecdb08447ce6556",
+        "bytes": 205506
+      },
+      "rawReports": [
+        {
+          "file": "trivy-infrastructure-alertmanager.json",
+          "sha256": "150f31b865ad88c7662cb4c7db8d2f6d5d5dd800382533e5fa84022e5c556564",
+          "bytes": 163109
+        },
+        {
+          "file": "trivy-infrastructure-coroot.json",
+          "sha256": "ebcd96ecbade7c09e0d0db7ddea3bc5d8c17233aaf3a780bac42cd0990bd46c2",
+          "bytes": 2160278
+        },
+        {
+          "file": "trivy-infrastructure-grafana.json",
+          "sha256": "0ac3d0e686c4979724ecd1480a98de5c01331e8db2ff7d9ddbc914563b3259f5",
+          "bytes": 1231139
+        },
+        {
+          "file": "trivy-infrastructure-mongo.json",
+          "sha256": "8525816e53a962c2f605a61627a042ee6da12197e6a52651a387a819a8763414",
+          "bytes": 1127334
+        },
+        {
+          "file": "trivy-infrastructure-nats.json",
+          "sha256": "7ea95882e3dca89546b8c3916e2b53198c4e5efc4f1d1715c12d986a7af3e9c1",
+          "bytes": 78369
+        },
+        {
+          "file": "trivy-infrastructure-opentelemetry-collector-contrib.json",
+          "sha256": "714d79d0d5255e0fffad0f2fd8a5b4bdc7774aea87a24046936725e3438605b9",
+          "bytes": 775907
+        },
+        {
+          "file": "trivy-infrastructure-postgres.json",
+          "sha256": "9a74773fe9e180723173616f421ae8a767270588fd3bbf7744fafd357e0a3c27",
+          "bytes": 297390
+        },
+        {
+          "file": "trivy-infrastructure-prometheus.json",
+          "sha256": "3d5160a0eb6c39ddeb5f4e34286c799dc3b5e4e91f4f02dbdab83070935e7949",
+          "bytes": 294197
+        },
+        {
+          "file": "trivy-infrastructure-redis.json",
+          "sha256": "dda72909b971cb4b75ada77eef361a7472934ab31a316729df74ef755e07b60c",
+          "bytes": 64355
+        }
+      ],
+      "selectedSourceReview": [
+        {
+          "repository": "tianon/gosu",
+          "tag": "1.19",
+          "sourceURL": "https://api.github.com/repos/tianon/gosu/tarball/1.19",
+          "archiveSha256": "592256f367aa967909c307b702fc6d6288ebbc2a79afd3464537f7ac19f6d913",
+          "productionGoFiles": 3,
+          "xdsServerMatches": [],
+          "directNetworkOrCryptoImports": [],
+          "assessment": "Source review only; preserve raw scanner findings and do not claim patched vendor binaries."
+        },
+        {
+          "repository": "prometheus/alertmanager",
+          "tag": "v0.34.1",
+          "sourceURL": "https://api.github.com/repos/prometheus/alertmanager/tarball/v0.34.1",
+          "archiveSha256": "715c9f2f4356b04930d0ce5fb0c8da5c291c544af079593320166f2963e1d4ca",
+          "productionGoFiles": 252,
+          "xdsServerMatches": [],
+          "directNetworkOrCryptoImports": [],
+          "assessment": "Source review only; preserve raw scanner findings and do not claim patched vendor binaries."
+        }
+      ]
+    },
+    "seaweedfsTrivy": {
+      "version": "4.47",
+      "high": 1,
+      "critical": 0,
+      "advisory": "CVE-2026-84445",
+      "assessment": "Released source uses grpc.NewServer, has no xds.NewGRPCServer call or import; required precondition assessed absent. Raw advisory retained without ignore.",
+      "rawReport": {
+        "file": "seaweedfs-trivy.json",
+        "sha256": "dd92fae7424388b29cbd6a5e06cde5c70215ade758e1d4709e4b09661fb08e64",
+        "bytes": 213868
+      }
+    }
+  },
+  "worldClass": {
+    "status": "partial",
+    "skipped": [
+      {
+        "name": "load-stress-soak",
+        "reason": "Load/stress/soak gate requires a runtime target in CI; set a command/URL env or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run."
+      },
+      {
+        "name": "chaos-resilience",
+        "reason": "Chaos gate requires a runtime target in CI; set a command/URL env or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run."
+      },
+      {
+        "name": "canary-synthetic-monitoring",
+        "reason": "Canary/synthetic gate requires runtime targets in CI; set URL env or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run."
+      },
+      {
+        "name": "reliability-smoke",
+        "reason": "Reliability smoke requires an executable command or runtime targets in CI; set QA_RELIABILITY_COMMAND/QA_RELIABILITY_URLS or WORLD_CLASS_ALLOW_CI_SKIPS=1 for an explicit partial run."
+      }
+    ],
+    "gates": [
+      {
+        "name": "real-user-journey-e2e",
+        "status": "ok"
+      },
+      {
+        "name": "load-stress-soak",
+        "status": "skipped"
+      },
+      {
+        "name": "chaos-resilience",
+        "status": "skipped"
+      },
+      {
+        "name": "disaster-recovery",
+        "status": "ok"
+      },
+      {
+        "name": "backup-restore-ci",
+        "status": "ok"
+      },
+      {
+        "name": "multi-tenant-security",
+        "status": "ok"
+      },
+      {
+        "name": "browser-device-cloud-matrix",
+        "status": "ok"
+      },
+      {
+        "name": "canary-synthetic-monitoring",
+        "status": "skipped"
+      },
+      {
+        "name": "observability",
+        "status": "ok"
+      },
+      {
+        "name": "migration-rollback",
+        "status": "ok"
+      },
+      {
+        "name": "concurrency-race",
+        "status": "ok"
+      },
+      {
+        "name": "reliability-smoke",
+        "status": "skipped"
+      }
+    ],
+    "report": {
+      "file": "report.json",
+      "sha256": "1445408ef73ed7715d23134225da11956ed55e411ccd09c5ad54964ad4959657",
+      "bytes": 8021
+    }
+  },
+  "failedAttemptBoundary": "An earlier setup failure continued into a concurrent build, exhausting Docker disk space and mixing provider images. Failed raw logs are retained separately. Final provider compile and runtime lanes use one writer, unique logs, fixed source and selection, and terminal completion before image snapshots/scans. The final isolated Mongo compile also encountered disk-full extraction once; its canonical retry and all eight journeys passed. A bounded private cache cleanup reclaimed 4.579GB before PostgreSQL. PostgreSQL then exhausted disk on both initial extraction and canonical retry. The source repair bounds loads to two images by default with a positive override; final full-stack proofs select one image per batch and reuse one complete compile union. Only owned nrb:local tags and proven private template cache entries were cleaned, reclaiming another 3.395GB; unrelated containers and images were untouched. The canonical manifest repair then exposed a physical optional Better Auth/Vitest chain despite clean direct dependencies. Backend artifact staging now removes only metadata-declared optional canonical development/native peers; final image inspections check physical pnpm package chains in all seven backend images.",
+  "sourceSpecification": {
+    "projects": 111,
+    "behaviorFiles": 677,
+    "requirements": 80,
+    "evidenceEntries": 281,
+    "trace": {
+      "file": "trace.json",
+      "sha256": "c68aa7b9c2319f795f31468712d3295fdd8f71d02891447b6cfd1ee22895df98",
+      "bytes": 58908
+    },
+    "finalDossier": "Generated after the clean audit commit; test-results/spec-evidence/assurance.json"
+  },
+  "logs": {
+    "auditReportFormat": {
+      "file": "nrb-audit-report-format-final.log",
+      "sha256": "2024fae34b7480d714905cd7829015fa51a604f27ca4d6c3baa39b43017f831a",
+      "bytes": 51
+    },
+    "productionComposeRender": {
+      "file": "nrb-final-production-render.log",
+      "sha256": "8bb0307b01176fb4f4c91e92d0eb8c5179f7ea375268f15f5f5266f250fee8f3",
+      "bytes": 132
+    },
+    "frozenArtifactRegression": {
+      "file": "nrb-ssr-peer-tests.log",
+      "sha256": "5941d70f70c5aed9a613221cc72a2361c32eb37ea168f9a690abc0588e90c94c",
+      "bytes": 1272
+    },
+    "standaloneSsrAndMigratorFrozen": {
+      "file": "nrb-frozen-extra-artifacts-actual.log",
+      "sha256": "77d465520bcb00f803838b443ac15cb32f62a19d22da163f81055e0727bfba5b",
+      "bytes": 1048
+    },
+    "productionDecoratorComposition": {
+      "file": "nrb-mongo-payments-di-owner-final.log",
+      "sha256": "59cbc0176aa26521367e5196d5e3d7a97d9172be24b6959d8a7c914aa7c20212",
+      "bytes": 1842
+    },
+    "postgresCleanBuildSource": {
+      "file": "nrb-postgres-peer-final-source-proof.json",
+      "sha256": "1e23495a4269aa1a6b7c144765d9f0097d922ceb9dddf3c43cbc3f0bbb4492f4",
+      "bytes": 407
+    },
+    "linuxSsrNativePeerExclusion": {
+      "file": "nrb-linux-ssr-native-exclusion-final.json",
+      "sha256": "0743da60351ecf30884e16d60f77e2c8e4f001c3c84a512ba740cf6f0030fd60",
+      "bytes": 338
+    },
+    "ownedPrivateCacheCleanup": {
+      "file": "nrb-private-runtime-owned-cache-cleanup.log",
+      "sha256": "9cc6b7202c2cd0320ddfa5e82b2b87f88097dc408c3782e322f27beeddfa3bd1",
+      "bytes": 5214
+    },
+    "compiledDependencyInjectionBefore": {
+      "file": "nrb-mongo-compiled-di-before.log",
+      "sha256": "c86c2176f6559deca5db021d6da074b69a22d3cff811d68f85b4954183cafb31",
+      "bytes": 806
+    },
+    "compiledDependencyInjectionAfter": {
+      "file": "nrb-mongo-compiled-di-after.log",
+      "sha256": "6923298ddea68de95e2dacc9d804c3f706b18694c37d80b305e8f497cbce26cc",
+      "bytes": 230
+    },
+    "gitConventions": {
+      "file": "nrb-git-conventions-runtime-final.log",
+      "sha256": "9478e7edc0311b0f43ec60a7c7e6e74ffca6b93cc58cfc18832a0777c475e609",
+      "bytes": 381
+    },
+    "coverage": {
+      "file": "nrb-coverage-canonical-final.log",
+      "sha256": "66f67eee6d50cd05cf536feab174963aed99a837afba821d222e6ef358aa6d95",
+      "bytes": 467085
+    },
+    "typeAndLintInitial": {
+      "file": "nrb-type-lint-final-closure.log",
+      "sha256": "81293618cf8fb94745e0cd744f01002708264fa2277cdf83c2bd82bfc588662d",
+      "bytes": 48831
+    },
+    "typeAndLintRepair": {
+      "file": "nrb-fullstack-image-regression-passed.log",
+      "sha256": "37bfed32832a75ba1f226b1b4c1c619b396d740e6bcad5f6decbd2fe61835d85",
+      "bytes": 4515
+    },
+    "allBuilds": {
+      "file": "nrb-build-all-repaired.log",
+      "sha256": "e77aa643184e14385deb420600978b1c4ae674ff5847697c5e1cef2d20306d01",
+      "bytes": 42346
+    },
+    "postgresCompiledFullstack": {
+      "file": "nrb-fullstack-postgres-peer-final.log",
+      "sha256": "0791238a77819a2b68bfd645198aef9fea520b33706b67fbb542818c60ddfa21",
+      "bytes": 154438
+    },
+    "postgresBeforeSourceClassification": {
+      "file": "nrb-fullstack-postgres-before-source-classification.log",
+      "sha256": "d178293301d923c5466bdbfda7f3bd837e8adc780776d2dde63d59da3ce8c1d3",
+      "bytes": 197370
+    },
+    "postgresBeforeBackendOptionalPeerRepair": {
+      "file": "nrb-fullstack-postgres-before-backend-optional-peers.log",
+      "sha256": "7f70483461dc847ad7cfae268541e06d8086936021c16de0b5ca0a97c7f3301e",
+      "bytes": 162814
+    },
+    "postgresCanonicalClassificationRegression": {
+      "file": "nrb-source-classification-regressions.log",
+      "sha256": "c04d567e81c430423b39b95f32f9f6f534707f8ac0558d23559dab4bff2d3980",
+      "bytes": 1147
+    },
+    "postgresBeforeFinalPackaging": {
+      "file": "nrb-fullstack-postgres-seaweed-final.log",
+      "sha256": "9fe5fc1f6e65db9a9f8cca3c034998b3bc38e812c7dc7c1298c45eb986555f4e",
+      "bytes": 172218
+    },
+    "mongodbCompiledFullstack": {
+      "file": "nrb-fullstack-mongodb-peer-final.log",
+      "sha256": "0cabe355e6734792eb513bcd4b0cf5b9e521945cd8a047946da685ef16290388",
+      "bytes": 180819
+    },
+    "mongodbMixedFailedAttempt": {
+      "file": "nrb-fullstack-concurrent-build-failure.log",
+      "sha256": "8bed5a05857040b1ede593a8a9c0b70b94641a92405265707c4efaa66dacccfc",
+      "bytes": 248442
+    },
+    "mongodbIsolatedReplayBeforeFinalPackaging": {
+      "file": "nrb-fullstack-mongodb-replay-final.log",
+      "sha256": "2cc19742f23881d51697d7a3949ce6f5d319130f351d93d44e1672676b060333",
+      "bytes": 11015
+    },
+    "s3Live": {
+      "file": "nrb-s3-provider-independent-gates.log",
+      "sha256": "d57fdf92357d9f905791fd070d10fc6c8c3b7a0929ead061a0e7e37589a8e10b",
+      "bytes": 1526
+    },
+    "mongodbGraphOwners": {
+      "file": "nrb-mongo-helper-owner-final.log",
+      "sha256": "7700665e030d2c78a2cb781fd8b1957c13e6d460ce20ccb4048cfd13742e8be7",
+      "bytes": 1274
+    },
+    "toolingFull": {
+      "file": "nrb-s3-tooling-tests.log",
+      "sha256": "5794d1903f15f9e66edd0eec4df583c434cd3293c3a907ef8997f3bf697a301d",
+      "bytes": 213055
+    },
+    "standaloneBackendFrozenInstall": {
+      "file": "nrb-runtime-policy-frozen-install.log",
+      "sha256": "b4a54d7391446d734d500a9af4d420ae02a86a536ad8f10f202a96fedfe16fd8",
+      "bytes": 2563
+    },
+    "frozenInstallAndPeers": {
+      "file": "nrb-final-frozen-peers.log",
+      "sha256": "b8f8ad5f23814403cb26409f569573566718af90a83f2394dce3efc674fabfb0",
+      "bytes": 270
+    },
+    "backupRestore": {
+      "file": "nrb-backup-restore-actual-final.log",
+      "sha256": "14f6d03d1eadbac2948c7cb959335ed0e710e883f08ade2ac7ba24a9047c29ce",
+      "bytes": 286
+    },
+    "backupDockerRegression": {
+      "file": "nrb-backup-docker-regression.log",
+      "sha256": "8b8b65959de7f2974c40df829869b074c7ad7d4f005ce1b30b5627ef92fb3981",
+      "bytes": 893
+    },
+    "visualLinux": {
+      "file": "nrb-visual-linux-reviewed-final.log",
+      "sha256": "0587da9dc305a6dafd11d7f5f7bf29422b22587fe633d923579428fc2af57cf7",
+      "bytes": 17199
+    },
+    "visualDarwin": {
+      "file": "nrb-visual-complete-matrix.log",
+      "sha256": "a7b92138a88e7a602a0c83baf7c622d3b360f42d0cf327fc7fdd4eba7d5843eb",
+      "bytes": 16775
+    },
+    "storybook": {
+      "file": "nrb-verify-storybook.log",
+      "sha256": "7be5f37c9a66d3a2db81fa7e22f55a9ce2a2724e9def1afd4c262447fbaeab78",
+      "bytes": 4043
+    },
+    "frontendE2e": {
+      "file": "nrb-frontend-e2e.log",
+      "sha256": "fd125715bd79e822d25c89fd42e54fda0e958d7847031337a1c638595e0c4023",
+      "bytes": 57671
+    },
+    "adminUserE2eAfterBudgets": {
+      "file": "nrb-admin-user-e2e-compact-final.log",
+      "sha256": "657266cd9a50c4245176d18000e18445c4ff34087d335131599f7886dc56dfea",
+      "bytes": 412
+    },
+    "bundleBudget": {
+      "file": "nrb-bundle-final-passed.log",
+      "sha256": "cb948455099c5843acc82e23188dd46ce24c088eb70ddde167a6215704053f7d",
+      "bytes": 505
+    },
+    "compactCatalogEquivalence": {
+      "file": "nrb-compact-toast-check.log",
+      "sha256": "c6877f34ec892e7bd5c7e4bfe62451d471f905fd441eddb9793a5b13ccbbcbee",
+      "bytes": 157
+    },
+    "moneyMutation": {
+      "file": "nrb-mutation-money-final.log",
+      "sha256": "ad48a3a6415e6cb508e0f8892fe173c4cf0a037d204f415aa2a2f699aaa330fd",
+      "bytes": 10142
+    },
+    "contracts": {
+      "file": "nrb-gate-api-contracts-check.log",
+      "sha256": "8954d33290cd9237faec5d8f543a459b67080d83556411ebdbdb33a046b01cb6",
+      "bytes": 2909
+    },
+    "clients": {
+      "file": "nrb-gate-api-clients-check.log",
+      "sha256": "d2ff83e439230d7b4ad382dcc2bc650de5312d909c87136791e5c73c77bb1840",
+      "bytes": 2745
+    },
+    "consumerContracts": {
+      "file": "nrb-gate-api-contracts-consumer.log",
+      "sha256": "f0d7d0cff797bc5acead7d1400103d0c45f76b18aab6f2cd4c57faa345f30cce",
+      "bytes": 274
+    },
+    "nativeOpenApiFuzz": {
+      "file": "nrb-gate-api-openapi-fuzz.log",
+      "sha256": "c8c97fdfe449a4f4fccfd3c7b9ab5ed35196b5ede0d0bdb3b0a0552bb9a297fb",
+      "bytes": 219
+    },
+    "property": {
+      "file": "nrb-gate-test-property.log",
+      "sha256": "489bc0fea3c44f5964e361b7eb1764dce87c9e80340988a28b77b9d56280618d",
+      "bytes": 183
+    },
+    "onboarding": {
+      "file": "nrb-onboarding-flushed.log",
+      "sha256": "78046e11fb46b563e71ada570ec47dd554e18a83641dceb4695bd60a915b0e94",
+      "bytes": 82333
+    },
+    "helm": {
+      "file": "nrb-helm-final.log",
+      "sha256": "8e57f262d6ba6aa83b98169475e2e8808c22fd2e6e8f8d7b846d6779588b8c56",
+      "bytes": 6319
+    },
+    "deployment": {
+      "file": "nrb-final-single-server-render.log",
+      "sha256": "83beca7ba440c2102e1788060fb5b998599cc8d7742602c5560b6c245eba2c78",
+      "bytes": 2583
+    },
+    "sourceStatic": {
+      "file": "nrb-backend-peer-static.log",
+      "sha256": "731f525c7b758b95482d82b2adbee76cbf25b5b75720753d129d5d8dd9eef478",
+      "bytes": 435
+    },
+    "sourceTypecheck": {
+      "file": "nrb-ssr-peer-typecheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "ssrOptionalPeerSpecification": {
+      "file": "nrb-ssr-peer-spec.log",
+      "sha256": "619988116f6925961d8bcab9ff5b89dcfb8fc64ccd667401d1310635d8ff562a",
+      "bytes": 604
+    },
+    "paymentLedgerAndProviderIsolation": {
+      "file": "nrb-mongo-payments-ledger-regressions.log",
+      "sha256": "1ed047f4d07de4e52d8d6488079522f9378cfcf0cf3caf142b5c7572ede22440",
+      "bytes": 5610
+    },
+    "paymentStartupFailure": {
+      "file": "nrb-mongo-payments-startup-error.log",
+      "sha256": "b441e4d36eb0f2443d0e8cd8c93600e7c07bbfea1f8715b4704f00dea73fcd13",
+      "bytes": 9006
+    },
+    "mongodbStartupFailureBeforeRepair": {
+      "file": "nrb-fullstack-mongodb-pre-payments-failure.log",
+      "sha256": "238048e2538b62cdfc6fc57c08985735eaa317f61df59d122f56af5f242c85f5",
+      "bytes": 213656
+    },
+    "agentVerification": {
+      "file": "nrb-agent-verify-audit-final.log",
+      "sha256": "1bb5ecdde6d7903c293bd528ba9f07602286a7fdfc888408c619ce0962eaf11e",
+      "bytes": 36336
+    },
+    "agentSetupPromptRegressions": {
+      "file": "nrb-skills-provider-final.log",
+      "sha256": "ca4f91c9f44e8b7c4a86558678378a3d0dec73e1be930f3ba645e52aad17ced6",
+      "bytes": 36352
+    },
+    "sourceSpecification": {
+      "file": "nrb-backend-peer-spec.log",
+      "sha256": "57fd21ed7ce2637560eaa4576dbda7529a8440555496f8309705fd7dd18225e8",
+      "bytes": 604
+    },
+    "sourceDocs": {
+      "file": "nrb-audit-report-docs-final.log",
+      "sha256": "a48db9fe5f720c662d8d19cbb6332ba689fb47a1cfd71b2813e9be2b1d1ec164",
+      "bytes": 240
+    },
+    "pnpmAudit": {
+      "file": "nrb-audit-final-source.json",
+      "sha256": "e6eb1fdad48374208c41da6bb5934cbbbdfecb109b05ac641ba6e0a7d27c57ac",
+      "bytes": 285
+    },
+    "gitleaks": {
+      "file": "nrb-gitleaks-final-source.log",
+      "sha256": "ed6883260c4cdd930f65a7cd250d1e4f30cb9067c08d5e8bbc7fb57caccd66c6",
+      "bytes": 355
+    },
+    "nativeSast": {
+      "file": "nrb-sast-current-final.log",
+      "sha256": "e17a9685430422e0957b79773858b2d0b0500cbde6bbfccb96ebc23fd81a14f5",
+      "bytes": 320
+    },
+    "externalSemgrep": {
+      "file": "nrb-semgrep-current-final.log",
+      "sha256": "6c333650b1d28e3f43fba10fb166b8dc9fc2fb3635e8860383e1998d2bb72b3b",
+      "bytes": 522
+    },
+    "applicationTrivyPostgres": {
+      "file": "nrb-trivy-postgres-peer-final.log",
+      "sha256": "8264f1ec48d89cfa908fd512da3cd0d426e054658da3f5346bf505efe3684f0c",
+      "bytes": 8473
+    },
+    "applicationTrivyMongo": {
+      "file": "nrb-trivy-mongodb-peer-final.log",
+      "sha256": "e08fcebd07c675c1e4c63a750df2e8159c7ca3a3693306f96e8c0e88b10a62e8",
+      "bytes": 8459
+    },
+    "seaweedTrivy": {
+      "file": "nrb-seaweed-trivy.log",
+      "sha256": "20754eedbe0402632f185f5050b5fef13d8e05269667012ed4e70fd0b67d3cbf",
+      "bytes": 6078
+    },
+    "seaweedReachability": {
+      "file": "nrb-seaweed-grpc-reachability.txt",
+      "sha256": "61e45e8e502b7d6447078a26c14d3d4e31aa3e7e2cffdb04686d96dc0e90fd97",
+      "bytes": 3831
+    },
+    "monitoringActual": {
+      "file": "nrb-observability-stack-final.log",
+      "sha256": "a2cb3ef21981168ff6c2cfa9189f129a25c898c3b88f494c7cceb528acb9f322",
+      "bytes": 166
+    },
+    "boundedImageCliValidation": {
+      "file": "nrb-image-batch-cli-validation.json",
+      "sha256": "6cb6eac32d4520b6fa98d4240ac4a3c13ad31d30665310f2555180f43fd19e57",
+      "bytes": 1239
+    },
+    "postgresBuildBatchPlan": {
+      "file": "nrb-postgres-batched-plan-proof.json",
+      "sha256": "d38bb7a2593a62169055440bdd496a1d2113098938a3e7337457e704be0bce99",
+      "bytes": 563
+    },
+    "postgresBuildDiskEnvironment": {
+      "file": "nrb-postgres-batched-disk-progress.log",
+      "sha256": "98bc6912b90bb425f55872eb8e2d9dd1f69e38edf69d0c58c7d167a2d25449cb",
+      "bytes": 125
+    },
+    "classifiedAuthRuntime": {
+      "file": "nrb-classified-auth-image-proof.json",
+      "sha256": "47365f2922b8b0393d7daae34e803da0e474056866cda94b497596d0fc93a8e8",
+      "bytes": 409
+    },
+    "canonicalSourceStatic": {
+      "file": "nrb-source-classification-deployment.log",
+      "sha256": "bd276c0680281670173a2fbe021188cc7024e40ca2e77286e65cb412ca07975b",
+      "bytes": 132
+    },
+    "canonicalSourceSpecification": {
+      "file": "nrb-source-classification-spec.log",
+      "sha256": "57fd21ed7ce2637560eaa4576dbda7529a8440555496f8309705fd7dd18225e8",
+      "bytes": 604
+    },
+    "deliveryRegressions": {
+      "file": "nrb-batches-observability-delivery-tests.log",
+      "sha256": "24c679fe8851035ace597d2a8b8c9637bec996308d81c895533f3368ce982efa",
+      "bytes": 7185
+    },
+    "postgresDiskPressureFailure": {
+      "file": "nrb-fullstack-postgres-pre-batching-failure.log",
+      "sha256": "1a9422a4e04add5059111a2537718bb7481f1e4305342a9c51f1f1978058bfa3",
+      "bytes": 221273
+    },
+    "boundedCacheCleanupAfterFailedPostgres": {
+      "file": "nrb-owned-cache-after-pg-failure-cleanup.log",
+      "sha256": "64845596c31d50e30b824df96f105747ec6390887bfbc5951ffdf4eff7a96cb5",
+      "bytes": 2684
+    },
+    "monitoringInitialParserFailure": {
+      "file": "nrb-observability-before-collector.json",
+      "sha256": "a5590d8ef14a5536bc2a27a7e4edf185c0d0cb095e6ecd91b9b94f52141f1095",
+      "bytes": 1238
+    },
+    "monitoringInitialAlertmanagerFailure": {
+      "file": "nrb-observability-before-alertmanager.json",
+      "sha256": "21ad05195e899b660fc315cf74c50445d51e08246bdc70334a59f83554d062bb",
+      "bytes": 505
+    },
+    "monitoringInitialGrafanaSecretFailure": {
+      "file": "nrb-observability-before-grafana-secret.json",
+      "sha256": "d969ab36b8e3d7cbd2f1878c88d20be18c14d3e8f94c0d6acc742b70d9df5928",
+      "bytes": 2611
+    },
+    "backendOptionalPeerBefore": {
+      "file": "nrb-discord-runtime-peer-diagnostic.json",
+      "sha256": "64ab609ec1d914c964e92371a813848dea546b8069f03e5f7af53a37acf31fbe",
+      "bytes": 2182
+    },
+    "backendOptionalPeerOwners": {
+      "file": "nrb-backend-optional-peer-owners.jsonl",
+      "sha256": "38c72fa3aea18b130b240eca22820ebfb1bb6f2fbc4adaaa631d2a1475bdcaa6",
+      "bytes": 2004
+    },
+    "backendOptionalPeerRegression": {
+      "file": "nrb-backend-peer-tests.log",
+      "sha256": "10ee2529aa109a60872b3f563665a23358525c5a990aa2c69466380fb3cce7c7",
+      "bytes": 1392
+    },
+    "backendOptionalPeerFrozenInstall": {
+      "file": "nrb-backend-frozen-optional-peers-actual.log",
+      "sha256": "b03a3f8dea8a1ee4009f2de2e0098d7470f150880c22651dd0ca70dd0471fbc9",
+      "bytes": 700
+    },
+    "worldClassConfigured": {
+      "file": "nrb-world-class-configured-final.log",
+      "sha256": "95aa7fa8fd391b2fbb35befb6bf5637a1e2fb0efee52cac1061690953632591d",
+      "bytes": 569
+    }
+  },
+  "limitations": [
+    "Semgrep retains 13 findings and 40 scanner errors",
+    "Raw SeaweedFS HIGH retained; source reachability assessment is not a patched library",
+    "Four world-class runtime targets unconfigured locally",
+    "No physical device/native Telegram/cloud auth/payment acceptance",
+    "No production or remote forge CI execution",
+    "GitHub required CI status summary has no configured GitHub Actions renderer; authoritative forge decision pending",
+    "Nine vendor images retain 148 HIGH and two CRITICAL scanner occurrences; source review of selected preconditions does not patch them"
+  ]
+}

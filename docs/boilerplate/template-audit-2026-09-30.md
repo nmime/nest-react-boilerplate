@@ -1,5 +1,8 @@
 # Template audit — 2026-09-30
 
+The [2026-10-01 addendum](template-audit-2026-10-01.md) records the later source,
+provider acceptance, restored GitHub gates and current security limitations.
+
 This is a historical audit of `nmime/nest-react-boilerplate`, starting at
 `4c79a30e2b851617bc05fc9f3ce68f98709b2796` on the topic branch
 `chore/template-audit-refresh`. The implementation reviewed here ends at

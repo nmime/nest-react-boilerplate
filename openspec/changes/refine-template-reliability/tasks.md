@@ -8,7 +8,7 @@
 
 - [x] 2.1 Preserve customized namespaces through additive, preset, and interactive setup.
 - [x] 2.2 Probe missing, empty, applied, and failed PostgreSQL migration state safely.
-- [ ] 2.3 Complete the remaining traced correctness queue with proportional evidence.
+- [x] 2.3 Complete the remaining traced correctness queue with proportional evidence.
 - [x] 2.4 Validate generator scope/layer and port exhaustion before writes.
 - [x] 2.5 Remove ambient and localhost payment component database fallbacks.
 - [x] 2.6 Require complete selected Compose service evidence before reporting readiness.
@@ -35,10 +35,10 @@
 - [x] 2.26 Make fixture ownership, dry runs, HTTP deadlines, and optional quality-engine image pins explicit and executable.
 - [x] 2.27 Repair Chinese presentation semantics without changing catalog keys, placeholders, brands, or literal commands.
 - [x] 2.28 Keep native API origin and credential configuration explicit; preserve local preferences when no native API is configured.
-- [ ] 2.29 Verify the owned runtime administrator, dual-cookie revocation, delayed browser queries, and authenticated RBAC on both final stacks.
+- [x] 2.29 Verify the owned runtime administrator, dual-cookie revocation, delayed browser queries, and authenticated RBAC on both final stacks.
 
 ## 3. Final assurance
 
-- [ ] 3.1 Regenerate source-owned artifacts and reconcile documentation and skills.
-- [ ] 3.2 Run the excellent final quality gate against the final source revision.
+- [x] 3.1 Regenerate source-owned artifacts and reconcile documentation and skills.
+- [x] 3.2 Run the excellent final quality gate against the final source revision.
 - [ ] 3.3 Finish independent review and present the concrete PR for specific merge approval.

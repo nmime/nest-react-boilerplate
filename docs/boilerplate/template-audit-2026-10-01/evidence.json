@@ -1,0 +1,2738 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-01",
+  "repository": "nmime/nest-react-boilerplate",
+  "implementationSource": "79a121dec952e393920ff555b2957c860a2fe066",
+  "base": "4c79a30e2b851617bc05fc9f3ce68f98709b2796",
+  "branch": "chore/template-audit-refresh",
+  "pullRequest": "https://github.com/nmime/nest-react-boilerplate/pull/329",
+  "mainMergeApproval": false,
+  "productionChanged": false,
+  "patchRiskRecommendation": "revise",
+  "dependencyCensus": {
+    "base": "4c79a30e2b851617bc05fc9f3ce68f98709b2796",
+    "head": "79a121dec952e393920ff555b2957c860a2fe066",
+    "declarationsChanged": 208,
+    "uniquePackages": 123,
+    "manifestCount": 8,
+    "changes": [
+      {
+        "manifest": "apps/e2e/acceptance/package.json",
+        "section": "devDependencies",
+        "name": "@cucumber/cucumber",
+        "before": "13.2.0",
+        "after": "13.2.1"
+      },
+      {
+        "manifest": "apps/e2e/acceptance/package.json",
+        "section": "devDependencies",
+        "name": "@types/node",
+        "before": "24.13.3",
+        "after": "24.19.0"
+      },
+      {
+        "manifest": "apps/e2e/acceptance/package.json",
+        "section": "devDependencies",
+        "name": "tsx",
+        "before": "4.23.1",
+        "after": "4.23.15"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "dependencies",
+        "name": "@astrojs/mdx",
+        "before": "7.0.3",
+        "after": "8.0.2"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "dependencies",
+        "name": "@astrojs/react",
+        "before": "6.0.1",
+        "after": "7.0.0"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "dependencies",
+        "name": "@astrojs/sitemap",
+        "before": "3.7.3",
+        "after": "3.7.4"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "dependencies",
+        "name": "astro",
+        "before": "7.3.3",
+        "after": "7.3.5"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "devDependencies",
+        "name": "@astrojs/check",
+        "before": "0.9.9",
+        "after": "0.9.10"
+      },
+      {
+        "manifest": "apps/frontend/landing/package.json",
+        "section": "devDependencies",
+        "name": "@astrojs/node",
+        "before": "11.0.2",
+        "after": "11.1.6"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "dependencies",
+        "name": "expo",
+        "before": "57.0.7",
+        "after": "57.0.26"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "dependencies",
+        "name": "expo-router",
+        "before": "57.0.7",
+        "after": "57.0.24"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "dependencies",
+        "name": "react-native",
+        "before": "0.86.0",
+        "after": "0.86.3"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "devDependencies",
+        "name": "@testing-library/react",
+        "before": "16.3.2",
+        "after": "16.3.3"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "devDependencies",
+        "name": "@types/react",
+        "before": "19.2.17",
+        "after": "19.2.18"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "devDependencies",
+        "name": "babel-preset-expo",
+        "before": "57.0.3",
+        "after": "57.0.13"
+      },
+      {
+        "manifest": "apps/frontend/mobile/package.json",
+        "section": "devDependencies",
+        "name": "happy-dom",
+        "before": "20.10.6",
+        "after": "20.14.5"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/core",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/migrations",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/nestjs",
+        "before": "7.0.2",
+        "after": "7.1.0"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/postgresql",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "@nestjs/common",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "@nestjs/core",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "joi",
+        "before": "18.2.3",
+        "after": "18.2.9"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "mongodb",
+        "before": "7.0.0",
+        "after": "7.7.0"
+      },
+      {
+        "manifest": "docker/migrator-package.json",
+        "section": "dependencies",
+        "name": "pg",
+        "before": "8.22.0",
+        "after": "8.23.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@aws-sdk/client-s3",
+        "before": "3.1092.0",
+        "after": "3.1142.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@fastify/otel",
+        "before": "0.20.1",
+        "after": "0.21.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@fastify/session",
+        "before": "11.1.2",
+        "after": "11.1.3"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@fastify/static",
+        "before": "10.1.2",
+        "after": "10.1.5"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@grammyjs/menu",
+        "before": "1.3.1",
+        "after": "1.5.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/core",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/migrations",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/nestjs",
+        "before": "7.0.2",
+        "after": "7.1.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/postgresql",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@nestjs/common",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@nestjs/core",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@nestjs/platform-fastify",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@nestjs/swagger",
+        "before": "11.4.6",
+        "after": "12.0.2"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/exporter-metrics-otlp-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/exporter-trace-otlp-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-mongodb",
+        "before": "0.73.0",
+        "after": "0.75.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-nestjs-core",
+        "before": "0.66.0",
+        "after": "0.68.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-pg",
+        "before": "0.72.0",
+        "after": "0.74.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-redis",
+        "before": "0.68.0",
+        "after": "0.70.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-runtime-node",
+        "before": "0.33.0",
+        "after": "0.35.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/resources",
+        "before": "2.9.0",
+        "after": "2.11.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/sdk-metrics",
+        "before": "2.9.0",
+        "after": "2.11.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/sdk-node",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "discord-api-types",
+        "before": "0.38.50",
+        "after": "0.38.56"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "grammy",
+        "before": "1.45.1",
+        "after": "1.46.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "ipaddr.js",
+        "before": "2.4.0",
+        "after": "2.5.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "jose",
+        "before": "6.2.3",
+        "after": "6.2.12"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "maxmind",
+        "before": "5.0.6",
+        "after": "5.0.7"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "mongodb",
+        "before": "7.0.0",
+        "after": "7.7.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "pg",
+        "before": "8.22.0",
+        "after": "8.23.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "dependencies",
+        "name": "redis",
+        "before": "6.1.0",
+        "after": "6.2.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "name": "@nestjs/testing",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "name": "@testcontainers/mongodb",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "name": "@testcontainers/postgresql",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "name": "@types/pg",
+        "before": "8.20.0",
+        "after": "8.23.1"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "name": "supertest",
+        "before": "7.2.2",
+        "after": "7.3.0"
+      },
+      {
+        "manifest": "libs/backend/package.json",
+        "section": "devDependencies",
+        "name": "testcontainers",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@fastify/static",
+        "before": "10.1.2",
+        "after": "10.1.5"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-alert-dialog",
+        "before": "^1.1.20",
+        "after": "^1.1.23"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-checkbox",
+        "before": "^1.3.8",
+        "after": "^1.3.11"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-dialog",
+        "before": "^1.1.20",
+        "after": "^1.1.23"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-dropdown-menu",
+        "before": "^2.1.21",
+        "after": "^2.1.24"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-label",
+        "before": "^2.1.12",
+        "after": "^2.1.15"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-select",
+        "before": "^2.3.4",
+        "after": "^2.3.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-slot",
+        "before": "^1.3.0",
+        "after": "^1.3.3"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-switch",
+        "before": "^1.3.4",
+        "after": "^1.3.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@radix-ui/react-tabs",
+        "before": "^1.1.18",
+        "after": "^1.1.21"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@tanstack/react-query",
+        "before": "^5.101.4",
+        "after": "^5.104.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "@tanstack/react-router",
+        "before": "1.170.18",
+        "after": "1.170.40"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "lucide-react",
+        "before": "^1.25.0",
+        "after": "^1.48.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "mobx-tanstack-query",
+        "before": "7.2.2",
+        "after": "7.3.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "tailwind-merge",
+        "before": "^3.6.0",
+        "after": "^3.7.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "tamagui",
+        "before": "2.5.0",
+        "after": "2.7.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "vike",
+        "before": "0.4.260",
+        "after": "0.4.267"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "dependencies",
+        "name": "vike-react",
+        "before": "0.6.25",
+        "after": "0.6.29"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@astrojs/check",
+        "before": "0.9.9",
+        "after": "0.9.10"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@astrojs/mdx",
+        "before": "7.0.3",
+        "after": "8.0.2"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@astrojs/node",
+        "before": "11.0.2",
+        "after": "11.1.6"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@astrojs/react",
+        "before": "6.0.1",
+        "after": "7.0.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@astrojs/sitemap",
+        "before": "3.7.3",
+        "after": "3.7.4"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@nx/react",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@nx/vite",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@playwright/test",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@storybook/addon-vitest",
+        "before": "10.5.4",
+        "after": "10.6.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@storybook/react-vite",
+        "before": "10.5.4",
+        "after": "10.6.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@testing-library/react",
+        "before": "16.3.2",
+        "after": "16.3.3"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@types/react",
+        "before": "19.2.17",
+        "after": "19.2.18"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@types/react-dom",
+        "before": "19.2.3",
+        "after": "19.2.7"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "@vitejs/plugin-react",
+        "before": "6.0.3",
+        "after": "6.1.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "astro",
+        "before": "7.3.3",
+        "after": "7.3.5"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "happy-dom",
+        "before": "20.10.6",
+        "after": "20.14.5"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "jsdom",
+        "before": "29.1.1",
+        "after": "30.1.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "playwright",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "postcss",
+        "before": "8.5.21",
+        "after": "8.5.28"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "react-native-web",
+        "before": "0.21.2",
+        "after": "0.21.3"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "storybook",
+        "before": "10.5.4",
+        "after": "10.6.1"
+      },
+      {
+        "manifest": "libs/frontend/package.json",
+        "section": "devDependencies",
+        "name": "vite",
+        "before": "8.1.5",
+        "after": "8.3.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@fastify/otel",
+        "before": "0.20.1",
+        "after": "0.21.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@fastify/session",
+        "before": "11.1.2",
+        "after": "11.1.3"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@fastify/static",
+        "before": "10.1.2",
+        "after": "10.1.5"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@grammyjs/menu",
+        "before": "1.3.1",
+        "after": "1.5.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/core",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/migrations",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/nestjs",
+        "before": "7.0.2",
+        "after": "7.1.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/postgresql",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@nestjs/common",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@nestjs/config",
+        "before": "4.0.4",
+        "after": "12.0.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@nestjs/core",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@nestjs/platform-fastify",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@nestjs/schedule",
+        "before": "6.1.3",
+        "after": "12.0.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@nestjs/swagger",
+        "before": "11.4.6",
+        "after": "12.0.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/exporter-metrics-otlp-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/exporter-trace-otlp-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-http",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-mongodb",
+        "before": "0.73.0",
+        "after": "0.75.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-nestjs-core",
+        "before": "0.66.0",
+        "after": "0.68.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-pg",
+        "before": "0.72.0",
+        "after": "0.74.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-redis",
+        "before": "0.68.0",
+        "after": "0.70.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/instrumentation-runtime-node",
+        "before": "0.33.0",
+        "after": "0.35.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/resources",
+        "before": "2.9.0",
+        "after": "2.11.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/sdk-metrics",
+        "before": "2.9.0",
+        "after": "2.11.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "@opentelemetry/sdk-node",
+        "before": "0.220.0",
+        "after": "0.222.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "better-auth",
+        "before": "1.6.23",
+        "after": "1.7.6"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "discord-api-types",
+        "before": "0.38.50",
+        "after": "0.38.56"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "drizzle-orm",
+        "before": "0.45.2",
+        "after": "0.45.3"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "grammy",
+        "before": "1.45.1",
+        "after": "1.46.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "jose",
+        "before": "6.2.3",
+        "after": "6.2.12"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "mongodb",
+        "before": "7.0.0",
+        "after": "7.7.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "openid-client",
+        "before": "6.8.4",
+        "after": "6.8.8"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "pg",
+        "before": "8.22.0",
+        "after": "8.23.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "redis",
+        "before": "6.1.0",
+        "after": "6.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "uuid",
+        "before": "14.0.1",
+        "after": "14.0.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "dependencies",
+        "name": "zod",
+        "before": "^4.4.3",
+        "after": "^4.6.5"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@cucumber/cucumber",
+        "before": "13.2.0",
+        "after": "13.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@fission-ai/openspec",
+        "before": "1.6.0",
+        "after": "1.13.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nestjs/testing",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/devkit",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/eslint",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/eslint-plugin",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/js",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/nest",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/node",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/react",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/vite",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/web",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@nx/webpack",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@playwright/test",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@semantic-release/github",
+        "before": "12.0.9",
+        "after": "12.0.10"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@storybook/addon-a11y",
+        "before": "10.5.4",
+        "after": "10.6.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@storybook/addon-vitest",
+        "before": "10.5.4",
+        "after": "10.6.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@storybook/react-vite",
+        "before": "10.5.4",
+        "after": "10.6.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@swc/core",
+        "before": "1.15.46",
+        "after": "1.16.12"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@testcontainers/mongodb",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@testcontainers/postgresql",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@testing-library/react",
+        "before": "16.3.2",
+        "after": "16.3.3"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@types/node",
+        "before": "24.13.3",
+        "after": "24.19.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@types/pg",
+        "before": "8.20.0",
+        "after": "8.23.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@types/react",
+        "before": "19.2.17",
+        "after": "19.2.18"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@types/react-dom",
+        "before": "19.2.3",
+        "after": "19.2.7"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@typescript-eslint/eslint-plugin",
+        "before": "8.65.0",
+        "after": "8.71.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@typescript-eslint/parser",
+        "before": "8.65.0",
+        "after": "8.71.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "@vitejs/plugin-react",
+        "before": "6.0.3",
+        "after": "6.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "conventional-changelog-conventionalcommits",
+        "before": "^10.2.1",
+        "after": "^10.4.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "drizzle-kit",
+        "before": "^0.31.10",
+        "after": "^0.31.11"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "eslint",
+        "before": "10.7.0",
+        "after": "10.11.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "eslint-plugin-sonarjs",
+        "before": "4.2.0",
+        "after": "4.2.2"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "jsdom",
+        "before": "29.1.1",
+        "after": "30.1.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "jsonc-eslint-parser",
+        "before": "3.1.0",
+        "after": "3.3.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "nx",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "playwright",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "postcss",
+        "before": "8.5.25",
+        "after": "8.5.28"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "prettier",
+        "before": "3.9.6",
+        "after": "3.9.9"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "semantic-release",
+        "before": "^25.0.8",
+        "after": "^25.0.9"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "shadcn",
+        "before": "4.13.1",
+        "after": "4.21.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "storybook",
+        "before": "10.5.4",
+        "after": "10.6.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "supertest",
+        "before": "7.2.2",
+        "after": "7.3.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "testcontainers",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "tsx",
+        "before": "4.23.1",
+        "after": "4.23.15"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "typescript-eslint",
+        "before": "8.65.0",
+        "after": "8.71.0"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "vite",
+        "before": "8.1.5",
+        "after": "8.3.1"
+      },
+      {
+        "manifest": "package.json",
+        "section": "devDependencies",
+        "name": "webpack-cli",
+        "before": "7.2.1",
+        "after": "7.2.3"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "@mikro-orm/core",
+        "before": "7.1.7",
+        "after": "7.2.2"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "@nestjs/common",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "@nestjs/core",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "@nestjs/platform-fastify",
+        "before": "11.1.28",
+        "after": "12.1.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "@nx/devkit",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "@playwright/test",
+        "before": "1.61.1",
+        "after": "1.63.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "@swc/core",
+        "before": "1.15.46",
+        "after": "1.16.12"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "@testcontainers/postgresql",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "axe-core",
+        "before": "4.12.1",
+        "after": "4.13.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "fast-check",
+        "before": "4.9.0",
+        "after": "4.10.2"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "mongodb",
+        "before": "7.0.0",
+        "after": "7.7.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "pg",
+        "before": "8.22.0",
+        "after": "8.23.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "sharp",
+        "before": "0.35.4",
+        "after": "0.35.5"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "yaml",
+        "before": "2.9.0",
+        "after": "2.9.1"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "dependencies",
+        "name": "zod",
+        "before": "^4.4.3",
+        "after": "^4.6.5"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "devDependencies",
+        "name": "@stryker-mutator/core",
+        "before": "9.6.1",
+        "after": "10.0.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "devDependencies",
+        "name": "@testcontainers/mongodb",
+        "before": "12.0.4",
+        "after": "12.2.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "devDependencies",
+        "name": "@types/node",
+        "before": "24.13.3",
+        "after": "24.19.0"
+      },
+      {
+        "manifest": "packages/tooling/package.json",
+        "section": "devDependencies",
+        "name": "nx",
+        "before": "23.1.0",
+        "after": "23.2.1"
+      }
+    ]
+  },
+  "sourceAssurance": {
+    "status": "ok",
+    "lane": "pr",
+    "workspaceState": "clean",
+    "sourceSha": "79a121dec952e393920ff555b2957c860a2fe066",
+    "generatedAt": "2026-09-30T21:51:21.496Z",
+    "specificationHash": "46ecc6a2ae8520ef35a2263c15067d82bdaaa59e206808515ecd540af017ce16",
+    "base": "4c79a30e2b851617bc05fc9f3ce68f98709b2796",
+    "head": "79a121dec952e393920ff555b2957c860a2fe066"
+  },
+  "browserMatrices": [
+    {
+      "provider": "pg",
+      "exit": 0
+    },
+    {
+      "provider": "mongo",
+      "exit": 0
+    }
+  ],
+  "browserCasesPerProvider": 54,
+  "databaseReadiness": {
+    "source": "79a121dec952e393920ff555b2957c860a2fe066",
+    "results": [
+      {
+        "project": "nrbfinalpgbc278",
+        "provider": "postgres",
+        "before": [
+          {
+            "port": 49301,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": false
+          },
+          {
+            "port": 49302,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": false
+          },
+          {
+            "port": 49303,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": false
+          }
+        ],
+        "databaseStopped": [
+          {
+            "port": 49301,
+            "status": 503,
+            "databaseStatus": "error",
+            "skipped": null
+          },
+          {
+            "port": 49302,
+            "status": 503,
+            "databaseStatus": "error",
+            "skipped": null
+          },
+          {
+            "port": 49303,
+            "status": 503,
+            "databaseStatus": "error",
+            "skipped": null
+          }
+        ],
+        "recovered": [
+          {
+            "port": 49301,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": false
+          },
+          {
+            "port": 49302,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": false
+          },
+          {
+            "port": 49303,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": false
+          }
+        ]
+      },
+      {
+        "project": "nrbfinalmongo0b37",
+        "provider": "mongodb",
+        "before": [
+          {
+            "port": 49501,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": null
+          },
+          {
+            "port": 49502,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": null
+          },
+          {
+            "port": 49503,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": null
+          }
+        ],
+        "databaseStopped": [
+          {
+            "port": 49501,
+            "status": 503,
+            "databaseStatus": "error",
+            "skipped": null
+          },
+          {
+            "port": 49502,
+            "status": 503,
+            "databaseStatus": "error",
+            "skipped": null
+          },
+          {
+            "port": 49503,
+            "status": 503,
+            "databaseStatus": "error",
+            "skipped": null
+          }
+        ],
+        "recovered": [
+          {
+            "port": 49501,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": null
+          },
+          {
+            "port": 49502,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": null
+          },
+          {
+            "port": 49503,
+            "status": 200,
+            "databaseStatus": "ok",
+            "skipped": null
+          }
+        ]
+      }
+    ]
+  },
+  "images": {
+    "postgres": {
+      "source": "79a121dec952e393920ff555b2957c860a2fe066",
+      "provider": "postgres",
+      "images": [
+        {
+          "tag": "nrb/admin-app:final-postgres",
+          "service": "admin-app",
+          "Id": "sha256:b0f7292eb44b63db6a6b71b9fb7f436564662bd774c240021d1d85804a9a0751",
+          "scanReference": "nrb/admin-app:final-web-79a121d",
+          "RepoDigests": ["nrb/admin-app@sha256:b0f7292eb44b63db6a6b71b9fb7f436564662bd774c240021d1d85804a9a0751"],
+          "Architecture": "arm64",
+          "Size": 23729326,
+          "source": "79a121dec952e393920ff555b2957c860a2fe066",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/admin-app-api:final-postgres",
+          "service": "admin-app-api",
+          "Id": "sha256:5106e5439c738c0365835993dd3c15714ab2d04a2a50bdb1bcb04f1a4e78375e",
+          "scanReference": "nrb/admin-app-api:final-pg-6dca9b8",
+          "RepoDigests": ["nrb/admin-app-api@sha256:5106e5439c738c0365835993dd3c15714ab2d04a2a50bdb1bcb04f1a4e78375e"],
+          "Architecture": "arm64",
+          "Size": 139414018,
+          "source": "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/auth-app-api:final-postgres",
+          "service": "auth-app-api",
+          "Id": "sha256:58caf7caf8000de2720ba8c5e00f7b1e683f4766adbb0e8d27f7f06713c366f5",
+          "scanReference": "nrb/auth-app-api:final-pg-6dca9b8",
+          "RepoDigests": ["nrb/auth-app-api@sha256:58caf7caf8000de2720ba8c5e00f7b1e683f4766adbb0e8d27f7f06713c366f5"],
+          "Architecture": "arm64",
+          "Size": 143680998,
+          "source": "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "Id": "sha256:ada5af016333d2fdc810ad60703a319b6bd3ad3455cde1c37b7ef533ae977cba",
+          "RepoDigests": [
+            "nrb/discord-app-api@sha256:ada5af016333d2fdc810ad60703a319b6bd3ad3455cde1c37b7ef533ae977cba"
+          ],
+          "Created": "2026-10-01T01:38:37.060899804+05:00",
+          "Architecture": "arm64",
+          "Size": 143892407,
+          "tag": "nrb/discord-app-api:local",
+          "service": "discord-app-api",
+          "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+          "availability": "historical-build-and-scan-reference",
+          "containerImageVerified": true
+        },
+        {
+          "Id": "sha256:3e3cb9f0d94317f9de56aa64470b75fa6c990c5500ee88bee5bf1dd62b7e695b",
+          "RepoDigests": ["nrb/landing-app@sha256:3e3cb9f0d94317f9de56aa64470b75fa6c990c5500ee88bee5bf1dd62b7e695b"],
+          "Created": "2026-10-01T00:43:25.14746807+05:00",
+          "Architecture": "arm64",
+          "Size": 23620709,
+          "tag": "nrb/landing-app:local",
+          "service": "landing-app",
+          "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+          "availability": "historical-build-and-scan-reference",
+          "containerImageVerified": true
+        },
+        {
+          "Id": "sha256:472fe659aafe550d4565a93791d516ecceec70a8d74942eb9148be0b34a5ce01",
+          "RepoDigests": ["nrb/migrator@sha256:472fe659aafe550d4565a93791d516ecceec70a8d74942eb9148be0b34a5ce01"],
+          "Created": "2026-10-01T01:39:34.673316045+05:00",
+          "Architecture": "arm64",
+          "Size": 116334963,
+          "tag": "nrb/migrator:local",
+          "service": "migrator",
+          "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+          "availability": "historical-build-and-scan-reference"
+        },
+        {
+          "Id": "sha256:d05d8e1dfa27ba21b134a13cfc758e2ecb50de93ade81918b98bafae29fadf29",
+          "RepoDigests": ["nrb/mobile-app@sha256:d05d8e1dfa27ba21b134a13cfc758e2ecb50de93ade81918b98bafae29fadf29"],
+          "Created": "2026-10-01T01:06:49.095719781+05:00",
+          "Architecture": "arm64",
+          "Size": 24262964,
+          "tag": "nrb/mobile-app:local",
+          "service": "mobile-app",
+          "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+          "availability": "historical-build-and-scan-reference",
+          "containerImageVerified": true
+        },
+        {
+          "Id": "sha256:c5df944e6bc93972fb8ed53d140f82e7a56aedad7597cc8f2292367ae745c266",
+          "RepoDigests": [
+            "nrb/notification-consumer@sha256:c5df944e6bc93972fb8ed53d140f82e7a56aedad7597cc8f2292367ae745c266"
+          ],
+          "Created": "2026-10-01T01:40:12.370081663+05:00",
+          "Architecture": "arm64",
+          "Size": 138511349,
+          "tag": "nrb/notification-consumer:local",
+          "service": "notification-consumer",
+          "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+          "availability": "historical-build-and-scan-reference",
+          "containerImageVerified": true
+        },
+        {
+          "Id": "sha256:430940670486e98bf84c18191c9e08be3005159ea457fcd3ec5d244fa3c811a4",
+          "RepoDigests": [
+            "nrb/notification-scheduler@sha256:430940670486e98bf84c18191c9e08be3005159ea457fcd3ec5d244fa3c811a4"
+          ],
+          "Created": "2026-10-01T01:40:52.401067454+05:00",
+          "Architecture": "arm64",
+          "Size": 138506212,
+          "tag": "nrb/notification-scheduler:local",
+          "service": "notification-scheduler",
+          "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+          "availability": "historical-build-and-scan-reference",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/site-app:final-postgres",
+          "service": "site-app",
+          "Id": "sha256:96a30afbd03d038035934670e3c1919c52b6b7fadec4ad136fd275034b7ef981",
+          "scanReference": "nrb/site-app:final-pg-6dca9b8",
+          "RepoDigests": ["nrb/site-app@sha256:96a30afbd03d038035934670e3c1919c52b6b7fadec4ad136fd275034b7ef981"],
+          "Architecture": "arm64",
+          "Size": 136662512,
+          "source": "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "Id": "sha256:08e3be37efcc073700b24839f27b438b3a9de8a760e5232a05aebf163cbe12f4",
+          "RepoDigests": [
+            "nrb/telegram-bot-api@sha256:08e3be37efcc073700b24839f27b438b3a9de8a760e5232a05aebf163cbe12f4"
+          ],
+          "Created": "2026-10-01T01:42:25.777850392+05:00",
+          "Architecture": "arm64",
+          "Size": 134466898,
+          "tag": "nrb/telegram-bot-api:local",
+          "service": "telegram-bot-api",
+          "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+          "availability": "historical-build-and-scan-reference",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/user-app:final-postgres",
+          "service": "user-app",
+          "Id": "sha256:4bea976b0bd4e01ed7d8bddf0e5921679ff090c079967f76a2acc069c5268f58",
+          "scanReference": "nrb/user-app:final-web-79a121d",
+          "RepoDigests": ["nrb/user-app@sha256:4bea976b0bd4e01ed7d8bddf0e5921679ff090c079967f76a2acc069c5268f58"],
+          "Architecture": "arm64",
+          "Size": 23710263,
+          "source": "79a121dec952e393920ff555b2957c860a2fe066",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/user-app-api:final-postgres",
+          "service": "user-app-api",
+          "Id": "sha256:a2511a065364dc4dd8f345e3e9ff9bc1af1176900e82d57af780964c7c708247",
+          "scanReference": "nrb/user-app-api:final-pg-6dca9b8",
+          "RepoDigests": ["nrb/user-app-api@sha256:a2511a065364dc4dd8f345e3e9ff9bc1af1176900e82d57af780964c7c708247"],
+          "Architecture": "arm64",
+          "Size": 138931645,
+          "source": "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+          "availability": "present",
+          "containerImageVerified": true
+        }
+      ]
+    },
+    "mongodb": {
+      "source": "79a121dec952e393920ff555b2957c860a2fe066",
+      "provider": "mongodb",
+      "images": [
+        {
+          "tag": "nrb/admin-app:final-mongodb",
+          "service": "admin-app",
+          "Id": "sha256:b0f7292eb44b63db6a6b71b9fb7f436564662bd774c240021d1d85804a9a0751",
+          "scanReference": "nrb/admin-app:final-web-79a121d",
+          "RepoDigests": ["nrb/admin-app@sha256:b0f7292eb44b63db6a6b71b9fb7f436564662bd774c240021d1d85804a9a0751"],
+          "Architecture": "arm64",
+          "Size": 23729326,
+          "source": "79a121dec952e393920ff555b2957c860a2fe066",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/admin-app-api:final-mongodb",
+          "service": "admin-app-api",
+          "Id": "sha256:3afce19426e15632e64b1383a82145381302b7e7cf405bcfe7c870e525e6b5d0",
+          "scanReference": "nrb/admin-app-api:final-mongo-6dca9b8",
+          "RepoDigests": ["nrb/admin-app-api@sha256:3afce19426e15632e64b1383a82145381302b7e7cf405bcfe7c870e525e6b5d0"],
+          "Architecture": "arm64",
+          "Size": 143299635,
+          "source": "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/auth-app-api:final-mongodb",
+          "service": "auth-app-api",
+          "Id": "sha256:74ed9221c6fdbf9fce94793220510fd8dedc9b0e8faba555dfd068935d1e668b",
+          "scanReference": "nrb/auth-app-api:final-mongo-6dca9b8",
+          "RepoDigests": ["nrb/auth-app-api@sha256:74ed9221c6fdbf9fce94793220510fd8dedc9b0e8faba555dfd068935d1e668b"],
+          "Architecture": "arm64",
+          "Size": 143954716,
+          "source": "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/discord-app-api:final-mongodb",
+          "service": "discord-app-api",
+          "Id": "sha256:61f4fe492f45bbf709273c9e8fd237e3a0ebd709fdf7b6c343fac8dbeff6acdc",
+          "scanReference": "nrb/discord-app-api:final-mongo-0b37a82",
+          "RepoDigests": [
+            "nrb/discord-app-api@sha256:61f4fe492f45bbf709273c9e8fd237e3a0ebd709fdf7b6c343fac8dbeff6acdc"
+          ],
+          "Architecture": "arm64",
+          "Size": 144170280,
+          "source": "0b37a82a27c49ade4f193dc996e95ec424536419",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/landing-app:final-mongodb",
+          "service": "landing-app",
+          "Id": "sha256:0ddafd8cedd3cfd2f95c47bcf8273aa8a2c0ff47325a36ba4e2446003c21b7d9",
+          "scanReference": "nrb/landing-app:final-mongo-0b37a82",
+          "RepoDigests": ["nrb/landing-app@sha256:0ddafd8cedd3cfd2f95c47bcf8273aa8a2c0ff47325a36ba4e2446003c21b7d9"],
+          "Architecture": "arm64",
+          "Size": 23620709,
+          "source": "0b37a82a27c49ade4f193dc996e95ec424536419",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/migrator:final-mongodb",
+          "service": "migrator",
+          "Id": "sha256:464124c51a30f3a9b4383304d2a1bd11dc60e600d0d56c47dafc715391604133",
+          "scanReference": "nrb/migrator:final-mongo-0b37a82",
+          "RepoDigests": ["nrb/migrator@sha256:464124c51a30f3a9b4383304d2a1bd11dc60e600d0d56c47dafc715391604133"],
+          "Architecture": "arm64",
+          "Size": 116624050,
+          "source": "0b37a82a27c49ade4f193dc996e95ec424536419",
+          "availability": "present"
+        },
+        {
+          "tag": "nrb/mobile-app:final-mongodb",
+          "service": "mobile-app",
+          "Id": "sha256:bbdefe425d5a4dd38df8c50ab766a0082e122f616b317ddc6805ccc823c6c771",
+          "scanReference": "nrb/mobile-app:final-mongo-0b37a82",
+          "RepoDigests": ["nrb/mobile-app@sha256:bbdefe425d5a4dd38df8c50ab766a0082e122f616b317ddc6805ccc823c6c771"],
+          "Architecture": "arm64",
+          "Size": 24262964,
+          "source": "0b37a82a27c49ade4f193dc996e95ec424536419",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/notification-consumer:final-mongodb",
+          "service": "notification-consumer",
+          "Id": "sha256:5f4da35a7672d2998ed503cc5d36387bac7cbfec575370227adb7893eed58f55",
+          "scanReference": "nrb/notification-consumer:final-mongo-0b37a82",
+          "RepoDigests": [
+            "nrb/notification-consumer@sha256:5f4da35a7672d2998ed503cc5d36387bac7cbfec575370227adb7893eed58f55"
+          ],
+          "Architecture": "arm64",
+          "Size": 142394325,
+          "source": "0b37a82a27c49ade4f193dc996e95ec424536419",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/notification-scheduler:final-mongodb",
+          "service": "notification-scheduler",
+          "Id": "sha256:a831c6a02d40cf9945323eab462984b1f41a9e331fd2976aac21a5d70c339890",
+          "scanReference": "nrb/notification-scheduler:final-mongo-0b37a82",
+          "RepoDigests": [
+            "nrb/notification-scheduler@sha256:a831c6a02d40cf9945323eab462984b1f41a9e331fd2976aac21a5d70c339890"
+          ],
+          "Architecture": "arm64",
+          "Size": 142393752,
+          "source": "0b37a82a27c49ade4f193dc996e95ec424536419",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/site-app:final-mongodb",
+          "service": "site-app",
+          "Id": "sha256:ec10f4b9d03b49dc64d0bba0e37d8fdb82f32a1e2fba056f4b921514df162a70",
+          "scanReference": "nrb/site-app:final-mongo-6dca9b8",
+          "RepoDigests": ["nrb/site-app@sha256:ec10f4b9d03b49dc64d0bba0e37d8fdb82f32a1e2fba056f4b921514df162a70"],
+          "Architecture": "arm64",
+          "Size": 136662621,
+          "source": "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/telegram-bot-api:final-mongodb",
+          "service": "telegram-bot-api",
+          "Id": "sha256:fdd27997b26feb33132d74384a06323001ec65a85db70e15abe36a84c5d96935",
+          "scanReference": "nrb/telegram-bot-api:final-mongo-0b37a82",
+          "RepoDigests": [
+            "nrb/telegram-bot-api@sha256:fdd27997b26feb33132d74384a06323001ec65a85db70e15abe36a84c5d96935"
+          ],
+          "Architecture": "arm64",
+          "Size": 134467219,
+          "source": "0b37a82a27c49ade4f193dc996e95ec424536419",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/user-app:final-mongodb",
+          "service": "user-app",
+          "Id": "sha256:4bea976b0bd4e01ed7d8bddf0e5921679ff090c079967f76a2acc069c5268f58",
+          "scanReference": "nrb/user-app:final-web-79a121d",
+          "RepoDigests": ["nrb/user-app@sha256:4bea976b0bd4e01ed7d8bddf0e5921679ff090c079967f76a2acc069c5268f58"],
+          "Architecture": "arm64",
+          "Size": 23710263,
+          "source": "79a121dec952e393920ff555b2957c860a2fe066",
+          "availability": "present",
+          "containerImageVerified": true
+        },
+        {
+          "tag": "nrb/user-app-api:final-mongodb",
+          "service": "user-app-api",
+          "Id": "sha256:801d0b44c123fd7bde6286a2cfe4efdf6632a41f11591fce78820edf0243599b",
+          "scanReference": "nrb/user-app-api:final-mongo-6dca9b8",
+          "RepoDigests": ["nrb/user-app-api@sha256:801d0b44c123fd7bde6286a2cfe4efdf6632a41f11591fce78820edf0243599b"],
+          "Architecture": "arm64",
+          "Size": 142816367,
+          "source": "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+          "availability": "present",
+          "containerImageVerified": true
+        }
+      ]
+    }
+  },
+  "imageScans": {
+    "trivy-bc2785c-pg": {
+      "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+      "provider": "postgres",
+      "engine": "aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969",
+      "images": [
+        {
+          "name": "admin-app-local",
+          "id": "sha256:374990cef86e9c9e8b79a965887e9695df8349a88b28bca06b1f5331a01c3e06",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "admin-app-local.json",
+          "sha256": "741af8581486f4c4ffd7c5e8917df3789639fc3253d3207aa20cc9c8e78176c4"
+        },
+        {
+          "name": "admin-app-api-local",
+          "id": "sha256:929a16ef7c82976692a0bcd72be97efae7b83eeca42aa1dd9239875549921621",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "admin-app-api-local.json",
+          "sha256": "1d9cdc89d482491dc68e9cbceea670e9e6eaed3649174789636df8c006eaa658"
+        },
+        {
+          "name": "auth-app-api-local",
+          "id": "sha256:65d79b46e0d7bb404d0bbcba2a412d2bc5fb56a2c9dc58d117e899cfd22ae0cc",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "auth-app-api-local.json",
+          "sha256": "d64b72e3ca9aadd89a586668db74a4b0567eba4325ddb14100a0af5daca1b52c"
+        },
+        {
+          "name": "discord-app-api-local",
+          "id": "sha256:ada5af016333d2fdc810ad60703a319b6bd3ad3455cde1c37b7ef533ae977cba",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "discord-app-api-local.json",
+          "sha256": "1bccafe68a6a7531a3d061fc1d7b474c02015f46d3a26761cea581d5f148451d"
+        },
+        {
+          "name": "landing-app-local",
+          "id": "sha256:3e3cb9f0d94317f9de56aa64470b75fa6c990c5500ee88bee5bf1dd62b7e695b",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "landing-app-local.json",
+          "sha256": "291ffbeaef5c6501c2bc97d925a42ac9c1fe807aa941c86cf9e18493508b0ae2"
+        },
+        {
+          "name": "migrator-local",
+          "id": "sha256:472fe659aafe550d4565a93791d516ecceec70a8d74942eb9148be0b34a5ce01",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "migrator-local.json",
+          "sha256": "a6ababb20dcbe6cd02a7cd45cd21bc129c7d790275c45b76f73ca06e11b5e5b8"
+        },
+        {
+          "name": "mobile-app-local",
+          "id": "sha256:d05d8e1dfa27ba21b134a13cfc758e2ecb50de93ade81918b98bafae29fadf29",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "mobile-app-local.json",
+          "sha256": "ccf824023df29a1cdd9dc284ca5eecf61971e606ed1fe84b98b614d707e7ac5c"
+        },
+        {
+          "name": "notification-consumer-local",
+          "id": "sha256:c5df944e6bc93972fb8ed53d140f82e7a56aedad7597cc8f2292367ae745c266",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "notification-consumer-local.json",
+          "sha256": "0715ffe1b5bee824c8f7dfbe8ecf3c5c0f974ff0406f94578e15ebb8e8fbe704"
+        },
+        {
+          "name": "notification-scheduler-local",
+          "id": "sha256:430940670486e98bf84c18191c9e08be3005159ea457fcd3ec5d244fa3c811a4",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "notification-scheduler-local.json",
+          "sha256": "bc697208f6e116c406fef7a6bee8d3731c3d0ec89ef79a0e3ba3e74e794b03b2"
+        },
+        {
+          "name": "site-app-local",
+          "id": "sha256:940ce88095d1ce6d847d38cc6434a17fa83b66e131c6a378018476458e35c89c",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "site-app-local.json",
+          "sha256": "6f594a930e1c0c1364aa62cd6cefcf7601ee4243fe7e975408285971c0b43da2"
+        },
+        {
+          "name": "telegram-bot-api-local",
+          "id": "sha256:08e3be37efcc073700b24839f27b438b3a9de8a760e5232a05aebf163cbe12f4",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "telegram-bot-api-local.json",
+          "sha256": "8848f9570fe3361070217b0f316155caa3b7dbdd8f1486c0517f0c030e120127"
+        },
+        {
+          "name": "user-app-local",
+          "id": "sha256:3959b858ed1478dc8a150deafbefa75a68a1465486916d853b1a64b2d830eac7",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "user-app-local.json",
+          "sha256": "22e899f7a455fe99b2ddbc8ff6eaf907d7bdd7dacfc16fcf2578c03dffda3d62"
+        },
+        {
+          "name": "user-app-api-local",
+          "id": "sha256:ac6a17b5cc92f669389bd46fac0ae79207849160f905ba9a2a2421dc19e847fb",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "user-app-api-local.json",
+          "sha256": "202dde63896957f9d743370f144e7ddb8295ad68689704e16e6256fcd64f5a13"
+        }
+      ]
+    },
+    "trivy-bc2785c-infrastructure": {
+      "source": "bc2785cb3967dca4e69132a95524a7bc78872fe0",
+      "provider": "runtime-infrastructure",
+      "engine": "aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969",
+      "images": [
+        {
+          "name": "redis-7.4.11-alpine",
+          "id": "sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499",
+          "exit": 1,
+          "high": 4,
+          "critical": 0,
+          "report": "redis-7.4.11-alpine.json",
+          "sha256": "499ab4d69cbfe2f2bc50731d52069b2361bb4103674722fb1c99ba3d5c1a3a20"
+        },
+        {
+          "name": "seaweedfs-4.47@sha256-ce9e796f1fe6f06968f4c04bdaf8f678dad9c8acdfef3d244133d71bfa6bf882",
+          "id": "sha256:ce9e796f1fe6f06968f4c04bdaf8f678dad9c8acdfef3d244133d71bfa6bf882",
+          "exit": 1,
+          "high": 1,
+          "critical": 0,
+          "report": "seaweedfs-4.47@sha256-ce9e796f1fe6f06968f4c04bdaf8f678dad9c8acdfef3d244133d71bfa6bf882.json",
+          "sha256": "24838b07ad3d15789065c4ae58de7bfed08dccd21fd858cd6b08387d5d21002b"
+        },
+        {
+          "name": "postgres-17.11-alpine",
+          "id": "sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
+          "exit": 1,
+          "high": 21,
+          "critical": 1,
+          "report": "postgres-17.11-alpine.json",
+          "sha256": "97c81c33a2e43615d12464fab1f746eadb71828491434150492710d9953a5508"
+        }
+      ]
+    },
+    "trivy-final-mongo-infrastructure": {
+      "source": "0b37a82a27c49ade4f193dc996e95ec424536419",
+      "provider": "mongodb",
+      "engine": "aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969",
+      "images": [
+        {
+          "name": "mongodb",
+          "id": "sha256:01354084d2ae665d2e79b79b0cdc50c2c0c98873618912d9a2c8c9cb5c3d24e6",
+          "exit": 1,
+          "high": 98,
+          "critical": 1,
+          "report": "mongodb.json",
+          "sha256": "ec288377f2b94bb427f11113a030e75ec3b59a8f77cc3674c468608dbbfd0c0a"
+        },
+        {
+          "name": "redis",
+          "id": "sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499",
+          "exit": 1,
+          "high": 4,
+          "critical": 0,
+          "report": "redis.json",
+          "sha256": "64c32ff9cfb49ccce0502cf1791ca7fcff48f7db8c6a60163be4baa7136d8f17"
+        },
+        {
+          "name": "s3",
+          "id": "sha256:ce9e796f1fe6f06968f4c04bdaf8f678dad9c8acdfef3d244133d71bfa6bf882",
+          "exit": 1,
+          "high": 1,
+          "critical": 0,
+          "report": "s3.json",
+          "sha256": "c2d5dbfaf2a3b3f68619d0661e0a2b945b74d99385ec22300796ebd1f482ac0a"
+        }
+      ]
+    },
+    "trivy-final-postgres-products": {
+      "source": "79a121dec952e393920ff555b2957c860a2fe066",
+      "provider": "postgres",
+      "engine": "aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969",
+      "images": [
+        {
+          "name": "admin-app-final-postgres",
+          "id": "sha256:b0f7292eb44b63db6a6b71b9fb7f436564662bd774c240021d1d85804a9a0751",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "admin-app-final-postgres.json",
+          "sha256": "9c542f5f41504f0c3bb78063dc1402920550dea10fd9a5931a00dd910166a906"
+        },
+        {
+          "name": "admin-app-api-final-postgres",
+          "id": "sha256:5106e5439c738c0365835993dd3c15714ab2d04a2a50bdb1bcb04f1a4e78375e",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "admin-app-api-final-postgres.json",
+          "sha256": "cad1d08143942c2285d117120a4451916d6c5c208ab80e51c24a8d9b8b8c9eb1"
+        },
+        {
+          "name": "auth-app-api-final-postgres",
+          "id": "sha256:58caf7caf8000de2720ba8c5e00f7b1e683f4766adbb0e8d27f7f06713c366f5",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "auth-app-api-final-postgres.json",
+          "sha256": "facf91fd589c471e2dbb5e873959ccbf119c6a2d6893b300fe406d4c4a78bf93"
+        },
+        {
+          "name": "site-app-final-postgres",
+          "id": "sha256:96a30afbd03d038035934670e3c1919c52b6b7fadec4ad136fd275034b7ef981",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "site-app-final-postgres.json",
+          "sha256": "76ccbbcfae58b8a944f1f32e1dcca9587c1443296d4f55c7d46a33d9d705f96d"
+        },
+        {
+          "name": "user-app-final-postgres",
+          "id": "sha256:4bea976b0bd4e01ed7d8bddf0e5921679ff090c079967f76a2acc069c5268f58",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "user-app-final-postgres.json",
+          "sha256": "5bcc7117e8a7aa377dec5efed05f0f30b39cc6e11588d93ba88ac7d0e20bd2ef"
+        },
+        {
+          "name": "user-app-api-final-postgres",
+          "id": "sha256:a2511a065364dc4dd8f345e3e9ff9bc1af1176900e82d57af780964c7c708247",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "user-app-api-final-postgres.json",
+          "sha256": "782cbc3188d4f7b6452f54bc399dbb7276c92a20cf7f17f165a356625c4c9778"
+        }
+      ]
+    },
+    "trivy-final-mongodb-products": {
+      "source": "79a121dec952e393920ff555b2957c860a2fe066",
+      "provider": "mongodb",
+      "engine": "aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969",
+      "images": [
+        {
+          "name": "admin-app-final-mongodb",
+          "id": "sha256:b0f7292eb44b63db6a6b71b9fb7f436564662bd774c240021d1d85804a9a0751",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "admin-app-final-mongodb.json",
+          "sha256": "cff6e9d07b5776a0add3b742e96e47a225e275ad2bcc43c4d8a91562b48fdecb"
+        },
+        {
+          "name": "admin-app-api-final-mongodb",
+          "id": "sha256:3afce19426e15632e64b1383a82145381302b7e7cf405bcfe7c870e525e6b5d0",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "admin-app-api-final-mongodb.json",
+          "sha256": "81095d682bbe0bf58065a27237994dfee20a27d82729eb268364c372171ed833"
+        },
+        {
+          "name": "auth-app-api-final-mongodb",
+          "id": "sha256:74ed9221c6fdbf9fce94793220510fd8dedc9b0e8faba555dfd068935d1e668b",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "auth-app-api-final-mongodb.json",
+          "sha256": "4bd4cf828cf3edcccf7282e7f738a7cb13284d2a02bf024fb0b351c471048484"
+        },
+        {
+          "name": "discord-app-api-final-mongodb",
+          "id": "sha256:61f4fe492f45bbf709273c9e8fd237e3a0ebd709fdf7b6c343fac8dbeff6acdc",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "discord-app-api-final-mongodb.json",
+          "sha256": "2ce8a3ec3acb6c1e23397cab238903990e28223fe21f726482b640bd0f0c4656"
+        },
+        {
+          "name": "landing-app-final-mongodb",
+          "id": "sha256:0ddafd8cedd3cfd2f95c47bcf8273aa8a2c0ff47325a36ba4e2446003c21b7d9",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "landing-app-final-mongodb.json",
+          "sha256": "d034b6e12583366105cde88d4c1822244930fb4af4cd707b67a2ee97781cce63"
+        },
+        {
+          "name": "migrator-final-mongodb",
+          "id": "sha256:464124c51a30f3a9b4383304d2a1bd11dc60e600d0d56c47dafc715391604133",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "migrator-final-mongodb.json",
+          "sha256": "d6d2758994c9777d4b0b70296888104ff926dfe8b13f2e7f6513e347e24779d5"
+        },
+        {
+          "name": "mobile-app-final-mongodb",
+          "id": "sha256:bbdefe425d5a4dd38df8c50ab766a0082e122f616b317ddc6805ccc823c6c771",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "mobile-app-final-mongodb.json",
+          "sha256": "a55dc1b7dc844783b04c57ad3e07c936ee0c3a78ba8a0330cca104bcace00e90"
+        },
+        {
+          "name": "notification-consumer-final-mongodb",
+          "id": "sha256:5f4da35a7672d2998ed503cc5d36387bac7cbfec575370227adb7893eed58f55",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "notification-consumer-final-mongodb.json",
+          "sha256": "8c7c4b90b621d6a940e4bd0f72c75c4525728631a0bc8921260393680b3818c5"
+        },
+        {
+          "name": "notification-scheduler-final-mongodb",
+          "id": "sha256:a831c6a02d40cf9945323eab462984b1f41a9e331fd2976aac21a5d70c339890",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "notification-scheduler-final-mongodb.json",
+          "sha256": "43ef7a2a7e2e2d28a676e9e28816d35314d8308d4cd4b11bd4dd37749097f36e"
+        },
+        {
+          "name": "site-app-final-mongodb",
+          "id": "sha256:ec10f4b9d03b49dc64d0bba0e37d8fdb82f32a1e2fba056f4b921514df162a70",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "site-app-final-mongodb.json",
+          "sha256": "5c7c5fb57f10276f67276db44eae2c95e2b78a0f6e5cfbae9623001a07ad683e"
+        },
+        {
+          "name": "telegram-bot-api-final-mongodb",
+          "id": "sha256:fdd27997b26feb33132d74384a06323001ec65a85db70e15abe36a84c5d96935",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "telegram-bot-api-final-mongodb.json",
+          "sha256": "9679c62f00aa03230151d2a8f0beb953036ee514c5a3e9f800d68255d2ad086b"
+        },
+        {
+          "name": "user-app-final-mongodb",
+          "id": "sha256:4bea976b0bd4e01ed7d8bddf0e5921679ff090c079967f76a2acc069c5268f58",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "user-app-final-mongodb.json",
+          "sha256": "5597ecc303a5e7c57fe3994a0b188bd0ff55c5cb3b91bf09faf0ff03d0c570a8"
+        },
+        {
+          "name": "user-app-api-final-mongodb",
+          "id": "sha256:801d0b44c123fd7bde6286a2cfe4efdf6632a41f11591fce78820edf0243599b",
+          "exit": 0,
+          "high": 0,
+          "critical": 0,
+          "report": "user-app-api-final-mongodb.json",
+          "sha256": "da63820439be48068994d968fd7c702a8d4ff3c3d38a0777d0e749fd969da959"
+        }
+      ]
+    }
+  },
+  "semgrep": {
+    "source": "79a121dec952e393920ff555b2957c860a2fe066",
+    "findings": 16,
+    "errors": 42,
+    "results": [
+      {
+        "rule": "yaml.github-actions.security.workflow-run-target-code-checkout.workflow-run-target-code-checkout",
+        "file": "/src/.github/workflows/release.yml",
+        "line": 27,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "generic.nginx.security.request-host-used.request-host-used",
+        "file": "/src/.helm/templates/configmap.yaml",
+        "line": 228,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age",
+        "file": "/src/.npmrc",
+        "line": 1,
+        "severity": "MEDIUM"
+      },
+      {
+        "rule": "package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age",
+        "file": "/src/.nrb/closure/pnpm-workspace.yaml",
+        "line": 131,
+        "severity": "MEDIUM"
+      },
+      {
+        "rule": "generic.nginx.security.request-host-used.request-host-used",
+        "file": "/src/docker/nginx-fullstack.conf",
+        "line": 222,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "generic.nginx.security.request-host-used.request-host-used",
+        "file": "/src/docker/nginx-fullstack.conf",
+        "line": 232,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "generic.nginx.security.request-host-used.request-host-used",
+        "file": "/src/docker/nginx-fullstack.conf",
+        "line": 244,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "generic.nginx.security.request-host-used.request-host-used",
+        "file": "/src/docker/nginx-fullstack.conf",
+        "line": 256,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "generic.nginx.security.request-host-used.request-host-used",
+        "file": "/src/docker/nginx-fullstack.conf",
+        "line": 264,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "generic.nginx.security.request-host-used.request-host-used",
+        "file": "/src/docker/nginx-fullstack.conf",
+        "line": 276,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+        "file": "/src/libs/backend/feature/auth/main/lib/src/application/better-auth-api.controller.ts",
+        "line": 125,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+        "file": "/src/libs/backend/postgres/main/shared/lib/src/data-source-options.spec.ts",
+        "line": 74,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+        "file": "/src/libs/backend/postgres/main/shared/lib/src/data-source-options.spec.ts",
+        "line": 82,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+        "file": "/src/libs/backend/postgres/main/shared/lib/src/data-source-options.spec.ts",
+        "line": 215,
+        "severity": "WARNING"
+      },
+      {
+        "rule": "package_managers.pnpm.pnpm-missing-minimum-release-age.pnpm-minimum-release-age",
+        "file": "/src/pnpm-workspace.yaml",
+        "line": 136,
+        "severity": "MEDIUM"
+      },
+      {
+        "rule": "generic.nginx.security.request-host-used.request-host-used",
+        "file": "/src/scripts/generate-nginx-config.mjs",
+        "line": 38,
+        "severity": "WARNING"
+      }
+    ],
+    "errorKinds": {
+      "Other syntax error": 15,
+      "PartialParsing": 27
+    },
+    "disposition": "findings-and-parser-limits-retained",
+    "review": "Unchanged alert classes: exact-main guarded release checkout; eight real virtual-host forwarding uses; three deliberate TLS unit fixtures; text/plain Better Auth forwarding; pnpm one-day maturity policy and an inapplicable npm policy rule. No broad exclusions or clean external SAST claim."
+  },
+  "zap": {
+    "fail": 0,
+    "warn": 5,
+    "pass": 62,
+    "engineExit": 2,
+    "wrapperStatus": "violations",
+    "applicationErrorDisclosure": "PASS"
+  },
+  "bundleBudget": {
+    "budgets": "packages/tooling/config/frontend-bundle-budgets.json",
+    "missing": [],
+    "results": [
+      {
+        "project": "landing-app",
+        "outputPath": "dist/apps/frontend/landing",
+        "budget": {
+          "maxChunkBytes": 300000,
+          "maxJavaScriptBytes": 600000,
+          "maxCssBytes": 80000,
+          "//": "Astro islands: already well split, so this budget is deliberately tight."
+        },
+        "cssBytes": 68103,
+        "fileCount": 7,
+        "javaScriptBytes": 508040,
+        "largestChunk": {
+          "bytes": 252475,
+          "path": "_astro/landing-react-island.DLTb81Vm.js"
+        },
+        "violations": []
+      },
+      {
+        "project": "admin-app",
+        "outputPath": "dist/apps/frontend/admin",
+        "budget": {
+          "maxChunkBytes": 650000,
+          "maxJavaScriptBytes": 1250000,
+          "maxCssBytes": 100000,
+          "//": "Same vendor split (1.1MB entry -> 624877B). The entry stays large until the 13-page `renderAdminRoute` matrix gains lazy boundaries, which is part of extracting those pages into feature libs. Target: 400000."
+        },
+        "cssBytes": 90417,
+        "fileCount": 9,
+        "javaScriptBytes": 1218129,
+        "largestChunk": {
+          "bytes": 352125,
+          "path": "assets/api-toast-rules-DTBDuEaq.js"
+        },
+        "violations": []
+      },
+      {
+        "project": "site-app",
+        "outputPath": "dist/apps/frontend/site",
+        "budget": {
+          "maxChunkBytes": 340000,
+          "maxJavaScriptBytes": 600000,
+          "maxCssBytes": 20000
+        },
+        "cssBytes": 3873,
+        "fileCount": 16,
+        "javaScriptBytes": 551869,
+        "largestChunk": {
+          "bytes": 190112,
+          "path": "client/assets/chunks/chunk-CV1Z0SHX.js"
+        },
+        "violations": []
+      },
+      {
+        "project": "user-app",
+        "outputPath": "dist/apps/frontend/app",
+        "budget": {
+          "maxChunkBytes": 560000,
+          "maxJavaScriptBytes": 1250000,
+          "maxCssBytes": 90000,
+          "//": "Vendor groups are split out (react/router/ui/state), which cut the entry chunk from 1151021B to 534498B. The remaining entry is app code; route-level lazy loading is the next reduction and belongs with the admin/user page extraction into feature libs. Target: 400000."
+        },
+        "cssBytes": 68777,
+        "fileCount": 10,
+        "javaScriptBytes": 936267,
+        "largestChunk": {
+          "bytes": 183609,
+          "path": "assets/vendor-router-query-vKgsYywJ.js"
+        },
+        "violations": []
+      }
+    ],
+    "status": "ok",
+    "tag": "type:frontend-app"
+  },
+  "skills": {
+    "reviewed": 32,
+    "executableCanaries": 45,
+    "evidenceSource": "8318c98"
+  },
+  "retainedArtifacts": [
+    {
+      "path": "/Users/nmi/.codex/state/plugins/codex-security/scans/nest-react-boilerplate/artifacts-02abb7203dd680378de34cb08e2da8f025e5ad67b0ee709b7cd48b540935b030/artifacts/template-final/main-to-79a121d.diff",
+      "sha256": "7bbabf36585207717871c16e92319ea1c705a23dcb46a6765783520c6895d292"
+    },
+    {
+      "path": "/Users/nmi/.codex/state/plugins/codex-security/scans/nest-react-boilerplate/artifacts-02abb7203dd680378de34cb08e2da8f025e5ad67b0ee709b7cd48b540935b030/artifacts/template-final/patch-identity-79a121d.json",
+      "sha256": "b79fe403a425d4e4934246455786679d5ac1a486be838b0aba04287a238cd4e6"
+    },
+    {
+      "path": "/Users/nmi/.codex/state/plugins/codex-security/scans/nest-react-boilerplate/artifacts-02abb7203dd680378de34cb08e2da8f025e5ad67b0ee709b7cd48b540935b030/artifacts/template-final/patch-risk-79a121d.md",
+      "sha256": "72dfdc1c4255308f8d02a4ddd3a106e1f9cd20bd5bdc9a880560bc2bba11412e"
+    },
+    {
+      "path": "/Users/nmi/.codex/state/plugins/codex-security/scans/nest-react-boilerplate/artifacts-02abb7203dd680378de34cb08e2da8f025e5ad67b0ee709b7cd48b540935b030/artifacts/template-final/patch-risk-79a121d.json",
+      "sha256": "108c323ed9ad0465d4b8294317d08aff5e63d1cb55bd1039474992229b862077"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/tmp/nrb-final-repairs-ci-pr.log",
+      "bytes": 2564,
+      "sha256": "22caa5a6b4a71448c33204163abe7eeefb3185b8e8ebfd7060955732247cb156"
+    },
+    {
+      "path": "/tmp/nrb-final-freeze-ci-pr.log",
+      "bytes": 2564,
+      "sha256": "9cad826f5b708e92157b1133c1f87e98cbcceefee651c57b3f1a1ee56389f045"
+    },
+    {
+      "path": "/tmp/nrb-final-repairs-static.log",
+      "bytes": 1383,
+      "sha256": "7a76777b2aebc7412619c5368dbdf3de6d034a80f352f489a3c4048ca8bc9d54"
+    },
+    {
+      "path": "/tmp/nrb-final-repairs-unit.log",
+      "bytes": 547,
+      "sha256": "6d76b4bd22c560a117b62ae3d928785c3238750e582ff25233887b8b3d2aaea3"
+    },
+    {
+      "path": "/tmp/nrb-final-repairs-coverage.log",
+      "bytes": 620,
+      "sha256": "5d0a7fbe2fc26ecc2c5de49730221614ffd3be37e5ad9cdf7f496946656d4676"
+    },
+    {
+      "path": "/tmp/nrb-final-site-coverage.log",
+      "bytes": 2552,
+      "sha256": "635d84203f1cc268af9260bebff3589c14d143d22ee0be680db000a465e68ed3"
+    },
+    {
+      "path": "/tmp/nrb-final-site-smoke.log",
+      "bytes": 4375,
+      "sha256": "b70518df8e8de77648d221bb76e2e55c228271aeef9c9c7664e043ced685ab52"
+    },
+    {
+      "path": "/tmp/nrb-final-fuzz-runner-unit.log",
+      "bytes": 1312,
+      "sha256": "959dc30b5a3ff97f6bce07f4c4afd63ff5faec6ef53fb4f064e00ded31a12f0d"
+    },
+    {
+      "path": "/tmp/nrb-final-contract-freshness.log",
+      "bytes": 2908,
+      "sha256": "06e62bd224b0c5e752eb23a7d790334404c983f556dff22e9b20055f9a4ee1de"
+    },
+    {
+      "path": "/tmp/nrb-final-client-freshness.log",
+      "bytes": 2740,
+      "sha256": "2a35e9afbbfc785ed5db5be1a3af403d541008d3a7b75bd663affc86d234bd6a"
+    },
+    {
+      "path": "/tmp/nrb-final-contract-toast-check.log",
+      "bytes": 157,
+      "sha256": "c605771b2a3a03ce2278c7649d067c83fcb5ffa698fe119071127c4329db822b"
+    },
+    {
+      "path": "/tmp/nrb-final-contract-consumer.log",
+      "bytes": 274,
+      "sha256": "f0d7d0cff797bc5acead7d1400103d0c45f76b18aab6f2cd4c57faa345f30cce"
+    },
+    {
+      "path": "/tmp/nrb-final-79a121d-spec-pr.log",
+      "bytes": 563,
+      "sha256": "7439a624333fda4037cbfc317d1e2686c491878731d6d3873e0fb782655b9047"
+    },
+    {
+      "path": "/tmp/nrb-final-pg-browser-accepted.log",
+      "bytes": 9660,
+      "sha256": "03c4408abf671c7b5bdd97934a8724d22c5c82600c668f692c888bd486d91e6d"
+    },
+    {
+      "path": "/tmp/nrb-final-mongo-browser-accepted.log",
+      "bytes": 9660,
+      "sha256": "644563281ef78d36855538e117c76a8a18930a9485680e6f06bb3d0f17f5db9c"
+    },
+    {
+      "path": "/tmp/nrb-final-two-provider-readiness.log",
+      "bytes": 1545,
+      "sha256": "0ba2e69c71b159a6dc1bc9fb2f8455dc6576bce70131099142055fd7bf2a2763"
+    },
+    {
+      "path": "/tmp/nrb-final-images-pg-refresh.log",
+      "bytes": 56393,
+      "sha256": "3f1b655c3df0ab7e90f808ca340c80823aeffc5ade9aa0e720db1f02db8465e3"
+    },
+    {
+      "path": "/tmp/nrb-final-images-mongo-refresh.log",
+      "bytes": 59423,
+      "sha256": "f95f80d097f604860793d47d044896b0cec79c7bcda79e9f9ecfab875271bd8e"
+    },
+    {
+      "path": "/tmp/nrb-final-web-images.log",
+      "bytes": 20766,
+      "sha256": "f6b6f429fead78c16f771efb7461b45390fca07cdf73d2e18d8aa55992aa70b7"
+    },
+    {
+      "path": "/tmp/nrb-final-storybook-build.log",
+      "bytes": 60715,
+      "sha256": "dcb8a6168255601534ccfe8bd17c5472833a8c2eb97080f7c862614a5f3ba232"
+    },
+    {
+      "path": "/tmp/nrb-final-storybook-interactions.log",
+      "bytes": 3839,
+      "sha256": "83a7f79e8e0179842af7defdba35fe726fcc8b04e172af8a0a43a7bd3749cb64"
+    },
+    {
+      "path": "/tmp/nrb-final-storybook-static.log",
+      "bytes": 489,
+      "sha256": "5e1a97c28f6d419e6478323d5450ad004556b769aea968077893f67690e7794d"
+    },
+    {
+      "path": "/tmp/nrb-final-bundle-budget.log",
+      "bytes": 506,
+      "sha256": "faf2b98d13a7dbcbfa81aa537247fa51b080df44d514a50f82df912a6deb892f"
+    },
+    {
+      "path": "/tmp/nrb-final-site-accessibility.log",
+      "bytes": 194,
+      "sha256": "67f982f82584ac39a4669a0b3ab5885280a43fd42443fd3710e59f04c1aa36f0"
+    },
+    {
+      "path": "/tmp/nrb-final-79a121d-semgrep.log",
+      "bytes": 358,
+      "sha256": "f65dfe06efcef71580305c637d5da3cebcf00fd74433945c7c172fb72f7c8556"
+    },
+    {
+      "path": "/tmp/nrb-final-site-zap.log",
+      "bytes": 419,
+      "sha256": "b1727269c251d83f074b2199a662a4fb6d51080a4d66c946eb264db080955354"
+    },
+    {
+      "path": "/tmp/nrb-sha-8318c98-coverage-isolated-retry.log",
+      "bytes": 480625,
+      "sha256": "fde375c46f79de56a63205604bb7faf024b7d02367e525a5b4a577b7997d7afa"
+    },
+    {
+      "path": "/tmp/nrb-sha-7141a84-visual-matrix.log",
+      "bytes": 16759,
+      "sha256": "0fe28b72a6d8ed5f16c9a41b77813b107cad7ae2313f6e14586dad1b6b66a0f4"
+    },
+    {
+      "path": "/tmp/nrb-sha-0b37a82-pg-operations-summary.json",
+      "bytes": 208,
+      "sha256": "041a7ec215802055ceb0724bcafa20c6bdcadf7e2fc81e077d7725461445d13c"
+    }
+  ],
+  "limitations": [
+    "Hosted final PR-head checks and independent maintainer review pending",
+    "External Semgrep 16 retained alerts and 42 parser errors",
+    "Vendor HIGH/CRITICAL advisories retained; no vulnerability-free infrastructure claim",
+    "ZAP warning result retained",
+    "Unchanged PostgreSQL component scans use their earlier immutable build references",
+    "Real Discord/Telegram/email/payment provider acceptance, native/device mobile, amd64 runtime, long soak and production rollout unverified",
+    "Complete selected-stack readiness unavailable with placeholder external bot identities"
+  ],
+  "dependencyAudit": {
+    "source": "79a121dec952e393920ff555b2957c860a2fe066",
+    "scope": "all severities, including development dependencies",
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "report": "/tmp/nrb-final-audit-all.json",
+    "sha256": "2c07787718e4bde28a59521ab77a3bb18bf6039206448c6d03c71e7692e92d2e"
+  }
+}

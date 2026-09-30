@@ -5,8 +5,6 @@
 // REQ-RUNTIME-RECOVERY-002, and REQ-SOCIAL-SESSION-002.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { dockerAvailable } from "../db/postgres-client.ts";
 import { declaredPipelineFiles } from "../ci/check-pipelines.ts";
 import { crossBrowserProjects } from "./browser-matrix.ts";
 import { commandExists, envList, ensureDir, packageManagerInvocation, parseArgs, readJson, run, writeJson } from "./runtime-utils.ts";
@@ -388,26 +386,13 @@ function runBackupRestore() {
   }
 
   requireScripts(["db:backup", "db:restore"]);
-  const missingTools = ["pg_dump", "pg_restore"].filter((tool) => !commandExists(tool));
-  const hasDockerFallback = missingTools.length > 0 && dockerAvailable();
-  if (missingTools.length && !hasDockerFallback) {
-    backupRestoreEvidence = missingRuntimeGate("Backup/restore runtime gate requires local PostgreSQL client tools, the Docker fallback, or an explicit command in CI.", {
-      missingTools,
-      dockerAvailable: false,
-      env: ["QA_BACKUP_RESTORE_COMMAND", "BACKUP_RESTORE_COMMAND"],
-    });
-    return backupRestoreEvidence;
-  }
-
-  const output = join("test-results", "world-class", "backup-restore.dump");
-  const backupCommand = configuredCommand([], ["pnpm", "run", "db:backup", "--", "--output", output]);
-  const restoreCommand = configuredCommand([], ["pnpm", "run", "db:restore", "--", "--input", output, "--yes"]);
+  const command = configuredCommand([], [process.execPath, '--test', '--import', 'jiti/register',
+    'packages/tooling/src/commands/db/isolated-recovery.component.test.ts']);
   backupRestoreEvidence = {
-    mode: "command-sequence",
-    source: backupCommand.source,
-    postgresClientMode: hasDockerFallback ? "docker-fallback" : "local",
-    backup: runCommand("backup", backupCommand),
-    restore: runCommand("restore", restoreCommand),
+    mode: "owned-container-roundtrip",
+    source: command.source,
+    providers: ['postgres', 'mongodb'],
+    ...runCommand('isolated backup/restore', command, { SKIP_INTEGRATION: '0' }),
   };
   return backupRestoreEvidence;
 }

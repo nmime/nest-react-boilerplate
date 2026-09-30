@@ -44,7 +44,12 @@ import {
   type NotificationTemplateVersionRecord,
 } from '@app/common-notifications';
 import type { ClientSession, Collection, Db, MongoClient } from 'mongodb';
-import { MongoClientToken, MongoDatabaseToken, runInMongoTransaction } from './mongo-runtime';
+import {
+  MongoClientToken,
+  MongoDatabaseToken,
+  notificationTransactionSession,
+  runInMongoTransaction,
+} from './mongo-runtime';
 import {
   NotificationMongoCollections,
   type NotificationAudienceSnapshotDocument,
@@ -109,14 +114,22 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
     return Promise.all(templates.map((template) => this.mapTemplate(template)));
   }
 
-  async getTemplate(id: string, tenantId: string): Promise<NotificationTemplateAdminRecord | null> {
-    const template = await this.templates.findOne({ _id: id, tenantId: { $in: [tenantId, null] } });
-    return template ? this.mapTemplate(template) : null;
+  async getTemplate(
+    id: string,
+    tenantId: string,
+    transaction?: unknown,
+  ): Promise<NotificationTemplateAdminRecord | null> {
+    const session = notificationTransactionSession(transaction);
+    const template = await this.templates.findOne({ _id: id, tenantId: { $in: [tenantId, null] } }, { session });
+    return template ? this.mapTemplate(template, session) : null;
   }
 
-  async createAdminTemplate(input: CreateAdminNotificationTemplateInput): Promise<NotificationTemplateAdminRecord> {
+  async createAdminTemplate(
+    input: CreateAdminNotificationTemplateInput,
+    transaction?: unknown,
+  ): Promise<NotificationTemplateAdminRecord> {
     validateChannels(input.channels, true);
-    const template = await runInMongoTransaction(this.client, async (session) => {
+    const template = await this.inTransaction(transaction, async (session) => {
       if (await this.templates.findOne({ tenantId: input.tenantId, code: input.code }, { session })) {
         throw new Error('notification_template_code_conflict');
       }
@@ -151,15 +164,16 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
       await this.channels.insertMany(channelDocuments(version._id, input.channels, now), { session });
       return templateDocument;
     });
-    return this.mapTemplate(template);
+    return this.mapTemplate(template, notificationTransactionSession(transaction));
   }
 
   async updateAdminTemplate(
     id: string,
     tenantId: string,
     input: UpdateAdminNotificationTemplateInput,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null> {
-    const template = await runInMongoTransaction(this.client, async (session) => {
+    const template = await this.inTransaction(transaction, async (session) => {
       let current = await this.templates.findOne({ _id: id, tenantId }, { session });
       if (!current) {
         return null;
@@ -215,15 +229,16 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
       await this.templates.replaceOne({ _id: current._id }, next, { session });
       return next;
     });
-    return template ? this.mapTemplate(template) : null;
+    return template ? this.mapTemplate(template, notificationTransactionSession(transaction)) : null;
   }
 
   async publishAdminTemplate(
     id: string,
     tenantId: string,
     actorId: string,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null> {
-    const template = await runInMongoTransaction(this.client, async (session) => {
+    const template = await this.inTransaction(transaction, async (session) => {
       const current = await this.templates.findOne({ _id: id, tenantId }, { session });
       if (!current) {
         return null;
@@ -249,15 +264,17 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
       await this.templates.replaceOne({ _id: current._id }, next, { session });
       return next;
     });
-    return template ? this.mapTemplate(template) : null;
+    return template ? this.mapTemplate(template, notificationTransactionSession(transaction)) : null;
   }
 
   async archiveAdminTemplate(
     id: string,
     tenantId: string,
     actorId: string,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null> {
-    const current = await this.templates.findOne({ _id: id, tenantId });
+    const session = notificationTransactionSession(transaction);
+    const current = await this.templates.findOne({ _id: id, tenantId }, { session });
     if (!current) {
       return null;
     }
@@ -268,9 +285,9 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
     const updated = await this.templates.findOneAndUpdate(
       { _id: id, tenantId, source: NotificationTemplateSource.Admin },
       { $set: { status: NotificationTemplateStatus.Archived, updatedBy: actorId, updatedAt } },
-      { returnDocument: 'after', includeResultMetadata: false },
+      { session, returnDocument: 'after', includeResultMetadata: false },
     );
-    return updated ? this.mapTemplate(updated) : null;
+    return updated ? this.mapTemplate(updated, session) : null;
   }
 
   async listSegments(filters: NotificationSegmentListFilters): Promise<NotificationSegmentRecord[]> {
@@ -285,12 +302,19 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
     ).map(mapSegment);
   }
 
-  async getSegment(id: string, tenantId: string): Promise<NotificationSegmentRecord | null> {
-    const segment = await this.segments.findOne({ _id: id, tenantId });
+  async getSegment(id: string, tenantId: string, transaction?: unknown): Promise<NotificationSegmentRecord | null> {
+    const segment = await this.segments.findOne(
+      { _id: id, tenantId },
+      { session: notificationTransactionSession(transaction) },
+    );
     return segment ? mapSegment(segment) : null;
   }
 
-  async createSegment(input: CreateNotificationSegmentInput): Promise<NotificationSegmentRecord> {
+  async createSegment(
+    input: CreateNotificationSegmentInput,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentRecord> {
+    const session = notificationTransactionSession(transaction);
     if (input.kind === NotificationSegmentKind.Dynamic && !input.resolverKey) {
       throw new Error('notification_segment_resolver_required');
     }
@@ -310,7 +334,7 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
       updatedAt: now,
     };
     try {
-      await this.segments.insertOne(segment);
+      await this.segments.insertOne(segment, { session });
     } catch (error) {
       if (isDuplicateKey(error)) {
         throw new Error('notification_segment_name_conflict', { cause: error });
@@ -324,8 +348,10 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
     id: string,
     tenantId: string,
     input: UpdateNotificationSegmentInput,
+    transaction?: unknown,
   ): Promise<NotificationSegmentRecord | null> {
-    const existing = await this.segments.findOne({ _id: id, tenantId });
+    const session = notificationTransactionSession(transaction);
+    const existing = await this.segments.findOne({ _id: id, tenantId }, { session });
     if (!existing) {
       return null;
     }
@@ -343,21 +369,29 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
           updatedAt: new Date(),
         },
       },
-      { returnDocument: 'after', includeResultMetadata: false },
+      { session, returnDocument: 'after', includeResultMetadata: false },
     );
     return updated ? mapSegment(updated) : null;
   }
 
-  async archiveSegment(id: string, tenantId: string, actorId: string): Promise<NotificationSegmentRecord | null> {
+  async archiveSegment(
+    id: string,
+    tenantId: string,
+    actorId: string,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentRecord | null> {
     const updated = await this.segments.findOneAndUpdate(
       { _id: id, tenantId },
       { $set: { status: NotificationSegmentStatus.Archived, updatedBy: actorId, updatedAt: new Date() } },
-      { returnDocument: 'after', includeResultMetadata: false },
+      { session: notificationTransactionSession(transaction), returnDocument: 'after', includeResultMetadata: false },
     );
     return updated ? mapSegment(updated) : null;
   }
 
-  async createSegmentUpload(input: CreateNotificationSegmentUploadInput): Promise<NotificationSegmentUploadRecord> {
+  async createSegmentUpload(
+    input: CreateNotificationSegmentUploadInput,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentUploadRecord> {
     const now = new Date();
     const upload = await this.uploads.findOneAndUpdate(
       { segmentId: input.segmentId, checksum: input.checksum },
@@ -380,7 +414,12 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
           updatedAt: now,
         },
       },
-      { upsert: true, returnDocument: 'after', includeResultMetadata: false },
+      {
+        session: notificationTransactionSession(transaction),
+        upsert: true,
+        returnDocument: 'after',
+        includeResultMetadata: false,
+      },
     );
     if (!upload) {
       throw new Error('notification_segment_upload_create_failed');
@@ -506,9 +545,12 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
     return broadcast ? this.mapBroadcast(broadcast) : null;
   }
 
-  async createBroadcast(input: CreateNotificationBroadcastInput): Promise<NotificationBroadcastRecord> {
+  async createBroadcast(
+    input: CreateNotificationBroadcastInput,
+    transaction?: unknown,
+  ): Promise<NotificationBroadcastRecord> {
     validateBroadcastInput(input.channel, input.provider, input.priority ?? 0);
-    const broadcast = await runInMongoTransaction(this.client, async (session) => {
+    const broadcast = await this.inTransaction(transaction, async (session) => {
       await this.requirePublishedVersion(input.templateVersionId, input.tenantId, session);
       await this.requireSegments(input.segmentIds, input.tenantId, session);
       const now = new Date();
@@ -549,15 +591,16 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
       );
       return document;
     });
-    return this.mapBroadcast(broadcast);
+    return this.mapBroadcast(broadcast, notificationTransactionSession(transaction));
   }
 
   async updateBroadcast(
     id: string,
     tenantId: string,
     input: UpdateNotificationBroadcastInput,
+    transaction?: unknown,
   ): Promise<NotificationBroadcastRecord | null> {
-    const broadcast = await runInMongoTransaction(this.client, async (session) => {
+    const broadcast = await this.inTransaction(transaction, async (session) => {
       const current = await this.broadcasts.findOne({ _id: id, tenantId }, { session });
       if (!current) {
         return null;
@@ -592,12 +635,15 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
       await this.broadcasts.replaceOne({ _id: id, status: NotificationBroadcastStatus.Draft }, next, { session });
       return next;
     });
-    return broadcast ? this.mapBroadcast(broadcast) : null;
+    return broadcast ? this.mapBroadcast(broadcast, notificationTransactionSession(transaction)) : null;
   }
 
-  async transitionBroadcast(input: NotificationBroadcastTransitionInput): Promise<NotificationBroadcastRecord | null> {
+  async transitionBroadcast(
+    input: NotificationBroadcastTransitionInput,
+    transaction?: unknown,
+  ): Promise<NotificationBroadcastRecord | null> {
     try {
-      const broadcast = await runInMongoTransaction(this.client, async (session) => {
+      const broadcast = await this.inTransaction(transaction, async (session) => {
         const current = await this.broadcasts.findOne(
           { _id: input.broadcastId, tenantId: input.tenantId },
           { session },
@@ -629,9 +675,9 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
         await this.broadcasts.replaceOne({ _id: current._id }, committed, { session });
         return committed;
       });
-      return broadcast ? this.mapBroadcast(broadcast) : null;
+      return broadcast ? this.mapBroadcast(broadcast, notificationTransactionSession(transaction)) : null;
     } catch (error) {
-      if (!isDuplicateKey(error)) {
+      if (transaction !== undefined || !isDuplicateKey(error)) {
         throw error;
       }
       return this.getBroadcast(input.broadcastId, input.tenantId);
@@ -1138,11 +1184,24 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
     }
   }
 
-  private async mapTemplate(template: NotificationTemplateDocument): Promise<NotificationTemplateAdminRecord> {
-    const versions = await this.versions.find({ templateId: template._id }).sort({ version: -1 }).toArray();
+  private inTransaction<T>(transaction: unknown, operation: (session: ClientSession) => Promise<T>): Promise<T> {
+    const session = notificationTransactionSession(transaction);
+    return session ? operation(session) : runInMongoTransaction(this.client, operation);
+  }
+
+  private async mapTemplate(
+    template: NotificationTemplateDocument,
+    session?: ClientSession,
+  ): Promise<NotificationTemplateAdminRecord> {
+    const versions = await this.versions
+      .find({ templateId: template._id }, { session })
+      .sort({ version: -1 })
+      .toArray();
     const channels =
       versions.length > 0
-        ? await this.channels.find({ templateVersionId: { $in: versions.map((version) => version._id) } }).toArray()
+        ? await this.channels
+            .find({ templateVersionId: { $in: versions.map((version) => version._id) } }, { session })
+            .toArray()
         : [];
     return {
       id: template._id,
@@ -1161,11 +1220,20 @@ export class MongoNotificationBroadcastPersistence extends NotificationBroadcast
     };
   }
 
-  private async mapBroadcast(document: NotificationBroadcastDocument): Promise<NotificationBroadcastRecord> {
-    const [links, snapshot] = await Promise.all([
-      this.broadcastSegments.find({ broadcastId: document._id }).sort({ _id: 1 }).toArray(),
-      this.snapshots.find({ broadcastId: document._id }).sort({ createdAt: -1 }).limit(1).next(),
-    ]);
+  private async mapBroadcast(
+    document: NotificationBroadcastDocument,
+    session?: ClientSession,
+  ): Promise<NotificationBroadcastRecord> {
+    // MongoDB does not support parallel operations within a transaction.
+    const links = await this.broadcastSegments
+      .find({ broadcastId: document._id }, { session })
+      .sort({ _id: 1 })
+      .toArray();
+    const snapshot = await this.snapshots
+      .find({ broadcastId: document._id }, { session })
+      .sort({ createdAt: -1 })
+      .limit(1)
+      .next();
     return {
       id: document._id,
       tenantId: document.tenantId,

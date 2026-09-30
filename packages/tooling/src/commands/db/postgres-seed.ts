@@ -162,6 +162,9 @@ export async function seed(client: pg.Client, seedUsers: SeedUser[]): Promise<Re
       );
       const userId = match.rows[0]?.id as string | undefined;
       if (!userId) throw new Error(`Could not resolve id for seeded user ${user.email}`);
+      if (userId !== user.id) {
+        throw new Error('Refusing to grant seed roles to an existing account that is not the canonical seed owner.');
+      }
       resolvedUserIds[user.email] = userId;
     }
     for (const user of seedUsers) {

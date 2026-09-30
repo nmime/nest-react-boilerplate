@@ -1,7 +1,33 @@
-// @requirements REQ-SCAFFOLD-TOOLING-005
+// @requirements REQ-SCAFFOLD-TOOLING-005 REQ-SCAFFOLD-INIT-004
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { runPrompts, type PromptIo } from './prompts.js';
+import { parseNrbConfig, schemaVersion } from './schema.js';
+
+describe('interactive configuration defaults', () => {
+  it('retains existing product and deployment namespaces when accepting prompt defaults', async () => {
+    const existing = parseNrbConfig({
+      schemaVersion,
+      apps: ['landing-app'],
+      product: { ciMode: 'maintainer', frontendApiMode: 'split-origin', mobileTargets: ['android'] },
+      deployment: {
+        publicDomain: 'orchard.example',
+        imageRegistry: 'ghcr.io/example/orchard',
+        kubernetesDelivery: 'argocd',
+        targets: ['kubernetes'],
+        infrastructure: { s3: 'external' },
+      },
+    });
+    const result = await runPrompts(false, existing, {
+      async ask(_question, defaultAnswer) {
+        return defaultAnswer ?? '';
+      },
+      write() {},
+    });
+    assert.deepEqual(result.product, existing.product);
+    assert.deepEqual(result.deployment, existing.deployment);
+  });
+});
 
 describe('interactive database provider prompt', () => {
   it('chooses one provider instead of prompting for independent provider checkboxes', async () => {

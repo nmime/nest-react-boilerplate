@@ -141,6 +141,35 @@ describe('CI gate contract', () => {
       /duplicate gate id "static-check"/u,
     );
   });
+
+  it('maps a non-merge gate to its actual scheduled workflow', () => {
+    const contract = parseCiContract({
+      ...minimalContract,
+      gates: [{ ...minimalContract.gates[0], requiredForMerge: false, files: { github: '.github/workflows/nightly.yml' } }],
+    });
+    assert.equal(contract.gates[0]?.files?.github, '.github/workflows/nightly.yml');
+  });
+
+  it('rejects unknown forges in gate workflow mappings', () => {
+    assert.throws(() => parseCiContract({
+      ...minimalContract,
+      gates: [{ ...minimalContract.gates[0], requiredForMerge: false, files: { buildkite: 'nightly.yml' } }],
+    }), /files references unknown forge "buildkite"/u);
+  });
+
+  it('rejects external workflow mappings for merge-required gates', () => {
+    assert.throws(() => parseCiContract({
+      ...minimalContract,
+      gates: [{ ...minimalContract.gates[0], files: { github: '.github/workflows/nightly.yml' } }],
+    }), /merge-required and must use its forge's merge pipeline/u);
+  });
+
+  it('does not allow external workflow mappings to override release ownership', () => {
+    assert.throws(() => parseCiContract({
+      ...minimalContract,
+      gates: [{ ...minimalContract.gates[0], requiredForMerge: false, pipeline: 'release', files: { github: 'nightly.yml' } }],
+    }), /cannot override a release or promotion pipeline/u);
+  });
 });
 
 describe('pipeline job extraction', () => {

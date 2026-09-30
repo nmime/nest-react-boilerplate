@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   boundedInteger,
+  finiteNumber,
   ciOpsGateProblems,
   disallowedRequiredSkips,
   parseCommandArgv,
@@ -10,6 +11,13 @@ import {
 } from './world-class-policy';
 
 describe('world-class focused gate policy', () => {
+  it('rejects nonfinite or nonpositive runtime budgets and out-of-range scores', () => {
+    for (const value of ['NaN', 'Infinity', '-1', '0']) {
+      assert.throws(() => finiteNumber({fallback: 1000, label: 'budget', max: 120000, value}), /must be finite/u);
+    }
+    assert.equal(finiteNumber({fallback: 0.7, min: 0, max: 1, label: 'score', value: '0.8'}), 0.8);
+    assert.throws(() => finiteNumber({fallback: 0.7, min: 0, max: 1, label: 'score', value: '1.1'}), /must be finite/u);
+  });
   it('does not fail a focused CI run for gates that were intentionally not selected', () => {
     const skipped = [
       { name: 'load-stress-soak', reason: 'not selected' },

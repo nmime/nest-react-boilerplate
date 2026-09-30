@@ -104,7 +104,7 @@ existing_value() {
 APP_ROOT="${APP_ROOT:-$(existing_value APP_ROOT)}"
 APP_ROOT="${APP_ROOT:-/opt/nest-react-boilerplate}"
 REPOSITORY_URL="${REPOSITORY_URL:-$(existing_value REPOSITORY_URL)}"
-REPOSITORY_URL="${REPOSITORY_URL:-https://github.com/your-github-org/nest-react-boilerplate.git}"
+REPOSITORY_URL="${REPOSITORY_URL:-https://github.com/nmime/nest-react-boilerplate.git}"
 REPOSITORY_BRANCH="${REPOSITORY_BRANCH:-$(existing_value REPOSITORY_BRANCH)}"
 REPOSITORY_BRANCH="${REPOSITORY_BRANCH:-main}"
 

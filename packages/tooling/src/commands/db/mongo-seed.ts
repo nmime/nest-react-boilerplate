@@ -141,6 +141,13 @@ export async function seedMongoBootstrap(
   }
 
   for (const user of seedUsers) {
+    const emailOwner = await database.collection<StringIdDocument>(collections.users).findOne(
+      { tenantId: DefaultTenantId, email: user.email },
+      { projection: { _id: 1 }, session },
+    );
+    if (emailOwner && emailOwner._id !== user.id) {
+      throw new Error('Refusing to grant seed roles to an existing account that is not the canonical seed owner.');
+    }
     const result = await database.collection<StringIdDocument>(collections.users).updateOne(
       { _id: user.id, tenantId: DefaultTenantId },
       {
@@ -164,6 +171,13 @@ export async function seedMongoBootstrap(
       { upsert: true, session },
     );
     counts.users += result.upsertedCount;
+    const stored = await database.collection<StringIdDocument>(collections.users).findOne(
+      { _id: user.id, tenantId: DefaultTenantId },
+      { projection: { _id: 1, email: 1 }, session },
+    );
+    if (!stored || typeof stored.email !== 'string' || stored.email.toLowerCase() !== user.email.toLowerCase()) {
+      throw new Error('Refusing to grant seed roles to an existing account that is not the canonical seed owner.');
+    }
   }
 
   for (const [index, user] of seedUsers.entries()) {

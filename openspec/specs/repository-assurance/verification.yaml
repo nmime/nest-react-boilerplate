@@ -90,6 +90,18 @@ requirements:
     cucumber:
       disposition: acceptance
     evidence:
+      - kind: operations
+        file: packages/tooling/src/commands/ci/check-pipelines.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: packages/tooling/src/commands/ci/pipeline-parity.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
       - kind: cucumber
         file: apps/e2e/acceptance/features/release-provenance.feature
         scenario: SCN-ASSURANCE-RELEASE-01

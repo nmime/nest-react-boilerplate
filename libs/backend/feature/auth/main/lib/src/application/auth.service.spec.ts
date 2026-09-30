@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-ACCESS-001
+// @requirements REQ-AUTH-ACCESS-001 REQ-AUTH-CREDENTIAL-003
 // Evidence for: REQ-AUTH-CREDENTIAL-003
 import {
   BadRequestException,
@@ -75,7 +75,7 @@ describe('AuthService', () => {
     await expect(service.getUserById('missing')).resolves.toBeNull();
   });
 
-  it('bootstraps normalized roles and returns the shared-matrix projection', async () => {
+  it('keeps unverified allowlisted registrations ordinary in normalized roles and session claims', async () => {
     const previousEnabled = process.env.ADMIN_BOOTSTRAP_ENABLED;
     const previousEmails = process.env.ADMIN_BOOTSTRAP_EMAILS;
     process.env.ADMIN_BOOTSTRAP_ENABLED = 'true';
@@ -101,7 +101,7 @@ describe('AuthService', () => {
     const normalPolicy = createDefaultAccessPolicy('member@example.com', process.env);
     const adminPolicy = createDefaultAccessPolicy('admin@example.com', process.env);
     expect(normalPolicy.roles).toEqual(['user']);
-    expect(adminPolicy.roles).toEqual(['user', 'admin']);
+    expect(adminPolicy.roles).toEqual(['user']);
 
     expect(normal.user.roles).toEqual(normalPolicy.roles);
     expect(normal.user.permissions).toEqual(normalPolicy.permissions);
@@ -110,7 +110,7 @@ describe('AuthService', () => {
 
     // The normalized assignment tables hold the same role keys.
     const assignedRoleKeys = (await roles.listRoleKeys(adminSession.user.id))._unsafeUnwrap();
-    expect([...assignedRoleKeys].sort((left, right) => left.localeCompare(right))).toEqual(['admin', 'user']);
+    expect([...assignedRoleKeys].sort((left, right) => left.localeCompare(right))).toEqual(['user']);
 
     // The persisted cache (what createAuthSession reads on the hot path) matches.
     const persistedAdmin = (await users.findById(adminSession.user.id))._unsafeUnwrap();

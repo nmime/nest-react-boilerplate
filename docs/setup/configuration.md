@@ -4,7 +4,7 @@ The NRB setup engine selects applications and concretely activates capabilities.
 
 ## How it works
 
-1. **Schema** — validates your configuration against a Zod schema (`schemaVersion`, `preset`, `apps`, `capabilities`, `options`).
+1. **Schema** — validates schema version 2 and the selection, identity, app renames, product/deployment, runtime, session, tenant, and operational namespaces against Zod.
 2. **Catalog** — defines apps/domains and machine-readable capability dependencies, owned projects, Docker services, environment variables, and Nest/bootstrap activation.
 3. **Planner** — resolves presets, expands transitive dependencies, validates the selection, and generates runtime manifests plus per-backend-app module and telemetry bootstrap composition.
 4. **Apply** — writes `nrb.config.json`, summary/workspace/capability manifests, environment activation, `capabilities.generated.ts` module composition, and `capabilities.bootstrap.generated.ts` pre-import initialization through a filesystem adapter with rollback on failure.
@@ -119,38 +119,41 @@ Outputs the resolved config, operations, and summary as JSON for scripting.
 
 ## Configuration schema
 
-| Field                    | Type       | Description                                                            |
-| ------------------------ | ---------- | ---------------------------------------------------------------------- |
-| `schemaVersion`          | `string`   | Must be `"1.0.0"`.                                                     |
-| `preset`                 | `string`   | Optional. One of: `minimal`, `web`, `fullstack`, `enterprise`, `bots`. |
-| `apps`                   | `string[]` | List of app IDs to enable.                                             |
-| `capabilities`           | `string[]` | List of capability IDs to enable.                                      |
-| `options.prune`          | `boolean`  | Remove stale setup-managed files only (default `false`).               |
-| `options.force`          | `boolean`  | Overwrite conflicts without asking (default `false`).                  |
-| `options.dryRun`         | `boolean`  | Show plan only (default `false`).                                      |
-| `options.nonInteractive` | `boolean`  | Records that setup ran without prompts (default `false`).              |
+| Field                    | Type       | Description                                                                                |
+| ------------------------ | ---------- | ------------------------------------------------------------------------------------------ |
+| `schemaVersion`          | `string`   | Current version is `"2.0.0"`; legacy `"1.0.0"` input is normalized with declared defaults. |
+| `preset`                 | `string`   | Optional. One of: `minimal`, `web`, `fullstack`, `enterprise`, `bots`.                     |
+| `apps`                   | `string[]` | List of app IDs to enable.                                                                 |
+| `capabilities`           | `string[]` | List of capability IDs to enable.                                                          |
+| `options.prune`          | `boolean`  | Remove stale setup-managed files only (default `false`).                                   |
+| `options.force`          | `boolean`  | Overwrite conflicts without asking (default `false`).                                      |
+| `options.dryRun`         | `boolean`  | Show plan only (default `false`).                                                          |
+| `options.nonInteractive` | `boolean`  | Records that setup ran without prompts (default `false`).                                  |
 
 Unknown top-level keys are rejected with a clear error. Every field is validated against an explicit enum.
 
-### Product identity is not in this schema
+### Persisted product namespaces
 
-`nrb.config.json` records _what the workspace contains_ — apps, capabilities,
-deployment shape. It does not yet record _whose product it is_: the name,
-owner, registry namespace, database name, and domain live only as literals
-across the tree, and `nrb init` rewrites them without recording what it was
-given.
+Schema version 2 records `identity`, `appRenames`, `product`, `deployment`,
+`runtime`, `session`, and `tenant` alongside the selected applications and
+capabilities. Identity includes the product name, owner, domain, package/database
+names, alias/tooling prefixes, and brand settings. Deployment records the image
+registry and delivery topology; runtime, session, and tenant fields retain their
+respective configuration.
 
-The practical consequence is that the rename cannot be replayed. After an
-upstream merge reintroduces boilerplate literals, you must remember the exact
-arguments you used the first time. Keep them in a checked-in script until
-identity becomes a declared field. See
-[Product Identity](../product-identity.md).
+Additive, preset, and interactive setup reruns preserve existing product
+namespaces. Explicit prompt or CLI edits change their declared fields; an exact
+`--config` supplies the whole desired configuration. Reconfiguration plans
+identity rewrites, records managed state, and rolls back failed apply operations.
+Tenant changes refuse seeded or migrated databases and unknown probe results.
+See [Product Identity](../product-identity.md) and
+[CLI reference](cli-reference.md) for the complete schema and command boundary.
 
 ### Example config
 
 ```json
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "2.0.0",
   "apps": ["landing-app", "user-app"],
   "capabilities": ["mongodb", "otel", "swagger"],
   "options": {

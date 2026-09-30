@@ -1,6 +1,5 @@
-// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002
+// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002 REQ-SCAFFOLD-SAFETY-008
 import { randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
 import type { StartedMongoDBContainer } from '@testcontainers/mongodb';
 import { MongoClient, type Db, type Document } from 'mongodb';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -33,33 +32,17 @@ interface MongoHarness {
   readonly source: string;
 }
 
-let harnessPromise: Promise<MongoHarness | null> | undefined;
-let unavailableReason = '';
+let harnessPromise: Promise<MongoHarness> | undefined;
 
-async function createHarness(): Promise<MongoHarness | null> {
-  const configuredUri = process.env['PAYMENTS_TEST_MONGODB_URI'] ?? process.env['MONGODB_URI'];
-  if (configuredUri) {
-    const configured = await connect(configuredUri, 'configured MongoDB');
-    if (configured) {
-      return configured;
-    }
-  }
-
-  const local = await connect('mongodb://127.0.0.1:27017', 'local MongoDB');
-  if (local) {
-    return local;
-  }
-
-  if (!existsSync('/var/run/docker.sock')) {
-    unavailableReason =
-      'MongoDB component tests self-skip: neither a configured/local MongoDB server nor /var/run/docker.sock is available. Unit tests still exercise collection DDL, migration verification, module wiring, ordered writes, and injected crash recovery at 100% coverage.';
-    return null;
-  }
-
+async function createHarness(): Promise<MongoHarness> {
+  const { MongoDBContainer } = await import('@testcontainers/mongodb');
+  const container = await new MongoDBContainer('mongo:8.0.32-noble').start();
+  const client = new MongoClient(container.getConnectionString(), {
+    directConnection: true,
+    replicaSet: 'rs0',
+    serverSelectionTimeoutMS: 10_000,
+  });
   try {
-    const { MongoDBContainer } = await import('@testcontainers/mongodb');
-    const container = await new MongoDBContainer('mongo:8.0.32-noble').start();
-    const client = new MongoClient(container.getConnectionString(), { serverSelectionTimeoutMS: 10_000 });
     await client.connect();
     return {
       database: client.db(`payments_component_${randomUUID().replaceAll('-', '')}`),
@@ -68,39 +51,20 @@ async function createHarness(): Promise<MongoHarness | null> {
       source: 'Testcontainers MongoDB',
     };
   } catch (error) {
-    unavailableReason = `MongoDB component tests self-skip: Testcontainers could not start (${error instanceof Error ? error.message : String(error)}). Unit tests still exercise collection DDL, migration verification, module wiring, ordered writes, and injected crash recovery at 100% coverage.`;
-    return null;
-  }
-}
-
-async function connect(uri: string, source: string): Promise<MongoHarness | null> {
-  const client = new MongoClient(uri, { directConnection: true, serverSelectionTimeoutMS: 500 });
-  try {
-    await client.connect();
-    await client.db('admin').command({ ping: 1 });
-    return {
-      database: client.db(`payments_component_${randomUUID().replaceAll('-', '')}`),
-      client,
-      source,
-    };
-  } catch {
     await client.close().catch(() => undefined);
-    return null;
+    await container.stop();
+    throw error;
   }
 }
 
-function harness(): Promise<MongoHarness | null> {
+function harness(): Promise<MongoHarness> {
   harnessPromise ??= createHarness();
   return harnessPromise;
 }
 
 function liveMongoTest(name: string, run: (active: MongoHarness) => Promise<void>): void {
-  it(name, async (context) => {
+  it(name, async () => {
     const active = await harness();
-    if (!active) {
-      context.skip(unavailableReason);
-      return;
-    }
     expect(active.source).toMatch(/MongoDB/u);
     await run(active);
   });
@@ -141,23 +105,26 @@ class CrashAfterStageObserver implements PaymentsMongoOrderedWriteObserver {
 }
 
 afterAll(async () => {
-  const active = await harness();
+  const active = await harnessPromise?.catch(() => undefined);
   if (!active) {
     return;
   }
-  await active.database.dropDatabase();
-  await active.client.close();
-  await active.container?.stop();
+  try {
+    await active.database.dropDatabase();
+  } finally {
+    try {
+      await active.client.close();
+    } finally {
+      await active.container?.stop();
+    }
+  }
 });
 
 describe('MongoDB payments persistence', () => {
-  it('reports the live-Mongo prerequisite honestly', async (context) => {
+  it('starts an owned MongoDB container without using ambient endpoints', async () => {
     const active = await harness();
-    if (!active) {
-      context.skip(unavailableReason);
-      return;
-    }
-    expect(active.source).toMatch(/MongoDB/u);
+    expect(active.source).toBe('Testcontainers MongoDB');
+    expect(active.container).toBeDefined();
   });
 
   liveMongoTest('applies, re-verifies, and drift-checks the numbered migration', async (active) => {

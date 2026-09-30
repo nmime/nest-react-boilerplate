@@ -289,35 +289,33 @@ describe("postgres seed", () => {
     }
   });
 
-  it("grants roles to the pre-existing user row when the email already exists under another id", async () => {
+  it("rolls back rather than promoting a public account at the selected seed email", async () => {
     const database = new FakePostgres();
     database.addRole(migratedAdminRole, "admin");
     database.addRole(migratedUserRole, "user");
-    // Manually created admin: same email as the seed admin, different uuid,
-    // already granted both roles.
     database.addUser(manualAdminUser, "admin@example.com");
-    database.addUserRole(manualAdminUser, migratedAdminRole);
-    database.addUserRole(manualAdminUser, migratedUserRole);
+    await assert.rejects(seed(database as unknown as pg.Client, buildSeedUsers("Local@Pass1!")),
+      /not the canonical seed owner/);
+    assert.equal(database.rolledBack, 1);
+    assert.equal(database.committed, 0);
+    assert.equal(database.grantCount(), 0);
+    assert.equal(seedCalls(database, 'INSERT INTO "auth_user_roles"').length, 0);
+    assert.deepEqual(database.userIds(), [manualAdminUser]);
+  });
 
-    const counts = await seed(database as unknown as pg.Client, buildSeedUsers("Local@Pass1!"));
-
-    assert.equal(counts.users, 2, "only the non-conflicting seed users are inserted");
-    assert.equal(counts.userRoles, 2, "the existing admin grant is not duplicated");
-    const grants = seedCalls(database, 'INSERT INTO "auth_user_roles"');
-    const adminGrant = grants.find((call) => String(call.values[1]) === migratedAdminRole);
-    assert.ok(adminGrant, "an admin role grant is attempted");
-    assert.equal(
-      adminGrant!.values[0],
-      manualAdminUser,
-      "grant targets the resolved user id, not the fixed seed id",
-    );
-    for (const call of grants) {
-      assert.notEqual(call.values[0], adminSeedId, "no grant may target the fixed seed admin id");
-    }
-    assert.deepEqual(
-      database.userIds().sort(),
-      [manualAdminUser, userUuids[1], userUuids[2]].sort(),
-    );
+  it("honors the selected administrator identity and omits demo users when requested", async () => {
+    const database = new FakePostgres();
+    const users = buildSeedUsers("Nondefault-password-at-least-16", "zh", {
+      email: " Owner@Example.COM ", displayName: "Selected Owner", includeDemoUsers: false,
+    });
+    assert.equal(users.length, 1);
+    assert.equal(users[0].email, "owner@example.com");
+    assert.equal(users[0].displayName, "Selected Owner");
+    assert.equal(users[0].locale, "zh");
+    const counts = await seed(database as unknown as pg.Client, users);
+    assert.equal(counts.users, 1);
+    assert.equal(counts.userRoles, 1);
+    assert.deepEqual(database.userIds(), [adminSeedId]);
   });
 
   it("is idempotent: a second run reports zero inserts and commits cleanly", async () => {

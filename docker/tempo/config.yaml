@@ -1,3 +1,5 @@
+stream_over_http_enabled: true
+
 server:
   http_listen_port: 3200
 
@@ -10,21 +12,13 @@ distributor:
         http:
           endpoint: 0.0.0.0:4318
 
-ingester:
-  max_block_age: 5m
-
-compactor:
-  compaction:
-    compaction_window: 1h
-    max_block_bytes: 1073741824
-    block_retention: 48h
-
 storage:
   trace:
-    raw:
-      backend: local
     wal:
       path: /tmp/tempo/wal
     backend: local
     local:
       path: /tmp/tempo/blocks
+
+usage_report:
+  reporting_enabled: false

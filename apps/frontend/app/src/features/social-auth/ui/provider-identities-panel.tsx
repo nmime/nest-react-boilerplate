@@ -50,6 +50,13 @@ const getUnlinkErrorKey = (error: unknown): TranslationKey => {
 function ProviderIdentitiesPanelBase({ onLink, t }: Readonly<ProviderIdentitiesPanelProps>) {
   const authStore = useAuthShellStore();
   const model = useProviderIdentitiesModel();
+  if (!authStore.isAuthenticated) {
+    return (
+      <UiCard className="user-settings__card" title={t('user.settings.connections.title')}>
+        <UiEmptyState description={t('user.state.unauthenticated')} title={t('user.profile.title')} />
+      </UiCard>
+    );
+  }
   const { identitiesQuery, unlinkMutation } = model;
   const state = normalizeProviderIdentities(identitiesQuery.data);
   const unlinkProviderName = t(getUnlinkProviderName(unlinkMutation.variables, state.identities));
@@ -57,9 +64,6 @@ function ProviderIdentitiesPanelBase({ onLink, t }: Readonly<ProviderIdentitiesP
   return (
     <UiCard className="user-settings__card" title={t('user.settings.connections.title')}>
       <p>{t('user.settings.connections.description')}</p>
-      {!authStore.isAuthenticated ? (
-        <UiEmptyState description={t('user.state.unauthenticated')} title={t('user.profile.title')} />
-      ) : null}
       {identitiesQuery.isLoading ? <UiLoading label={t('user.loadingProfile')} /> : null}
       {identitiesQuery.isError ? (
         <UiToast

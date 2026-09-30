@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import type { FilesystemAdapter } from '../setup/adapters/filesystem.js';
-import { assertTenantChangeAllowed } from './io.js';
+import { assertTenantChangeAllowed, probePostgresMigrationState } from './io.js';
 
 function filesystem(paths: string[] = []): FilesystemAdapter {
   const files = new Set(paths);
@@ -44,6 +44,40 @@ function assertTenantChangeAllowedIn(
 }
 
 describe('tenant change guard', () => {
+  it('never parses an absent migration relation and refuses ambiguous probe results', async () => {
+    const queries: string[] = [];
+    const missing = await probePostgresMigrationState('postgres://unused/test', '/unused', (sql) => {
+      queries.push(sql);
+      return { status: 0, stdout: 'missing\n', stderr: '' };
+    });
+    assert.equal(missing.stdout, 'fresh');
+    assert.equal(queries.length, 1);
+    assert.doesNotMatch(queries[0], /FROM public\.mikro_orm_migrations/);
+    const failed = await probePostgresMigrationState('postgres://unused/test', '/unused', () => ({
+      status: 2,
+      stdout: '',
+      stderr: 'connection unavailable',
+    }));
+    assert.equal(failed.status, 2);
+    const unknown = await probePostgresMigrationState('postgres://unused/test', '/unused', () => ({
+      status: 0,
+      stdout: 'ambiguous',
+      stderr: '',
+    }));
+    assert.equal(unknown.stdout, 'unknown');
+  });
+
+  it('queries ledger contents only after confirming relation existence', async () => {
+    const queries: string[] = [];
+    const result = await probePostgresMigrationState('postgres://unused/test', '/unused', (sql) => {
+      queries.push(sql);
+      return { status: 0, stdout: queries.length === 1 ? 'present' : 'applied', stderr: '' };
+    });
+    assert.equal(result.stdout, 'applied');
+    assert.equal(queries.length, 2);
+    assert.match(queries[1], /FROM public\.mikro_orm_migrations/);
+  });
+
   it('allows a checkout with no seed marker and no configured database', async () => {
     // Isolated root: a host checkout's .env may configure a live database, and
     // an empty databaseUrl must mean "unconfigured", not "read the host env".

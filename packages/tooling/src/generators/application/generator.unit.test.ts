@@ -26,6 +26,24 @@ describe('application generator', () => {
   // -----------------------------------------------------------------------
 
   describe('name validation', () => {
+    it('refuses an exhausted local port range before generating any app files', async () => {
+      const tree = await createTree();
+      tree.write(
+        'apps/existing/ports.ts',
+        Array.from(
+          { length: 65535 - 3100 + 1 },
+          (_, index) => `const fixture${index} = { port: ${3100 + index} };`,
+        ).join('\n'),
+      );
+      const before = tree.listChanges();
+      const { applicationGenerator } = await import('./generator.js');
+      await assert.rejects(
+        applicationGenerator(tree, { name: 'example-api', kind: 'backend', skipFormat: true }),
+        /No available local backend application port remains/,
+      );
+      assert.deepEqual(tree.listChanges(), before);
+    });
+
     it('rejects empty name', async () => {
       const tree = await createTree();
       const { applicationGenerator } = await import('./generator.js');

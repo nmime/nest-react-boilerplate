@@ -127,7 +127,7 @@ export function buildConfigurePlan({ role, database, password, redisPassword }) 
           'chown redis:redis /etc/redis/redis.conf.d/20-nrb-auth.conf 2>/dev/null || true; ' +
           'chmod 640 /etc/redis/redis.conf.d/20-nrb-auth.conf; systemctl reload-or-restart redis-server',
       ],
-      { input: `requirepass ${redisPassword}\n` },
+      { input: `requirepass ${JSON.stringify(redisPassword)}\n` },
     ),
   ];
 }
@@ -177,10 +177,16 @@ function run(plan, { dryRun }) {
 
 function main() {
   const [action, ...rest] = process.argv.slice(2);
-  const options = { dryRun: false, secretsEnv: '.env.pm2-secrets', productionEnv: '.env.production' };
+  const options = {
+    dryRun: false,
+    secretsEnv: '.env.pm2-secrets',
+    productionEnv: '.env.production',
+    fromEnvironment: false,
+  };
   for (let i = 0; i < rest.length; i += 1) {
     const arg = rest[i];
     if (arg === '--dry-run') options.dryRun = true;
+    else if (arg === '--from-environment') options.fromEnvironment = true;
     else if (arg.startsWith('--secrets-env=')) options.secretsEnv = arg.slice('--secrets-env='.length);
     else if (arg.startsWith('--production-env=')) options.productionEnv = arg.slice('--production-env='.length);
     else throw new Error(`Unknown argument: ${arg}`);
@@ -198,7 +204,11 @@ function main() {
   }
   const secretsPath = resolve(repoRoot, options.secretsEnv);
   const productionPath = resolve(repoRoot, options.productionEnv);
-  const secrets = existsSync(secretsPath) ? parseSecretsEnv(readFileSync(secretsPath, 'utf8')) : {};
+  const secrets = options.fromEnvironment
+    ? process.env
+    : existsSync(secretsPath)
+      ? parseSecretsEnv(readFileSync(secretsPath, 'utf8'))
+      : {};
   const role = readEnvValue(productionPath, 'POSTGRES_USER', defaultRole);
   const database = readEnvValue(productionPath, 'POSTGRES_DB', defaultRole);
   run(

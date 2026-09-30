@@ -1,5 +1,6 @@
 import { observer, useAuthShellStore, type TranslationKey, type TranslationParams } from '@app/frontend-runtime';
-import { UiButton } from '../../../shared/ui';
+import { UiButton, UiToast } from '../../../shared/ui';
+import { getApiErrorDisplayMessage } from '@app/frontend-api-support';
 import { useLogout } from '@app/frontend-feature-user-logout';
 
 export interface LogoutButtonProps {
@@ -21,19 +22,27 @@ export const LogoutButton = observer(function LogoutButton({
   const authStore = useAuthShellStore();
   const { model, signOut } = useLogout({ navigate });
 
-  if (!authStore.isAuthenticated) {
+  if (!authStore.isAuthenticated && !model.mutation.isError && !model.isPending) {
     return null;
   }
 
   return (
-    <UiButton
-      isLoading={model.isPending}
-      loadingLabel={t('user.action.signingOut')}
-      onClick={signOut}
-      type="button"
-      variant={variant}
-    >
-      {t('user.action.signOut')}
-    </UiButton>
+    <>
+      {model.mutation.isError ? (
+        <UiToast
+          tone="warning"
+          message={getApiErrorDisplayMessage(model.mutation.error, t('errors.internal-server-error.detail'))}
+        />
+      ) : null}
+      <UiButton
+        isLoading={model.isPending}
+        loadingLabel={t('user.action.signingOut')}
+        onClick={signOut}
+        type="button"
+        variant={variant}
+      >
+        {t('user.action.signOut')}
+      </UiButton>
+    </>
   );
 });

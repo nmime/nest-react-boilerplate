@@ -208,6 +208,17 @@ PostgreSQL uses custom-format dumps. Reset, seed, and restore retain the local
 safety guard unless the operator deliberately supplies `--force`; restore also
 requires `--yes` outside dry-run mode.
 
+Seeding honors `--email` and `--display-name`. Local development retains the
+documented demo accounts; non-local databases receive only the selected
+administrator and require a non-default password of at least 16 characters.
+Prefer `--password-env` to placing credentials in shell history. Non-local
+seeding requires `--force` and `DB_SEED_ALLOW_NON_LOCAL=true`; production also
+requires `DB_SEED_ALLOW_PRODUCTION=true`. These flags express operator intent
+and do not replace the maintainer's production approval. A different existing
+account at the selected email is never promoted: the transaction fails. Repeating
+the same canonical seed retains its existing password; use account recovery or
+an explicit credential operation to rotate it.
+
 Run `pnpm run db:migrations:rollback-check` only for PostgreSQL migration
 up/down/up proof. For MongoDB, run focused migration unit/component tests against
 a replica-set Testcontainer and prove idempotent apply plus verification. Before

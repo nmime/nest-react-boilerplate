@@ -6,7 +6,7 @@ import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { accessibilityContextOptions } from "./accessibility-context.ts";
-import { envList, parseArgs, writeJson } from "./runtime-utils.ts";
+import { envList, parseArgs, resolveStaticFile, writeJson } from "./runtime-utils.ts";
 
 interface AxeViolation { id: string; impact: string | null; help: string; nodes: unknown[]; }
 interface AxeResults { violations: AxeViolation[]; }
@@ -47,15 +47,19 @@ interface StaticServer { url: string; close: () => Promise<void>; }
 async function serveDir(dir: string): Promise<StaticServer> {
   const root = resolve(dir);
   const server = createServer((req, res) => {
-    const pathname = decodeURIComponent(new URL(req.url ?? "/", "http://127.0.0.1").pathname);
-    const file = join(root, pathname === "/" ? "index.html" : pathname);
-    if (!file.startsWith(root) || !existsSync(file)) {
+    const file = resolveStaticFile(root, req.url ?? '/');
+    if (!file) {
       res.statusCode = 404;
       res.end("not found");
       return;
     }
     res.setHeader("content-type", contentType(file));
-    createReadStream(file).pipe(res);
+    const stream = createReadStream(file);
+    stream.on('error', () => {
+      if (!res.headersSent) { res.statusCode = 500; res.end('unable to read fixture'); }
+      else res.destroy();
+    });
+    stream.pipe(res);
   });
   await new Promise<void>((resolveListen) => {
     server.listen(0, "127.0.0.1", () => resolveListen());
@@ -97,19 +101,20 @@ for (const dir of defaultTargetDirs) if (existsSync(join(dir, "index.html"))) {
 }
 
 if (!urls.length) {
+  const status = process.env.A11Y_REQUIRE_TARGET === '1' ? 'violations' : 'skipped';
   writeJson(out, {
-    status: "skipped",
+    status,
     reason: "No accessibility targets. Build apps/storybook or set A11Y_URLS to enforce accessibility checks.",
     urls,
     profiles,
   });
   console.log(JSON.stringify({
-    status: "skipped",
+    status,
     preset: "accessibility",
     reason: "No A11Y_URLS or built app/storybook targets",
     report: out,
   }));
-  process.exit(0);
+  process.exit(status === 'violations' ? 1 : 0);
 }
 
 const { chromium, devices } = await import("@playwright/test");

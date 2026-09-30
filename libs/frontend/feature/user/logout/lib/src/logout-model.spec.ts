@@ -12,12 +12,6 @@ const setup = (logout: () => Promise<unknown>) => {
   const clearSession = vi.fn(() => {
     order.push('clearSession');
   });
-  const invalidateSpy = vi
-    .spyOn(queryClient, 'invalidateQueries')
-    .mockImplementation((filters?: { queryKey?: unknown }) => {
-      order.push(`invalidate:${JSON.stringify(filters?.queryKey)}`);
-      return Promise.resolve();
-    });
   const onSignedOut = vi.fn(() => {
     order.push('onSignedOut');
   });
@@ -25,91 +19,82 @@ const setup = (logout: () => Promise<unknown>) => {
     order.push('logout');
     return logout();
   });
-  const model = new LogoutModel({
-    authStore: { clearSession },
-    logout: logoutRequest,
-    queryClient,
-  });
-
-  return {
-    clearSession,
-    invalidateSpy,
-    logoutRequest,
-    model,
-    onSignedOut,
-    order,
-  };
+  const model = new LogoutModel({ authStore: { clearSession }, logout: logoutRequest, queryClient });
+  return { clearSession, logoutRequest, model, onSignedOut, order, queryClient };
 };
 
 describe('LogoutModel', () => {
-  it('revokes the session, clears the store, invalidates caches, then navigates', async () => {
-    const { clearSession, invalidateSpy, logoutRequest, model, onSignedOut, order } = setup(() =>
+  it('revokes the session and removes warm private data before navigating', async () => {
+    const { clearSession, logoutRequest, model, onSignedOut, order, queryClient } = setup(() =>
       Promise.resolve({ ok: true }),
     );
-
+    const keys = [
+      authApi.getAuthControllerMeQueryKey(),
+      userApi.getProfileControllerMeQueryKey(),
+      authApi.getAuthControllerProviderIdentitiesQueryKey(),
+      ['private-billing'],
+    ];
+    for (const key of keys) {
+      queryClient.setQueryData(key, { email: 'preceding-account@example.test' });
+    }
     await model.signOut({ onSignedOut });
+    expect(logoutRequest).toHaveBeenCalledOnce();
+    expect(clearSession).toHaveBeenCalledOnce();
+    expect(queryClient.getQueryCache().getAll()).toEqual([]);
+    expect(onSignedOut).toHaveBeenCalledOnce();
+    expect(order).toEqual(['logout', 'clearSession', 'onSignedOut']);
+    model.destroy();
+  });
 
-    expect(logoutRequest).toHaveBeenCalledTimes(1);
-    expect(clearSession).toHaveBeenCalledTimes(1);
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: authApi.getAuthControllerMeQueryKey(),
+  it('cancels a pending private read so its late completion cannot refill the cache', async () => {
+    const { model, queryClient } = setup(() => Promise.resolve({ ok: true }));
+    let resolveRead!: (data: unknown) => void;
+    const pending = new Promise<unknown>((resolve) => {
+      resolveRead = resolve;
     });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: userApi.getProfileControllerMeQueryKey(),
-    });
-    expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: authApi.getAuthControllerProviderIdentitiesQueryKey(),
-    });
-    expect(onSignedOut).toHaveBeenCalledTimes(1);
-
-    // Ordering: request (with token) -> clear session -> invalidate -> navigate.
-    expect(order[0]).toBe('logout');
-    expect(order.indexOf('logout')).toBeLessThan(order.indexOf('clearSession'));
-    expect(order.indexOf('clearSession')).toBeLessThan(order.indexOf('onSignedOut'));
-    expect(order.indexOf('clearSession')).toBeLessThan(order.findIndex((entry) => entry.startsWith('invalidate:')));
-
+    const queryKey = authApi.getAuthControllerProviderIdentitiesQueryKey();
+    const result = queryClient.fetchQuery({ queryKey, queryFn: () => pending }).catch(() => undefined);
+    await model.signOut();
+    resolveRead({ items: [{ email: 'private@example.test' }] });
+    await result;
+    await Promise.resolve();
+    expect(queryClient.getQueryData(queryKey)).toBeUndefined();
+    expect(queryClient.getQueryCache().getAll()).toEqual([]);
     model.destroy();
   });
 
   it('exposes the mutation pending flag', () => {
     const { model } = setup(() => Promise.resolve({ ok: true }));
-
     expect(model.isPending).toBe(false);
-
     model.destroy();
   });
 
-  it('sends the re-bound request after setLogout replaces it', async () => {
+  it('sends the current request after rebinding the API client', async () => {
     const { logoutRequest, model, order } = setup(() => Promise.resolve({ ok: true }));
     const rebound = vi.fn(async () => {
       order.push('rebound-logout');
       return { ok: true };
     });
-
-    // The API client registry is rebuilt whenever the runtime config changes, so
-    // the model must send the current request rather than the one it was built with.
     model.setLogout(rebound);
     await model.signOut();
-
-    expect(rebound).toHaveBeenCalledTimes(1);
+    expect(rebound).toHaveBeenCalledOnce();
     expect(logoutRequest).not.toHaveBeenCalled();
     expect(order[0]).toBe('rebound-logout');
-
     model.destroy();
   });
 
-  it('clears the session and navigates even when the logout request fails', async () => {
-    const { clearSession, invalidateSpy, model, onSignedOut, order } = setup(() =>
-      Promise.reject(new Error('network down')),
-    );
-
-    await expect(model.signOut({ onSignedOut })).resolves.toBeUndefined();
-
-    expect(clearSession).toHaveBeenCalledTimes(1);
-    expect(invalidateSpy).toHaveBeenCalledTimes(3);
-    expect(onSignedOut).toHaveBeenCalledTimes(1);
-    expect(order.indexOf('logout')).toBeLessThan(order.indexOf('clearSession'));
-
+  it('purges private data on failure and retains a retryable error without claiming success', async () => {
+    const { clearSession, model, onSignedOut, queryClient } = setup(() => Promise.reject(new Error('network down')));
+    queryClient.setQueryData(['private-profile'], { email: 'private@example.test' });
+    await expect(model.signOut({ onSignedOut })).rejects.toThrow('network down');
+    expect(clearSession).toHaveBeenCalledOnce();
+    expect(queryClient.getQueryCache().getAll()).toEqual([]);
+    expect(onSignedOut).not.toHaveBeenCalled();
+    expect(model.mutation.isError).toBe(true);
+    model.setLogout(() => Promise.resolve({ ok: true }));
+    await model.signOut({ onSignedOut });
+    expect(onSignedOut).toHaveBeenCalledOnce();
+    expect(model.mutation.isError).toBe(false);
     model.destroy();
   });
 });

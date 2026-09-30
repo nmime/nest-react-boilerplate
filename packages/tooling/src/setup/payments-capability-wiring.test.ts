@@ -66,6 +66,11 @@ const ROOT_MODULE_PATHS: Record<string, string> = {
 
 const PAYMENTS_MODULE_EXPRESSION =
   'PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })';
+const PAYMENTS_WORKER_MODULE_EXPRESSION =
+  'PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: false, scheduler: { enabled: true, intervalMs: 60_000 } })';
+
+const expectedPaymentsExpression = (appId: string) =>
+  appId.startsWith('notification-') ? PAYMENTS_WORKER_MODULE_EXPRESSION : PAYMENTS_MODULE_EXPRESSION;
 
 const POSTGRES_WIRING = {
   hosts: 'durable-backend',
@@ -73,6 +78,10 @@ const POSTGRES_WIRING = {
   importPath: '@app/backend-feature-payments-main',
   additionalImports: [{ importName: 'PaymentsPostgresModule', importPath: '@app/backend-postgres-main-payments' }],
   moduleExpression: PAYMENTS_MODULE_EXPRESSION,
+  moduleExpressionByHost: {
+    'notification-consumer': PAYMENTS_WORKER_MODULE_EXPRESSION,
+    'notification-scheduler': PAYMENTS_WORKER_MODULE_EXPRESSION,
+  },
 } as const;
 
 describe('payments capability — catalog entry', () => {
@@ -171,7 +180,10 @@ describe('payments capability — planner wiring list', () => {
       assert.match(content, /import \{ PaymentsPostgresModule \} from '@app\/backend-postgres-main-payments';/u);
       // The module list renders inline when it fits the generated print width, so assert the
       // expression and the export membership without pinning the line layout.
-      assert.ok(content.includes(`${PAYMENTS_MODULE_EXPRESSION},`), 'postgres module expression in imports list');
+      assert.ok(
+        content.includes(`${expectedPaymentsExpression(appId)},`),
+        'host-specific postgres expression in imports list',
+      );
       assert.match(content, /exports: \[[^\]]*PaymentsMainModule[^\]]*\],/u);
     });
 
@@ -184,6 +196,7 @@ describe('payments capability — planner wiring list', () => {
       assert.match(content, /imports: \[PaymentsMongoPersistenceModule\]/u);
       assert.doesNotMatch(content, /imports: \[PaymentsMongoModule\]/u);
       assert.doesNotMatch(content, /PaymentsPostgresModule/u);
+      assert.match(content, new RegExp(`exposeHttp: ${appId.startsWith('notification-') ? 'false' : 'true'}`, 'u'));
     });
   }
 
@@ -199,6 +212,23 @@ describe('payments capability — planner wiring list', () => {
     const { content } = generateBackendCapabilityModule('discord-app-api' as AppId, discordSummary);
     assert.ok(content.includes(`${PAYMENTS_MODULE_EXPRESSION},`), 'discord receives the identical expression');
   });
+
+  for (const provider of ['postgres', 'mongodb'] as const) {
+    for (const appId of ['notification-consumer', 'notification-scheduler'] as const) {
+      it(`keeps payment and fiat HTTP disabled on ${appId} with ${provider}`, () => {
+        const { content } = generateBackendCapabilityModule(
+          appId,
+          planSummaryFixture({
+            apps: [appId],
+            capabilities: ['payments', 'fiat-currency', provider],
+          }),
+        );
+        assert.match(content, /PaymentsMainModule\.forRoot\(\{.*exposeHttp: false/u);
+        assert.match(content, /FiatCurrencyMainModule\.forRoot\(\{.*exposeHttp: false/u);
+        assert.doesNotMatch(content, /exposeHttp: true/u);
+      });
+    }
+  }
 });
 
 describe('payments capability — committed workspace wiring list', () => {
@@ -214,7 +244,7 @@ describe('payments capability — committed workspace wiring list', () => {
       const content = readFileSync(new URL(GENERATED_MODULE_PATHS[appId], workspaceRoot), 'utf8');
       assert.match(content, /import \{ PaymentsMainModule \} from '@app\/backend-feature-payments-main';/u);
       assert.match(content, /import \{ PaymentsPostgresModule \} from '@app\/backend-postgres-main-payments';/u);
-      assert.ok(content.includes(`    ${PAYMENTS_MODULE_EXPRESSION},\n`));
+      assert.ok(content.includes(`    ${expectedPaymentsExpression(appId)},\n`));
     });
   }
 

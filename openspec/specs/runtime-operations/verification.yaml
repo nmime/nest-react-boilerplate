@@ -35,6 +35,7 @@ requirements:
     projects:
       - '@app/backend-common-component-test'
       - '@app/backend-postgres-main'
+      - '@repo/tooling'
     risk: critical
     profiles:
       - async
@@ -50,6 +51,12 @@ requirements:
       - kind: component
         file: libs/backend/common/component-test/lib/src/testcontainer/service-containers.spec.ts
         target: '@app/backend-common-component-test:test'
+        lanes:
+          - main
+          - nightly
+      - kind: component
+        file: packages/tooling/src/commands/db/isolated-recovery.component.test.ts
+        target: '@repo/tooling:test'
         lanes:
           - main
           - nightly
@@ -121,6 +128,7 @@ requirements:
           - nightly
   - id: REQ-RUNTIME-OBSERVABILITY-005
     projects:
+      - '@repo/tooling'
       - '@app/backend-common-analytics'
       - '@app/backend-common-logger'
       - '@app/backend-common-otel'
@@ -150,6 +158,12 @@ requirements:
         file: scripts/smoke-observability.mjs
         script: test:observability-stack
         lanes:
+          - runtime
+      - kind: operations
+        file: scripts/local-observability.component-spec.mjs
+        script: test:local-observability
+        lanes:
+          - nightly
           - runtime
   - id: REQ-RUNTIME-MESSAGING-006
     projects:
@@ -182,6 +196,7 @@ requirements:
           - nightly
   - id: REQ-RUNTIME-STORAGE-007
     projects:
+      - '@repo/tooling'
       - '@app/backend-common-redis'
       - '@app/backend-common-s3'
     risk: high
@@ -195,6 +210,12 @@ requirements:
         - security
         - vitest
     evidence:
+      - kind: security
+        file: packages/tooling/src/commands/qa/notify-harness.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/backend/common/s3/lib/src/s3.storage.spec.ts
         target: '@app/backend-common-s3:test'
@@ -239,6 +260,12 @@ requirements:
         lanes:
           - main
           - nightly
+      - kind: component
+        file: libs/backend/postgres/main/auth/lib/src/postgres-tls.component-spec.ts
+        target: '@app/backend-postgres-main-auth:component-test'
+        lanes:
+          - main
+          - nightly
       - kind: vitest
         file: packages/tooling/src/commands/db/migration-index-name.test.ts
         target: '@repo/tooling:test'
@@ -248,6 +275,18 @@ requirements:
       - kind: vitest
         file: libs/backend/postgres/main/shared/lib/src/data-source-options.spec.ts
         target: '@app/backend-postgres-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/shared/lib/src/postgres-session.store.spec.ts
+        target: '@app/backend-postgres-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/auth/lib/src/better-auth-database.spec.ts
+        target: '@app/backend-postgres-main-auth:test'
         lanes:
           - pr
           - main
@@ -277,6 +316,24 @@ requirements:
         - operations
         - security
     evidence:
+      - kind: operations
+        file: scripts/ci/runtime-stack.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/compose-production-init.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
       - kind: operations
         file: packages/tooling/src/runtime/deployment-artifact.test.ts
         target: '@repo/tooling:test'
@@ -325,6 +382,36 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: operations
+        file: scripts/native-release.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/native-runtime-env.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/native-datastores.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: scripts/frontend-proxy-trust.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/nginx-runtime.component-spec.mjs
+        script: test:nginx-runtime
+        lanes:
+          - nightly
+          - runtime
   - id: REQ-RUNTIME-BOUNDARY-010
     projects:
       - '@app/backend-common-network'

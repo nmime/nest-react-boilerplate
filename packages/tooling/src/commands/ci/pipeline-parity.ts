@@ -2,6 +2,7 @@ import type { CiContract, CiForge, CiGate, PipelineKind, SupplyChainControl } fr
 import { extractJob, referencesJob } from './pipeline-contract';
 
 export type ParityProblemCode =
+  | 'no-configured-forge'
   | 'gate-not-mapped'
   | 'pipeline-missing'
   | 'job-missing'
@@ -69,6 +70,10 @@ function gatePipelineFile(forge: CiForge, kind: PipelineKind): string {
 export function evaluateParity(contract: CiContract, sources: Record<string, ForgeSources | undefined>): ParityReport {
   const problems: ParityProblem[] = [];
   const skippedForges: string[] = [];
+  if (!Object.keys(contract.forges).some((forgeId) => sources[forgeId] !== undefined)) {
+    problems.push({ code: 'no-configured-forge', forge: 'repository',
+      message: 'No declared forge has a configured pipeline; CI gate evidence is absent.' });
+  }
 
   for (const [forgeId, forge] of Object.entries(contract.forges)) {
     const forgeSources = sources[forgeId];
@@ -95,14 +100,17 @@ export function evaluateParity(contract: CiContract, sources: Record<string, For
 
       if (gate.requiredForMerge) requiredJobs.add(jobId);
 
-      const pipelineFile = gatePipelineFile(forge, gate.pipeline);
-      const pipelineText = gatePipelineText(forgeSources, gate.pipeline);
+      const declaredFile = gate.files?.[forgeId];
+      const pipelineFile = declaredFile ?? gatePipelineFile(forge, gate.pipeline);
+      const pipelineText = declaredFile === undefined
+        ? gatePipelineText(forgeSources, gate.pipeline)
+        : forgeSources.laneFiles[declaredFile];
       if (pipelineText === undefined) {
         problems.push({
           code: 'pipeline-missing',
           forge: forgeId,
           gate: gate.id,
-          message: `${forgeId} declares no ${gate.pipeline} pipeline for gate "${gate.id}"`,
+          message: `${forgeId} has no pipeline ${pipelineFile} for gate "${gate.id}"`,
         });
         continue;
       }

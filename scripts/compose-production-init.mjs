@@ -216,6 +216,7 @@ export function run(argv = [], { root = repoRoot } = {}) {
     COMPOSE_PROFILES: options.profiles,
     COMPOSE_IMAGE_SOURCE: options.imageSource,
     EXTERNAL_PROXY_FRONTEND_MODE: options.frontendMode,
+    ...(summary.copiedEnv && options.database === 'external-db' ? { POSTGRES_SSL: 'true' } : {}),
     // The shipped example defaults POSTGRES_USER to the postgres superuser, which
     // must never be the application role on a host-installed server.
     ...(options.database === 'native'

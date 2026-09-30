@@ -1,9 +1,25 @@
-// @requirements REQ-NOTIFY-PREFERENCE-006
+// @requirements REQ-NOTIFY-PREFERENCE-006 REQ-AUTH-FRONTEND-009
 import { describe, expect, it } from 'vitest';
 import type { LocalePayload } from './session-preferences-model';
-import { getPayloadLocale, getPayloadTheme, readAuthPayloadField } from './session-payload';
+import { getPayloadLocale, getPayloadTheme, getPayloadPrincipal, readAuthPayloadField } from './session-payload';
 
 const asBoolean = (value: unknown): boolean | undefined => (typeof value === 'boolean' ? value : undefined);
+
+describe('principal cache ownership', () => {
+  it('requires both a local account and tenant, normalizes metadata, and rejects incomplete payloads', () => {
+    expect(getPayloadPrincipal({ user: { id: ' account ', tenantId: ' tenant ' } } as LocalePayload)).toEqual({
+      subject: 'account',
+      tenantId: 'tenant',
+    });
+    expect(getPayloadPrincipal({ principal: { subject: 'account', tenantId: 'tenant' } } as LocalePayload)).toEqual({
+      subject: 'account',
+      tenantId: 'tenant',
+    });
+    expect(getPayloadPrincipal({ user: { id: 'account' } })).toBeUndefined();
+    expect(getPayloadPrincipal({ user: { id: ' ' }, tenantId: 'tenant' } as LocalePayload)).toBeUndefined();
+    expect(getPayloadPrincipal(null)).toBeUndefined();
+  });
+});
 
 describe('readAuthPayloadField', () => {
   it('reads a field the shared payload types do not model, newest scope first', () => {

@@ -10,7 +10,8 @@
  * every `*_FILE` path into a plain variable. PM2 has no such hook, so this module is
  * that hook — and it hands the values to the child through its environment, never
  * through argv (`/proc/<pid>/cmdline` is world-readable) and never through an
- * aggregated plaintext file on disk.
+ * command arguments. Managed hosts resolve individual protected files; one-shot
+ * deployment can load its explicitly selected private secrets environment file.
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -64,6 +65,41 @@ const fail = (message) => {
 
 const loopbackHosts = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
 
+function isSecretEnvironmentKey(key) {
+  return (
+    key.endsWith('_FILE') ||
+    key in secretFileEnvironmentKeys ||
+    Object.values(secretFileEnvironmentKeys).includes(key) ||
+    [
+      'DATABASE_URL',
+      'MONGODB_URI',
+      'MONGODB_MIGRATION_URI',
+      'MONGODB_BACKUP_RESTORE_URI',
+      'REDIS_URL',
+      'OTEL_EXPORTER_OTLP_HEADERS',
+    ].includes(key) ||
+    /PASSWORD|SECRET|TOKEN|PRIVATE.?KEY|CREDENTIAL|AUTHORIZATION|ACCESS_KEY|API_KEY/iu.test(key)
+  );
+}
+
+/** A build receives public configuration, never inherited application credentials. */
+export function withoutNativeSecrets(environment) {
+  return Object.fromEntries(
+    Object.entries(environment).filter(([key, value]) => {
+      if (isSecretEnvironmentKey(key)) return false;
+      if (typeof value === 'string') {
+        try {
+          const url = new URL(value);
+          if (url.username || url.password) return false;
+        } catch {
+          /* A non-URL setting. */
+        }
+      }
+      return true;
+    }),
+  );
+}
+
 /**
  * A bare single-label host is a Compose service alias (`postgres`, `redis`,
  * `otel-collector`) and cannot resolve on a native host. Real external endpoints are
@@ -94,19 +130,19 @@ export function assertNativeEndpoints(environment) {
     try {
       parsed = new URL(value);
     } catch {
-      fail(`${key} must be a valid URL for a native host (received "${value}").`);
+      fail(`${key} must be a valid URL for a native host.`);
     }
     assertReachableHost(parsed.hostname, key);
   }
   for (const key of hostListEndpointKeys) {
     for (const entry of (environment[key]?.trim() || '').split(',').filter(Boolean)) {
-      // Entries may be `host:port` or a full URL, so drop any scheme before the host.
-      const host = entry
-        .trim()
-        .replace(/^[a-z][a-z0-9+.-]*:\/\//iu, '')
-        .split('/')[0]
-        .split(':')[0];
-      assertReachableHost(host, key);
+      let parsed;
+      try {
+        parsed = new URL(entry.includes('://') ? entry.trim() : `tcp://${entry.trim()}`);
+      } catch {
+        fail(`${key} contains an invalid native endpoint.`);
+      }
+      assertReachableHost(parsed.hostname, key);
     }
   }
 }
@@ -118,18 +154,42 @@ export function assertNativeEndpoints(environment) {
  * `includeSecrets: false` is for build steps, which need the VITE_* surface but must
  * never have credentials in their process environment.
  */
-export function resolveNativeEnvironment({ production, readSecret, includeSecrets = true }) {
+export function resolveNativeEnvironment({
+  production,
+  readSecret,
+  includeSecrets = true,
+  secretsEnvironment = {},
+  inheritedEnvironment = {},
+}) {
+  const suppliedSecrets = Object.fromEntries(
+    Object.entries(inheritedEnvironment).filter(
+      ([key, value]) => isSecretEnvironmentKey(key) && !key.endsWith('_FILE') && value?.trim(),
+    ),
+  );
+  Object.assign(
+    suppliedSecrets,
+    Object.fromEntries(Object.entries(secretsEnvironment).filter(([, value]) => value?.trim())),
+  );
   const environment = {};
   for (const [key, value] of Object.entries(production)) {
     // Resolved indirections are replaced by their plain sibling. The keys the app reads itself are
     // absent from the table by construction, so they fall through here and stay as paths.
     if (key in secretFileEnvironmentKeys) continue;
+    if (
+      applicationResolvedSecretFiles.has(key) &&
+      (production[key.slice(0, -5)]?.trim() || suppliedSecrets[key.slice(0, -5)]?.trim())
+    )
+      continue;
     environment[key] = value;
   }
-  if (!includeSecrets) return environment;
+  if (!includeSecrets) return withoutNativeSecrets(environment);
+  for (const [key, value] of Object.entries(suppliedSecrets)) {
+    if (!environment[key]?.trim()) environment[key] = value;
+  }
 
   for (const [fileKey, plainKey] of Object.entries(secretFileEnvironmentKeys)) {
     const path = production[fileKey]?.trim();
+    if (environment[plainKey]?.trim()) continue;
     if (!path) continue;
     const value = readSecret(path)?.replace(/\r?\n$/u, '');
     // serverctl creates empty placeholders for secrets only an external system can
@@ -158,7 +218,7 @@ export function resolveNativeEnvironment({ production, readSecret, includeSecret
 }
 
 function parseOptions(argv) {
-  const options = { productionEnv: '.env.production', includeSecrets: true, command: [] };
+  const options = { productionEnv: '.env.production', secretsEnv: undefined, includeSecrets: true, command: [] };
   const rest = [...argv];
   while (rest.length) {
     const argument = rest.shift();
@@ -167,6 +227,7 @@ function parseOptions(argv) {
       break;
     }
     if (argument.startsWith('--production-env=')) options.productionEnv = argument.slice('--production-env='.length);
+    else if (argument.startsWith('--secrets-env=')) options.secretsEnv = argument.slice('--secrets-env='.length);
     else if (argument === '--no-secrets') options.includeSecrets = false;
     else fail(`Unknown argument: ${argument}`);
   }
@@ -176,22 +237,30 @@ function parseOptions(argv) {
 function main() {
   const [action, ...rest] = process.argv.slice(2);
   if (!['exec', 'keys'].includes(action)) {
-    console.log('Usage: native-runtime-env.mjs <exec|keys> [--production-env=path] [--no-secrets] [-- command ...]');
+    console.log(
+      'Usage: native-runtime-env.mjs <exec|keys> [--production-env=path] [--secrets-env=path] [--no-secrets] [-- command ...]',
+    );
     process.exit(action ? 2 : 0);
   }
   const options = parseOptions(rest);
   const productionPath = resolve(repoRoot, options.productionEnv);
   if (!existsSync(productionPath)) fail(`Production environment file not found: ${productionPath}`);
   const production = parseEnvFile(readFileSync(productionPath, 'utf8'));
+  const secretsEnvironment =
+    options.includeSecrets && options.secretsEnv
+      ? parseEnvFile(readFileSync(resolve(repoRoot, options.secretsEnv), 'utf8'))
+      : {};
   const environment = resolveNativeEnvironment({
     production,
+    secretsEnvironment,
+    inheritedEnvironment: process.env,
     includeSecrets: options.includeSecrets,
     readSecret: (path) => {
       if (!existsSync(path)) fail(`Secret file not found: ${path}`);
       return readFileSync(path, 'utf8');
     },
   });
-  assertNativeEndpoints(environment);
+  if (options.includeSecrets) assertNativeEndpoints({ ...process.env, ...environment });
   if (action === 'keys') {
     console.log(Object.keys(environment).sort().join('\n'));
     return;
@@ -201,7 +270,7 @@ function main() {
   const result = spawnSync(command, args, {
     cwd: repoRoot,
     stdio: 'inherit',
-    env: { ...process.env, ...environment },
+    env: { ...(options.includeSecrets ? process.env : withoutNativeSecrets(process.env)), ...environment },
   });
   if (result.error?.code === 'ENOENT') {
     console.error(`"${command}" is not available on this host.`);

@@ -1,6 +1,7 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Injectable, Module, type OnApplicationShutdown } from '@nestjs/common';
 import { Pool } from 'pg';
+import { createPostgresConnectionOptions } from '@app/backend-postgres-main';
 import {
   AdminAuditLogRepositoryInjectToken,
   ApiResponseStudioRepositoryInjectToken,
@@ -67,7 +68,7 @@ class PostgresBetterAuthDatabaseProvider implements BetterAuthDatabaseProvider, 
     if (!databaseUrl && process.env.OPENAPI_ENABLED !== 'true') {
       throw new Error('DATABASE_URL is required for Better-Auth PostgreSQL persistence.');
     }
-    this.pool = databaseUrl ? new Pool({ connectionString: databaseUrl }) : undefined;
+    this.pool = databaseUrl ? new Pool(createPostgresConnectionOptions(databaseUrl)) : undefined;
   }
 
   get database(): Pool | undefined {

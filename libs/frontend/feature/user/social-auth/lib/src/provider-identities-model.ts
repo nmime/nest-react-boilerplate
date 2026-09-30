@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { reaction, type IReactionDisposer } from 'mobx';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAuthApiClient, type AuthApiClient } from '@app/frontend-api-client';
 import {
@@ -16,7 +17,7 @@ type ProviderIdentitiesData = Awaited<ReturnType<typeof fetchProviderIdentities>
 export interface ProviderIdentitiesModelOptions {
   /** API client used by both operations. Replaced through {@link ProviderIdentitiesModel.setAuthClient}. */
   authClient: AuthApiClient;
-  authStore: Pick<AuthShellStore, 'isAuthenticated'>;
+  authStore: Pick<AuthShellStore, 'isAuthenticated' | 'principalKey'>;
   queryClient: QueryClient;
 }
 
@@ -32,16 +33,27 @@ export class ProviderIdentitiesModel {
   readonly unlinkMutation: MobxMutation<unknown, string>;
 
   private authClient: AuthApiClient;
+  private readonly disposePrincipalReaction: IReactionDisposer;
 
   constructor({ authClient, authStore, queryClient }: ProviderIdentitiesModelOptions) {
     this.authClient = authClient;
+    const keyForPrincipal = (principalKey: string | null) => [...providerIdentitiesQueryKey(), principalKey];
     this.identitiesQuery = createMobxQuery<ProviderIdentitiesData>({
-      options: () => ({ enabled: authStore.isAuthenticated }),
+      options: () => ({ enabled: authStore.isAuthenticated, queryKey: keyForPrincipal(authStore.principalKey) }),
       queryClient,
       queryFn: () => fetchProviderIdentities(this.authClient),
       queryKey: providerIdentitiesQueryKey(),
       retry: false,
     });
+    this.disposePrincipalReaction = reaction(
+      () => authStore.principalKey,
+      (_next, previous) => {
+        const queryKey = keyForPrincipal(previous);
+        void queryClient.cancelQueries({ queryKey, exact: true }).then(() => {
+          queryClient.removeQueries({ queryKey, exact: true });
+        });
+      },
+    );
     this.unlinkMutation = createMobxMutation<unknown, string>({
       mutationFn: (identityId) => unlinkProviderIdentity(this.authClient, identityId),
       onSuccess: () =>
@@ -69,6 +81,7 @@ export class ProviderIdentitiesModel {
   }
 
   destroy(): void {
+    this.disposePrincipalReaction();
     this.identitiesQuery.destroy();
     this.unlinkMutation.destroy();
   }

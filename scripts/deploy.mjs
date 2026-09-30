@@ -20,7 +20,12 @@ import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { helmValueFiles } from './delivery-inventory.mjs';
-import { buildNativeBuildPlan, buildNativeStartPlan, derivePm2Flags } from './native-release.mjs';
+import {
+  buildNativeBuildPlan,
+  buildNativeStartPlan,
+  derivePm2Flags,
+  nativeEnvironmentWrapper,
+} from './native-release.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..');
@@ -318,6 +323,7 @@ function pm2Plan(answers) {
 
   const nativeData = database === 'native';
   const secretsEnv = answers.secretsEnvFile ?? '.env.pm2-secrets';
+  const withEnvironment = nativeEnvironmentWrapper({ productionEnv: answers.envFile ?? '.env.production', secretsEnv });
   const wire = deriveComposeEnv(answers);
   const steps = [];
   if (nativeData) {
@@ -337,11 +343,11 @@ function pm2Plan(answers) {
   }
   steps.push(
     // Shared with serverctl's RUNTIME_MODE=native path so ordering cannot drift.
-    ...buildNativeBuildPlan(),
     // PM2 reads secrets from the environment, so generate the same material the
-    // container paths generate and emit it as a 0600 env file to source.
+    // container paths generate and emit it as a 0600 env file for the wrapper.
     step('Generate runtime secrets', process.execPath, [
       'scripts/compose-production-init.mjs',
+      `--env-out=${answers.envFile ?? '.env.production'}`,
       `--database=${database}`,
       `--domain-mode=${wire.domainMode}`,
       `--tls-mode=${wire.tlsMode}`,
@@ -352,12 +358,18 @@ function pm2Plan(answers) {
       `--emit-env=${secretsEnv}`,
     ]),
   );
+  steps.push(...buildNativeBuildPlan({ withEnvironment }));
   if (nativeData) {
     steps.push(
       step(
         'Create the database role and apply generated passwords',
         process.execPath,
-        ['scripts/native-datastores.mjs', 'configure', `--secrets-env=${secretsEnv}`],
+        [
+          'scripts/native-datastores.mjs',
+          'configure',
+          `--secrets-env=${secretsEnv}`,
+          `--production-env=${answers.envFile ?? '.env.production'}`,
+        ],
         { sudo: true },
       ),
     );
@@ -367,14 +379,13 @@ function pm2Plan(answers) {
       step('Validate deployment configuration', process.execPath, ['scripts/deploy-validate.mjs', '--mode=pm2']),
     );
   }
-  // This path sources its secrets from the emitted env file, so it needs no wrapper.
-  steps.push(...buildNativeStartPlan({ pm2Flags: env }));
+  steps.push(...buildNativeStartPlan({ pm2Flags: env, withEnvironment }));
   // Only render an edge we actually own; --edge=none leaves it to the operator.
   if (edge === 'host-nginx') steps.push(...hostNginxSteps(answers));
   return {
     steps,
     warnings: [
-      'Generated secrets land in .env.pm2-secrets (0600). Source it before `pm2 start`: `set -a; . ./.env.pm2-secrets; set +a`.',
+      `Generated secrets land in ${secretsEnv} (0600). The shared native wrapper loads them for migrations and PM2; builds receive public configuration only.`,
       nativeData
         ? 'PostgreSQL and Redis run on this host bound to 127.0.0.1 with generated passwords; nothing else needs pasting except provider tokens.'
         : 'Export DATABASE_URL and REDIS_URL for your existing data services before starting.',

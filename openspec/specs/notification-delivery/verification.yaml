@@ -45,15 +45,19 @@ requirements:
       - notification-scheduler
       - '@app/backend-feature-notification-admin'
       - '@app/backend-feature-notification-main'
+      - '@app/backend-postgres-main-notification'
+      - '@app/backend-mongodb-main-notification'
     risk: critical
     profiles:
       - domain
+      - persistence
       - operations
     cucumber:
       disposition: not-applicable
       reason: Idempotent broadcast transitions and recovery are state-machine and operational invariants with direct evidence.
       alternativeEvidence:
         - vitest
+        - component
         - operations
     evidence:
       - kind: vitest
@@ -66,6 +70,24 @@ requirements:
         file: packages/tooling/src/commands/qa/world-class-gates.ts
         script: test:world-class
         lanes:
+          - nightly
+      - kind: vitest
+        file: libs/backend/feature/notification/admin/lib/src/admin-notifications.controller.spec.ts
+        target: '@app/backend-feature-notification-admin:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/postgres/main/notification/lib/src/repositories/notification-concurrency.component-spec.ts
+        target: '@app/backend-postgres-main-notification:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: component
+        file: libs/backend/mongodb/main/notification/lib/src/notification-mongo.repository.component-spec.ts
+        target: '@app/backend-mongodb-main-notification:component-test'
+        lanes:
+          - main
           - nightly
   - id: REQ-NOTIFY-TEMPLATE-003
     projects:

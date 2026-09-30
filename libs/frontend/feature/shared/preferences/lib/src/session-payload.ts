@@ -47,3 +47,13 @@ export const getPayloadLocale = (payload?: LocalePayload | null): Locale | undef
 
 export const getPayloadTheme = (payload?: LocalePayload | null): UiTheme | undefined =>
   readAuthPayloadField(payload ?? null, 'theme', normalizeTheme);
+
+export const getPayloadPrincipal = (
+  payload?: LocalePayload | null,
+): { subject: string; tenantId: string } | undefined => {
+  const parse = (value: unknown) => (typeof value === 'string' && value.trim() ? value.trim() : undefined);
+  const subject =
+    readAuthPayloadField(payload ?? null, 'id', parse) ?? readAuthPayloadField(payload ?? null, 'subject', parse);
+  const tenantId = readAuthPayloadField(payload ?? null, 'tenantId', parse);
+  return subject && tenantId ? { subject, tenantId } : undefined;
+};

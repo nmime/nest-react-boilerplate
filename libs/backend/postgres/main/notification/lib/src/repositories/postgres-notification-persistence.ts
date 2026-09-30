@@ -161,7 +161,17 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
     });
   }
 
-  async create<T>(params: CreateTemplateNotificationParams<T>): Promise<NotificationRecord<T>> {
+  async create<T>(params: CreateTemplateNotificationParams<T>, transaction?: unknown): Promise<NotificationRecord<T>> {
+    if (transaction !== undefined) {
+      if (
+        !(transaction instanceof EntityManager) ||
+        !transaction.isInTransaction() ||
+        transaction.getConnection() !== this.entityManager.getConnection()
+      ) {
+        throw new Error('notification_invalid_transaction');
+      }
+      return this.createInTransaction(transaction, params);
+    }
     return this.entityManager.transactional((em) => this.createInTransaction(em, params));
   }
 

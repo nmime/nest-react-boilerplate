@@ -10,10 +10,12 @@ import { buildDeployPlan } from './deploy.mjs';
 import {
   helmVersion,
   mongoImage,
+  postgresImage,
   generatableSecrets,
   helmValueFiles,
   publicApps,
   observabilityImages,
+  localObservabilityImages,
 } from './delivery-inventory.mjs';
 import { generatableSecrets as initSecrets } from './compose-production-init.mjs';
 
@@ -70,6 +72,13 @@ test('reference monitoring pins agree across Compose and Helm without duplicate 
   ]) {
     assert.equal(`${image.repository}:${image.tag}`, observabilityImages[name]);
   }
+  const production = parse(read('.helm/values-production.yaml'));
+  assert.equal(`${production.coroot.image.repository}:${production.coroot.image.tag}`, observabilityImages.coroot);
+  assert.equal(`${helm.backups.mongodbImage.repository}:${helm.backups.mongodbImage.tag}`, mongoImage);
+  assert.equal(`${helm.backups.image.repository}:${helm.backups.image.tag}`, postgresImage);
+  for (const key of ['POSTGRES_CLIENT_DOCKER_IMAGE', 'DB_BACKUP_DOCKER_IMAGE']) {
+    assert.ok(read('.env.example').includes(`${key}=${postgresImage}`));
+  }
   assert.equal(
     compose.services.grafana.environment.GF_SECURITY_ADMIN_PASSWORD__FILE,
     '/run/secrets/grafana_admin_password',
@@ -96,6 +105,22 @@ test('reference monitoring pins agree across Compose and Helm without duplicate 
   ]);
   assert.equal(compose.services['otel-collector'].environment.NODE_ENV, 'production');
   assert.equal(compose.services['otel-collector'].healthcheck, undefined);
+});
+
+test('developer databases and observability are explicit and Grafana cannot grant anonymous admin authority', () => {
+  const base = parse(read('docker-compose.yml'));
+  const local = parse(read('docker-compose.override.yml'));
+  assert.deepEqual(base.services.postgres.profiles, ['postgres']);
+  assert.deepEqual(base.services.mongodb.profiles, ['mongodb']);
+  for (const [name, image] of Object.entries(localObservabilityImages)) {
+    assert.equal(local.services[name].image, image);
+    assert.deepEqual(local.services[name].profiles, ['observability']);
+    assert.ok(local.services[name].ports.every((port) => port.startsWith('127.0.0.1:')));
+  }
+  assert.equal(local.services.grafana.environment.GF_AUTH_ANONYMOUS_ORG_ROLE, 'Viewer');
+  assert.equal(local.services.grafana.environment.GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION, 'true');
+  const datasources = parse(read('docker/grafana/local-datasources.yml'));
+  assert.deepEqual(datasources.datasources.map(({ uid }) => uid).sort(), ['loki', 'tempo']);
 });
 
 test('image promotion is the Node updater only', () => {

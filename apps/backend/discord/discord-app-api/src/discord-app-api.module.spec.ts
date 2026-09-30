@@ -1,5 +1,6 @@
-// @requirements REQ-SOCIAL-INGRESS-001
+// @requirements REQ-SOCIAL-INGRESS-001 REQ-AUTH-SESSION-002 REQ-AUTH-IDENTITY-005
 import { Test } from '@nestjs/testing';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiscordAccountApplicationPort, DiscordAccountService } from '@app/backend-feature-discord-bot';
 import {
@@ -15,6 +16,7 @@ import { DiscordExternalAuthAdapter } from './discord-external-auth.adapter';
 
 const tenantId = '00000000-0000-0000-0000-000000000000';
 const discordUserId = '123456789012345678';
+const localUserId = '11111111-1111-4111-8111-111111111111';
 
 /**
  * Boots the real application module and replaces only the auth feature's
@@ -33,7 +35,10 @@ async function boot(externalAuth: Partial<ExternalAuthService>): Promise<{
     imports: [DiscordAppApiModule],
   })
     .overrideProvider(ExternalAuthService)
-    .useValue(externalAuth)
+    .useValue({
+      resolveProviderPrincipal: vi.fn().mockResolvedValue({ subject: localUserId, tenantId }),
+      ...externalAuth,
+    })
     .compile();
 
   return {
@@ -75,6 +80,55 @@ describe('DiscordAppApiModule wiring', () => {
     }
   });
 
+  it('serves no duplicate custom or Better Auth HTTP routes from the Discord host', async () => {
+    process.env.AUTH_PERSISTENCE = 'memory';
+    process.env.OPENAPI_ENABLED = 'true';
+    const moduleRef = await Test.createTestingModule({ imports: [DiscordAppApiModule] }).compile();
+    const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+    try {
+      await app.init();
+      await app.getHttpAdapter().getInstance().ready();
+      for (const url of ['/auth/me', '/auth/provider-identities', '/api/auth/get-session']) {
+        const response = await app.inject({ method: 'GET', url });
+        expect(response.statusCode, url).toBe(404);
+      }
+      for (const url of ['/auth/register', '/auth/logout', '/api/auth/sign-in/email']) {
+        const response = await app.inject({ method: 'POST', url, payload: {} });
+        expect(response.statusCode, url).toBe(404);
+      }
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('reports unknown signed senders unlinked and refuses account writes without a local mapping', async () => {
+    const createDiscordAuthorizationRequest = vi.fn();
+    const unlinkProviderIdentity = vi.fn();
+    const { accounts, close } = await boot({
+      resolveProviderPrincipal: vi.fn().mockResolvedValue(null),
+      createDiscordAuthorizationRequest,
+      unlinkProviderIdentity,
+    });
+    try {
+      await expect(accounts.status({ userId: discordUserId, tenantId })).resolves.toMatchObject({ linked: false });
+      const port = (accounts as unknown as { externalAuth: DiscordExternalAuthAdapter }).externalAuth;
+      await expect(
+        port.createDiscordAuthorizationRequest({
+          tenantId,
+          intent: 'link',
+          principal: { subject: discordUserId, tenantId },
+        }),
+      ).rejects.toThrow('discord_account_not_linked');
+      await expect(port.unlinkProviderIdentity('identity', { subject: discordUserId, tenantId })).rejects.toThrow(
+        'discord_account_not_linked',
+      );
+      expect(createDiscordAuthorizationRequest).not.toHaveBeenCalled();
+      expect(unlinkProviderIdentity).not.toHaveBeenCalled();
+    } finally {
+      await close();
+    }
+  });
+
   it("binds the account service's external auth port to the ExternalAuthService adapter", async () => {
     const { accounts, close } = await boot({
       listProviderIdentities: vi.fn().mockResolvedValue([]),
@@ -107,7 +161,7 @@ describe('DiscordAppApiModule wiring', () => {
         linked: true,
         displayName: 'Tester',
       });
-      expect(listProviderIdentities).toHaveBeenCalledWith(discordUserId, tenantId);
+      expect(listProviderIdentities).toHaveBeenCalledWith(localUserId, tenantId);
     } finally {
       await close();
     }
@@ -138,7 +192,7 @@ describe('DiscordAppApiModule wiring', () => {
         { subject: string; tenantId: string; authTime: number },
       ];
       expect(identityId).toBe('identity-1');
-      expect(principal.subject).toBe(discordUserId);
+      expect(principal.subject).toBe(localUserId);
       expect(principal.tenantId).toBe(tenantId);
       // The adapter supplies the verified interaction moment as the step-up
       // authTime the auth feature requires, so unlink is not a no-op.
@@ -177,7 +231,8 @@ describe('DiscordAppApiModule wiring', () => {
       expect(createDiscordAuthorizationRequest).toHaveBeenLastCalledWith({
         intent: 'link',
         returnUrl: undefined,
-        principal: { subject: discordUserId, tenantId },
+        principal: { subject: localUserId, tenantId },
+        binding: { kind: 'discord-interaction', providerSubject: discordUserId },
       });
     } finally {
       await close();

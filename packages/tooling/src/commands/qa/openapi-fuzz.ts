@@ -4,9 +4,14 @@ import { join } from "node:path";
 import { commandExists, envList, loadOpenApiContracts, parseArgs, run, schemaExample, slug, validateSchema, writeJson } from "./runtime-utils.ts";
 import type { LoadedOpenApiContract, OpenApiOperation } from "./runtime-utils.ts";
 
+import { boundedInteger } from "./world-class-policy.ts";
+
 const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
 const engine = args.options.get("engine") ?? process.env.OPENAPI_FUZZ_ENGINE ?? "native";
+if (!['native', 'schemathesis'].includes(engine)) throw new Error(`Unknown fuzz engine: ${engine}`);
+const timeoutMs = boundedInteger({ fallback: 10000, label: 'OPENAPI_FUZZ_TIMEOUT_MS', min: 100, max: 120_000, value: process.env.OPENAPI_FUZZ_TIMEOUT_MS });
+const maxExamples = boundedInteger({ fallback: 25, label: 'OPENAPI_FUZZ_MAX_EXAMPLES', max: 200, value: process.env.OPENAPI_FUZZ_MAX_EXAMPLES });
 const out = args.options.get("report") ?? "test-results/openapi-fuzz/report.json";
 const safeMethods = new Set(["get", "head", "options"]);
 const allowUnsafe = process.env.OPENAPI_FUZZ_UNSAFE === "1";
@@ -53,57 +58,65 @@ for (const contract of contracts) {
   }
 }
 
+let executed = 0;
 if (engine === "schemathesis" && !dryRun) {
-  if (!globalBaseUrls.length) live.push({ engine: "schemathesis", ok: false, error: "OPENAPI_FUZZ_BASE_URL is required for Schemathesis live fuzzing" });
-  else if (commandExists("schemathesis")) {
-    for (const contract of contracts) {
-      const result = run("schemathesis", ["run", contract.path, "--base-url", globalBaseUrls[0], "--checks", "all", "--max-examples", process.env.OPENAPI_FUZZ_MAX_EXAMPLES ?? "25"]);
-      live.push({ engine: "schemathesis", contract: contract.file, status: result.status, ok: result.status === 0, stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-4000) });
+  const methodSelection = allowUnsafe ? [] : ['--include-method-regex', '^(GET|HEAD|OPTIONS)$', '--phases', 'examples,fuzzing'];
+  // Unsupported-method and stateful checks can send writes outside the selected operation.
+  const checks = allowUnsafe ? 'all' : 'not_a_server_error,status_code_conformance,content_type_conformance,response_schema_conformance';
+  for (const contract of contracts) {
+    const eligible = cases.filter((item) => item.contract === contract.file && (item.safe || allowUnsafe));
+    if (!eligible.length) continue;
+    for (const baseUrl of baseUrlsFor(contract)) {
+      const cliArgs = ['run', contract.path, '--base-url', baseUrl, '--checks', checks, '--max-examples', String(maxExamples), ...methodSelection];
+      let result;
+      if (commandExists('schemathesis')) result = run('schemathesis', cliArgs);
+      else if (commandExists('docker')) {
+        result = run('docker', ['run', '--rm', '-v', `${process.cwd()}:/work:ro`, '--workdir', '/work', 'schemathesis/schemathesis:stable', ...cliArgs]);
+      } else {
+        live.push({engine: 'schemathesis', ok: false, error: 'Install schemathesis or Docker to run the selected fuzz engine.'});
+        continue;
+      }
+      executed += 1;
+      live.push({engine: 'schemathesis', contract: contract.file, status: result.status, ok: result.status === 0, stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-4000)});
     }
-  } else if (commandExists("docker")) {
-    for (const contract of contracts) {
-      const result = run("docker", ["run", "--rm", "-v", `${process.cwd()}:/work`, "schemathesis/schemathesis:stable", "run", `/work/${contract.path}`, "--base-url", globalBaseUrls[0], "--checks", "all", "--max-examples", process.env.OPENAPI_FUZZ_MAX_EXAMPLES ?? "25"]);
-      live.push({ engine: "schemathesis-docker", contract: contract.file, status: result.status, ok: result.status === 0, stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-4000) });
-    }
-  } else live.push({ engine: "schemathesis", ok: false, error: "Install schemathesis or Docker to run OPENAPI_FUZZ_ENGINE=schemathesis" });
+  }
 }
 
-if (!dryRun && engine !== "schemathesis") {
-  // With no base URL the probe loop body never executes, `live` stays empty, and the gate
-  // reports ok having sent zero requests. Fail closed in CI, matching the schemathesis branch
-  // above and missingRuntimeGate in world-class-gates.
-  // Scoped to OPENAPI_FUZZ_REQUIRE_TARGET rather than CI: the non-runtime CI job legitimately
-  // only generates cases, while the runtime lane that stands up a stack must actually send them.
-  const targeted = contracts.filter((contract) => baseUrlsFor(contract).length > 0);
-  if (targeted.length === 0 && process.env.OPENAPI_FUZZ_REQUIRE_TARGET === "1") {
-    live.push({
-      engine: "native",
-      ok: false,
-      error:
-        "No live fuzz target resolved. Set OPENAPI_FUZZ_BASE_URL (or OPENAPI_FUZZ_BASE_URL_<SLUG>) so the generated cases are actually sent.",
-    });
-  }
-
+if (!dryRun && engine === 'native') {
   for (const contract of contracts) {
     for (const baseUrl of baseUrlsFor(contract)) {
       for (const item of cases.filter((candidate) => candidate.contract === contract.file && (candidate.safe || allowUnsafe))) {
-        const path = item.path.replaceAll(/\{[^}]+\}/g, "1");
-        const url = new URL(path, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
-        url.searchParams.set("__qa_fuzz", "0");
-        try {
-          const response = await fetch(url, { method: item.method, headers: { accept: "application/json", "x-qa-fuzz": "openapi" }, signal: AbortSignal.timeout(Number(process.env.OPENAPI_FUZZ_TIMEOUT_MS ?? 10000)) });
-          live.push({ operationId: item.operationId, url: String(url), method: item.method, status: response.status, ok: response.status < 500 });
-        } catch (error) {
-          live.push({ operationId: item.operationId, url: String(url), method: item.method, error: error instanceof Error ? error.message : String(error), ok: false });
+        const path = item.path.replaceAll(/\{[^}]+\}/g, '1');
+        const bodies = item.validBody === undefined ? [{kind: 'none', body: undefined}] : [
+          {kind: 'valid', body: item.validBody},
+          ...item.invalidBodies.map((body, index) => ({kind: `invalid-${index + 1}`, body})),
+        ];
+        for (const probe of item.probes) for (const variant of bodies) {
+          const url = new URL(path, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
+          url.searchParams.set('__qa_fuzz', String(probe.seed));
+          // Fetch forbids GET/HEAD bodies; their query probes still execute independently.
+          const body = item.method === 'GET' || item.method === 'HEAD' ? undefined : variant.body === undefined ? undefined : JSON.stringify(variant.body);
+          try {
+            executed += 1;
+            const response = await fetch(url, { method: item.method, headers: { accept: 'application/json', 'x-qa-fuzz': 'openapi', ...(body === undefined ? {} : {'content-type': 'application/json'}) }, body, redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
+            await response.arrayBuffer();
+            live.push({operationId: item.operationId, url: String(url), method: item.method, seed: probe.seed, bodyVariant: variant.kind, status: response.status, ok: response.status < 500});
+          } catch (error) {
+            live.push({operationId: item.operationId, url: String(url), method: item.method, seed: probe.seed, bodyVariant: variant.kind, error: error instanceof Error ? error.message : String(error), ok: false});
+          }
         }
       }
     }
   }
 }
+if (!dryRun && executed === 0 && (engine === 'schemathesis' || process.env.OPENAPI_FUZZ_REQUIRE_TARGET === '1')) {
+  live.push({engine, ok: false, error: 'No eligible live fuzz probes executed. Configure targets for a contract with selected methods.'});
+}
 
 mkdirSync("test-results/openapi-fuzz", { recursive: true });
 writeFileSync(join("test-results/openapi-fuzz", "cases.json"), `${JSON.stringify(cases, null, 2)}\n`);
 const failed = live.some((item) => item.ok === false);
-writeJson(out, { status: failed ? "violations" : "ok", engine, dryRun, generatedAt: new Date().toISOString(), cases, live });
-console.log(JSON.stringify({ status: failed ? "violations" : "ok", dryRun, engine, cases: cases.length, live: live.length, report: out }));
+const status = failed ? "violations" : dryRun ? "dry-run" : executed === 0 ? "planned" : "ok";
+writeJson(out, { status, engine, dryRun, executed, generatedAt: new Date().toISOString(), cases, live });
+console.log(JSON.stringify({ status, dryRun, engine, executed, cases: cases.length, live: live.length, report: out }));
 if (failed) process.exit(1);

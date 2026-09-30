@@ -108,9 +108,9 @@ test('compose plan threads domain style, TLS mode, and profiles into every compo
 test('pm2 plan builds, validates, migrates, then starts processes', () => {
   const plan = buildDeployPlan({ ...base, target: 'pm2', domains: 'external-proxy', tls: 'external' });
   assert.deepEqual(titles(plan), [
+    'Generate runtime secrets',
     'Install workspace dependencies',
     'Build applications',
-    'Generate runtime secrets',
     'Validate deployment configuration',
     'Run database migrations',
     'Start or reload PM2 services',
@@ -120,6 +120,17 @@ test('pm2 plan builds, validates, migrates, then starts processes', () => {
     'Test and reload nginx',
     'Obtain or renew certificates',
   ]);
+  const build = stepFor(plan, 'build applications');
+  const migrate = stepFor(plan, 'migrations');
+  const start = stepFor(plan, 'reload pm2');
+  assert.ok(build.args.includes('--no-secrets'));
+  assert.ok(!build.args.includes('--secrets-env=.env.pm2-secrets'));
+  for (const item of [migrate, start]) {
+    assert.ok(item.args.includes('scripts/native-runtime-env.mjs'));
+    assert.ok(item.args.includes('--production-env=.env.production'));
+    assert.ok(item.args.includes('--secrets-env=.env.pm2-secrets'));
+    assert.ok(!item.args.includes('--no-secrets'));
+  }
   assert.match(commandLine(stepFor(plan, 'migrations')), /db:migrate/u);
   // startOrReload plus --update-env is what makes a rotated secret take effect.
   assert.match(commandLine(stepFor(plan, 'reload pm2')), /pm2 startOrReload ecosystem\.config\.cjs --update-env/u);

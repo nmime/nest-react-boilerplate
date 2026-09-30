@@ -199,6 +199,21 @@ For the supported turnkey host Nginx + Certbot implementation, use
 [single-server-deployment.md](single-server-deployment.md) instead of creating a
 second hand-maintained proxy map.
 
+If an additional TLS terminator sends API traffic through the frontend Nginx
+proxy, set `FRONTEND_TRUSTED_PROXY_CIDRS` to its immediate source IP/CIDR (for
+example `172.20.0.1/32` on an explicitly configured Docker network). The default
+trusts no forwarded protocol headers. Never use a whole-client network or `/0`;
+keep frontend and API listeners private. Nginx preserves exact `http`/`https`
+claims only from that source and overwrites untrusted claims with its own scheme.
+Kubernetes uses `frontendNginx.trustedProxyCidrs` for the ingress controller's
+source addresses. The shipped Caddy and host Nginx API routes go directly to the
+API and do not need this additional frontend hop.
+
+HTML navigation and `runtime-config.js` receive `no-store` and the complete
+security header policy. Fingerprinted Vite `/assets/name-<8 characters>.*` and
+Astro `/_astro/name.<8 characters>.*` output uses immutable caching. Other static
+names are uncached, and missing assets never receive an immutable cache header.
+
 ### Operator-provided or wildcard certificate
 
 Set:

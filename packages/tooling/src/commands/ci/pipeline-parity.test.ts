@@ -84,6 +84,32 @@ const githubSources = githubSourcesFor(githubPipeline);
 const gitlabSources = gitlabSourcesFor(gitlabPipeline);
 
 describe('cross-forge gate parity', () => {
+  it('fails when every declared pipeline is absent', () => {
+    const report = evaluateParity(contract, { github: undefined, gitlab: undefined });
+    assert.deepEqual(report.problems.map(({ code }) => code), ['no-configured-forge']);
+    assert.deepEqual(report.skippedForges, ['github', 'gitlab']);
+  });
+
+  it('checks scheduled gates in their actual workflow, including missing files and jobs', () => {
+    const file = '.github/workflows/nightly.yml';
+    const scheduled = parseCiContract({
+      ...JSON.parse(JSON.stringify(contract)),
+      gates: [...contract.gates, {
+        id: 'nightly-check', description: 'An actual scheduled check.', commands: ['pnpm run qa:nightly'],
+        lanes: ['pr'], requiredForMerge: false, jobs: { github: 'nightly' }, files: { github: file },
+        forges: ['github'], reason: 'This fixture models a separate GitHub scheduled workflow.',
+      }],
+    });
+    const evaluate = (text?: string) => evaluateParity(scheduled, {
+      github: { ...githubSources, laneFiles: { ...githubSources.laneFiles, ...(text === undefined ? {} : { [file]: text }) } },
+      gitlab: gitlabSources,
+    });
+    assert.deepEqual(evaluate('jobs:\n  nightly:\n    steps:\n      - run: pnpm run qa:nightly\n').problems, []);
+    assert.deepEqual(evaluate().problems.map(({ code, gate }) => ({ code, gate })), [{ code: 'pipeline-missing', gate: 'nightly-check' }]);
+    assert.deepEqual(evaluate('jobs:\n  other:\n    steps:\n      - run: pnpm run qa:nightly\n').problems.map(({ code }) => code), ['job-missing']);
+    assert.deepEqual(evaluate('jobs:\n  nightly:\n    steps:\n      - run: echo skipped\n').problems.map(({ code }) => code), ['command-missing']);
+  });
+
   it('reports no problems when both forges run every declared gate', () => {
     const report = evaluateParity(contract, { github: githubSources, gitlab: gitlabSources });
 

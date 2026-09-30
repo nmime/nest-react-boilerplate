@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-SHELL-004
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AUTH-FRONTEND-009
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ThemeStorageKey } from './ui-store';
 import { AuthShellStore, LocaleStorageKey, LocaleStore, createRootStore, detectBrowserLocale } from './index';
@@ -66,6 +66,20 @@ describe('frontend auth and locale state', () => {
     store.clearSession();
     expect(store.sessionStatus).toBe('guest');
     expect(store.isAuthenticated).toBe(false);
+  });
+
+  it('distinguishes account and tenant ownership and discards it when the session clears', () => {
+    const store = new AuthShellStore();
+    store.markAuthenticated({ subject: 'first', tenantId: 'tenant-a' });
+    const firstKey = store.principalKey;
+    store.markAuthenticated({ subject: 'second', tenantId: 'tenant-a' });
+    expect(store.principalKey).not.toBe(firstKey);
+    store.markAuthenticated({ subject: 'first', tenantId: 'tenant-b' });
+    expect(store.principalKey).not.toBe(firstKey);
+    store.clearSession();
+    expect(store.principalKey).toBeNull();
+    store.markAuthenticated();
+    expect(store.principalKey).toBeNull();
   });
 
   it('persists locale changes and applies document language', () => {

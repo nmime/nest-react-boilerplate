@@ -230,6 +230,7 @@ export function generateCapabilitiesManifest(summary: PlanSummary): { path: stri
       backendWiring: backendWiring.map((wiring) => ({
         hosts: wiring.hosts,
         moduleExpression: wiring.moduleExpression,
+        ...(wiring.moduleExpressionByHost ? { moduleExpressionByHost: wiring.moduleExpressionByHost } : {}),
         imports: [
           { importName: wiring.importName, importPath: wiring.importPath },
           ...(wiring.additionalImports ?? []),
@@ -478,15 +479,20 @@ function resolveBackendWiring(appId: AppId, capabilities: string[]): BackendModu
     throw new Error(`${appId} requires exactly one durable database provider.`);
   }
   return capabilities.flatMap((capabilityId) =>
-    resolveCapabilityBackendWiring(capabilityCatalog[capabilityId], provider).filter((wiring) => {
-      if (wiring.hosts === 'selected-backend') {
-        return true;
-      }
-      if (wiring.hosts === 'durable-backend') {
-        return requiresDurableDatabase;
-      }
-      return wiring.hosts.includes(appId);
-    }),
+    resolveCapabilityBackendWiring(capabilityCatalog[capabilityId], provider)
+      .filter((wiring) => {
+        if (wiring.hosts === 'selected-backend') {
+          return true;
+        }
+        if (wiring.hosts === 'durable-backend') {
+          return requiresDurableDatabase;
+        }
+        return wiring.hosts.includes(appId);
+      })
+      .map((wiring) => ({
+        ...wiring,
+        moduleExpression: wiring.moduleExpressionByHost?.[appId] ?? wiring.moduleExpression,
+      })),
   );
 }
 

@@ -86,6 +86,17 @@ default branch has already moved past.
 
 **Invariants:**
 
+- CI parity SHALL require at least one configured pipeline; absence of every
+  declared forge is a failure. Merge aggregates SHALL depend only on jobs that
+  exist in their merge lane, or explicitly mark a schedule-only dependency
+  optional without weakening mandatory merge gates.
+- The upstream GitHub repository SHALL ship its configured GitHub CI alongside
+  GitLab CI. Its protected `CI status summary` check SHALL always evaluate every
+  merge-required job result and fail on failure, cancellation, or unexpected
+  skipping. Restoring a workflow never permits a fabricated status or protection
+  bypass. Release and promotion retain exact-revision checks and explicit
+  operator-owned execution boundaries.
+
 - Release automation never creates an untested source-code commit.
 - A stale gate result cannot release a newer or replaced default-branch
   revision.
@@ -108,6 +119,12 @@ default branch has already moved past.
 
 - **WHEN** a configured forge's release pipeline runs
 - **THEN** it releases only the exact revision whose gates it verified
+
+#### Scenario: Upstream required GitHub status
+
+- **WHEN** a pull request runs GitHub CI
+- **THEN** the protected aggregate check runs even after a dependency fails
+- **AND** it succeeds only when every merge-required job succeeds
 
 #### Scenario: Default branch moved after validation
 

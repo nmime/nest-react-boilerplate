@@ -53,7 +53,10 @@ export class AuditLogAdminService {
     return toAuditLogAdminView(result.value);
   }
 
-  async recordMutation<T>(input: AuditLogAdminMutationInput<T>, operation: () => Promise<T>): Promise<T> {
+  async recordMutation<T>(
+    input: AuditLogAdminMutationInput<T>,
+    operation: (transaction: unknown) => Promise<T>,
+  ): Promise<T> {
     try {
       return await this.auditLogs.recordTransactionally({
         operation,

@@ -10,6 +10,7 @@ const state = (stateHash: string, expiresAt = new Date(Date.now() + 60_000)): St
   tenantId: 'tenant-id',
   stateHash,
   codeVerifier: 'verifier',
+  binding: { kind: 'browser', nonceHash: 'browser-hash' },
   intent: ExternalAuthIntent.Login,
   expiresAt,
 });

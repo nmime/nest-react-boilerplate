@@ -102,7 +102,7 @@ export function createTelegramMenus(input: {
     fingerprint: (ctx) => menuFingerprint(ctx),
   })
     .text(
-      (ctx) => ctx.t('auth.social.button.linkTelegram'),
+      (ctx) => ctx.t('bot.menu.link'),
       async (ctx) => {
         navigateTo(ctx, 'link.instructions');
         let instructions: string | null = null;

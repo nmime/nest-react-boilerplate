@@ -1,5 +1,21 @@
-// @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005
+// @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005 REQ-NOTIFY-LIFECYCLE-002
 import { randomUUID } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
+import type { S3Service } from '@app/backend-common-s3';
+import { AuditLogAdminPersistenceError, AuditLogAdminService } from '@app/backend-feature-audit-log-admin';
+import {
+  NotificationAdminService,
+  NotificationConfigService,
+  type NotificationSegmentResolverRegistry,
+} from '@app/backend-feature-notification-main';
+// nx-ignore-next-line -- The component fixture exercises the concrete selected audit provider.
+import {
+  AdminAuditLogEntitySchema,
+  AdminAuditLogRepository,
+  TransactionalOutboxEventEntitySchema,
+  Migration20260605143000CreateAdminAuditLogs,
+  Migration20260606120000CreateTransactionalOutboxEvents,
+} from '@app/backend-postgres-main-auth';
 import { MikroORM } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
 import { type EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
@@ -11,7 +27,14 @@ import {
   startPostgresContainer,
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
-import { NotificationChannel, NotificationStatus, NotificationTargetType } from '@app/common-notifications';
+import {
+  NotificationAudienceSnapshotStatus,
+  NotificationChannel,
+  NotificationDeliveryProvider,
+  NotificationSegmentKind,
+  NotificationStatus,
+  NotificationTargetType,
+} from '@app/common-notifications';
 import {
   EmptyNotificationDeliveryClaimId,
   NotificationAudienceSnapshotEntitySchema,
@@ -50,7 +73,14 @@ describeIfDocker('notification persistence concurrency', () => {
     orm = await MikroORM.init<PostgreSqlDriver>(
       createPostgresContainerMikroOrmOptions(container, notificationEntities, {
         extensions: [Migrator],
-        migrations: notificationMigrationOptions,
+        migrations: {
+          ...notificationMigrationOptions,
+          migrationsList: [
+            Migration20260605143000CreateAdminAuditLogs,
+            Migration20260606120000CreateTransactionalOutboxEvents,
+            ...(notificationMigrationOptions.migrationsList ?? []),
+          ],
+        },
       }),
     );
     await orm.migrator.up();
@@ -59,6 +89,169 @@ describeIfDocker('notification persistence concurrency', () => {
   afterAll(async () => {
     await orm.close(true);
     await stopPostgresContainer(container);
+  });
+
+  it.each(['admin_audit_logs', 'transactional_outbox_events'])(
+    'rolls back all admin notification writes when %s rejects the audit transaction',
+    async (failedTable) => {
+      const em = orm.em.fork();
+      const broadcasts = broadcastPersistence(em);
+      const audit = new AuditLogAdminService(new AdminAuditLogRepository(em));
+      const uploadedObjects: string[] = [];
+      const admin = new NotificationAdminService(
+        new NotificationConfigService(new ConfigService()),
+        broadcasts,
+        deliveryPersistence(em),
+        {
+          putObject: async ({ key }: { key: string }) => {
+            uploadedObjects.push(key);
+          },
+        } as unknown as S3Service,
+        {} as NotificationSegmentResolverRegistry,
+      );
+      const tenantId = randomUUID();
+      const actorId = randomUUID();
+      const operation = async (transaction: unknown) => {
+        let template = await admin.createTemplate(
+          {
+            tenantId,
+            actorId,
+            code: `atomic-${randomUUID()}`,
+            name: 'Atomic template',
+            channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Version one' } } }],
+          },
+          transaction,
+        );
+        expect(template.versions).toHaveLength(1);
+        await admin.publishTemplate(template.id, tenantId, actorId, transaction);
+        await admin.updateTemplate(template.id, tenantId, { actorId, name: 'Updated template' }, transaction);
+        template = (await admin.publishTemplate(template.id, tenantId, actorId, transaction))!;
+        expect(template.versions).toHaveLength(2);
+        await admin.testSend(
+          {
+            id: template.id,
+            tenantId,
+            targetType: NotificationTargetType.TelegramChat,
+            targetId: 'owned-fixture',
+            channel: NotificationChannel.Bot,
+            provider: NotificationDeliveryProvider.TelegramBot,
+            variables: {},
+          },
+          transaction,
+        );
+        const segment = await admin.createSegment(
+          { tenantId, actorId, name: 'Atomic audience', kind: NotificationSegmentKind.Static },
+          transaction,
+        );
+        await admin.updateSegment(segment.id, tenantId, { actorId, name: 'Updated audience' }, transaction);
+        await admin.uploadSegmentCsv(
+          {
+            id: segment.id,
+            tenantId,
+            actorId,
+            filename: 'fixture.csv',
+            contentBase64: Buffer.from('targetId\nfixture\n').toString('base64'),
+          },
+          transaction,
+        );
+        const broadcast = await admin.createBroadcast(
+          {
+            tenantId,
+            actorId,
+            name: 'Atomic broadcast',
+            templateVersionId: template.currentVersionId!,
+            channel: NotificationChannel.Bot,
+            provider: NotificationDeliveryProvider.TelegramBot,
+            segmentIds: [segment.id],
+          },
+          transaction,
+        );
+        expect(broadcast.segmentIds).toEqual([segment.id]);
+        await admin.updateBroadcast(broadcast.id, tenantId, { name: 'Updated broadcast' }, transaction);
+        const collecting = await admin.command(
+          {
+            broadcastId: broadcast.id,
+            tenantId,
+            actorId,
+            action: 'collect-audience',
+            idempotencyKey: 'owned-atomic-command',
+          },
+          transaction,
+        );
+        expect(collecting?.snapshot).toMatchObject({ status: NotificationAudienceSnapshotStatus.Created });
+        await admin.archiveTemplate(template.id, tenantId, actorId, transaction);
+        await admin.archiveSegment(segment.id, tenantId, actorId, transaction);
+        return broadcast;
+      };
+      const mutate = () =>
+        audit.recordMutation(
+          {
+            tenantId,
+            actorUserId: actorId,
+            action: 'admin.notification_broadcast.create',
+            resource: 'admin.notification-broadcasts',
+            targetId: (result) => result.id,
+            after: (result) => ({ id: result.id }),
+          },
+          operation,
+        );
+      const tableNames = notificationEntities.map((schema) => schema.meta.tableName!);
+      const counts = async () => {
+        const result: Record<string, number> = {};
+        for (const tableName of tableNames) {
+          // These names come exclusively from the checked-in entity schemas.
+          // eslint-disable-next-line no-await-in-loop
+          result[tableName] = (
+            await rows<{ count: number }>(em, `select count(*)::int as count from "${tableName}"`, [])
+          )[0]!.count;
+        }
+        return result;
+      };
+      const baseline = await counts();
+      await em
+        .getConnection()
+        .execute(`alter table "${failedTable}" add constraint nrb_owned_fixture_reject check (false) not valid`);
+      try {
+        await expect(mutate()).rejects.toBeInstanceOf(AuditLogAdminPersistenceError);
+        expect(await counts()).toEqual(baseline);
+        expect(uploadedObjects).toHaveLength(1); // Object storage has a separate cleanup boundary.
+      } finally {
+        await em.getConnection().execute(`alter table "${failedTable}" drop constraint nrb_owned_fixture_reject`);
+        em.clear();
+      }
+      const committed = await mutate();
+      em.clear();
+      expect(await broadcasts.getBroadcast(committed.id, tenantId)).toMatchObject({ name: 'Updated broadcast' });
+      const after = await counts();
+      expect(after['admin_audit_logs']).toBe(baseline['admin_audit_logs']! + 1);
+      expect(after['transactional_outbox_events']).toBe(baseline['transactional_outbox_events']! + 1);
+      expect(after['notification_deliveries']).toBe(baseline['notification_deliveries']! + 1);
+    },
+  );
+
+  it('rejects invalid and inactive external transaction tokens before notification writes', async () => {
+    const em = orm.em.fork();
+    const broadcasts = broadcastPersistence(em);
+    const input = {
+      tenantId: randomUUID(),
+      actorId: randomUUID(),
+      name: 'Invalid',
+      kind: NotificationSegmentKind.Static,
+    };
+    await expect(broadcasts.createSegment(input, {})).rejects.toThrow('notification_invalid_transaction');
+    await expect(broadcasts.createSegment(input, em)).rejects.toThrow('notification_invalid_transaction');
+    await expect(
+      deliveryPersistence(em).create(
+        {
+          tenantId: input.tenantId,
+          targetType: NotificationTargetType.TelegramChat,
+          targetId: 'fixture',
+          templateCode: 'fixture',
+        },
+        em,
+      ),
+    ).rejects.toThrow('notification_invalid_transaction');
+    expect(await rows(em, 'select id from notification_segments where tenant_id = ?', [input.tenantId])).toEqual([]);
   });
 
   it('isolates tenant templates while retaining the shared-template fallback', async () => {
@@ -391,6 +584,8 @@ describeIfDocker('notification persistence concurrency', () => {
 });
 
 const notificationEntities = [
+  AdminAuditLogEntitySchema,
+  TransactionalOutboxEventEntitySchema,
   NotificationEntitySchema,
   NotificationTemplateEntitySchema,
   NotificationTemplateVersionEntitySchema,

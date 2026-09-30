@@ -25,5 +25,6 @@ export interface StoredDiscordState {
   linkToken?: string;
   returnUrl?: string;
   userId?: string;
+  binding: { kind: 'browser'; nonceHash: string } | { kind: 'discord-interaction'; providerSubject: string };
   expiresAt: Date;
 }

@@ -60,6 +60,10 @@ describe('AuditLogAdminService', () => {
     const repository = { recordTransactionally } as unknown as AdminAuditLogRepositoryPort;
     const service = new AuditLogAdminService(repository);
 
+    const operation = vi.fn(async (receivedTransaction: unknown) => {
+      expect(receivedTransaction).toBe(transaction);
+      return { id: 'broadcast-1', status: 'draft' };
+    });
     await expect(
       service.recordMutation(
         {
@@ -70,11 +74,12 @@ describe('AuditLogAdminService', () => {
           targetId: (result: { id: string }) => result.id,
           after: (result) => ({ status: result.status }),
         },
-        async () => ({ id: 'broadcast-1', status: 'draft' }),
+        operation,
       ),
     ).resolves.toEqual({ id: 'broadcast-1', status: 'draft' });
 
     expect(recordTransactionally).toHaveBeenCalledTimes(1);
+    expect(operation).toHaveBeenCalledWith(transaction);
   });
 
   it('distinguishes an audit transaction failure from a domain-operation failure', async () => {

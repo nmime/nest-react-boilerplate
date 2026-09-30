@@ -85,17 +85,25 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     return Promise.all(templates.map((template) => this.mapTemplate(this.entityManager, template)));
   }
 
-  async getTemplate(id: string, tenantId: string): Promise<NotificationTemplateAdminRecord | null> {
-    const template = await this.entityManager.findOne(NotificationTemplateEntity, {
+  async getTemplate(
+    id: string,
+    tenantId: string,
+    transaction?: unknown,
+  ): Promise<NotificationTemplateAdminRecord | null> {
+    const em = this.transactionManager(transaction);
+    const template = await em.findOne(NotificationTemplateEntity, {
       id,
       $or: [{ tenantId }, { tenantId: null }],
     });
-    return template ? this.mapTemplate(this.entityManager, template) : null;
+    return template ? this.mapTemplate(em, template) : null;
   }
 
-  async createAdminTemplate(input: CreateAdminNotificationTemplateInput): Promise<NotificationTemplateAdminRecord> {
+  async createAdminTemplate(
+    input: CreateAdminNotificationTemplateInput,
+    transaction?: unknown,
+  ): Promise<NotificationTemplateAdminRecord> {
     this.validateChannels(input.channels, true);
-    return this.entityManager.transactional(async (em) => {
+    return this.inTransaction(transaction, async (em) => {
       const existing = await em.findOne(NotificationTemplateEntity, { tenantId: input.tenantId, code: input.code });
       if (existing) {
         throw new Error('notification_template_code_conflict');
@@ -140,8 +148,9 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     id: string,
     tenantId: string,
     input: UpdateAdminNotificationTemplateInput,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null> {
-    return this.entityManager.transactional(async (em) => {
+    return this.inTransaction(transaction, async (em) => {
       const template = await em.findOne(NotificationTemplateEntity, { id, tenantId });
       if (!template) {
         return null;
@@ -214,8 +223,9 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     id: string,
     tenantId: string,
     actorId: string,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null> {
-    return this.entityManager.transactional(async (em) => {
+    return this.inTransaction(transaction, async (em) => {
       const template = await em.findOne(NotificationTemplateEntity, { id, tenantId });
       if (!template) {
         return null;
@@ -246,8 +256,9 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     id: string,
     tenantId: string,
     actorId: string,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null> {
-    return this.entityManager.transactional(async (em) => {
+    return this.inTransaction(transaction, async (em) => {
       const template = await em.findOne(NotificationTemplateEntity, { id, tenantId });
       if (!template) {
         return null;
@@ -275,13 +286,16 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     return segments.map(mapSegment);
   }
 
-  async getSegment(id: string, tenantId: string): Promise<NotificationSegmentRecord | null> {
-    const segment = await this.entityManager.findOne(NotificationSegmentEntity, { id, tenantId });
+  async getSegment(id: string, tenantId: string, transaction?: unknown): Promise<NotificationSegmentRecord | null> {
+    const segment = await this.transactionManager(transaction).findOne(NotificationSegmentEntity, { id, tenantId });
     return segment ? mapSegment(segment) : null;
   }
 
-  async createSegment(input: CreateNotificationSegmentInput): Promise<NotificationSegmentRecord> {
-    return this.entityManager.transactional(async (em) => {
+  async createSegment(
+    input: CreateNotificationSegmentInput,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentRecord> {
+    return this.inTransaction(transaction, async (em) => {
       const existing = await em.findOne(NotificationSegmentEntity, {
         tenantId: input.tenantId,
         name: input.name,
@@ -312,8 +326,9 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     id: string,
     tenantId: string,
     input: UpdateNotificationSegmentInput,
+    transaction?: unknown,
   ): Promise<NotificationSegmentRecord | null> {
-    return this.entityManager.transactional(async (em) => {
+    return this.inTransaction(transaction, async (em) => {
       const segment = await em.findOne(NotificationSegmentEntity, { id, tenantId });
       if (!segment) {
         return null;
@@ -337,8 +352,13 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     });
   }
 
-  async archiveSegment(id: string, tenantId: string, actorId: string): Promise<NotificationSegmentRecord | null> {
-    return this.entityManager.transactional(async (em) => {
+  async archiveSegment(
+    id: string,
+    tenantId: string,
+    actorId: string,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentRecord | null> {
+    return this.inTransaction(transaction, async (em) => {
       const segment = await em.findOne(NotificationSegmentEntity, { id, tenantId });
       if (!segment) {
         return null;
@@ -351,8 +371,11 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     });
   }
 
-  async createSegmentUpload(input: CreateNotificationSegmentUploadInput): Promise<NotificationSegmentUploadRecord> {
-    return this.entityManager.transactional(async (em) => {
+  async createSegmentUpload(
+    input: CreateNotificationSegmentUploadInput,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentUploadRecord> {
+    return this.inTransaction(transaction, async (em) => {
       const existing = await em.findOne(NotificationSegmentUploadEntity, {
         segmentId: input.segmentId,
         checksum: input.checksum,
@@ -492,9 +515,12 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     return broadcast ? this.mapBroadcast(this.entityManager, broadcast) : null;
   }
 
-  async createBroadcast(input: CreateNotificationBroadcastInput): Promise<NotificationBroadcastRecord> {
+  async createBroadcast(
+    input: CreateNotificationBroadcastInput,
+    transaction?: unknown,
+  ): Promise<NotificationBroadcastRecord> {
     this.validateBroadcastInput(input.channel, input.provider, input.priority ?? 0);
-    return this.entityManager.transactional(async (em) => {
+    return this.inTransaction(transaction, async (em) => {
       await this.requirePublishedVersion(em, input.templateVersionId, input.tenantId);
       await this.requireSegments(em, input.segmentIds, input.tenantId);
       const broadcast = new NotificationBroadcastEntity({
@@ -525,8 +551,9 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     id: string,
     tenantId: string,
     input: UpdateNotificationBroadcastInput,
+    transaction?: unknown,
   ): Promise<NotificationBroadcastRecord | null> {
-    return this.entityManager.transactional(async (em) => {
+    return this.inTransaction(transaction, async (em) => {
       const broadcast = await em.findOne(NotificationBroadcastEntity, { id, tenantId });
       if (!broadcast) {
         return null;
@@ -572,8 +599,11 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
     });
   }
 
-  async transitionBroadcast(input: NotificationBroadcastTransitionInput): Promise<NotificationBroadcastRecord | null> {
-    return this.entityManager.transactional(async (em) => {
+  async transitionBroadcast(
+    input: NotificationBroadcastTransitionInput,
+    transaction?: unknown,
+  ): Promise<NotificationBroadcastRecord | null> {
+    return this.inTransaction(transaction, async (em) => {
       const broadcast = await em.findOne(
         NotificationBroadcastEntity,
         { id: input.broadcastId, tenantId: input.tenantId },
@@ -1286,6 +1316,26 @@ export class PostgresNotificationBroadcastPersistence extends NotificationBroadc
           createdAt,
         }),
     );
+  }
+
+  private transactionManager(transaction?: unknown): EntityManager {
+    if (transaction === undefined) {
+      return this.entityManager;
+    }
+    if (
+      !(transaction instanceof EntityManager) ||
+      !transaction.isInTransaction() ||
+      transaction.getConnection() !== this.entityManager.getConnection()
+    ) {
+      throw new Error('notification_invalid_transaction');
+    }
+    return transaction;
+  }
+
+  private inTransaction<T>(transaction: unknown, operation: (em: EntityManager) => Promise<T>): Promise<T> {
+    return transaction === undefined
+      ? this.entityManager.transactional(operation)
+      : operation(this.transactionManager(transaction));
   }
 
   private async mapTemplate(

@@ -1,9 +1,9 @@
-// @requirements REQ-RUNTIME-DATABASE-008
+// @requirements REQ-RUNTIME-DATABASE-008 REQ-SCAFFOLD-SAFETY-008
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ClientSession, Db, Document } from "mongodb";
 import { seedMongoBootstrap } from "./mongo-seed.ts";
-import { buildSeedUsers, permissions, rolePermissions } from "./seed-data.ts";
+import { DefaultTenantId, buildSeedUsers, permissions, rolePermissions, userUuids } from "./seed-data.ts";
 
 class FakeCollection {
   readonly documents: Document[] = [];
@@ -36,6 +36,31 @@ class FakeDatabase {
 }
 
 describe("MongoDB bootstrap seed", () => {
+  it("does not grant roles to a public account at the selected seed email", async () => {
+    const database = new FakeDatabase();
+    database.collection("auth_users").documents.push({
+      _id: "public-account", tenantId: DefaultTenantId, email: "owner@example.com",
+    });
+    const users = buildSeedUsers("Nondefault-password-at-least-16", "en", {
+      email: "owner@example.com", includeDemoUsers: false,
+    });
+    await assert.rejects(seedMongoBootstrap(database as unknown as Pick<Db, "collection">,
+      users, {} as ClientSession), /not the canonical seed owner/);
+    assert.equal(database.collection("auth_user_roles").updates.length, 0);
+    assert.equal(database.collection("auth_users").updates.length, 0);
+  });
+
+  it("refuses a canonical id whose existing email differs from the selected owner", async () => {
+    const database = new FakeDatabase();
+    database.collection("auth_users").documents.push({
+      _id: userUuids[0], tenantId: DefaultTenantId, email: "other@example.com",
+    });
+    await assert.rejects(seedMongoBootstrap(database as unknown as Pick<Db, "collection">,
+      buildSeedUsers("Nondefault-password-at-least-16", "en", { includeDemoUsers: false }),
+      {} as ClientSession), /not the canonical seed owner/);
+    assert.equal(database.collection("auth_user_roles").updates.length, 0);
+  });
+
   it("creates the canonical bootstrap records idempotently through upserts", async () => {
     const database = new FakeDatabase();
     const session = {} as ClientSession;

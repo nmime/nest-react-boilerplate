@@ -156,7 +156,11 @@ export class ExternalAuthService {
 
   async telegramBotLink(input: TelegramBotLinkInput): Promise<ExternalAuthLoginResult> {
     assertProviderEnabled(AuthProvider.Telegram);
-    const consumed = await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link);
+    const consumed = await this.consumeLinkTokenOrThrow(
+      input.linkToken,
+      ExternalAuthIntent.Link,
+      AuthProvider.Telegram,
+    );
     if (!consumed.userId) {
       throw new UnauthorizedException('link_token_expired');
     }
@@ -218,6 +222,23 @@ export class ExternalAuthService {
     return identities.value.map(toIdentityView);
   }
 
+  /** Resolve a transport-verified provider sender to the canonical local account. */
+  async resolveProviderPrincipal(provider: ExternalAuthProvider, providerSubject: string, tenantIdInput: string) {
+    const tenantId = parseTenantId(tenantIdInput);
+    const identity = await this.social.findIdentity(provider, providerSubject, tenantId);
+    if (identity.isErr()) {
+      throw new ConflictException(identity.error.message);
+    }
+    if (!identity.value) {
+      return null;
+    }
+    const user = await this.users.findById(identity.value.userId, tenantId);
+    if (user.isErr()) {
+      throw new ConflictException(user.error.message);
+    }
+    return user.value?.status === 'active' ? { subject: user.value.id, tenantId } : null;
+  }
+
   async unlinkProviderIdentity(
     identityId: string,
     principal: { subject: string; tenantId: string; authTime?: number },
@@ -276,17 +297,31 @@ export class ExternalAuthService {
     const stateHash = hashOpaqueToken(state);
     const codeVerifier = generateCodeVerifier();
     const intent = input.intent ?? ExternalAuthIntent.Login;
+    if (
+      !input.binding ||
+      (input.binding.kind !== 'browser' && input.binding.kind !== 'discord-interaction') ||
+      (input.binding.kind === 'browser' && input.binding.nonce.length < 32) ||
+      (input.binding.kind === 'discord-interaction' &&
+        (intent !== ExternalAuthIntent.Link || !input.principal || !/^\d+$/u.test(input.binding.providerSubject)))
+    ) {
+      throw new UnauthorizedException('invalid_state_binding');
+    }
+    const owner =
+      intent === ExternalAuthIntent.Link ? await this.resolveLinkOwner(input, AuthProvider.Discord) : input.principal;
     const ttlSeconds = readPositiveInt(process.env.DISCORD_OAUTH_STATE_TTL_SECONDS, DefaultDiscordStateTtlSeconds);
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
     await this.discordOauthStates.store(
       {
-        tenantId,
         stateHash,
         codeVerifier,
         intent,
-        linkToken: input.linkToken ?? undefined,
         returnUrl: input.returnUrl ?? undefined,
-        userId: input.principal?.subject,
+        userId: owner?.subject,
+        tenantId: owner?.tenantId ?? tenantId,
+        binding:
+          input.binding.kind === 'browser'
+            ? { kind: 'browser', nonceHash: hashOpaqueToken(input.binding.nonce) }
+            : input.binding,
         expiresAt,
       },
       ttlSeconds,
@@ -309,8 +344,22 @@ export class ExternalAuthService {
     if (!stored) {
       throw new UnauthorizedException('invalid_state');
     }
+    if (
+      !stored.binding ||
+      (stored.binding.kind !== 'browser' && stored.binding.kind !== 'discord-interaction') ||
+      (stored.binding.kind === 'browser' &&
+        (!input.browserNonce || stored.binding.nonceHash !== hashOpaqueToken(input.browserNonce))) ||
+      (stored.binding.kind === 'discord-interaction' &&
+        (!stored.userId || stored.intent !== ExternalAuthIntent.Link)) ||
+      (input.principal && (input.principal.subject !== stored.userId || input.principal.tenantId !== stored.tenantId))
+    ) {
+      throw new UnauthorizedException('invalid_state_binding');
+    }
     const tokens = await createDiscordProvider().validateAuthorizationCode(input.code, stored.codeVerifier);
     const discordUser = await fetchDiscordUser(tokens.accessToken());
+    if (stored.binding.kind === 'discord-interaction' && discordUser.id !== stored.binding.providerSubject) {
+      throw new UnauthorizedException('discord_identity_mismatch');
+    }
     const profile: VerifiedExternalProfile = {
       provider: AuthProvider.Discord,
       channel: AuthProviderChannel.DiscordOauth,
@@ -329,7 +378,7 @@ export class ExternalAuthService {
       intent: stored.intent,
       linkToken: stored.linkToken,
       returnUrl: stored.returnUrl,
-      principal: input.principal ?? (stored.userId ? { subject: stored.userId, tenantId: stored.tenantId } : null),
+      principal: stored.userId ? { subject: stored.userId, tenantId: stored.tenantId } : null,
       profile,
       discordTokens: tokens,
     });
@@ -360,6 +409,7 @@ export class ExternalAuthService {
     }
     if (existing.value) {
       const user = await this.requireActiveUser(existing.value.userId, input.tenantId);
+      await this.users.recordLogin(user.id, new Date(), input.tenantId);
       const identity = await this.social.upsertIdentity({
         ...profileToIdentityInput(input.profile, input.tenantId, user.id),
         lastAuthenticatedAt: new Date(),
@@ -391,7 +441,12 @@ export class ExternalAuthService {
     // Provision the account with bootstrap ROLES (matrix-derived arrays up
     // front), then let the resolver refresh the denormalized cache from the
     // normalized RBAC tables via the shared AuthService helper.
-    const roleKeys = resolveBootstrapRoleKeys(displayEmail ?? '', process.env, input.tenantId);
+    const roleKeys = resolveBootstrapRoleKeys(
+      displayEmail ?? '',
+      process.env,
+      input.tenantId,
+      input.profile.emailVerified === true,
+    );
     const created = await this.users.create({
       tenantId: input.tenantId,
       email: displayEmail,
@@ -434,29 +489,36 @@ export class ExternalAuthService {
     profile: VerifiedExternalProfile;
     discordTokens?: OAuth2Tokens;
   }): Promise<ExternalAuthLoginResult> {
-    if (input.principal) {
-      return this.linkProfileToUser({
-        tenantId: input.principal.tenantId,
-        userId: input.principal.subject,
-        profile: input.profile,
-        returnUrl: input.returnUrl,
-        discordTokens: input.discordTokens,
-      });
-    }
-    if (!input.linkToken) {
-      throw new UnauthorizedException('link_token_expired');
-    }
-    const consumed = await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link);
-    if (!consumed.userId) {
-      throw new UnauthorizedException('link_token_expired');
-    }
+    const owner = await this.resolveLinkOwner(input, input.profile.provider);
     return this.linkProfileToUser({
-      tenantId: consumed.tenantId,
-      userId: consumed.userId,
+      tenantId: owner.tenantId,
+      userId: owner.subject,
       profile: input.profile,
       returnUrl: input.returnUrl,
       discordTokens: input.discordTokens,
     });
+  }
+
+  private async resolveLinkOwner(
+    input: { linkToken?: string | null; principal?: { subject: string; tenantId: string } | null },
+    provider: ExternalAuthProvider,
+  ): Promise<{ subject: string; tenantId: string }> {
+    if (input.linkToken) {
+      const token = await this.consumeLinkTokenOrThrow(input.linkToken, ExternalAuthIntent.Link, provider);
+      if (
+        !token.userId ||
+        (input.principal && (input.principal.subject !== token.userId || input.principal.tenantId !== token.tenantId))
+      ) {
+        throw new UnauthorizedException('link_token_owner_mismatch');
+      }
+      await this.requireActiveUser(token.userId, token.tenantId);
+      return { subject: token.userId, tenantId: token.tenantId };
+    }
+    if (!input.principal) {
+      throw new UnauthorizedException('link_token_expired');
+    }
+    await this.requireActiveUser(input.principal.subject, input.principal.tenantId);
+    return input.principal;
   }
 
   private async linkProfileToUser(input: {
@@ -466,6 +528,7 @@ export class ExternalAuthService {
     returnUrl?: string | null;
     discordTokens?: OAuth2Tokens;
   }): Promise<ExternalAuthLoginResult> {
+    await this.requireActiveUser(input.userId, input.tenantId);
     const existing = await this.social.findIdentity(
       input.profile.provider,
       input.profile.providerSubject,
@@ -531,12 +594,12 @@ export class ExternalAuthService {
     });
   }
 
-  private async consumeLinkTokenOrThrow(token: string, purpose: ExternalAuthIntent, tenantId?: string | null) {
-    const consumed = await this.social.consumeLinkToken(hashOpaqueToken(token), purpose, tenantId);
+  private async consumeLinkTokenOrThrow(token: string, purpose: ExternalAuthIntent, provider: ExternalAuthProvider) {
+    const consumed = await this.social.consumeLinkToken(hashOpaqueToken(token), purpose);
     if (consumed.isErr()) {
       throw new UnauthorizedException(consumed.error.message);
     }
-    if (!consumed.value) {
+    if (!consumed.value || consumed.value.provider !== provider) {
       throw new UnauthorizedException('link_token_expired');
     }
     return consumed.value;
@@ -547,7 +610,6 @@ export class ExternalAuthService {
     if (user.isErr() || !user.value || user.value.status !== 'active') {
       throw new UnauthorizedException('Invalid external identity.');
     }
-    await this.users.recordLogin(user.value.id, new Date(), tenantId);
     return user.value;
   }
 

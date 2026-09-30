@@ -645,6 +645,11 @@ export async function runSetupCommandInteractive(
     const existing = loadExistingConfig(context.workspaceRoot);
     const prompts = await promptRunner(false, existing);
     const config = buildConfig(prompts, {
+      identity: existing?.identity,
+      appRenames: existing?.appRenames,
+      runtime: existing?.runtime,
+      session: existing?.session,
+      tenant: existing?.tenant,
       options: {
         prune: args.prune || prompts.prune,
         force: args.force || prompts.force,

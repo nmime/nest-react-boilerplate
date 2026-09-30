@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ExternalAuthService } from '@app/backend-feature-auth-main';
-import { ExternalAuthIntent } from '@app/backend-feature-auth-shared';
+import { AuthProvider, ExternalAuthIntent } from '@app/backend-feature-auth-shared';
 import type { DiscordExternalAuthPort } from '@app/backend-feature-discord-bot';
 
 /**
@@ -15,21 +15,27 @@ import type { DiscordExternalAuthPort } from '@app/backend-feature-discord-bot';
 export class DiscordExternalAuthAdapter implements DiscordExternalAuthPort {
   constructor(private readonly externalAuth: ExternalAuthService) {}
 
-  createDiscordAuthorizationRequest(input: {
+  async createDiscordAuthorizationRequest(input: {
     tenantId: string;
     intent: 'link';
     returnUrl?: string | null;
     principal: { subject: string; tenantId: string };
   }): Promise<{ authorizationUrl: string; stateExpiresAt: string }> {
+    const principal = await this.requirePrincipal(input.principal.subject, input.tenantId);
+    if (input.principal.tenantId !== input.tenantId) {
+      throw new UnauthorizedException('discord_tenant_mismatch');
+    }
     return this.externalAuth.createDiscordAuthorizationRequest({
       intent: ExternalAuthIntent.Link,
       returnUrl: input.returnUrl,
-      principal: input.principal,
+      principal,
+      binding: { kind: 'discord-interaction', providerSubject: input.principal.subject },
     });
   }
 
-  listProviderIdentities(userId: string, tenantId: string) {
-    return this.externalAuth.listProviderIdentities(userId, tenantId);
+  async listProviderIdentities(userId: string, tenantId: string) {
+    const principal = await this.externalAuth.resolveProviderPrincipal(AuthProvider.Discord, userId, tenantId);
+    return principal ? this.externalAuth.listProviderIdentities(principal.subject, principal.tenantId) : [];
   }
 
   async unlinkProviderIdentity(
@@ -41,9 +47,16 @@ export class DiscordExternalAuthAdapter implements DiscordExternalAuthPort {
     // that moment as the step-up `authTime` the auth feature requires before
     // unlinking — the bot channel has no long-lived session to reuse.
     return this.externalAuth.unlinkProviderIdentity(identityId, {
-      subject: principal.subject,
-      tenantId: principal.tenantId,
+      ...(await this.requirePrincipal(principal.subject, principal.tenantId)),
       authTime: Math.floor(Date.now() / 1000),
     });
+  }
+
+  private async requirePrincipal(providerSubject: string, tenantId: string) {
+    const principal = await this.externalAuth.resolveProviderPrincipal(AuthProvider.Discord, providerSubject, tenantId);
+    if (!principal) {
+      throw new UnauthorizedException('discord_account_not_linked');
+    }
+    return principal;
   }
 }

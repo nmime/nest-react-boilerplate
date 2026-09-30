@@ -7,6 +7,7 @@ import {
   fetchUserProfile,
   getPayloadLocale,
   getPayloadTheme,
+  getPayloadPrincipal,
   getProfileState,
   profileQueryKey,
   type ProfileState,
@@ -80,8 +81,10 @@ export function useAuthSessionFlow({
       // probe so its eventual 401 cannot clear the newly established session.
       await queryClient.cancelQueries({ queryKey: authMeQueryKey() });
     },
-    onSuccess: (body) => {
-      authStore.markAuthenticated();
+    onSuccess: async (body) => {
+      await queryClient.cancelQueries();
+      queryClient.removeQueries();
+      authStore.markAuthenticated(getPayloadPrincipal(body));
       clearApiAuthRequired();
       const nextLocale = getPayloadLocale(body);
       const nextTheme = getPayloadTheme(body);

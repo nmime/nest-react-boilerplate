@@ -133,34 +133,56 @@ export interface NotificationSegmentListFilters {
 /** Persistence port for admin notification templates, audiences, and broadcasts. */
 export abstract class NotificationBroadcastPersistence {
   abstract listTemplates(tenantId: string): Promise<NotificationTemplateAdminRecord[]>;
-  abstract getTemplate(id: string, tenantId: string): Promise<NotificationTemplateAdminRecord | null>;
-  abstract createAdminTemplate(input: CreateAdminNotificationTemplateInput): Promise<NotificationTemplateAdminRecord>;
+  abstract getTemplate(
+    id: string,
+    tenantId: string,
+    transaction?: unknown,
+  ): Promise<NotificationTemplateAdminRecord | null>;
+  abstract createAdminTemplate(
+    input: CreateAdminNotificationTemplateInput,
+    transaction?: unknown,
+  ): Promise<NotificationTemplateAdminRecord>;
   abstract updateAdminTemplate(
     id: string,
     tenantId: string,
     input: UpdateAdminNotificationTemplateInput,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null>;
   abstract publishAdminTemplate(
     id: string,
     tenantId: string,
     actorId: string,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null>;
   abstract archiveAdminTemplate(
     id: string,
     tenantId: string,
     actorId: string,
+    transaction?: unknown,
   ): Promise<NotificationTemplateAdminRecord | null>;
 
   abstract listSegments(filters: NotificationSegmentListFilters): Promise<NotificationSegmentRecord[]>;
-  abstract getSegment(id: string, tenantId: string): Promise<NotificationSegmentRecord | null>;
-  abstract createSegment(input: CreateNotificationSegmentInput): Promise<NotificationSegmentRecord>;
+  abstract getSegment(id: string, tenantId: string, transaction?: unknown): Promise<NotificationSegmentRecord | null>;
+  abstract createSegment(
+    input: CreateNotificationSegmentInput,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentRecord>;
   abstract updateSegment(
     id: string,
     tenantId: string,
     input: UpdateNotificationSegmentInput,
+    transaction?: unknown,
   ): Promise<NotificationSegmentRecord | null>;
-  abstract archiveSegment(id: string, tenantId: string, actorId: string): Promise<NotificationSegmentRecord | null>;
-  abstract createSegmentUpload(input: CreateNotificationSegmentUploadInput): Promise<NotificationSegmentUploadRecord>;
+  abstract archiveSegment(
+    id: string,
+    tenantId: string,
+    actorId: string,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentRecord | null>;
+  abstract createSegmentUpload(
+    input: CreateNotificationSegmentUploadInput,
+    transaction?: unknown,
+  ): Promise<NotificationSegmentUploadRecord>;
   abstract getSegmentUpload(id: string, tenantId: string): Promise<NotificationSegmentUploadRecord | null>;
   abstract claimSegmentUpload(now: Date): Promise<ClaimedNotificationSegmentUpload | null>;
   abstract completeSegmentUpload(input: CompleteNotificationSegmentUploadInput): Promise<void>;
@@ -172,14 +194,19 @@ export abstract class NotificationBroadcastPersistence {
     status?: NotificationBroadcastStatus,
   ): Promise<NotificationBroadcastRecord[]>;
   abstract getBroadcast(id: string, tenantId: string): Promise<NotificationBroadcastRecord | null>;
-  abstract createBroadcast(input: CreateNotificationBroadcastInput): Promise<NotificationBroadcastRecord>;
+  abstract createBroadcast(
+    input: CreateNotificationBroadcastInput,
+    transaction?: unknown,
+  ): Promise<NotificationBroadcastRecord>;
   abstract updateBroadcast(
     id: string,
     tenantId: string,
     input: UpdateNotificationBroadcastInput,
+    transaction?: unknown,
   ): Promise<NotificationBroadcastRecord | null>;
   abstract transitionBroadcast(
     input: NotificationBroadcastTransitionInput,
+    transaction?: unknown,
   ): Promise<NotificationBroadcastRecord | null>;
   abstract claimSnapshot(now: Date): Promise<NotificationSnapshotCollectionContext | null>;
   abstract completeSnapshot(

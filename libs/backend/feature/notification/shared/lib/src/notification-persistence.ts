@@ -46,7 +46,10 @@ export interface FindRecentNotificationDeliveryErrorsParams {
 export abstract class NotificationPersistence {
   abstract upsertTemplate(params: UpsertNotificationTemplateParams): Promise<NotificationTemplateRecord>;
 
-  abstract create<T>(params: CreateTemplateNotificationParams<T>): Promise<NotificationRecord<T>>;
+  abstract create<T>(
+    params: CreateTemplateNotificationParams<T>,
+    transaction?: unknown,
+  ): Promise<NotificationRecord<T>>;
 
   abstract createBatch<T>(params: CreateTemplateNotificationBatch<T>): Promise<NotificationRecord<T>[]>;
 

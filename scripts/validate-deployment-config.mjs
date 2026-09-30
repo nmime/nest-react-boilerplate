@@ -217,8 +217,7 @@ for (const forge of configuredForges(rootDir)) {
   const jobId = opsGate.jobs[forge.id];
   // An unmapped gate is ci-pipeline-parity's finding to report, not this validator's.
   if (jobId === undefined) continue;
-  const pipelinePath =
-    forge.id === 'github' && jobId === 'presets' ? '.github/workflows/quality-presets.yml' : forge.pipeline;
+  const pipelinePath = opsGate.files?.[forge.id] ?? forge.pipeline;
   const runtimeOpsJob = extractJob(read(pipelinePath), jobId, forge.jobStyle);
   assert.ok(runtimeOpsJob, `${forge.pipeline} declares no job "${jobId}" to carry the runtime QA fixture`);
   for (const expected of [

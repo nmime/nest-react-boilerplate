@@ -2,13 +2,17 @@
 
 The list of gates that must pass before a change merges lives in
 [`scripts/ci/gates.json`](../scripts/ci/gates.json), not in the forge YAML file.
-`.gitlab-ci.yml` is the one rendering the template ships.
+`.github/workflows/` and `.gitlab-ci.yml` render the same inventory.
 `node scripts/ci/check-pipelines.mjs` fails when a configured forge drops a
 gate, misses the aggregate job, or loses a release supply-chain control.
 
 Add a gate to the descriptor first, then wire the same command into every forge
 that should run it. A product that adds a second forge wires it into both; a
 forge that cannot run a gate must say so with `forges` plus `reason`.
+Gates in separate scheduled workflows name their actual files through `files`;
+disabled jobs that only echo commands are not gate evidence. The upstream
+protected check is `CI status summary`, whose result requires every merge job
+to succeed, including after a dependency failure or cancellation.
 
 ## Lanes
 
@@ -20,6 +24,12 @@ forge that cannot run a gate must say so with `forges` plus `reason`.
 | `runtime`           | Manual / scheduled runtime   | Evidence that needs a live stack                       |
 | `scheduled-quality` | Nightly extras               | Visual matrix and broader quality presets              |
 | `release`           | Tag                          | Signed, scanned, attested images                       |
+
+Automatic GitHub release creation requires the repository variable
+`RELEASE_ENABLED=true`. It tags the exact successful current-main CI revision.
+Image publication also checks current main and the successful CI run for that
+exact SHA before building or obtaining publication permissions. Manual GitOps
+promotion opens a reviewable PR; it does not merge main or deploy a workload.
 
 ## Shared pins
 

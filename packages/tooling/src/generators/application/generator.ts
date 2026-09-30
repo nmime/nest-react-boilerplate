@@ -109,7 +109,7 @@ function collectUsedAppPorts(tree: Tree): Set<number> {
 
 function nextAvailablePort(kind: 'frontend' | 'backend', usedPorts: ReadonlySet<number>): number {
   let port = kind === 'frontend' ? 4200 : 3100;
-  while (usedPorts.has(port) && port < 65535) {
+  while (usedPorts.has(port) && port <= 65535) {
     port += 1;
   }
   if (port > 65535) {

@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-PERSISTENCE-007 REQ-RUNTIME-DATABASE-008
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
@@ -47,7 +47,7 @@ describe('AuthPostgresModule Better Auth adapter', () => {
     const Provider = providerConstructor();
     const provider = new Provider();
 
-    expect(mocks.Pool).toHaveBeenCalledWith({ connectionString: 'postgres://database/app' });
+    expect(mocks.Pool).toHaveBeenCalledWith({ connectionString: 'postgres://database/app', ssl: false });
     expect(provider.database).toBe(mocks.pool);
     await provider.onApplicationShutdown();
     expect(mocks.end).toHaveBeenCalledOnce();
@@ -62,5 +62,20 @@ describe('AuthPostgresModule Better Auth adapter', () => {
     expect(() => new Provider()).toThrow('DATABASE_URL is required for Better-Auth PostgreSQL persistence.');
     process.env.OPENAPI_ENABLED = 'true';
     expect(new Provider().database).toBeUndefined();
+  });
+
+  it('retains required URI TLS instead of ignoring it in the provider-session pool', async () => {
+    process.env = {
+      ...originalEnvironment,
+      DATABASE_URL: 'postgres://database/app?sslmode=verify-full',
+      POSTGRES_SSL: 'false',
+    };
+    const Provider = providerConstructor();
+    const provider = new Provider();
+    expect(mocks.Pool).toHaveBeenCalledWith({
+      connectionString: 'postgres://database/app',
+      ssl: { rejectUnauthorized: true },
+    });
+    await provider.onApplicationShutdown();
   });
 });

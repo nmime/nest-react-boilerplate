@@ -22,6 +22,7 @@ COMMAND="${1:-help}"
 shift || true
 
 SYSTEM_UPDATE=false
+SKIP_MIGRATIONS=false
 ASSUME_YES=false
 IMAGE_TAG_OVERRIDE=''
 LOG_SERVICE=''
@@ -97,6 +98,7 @@ Runtimes (server.env RUNTIME_MODE):
 Options:
   --image-tag sha-...  Immutable image tag for update (compose + registry only).
   --system             Also rerun provision during update.
+  --skip-migrations    Native manual rollback only: skip forward migrations.
   --yes                Confirm the database-compatible rollback warning.
 
 Environment:
@@ -113,6 +115,9 @@ while (($#)); do
       ;;
     --image-tag=*) IMAGE_TAG_OVERRIDE="${1#*=}"; shift ;;
     --system) SYSTEM_UPDATE=true; shift ;;
+    --skip-migrations)
+      [[ "${COMMAND}" == 'deploy' ]] || die '--skip-migrations is only supported by deploy'
+      SKIP_MIGRATIONS=true; shift ;;
     --yes) ASSUME_YES=true; shift ;;
     --*) die "unknown option: $1" ;;
     *)
@@ -217,7 +222,7 @@ load_server_environment() {
   validate_dedicated_path STATE_ROOT "${STATE_ROOT}"
   [[ "${DEPLOY_USER}" =~ ^[a-z_][a-z0-9_-]*$ ]] || die 'DEPLOY_USER is invalid'
   [[ "${NODE_VERSION}" =~ ^24\.[0-9]+\.[0-9]+$ ]] || die 'NODE_VERSION must be an exact Node.js 24 release'
-  [[ "${PNPM_VERSION}" =~ ^11\.[0-9]+\.[0-9]+$ ]] || die 'PNPM_VERSION must be an exact pnpm 11 release'
+  [[ "${PNPM_VERSION}" =~ ^12\.[0-9]+\.[0-9]+$ ]] || die 'PNPM_VERSION must be an exact pnpm 12 release'
   [[ "${COREPACK_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die 'COREPACK_VERSION must be exact'
   [[ "${PM2_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die 'PM2_VERSION must be exact'
   [[ "${RUNTIME_MODE}" == 'compose' || "${RUNTIME_MODE}" == 'native' ]] || die 'RUNTIME_MODE must be compose or native'
@@ -1086,10 +1091,17 @@ deployed_identity() {
 }
 
 deploy() {
-  local skip_migrations="${1:-false}"
+  local skip_migrations="${1:-${SKIP_MIGRATIONS}}"
   require_root
   load_server_environment
+  [[ "${skip_migrations}" != 'true' || "${RUNTIME_MODE}" == 'native' ]] || die '--skip-migrations requires the native runtime'
   ensure_secret_material
+  if [[ "${RUNTIME_MODE}" == 'native' && "$(environment_value COMPOSE_DATABASE_MODE)" == 'native' ]]; then
+    /usr/local/bin/node "${APP_ROOT}/scripts/native-runtime-env.mjs" exec \
+      --production-env="${PRODUCTION_ENV}" -- /usr/local/bin/node \
+      "${APP_ROOT}/scripts/native-datastores.mjs" configure --from-environment \
+      --production-env="${PRODUCTION_ENV}"
+  fi
   prepare_runtime_permissions
   validate_configuration
   disable_foreign_runtime_unit
@@ -1111,6 +1123,7 @@ deploy() {
     systemctl restart "${COMPOSE_UNIT}"
   else
     release_native "${skip_migrations}"
+    remove_obsolete_native_processes
   fi
   ensure_certificate
   render_nginx https
@@ -1165,7 +1178,7 @@ rollback_application() {
     # so refuse rather than offer a rollback that can destroy a working host.
     local previous='(none recorded)'
     [[ ! -f "${STATE_ROOT}/previous-commit" ]] || previous="$(<"${STATE_ROOT}/previous-commit")"
-    die "automatic rollback is not available for RUNTIME_MODE=native: it would rebuild in place. Roll back manually with 'sudo -u ${DEPLOY_USER} git -C ${APP_ROOT} checkout --detach ${previous}' then '${CONTROLLER_NAME} deploy'; migrations are never re-run."
+    die "automatic rollback is not available for RUNTIME_MODE=native: it would rebuild in place. Roll back manually with 'sudo -u ${DEPLOY_USER} git -C ${APP_ROOT} checkout --detach ${previous}' then '${CONTROLLER_NAME} deploy --skip-migrations'; forward migrations are skipped."
   fi
   [[ -f "${STATE_ROOT}/current-image-tag" ]] || die 'no successful image tag is recorded'
   local selected last_successful target
@@ -1223,7 +1236,7 @@ check_application_readiness() {
   for entry in "${entries[@]}"; do
     key="${entry%%=*}"
     # Only the application services expose /ready; observability containers do not.
-    [[ "${key}" == *_API_PORT || "${key}" == 'SITE_APP_PORT' ]] || continue
+    [[ "${key}" == *_API_PORT || "${key}" == 'SITE_APP_PORT' || "${key}" == NOTIFICATION_*_PORT ]] || continue
     port="${entry##*=}"
     for ((attempt = 1; attempt <= HEALTHCHECK_RETRIES; attempt += 1)); do
       if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:${port}/ready" >/dev/null; then
@@ -1276,6 +1289,18 @@ check_native_health() {
     and (($want | unique) - $online | length) == 0
     and all(.[]; (.pm2_env.unstable_restarts // 0) == 0)
   ' <<<"${status}" >/dev/null || die 'one or more PM2 services are missing, stopped, or restarting'
+
+  local extra
+  while IFS= read -r extra; do
+    [[ -n "${extra}" ]] || continue
+    expected_pm2_apps | grep -qx "${extra}" || die "obsolete PM2 process ${extra}; run deploy to reconcile the topology"
+  done < <(jq -r '.[].name' <<<"${status}")
+}
+
+remove_obsolete_native_processes() {
+  local status
+  status="$(run_as_deploy /usr/local/bin/pm2 jlist 2>/dev/null)"
+  jq -e 'type == "array" and all(.[]; (.name | type) == "string")' <<<"${status}" >/dev/null || die 'invalid PM2 process inventory'
 
   # A profile turned off in .env.production would otherwise leave its process running
   # forever with rotated credentials.

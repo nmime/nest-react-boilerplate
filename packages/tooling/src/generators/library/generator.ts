@@ -722,8 +722,14 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
     throw new Error('Custom library tags are disabled; ownership tags are derived from kind, type, scope, and layer.');
   }
   const [inferredScope] = names.kebab.split('-');
-  const scope = options.scope?.trim() || inferredScope || names.kebab;
+  const scope = options.scope ?? inferredScope ?? names.kebab;
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(scope)) {
+    throw new Error('Invalid library scope: use a non-empty lower-case kebab name.');
+  }
   const fsdLayer = options.fsdLayer ?? (type === 'feature-main' ? 'features' : 'shared');
+  if (!['shared', 'entities', 'features', 'widgets', 'pages'].includes(fsdLayer)) {
+    throw new Error(`Unsupported frontend layer "${fsdLayer}".`);
+  }
   const database = type === 'data-access' ? resolveDatabaseProvider(tree, options.database) : 'postgres';
   const projectName = computeProjectName(options.kind, names.kebab, type, scope, database);
   const dir = computeDirectory(options.kind, names.kebab, type, scope, database);

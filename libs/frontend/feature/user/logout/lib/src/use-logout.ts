@@ -47,9 +47,11 @@ export function useLogout({ navigate, redirectTo = '/auth' }: UseLogoutInput = {
   }, [model]);
 
   const signOut = useCallback(() => {
-    void model.signOut({
-      onSignedOut: () => navigate?.(redirectTo, { replace: true }),
-    });
+    void model
+      .signOut({
+        onSignedOut: () => navigate?.(redirectTo, { replace: true }),
+      })
+      .catch(() => undefined); // The observable mutation retains the retryable error.
   }, [model, navigate, redirectTo]);
 
   return { model, signOut };

@@ -16,6 +16,19 @@
         "rootDir": "."
       }
     },
+    "component-test": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "libs/backend/postgres/main/auth/lib",
+        "command": "NODE_ENV=test vitest run --config vitest.component.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        { "externalDependencies": ["vitest", "testcontainers", "@testcontainers/postgresql"] }
+      ]
+    },
     "test": {
       "executor": "nx:run-commands",
       "cache": true,

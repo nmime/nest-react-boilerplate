@@ -385,10 +385,11 @@ and `nrb-server rollback` prints the exact manual sequence:
 
 ```bash
 sudo -u nrb git -C /opt/nest-react-boilerplate checkout --detach <previous-commit>
-sudo nrb-server deploy
+sudo nrb-server deploy --skip-migrations
 ```
 
-Migrations are never re-run on that path. Retained per-commit release trees are
+The explicit `--skip-migrations` skips forward migrations on that rollback path;
+ordinary `deploy` applies migrations. Retained per-commit release trees are
 the prerequisite for making it automatic; until then the refusal is deliberate.
 
 Before every release:

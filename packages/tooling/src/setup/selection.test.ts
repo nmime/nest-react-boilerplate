@@ -5,6 +5,26 @@ import { parseNrbConfig, schemaVersion } from './schema.js';
 import { materializeSelection, updateSelection } from './selection.js';
 
 describe('repeatable setup selection', () => {
+  it('preserves every product namespace across additive, preset, and replacement selections', () => {
+    const existing = parseNrbConfig({
+      schemaVersion,
+      apps: ['landing-app'],
+      identity: { slug: 'orchard', brand: { cliBin: 'orchard', redisKeyPrefix: 'orchard:' } },
+      appRenames: {},
+      runtime: { stagingOffset: 200 },
+      session: { cookieNameDev: 'orchard.sid' },
+      tenant: { defaultTenantId: 'a0000000-0000-0000-0000-000000000001' },
+      product: { ciMode: 'maintainer', frontendApiMode: 'split-origin' },
+      deployment: { publicDomain: 'orchard.example', imageRegistry: 'ghcr.io/example/orchard' },
+    });
+    for (const update of [{ addApps: ['user-app'] }, { preset: 'minimal' }, { replace: true, addApps: ['site-app'] }]) {
+      const result = updateSelection(existing, update);
+      for (const key of ['identity', 'appRenames', 'runtime', 'session', 'tenant', 'product', 'deployment'] as const) {
+        assert.deepEqual(result[key], existing[key], `${key} after ${JSON.stringify(update)}`);
+      }
+    }
+  });
+
   it('uses a preset as an exact shortcut on first run', () => {
     const config = updateSelection(null, { preset: 'web', options: { nonInteractive: true } });
     assert.equal(config.preset, 'web');

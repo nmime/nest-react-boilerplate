@@ -41,6 +41,8 @@ export enum AuthPersistenceMode {
 export interface AuthMainModuleOptions {
   mode?: AuthPersistenceMode;
   imports?: NonNullable<ModuleMetadata['imports']>;
+  /** Bot and worker hosts use services without duplicating the auth HTTP surface. */
+  exposeHttp?: boolean;
 }
 
 function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
@@ -67,18 +69,20 @@ function resolvePersistenceMode(): AuthPersistenceMode {
 interface NormalizedAuthMainModuleOptions {
   mode: AuthPersistenceMode;
   imports: NonNullable<ModuleMetadata['imports']>;
+  exposeHttp: boolean;
 }
 
 function normalizeOptions(
   optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
 ): NormalizedAuthMainModuleOptions {
   if (typeof optionsOrMode === 'string') {
-    return { mode: optionsOrMode, imports: [] };
+    return { mode: optionsOrMode, imports: [], exposeHttp: true };
   }
 
   return {
     mode: optionsOrMode.mode ?? resolvePersistenceMode(),
     imports: optionsOrMode.imports ?? [],
+    exposeHttp: optionsOrMode.exposeHttp ?? true,
   };
 }
 
@@ -118,7 +122,7 @@ export class AuthMainModule {
     return {
       module: AuthMainModule,
       imports: [...options.imports, BetterAuthModule.forRoot()],
-      controllers: [AuthController, BetterAuthApiController, ProblemPresentationsController],
+      controllers: options.exposeHttp ? [AuthController, BetterAuthApiController, ProblemPresentationsController] : [],
       providers: [
         AuthService,
         AuthLoginAnalyticsService,

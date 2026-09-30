@@ -1,9 +1,10 @@
-// @requirements REQ-FRONTEND-SHELL-004
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AUTH-FRONTEND-009
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiClientProvider } from '@app/frontend-api-client';
-import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
+import { FrontendI18nProvider, FrontendStateProvider, useAuthShellStore } from '@app/frontend-runtime';
+import { providerIdentitiesQueryKey } from '@app/frontend-feature-user-social-auth';
 import { ProviderIdentitiesPanel } from './provider-identities-panel';
 
 const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
@@ -40,6 +41,70 @@ afterEach(() => {
 });
 
 describe('ProviderIdentitiesPanel', () => {
+  it('never renders the preceding account identity or account actions for a guest with warm cache', async () => {
+    const client = new QueryClient();
+    client.setQueryData([...providerIdentitiesQueryKey(), null], {
+      items: [
+        {
+          id: 'private-identity',
+          provider: 'telegram',
+          email: 'private@example.test',
+          displayName: 'Private Name',
+        },
+      ],
+    });
+    const fetchMock = vi.fn<typeof fetch>();
+    render(
+      <FrontendStateProvider>
+        <ApiClientProvider baseUrls={{ admin: '', auth: 'https://auth-api', user: '' }} fetchImpl={fetchMock}>
+          <QueryClientProvider client={client}>
+            <ProviderIdentitiesPanel onLink={vi.fn()} t={(key) => key} />
+          </QueryClientProvider>
+        </ApiClientProvider>
+      </FrontendStateProvider>,
+    );
+    expect(screen.getByText('user.state.unauthenticated')).toBeTruthy();
+    expect(screen.queryByText('private@example.test')).toBeNull();
+    expect(screen.queryByText('Private Name')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    client.clear();
+  });
+
+  it('hides a late private identity response after the authenticated store becomes guest', async () => {
+    let resolveRead!: (value: Response) => void;
+    const fetchMock = vi.fn<typeof fetch>(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveRead = resolve;
+        }),
+    );
+    function ClearSession() {
+      const store = useAuthShellStore();
+      return <button onClick={() => store.clearSession()}>Become guest</button>;
+    }
+    const client = new QueryClient();
+    render(
+      <FrontendStateProvider initiallyAuthenticated>
+        <ApiClientProvider baseUrls={{ admin: '', auth: 'https://auth-api', user: '' }} fetchImpl={fetchMock}>
+          <QueryClientProvider client={client}>
+            <ClearSession />
+            <ProviderIdentitiesPanel onLink={vi.fn()} t={(key) => key} />
+          </QueryClientProvider>
+        </ApiClientProvider>
+      </FrontendStateProvider>,
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    fireEvent.click(screen.getByText('Become guest'));
+    resolveRead(
+      jsonResponse({ data: { items: [{ id: 'private', provider: 'telegram', email: 'late@example.test' }] } }),
+    );
+    await waitFor(() => expect(client.getQueryData([...providerIdentitiesQueryKey(), null])).toBeDefined());
+    expect(screen.getByText('user.state.unauthenticated')).toBeTruthy();
+    expect(screen.queryByText('late@example.test')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'auth.social.button.unlinkTelegram' })).toBeNull();
+    client.clear();
+  });
   it('renders empty provider identities and link actions', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(jsonResponse({ data: { identities: [] } }));
     const { onLink } = renderPanel(fetchMock);

@@ -228,6 +228,10 @@
         {
           "hosts": "durable-backend",
           "moduleExpression": "PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })",
+          "moduleExpressionByHost": {
+            "notification-consumer": "PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: false, scheduler: { enabled: true, intervalMs: 60_000 } })",
+            "notification-scheduler": "PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: false, scheduler: { enabled: true, intervalMs: 60_000 } })"
+          },
           "imports": [
             {
               "importName": "PaymentsMainModule",

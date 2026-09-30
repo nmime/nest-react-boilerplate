@@ -240,7 +240,9 @@ async function promptProductAndDeployment(
     ],
     currentProduct.frontendApiMode === 'same-origin' ? 0 : 1,
   )) as NrbConfig['product']['frontendApiMode'];
-  const mobileTargets: NrbConfig['product']['mobileTargets'] = [];
+  const mobileTargets: NrbConfig['product']['mobileTargets'] = apps.includes('mobile-app')
+    ? []
+    : [...currentProduct.mobileTargets];
   if (apps.includes('mobile-app')) {
     for (const target of ['web', 'android', 'ios'] as const) {
       if (

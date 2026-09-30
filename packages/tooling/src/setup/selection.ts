@@ -136,11 +136,13 @@ export function updateSelection(existing: NrbConfig | null, update: SelectionUpd
   const options = { ...defaultOptions, ...update.options };
 
   if (preset && !customized) {
-    return parseNrbConfig({ schemaVersion, preset, options });
+    return parseNrbConfig({ ...existing, schemaVersion, preset, apps: [], capabilities: [], options });
   }
 
   return parseNrbConfig({
+    ...existing,
     schemaVersion,
+    preset: undefined,
     apps: resolved.apps,
     capabilities: resolved.capabilities,
     options,

@@ -51,6 +51,7 @@ requirements:
     projects:
       - auth-app-api
       - user-app-api
+      - discord-app-api
       - '@app/backend-feature-admin-main'
       - '@app/backend-feature-auth-main'
       - '@app/backend-feature-auth-shared'
@@ -70,6 +71,24 @@ requirements:
         - security
         - playwright
     evidence:
+      - kind: security
+        file: apps/backend/discord/discord-app-api/src/discord-app-api.module.spec.ts
+        target: 'discord-app-api:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/application/better-auth-telegram-session.service.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/backend/feature/auth/main/lib/src/interfaces/http/persistent-session-access.guard.spec.ts
         target: '@app/backend-feature-auth-main:test'
@@ -131,6 +150,12 @@ requirements:
         - vitest
         - security
     evidence:
+      - kind: security
+        file: libs/backend/feature/auth/shared/lib/src/access-policy.spec.ts
+        target: '@app/backend-feature-auth-shared:test'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/backend/feature/auth/main/lib/src/application/auth-password-hash.spec.ts
         target: '@app/backend-feature-auth-main:test'
@@ -222,6 +247,7 @@ requirements:
           - nightly
   - id: REQ-AUTH-IDENTITY-005
     projects:
+      - discord-app-api
       - '@app/backend-feature-auth-main'
       - '@app/backend-postgres-main-auth'
       - '@app/backend-mongodb-main-auth'
@@ -239,6 +265,12 @@ requirements:
         - security
         - playwright
     evidence:
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/frontend/feature/user/social-auth/lib/src/same-origin-return-url.spec.ts
         target: '@app/frontend-feature-user-social-auth:test'
@@ -387,6 +419,9 @@ requirements:
           - nightly
   - id: REQ-AUTH-FRONTEND-009
     projects:
+      - user-app
+      - '@app/frontend-runtime'
+      - '@app/frontend-feature-shared-preferences'
       - '@app/frontend-feature-user-auth'
       - '@app/frontend-feature-user-logout'
       - '@app/frontend-feature-user-profile'
@@ -403,6 +438,42 @@ requirements:
         - playwright
         - vitest
     evidence:
+      - kind: vitest
+        file: libs/frontend/runtime/lib/src/state/auth-shell-store.spec.ts
+        target: '@app/frontend-runtime:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/frontend/feature/shared/preferences/lib/src/session-payload.spec.ts
+        target: '@app/frontend-feature-shared-preferences:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/frontend/feature/user/social-auth/lib/src/provider-identities-model.spec.tsx
+        target: '@app/frontend-feature-user-social-auth:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/frontend/feature/user/logout/lib/src/logout-model.spec.ts
+        target: '@app/frontend-feature-user-logout:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/app/src/app/social-auth-tma.spec.tsx
+        target: 'user-app:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/app/src/features/social-auth/ui/provider-identities-panel.spec.tsx
+        target: 'user-app:test'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/frontend/feature/user/auth/lib/src/use-auth-session-flow.spec.tsx
         target: '@app/frontend-feature-user-auth:test'

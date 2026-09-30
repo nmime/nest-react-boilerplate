@@ -19,6 +19,12 @@ export const observabilityImages = Object.freeze({
   coroot: 'ghcr.io/coroot/coroot:1.27.0@sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb',
 });
 
+export const localObservabilityImages = Object.freeze({
+  grafana: observabilityImages.grafana,
+  loki: 'grafana/loki:3.7.8@sha256:1107dd5274e0ada47e42472b7a7e71f3b2a2fe878878108f3e2f9e51528f0193',
+  tempo: 'grafana/tempo:3.1.0@sha256:3076b8dcdfb32fd6bc5ccef85e7b7313e6199b9cb84366257fc17ecb696db5fd',
+});
+
 export const productionAppIds = Object.freeze([
   'admin-app',
   'admin-app-api',

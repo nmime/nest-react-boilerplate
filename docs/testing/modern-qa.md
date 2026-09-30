@@ -33,7 +33,7 @@ This repository treats QA as local-first. GitHub and GitLab CI apply the documen
 | Performance                | Page budgets, API p95/load probes, optional Lighthouse                             | `pnpm run test:perf`              | Manual/nightly                    | Set `PERF_URLS` and/or `PERF_API_URLS`. Budgets: `PERF_TTFB_BUDGET_MS`, `PERF_HTML_BUDGET_BYTES`, `PERF_API_P95_BUDGET_MS`, `PERF_API_REQUESTS`. Optional Lighthouse is pinned by default: `PERF_ENGINE=lighthouse` or `PERF_LIGHTHOUSE=1`; override planned upgrades with `LIGHTHOUSE_VERSION`. Dry run supported.                                                                                   |
 | Security SAST              | Lightweight JS/TS static security checks, optional Semgrep                         | `pnpm run test:security:sast`     | Blocking PR gate/manual          | Native rules flag eval, dynamic Function, disabled TLS, dangerous HTML sinks, shell exec, weak random. Optional Semgrep uses a pinned Docker image with `SEMGREP_DOCKER_IMAGE` override. Dry run supported.                                                                                                                                                 |
 | Dependency audit           | Package vulnerability gate                                                         | `pnpm run audit`                  | Blocking/manual                   | Uses `pnpm audit --audit-level=moderate`.                                                                                                                                                                                                                                                                                   |
-| Secret scanning            | Leaked keys/tokens/high-entropy strings                                            | `pnpm run test:security:secrets`  | Blocking PR gate/manual          | Native scan ignores generated/build dirs and placeholders; products register their own fixtures in [`config/secret-scan.allowlist.json`](#product-owned-secret-scan-allowlist) instead of editing the shared policy. Gitleaks is composed the same way: the product-owned root `.gitleaks.toml` extends the boilerplate-owned `packages/tooling/config/gitleaks.base.toml`, which extends the default rules, and both carry path-and-value allowlists for explicit test fixtures only; add no real credential or broad path exclusion. Every invocation names its config (`--gitleaks-config` / `GITLEAKS_CONFIG`) instead of relying on root discovery. Optional local scans use a pinned Docker image with `GITLEAKS_DOCKER_IMAGE` override. Dry run supported.                                                                                   |
+| Secret scanning            | Leaked keys/tokens/high-entropy strings                                            | `pnpm run test:security:secrets`  | Blocking PR gate/manual          | Native scan excludes generated/build directories and allows only reviewed identifier shapes or path/value registrations; products register their own fixtures in [`config/secret-scan.allowlist.json`](#product-owned-secret-scan-allowlist) instead of editing the shared policy. Gitleaks is composed the same way: the product-owned root `.gitleaks.toml` extends the boilerplate-owned `packages/tooling/config/gitleaks.base.toml`, which extends the default rules, and both carry path-and-value allowlists for explicit test fixtures only; add no real credential or broad path exclusion. Every invocation names its config (`--gitleaks-config` / `GITLEAKS_CONFIG`) instead of relying on root discovery. Optional local scans use a pinned Docker image with `GITLEAKS_DOCKER_IMAGE` override. Dry run supported.                                                                                   |
 | Security DAST              | Runtime header, reflected payload, 5xx, sensitive path probes                      | `pnpm run test:security:dast`     | Manual/nightly                    | Set `SECURITY_DAST_URLS`. Required headers default to `x-content-type-options,referrer-policy`; override with `SECURITY_DAST_REQUIRED_HEADERS`. Optional OWASP ZAP: `SECURITY_DAST_ENGINE=zap`. Dry run supported.                                                                                                          |
 | Security aggregate         | SAST + secrets + DAST                                                              | `pnpm run test:security`          | Manual/nightly                    | Pass `-- --dry-run` to validate configuration without targets.                                                                                                                                                                                                                                                              |
 | Property-based invariants  | Randomized OpenAPI/schema/path/workspace invariants                                | `pnpm run test:property`          | Blocking                          | Native randomized checks over contracts, schema examples, path templates, package script references, workspace tooling. Uses `fast-check` automatically if it is present, but does not require lockfile churn.                                                                                                              |
@@ -163,6 +163,30 @@ bounded at two hours. Reliability URL concurrency is capped at 32 through
 gates as `notSelected`; those omissions do not fail or make the selected gate
 partial.
 
+Runtime preset owners set `A11Y_REQUIRE_TARGET=1`, `PERF_REQUIRE_TARGET=1`,
+`SECURITY_DAST_REQUIRE_TARGET=1`, and `OPENAPI_FUZZ_REQUIRE_TARGET=1`. Missing
+required targets fail; optional omissions are explicit skips or static fuzz
+plans. Only `--dry-run` produces planned dry-run evidence. Performance requires
+positive bounded sample counts, finite budgets, and a Lighthouse JSON score at
+or above `PERF_LIGHTHOUSE_PERFORMANCE_MIN`. API client errors fail load samples.
+DAST identifies sensitive-file response content, so ordinary SPA fallback HTML
+is not reported as an exposed `.env` file.
+
+Native fuzzing sends every generated seed and, after `OPENAPI_FUZZ_UNSAFE=1`,
+request-body variant. Both native and Schemathesis restrict methods to GET,
+HEAD, and OPTIONS by default. The safe external selection also excludes
+stateful and unsupported-method checks that could send writes. A successful
+engine invocation is engine evidence; native status probes do not prove
+payment, authorization, or full response-schema acceptance.
+
+The default backup/restore world-class gates execute
+`packages/tooling/src/commands/db/isolated-recovery.component.test.ts`. This
+uses real archive clients with owned PostgreSQL and MongoDB containers,
+restores into a separate owned target, checks data/constraints, and verifies the
+source stayed unchanged. Docker failure is a failed drill, never a skip. An
+operator can still select an explicit reviewed argv command through
+`QA_BACKUP_RESTORE_COMMAND`; that command owns its target safety and evidence.
+
 ## Contracts as generated artifacts
 
 Generated API contracts are committed under `apps/backend/*/*-app-api/contracts/openapi`. They are machine-readable inputs for linting, fuzzing, client generation, and consumer contract checks. Do not move them back under `docs/openapi` as hand-authored documentation.
@@ -190,9 +214,7 @@ shape rather than by filename:
 
 ### Product-owned secret scan allowlist
 
-Anything a product needs beyond that goes in `config/secret-scan.allowlist.json`, which ships empty
-and is the only file a product edits — the base policy stays boilerplate-owned so an upgrade never
-conflicts:
+Intentional public fixtures are registered in `config/secret-scan.allowlist.json`, which ships a small reviewed upstream set. Products register their own values there; the scanner policy stays owned by the boilerplate. A value containing `fixture`, `dummy`, `test`, or interpolation text receives no blanket exemption:
 
 ```json
 {

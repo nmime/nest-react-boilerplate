@@ -21,7 +21,7 @@ import { PaymentsPostgresModule } from '@app/backend-postgres-main-payments';
     FeatureFlagsPostgresModule,
     NotificationMainModule.forRoot({ enableScheduler: true, exposeHttp: false }),
     NotificationPostgresModule,
-    PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } }),
+    PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: false, scheduler: { enabled: true, intervalMs: 60_000 } }),
     PostgresMainModule.forRoot(),
     RedisModule.forRoot(),
     S3Module.forRoot(),

@@ -1,50 +1,49 @@
 services:
   grafana:
-    image: grafana/grafana:11.4.0
+    profiles: [observability]
+    image: grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572
     ports:
       - '127.0.0.1:3000:3000'
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: 'true'
-      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       GF_AUTH_DISABLE_LOGIN_FORM: 'true'
+      GF_AUTH_BASIC_ENABLED: 'false'
+      GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: 'true'
     volumes:
-      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/local-datasources.yml:/etc/grafana/provisioning/datasources/local.yml:ro
     depends_on:
       loki:
-        condition: service_healthy
+        condition: service_started
       tempo:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
-      test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health']
+      # Distroless Loki/Tempo have no shell; these real HTTP probes provide
+      # combined readiness for the optional local stack.
+      test:
+        [
+          'CMD-SHELL',
+          'wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health && wget --no-verbose --tries=1 --spider http://loki:3100/ready && wget --no-verbose --tries=1 --spider http://tempo:3200/ready',
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
   loki:
-    image: grafana/loki:3.0.0
+    profiles: [observability]
+    image: grafana/loki:3.7.8@sha256:1107dd5274e0ada47e42472b7a7e71f3b2a2fe878878108f3e2f9e51528f0193
     ports:
       - '127.0.0.1:3100:3100'
     command: -config.file=/etc/loki/local-config.yaml
-    healthcheck:
-      test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://127.0.0.1:3100/ready']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
   tempo:
-    image: grafana/tempo:2.5.0
+    profiles: [observability]
+    image: grafana/tempo:3.1.0@sha256:3076b8dcdfb32fd6bc5ccef85e7b7313e6199b9cb84366257fc17ecb696db5fd
     ports:
       - '127.0.0.1:3200:3200'
       - '127.0.0.1:4317:4317'
       - '127.0.0.1:4318:4318'
-    command: -config.file=/etc/tempo/config.yaml
+    command: -target=all -config.file=/etc/tempo/config.yaml
     volumes:
-      - ./docker/tempo/config.yaml:/etc/tempo/config.yaml
-    healthcheck:
-      test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://127.0.0.1:3200/']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      - ./docker/tempo/config.yaml:/etc/tempo/config.yaml:ro

@@ -48,6 +48,7 @@ export interface AuthenticatedSession {
 }
 
 export interface AuthenticatedResponse {
+  header?: (name: string, value: string | string[]) => unknown;
   clearCookie?: (name: string, options?: { path?: string }) => void;
   redirect?: (url: string, statusCode?: number) => void;
   send?: (payload?: unknown) => void;

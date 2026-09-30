@@ -59,12 +59,10 @@ export function assertSeedSafety(
     assertLocalDevelopmentDatabase,
     isLocalDevelopmentDatabase: inspectLocalDatabase = isLocalDevelopmentDatabase,
   }: SeedSafetyOptions = {},
-): void {
+): { localDevelopmentDatabase: boolean } {
   const localDevelopmentDatabase = inspectLocalDatabase(connectionString, env);
   const productionRuntime = env.NODE_ENV === "production";
-  const defaultSeedCredentials =
-    args.email.toLowerCase() === DefaultAdminEmail &&
-    args.password === DefaultAdminPassword;
+  const defaultSeedCredentials = [DefaultAdminPassword, 'Admin@Secure1!'].includes(args.password);
 
   if (!args.force) {
     assertLocalDevelopmentDatabase?.(connectionString);
@@ -88,4 +86,14 @@ export function assertSeedSafety(
       "Default seed admin credentials are not allowed for production or non-local databases. Pass --email and a strong --password or --password-env value.",
     );
   }
+  if ((productionRuntime || !localDevelopmentDatabase) && args.password.length < 16) {
+    throw new Error('Non-local seed passwords must contain at least 16 characters.');
+  }
+  if (!args.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(args.email.trim())) {
+    throw new Error('A valid administrator seed email is required.');
+  }
+  if (!localDevelopmentDatabase && !args.force) {
+    throw new Error('Refusing seed against a non-local/dev database without the explicit --force seed guards.');
+  }
+  return { localDevelopmentDatabase };
 }

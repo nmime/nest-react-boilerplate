@@ -49,12 +49,15 @@ export interface DiscordAuthorizationRequestInput {
   linkToken?: string | null;
   returnUrl?: string | null;
   principal?: { subject: string; tenantId: string } | null;
+  /** Supplied by a trusted transport adapter, never a public request DTO. */
+  binding: { kind: 'browser'; nonce: string } | { kind: 'discord-interaction'; providerSubject: string };
 }
 
 export interface DiscordCallbackInput {
   code?: string | null;
   state?: string | null;
   principal?: { subject: string; tenantId: string } | null;
+  browserNonce?: string | null;
 }
 
 export interface DiscordAuthorizationRequestResult {

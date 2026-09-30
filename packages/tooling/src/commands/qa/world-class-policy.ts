@@ -57,6 +57,22 @@ export function boundedInteger(options: {
   return value;
 }
 
+export function finiteNumber(options: {
+  fallback: number;
+  label: string;
+  max: number;
+  min?: number;
+  value?: string | number;
+}): number {
+  const min = options.min ?? Number.EPSILON;
+  const raw = options.value === undefined || options.value === '' ? options.fallback : options.value;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < min || value > options.max) {
+    throw new Error(`${options.label} must be finite and between ${min} and ${options.max}.`);
+  }
+  return value;
+}
+
 export function unknownWorldClassGates(selectedGates: ReadonlySet<string>): string[] {
   const knownGates = new Set<string>(worldClassGateNames);
   return [...selectedGates].filter((name) => !knownGates.has(name)).sort();

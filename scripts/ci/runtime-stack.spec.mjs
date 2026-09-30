@@ -5,12 +5,73 @@ import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { classifyContainerReadiness, composeStartupPlan, startupCommands } from './runtime-stack.mjs';
+import {
+  classifyContainerReadiness,
+  composeStartupPlan,
+  startupCommands,
+  parseRuntimeComposeConfig,
+  runtimeSnapshotReadiness,
+  readRuntimeReadiness,
+} from './runtime-stack.mjs';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (path) => readFileSync(join(repoRoot, path), 'utf8');
 
 describe('runtime stack readiness classification', () => {
+  const snapshot = (service, status = 'running', health = 'healthy') => ({
+    Config: { Labels: { 'com.docker.compose.service': service } },
+    State: { Status: status, ExitCode: 0, Health: { Status: health } },
+  });
+
+  it('refuses empty or malformed selected configuration', () => {
+    for (const raw of ['', 'invalid', '{}', '{"services":{}}', '{"services":[]}']) {
+      assert.throws(() => parseRuntimeComposeConfig(raw), /Runtime Compose configuration/);
+    }
+    assert.deepEqual(Object.keys(parseRuntimeComposeConfig('{"services":{"api":{}}}').services), ['api']);
+  });
+
+  it('requires observed ready state for every expected service', () => {
+    assert.equal(runtimeSnapshotReadiness(['api'], []).ready, false);
+    assert.equal(runtimeSnapshotReadiness(['api', 'worker'], [snapshot('api')]).ready, false);
+    assert.equal(runtimeSnapshotReadiness(['api', 'worker'], [snapshot('api'), snapshot('worker')]).ready, true);
+    assert.equal(
+      runtimeSnapshotReadiness(['api'], [snapshot('api'), snapshot('api', 'restarting', 'starting')]).ready,
+      false,
+    );
+    assert.equal(runtimeSnapshotReadiness(['api'], [snapshot('api', 'exited')]).ready, false);
+    assert.equal(runtimeSnapshotReadiness(['api'], [{ State: {} }]).ready, false);
+    assert.equal(runtimeSnapshotReadiness(['api'], [snapshot('unselected')]).ready, false);
+  });
+
+  it('accepts completed auto-removed one-shots only through their successful startup commands', () => {
+    assert.equal(runtimeSnapshotReadiness(['api'], [snapshot('api')], ['migrate']).ready, true);
+    assert.equal(
+      runtimeSnapshotReadiness(['api'], [snapshot('api'), snapshot('migrate', 'running', 'none')], ['migrate']).ready,
+      false,
+    );
+  });
+
+  it('cannot turn failed ps/inspect commands or malformed JSON into ready state', () => {
+    assert.throws(
+      () =>
+        readRuntimeReadiness(['api'], [], () => {
+          throw new Error('ps failed');
+        }),
+      /ps failed/,
+    );
+    assert.equal(readRuntimeReadiness(['api'], [], () => '').ready, false);
+    assert.throws(
+      () => readRuntimeReadiness(['api'], [], (args) => (args[0] === 'inspect' ? 'invalid' : 'container-id')),
+      /inspection did not return valid JSON/,
+    );
+    assert.equal(
+      readRuntimeReadiness(['api'], [], (args) =>
+        args[0] === 'inspect' ? JSON.stringify([snapshot('api')]) : 'container-id',
+      ).ready,
+      true,
+    );
+  });
+
   // The old shell asserted `status != 'exited' && status != 'running'`, so a one-shot still
   // running was neither pending nor failed and the whole stack was declared ready while the
   // migrator was mid-run. That is the race this classification exists to close.

@@ -25,6 +25,7 @@ const fixture = ({
   publicMode = 'per-app-domains',
   frontendMode,
   runtimeMode,
+  notificationConsumerPort = 3004,
   distRoot = '/srv/nrb/dist/apps/frontend',
 } = {}) => {
   const directory = mkdtempSync(join(tmpdir(), 'nrb-single-server-'));
@@ -56,6 +57,7 @@ const fixture = ({
       'ADMIN_APP_API_PORT=3101',
       'USER_APP_API_PORT=3102',
       'AUTH_APP_API_PORT=3103',
+      `NOTIFICATION_CONSUMER_PORT=${notificationConsumerPort}`,
       'DISCORD_APP_API_PORT=3107',
       'TELEGRAM_BOT_API_PORT=3113',
       'ADMIN_APP_PORT=4100',
@@ -67,7 +69,13 @@ const fixture = ({
       ...(frontendMode ? [`EXTERNAL_PROXY_FRONTEND_MODE=${frontendMode}`] : []),
     ].join('\n'),
   );
-  const configuration = loadSingleServerConfiguration({ productionEnv, serverEnv });
+  let configuration;
+  try {
+    configuration = loadSingleServerConfiguration({ productionEnv, serverEnv });
+  } catch (error) {
+    rmSync(directory, { force: true, recursive: true });
+    throw error;
+  }
   return {
     configuration,
     cleanup: () => rmSync(directory, { force: true, recursive: true }),
@@ -281,7 +289,10 @@ test('static frontend mode serves built SPAs from disk with history fallback', (
     }
     assert.match(nginx, /try_files \$uri \$uri\/ \/index\.html;/u, 'SPA history fallback is required');
     assert.match(nginx, /Cache-Control "no-store"/u, 'index.html must never be cached');
-    assert.match(nginx, /location \^~ \/assets\/ \{/u, 'only hashed output is cached hard');
+    assert.ok(
+      nginx.includes('location ~ "^/(assets/[^/]+-[A-Za-z0-9_-]{8}'),
+      'only fingerprinted names are cached hard',
+    );
     assert.match(nginx, /max-age=31536000, immutable/u, 'hashed assets should be cached hard');
     // The runtime config is rewritten per deployment, so it must not inherit the
     // immutable asset policy, and no extension regex may outrank the API prefixes.
@@ -309,7 +320,7 @@ test('static frontend mode serves built SPAs from disk with history fallback', (
     );
     assert.match(userServer, /script-src 'self';/u, 'non-Astro SPAs must retain the strict outer script policy');
     assert.doesNotMatch(userServer, /script-src 'self' 'unsafe-inline'/u);
-    const assetBlock = nginx.slice(nginx.indexOf('location ^~ /assets/ {'));
+    const assetBlock = nginx.slice(nginx.indexOf('location ~ "^/(assets/'));
     assert.ok(assetBlock.slice(0, 600).includes('X-Content-Type-Options'), 'assets must keep nosniff');
     // Swagger UI is proxied on the same vhost and would break under the SPA CSP.
     const docsBlock = nginx.slice(nginx.indexOf('location ^~ /auth/docs/ {'));
@@ -568,6 +579,91 @@ test('provisions a secret file for every secret the runtime image loads', () => 
   assert.deepEqual(missing, []);
 });
 
+test('managed-host validation accepts the canonical pnpm pin and refuses unsupported versions', () => {
+  const controller = readFileSync(join(root, 'deploy/single-server/serverctl'), 'utf8');
+  const validation = controller.split('\n').find((line) => line.includes('"${PNPM_VERSION}" =~'));
+  assert.ok(validation, 'the host owner must validate package-manager versions');
+  const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  const pin = manifest.packageManager.split('@')[1].split('+')[0];
+  const example = readFileSync(join(root, 'deploy/single-server/server.env.example'), 'utf8');
+  assert.match(example, new RegExp(`^PNPM_VERSION=${pin.replaceAll('.', '\\.')}\\r?$`, 'mu'));
+  for (const version of [pin, '11.0.0', '13.0.0', 'latest', '12.x']) {
+    const result = spawnSync('bash', ['-c', `set -eu\ndie() { exit 9; }\n${validation}`], {
+      encoding: 'utf8',
+      env: { ...process.env, PNPM_VERSION: version },
+      timeout: 5000,
+    });
+    assert.equal(result.status, version === pin ? 0 : 9, version);
+  }
+});
+
+test('unattended bootstrap uses the declared upstream repository', () => {
+  const bootstrap = readFileSync(join(root, 'deploy/single-server/bootstrap.sh'), 'utf8');
+  assert.ok(
+    bootstrap.includes('REPOSITORY_URL="${REPOSITORY_URL:-https://github.com/nmime/nest-react-boilerplate.git}"'),
+  );
+});
+
+test('native notification listeners are private topology members and collisions fail before deployment', (context) => {
+  const current = fixture({ runtimeMode: 'native', profiles: 'notification-consumer' });
+  context.after(current.cleanup);
+  const ports = expectedListeningPorts(current.configuration);
+  assert.ok(ports.some(({ key, port }) => key === 'NOTIFICATION_CONSUMER_PORT' && port === 3004));
+  assert.ok(ports.some(({ key, port }) => key === 'NOTIFICATION_SCHEDULER_PORT' && port === 3005));
+  assert.doesNotMatch(renderStaticNginx(current.configuration), /proxy_pass http:\/\/127\.0\.0\.1:300[45]/u);
+  assert.throws(
+    () => fixture({ runtimeMode: 'native', profiles: 'notification-consumer', notificationConsumerPort: 3101 }),
+    /both publish host port/u,
+  );
+});
+
+test('the actual PM2 manifest keeps workers and APIs on loopback despite an ambient public bind', () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      '-e',
+      "const a=require('node:assert/strict');const {apps}=require('./ecosystem.config.cjs');a.ok(apps.some(x=>x.name==='notification-consumer'));a.ok(apps.some(x=>x.name==='notification-scheduler'));for(const app of apps)a.equal(app.env.HOST,'127.0.0.1');",
+    ],
+    { cwd: root, encoding: 'utf8', env: { ...process.env, HOST: '0.0.0.0', PM2_ENABLE_NOTIFICATIONS: 'true' } },
+  );
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('native doctor rejects obsolete processes without changing the PM2 inventory', () => {
+  const controller = readFileSync(join(root, 'deploy/single-server/serverctl'), 'utf8');
+  const check = /^check_native_health\(\) \{$[\s\S]*?^\}$/mu.exec(controller)?.[0];
+  assert.ok(check);
+  for (const names of [['auth-app-api'], ['auth-app-api', 'obsolete-worker']]) {
+    const state = JSON.stringify(names.map((name) => ({ name, pm2_env: { status: 'online', unstable_restarts: 0 } })));
+    const result = spawnSync(
+      'bash',
+      [
+        '-c',
+        `set -eu\nexpected_pm2_apps() { printf '%s\\n' auth-app-api; }\ndie() { printf '%s\\n' "$*" >&2; exit 9; }\nrun_as_deploy() { [[ "$2" == jlist ]] || { printf 'UNEXPECTED_WRITE\\n'; exit 8; }; printf '%s\\n' "$OWNED_PM2_STATE"; }\n${check}\ncheck_native_health`,
+      ],
+      { encoding: 'utf8', timeout: 5000, env: { ...process.env, OWNED_PM2_STATE: state } },
+    );
+    assert.equal(result.status, names.length === 1 ? 0 : 9, result.stderr);
+    assert.ok(!result.stdout.includes('UNEXPECTED_WRITE'));
+    if (names.length > 1) assert.match(result.stderr, /obsolete PM2 process/u);
+  }
+});
+
+test('skipping migrations on a Compose deploy fails before any configuration mutation', () => {
+  const controller = readFileSync(join(root, 'deploy/single-server/serverctl'), 'utf8');
+  const deploy = /^deploy\(\) \{$[\s\S]*?^\}$/mu.exec(controller)?.[0];
+  assert.ok(deploy);
+  const result = spawnSync(
+    'bash',
+    [
+      '-c',
+      `set -eu\nSKIP_MIGRATIONS=true\nrequire_root() { :; }\nload_server_environment() { RUNTIME_MODE=compose; }\ndie() { exit 9; }\nensure_secret_material() { exit 8; }\n${deploy}\ndeploy`,
+    ],
+    { encoding: 'utf8', timeout: 5000 },
+  );
+  assert.equal(result.status, 9, 'the unsupported skip is rejected before provisioning');
+});
+
 test('corepack provisioning survives a host that already owns /usr/local/bin/corepack', () => {
   // A rented VPS very often already has Node with corepack shims. Installing corepack into the
   // shared prefix makes npm create every package-manager shim and abort with EEXIST on the first
@@ -626,7 +722,7 @@ test('corepack provisioning survives a host that already owns /usr/local/bin/cor
       'log() { :; }',
       'die() { echo "$*" >&2; exit 1; }',
       'COREPACK_VERSION=0.35.0',
-      'PNPM_VERSION=11.0.0',
+      'PNPM_VERSION=12.8.1',
       `NRB_COREPACK_ROOT=${JSON.stringify(corepackRoot)}`,
       `NRB_BIN_ROOT=${JSON.stringify(binRoot)}`,
       installCorepack,

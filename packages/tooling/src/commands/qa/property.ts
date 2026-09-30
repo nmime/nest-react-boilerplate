@@ -2,10 +2,12 @@
 // Evidence for: REQ-API-COMPAT-002
 // Property evidence for REQ-API-COMPAT-002.
 import { existsSync, readFileSync } from "node:fs";
-import { findOperation, loadOpenApiContracts, matchPathTemplate, parseArgs, readJson, schemaExample, validateSchema, writeJson } from "./runtime-utils.ts";
+import { findOperation, loadOpenApiContracts, matchPathTemplate, parseArgs, readJson, resolveJsonPointer, schemaExample, validateSchema, writeJson } from "./runtime-utils.ts";
+
+import { boundedInteger } from "./world-class-policy.ts";
 
 const args = parseArgs();
-const iterations = Number(args.options.get("iterations") ?? process.env.PROPERTY_ITERATIONS ?? 100);
+const iterations = boundedInteger({ fallback: 100, label: "PROPERTY_ITERATIONS", max: 1000, value: args.options.get("iterations") ?? process.env.PROPERTY_ITERATIONS });
 const reportPath = args.options.get("report") ?? "test-results/property/report.json";
 const errors: string[] = [];
 
@@ -85,13 +87,16 @@ for (let seed = 0; seed < iterations; seed += 1) {
 try {
   const fastCheck = await import("fast-check");
   const escapePointerToken = (token: string): string => token.replaceAll("~", "~0").replaceAll("/", "~1");
-  const unescapePointerToken = (token: string): string => token.replaceAll("~1", "/").replaceAll("~0", "~");
 
   await fastCheck.assert(
-    fastCheck.property(fastCheck.string(), (value: string) => unescapePointerToken(escapePointerToken(value)) === value),
+    fastCheck.property(fastCheck.string(), (value: string) => {
+      const target = {type: "string"};
+      const document = {components: {schemas: {[value]: target}}};
+      return resolveJsonPointer(document, `#/components/schemas/${escapePointerToken(value)}`) === target;
+    }),
     { numRuns: Math.min(iterations, 1000) },
   );
-  checks.push({ name: "fast-check json-pointer escaping round-trips", ok: true, engine: "fast-check" });
+  checks.push({ name: "fast-check exported JSON-pointer resolver selects exact schema", ok: true, engine: "fast-check" });
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
   const missingEngine = /Cannot find (?:module|package)|ERR_MODULE_NOT_FOUND/u.test(message);
@@ -100,8 +105,8 @@ try {
     // Absence of the optional engine is not a property failure, but it must be visible.
     checks.push({ name: "fast-check optional engine unavailable", ok: true, engine: "native", note: message });
   } else {
-    errors.push(`fast-check json-pointer escaping round-trips: ${message}`);
-    checks.push({ name: "fast-check json-pointer escaping round-trips", ok: false, engine: "fast-check", note: message });
+    errors.push(`fast-check exported JSON-pointer resolver selects exact schema: ${message}`);
+    checks.push({ name: "fast-check exported JSON-pointer resolver selects exact schema", ok: false, engine: "fast-check", note: message });
   }
 }
 

@@ -71,6 +71,20 @@ const ci = workflows.find((workflow) => workflow.name === 'ci.yml')?.text ?? '';
 const release = workflows.find((workflow) => workflow.name === 'release.yml')?.text ?? '';
 const releaseImagesWorkflow = workflows.find((workflow) => workflow.name === 'release-images.yml')?.text ?? '';
 const deployWorkflow = workflows.find((workflow) => workflow.name === 'deploy.yml')?.text ?? '';
+assert.ok(
+  releaseImagesWorkflow
+    .replace(/\\\s*\n\s*/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .includes('--workflow ci.yml --commit "$VERIFIED_SHA" --event push --branch main --status success'),
+  'release-images.yml requires successful main CI for its exact revision',
+);
+assert.ok(
+  releaseImagesWorkflow.includes('test "$(git rev-parse FETCH_HEAD)" = "$VERIFIED_SHA"'),
+  'release-images.yml refuses a stale main revision',
+);
+assert.ok(releaseImagesWorkflow.includes('syft-version: v1.52.0'), 'release-images.yml pins the reviewed Syft CLI');
+assert.ok(releaseImagesWorkflow.includes('cosign-release: v3.1.3'), 'release-images.yml pins the reviewed Cosign CLI');
+assert.ok(releaseImagesWorkflow.includes('version: v0.74.0'), 'release-images.yml pins the reviewed Trivy CLI');
 const nightlyAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-nightly.yml')?.text ?? '';
 const runtimeAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-runtime.yml')?.text ?? '';
 const githubReleaseNotes = readFileSync(new URL('.github/release.yml', workspaceUrl), 'utf8');
@@ -113,6 +127,10 @@ assert.ok(
   !release.includes('GIT_AUTHOR_NAME:') && !release.includes('GIT_COMMITTER_NAME:'),
   'release.yml must not configure an identity for forbidden protected-branch release commits',
 );
+assert.ok(
+  release.includes("vars.RELEASE_ENABLED == 'true'"),
+  'release.yml requires explicit operator opt-in before publication',
+);
 assert.ok(release.includes('workflow_run:'), 'release.yml must wait for the CI workflow');
 assert.ok(
   release.includes("github.event.workflow_run.conclusion == 'success'"),
@@ -154,7 +172,7 @@ const enforcedJobs = new Set(
 );
 
 for (const job of ciJobNames) {
-  if (job === 'ci-status-summary' || job === 'presets') continue;
+  if (job === 'ci-status-summary') continue;
   assert.ok(awaitedJobs.has(job), `ci.yml ci-status-summary needs must include every gate job; missing: ${job}`);
   assert.ok(enforcedJobs.has(job), `ci.yml REQUIRED_RESULTS must enforce every gate job; missing: ${job}`);
 }

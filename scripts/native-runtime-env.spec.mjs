@@ -1,6 +1,9 @@
-// @requirements REQ-SCAFFOLD-SAFETY-008
+// @requirements REQ-SCAFFOLD-SAFETY-008 REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 
 import { parseDeclaredSecrets } from './declared-secrets.mjs';
@@ -9,7 +12,134 @@ import {
   assertNativeEndpoints,
   resolveNativeEnvironment,
   secretFileEnvironmentKeys,
+  withoutNativeSecrets,
 } from './native-runtime-env.mjs';
+
+test('emitted one-shot credentials replace container indirections without reading those paths', () => {
+  const environment = resolveNativeEnvironment({
+    production: {
+      SESSION_SECRET_FILE: '/run/secrets/session_secret',
+      AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE: '/run/secrets/auth_provider_token_encryption_key',
+      VITE_API_BASE_URL_MODE: 'same-origin',
+    },
+    secretsEnvironment: {
+      SESSION_SECRET: 'owned-session-fixture',
+      AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY: 'owned-encryption-fixture',
+    },
+    readSecret: () => {
+      throw new Error('Container-only paths must not be read by the one-shot host wrapper.');
+    },
+  });
+  assert.equal(environment.SESSION_SECRET, 'owned-session-fixture');
+  assert.equal(environment.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY, 'owned-encryption-fixture');
+  assert.equal(environment.AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE, undefined);
+  assert.equal(environment.SESSION_SECRET_FILE, undefined);
+});
+
+test('build sanitization excludes plaintext, secret paths, inherited keys, and credential URLs', () => {
+  const environment = {
+    SESSION_SECRET: 'private',
+    DATABASE_URL: 'postgres://owned:private@127.0.0.1/test',
+    AUTH_PROVIDER_TOKEN_ENCRYPTION_KEY_FILE: '/private/path',
+    PROVIDER_API_KEY: 'private',
+    OTEL_EXPORTER_OTLP_HEADERS: 'Authorization=private',
+    NATS_URL: 'nats://owned:private@127.0.0.1',
+    VITE_API_BASE_URL_MODE: 'same-origin',
+    PATH: '/usr/bin',
+  };
+  assert.deepEqual(withoutNativeSecrets(environment), { VITE_API_BASE_URL_MODE: 'same-origin', PATH: '/usr/bin' });
+  assert.deepEqual(
+    resolveNativeEnvironment({
+      production: environment,
+      includeSecrets: false,
+      secretsEnvironment: { BETTER_AUTH_SECRET: 'private' },
+      readSecret: () => {
+        throw new Error('Build secret read');
+      },
+    }),
+    { VITE_API_BASE_URL_MODE: 'same-origin', PATH: '/usr/bin' },
+  );
+});
+
+test('external one-shot credentials use inherited values when emitted placeholders are empty', () => {
+  const environment = resolveNativeEnvironment({
+    production: { DATABASE_URL_FILE: '/run/secrets/database_url', SESSION_SECRET_FILE: '/run/secrets/session_secret' },
+    inheritedEnvironment: {
+      DATABASE_URL: 'postgres://owned:fixture@127.0.0.1/nrb_test',
+      SESSION_SECRET: 'ambient-fixture',
+    },
+    secretsEnvironment: { DATABASE_URL: '', SESSION_SECRET: 'emitted-fixture' },
+    readSecret: () => {
+      throw new Error('A supplied credential must bypass the container-only file.');
+    },
+  });
+  assert.equal(environment.DATABASE_URL, 'postgres://owned:fixture@127.0.0.1/nrb_test');
+  assert.equal(environment.SESSION_SECRET, 'emitted-fixture');
+});
+
+test('malformed credential URLs never appear in validation diagnostics', () => {
+  const secret = 'owned-malformed-secret-value';
+  assert.throws(
+    () => assertNativeEndpoints({ DATABASE_URL: secret }),
+    (error) => {
+      assert.match(error.message, /DATABASE_URL must be a valid URL/u);
+      assert.ok(!error.message.includes(secret));
+      return true;
+    },
+  );
+});
+
+test('real child processes receive runtime credentials while build children exclude inherited and configured secrets', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'nrb-native-env-'));
+  const productionEnv = join(directory, 'production.env');
+  const secretsEnv = join(directory, 'runtime.env');
+  writeFileSync(productionEnv, 'SESSION_SECRET_FILE=/run/secrets/session_secret\nVITE_API_BASE_URL_MODE=same-origin\n');
+  writeFileSync(secretsEnv, 'SESSION_SECRET=owned-runtime-fixture\n', { mode: 0o600 });
+  const wrapper = new URL('./native-runtime-env.mjs', import.meta.url).pathname;
+  try {
+    const runtime = spawnSync(
+      process.execPath,
+      [
+        wrapper,
+        'exec',
+        `--production-env=${productionEnv}`,
+        `--secrets-env=${secretsEnv}`,
+        '--',
+        process.execPath,
+        '-e',
+        "require('node:assert/strict').equal(process.env.SESSION_SECRET, 'owned-runtime-fixture');",
+      ],
+      { encoding: 'utf8' },
+    );
+    assert.equal(runtime.status, 0, runtime.stderr);
+    const build = spawnSync(
+      process.execPath,
+      [
+        wrapper,
+        'exec',
+        `--production-env=${productionEnv}`,
+        '--no-secrets',
+        '--',
+        process.execPath,
+        '-e',
+        "const a = require('node:assert/strict'); for (const key of ['SESSION_SECRET','DATABASE_URL','PROVIDER_API_KEY']) a.equal(process.env[key], undefined); a.equal(process.env.VITE_API_BASE_URL_MODE,'same-origin');",
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          SESSION_SECRET: 'inherited-fixture',
+          DATABASE_URL: 'postgres://owned:fixture@127.0.0.1/test',
+          PROVIDER_API_KEY: 'inherited-fixture',
+        },
+      },
+    );
+    assert.equal(build.status, 0, build.stderr);
+    assert.ok(!runtime.stdout.includes('owned-runtime-fixture'));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 const secrets = {
   '/etc/nrb/secrets/session_secret.txt': 'session-material\n',
@@ -143,4 +273,13 @@ test('accepts loopback and real external endpoints', () => {
     DATABASE_URL: 'postgres://app:secret@db.example.com:5432/app',
     OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4318',
   });
+  assertNativeEndpoints({ NATS_SERVERS: 'nats://owned:private-fixture@[::1]:4222', REDIS_HOSTS: '[::1]:6379' });
+  assert.throws(
+    () => assertNativeEndpoints({ NATS_SERVERS: 'nats://owned:private-fixture@[' }),
+    (error) => {
+      assert.match(error.message, /invalid native endpoint/u);
+      assert.ok(!error.message.includes('private-fixture'));
+      return true;
+    },
+  );
 });

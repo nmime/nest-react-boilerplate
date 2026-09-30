@@ -37,6 +37,8 @@
     "test:coverage": "pnpm nrb closure run test -- --coverage",
     "test:coverage:all": "pnpm --filter @repo/tooling tooling qa test-aggregate --coverage",
     "test:scripts": "node --test \"scripts/**/*.spec.mjs\"",
+    "test:nginx-runtime": "node --test scripts/nginx-runtime.component-spec.mjs",
+    "test:local-observability": "node --test scripts/local-observability.component-spec.mjs",
     "audit": "pnpm audit --audit-level=moderate",
     "audit:ci": "pnpm audit --audit-level=moderate --prod",
     "audit:full": "pnpm audit --audit-level=high",

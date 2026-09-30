@@ -32,7 +32,12 @@ import {
   type NotificationTemplateRecord,
 } from '@app/common-notifications';
 import type { ClientSession, Collection, Db, MongoClient } from 'mongodb';
-import { MongoClientToken, MongoDatabaseToken, runInMongoTransaction } from './mongo-runtime';
+import {
+  MongoClientToken,
+  MongoDatabaseToken,
+  notificationTransactionSession,
+  runInMongoTransaction,
+} from './mongo-runtime';
 import {
   NotificationMongoCollections,
   type NotificationDeliveryDocument,
@@ -155,7 +160,11 @@ export class MongoNotificationPersistence extends NotificationPersistence {
     });
   }
 
-  create<T>(params: CreateTemplateNotificationParams<T>): Promise<NotificationRecord<T>> {
+  create<T>(params: CreateTemplateNotificationParams<T>, transaction?: unknown): Promise<NotificationRecord<T>> {
+    const session = notificationTransactionSession(transaction);
+    if (session) {
+      return this.createInTransaction(params, session);
+    }
     return runInMongoTransaction(this.client, (session) => this.createInTransaction(params, session));
   }
 

@@ -65,49 +65,31 @@ function validate(root) {
 }
 
 describe('GitHub workflow hardening', () => {
-  // The hardening rules themselves are this script's own subject and its gate's business. What
-  // these two cases pin is the decision in front of them: which checkouts it applies to at all.
-  // GitHub Actions was dropped from this template (CI lives in GitLab), so this checkout configures
-  // no github forge and the validator must stand down explicitly rather than assert nothing.
-  it('stands down on a checkout that configures no github forge', () => {
+  it('hardens every shipped upstream GitHub workflow', () => {
     const result = validate(rootDir);
-
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-    const report = JSON.parse(result.stdout);
-    assert.equal(report.status, 'not-applicable');
-    assert.match(report.reason, /github/u, 'the forge that was not configured must be named');
+    assert.deepEqual(JSON.parse(result.stdout), { status: 'ok', workflows: 7 });
   });
 
-  // This validator is merge-blocking evidence for two forge-neutral requirements, so on a checkout
-  // that keeps a different forge it has to say why it asserted nothing. Crashing on the missing
-  // directory — or quietly exiting 0 — would both be wrong: ci-pipeline-parity is what proves the
-  // gate was not dropped, and it can only do that if this one is explicit about standing down.
   it('reports not-applicable when the checkout configures no github forge', () => {
     const result = validate(checkoutWithout('gitlab-only', ['.github']));
-
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
     const report = JSON.parse(result.stdout);
     assert.equal(report.status, 'not-applicable');
-    assert.match(report.reason, /github/u, 'the forge that was not configured must be named');
+    assert.match(report.reason, /github/u);
   });
 
-  // The secret-scanning config is split so a product can register its own fixtures without editing
-  // a file upstream rewrites. GitHub Actions was dropped from this template, so the gitleaks split
-  // is enforced by the forge-neutral ci-pipeline-parity gate, not this GitHub-only validator: here
-  // the checkout stands down, and each case pins that it does so explicitly rather than silently.
-  it('stands down on a product gitleaks config that replaces the boilerplate base', () => {
+  it('rejects a product gitleaks config that replaces the boilerplate base', () => {
     const result = validate(
       checkoutWith('gitleaks-detached-base', {
         '.gitleaks.toml': 'title = "Product"\n\n[extend]\nuseDefault = true\n',
       }),
     );
-
-    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-    const report = JSON.parse(result.stdout);
-    assert.equal(report.status, 'not-applicable');
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /must extend/u);
   });
 
-  it('stands down on a base gitleaks config that dropped a boilerplate fixture allowlist', () => {
+  it('rejects a base gitleaks config that dropped a boilerplate fixture allowlist', () => {
     const result = validate(
       checkoutWith('gitleaks-base-without-fixture', {
         'packages/tooling/config/gitleaks.base.toml': repositoryFile(
@@ -115,21 +97,30 @@ describe('GitHub workflow hardening', () => {
         ).replace('sk-live-abc123', 'unrelated-value'),
       }),
     );
-
-    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-    const report = JSON.parse(result.stdout);
-    assert.equal(report.status, 'not-applicable');
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /missing narrow fixture allowlist/u);
   });
 
-  it('stands down on a pipeline that lets gitleaks discover its own configuration', () => {
+  it('rejects a pipeline that lets gitleaks discover its own configuration', () => {
     const result = validate(
       checkoutWith('gitleaks-implicit-config', {
         '.gitlab-ci.yml': repositoryFile('.gitlab-ci.yml').replace('--config .gitleaks.toml', ''),
       }),
     );
+    assert.notEqual(result.status, 0);
+    assert.ok(result.stderr.includes('--config .gitleaks.toml'), result.stderr);
+  });
 
-    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-    const report = JSON.parse(result.stdout);
-    assert.equal(report.status, 'not-applicable');
+  it('rejects an aggregate that forgets to enforce a required job', () => {
+    const result = validate(
+      checkoutWith('summary-missing-result', {
+        '.github/workflows/ci.yml': repositoryFile('.github/workflows/ci.yml').replace(
+          '          ${{ needs.mongodb-validation.result }}\n',
+          '',
+        ),
+      }),
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /REQUIRED_RESULTS must enforce every gate job; missing: mongodb-validation/u);
   });
 });

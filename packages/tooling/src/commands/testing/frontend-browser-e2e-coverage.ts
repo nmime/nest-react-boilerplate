@@ -120,6 +120,13 @@ export function parseCoverageArgs(argv: readonly string[]): CoverageArgs {
   return { appName, contains, coverageDir, dist, skipVisits, visits };
 }
 
+export function initialCoverageVisits(args: Pick<CoverageArgs, 'visits' | 'skipVisits'>): string[] {
+  const skipped = new Set(args.skipVisits);
+  const visits = [...new Set(['/', ...args.visits])].filter((route) => !skipped.has(route));
+  if (!visits.length) throw new Error('Browser coverage requires at least one entry route; --skip-visit cannot exclude every entry.');
+  return visits;
+}
+
 /**
  * The app's own routes among the anchors it rendered, deduplicated and in DOM
  * order. `isRoutePath` rejects hrefs the dist serves as a file, so assets and
@@ -159,6 +166,7 @@ export function contentType(filePath: string): string {
 }
 
 async function runCoverage(args: CoverageArgs): Promise<void> {
+  const pending = initialCoverageVisits(args);
   const workspaceRoot = realpathSync(process.cwd());
   const distRoot = path.resolve(workspaceRoot, "dist");
   const root = realpathSync(
@@ -200,7 +208,6 @@ async function runCoverage(args: CoverageArgs): Promise<void> {
 
   const baseUrl = `http://127.0.0.1:${address.port}`;
   const skipped = new Set(args.skipVisits);
-  const pending = ["/", ...args.visits].filter((routePath) => !skipped.has(routePath));
   const visited: string[] = [];
   const coverageMap = istanbulCoverage.createCoverageMap();
   let browser: Awaited<ReturnType<typeof chromium.launch>> | undefined;
@@ -276,6 +283,7 @@ async function runCoverage(args: CoverageArgs): Promise<void> {
       }
     }
 
+    if (!visited.length || !coverageMap.files().length) throw new Error('Browser coverage requires a visited route and instrumented source files.');
     await mkdir(reportDir, { recursive: true });
     await mkdir(path.join(reportDir, ".nyc_output"), { recursive: true });
     await writeFile(

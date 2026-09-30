@@ -31,8 +31,8 @@ describe('auth shared', () => {
         ADMIN_BOOTSTRAP_EMAILS: 'admin@example.com,other@example.com',
       }),
     ).toEqual({
-      roles: [UserRole, AdminRole],
-      permissions: permissionsForRoles([UserRole, AdminRole]),
+      roles: [UserRole],
+      permissions: permissionsForRoles([UserRole]),
     });
   });
 

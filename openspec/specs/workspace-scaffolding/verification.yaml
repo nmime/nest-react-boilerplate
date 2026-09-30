@@ -96,6 +96,18 @@ requirements:
         - vitest
         - component
     evidence:
+      - kind: vitest
+        file: packages/tooling/src/generators/application/generator.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/generators/library/generator.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
       - kind: static
         file: packages/tooling/src/generators/feature/generator.ts
         target: '@repo/tooling:static-check'
@@ -127,7 +139,38 @@ requirements:
       alternativeEvidence:
         - static
         - vitest
+        - component
     evidence:
+      - kind: vitest
+        file: packages/tooling/src/setup/selection.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/project/setup.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/setup/prompts.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/reconfigure/io.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/seed-authority.component.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
       - kind: static
         file: packages/tooling/src/commands/project/init-project.ts
         target: '@repo/tooling:static-check'
@@ -222,9 +265,42 @@ requirements:
         lanes:
           - pr
           - main
-      # scripts/validate-github-workflows.mjs was the static evidence here. The scaffolded workflow
-      # shape it checks only exists on a checkout that ships GitHub Actions, which this template no
-      # longer does, so the descriptor declares no such forge and the entry would be invalid.
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/quality-runtime.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/property.unit.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/runtime-utils.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: packages/tooling/src/commands/qa/secret-scan-policy.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: scripts/validate-github-workflows.spec.mjs
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: static
+        file: scripts/validate-github-workflows.mjs
+        script: ci:workflows:check
+        lanes:
+          - pr
+          - main
       - kind: operations
         file: packages/tooling/src/commands/qa/world-class-gates.ts
         script: test:world-class
@@ -263,6 +339,8 @@ requirements:
           - main
   - id: REQ-SCAFFOLD-SAFETY-008
     projects:
+      - '@app/backend-mongodb-main-payments'
+      - '@app/backend-postgres-main-payments'
       - '@repo/tooling'
     risk: critical
     profiles:
@@ -277,6 +355,48 @@ requirements:
         - component
         - security
     evidence:
+      - kind: security
+        file: packages/tooling/src/commands/qa/notify-harness.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/mongodb/main/payments/lib/src/payments-mongo.component-spec.ts
+        target: '@app/backend-mongodb-main-payments:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: component
+        file: libs/backend/postgres/main/payments/lib/src/payments-migrations.component-spec.ts
+        target: '@app/backend-postgres-main-payments:component-test'
+        lanes:
+          - main
+          - nightly
+      - kind: security
+        file: packages/tooling/src/commands/db/seed-safety.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: packages/tooling/src/commands/db/postgres-seed.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: packages/tooling/src/commands/db/mongo-seed.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: packages/tooling/src/commands/db/seed-authority.component.test.ts
+        target: '@repo/tooling:test'
+        lanes:
+          - main
+          - nightly
       - kind: static
         file: packages/tooling/src/commands/db/restore.ts
         target: '@repo/tooling:static-check'

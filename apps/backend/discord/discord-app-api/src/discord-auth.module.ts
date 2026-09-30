@@ -9,7 +9,7 @@ import { DiscordAppApiCapabilitiesModule } from './capabilities.generated';
  * module directly to AuthMainModule.forRoot().
  */
 @Module({
-  imports: [AuthMainModule.forRoot({ imports: [DiscordAppApiCapabilitiesModule] })],
+  imports: [AuthMainModule.forRoot({ imports: [DiscordAppApiCapabilitiesModule], exposeHttp: false })],
   exports: [AuthMainModule],
 })
 export class DiscordAuthModule {}

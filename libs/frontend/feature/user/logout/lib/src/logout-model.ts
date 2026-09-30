@@ -1,5 +1,4 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { authApi, userApi } from '@app/frontend-api-client';
 import { clearApiAuthRequired } from '@app/frontend-api-support';
 import { createMobxMutation, type AuthShellStore, type MobxMutation } from '@app/frontend-runtime';
 
@@ -52,33 +51,30 @@ export class LogoutModel {
   }
 
   async signOut({ onSignedOut }: SignOutOptions = {}): Promise<void> {
+    let succeeded = false;
     try {
       // Let the backend destroy the server-side session before clearing UI state.
       await this.mutation.mutate();
-    } catch {
-      // Ignore request failures: the client-side session must be cleared even
-      // when the network call fails or the session is already invalid.
+      succeeded = true;
+    } finally {
+      this.authStore.clearSession();
+      clearApiAuthRequired();
+      await this.clearServerState();
     }
-
-    this.authStore.clearSession();
-    clearApiAuthRequired();
-    this.clearServerState();
-    onSignedOut?.();
+    if (succeeded) {
+      onSignedOut?.();
+    }
   }
 
   destroy(): void {
     this.mutation.destroy();
   }
 
-  private clearServerState(): void {
-    void this.queryClient.invalidateQueries({
-      queryKey: authApi.getAuthControllerMeQueryKey(),
-    });
-    void this.queryClient.invalidateQueries({
-      queryKey: userApi.getProfileControllerMeQueryKey(),
-    });
-    void this.queryClient.invalidateQueries({
-      queryKey: authApi.getAuthControllerProviderIdentitiesQueryKey(),
-    });
+  private async clearServerState(): Promise<void> {
+    // The application QueryClient may contain private reads outside the three
+    // known auth endpoints. Cancel before removing so late completions cannot
+    // restore data from the preceding account.
+    await this.queryClient.cancelQueries();
+    this.queryClient.removeQueries();
   }
 }

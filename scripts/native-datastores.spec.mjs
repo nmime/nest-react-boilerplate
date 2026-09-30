@@ -1,6 +1,33 @@
-// @requirements REQ-SCAFFOLD-SAFETY-008
+// @requirements REQ-SCAFFOLD-SAFETY-008 REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+
+test('managed native configuration receives credentials through the private child environment', () => {
+  const result = spawnSync(
+    process.execPath,
+    [
+      new URL('./native-datastores.mjs', import.meta.url).pathname,
+      'configure',
+      '--from-environment',
+      '--dry-run',
+      '--production-env=/nonexistent/owned-test.env',
+    ],
+    {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        POSTGRES_PASSWORD: 'owned-pg-config-fixture',
+        REDIS_PASSWORD: 'owned-redis-config-fixture',
+      },
+    },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Apply the generated database password/u);
+  assert.match(result.stdout, /Apply the generated Redis password/u);
+  for (const secret of ['owned-pg-config-fixture', 'owned-redis-config-fixture'])
+    assert.ok(!result.stdout.includes(secret));
+});
 
 import {
   buildConfigurePlan,
@@ -73,6 +100,14 @@ test('SQL literals are escaped so a generated password cannot break out', () => 
   });
   const stdin = plan.map((step) => step.input ?? '').join('\n');
   assert.match(stdin, /'pa''ss'/u);
+});
+
+test('Redis credential quoting cannot inject another configuration directive', () => {
+  const redisPassword = 'owned "quoted"\npassword\\value';
+  const plan = buildConfigurePlan({ role: 'app', database: 'db', password: 'owned-pg', redisPassword });
+  const redisStep = plan.find(({ title }) => title.includes('Redis password'));
+  assert.equal(redisStep.input, `requirepass ${JSON.stringify(redisPassword)}\n`);
+  assert.equal(redisStep.input.split('\n').length, 2, 'exactly one Redis directive is emitted');
 });
 
 test('no generated password is ever passed in argv', () => {

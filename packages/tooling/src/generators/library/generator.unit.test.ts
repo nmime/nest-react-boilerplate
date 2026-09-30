@@ -20,6 +20,36 @@ describe('library generator', () => {
   // -----------------------------------------------------------------------
 
   describe('name validation', () => {
+    it('rejects path, source-string, and noncanonical scopes before writing', async () => {
+      const { libraryGenerator } = await import('./generator.js');
+      for (const scope of ['../outside', '/absolute', 'bad/segment', "scope';injected", 'Uppercase', '', ' scope ']) {
+        const tree = await createTree();
+        const before = tree.listChanges();
+        await assert.rejects(
+          libraryGenerator(tree, { name: 'example-util', kind: 'frontend', type: 'util', scope, skipFormat: true }),
+          /Invalid library scope/,
+        );
+        assert.deepEqual(tree.listChanges(), before);
+      }
+    });
+
+    it('rejects unsupported FSD layers on direct calls before writing', async () => {
+      const tree = await createTree();
+      const { libraryGenerator } = await import('./generator.js');
+      const before = tree.listChanges();
+      await assert.rejects(
+        libraryGenerator(tree, {
+          name: 'example-util',
+          kind: 'frontend',
+          type: 'util',
+          fsdLayer: '../outside' as never,
+          skipFormat: true,
+        }),
+        /Unsupported frontend layer/,
+      );
+      assert.deepEqual(tree.listChanges(), before);
+    });
+
     it('rejects empty name', async () => {
       const tree = await createTree();
       const { libraryGenerator } = await import('./generator.js');

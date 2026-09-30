@@ -402,7 +402,7 @@ coroot:
   replicas: 1
   image:
     repository: ghcr.io/coroot/coroot
-    tag: '1.0.0'
+    tag: 1.27.0@sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb
     pullPolicy: IfNotPresent
   rbac:
     readSecrets: false

@@ -285,4 +285,15 @@ test('run in bundled-db mode scaffolds postgres_password, external-db scaffolds 
   );
   assert.ok(external.placeholders.includes('database_url'));
   assert.ok(!existsSync(join(tmpB, 'secrets', 'postgres_password.txt')));
+  assert.match(readFileSync(join(tmpB, '.env.production'), 'utf8'), /^POSTGRES_SSL=true$/mu);
+  const existingEnv = readFileSync(join(tmpB, '.env.production'), 'utf8').replace(
+    /^POSTGRES_SSL=true$/mu,
+    'POSTGRES_SSL=false',
+  );
+  writeFileSync(join(tmpB, '.env.production'), existingEnv);
+  run(
+    ['--secrets-dir', join(tmpB, 'secrets'), '--env-out', join(tmpB, '.env.production'), '--database', 'external-db'],
+    { root: repoRoot },
+  );
+  assert.match(readFileSync(join(tmpB, '.env.production'), 'utf8'), /^POSTGRES_SSL=false$/mu);
 });

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi, useAuthApiClient } from '@app/frontend-api-client';
 import { clearApiAuthRequired } from '@app/frontend-api-support';
 import { useAuthShellStore } from '@app/frontend-runtime';
-import { profileQueryKey } from '@app/frontend-feature-user-profile';
+import { getPayloadPrincipal, profileQueryKey } from '@app/frontend-feature-user-profile';
 import { toAbsoluteSameOriginReturnUrl, toSameOriginReturnPath } from './same-origin-return-url';
 import {
   providerIdentitiesQueryKey,
@@ -44,10 +44,12 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
   const authStore = useAuthShellStore();
   const queryClient = useQueryClient();
 
-  const finishExternalAuth = (result: Awaited<ReturnType<typeof submitTelegramTma>>) => {
+  const finishExternalAuth = async (result: Awaited<ReturnType<typeof submitTelegramTma>>) => {
     const session = getSessionFromExternalAuthResult(result);
     if (session) {
-      authStore.markAuthenticated();
+      await queryClient.cancelQueries();
+      queryClient.removeQueries();
+      authStore.markAuthenticated(getPayloadPrincipal(session));
       clearApiAuthRequired();
       void queryClient.invalidateQueries({
         queryKey: authApi.getAuthControllerMeQueryKey(),

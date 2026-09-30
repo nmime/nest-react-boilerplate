@@ -37,8 +37,11 @@ const proxyHeaders = [
   'proxy_http_version 1.1;',
   'proxy_set_header Host $host;',
   'proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;',
-  'proxy_set_header X-Forwarded-Proto $scheme;',
+  'proxy_set_header X-Forwarded-Proto $frontend_forwarded_proto;',
 ];
+const allSecurityHeaders = [...securityHeaders, 'add_header Vary "Accept" always;', contentSecurityPolicy];
+const hashedAssetPattern =
+  '^/(assets/[^/]+-[A-Za-z0-9_-]{8}|_astro/[^/]+\\.[A-Za-z0-9_-]{8})\\.(css|js|jpg|jpeg|gif|png|svg|ico|ttf|woff|woff2|eot)$';
 
 /** Wrap a route note at the conf's comment width so the generated file stays readable. */
 function commentLines(note, indent) {
@@ -59,6 +62,17 @@ function commentLines(note, indent) {
 
 export function renderNginxFullstackConfig(routes, upstreams = composeUpstreams) {
   const lines = [
+    'geo $frontend_trusted_proxy {',
+    '  default 0;',
+    '  include /etc/nginx/nrb-trusted-proxies.conf;',
+    '}',
+    '',
+    'map "$frontend_trusted_proxy:$http_x_forwarded_proto" $frontend_forwarded_proto {',
+    '  default $scheme;',
+    '  "1:http" http;',
+    '  "1:https" https;',
+    '}',
+    '',
     'map $http_accept $frontend_accepts_html {',
     '  default 0;',
     '  "~*text/html" 1;',
@@ -90,6 +104,7 @@ export function renderNginxFullstackConfig(routes, upstreams = composeUpstreams)
     '',
     '  location = /nginx-health {',
     '    access_log off;',
+    ...allSecurityHeaders.map((header) => `    ${header}`),
     '    add_header Content-Type text/plain;',
     '    return 200 "ok\\n";',
     '  }',
@@ -122,13 +137,22 @@ export function renderNginxFullstackConfig(routes, upstreams = composeUpstreams)
 
   for (const route of routes.spaRoutes) {
     if (route.note) lines.push(...commentLines(route.note, '  '));
-    lines.push(`  location = ${route.path} {`, '    try_files /index.html =404;', '  }', '');
+    lines.push(
+      `  location = ${route.path} {`,
+      ...allSecurityHeaders.map((header) => `    ${header}`),
+      ...noStoreHeaders.map((header) => `    ${header}`),
+      '    try_files /index.html =404;',
+      '  }',
+      '',
+    );
   }
 
   lines.push(
     '  error_page 418 = @frontend_spa;',
     '',
     '  location @frontend_spa {',
+    ...allSecurityHeaders.map((header) => `    ${header}`),
+    ...noStoreHeaders.map((header) => `    ${header}`),
     '    try_files /index.html =404;',
     '  }',
     '',
@@ -151,7 +175,7 @@ export function renderNginxFullstackConfig(routes, upstreams = composeUpstreams)
     '  # immutable for a year. An exact-match location outranks that regex.',
     '  location = /runtime-config.js {',
     '    try_files $uri =404;',
-    '    add_header X-Content-Type-Options "nosniff" always;',
+    ...allSecurityHeaders.map((header) => `    ${header}`),
     ...noStoreHeaders.map((header) => `    ${header}`),
     '  }',
     '',
@@ -159,11 +183,16 @@ export function renderNginxFullstackConfig(routes, upstreams = composeUpstreams)
     '    try_files $uri $uri/ /index.html;',
     '  }',
     '',
+    `  location ~ "${hashedAssetPattern}" {`,
+    '    try_files $uri =404;',
+    ...allSecurityHeaders.map((header) => `    ${header}`),
+    '    add_header Cache-Control "public, max-age=31536000, immutable";',
+    '  }',
+    '',
     '  location ~* \\.(css|js|jpg|jpeg|gif|png|svg|ico|ttf|woff|woff2|eot)$ {',
     '    try_files $uri =404;',
-    '    add_header X-Content-Type-Options "nosniff" always;',
-    '    add_header Referrer-Policy "strict-origin-when-cross-origin" always;',
-    '    add_header Cache-Control "public, max-age=31536000, immutable" always;',
+    ...allSecurityHeaders.map((header) => `    ${header}`),
+    ...noStoreHeaders.map((header) => `    ${header}`),
     '  }',
     '}',
     '',

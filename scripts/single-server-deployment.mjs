@@ -27,6 +27,8 @@ const appPorts = {
   ADMIN_APP_API_PORT: 3001,
   USER_APP_API_PORT: 3002,
   AUTH_APP_API_PORT: 3003,
+  NOTIFICATION_CONSUMER_PORT: 3004,
+  NOTIFICATION_SCHEDULER_PORT: 3005,
   DISCORD_APP_API_PORT: 3007,
   TELEGRAM_BOT_API_PORT: 3013,
   ADMIN_APP_PORT: 4200,
@@ -222,6 +224,9 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv, fronte
     'MOBILE_APP_PORT',
     ...(enabledProfiles.includes('discord') ? ['DISCORD_APP_API_PORT'] : []),
     ...(enabledProfiles.includes('telegram') ? ['TELEGRAM_BOT_API_PORT'] : []),
+    ...(runtimeMode === 'native' && enabledProfiles.some((profile) => profile.startsWith('notification-'))
+      ? ['NOTIFICATION_CONSUMER_PORT', 'NOTIFICATION_SCHEDULER_PORT']
+      : []),
   ];
   const hostPorts = {
     ...Object.fromEntries(activeAppPortKeys.map((key) => [key, ports[key]])),
@@ -449,11 +454,8 @@ const securityHeaders = (indent) => securityHeaderDirectives.map((directive) => 
 /**
  * Serve a built SPA from disk with history fallback.
  *
- * Immutable caching is scoped to the bundlers' content-hashed output directories
- * (Vite `/assets/`, Expo web `/_expo/`) with `^~` rather than an extension regex:
- * a regex outranks the plain `/auth`, `/profile` and `/admin` prefixes and would
- * answer their API requests from disk, and it would also pin the per-deployment
- * `/runtime-config.js` — which is rewritten in place — for a year.
+ * Immutable caching is limited to fingerprinted names inside the bundlers'
+ * reserved asset namespaces. It cannot match API namespaces or runtime config.
  */
 function staticFrontendLocation(distRoot, directory, readStaticFile) {
   const root = `${distRoot}/${directory}`;
@@ -478,15 +480,19 @@ function staticFrontendLocation(distRoot, directory, readStaticFile) {
     // known hydration bootstrap remains executable.
     allowsAstroInlineScripts = true;
   }
-  const immutable = (path) => `  location ^~ ${path} {
+  const immutable = `  location ~ "^/(assets/[^/]+-[A-Za-z0-9_-]{8}|_astro/[^/]+\\.[A-Za-z0-9_-]{8}|_expo/static/js/[^/]+/[^/]+-[a-f0-9]{32})\\.(css|js|jpg|jpeg|gif|png|svg|ico|ttf|woff|woff2|eot)$" {
     root ${root};
     try_files $uri =404;
 ${securityHeaders('    ')}
-    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    ${htmlContentSecurityPolicy(allowsAstroInlineScripts)}
+    add_header Cache-Control "public, max-age=31536000, immutable";
   }`;
   return `  location / {
     root ${root};
     try_files $uri $uri/ /index.html;
+${securityHeaders('    ')}
+    ${htmlContentSecurityPolicy(allowsAstroInlineScripts)}
+    add_header Cache-Control "no-store" always;
   }
 
   location = /index.html {
@@ -500,12 +506,11 @@ ${securityHeaders('    ')}
     root ${root};
     try_files $uri =404;
 ${securityHeaders('    ')}
+    ${htmlContentSecurityPolicy(allowsAstroInlineScripts)}
     add_header Cache-Control "no-store" always;
   }
 
-${immutable('/assets/')}
-
-${immutable('/_expo/')}`;
+${immutable}`;
 }
 
 function tlsServer(configuration, host, body) {
@@ -679,6 +684,9 @@ export function expectedListeningPorts(configuration) {
   const keys = ['ADMIN_APP_API_PORT', 'USER_APP_API_PORT', 'AUTH_APP_API_PORT'];
   if (enabledProfiles.includes('discord')) keys.push('DISCORD_APP_API_PORT');
   if (enabledProfiles.includes('telegram')) keys.push('TELEGRAM_BOT_API_PORT');
+  if (runtimeMode === 'native' && enabledProfiles.some((profile) => profile.startsWith('notification-'))) {
+    keys.push('NOTIFICATION_CONSUMER_PORT', 'NOTIFICATION_SCHEDULER_PORT');
+  }
 
   // Mirror the render: single-domain only serves the primary app (plus the user SPA
   // when the Mini App route is proxied), per-app-domains serves every frontend. Each

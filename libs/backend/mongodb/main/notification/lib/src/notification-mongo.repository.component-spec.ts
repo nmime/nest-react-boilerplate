@@ -1,5 +1,19 @@
-// @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005
+// @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-AUDIENCE-004 REQ-NOTIFY-PERSISTENCE-005 REQ-NOTIFY-LIFECYCLE-002
 import { randomUUID } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
+import type { S3Service } from '@app/backend-common-s3';
+import { AuditLogAdminPersistenceError, AuditLogAdminService } from '@app/backend-feature-audit-log-admin';
+import {
+  NotificationAdminService,
+  NotificationConfigService,
+  type NotificationSegmentResolverRegistry,
+} from '@app/backend-feature-notification-main';
+// nx-ignore-next-line -- The component fixture exercises the concrete selected audit provider.
+import {
+  MongoAdminAuditLogRepository,
+  AuthMongoCollections,
+  initializeMongoAuthPersistence,
+} from '@app/backend-mongodb-main-auth';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
 // nx-ignore-next-line -- This component-only probe is not a production build dependency.
 import { hasDockerRuntime } from '@app/backend-common-component-test-runtime';
@@ -45,6 +59,7 @@ describeIfDocker('Mongo notification persistence on a replica set', () => {
     const database = client.db('notification_component');
     await database.dropDatabase();
     await initializeTenantOwnedMongoNotificationPersistence(database);
+    await initializeMongoAuthPersistence(database);
   });
 
   afterAll(async () => {
@@ -63,6 +78,172 @@ describeIfDocker('Mongo notification persistence on a replica set', () => {
       broadcasts: new MongoNotificationBroadcastPersistence(database, client, crypto),
     };
   };
+
+  it.each([AuthMongoCollections.auditLogs, AuthMongoCollections.outbox])(
+    'rolls back all admin notification writes when %s rejects the audit transaction',
+    async (failedCollection) => {
+      const { database, broadcasts, notifications } = repositories();
+      const audit = new AuditLogAdminService(new MongoAdminAuditLogRepository(database, client));
+      const uploadedObjects: string[] = [];
+      const admin = new NotificationAdminService(
+        new NotificationConfigService(new ConfigService()),
+        broadcasts,
+        notifications,
+        {
+          putObject: async ({ key }: { key: string }) => {
+            uploadedObjects.push(key);
+          },
+        } as unknown as S3Service,
+        {} as NotificationSegmentResolverRegistry,
+      );
+      const tenantId = randomUUID();
+      const actorId = randomUUID();
+      const operation = async (transaction: unknown) => {
+        let template = await admin.createTemplate(
+          {
+            tenantId,
+            actorId,
+            code: `atomic-${randomUUID()}`,
+            name: 'Atomic template',
+            channels: [{ channel: NotificationChannel.Bot, content: { body: { en: 'Version one' } } }],
+          },
+          transaction,
+        );
+        expect(template.versions).toHaveLength(1);
+        await admin.publishTemplate(template.id, tenantId, actorId, transaction);
+        await admin.updateTemplate(template.id, tenantId, { actorId, name: 'Updated template' }, transaction);
+        template = (await admin.publishTemplate(template.id, tenantId, actorId, transaction))!;
+        expect(template.versions).toHaveLength(2);
+        await admin.testSend(
+          {
+            id: template.id,
+            tenantId,
+            targetType: NotificationTargetType.TelegramChat,
+            targetId: 'owned-fixture',
+            channel: NotificationChannel.Bot,
+            provider: NotificationDeliveryProvider.TelegramBot,
+            variables: {},
+          },
+          transaction,
+        );
+        const segment = await admin.createSegment(
+          { tenantId, actorId, name: 'Atomic audience', kind: NotificationSegmentKind.Static },
+          transaction,
+        );
+        await admin.updateSegment(segment.id, tenantId, { actorId, name: 'Updated audience' }, transaction);
+        await admin.uploadSegmentCsv(
+          {
+            id: segment.id,
+            tenantId,
+            actorId,
+            filename: 'fixture.csv',
+            contentBase64: Buffer.from('targetId\nfixture\n').toString('base64'),
+          },
+          transaction,
+        );
+        const broadcast = await admin.createBroadcast(
+          {
+            tenantId,
+            actorId,
+            name: 'Atomic broadcast',
+            templateVersionId: template.currentVersionId!,
+            channel: NotificationChannel.Bot,
+            provider: NotificationDeliveryProvider.TelegramBot,
+            segmentIds: [segment.id],
+          },
+          transaction,
+        );
+        expect(broadcast.segmentIds).toEqual([segment.id]);
+        await admin.updateBroadcast(broadcast.id, tenantId, { name: 'Updated broadcast' }, transaction);
+        const collecting = await admin.command(
+          {
+            broadcastId: broadcast.id,
+            tenantId,
+            actorId,
+            action: 'collect-audience',
+            idempotencyKey: 'owned-atomic-command',
+          },
+          transaction,
+        );
+        expect(collecting?.snapshot).toMatchObject({ status: NotificationAudienceSnapshotStatus.Created });
+        await admin.archiveTemplate(template.id, tenantId, actorId, transaction);
+        await admin.archiveSegment(segment.id, tenantId, actorId, transaction);
+        return broadcast;
+      };
+      const mutate = () =>
+        audit.recordMutation(
+          {
+            tenantId,
+            actorUserId: actorId,
+            action: 'admin.notification_broadcast.create',
+            resource: 'admin.notification-broadcasts',
+            targetId: (result) => result.id,
+            after: (result) => ({ id: result.id }),
+          },
+          operation,
+        );
+      const collectionInfo = await database.listCollections({ name: failedCollection }, { nameOnly: false }).next();
+      if (!collectionInfo || !('options' in collectionInfo) || !collectionInfo.options) {
+        throw new Error('Owned audit fixture collection metadata is unavailable.');
+      }
+      const original = collectionInfo.options.validator ?? {};
+      await database.command({
+        collMod: failedCollection,
+        validator: { $expr: { $eq: [1, 0] } },
+        validationAction: 'error',
+      });
+      try {
+        await expect(mutate()).rejects.toBeInstanceOf(AuditLogAdminPersistenceError);
+        for (const collectionName of [
+          ...Object.values(NotificationMongoCollections),
+          AuthMongoCollections.auditLogs,
+          AuthMongoCollections.outbox,
+        ]) {
+          // eslint-disable-next-line no-await-in-loop
+          expect(await database.collection(collectionName).countDocuments(), collectionName).toBe(0);
+        }
+        expect(uploadedObjects).toHaveLength(1); // Object storage has a separate cleanup boundary.
+      } finally {
+        await database.command({ collMod: failedCollection, validator: original, validationAction: 'error' });
+      }
+      const committed = await mutate();
+      expect(await broadcasts.getBroadcast(committed.id, tenantId)).toMatchObject({ name: 'Updated broadcast' });
+      expect(await database.collection(AuthMongoCollections.auditLogs).countDocuments()).toBe(1);
+      expect(await database.collection(AuthMongoCollections.outbox).countDocuments()).toBe(1);
+      expect(await database.collection(NotificationMongoCollections.deliveries).countDocuments()).toBe(1);
+    },
+  );
+
+  it('rejects invalid and inactive external transaction tokens before notification writes', async () => {
+    const { broadcasts, notifications, database } = repositories();
+    const input = {
+      tenantId: randomUUID(),
+      actorId: randomUUID(),
+      name: 'Invalid',
+      kind: NotificationSegmentKind.Static,
+    };
+    await expect(broadcasts.createSegment(input, {})).rejects.toThrow('notification_invalid_transaction');
+    const inactiveSession = client.startSession();
+    try {
+      await expect(broadcasts.createSegment(input, inactiveSession)).rejects.toThrow(
+        'notification_invalid_transaction',
+      );
+      expect(() =>
+        notifications.create(
+          {
+            tenantId: input.tenantId,
+            targetType: NotificationTargetType.TelegramChat,
+            targetId: 'fixture',
+            templateCode: 'fixture',
+          },
+          inactiveSession,
+        ),
+      ).toThrow('notification_invalid_transaction');
+      expect(await database.collection(NotificationMongoCollections.segments).countDocuments()).toBe(0);
+    } finally {
+      await inactiveSession.endSession();
+    }
+  });
 
   it('allows the same template code in separate tenants without cross-tenant mutation', async () => {
     const { database, notifications } = repositories();

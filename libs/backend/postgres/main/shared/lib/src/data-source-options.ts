@@ -3,6 +3,7 @@ import { Migrator } from '@mikro-orm/migrations';
 import type { MikroOrmModuleSyncOptions } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { createPostgresEnvironment, type PostgresEnvironment } from './database.config';
+import { createPostgresConnectionOptions } from './postgres-connection-options';
 
 export const PostgresMigrationsTableName = 'mikro_orm_migrations';
 
@@ -45,15 +46,9 @@ export function createPostgresMikroOrmOptions(
       idleTimeoutMillis: config.POSTGRES_POOL_IDLE_TIMEOUT_MS,
     },
     ...(config.POSTGRES_SLOW_QUERY_MS === undefined ? {} : { slowQueryThreshold: config.POSTGRES_SLOW_QUERY_MS }),
-    driverOptions: config.POSTGRES_SSL
-      ? {
-          connection: {
-            ssl: {
-              rejectUnauthorized: config.POSTGRES_SSL_REJECT_UNAUTHORIZED,
-            },
-          },
-        }
-      : {},
+    // MikroORM 7 forwards driverOptions directly to pg.Pool; nested
+    // driverOptions.connection is not a supported pool TLS setting.
+    driverOptions: createPostgresConnectionOptions(config.DATABASE_URL, env),
     ...overrides,
     migrations: {
       ...defaultPostgresMigrationOptions,

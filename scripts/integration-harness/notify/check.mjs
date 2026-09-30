@@ -15,20 +15,23 @@
  * persisted under ./s3-store/, and delivery state transitions observed via the
  * admin API. Prints one JSON line and exits 0 (pass) or 1 (fail).
  */
-import { spawn, execSync } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, truncate, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { notificationFixtureDatabase } from './fixture-config.mjs';
 
 const HARNESS_DIR = dirname(fileURLToPath(import.meta.url));
-const CALLS_LOG = join(HARNESS_DIR, 'calls.log.jsonl');
-const S3_STORE = join(HARNESS_DIR, 's3-store');
+const DATABASE_URL = notificationFixtureDatabase();
+const STATE_DIR = await mkdtemp(join(tmpdir(), 'nrb-notify-check-'));
+const CALLS_LOG = join(STATE_DIR, 'calls.log.jsonl');
+const S3_STORE = join(STATE_DIR, 's3-store');
 
 const AUTH_API = 'http://127.0.0.1:3003';
 const ADMIN_API = 'http://127.0.0.1:3001';
 const MOCK_PORTS = { email: 4361, telegram: 4350, discord: 4351, s3: 4360 };
-const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://postgres:postgres@127.0.0.1:5432/social_agents';
 
 const ADMIN_EMAIL = 'notify-admin@harness.test';
 const ADMIN_PASSWORD = 'Harness123!Notify';
@@ -76,18 +79,15 @@ async function waitForPort(port, timeoutMs, isTls = false) {
 
 function processAlive(pattern) {
   try {
-    const output = execSync(`pgrep -fa "${pattern}" | grep -v pgrep | grep -v check.mjs || true`, {
-      encoding: 'utf8',
-    });
-    return output.trim().length > 0;
+    const output = execFileSync('pgrep', ['-fa', pattern], { encoding: 'utf8', timeout: 5000 });
+    return output.split('\n').some((line) => line && !line.includes('pgrep') && !line.includes('check.mjs'));
   } catch {
     return false;
   }
 }
 
 function psql(query) {
-  const flat = query.replace(/\s+/gu, ' ').trim();
-  return execSync(`psql "${DATABASE_URL}" -t -A -c ${JSON.stringify(flat)}`, { encoding: 'utf8' }).trim();
+  return execFileSync('psql', [DATABASE_URL, '-t', '-A', '-c', query], { encoding: 'utf8', timeout: 30_000 }).trim();
 }
 
 async function readCalls() {
@@ -125,6 +125,7 @@ async function http(method, url, { body, headers = {}, cookie = true } = {}) {
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
     redirect: 'manual',
+    signal: AbortSignal.timeout(15_000),
   });
   const setCookies = response.headers.getSetCookie?.() ?? [];
   const session = setCookies.map((item) => item.split(';')[0]).find((item) => item.startsWith('nrb.sid='));
@@ -153,10 +154,9 @@ async function adminRequest(method, path, { body, headers = {} } = {}) {
 /* ------------------------------------------------------------------ */
 
 async function startMocks() {
-  await mkdir(S3_STORE, { recursive: true });
-  await writeFile(CALLS_LOG, '');
   const child = spawn(process.execPath, [join(HARNESS_DIR, 'mock-transports.mjs')], {
     stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, NRB_NOTIFY_HARNESS_DIR: STATE_DIR },
   });
   let ready = false;
   child.stdout.on('data', (chunk) => {
@@ -421,9 +421,10 @@ async function main() {
       fail('no S3 PutObject/GetObject calls reached the mock');
     }
 
-    const storedObjects = execSync(`find ${S3_STORE} -type f -name '*.csv' | sort`, { encoding: 'utf8' })
-      .split('\n')
-      .filter(Boolean);
+    const storedObjects = (await readdir(S3_STORE, { recursive: true }))
+      .filter((path) => path.endsWith('.csv'))
+      .map((path) => join(S3_STORE, path))
+      .sort();
     if (storedObjects.length >= 3) {
       note(
         `evidence: ${storedObjects.length} segment CSV objects persisted under s3-store/ (${storedObjects[0].replace(HARNESS_DIR, '')}, ...)`,

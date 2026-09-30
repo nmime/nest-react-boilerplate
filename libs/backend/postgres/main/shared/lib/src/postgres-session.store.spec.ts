@@ -33,6 +33,17 @@ const setSession = (store: PostgresSessionStore, sessionId: string, session: Ses
   });
 
 describe('PostgresSessionStore', () => {
+  it('uses the URI TLS policy and the supplied session environment instead of ambient flags', async () => {
+    const store = new PostgresSessionStore('postgres://database/app?sslmode=verify-full', 3600, 0, {
+      POSTGRES_SSL: 'false',
+    });
+    expect(mocks.Pool).toHaveBeenCalledWith({
+      connectionString: 'postgres://database/app',
+      ssl: { rejectUnauthorized: true },
+    });
+    await store.close();
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
@@ -42,7 +53,7 @@ describe('PostgresSessionStore', () => {
     const store = new PostgresSessionStore('postgres://database/app', 3600, 60_000);
     await store.init();
 
-    expect(mocks.Pool).toHaveBeenCalledWith({ connectionString: 'postgres://database/app' });
+    expect(mocks.Pool).toHaveBeenCalledWith({ connectionString: 'postgres://database/app', ssl: false });
     expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('CREATE TABLE IF NOT EXISTS fastify_sessions'));
 
     const expires = new Date(Date.now() + 60_000);

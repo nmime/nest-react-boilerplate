@@ -86,8 +86,35 @@ export interface TenantChangeGuardOptions {
    * database configuration decide an assertion about a fixture checkout.
    */
   ambientEnvironment?: NodeJS.ProcessEnv;
-  runPostgresProbe?: (databaseUrl: string) => { status: number | null; stdout: string; stderr: string; error?: Error };
+  runPostgresProbe?: (databaseUrl: string) => PostgresProbeResult | Promise<PostgresProbeResult>;
   runMongoProbe?: (mongodbUri: string, database: string) => Promise<'fresh' | 'applied'>;
+}
+
+interface PostgresProbeResult {
+  status: number | null;
+  stdout: string;
+  stderr: string;
+  error?: Error;
+}
+
+export async function probePostgresMigrationState(
+  databaseUrl: string,
+  workspaceRoot: string,
+  runSql: (sql: string) => PostgresProbeResult | Promise<PostgresProbeResult> = (sql) =>
+    spawnSync('psql', [databaseUrl, '--no-psqlrc', '--tuples-only', '--no-align', '--command', sql], {
+      cwd: workspaceRoot,
+      encoding: 'utf8',
+      timeout: 10_000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }),
+): Promise<PostgresProbeResult> {
+  const relation = await runSql(
+    "SELECT CASE WHEN to_regclass('public.mikro_orm_migrations') IS NULL THEN 'missing' ELSE 'present' END;",
+  );
+  if (relation.error || relation.status !== 0) return relation;
+  if (relation.stdout.trim() === 'missing') return { status: 0, stdout: 'fresh', stderr: '' };
+  if (relation.stdout.trim() !== 'present') return { ...relation, stdout: 'unknown' };
+  return runSql("SELECT CASE WHEN EXISTS (SELECT 1 FROM public.mikro_orm_migrations) THEN 'applied' ELSE 'fresh' END;");
 }
 
 export async function assertTenantChangeAllowed(
@@ -148,22 +175,8 @@ async function assertFreshPostgresDatabase(
       `Refusing tenant.defaultTenantId rewrite because DATABASE_URL uses unsupported protocol ${parsed.protocol}; migration state is unknown.`,
     );
   }
-  const runProbe =
-    options.runPostgresProbe ??
-    ((url: string) =>
-      spawnSync(
-        'psql',
-        [
-          url,
-          '--no-psqlrc',
-          '--tuples-only',
-          '--no-align',
-          '--command',
-          "SELECT CASE WHEN to_regclass('public.mikro_orm_migrations') IS NULL THEN 'fresh' WHEN EXISTS (SELECT 1 FROM public.mikro_orm_migrations) THEN 'applied' ELSE 'fresh' END;",
-        ],
-        { cwd: workspaceRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-      ));
-  const result = runProbe(databaseUrl);
+  const runProbe = options.runPostgresProbe ?? ((url: string) => probePostgresMigrationState(url, workspaceRoot));
+  const result = await runProbe(databaseUrl);
   if (result.error) {
     throw new Error(
       `Refusing tenant.defaultTenantId rewrite because DATABASE_URL is configured but migration state could not be checked: ${result.error.message}`,

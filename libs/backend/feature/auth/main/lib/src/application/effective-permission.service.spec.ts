@@ -57,10 +57,15 @@ describe('EffectivePermissionService', () => {
       roleKeys: [UserRole, AdminRole],
     });
 
-    const adminPolicy = createDefaultAccessPolicy('admin@example.com', {
-      ADMIN_BOOTSTRAP_ENABLED: 'true',
-      ADMIN_BOOTSTRAP_EMAILS: 'admin@example.com',
-    });
+    const adminPolicy = createDefaultAccessPolicy(
+      'admin@example.com',
+      {
+        ADMIN_BOOTSTRAP_ENABLED: 'true',
+        ADMIN_BOOTSTRAP_EMAILS: 'admin@example.com',
+      },
+      DefaultAuthTenantId,
+      true,
+    );
     expect(refreshed?.roles).toEqual(adminPolicy.roles);
     expect(refreshed?.permissions).toEqual(adminPolicy.permissions);
 

@@ -39,6 +39,7 @@
     },
     "scope": {
       "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
       "description": "Owning product/domain scope; defaults to the first name segment",
       "x-priority": "optional"
     },

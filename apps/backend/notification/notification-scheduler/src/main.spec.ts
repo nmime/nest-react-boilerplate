@@ -14,6 +14,9 @@ describe('notification-scheduler bootstrap', () => {
     expect(source).toContain('bootstrapNestApi(appModule.NotificationSchedulerModule');
     expect(source).toContain("appName: 'notification-scheduler'");
     expect(source).toContain('port: 3005');
+    expect(source).toContain('enableCookieSessions: false');
+    expect(source).toContain('enableCors: false');
+    expect(source).toContain('openApi: { enabled: false }');
     expect(source).not.toContain('createApplicationContext');
   });
 });

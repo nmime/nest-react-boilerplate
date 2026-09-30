@@ -5,7 +5,12 @@ import type { UserProfilePayload } from '@app/frontend-feature-shared-preference
 // now live in the shared session-preferences library so the admin console can
 // consume them too. They are re-exported here to keep this user-profile
 // boundary's public API stable for existing importers.
-export { getPayloadLocale, getPayloadTheme, readAuthPayloadField } from '@app/frontend-feature-shared-preferences';
+export {
+  getPayloadLocale,
+  getPayloadTheme,
+  getPayloadPrincipal,
+  readAuthPayloadField,
+} from '@app/frontend-feature-shared-preferences';
 export type {
   AuthPrincipalPayload,
   AuthUserPayload,

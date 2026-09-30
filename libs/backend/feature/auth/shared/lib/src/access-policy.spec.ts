@@ -21,13 +21,13 @@ describe('access policy bootstrap roles', () => {
     expect(resolveBootstrapRoleKeys('member@example.com', {})).toEqual([UserRole]);
   });
 
-  it('adds the admin role for bootstrap-allowlisted emails', () => {
-    expect(
-      resolveBootstrapRoleKeys('Admin@Example.com', {
-        ADMIN_BOOTSTRAP_ENABLED: 'true',
-        ADMIN_BOOTSTRAP_EMAILS: 'admin@example.com',
-      }),
-    ).toEqual([UserRole, AdminRole]);
+  it('requires verified email before adding bootstrap administrator authority', () => {
+    const env = { ADMIN_BOOTSTRAP_ENABLED: 'true', ADMIN_BOOTSTRAP_EMAILS: 'admin@example.com' };
+    expect(resolveBootstrapRoleKeys('Admin@Example.com', env)).toEqual([UserRole]);
+    expect(resolveBootstrapRoleKeys('Admin@Example.com', env, DefaultAuthTenantId, true)).toEqual([
+      UserRole,
+      AdminRole,
+    ]);
   });
 
   it('keeps enabled bootstrap closed for non-allowlisted emails', () => {
@@ -47,7 +47,13 @@ describe('access policy bootstrap roles', () => {
     };
     expect(isAdminBootstrapAllowed('admin@example.com', allowlistedTenantId, env)).toBe(true);
     expect(isAdminBootstrapAllowed('admin@example.com', '22222222-2222-4222-8222-222222222222', env)).toBe(false);
-    expect(resolveBootstrapRoleKeys('admin@example.com', env, allowlistedTenantId)).toEqual([UserRole, AdminRole]);
+    expect(resolveBootstrapRoleKeys('admin@example.com', env, allowlistedTenantId, true)).toEqual([
+      UserRole,
+      AdminRole,
+    ]);
+    expect(resolveBootstrapRoleKeys('admin@example.com', env, '22222222-2222-4222-8222-222222222222', true)).toEqual([
+      UserRole,
+    ]);
   });
 
   it('keeps createDefaultAccessPolicy deriving permissions from the role keys', () => {

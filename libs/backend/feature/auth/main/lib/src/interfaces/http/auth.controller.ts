@@ -14,7 +14,10 @@ import {
   Req,
   Res,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
+import { InternalException } from '@app/backend-common-exception';
 import { supportedLocales } from '@app/backend-common-i18n';
 import { ApiOkDataResponse, ApiExceptions, ApiProblemTypes, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
@@ -91,6 +94,7 @@ import { principalFromUserView } from './util/principal.mapper';
 export * from './dto';
 export * from './type/auth-http.type';
 export { SessionCookieName };
+const DiscordBrowserNonceKey = 'discordOAuthBrowserNonce';
 
 @ApiExceptions(400, 401, 403, 409, 429, 500)
 @Controller('auth')
@@ -229,8 +233,22 @@ export class AuthController {
   @Post('telegram/bot-link')
   @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)
-  async telegramBotLink(@Body() input: TelegramBotLinkDto): Promise<OkResponse<ExternalAuthLoginResult>> {
-    return createOkResponse(await this.externalAuth.telegramBotLink(input));
+  async telegramBotLink(
+    @Body() input: TelegramBotLinkDto,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<ExternalAuthLoginResult>> {
+    const profile = await this.betterAuthTelegramSession.requireTelegramProfile(request.headers);
+    if (input.providerSubject !== profile.providerSubject) {
+      throw new UnauthorizedException('telegram_identity_mismatch');
+    }
+    return createOkResponse(
+      await this.externalAuth.telegramBotLink({
+        linkToken: input.linkToken,
+        providerSubject: profile.providerSubject,
+        displayName: profile.displayName,
+        avatarUrl: profile.avatarUrl,
+      }),
+    );
   }
 
   @Post('discord/authorization-request')
@@ -240,10 +258,18 @@ export class AuthController {
     @Body() input: DiscordAuthorizationRequestDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<OkResponse<{ authorizationUrl: string; stateExpiresAt: string }>> {
+    if (!request.session || typeof request.session.save !== 'function') {
+      throw new UnauthorizedException('browser_session_required');
+    }
+    if (typeof request.session[DiscordBrowserNonceKey] !== 'string') {
+      request.session[DiscordBrowserNonceKey] = randomBytes(32).toString('base64url');
+    }
+    await callSessionMethod(request, 'save');
     return createOkResponse(
       await this.externalAuth.createDiscordAuthorizationRequest({
         ...input,
         principal: request.user ?? request.auth ?? null,
+        binding: { kind: 'browser', nonce: request.session[DiscordBrowserNonceKey] as string },
       }),
     );
   }
@@ -260,6 +286,10 @@ export class AuthController {
       const result = await this.externalAuth.discordCallback({
         ...input,
         principal: request.user ?? request.auth ?? null,
+        browserNonce:
+          typeof request.session?.[DiscordBrowserNonceKey] === 'string'
+            ? (request.session[DiscordBrowserNonceKey] as string)
+            : null,
       });
       await establishExternalSessionIfPresent(request, result);
       if (result.session) {
@@ -416,14 +446,23 @@ export class AuthController {
   }
 
   @Post('logout')
+  @Public()
   @ApiOkDataResponse(LogoutPayloadDto)
-  @ApiSessionCookieAuth()
-  @UseGuards(new SessionAuthGuard())
   async logout(
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: AuthenticatedResponse,
   ): Promise<OkResponse<LogoutPayload>> {
-    await clearRequestSession(request, response);
+    try {
+      const cookies = await this.betterAuthTelegramSession.revokeSession(request.headers);
+      if (cookies.length) {
+        if (!response.header) {
+          throw new InternalException({ reason: 'session_cookie_response_unavailable' });
+        }
+        response.header('set-cookie', cookies);
+      }
+    } finally {
+      await clearRequestSession(request, response);
+    }
     return createOkResponse({ loggedOut: true });
   }
 

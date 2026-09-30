@@ -65,13 +65,17 @@ export const userUuids = [
   "30000000-0000-0000-0000-000000000003",
 ];
 
-export function buildSeedUsers(basePassword: string, locale = "en"): SeedUser[] {
+export function buildSeedUsers(basePassword: string, locale = "en", options: {
+  email?: string;
+  displayName?: string;
+  includeDemoUsers?: boolean;
+} = {}): SeedUser[] {
   const adminPassword = basePassword === DefaultAdminPassword ? "Admin@Secure1!" : basePassword;
-  return [
+  const users: SeedUser[] = [
     {
       id: userUuids[0],
-      email: DefaultAdminEmail,
-      displayName: "Alice Administrator",
+      email: (options.email ?? DefaultAdminEmail).trim().toLowerCase(),
+      displayName: options.displayName ?? "Alice Administrator",
       password: adminPassword,
       role: "admin",
       locale,
@@ -96,4 +100,5 @@ export function buildSeedUsers(basePassword: string, locale = "en"): SeedUser[] 
       theme: "dark",
     },
   ];
+  return options.includeDemoUsers === false ? users.slice(0, 1) : users;
 }

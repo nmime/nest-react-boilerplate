@@ -1,5 +1,5 @@
 {
-  "$comment": "Forge-neutral CI gate inventory. .gitlab-ci.yml renders it, and node scripts/ci/check-pipelines.mjs verifies every configured forge against it. Add a gate here first, then wire it into every forge; a forge that cannot run a gate must say so with `forges` plus `reason`. See docs/ci-lanes.md.",
+  "$comment": "Forge-neutral CI gate inventory. Both .github/workflows and .gitlab-ci.yml render it, and node scripts/ci/check-pipelines.mjs verifies every configured forge against it. Add a gate here first, then wire it into every forge; a forge that cannot run a gate must say so with `forges` plus `reason`. See docs/ci-lanes.md.",
   "forges": {
     "gitlab": {
       "pipeline": ".gitlab-ci.yml",
@@ -7,50 +7,103 @@
       "aggregateJob": "ci-status-summary",
       "releasePipeline": ".gitlab-ci.yml",
       "provenancePipeline": ".gitlab-ci.yml"
+    },
+    "github": {
+      "pipeline": ".github/workflows/ci.yml",
+      "jobStyle": "github",
+      "aggregateJob": "ci-status-summary",
+      "releasePipeline": ".github/workflows/release-images.yml",
+      "promotionPipeline": ".github/workflows/deploy.yml",
+      "provenancePipeline": ".github/workflows/release.yml"
     }
   },
   "lanes": {
     "pr": {
       "description": "Evidence for the requirements a change proposal touches.",
       "executors": {
-        "gitlab": { "file": ".gitlab-ci.yml", "job": "spec-evidence" }
+        "gitlab": {
+          "file": ".gitlab-ci.yml",
+          "job": "spec-evidence"
+        },
+        "github": {
+          "file": ".github/workflows/ci.yml",
+          "job": "spec-evidence"
+        }
       }
     },
     "main": {
       "description": "Evidence for the requirements a default-branch push touches.",
       "executors": {
-        "gitlab": { "file": ".gitlab-ci.yml", "job": "spec-evidence" }
+        "gitlab": {
+          "file": ".gitlab-ci.yml",
+          "job": "spec-evidence"
+        },
+        "github": {
+          "file": ".github/workflows/ci.yml",
+          "job": "spec-evidence"
+        }
       }
     },
     "nightly": {
       "description": "Scheduled full-inventory evidence for every declared requirement.",
       "executors": {
-        "gitlab": { "file": ".gitlab-ci.yml", "job": "spec-evidence-nightly" }
+        "gitlab": {
+          "file": ".gitlab-ci.yml",
+          "job": "spec-evidence-nightly"
+        },
+        "github": {
+          "file": ".github/workflows/spec-assurance-nightly.yml",
+          "job": "assurance"
+        }
       }
     },
     "runtime": {
       "description": "Evidence that needs a live runtime stack rather than a build sandbox.",
       "executors": {
-        "gitlab": { "file": ".gitlab-ci.yml", "job": "spec-evidence-runtime" }
+        "gitlab": {
+          "file": ".gitlab-ci.yml",
+          "job": "spec-evidence-runtime"
+        },
+        "github": {
+          "file": ".github/workflows/spec-assurance-runtime.yml",
+          "job": "assurance"
+        }
       }
     },
     "scheduled-quality": {
       "description": "Scheduled cross-browser and mobile visual regression matrix.",
       "executors": {
-        "gitlab": { "file": ".gitlab-ci.yml", "job": "visual-regression-matrix" }
+        "gitlab": {
+          "file": ".gitlab-ci.yml",
+          "job": "visual-regression-matrix"
+        },
+        "github": {
+          "file": ".github/workflows/quality-presets.yml",
+          "job": "presets"
+        }
       }
     },
     "release": {
       "description": "Tagged build that publishes signed, scanned, attested images.",
       "executors": {
-        "gitlab": { "file": ".gitlab-ci.yml", "job": "release-images" }
+        "gitlab": {
+          "file": ".gitlab-ci.yml",
+          "job": "release-images"
+        },
+        "github": {
+          "file": ".github/workflows/release-images.yml",
+          "job": "build-scan-sign"
+        }
       }
     }
   },
   "toolchains": {
     "helm": {
       "description": "Helm 4 CLI, which the chart renderer shells out to and whose major version it asserts.",
-      "provisioning": { "gitlab": "get.helm.sh" }
+      "provisioning": {
+        "gitlab": "get.helm.sh",
+        "github": "azure/setup-helm"
+      }
     }
   },
   "gates": [
@@ -60,7 +113,10 @@
       "commands": ["gitleaks/gitleaks-action", "gitleaks detect"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "gitleaks" }
+      "jobs": {
+        "gitlab": "gitleaks",
+        "github": "gitleaks"
+      }
     },
     {
       "id": "helm-render",
@@ -69,7 +125,10 @@
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
       "toolchain": ["helm"],
-      "jobs": { "gitlab": "helm-validation" }
+      "jobs": {
+        "gitlab": "helm-validation",
+        "github": "helm-validation"
+      }
     },
     {
       "id": "ci-pipeline-parity",
@@ -77,7 +136,10 @@
       "commands": ["node scripts/ci/check-pipelines.mjs"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "helm-validation" }
+      "jobs": {
+        "gitlab": "helm-validation",
+        "github": "helm-validation"
+      }
     },
     {
       "id": "git-conventions",
@@ -85,7 +147,10 @@
       "commands": ["pnpm run git:conventions"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "tooling-static-check",
@@ -93,7 +158,10 @@
       "commands": ["pnpm run tooling:static-check", "pnpm run ci:pr"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "locale-artifact-freshness",
@@ -101,7 +169,10 @@
       "commands": ["pnpm run i18n:catalogs:check", "pnpm run ci:pr"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "docs-check",
@@ -109,7 +180,10 @@
       "commands": ["pnpm run docs:check", "pnpm run ci:pr"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "spec-validate",
@@ -117,7 +191,10 @@
       "commands": ["pnpm run spec:validate", "pnpm run ci:pr"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "format-changed",
@@ -125,7 +202,10 @@
       "commands": ["pnpm run format:changed", "pnpm run ci:pr"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "secret-scan-native",
@@ -133,7 +213,10 @@
       "commands": ["pnpm run test:security:secrets", "pnpm run ci:pr"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "sast-native",
@@ -141,7 +224,10 @@
       "commands": ["pnpm run test:security:sast", "pnpm run ci:pr"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "production-dependency-audit",
@@ -149,7 +235,10 @@
       "commands": ["pnpm run audit:ci", "pnpm run ci:pr"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "fast-check" }
+      "jobs": {
+        "gitlab": "fast-check",
+        "github": "fast-check"
+      }
     },
     {
       "id": "spec-evidence",
@@ -157,7 +246,10 @@
       "commands": ["pnpm run spec:verify"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "spec-evidence" }
+      "jobs": {
+        "gitlab": "spec-evidence",
+        "github": "spec-evidence"
+      }
     },
     {
       "id": "onboarding-verify",
@@ -165,7 +257,10 @@
       "commands": ["pnpm run onboarding:verify"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "migration-freshness",
@@ -173,7 +268,10 @@
       "commands": ["pnpm run db:migrations:check"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "repository-script-specs",
@@ -181,7 +279,10 @@
       "commands": ["pnpm run test:scripts"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "library-configs",
@@ -189,7 +290,10 @@
       "commands": ["pnpm run lib:configs:check"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "frontend-fsd",
@@ -197,7 +301,10 @@
       "commands": ["pnpm run frontend:fsd:check"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "toast-config",
@@ -205,7 +312,10 @@
       "commands": ["pnpm run api:toast-config:check"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "licence-audit",
@@ -213,7 +323,10 @@
       "commands": ["pnpm run audit:licenses"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "full-dependency-audit",
@@ -221,7 +334,10 @@
       "commands": ["pnpm run audit:full"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "api-contracts",
@@ -229,7 +345,10 @@
       "commands": ["pnpm run api:contracts:check"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "api-clients",
@@ -237,7 +356,10 @@
       "commands": ["pnpm run api:clients:check"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "openapi-lint",
@@ -245,7 +367,10 @@
       "commands": ["pnpm run api:openapi:lint"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "consumer-contracts",
@@ -253,7 +378,10 @@
       "commands": ["pnpm run api:contracts:consumer"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "openapi-fuzz",
@@ -261,7 +389,10 @@
       "commands": ["pnpm run api:openapi:fuzz"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "property-invariants",
@@ -269,7 +400,10 @@
       "commands": ["pnpm run test:property"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "pm2-deployment-config",
@@ -277,7 +411,10 @@
       "commands": ["pnpm run deploy:validate:pm2"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "gitops-deployment-config",
@@ -286,7 +423,10 @@
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
       "toolchain": ["helm"],
-      "jobs": { "gitlab": "non-runtime-validation" }
+      "jobs": {
+        "gitlab": "non-runtime-validation",
+        "github": "non-runtime-validation"
+      }
     },
     {
       "id": "format-check",
@@ -294,15 +434,21 @@
       "commands": ["pnpm run format:check"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "full-check" }
+      "jobs": {
+        "gitlab": "full-check",
+        "github": "quality"
+      }
     },
     {
       "id": "lint-typecheck-build",
-      "description": "Lint, typecheck, and build — affected on proposals, everything on the default branch.",
+      "description": "Lint, typecheck, and build \u2014 affected on proposals, everything on the default branch.",
       "commands": ["nx affected -t lint typecheck build", "pnpm run lint:all"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "full-check" }
+      "jobs": {
+        "gitlab": "full-check",
+        "github": "quality"
+      }
     },
     {
       "id": "coverage-thresholds",
@@ -310,7 +456,10 @@
       "commands": ["pnpm run test:coverage:all"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "full-check" }
+      "jobs": {
+        "gitlab": "full-check",
+        "github": "quality"
+      }
     },
     {
       "id": "bundle-budget",
@@ -318,7 +467,10 @@
       "commands": ["pnpm run test:bundle-budget"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "full-check" }
+      "jobs": {
+        "gitlab": "full-check",
+        "github": "quality"
+      }
     },
     {
       "id": "postgres-component-tests",
@@ -326,7 +478,10 @@
       "commands": ["nx run @app/backend-feature-auth-test:component-test"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "component-tests" }
+      "jobs": {
+        "gitlab": "component-tests",
+        "github": "quality"
+      }
     },
     {
       "id": "mongodb-validation",
@@ -336,7 +491,10 @@
       ],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "mongodb-validation" }
+      "jobs": {
+        "gitlab": "mongodb-validation",
+        "github": "mongodb-validation"
+      }
     },
     {
       "id": "e2e-coverage",
@@ -344,7 +502,10 @@
       "commands": ["pnpm run test:e2e:coverage:all"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "e2e-tests" }
+      "jobs": {
+        "gitlab": "e2e-tests",
+        "github": "e2e"
+      }
     },
     {
       "id": "storybook-interaction",
@@ -352,7 +513,10 @@
       "commands": ["pnpm run test:storybook"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "storybook-tests" }
+      "jobs": {
+        "gitlab": "storybook-tests",
+        "github": "visual-regression"
+      }
     },
     {
       "id": "visual-baselines",
@@ -360,7 +524,10 @@
       "commands": ["pnpm run test:visual"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "storybook-tests" }
+      "jobs": {
+        "gitlab": "storybook-tests",
+        "github": "visual-regression"
+      }
     },
     {
       "id": "docker-smoke",
@@ -368,7 +535,10 @@
       "commands": ["pnpm run docker:prod:config:check", "node scripts/validate-compose-modes.mjs"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "docker-smoke-test" }
+      "jobs": {
+        "gitlab": "docker-smoke-test",
+        "github": "docker-smoke"
+      }
     },
     {
       "id": "compose-deployment-modes",
@@ -376,7 +546,10 @@
       "commands": ["node scripts/validate-compose-modes.mjs"],
       "lanes": ["pr", "main"],
       "requiredForMerge": true,
-      "jobs": { "gitlab": "docker-smoke-test" }
+      "jobs": {
+        "gitlab": "docker-smoke-test",
+        "github": "docker-smoke"
+      }
     },
     {
       "id": "world-class-ops",
@@ -384,7 +557,13 @@
       "commands": ["pnpm run quality:presets", "pnpm run test:world-class"],
       "lanes": ["nightly"],
       "requiredForMerge": false,
-      "jobs": { "gitlab": "ops-gates" }
+      "jobs": {
+        "gitlab": "ops-gates",
+        "github": "presets"
+      },
+      "files": {
+        "github": ".github/workflows/quality-presets.yml"
+      }
     },
     {
       "id": "accessibility",
@@ -392,7 +571,13 @@
       "commands": ["pnpm run test:a11y", "pnpm run quality:presets"],
       "lanes": ["nightly"],
       "requiredForMerge": false,
-      "jobs": { "gitlab": "ops-gates" }
+      "jobs": {
+        "gitlab": "ops-gates",
+        "github": "presets"
+      },
+      "files": {
+        "github": ".github/workflows/quality-presets.yml"
+      }
     },
     {
       "id": "fullstack-e2e-postgres",
@@ -400,7 +585,13 @@
       "commands": ["pnpm run test:fullstack"],
       "lanes": ["nightly"],
       "requiredForMerge": false,
-      "jobs": { "gitlab": "docker-fullstack" }
+      "jobs": {
+        "gitlab": "docker-fullstack",
+        "github": "presets"
+      },
+      "files": {
+        "github": ".github/workflows/quality-presets.yml"
+      }
     },
     {
       "id": "fullstack-e2e-mongodb",
@@ -408,7 +599,13 @@
       "commands": ["pnpm run test:fullstack"],
       "lanes": ["nightly"],
       "requiredForMerge": false,
-      "jobs": { "gitlab": "docker-fullstack-mongodb" }
+      "jobs": {
+        "gitlab": "docker-fullstack-mongodb",
+        "github": "mongodb-fullstack"
+      },
+      "files": {
+        "github": ".github/workflows/quality-presets.yml"
+      }
     },
     {
       "id": "release-image-build",
@@ -417,7 +614,10 @@
       "pipeline": "release",
       "lanes": ["release"],
       "requiredForMerge": false,
-      "jobs": { "gitlab": "release-images" }
+      "jobs": {
+        "gitlab": "release-images",
+        "github": "build-scan-sign"
+      }
     },
     {
       "id": "release-image-signing",
@@ -426,7 +626,10 @@
       "pipeline": "release",
       "lanes": ["release"],
       "requiredForMerge": false,
-      "jobs": { "gitlab": "release-images" }
+      "jobs": {
+        "gitlab": "release-images",
+        "github": "build-scan-sign"
+      }
     }
   ],
   "supplyChain": [
@@ -504,7 +707,23 @@
       "id": "release-follows-verified-gates",
       "requirement": "The release stage follows the reports fan-in and has no needs override that bypasses earlier quality stages.",
       "scope": "provenance",
-      "evidence": ["stage: reports", "stage: release"]
+      "evidence": ["stage: reports", "stage: release"],
+      "forges": ["gitlab"],
+      "reason": "GitLab enforces the reports fan-in before its release stage; GitHub verifies a completed CI workflow instead of using GitLab stage names."
+    },
+    {
+      "id": "release-follows-verified-gates-github",
+      "requirement": "GitHub publishes only from the exact revision of a successful push-to-main CI workflow.",
+      "scope": "provenance",
+      "evidence": [
+        "workflow_run:",
+        "github.event.workflow_run.conclusion == 'success'",
+        "github.event.workflow_run.event == 'push'",
+        "github.event.workflow_run.head_branch == 'main'",
+        "ref: ${{ github.event.workflow_run.head_sha }}"
+      ],
+      "forges": ["github"],
+      "reason": "GitHub release provenance follows its completed CI workflow; GitLab performs release in the same staged pipeline."
     },
     {
       "id": "release-refuses-stale-head",

@@ -14,6 +14,9 @@ describe('notification-consumer bootstrap', () => {
     expect(source).toContain('bootstrapNestApi(appModule.NotificationConsumerModule');
     expect(source).toContain("appName: 'notification-consumer'");
     expect(source).toContain('port: 3004');
+    expect(source).toContain('enableCookieSessions: false');
+    expect(source).toContain('enableCors: false');
+    expect(source).toContain('openApi: { enabled: false }');
     expect(source).not.toContain('createApplicationContext');
   });
 });

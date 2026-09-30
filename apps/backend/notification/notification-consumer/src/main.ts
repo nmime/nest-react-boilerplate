@@ -8,7 +8,9 @@ export async function bootstrap(): Promise<void> {
   ]);
   await bootstrapModule.bootstrapNestApi(appModule.NotificationConsumerModule, {
     appName: 'notification-consumer',
-    corsOrigins: bootstrapModule.resolveDefaultDevelopmentCorsOrigins(),
+    enableCookieSessions: false,
+    enableCors: false,
+    openApi: { enabled: false },
     port: 3004,
   });
 }

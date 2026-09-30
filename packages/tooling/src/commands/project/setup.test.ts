@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-TOOLING-005
+// @requirements REQ-SCAFFOLD-TOOLING-005 REQ-SCAFFOLD-INIT-004
 // Evidence for: REQ-SCAFFOLD-TOOLING-005
 /**
  * Unit and component tests for setup CLI, doctor, and prompts.
@@ -464,6 +464,15 @@ describe("setup — repeatable command selection", () => {
   it("applies the interactive prompt result instead of discarding it", async () => {
     const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-setup-interactive-"));
     try {
+      const existing = parseNrbConfig({ schemaVersion, apps: ["landing-app"],
+        identity: { slug: "orchard", brand: { redisKeyPrefix: "orchard:" } },
+        runtime: { stagingOffset: 200 }, session: { cookieNameDev: "orchard.sid" },
+        tenant: { defaultTenantId: "a0000000-0000-0000-0000-000000000001" },
+      });
+      const initialConfig = join(workspaceRoot, "initial-config.json");
+      writeFileSync(initialConfig, JSON.stringify(existing));
+      assert.equal(await runSetupCommand({ argv: ["--config", initialConfig, "--non-interactive"],
+        packageRoot: "/mock/packages/tooling", workspaceRoot }, setupDependencies), 0);
       const promptRunner = async (): Promise<PromptResult> => ({
         apps: ["site-app"],
         capabilities: [],
@@ -487,10 +496,11 @@ describe("setup — repeatable command selection", () => {
         setupDependencies,
       );
       assert.equal(status, 0);
-      const config = JSON.parse(readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8")) as {
-        apps: string[];
-      };
+      const config = parseNrbConfig(JSON.parse(readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8")));
       assert.deepEqual(config.apps, ["site-app"]);
+      for (const key of ["identity", "appRenames", "runtime", "session", "tenant"] as const) {
+        assert.deepEqual(config[key], existing[key], key);
+      }
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
     }

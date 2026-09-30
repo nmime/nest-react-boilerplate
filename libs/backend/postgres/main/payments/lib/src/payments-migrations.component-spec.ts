@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002
+// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002 REQ-SCAFFOLD-SAFETY-008
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createHash, randomUUID } from 'node:crypto';
 import { MikroORM, type Options } from '@mikro-orm/core';
@@ -7,7 +7,6 @@ import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   createPostgresContainerMikroOrmOptions,
-  hasDockerRuntime,
   startPostgresContainer,
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
@@ -35,11 +34,8 @@ function collectUpSql(): string[] {
 }
 
 describe('payments postgres migrations against PostgreSQL', () => {
-  const dockerAvailable = hasDockerRuntime();
   let container: StartedPostgreSqlContainer | undefined;
   let orm: MikroORM<PostgreSqlDriver> | undefined;
-  let localAdminOrm: MikroORM<PostgreSqlDriver> | undefined;
-  let localDatabaseName: string | undefined;
 
   // Ledger checksums captured per spec: up SQL sha256 per migration
   const ledgerChecksums = collectUpSql().map((sql, idx) => ({
@@ -56,67 +52,20 @@ describe('payments postgres migrations against PostgreSQL', () => {
       migrationsList: [...paymentsMigrations],
     };
 
-    const initLocal = async (): Promise<MikroORM<PostgreSqlDriver>> => {
-      process.stderr.write('Payments component test: using a fresh local PostgreSQL database.\n');
-      const sourceUrl =
-        process.env.DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/nest_react_boilerplate';
-      const adminUrl = new URL(sourceUrl);
-      adminUrl.pathname = '/postgres';
-      localDatabaseName = `payments_component_${randomUUID().replaceAll('-', '')}`;
-      const localUrl = new URL(sourceUrl);
-      localUrl.pathname = `/${localDatabaseName}`;
-
-      localAdminOrm = await MikroORM.init<PostgreSqlDriver>({
-        driver: PostgreSqlDriver,
-        clientUrl: adminUrl.toString(),
-        entities: [...PaymentsPostgresEntitySchemas],
-        allowGlobalContext: true,
-        debug: false,
-      });
-      await localAdminOrm.em.getConnection().execute(`create database "${localDatabaseName}"`);
-
-      const localOptions: Partial<Options<PostgreSqlDriver>> = {
-        driver: PostgreSqlDriver,
-        clientUrl: localUrl.toString(),
-        entities: [...PaymentsPostgresEntitySchemas],
+    container = await startPostgresContainer();
+    orm = await MikroORM.init<PostgreSqlDriver>(
+      createPostgresContainerMikroOrmOptions(container, [...PaymentsPostgresEntitySchemas], {
         extensions: [Migrator],
         migrations: migrationsConfig,
-        allowGlobalContext: true,
-        debug: false,
-      };
-      return MikroORM.init<PostgreSqlDriver>(localOptions);
-    };
-
-    if (dockerAvailable) {
-      try {
-        container = await startPostgresContainer();
-        orm = await MikroORM.init<PostgreSqlDriver>(
-          createPostgresContainerMikroOrmOptions(container, [...PaymentsPostgresEntitySchemas], {
-            extensions: [Migrator],
-            migrations: migrationsConfig,
-          }),
-        );
-      } catch (error) {
-        process.stderr.write(
-          `Payments component test: Testcontainers unavailable (${String(error)}), falling back to local PostgreSQL.\n`,
-        );
-        orm = await initLocal();
-      }
-    } else {
-      orm = await initLocal();
-    }
+      }),
+    );
   });
 
   afterAll(async () => {
-    if (orm) {
-      await orm.close(true);
-    }
-    if (container) {
-      await stopPostgresContainer(container);
-    }
-    if (localAdminOrm && localDatabaseName) {
-      await localAdminOrm.em.getConnection().execute(`drop database if exists "${localDatabaseName}"`);
-      await localAdminOrm.close(true);
+    try {
+      await orm?.close(true);
+    } finally {
+      if (container) await stopPostgresContainer(container);
     }
   });
 

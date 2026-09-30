@@ -53,7 +53,7 @@ const service = (name, script, extraEnv = {}) => ({
 const api = (name, script, portEnvVar, defaultPort) =>
   service(name, script, {
     [portEnvVar]: process.env[portEnvVar] || String(defaultPort),
-    HOST: process.env.HOST || '127.0.0.1',
+    HOST: '127.0.0.1',
   });
 
 const apps = [
@@ -78,8 +78,22 @@ if (isEnabled(process.env.PM2_ENABLE_SITE)) {
   apps.push(api('site-app', 'dist/apps/frontend/site/server/index.js', 'SITE_APP_PORT', 4203));
 }
 if (isEnabled(process.env.PM2_ENABLE_NOTIFICATIONS)) {
-  apps.push(service('notification-consumer', 'dist/apps/backend/notification/notification-consumer'));
-  apps.push(service('notification-scheduler', 'dist/apps/backend/notification/notification-scheduler'));
+  apps.push(
+    api(
+      'notification-consumer',
+      'dist/apps/backend/notification/notification-consumer',
+      'NOTIFICATION_CONSUMER_PORT',
+      3004,
+    ),
+  );
+  apps.push(
+    api(
+      'notification-scheduler',
+      'dist/apps/backend/notification/notification-scheduler',
+      'NOTIFICATION_SCHEDULER_PORT',
+      3005,
+    ),
+  );
 }
 
 module.exports = { apps };

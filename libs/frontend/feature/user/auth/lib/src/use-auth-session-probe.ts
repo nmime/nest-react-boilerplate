@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthApiClient } from '@app/frontend-api-client';
 import { createApiRuntimeFetch } from '@app/frontend-api-support';
 import { useAuthShellStore, type Locale, type UiTheme } from '@app/frontend-runtime';
-import { getPayloadLocale, getPayloadTheme } from '@app/frontend-feature-user-profile';
+import { getPayloadLocale, getPayloadTheme, getPayloadPrincipal } from '@app/frontend-feature-user-profile';
 import { authMeQueryKey, fetchAuthMe } from './auth-api';
 
 export interface AuthSessionProbeInput {
@@ -39,7 +39,7 @@ export function useAuthSessionProbe({
       return;
     }
     if (authMeQuery.data) {
-      authStore.markAuthenticated();
+      authStore.markAuthenticated(getPayloadPrincipal(authMeQuery.data));
     } else {
       authStore.clearSession();
     }

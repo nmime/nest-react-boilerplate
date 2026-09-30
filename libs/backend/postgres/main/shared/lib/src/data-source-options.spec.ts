@@ -3,6 +3,11 @@
 import { Migrator } from '@mikro-orm/migrations';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { describe, expect, it } from 'vitest';
+import { Client } from 'pg';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createPostgresConnectionOptions } from './postgres-connection-options';
 import { PostgresMigrationsTableName, createPostgresMikroOrmOptions } from './data-source-options';
 import {
   DefaultPostgresDatabase,
@@ -20,6 +25,90 @@ import {
 } from './database.config';
 
 describe('Postgres MikroORM options', () => {
+  it('keeps URI verified TLS effective in native pg even when legacy flags default to false', () => {
+    const uri = 'postgres://user:synthetic_tls_password@db.example/app?sslmode=verify-full&application_name=fixture';
+    const policy = createPostgresConnectionOptions(uri, { POSTGRES_SSL: 'false' });
+    expect(policy).toEqual({
+      connectionString: 'postgres://user:synthetic_tls_password@db.example/app?application_name=fixture',
+      ssl: { rejectUnauthorized: true },
+    });
+    expect(new Client(policy).ssl).toEqual({ rejectUnauthorized: true });
+    expect(createPostgresMikroOrmOptions({}, { DATABASE_URL: uri, POSTGRES_SSL: 'false' }).driverOptions).toEqual(
+      policy,
+    );
+  });
+
+  it('retains URI CA and client trust material after pg reparses the forwarded URL', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'nrb-tls-policy-'));
+    try {
+      const ca = join(directory, 'ca.pem');
+      const cert = join(directory, 'client.pem');
+      const key = join(directory, 'client.key');
+      writeFileSync(ca, 'fixture-ca-content');
+      writeFileSync(cert, 'fixture-certificate-content');
+      writeFileSync(key, 'fixture-key-content', { mode: 0o600 });
+      const uri = new URL('postgres://db.example/app');
+      uri.searchParams.set('sslmode', 'verify-full');
+      uri.searchParams.set('sslrootcert', ca);
+      uri.searchParams.set('sslcert', cert);
+      uri.searchParams.set('sslkey', key);
+      const policy = createPostgresConnectionOptions(uri.toString(), { POSTGRES_SSL_REJECT_UNAUTHORIZED: 'false' });
+      expect(new URL(policy.connectionString ?? '').searchParams.size).toBe(0);
+      expect(new Client(policy).ssl).toMatchObject({
+        ca: 'fixture-ca-content',
+        cert: 'fixture-certificate-content',
+        key: 'fixture-key-content',
+        rejectUnauthorized: true,
+      });
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('applies one environment policy while preserving explicit URI disablement', () => {
+    expect(createPostgresConnectionOptions('postgres://db.example/app', { POSTGRES_SSL: true })).toMatchObject({
+      ssl: { rejectUnauthorized: true },
+    });
+    expect(
+      createPostgresConnectionOptions(undefined, { POSTGRES_SSL: 'true', POSTGRES_SSL_REJECT_UNAUTHORIZED: 'false' }),
+    ).toEqual({ ssl: { rejectUnauthorized: false } });
+    expect(createPostgresConnectionOptions('postgres://db.example/app', { PGSSLMODE: 'verify-full' })).toMatchObject({
+      ssl: { rejectUnauthorized: true },
+    });
+    expect(
+      createPostgresConnectionOptions('postgres://db.example/app?sslmode=disable', { POSTGRES_SSL: true }),
+    ).toEqual({ connectionString: 'postgres://db.example/app', ssl: false });
+    expect(createPostgresConnectionOptions('postgres://db.example/app?sslmode=no-verify', {})).toMatchObject({
+      ssl: { rejectUnauthorized: false },
+    });
+  });
+
+  it('retains direct TLS negotiation and fails closed on malformed policy without printing a URL', () => {
+    expect(createPostgresConnectionOptions('postgres://db.example/app?sslnegotiation=direct', {})).toEqual({
+      connectionString: 'postgres://db.example/app',
+      ssl: { rejectUnauthorized: true },
+      sslnegotiation: 'direct',
+    });
+    expect(() => createPostgresConnectionOptions('postgres://db.example/app?sslmode=typo', {})).toThrow(
+      'Invalid PostgreSQL TLS mode',
+    );
+    expect(() => createPostgresConnectionOptions(undefined, { PGSSLMODE: 'typo' })).toThrow(
+      'Invalid PostgreSQL TLS mode',
+    );
+    expect(() => createPostgresConnectionOptions(undefined, { POSTGRES_SSL: 1 })).toThrow(
+      'POSTGRES_SSL must be a boolean',
+    );
+    expect(() => createPostgresConnectionOptions('postgres://db.example/app?uselibpqcompat=true', {})).toThrow(
+      'Incomplete PostgreSQL URI TLS policy',
+    );
+    expect(() => createPostgresConnectionOptions(undefined, { PGSSLNEGOTIATION: 'direct' })).toThrow(
+      'Invalid PostgreSQL TLS negotiation policy',
+    );
+    expect(() => createPostgresConnectionOptions('not-a-connection-url', {})).toThrow(
+      'Invalid PostgreSQL connection URL',
+    );
+  });
+
   it('uses secure local defaults without automatic schema sync', () => {
     expect(createPostgresMikroOrmOptions({}, {})).toMatchObject({
       driver: PostgreSqlDriver,
@@ -28,7 +117,7 @@ describe('Postgres MikroORM options', () => {
       user: DefaultPostgresUser,
       dbName: DefaultPostgresDatabase,
       debug: false,
-      driverOptions: {},
+      driverOptions: { ssl: false },
       entities: [],
       extensions: [Migrator],
       migrations: {
@@ -123,7 +212,7 @@ describe('Postgres MikroORM options', () => {
       password: 'secret',
       dbName: 'app_db',
       driverOptions: {
-        connection: { ssl: { rejectUnauthorized: false } },
+        ssl: { rejectUnauthorized: false },
       },
       debug: true,
     });

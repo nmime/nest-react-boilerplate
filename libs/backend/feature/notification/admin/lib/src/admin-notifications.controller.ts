@@ -98,14 +98,21 @@ export class AdminNotificationsController {
     @Body() input: CreateAdminNotificationTemplateDto,
   ) {
     return createOkResponse(
-      await this.mutate(principal, 'admin.notification_template.create', 'admin.notification-templates', () =>
-        this.notifications.createTemplate({
-          ...input,
-          tenantId: principal.tenantId,
-          actorId: principal.subject,
-          variablesSchema: input.variablesSchema as NotificationVariablesSchema | undefined,
-          channels: input.channels as never,
-        }),
+      await this.mutate(
+        principal,
+        'admin.notification_template.create',
+        'admin.notification-templates',
+        (transaction) =>
+          this.notifications.createTemplate(
+            {
+              ...input,
+              tenantId: principal.tenantId,
+              actorId: principal.subject,
+              variablesSchema: input.variablesSchema as NotificationVariablesSchema | undefined,
+              channels: input.channels as never,
+            },
+            transaction,
+          ),
       ),
     );
   }
@@ -129,14 +136,19 @@ export class AdminNotificationsController {
       principal,
       'admin.notification_template.update',
       `admin.notification-templates:${id}`,
-      () =>
-        this.notifications.updateTemplate(id, principal.tenantId, {
-          ...input,
-          actorId: principal.subject,
-          variablesSchema: input.variablesSchema as NotificationVariablesSchema | undefined,
-          channels: input.channels as never,
-          expectedUpdatedAt: input.expectedUpdatedAt ? new Date(input.expectedUpdatedAt) : undefined,
-        }),
+      (transaction) =>
+        this.notifications.updateTemplate(
+          id,
+          principal.tenantId,
+          {
+            ...input,
+            actorId: principal.subject,
+            variablesSchema: input.variablesSchema as NotificationVariablesSchema | undefined,
+            channels: input.channels as never,
+            expectedUpdatedAt: input.expectedUpdatedAt ? new Date(input.expectedUpdatedAt) : undefined,
+          },
+          transaction,
+        ),
     );
     return createOkResponse(this.requireFound(result));
   }
@@ -188,17 +200,20 @@ export class AdminNotificationsController {
       principal,
       'admin.notification_template.test_send',
       `admin.notification-templates:${id}`,
-      () =>
-        this.notifications.testSend({
-          id,
-          tenantId: principal.tenantId,
-          targetType: input.targetType,
-          targetId: input.targetId,
-          channel: input.channel,
-          provider: input.provider,
-          language: input.language,
-          variables: input.variables as NotificationData,
-        }),
+      (transaction) =>
+        this.notifications.testSend(
+          {
+            id,
+            tenantId: principal.tenantId,
+            targetType: input.targetType,
+            targetId: input.targetId,
+            channel: input.channel,
+            provider: input.provider,
+            language: input.language,
+            variables: input.variables as NotificationData,
+          },
+          transaction,
+        ),
     );
     return createOkResponse({ message: { notificationId: notification.id } });
   }
@@ -230,13 +245,16 @@ export class AdminNotificationsController {
     @Body() input: CreateAdminNotificationSegmentDto,
   ) {
     return createOkResponse(
-      await this.mutate(principal, 'admin.notification_segment.create', 'admin.notification-segments', () =>
-        this.notifications.createSegment({
-          ...input,
-          tenantId: principal.tenantId,
-          actorId: principal.subject,
-          parameters: input.parameters as NotificationData | undefined,
-        }),
+      await this.mutate(principal, 'admin.notification_segment.create', 'admin.notification-segments', (transaction) =>
+        this.notifications.createSegment(
+          {
+            ...input,
+            tenantId: principal.tenantId,
+            actorId: principal.subject,
+            parameters: input.parameters as NotificationData | undefined,
+          },
+          transaction,
+        ),
       ),
     );
   }
@@ -260,12 +278,17 @@ export class AdminNotificationsController {
       principal,
       'admin.notification_segment.update',
       `admin.notification-segments:${id}`,
-      () =>
-        this.notifications.updateSegment(id, principal.tenantId, {
-          ...input,
-          actorId: principal.subject,
-          parameters: input.parameters as NotificationData | undefined,
-        }),
+      (transaction) =>
+        this.notifications.updateSegment(
+          id,
+          principal.tenantId,
+          {
+            ...input,
+            actorId: principal.subject,
+            parameters: input.parameters as NotificationData | undefined,
+          },
+          transaction,
+        ),
     );
     return createOkResponse(this.requireFound(result));
   }
@@ -286,13 +309,20 @@ export class AdminNotificationsController {
     @Body() input: UploadAdminNotificationSegmentCsvDto,
   ) {
     return createOkResponse(
-      await this.mutate(principal, 'admin.notification_segment.upload', `admin.notification-segments:${id}`, () =>
-        this.notifications.uploadSegmentCsv({
-          id,
-          tenantId: principal.tenantId,
-          actorId: principal.subject,
-          ...input,
-        }),
+      await this.mutate(
+        principal,
+        'admin.notification_segment.upload',
+        `admin.notification-segments:${id}`,
+        (transaction) =>
+          this.notifications.uploadSegmentCsv(
+            {
+              id,
+              tenantId: principal.tenantId,
+              actorId: principal.subject,
+              ...input,
+            },
+            transaction,
+          ),
       ),
     );
   }
@@ -312,7 +342,7 @@ export class AdminNotificationsController {
       principal,
       'admin.notification_segment.archive',
       `admin.notification-segments:${id}`,
-      () => this.notifications.archiveSegment(id, principal.tenantId, principal.subject),
+      (transaction) => this.notifications.archiveSegment(id, principal.tenantId, principal.subject, transaction),
     );
     return createOkResponse(this.requireFound(result));
   }
@@ -335,13 +365,20 @@ export class AdminNotificationsController {
     @Body() input: CreateAdminNotificationBroadcastDto,
   ) {
     return createOkResponse(
-      await this.mutate(principal, 'admin.notification_broadcast.create', 'admin.notification-broadcasts', () =>
-        this.notifications.createBroadcast({
-          ...input,
-          tenantId: principal.tenantId,
-          actorId: principal.subject,
-          globalVariables: input.globalVariables as NotificationData | undefined,
-        }),
+      await this.mutate(
+        principal,
+        'admin.notification_broadcast.create',
+        'admin.notification-broadcasts',
+        (transaction) =>
+          this.notifications.createBroadcast(
+            {
+              ...input,
+              tenantId: principal.tenantId,
+              actorId: principal.subject,
+              globalVariables: input.globalVariables as NotificationData | undefined,
+            },
+            transaction,
+          ),
       ),
     );
   }
@@ -365,11 +402,16 @@ export class AdminNotificationsController {
       principal,
       'admin.notification_broadcast.update',
       `admin.notification-broadcasts:${id}`,
-      () =>
-        this.notifications.updateBroadcast(id, principal.tenantId, {
-          ...input,
-          globalVariables: input.globalVariables as NotificationData | undefined,
-        }),
+      (transaction) =>
+        this.notifications.updateBroadcast(
+          id,
+          principal.tenantId,
+          {
+            ...input,
+            globalVariables: input.globalVariables as NotificationData | undefined,
+          },
+          transaction,
+        ),
     );
     return createOkResponse(this.requireFound(result));
   }
@@ -464,10 +506,10 @@ export class AdminNotificationsController {
       principal,
       `admin.notification_template.${action}`,
       `admin.notification-templates:${id}`,
-      () =>
+      (transaction) =>
         action === 'publish'
-          ? this.notifications.publishTemplate(id, principal.tenantId, principal.subject)
-          : this.notifications.archiveTemplate(id, principal.tenantId, principal.subject),
+          ? this.notifications.publishTemplate(id, principal.tenantId, principal.subject, transaction)
+          : this.notifications.archiveTemplate(id, principal.tenantId, principal.subject, transaction),
     );
     return createOkResponse(this.requireFound(result));
   }
@@ -486,15 +528,18 @@ export class AdminNotificationsController {
       principal,
       'admin.notification_broadcast.command',
       `admin.notification-broadcasts:${id}`,
-      () =>
-        this.notifications.command({
-          broadcastId: id,
-          tenantId: principal.tenantId,
-          actorId: principal.subject,
-          action,
-          idempotencyKey: key.trim(),
-          scheduledAt,
-        }),
+      (transaction) =>
+        this.notifications.command(
+          {
+            broadcastId: id,
+            tenantId: principal.tenantId,
+            actorId: principal.subject,
+            action,
+            idempotencyKey: key.trim(),
+            scheduledAt,
+          },
+          transaction,
+        ),
       { action },
     );
     return createOkResponse(this.requireFound(result));
@@ -504,7 +549,7 @@ export class AdminNotificationsController {
     principal: AuthenticatedPrincipal,
     action: Parameters<AuditLogAdminService['record']>[0]['action'],
     resource: string,
-    operation: () => Promise<T>,
+    operation: (transaction: unknown) => Promise<T>,
     metadata: Record<string, unknown> = {},
   ): Promise<T> {
     const [resourceName, explicitTargetId] = resource.split(':', 2);
@@ -519,7 +564,7 @@ export class AdminNotificationsController {
           after: (result) => toAuditSnapshot(result),
           metadata,
         },
-        () => this.execute(operation),
+        (transaction) => this.execute(() => operation(transaction)),
       );
     } catch (error) {
       if (!(error instanceof AuditLogAdminPersistenceError)) {
@@ -590,16 +635,19 @@ interface NotificationAdminOperations {
     language: string,
     variables: NotificationData,
   ): Promise<unknown>;
-  testSend(input: {
-    id: string;
-    tenantId: string;
-    targetType: NotificationTargetType;
-    targetId: string;
-    channel: NotificationDeliveryChannel;
-    provider: NotificationDeliveryProvider;
-    language?: string;
-    variables: NotificationData;
-  }): Promise<NotificationRecord>;
+  testSend(
+    input: {
+      id: string;
+      tenantId: string;
+      targetType: NotificationTargetType;
+      targetId: string;
+      channel: NotificationDeliveryChannel;
+      provider: NotificationDeliveryProvider;
+      language?: string;
+      variables: NotificationData;
+    },
+    transaction?: unknown,
+  ): Promise<NotificationRecord>;
   listResolvers(): NotificationSegmentResolverMetadata[];
   listSegments(tenantId: string, includeArchived?: boolean): Promise<NotificationSegmentRecord[]>;
   getSegment: NotificationBroadcastPersistence['getSegment'];
@@ -607,13 +655,16 @@ interface NotificationAdminOperations {
   updateSegment: NotificationBroadcastPersistence['updateSegment'];
   archiveSegment: NotificationBroadcastPersistence['archiveSegment'];
   estimateSegment(id: string, tenantId: string): Promise<{ count: number }>;
-  uploadSegmentCsv(input: {
-    id: string;
-    tenantId: string;
-    actorId: string;
-    filename: string;
-    contentBase64: string;
-  }): Promise<NotificationSegmentUploadRecord>;
+  uploadSegmentCsv(
+    input: {
+      id: string;
+      tenantId: string;
+      actorId: string;
+      filename: string;
+      contentBase64: string;
+    },
+    transaction?: unknown,
+  ): Promise<NotificationSegmentUploadRecord>;
   getSegmentUpload: NotificationBroadcastPersistence['getSegmentUpload'];
   listBroadcasts: NotificationBroadcastPersistence['listBroadcasts'];
   getBroadcast: NotificationBroadcastPersistence['getBroadcast'];

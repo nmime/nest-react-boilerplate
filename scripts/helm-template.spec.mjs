@@ -528,6 +528,17 @@ test('one route table serves both edges, so a new namespace is a single row', { 
   assert.match(overriddenConfigMap, /location \^~ \/marketplace\/ \{[\s\S]*?nrbtest-user-app-api:80/u);
 });
 
+test('frontend proxy trust requires an explicit safe immediate-proxy CIDR list', { skip: !HELM }, () => {
+  const result = render('nrbtest', ['--set-json', 'frontendNginx.trustedProxyCidrs=["10.23.0.0/24","::1/128"]']);
+  const config = docFor(result, 'ConfigMap', 'nrbtest-frontend-nginx');
+  assert.ok(config.includes('10.23.0.0/24 1;'));
+  assert.ok(config.includes('::1/128 1;'));
+  assert.ok(config.includes('default $scheme;'));
+  for (const value of [['0.0.0.0/0'], ['::/0'], ['10.23.0.0/33'], ['10.23.0.0/24;include /private/file;']]) {
+    assert.throws(() => render('nrbtest', ['--set-json', `frontendNginx.trustedProxyCidrs=${JSON.stringify(value)}`]), /trustedProxyCidrs/u);
+  }
+});
+
 test('a generated host table gets TLS for every enabled host without restating them', { skip: !HELM }, () => {
   // `nrb setup` regenerates ingress.hosts for the product's own domain. A TLS list keyed to the
   // chart's example.com hosts would silently intersect to nothing and ship a certificate-free

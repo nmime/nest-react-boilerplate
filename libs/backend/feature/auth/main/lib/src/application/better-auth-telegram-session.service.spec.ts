@@ -8,6 +8,7 @@ const createService = (session: unknown, accounts: unknown[]) => {
     api: {
       getSession: vi.fn().mockResolvedValue(session),
       listUserAccounts: vi.fn().mockResolvedValue(accounts),
+      signOut: vi.fn().mockResolvedValue(new Response('{}')),
     },
   };
   return { betterAuth, service: new BetterAuthTelegramSessionService(betterAuth as never) };
@@ -29,6 +30,7 @@ describe(BetterAuthTelegramSessionService.name, () => {
     });
     expect(betterAuth.api.getSession).toHaveBeenCalledWith({
       headers: expect.objectContaining({}),
+      query: { disableCookieCache: true, disableRefresh: true },
     });
     const { headers } = betterAuth.api.getSession.mock.calls[0]?.[0] as { headers: Headers };
     expect(headers.get('cookie')).toBe('better-auth.session_token=one, other=two');
@@ -46,6 +48,42 @@ describe(BetterAuthTelegramSessionService.name, () => {
 
     await expect(missing.service.requireTelegramProfile({})).rejects.toThrow('telegram_better_auth_account_required');
     await expect(invalid.service.requireTelegramProfile({})).rejects.toThrow('telegram_better_auth_account_required');
+  });
+
+  it('returns every clearing cookie only after the original credential is revoked', async () => {
+    const { betterAuth, service } = createService(null, []);
+    const headers = new Headers();
+    headers.append('set-cookie', 'better-auth.session_token=; Max-Age=0; Path=/');
+    headers.append('set-cookie', 'better-auth.session_data=; Max-Age=0; Path=/');
+    betterAuth.api.signOut.mockResolvedValueOnce(new Response('{}', { headers }));
+
+    await expect(service.revokeSession({ cookie: 'better-auth.session_token=original' })).resolves.toEqual(
+      headers.getSetCookie(),
+    );
+    expect(betterAuth.api.signOut).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
+      body: { disableRedirect: true },
+      asResponse: true,
+    });
+    expect(betterAuth.api.getSession).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
+      query: { disableCookieCache: true, disableRefresh: true },
+    });
+    const incoming = betterAuth.api.getSession.mock.calls[0]?.[0] as { headers: Headers };
+    expect(incoming.headers.get('cookie')).toContain('original');
+  });
+
+  it('does not accept signOut success when the server still stores the original session', async () => {
+    const { service } = createService({ user: { id: 'retained' }, session: { id: 'retained-session' } }, []);
+    await expect(service.revokeSession({ cookie: 'better-auth.session_token=original' })).rejects.toThrow();
+  });
+
+  it('fails revocation on an unsuccessful response or unavailable authoritative store', async () => {
+    const { betterAuth, service } = createService(null, []);
+    betterAuth.api.signOut.mockResolvedValueOnce(new Response('{}', { status: 503 }));
+    await expect(service.revokeSession({})).rejects.toThrow();
+    betterAuth.api.getSession.mockRejectedValueOnce(new Error('store unavailable'));
+    await expect(service.revokeSession({})).rejects.toThrow('store unavailable');
   });
 });
 

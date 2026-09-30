@@ -2,8 +2,10 @@
 
 Cron-driven notification delivery process. It claims durable delivery rows,
 resolves recipients and provider strategies, sends messages, persists retry or
-terminal outcomes, and maintains future delivery partitions. It exposes no
-HTTP surface.
+terminal outcomes, and maintains future delivery partitions. It retains the
+shared private operational HTTP host for health, with a development default
+port of 3005 (`PORT` may override it). Browser cookie sessions, CORS, Swagger,
+and product HTTP controllers are disabled.
 
 ## Verification
 
@@ -13,13 +15,12 @@ pnpm exec nx run notification-scheduler:test
 pnpm exec nx run notification-scheduler:serve
 ```
 
-## Completion contract
+## Runtime ownership
 
-This source scaffold is not automatically added to the setup catalog or runtime.
-Register its stable ID, classification, dependencies, and enterprise-profile
-membership before `pnpm nrb setup` can select it; `pnpm run onboarding:verify`
-fails until every real Nx application is registered. Then complete the applicable
-[deployable registration checklist](../../../../docs/scaffolding-and-extension.md#application-completion-checklist)
-for local Compose, Docker/Helm, ingress, DNS, TLS, and observability before
-calling the service production-ready. Keep Nx identity and tags in
-`project.json`; do not copy them into this README.
+The `notifications` capability selects this registered scheduler and its
+consumer with the configured durable database provider. Compose and Helm run
+the scheduler as a background process without a public hostname or ingress.
+The current chart does not create a worker Service or HTTP probes. Successful
+process startup does not prove database readiness, actual provider delivery,
+or recipient acceptance. See [Notifications](../../../../docs/notifications.md)
+and the generated [Project Catalog](../../../../docs/project-catalog.md).

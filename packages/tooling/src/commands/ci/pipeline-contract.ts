@@ -40,6 +40,8 @@ export interface CiGate {
   lanes: string[];
   requiredForMerge: boolean;
   jobs: Record<string, string>;
+  /** Explicit workflow files for gates outside the forge's merge pipeline. */
+  files?: Record<string, string>;
   /** Present only when a gate deliberately does not run on every forge. */
   forges?: string[];
   /** Why the restriction above exists. Mandatory whenever `forges` is set. */
@@ -284,6 +286,13 @@ function parseGates(
       if (!forgeIds.has(forgeId)) problems.push(`gates.${id}.jobs references unknown forge "${forgeId}"`);
     }
 
+    const files = value.files === undefined ? undefined : readStringMap(value.files, `gates.${id}.files`, problems);
+    for (const forgeId of Object.keys(files ?? {})) {
+      if (!forgeIds.has(forgeId)) problems.push(`gates.${id}.files references unknown forge "${forgeId}"`);
+      if (value.requiredForMerge === true) problems.push(`gates.${id} is merge-required and must use its forge's merge pipeline`);
+      if (pipeline !== 'default') problems.push(`gates.${id}.files cannot override a release or promotion pipeline`);
+    }
+
     let forges: string[] | undefined;
     if (value.forges !== undefined) {
       forges = readStringArray(value.forges, `gates.${id}.forges`, problems);
@@ -313,6 +322,7 @@ function parseGates(
       lanes,
       requiredForMerge: value.requiredForMerge === true,
       jobs,
+      ...(files ? { files } : {}),
       ...(forges ? { forges } : {}),
       ...(typeof value.reason === 'string' ? { reason: value.reason } : {}),
       ...(toolchain ? { toolchain } : {}),

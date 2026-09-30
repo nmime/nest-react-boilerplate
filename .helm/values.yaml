@@ -158,6 +158,9 @@ frontendNginx:
   healthPath: /nginx-health
   listenPort: 8080
   cspConnectSrc: "'self'"
+  # Exact immediate TLS terminator addresses/subnets. Empty rejects incoming
+  # forwarded-protocol claims; never trust every client with a /0 network.
+  trustedProxyCidrs: []
   # The route table lives in .helm/frontend-routes.json so the Compose edge can be generated from
   # the same rows. Set this only to override the shipped table for one release; a permanent route
   # belongs in that file, where both edges see it.
@@ -569,7 +572,7 @@ backups:
     pullPolicy: IfNotPresent
   mongodbImage:
     repository: mongo
-    tag: '8.0.12-noble'
+    tag: '8.0.32-noble'
     pullPolicy: IfNotPresent
   mongodb:
     # Must contain a deployment-wide MONGODB_BACKUP_RESTORE_URI with

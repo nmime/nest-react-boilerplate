@@ -371,6 +371,8 @@ export interface BackendModuleWiring {
   importName: string;
   importPath: string;
   moduleExpression: string;
+  /** Explicit service-only or otherwise specialized composition for selected hosts. */
+  moduleExpressionByHost?: Partial<Record<AppId, string>>;
   additionalImports?: BackendModuleImport[];
 }
 
@@ -567,6 +569,12 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
           ],
           moduleExpression:
             'FiatCurrencyMainModule.forRoot({ imports: [FiatCurrencyPostgresModule], exposeHttp: true })',
+          moduleExpressionByHost: {
+            'notification-consumer':
+              'FiatCurrencyMainModule.forRoot({ imports: [FiatCurrencyPostgresModule], exposeHttp: false })',
+            'notification-scheduler':
+              'FiatCurrencyMainModule.forRoot({ imports: [FiatCurrencyPostgresModule], exposeHttp: false })',
+          },
         },
       ],
       mongodb: [
@@ -582,6 +590,12 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
           ],
           moduleExpression:
             'FiatCurrencyMainModule.forRoot({ imports: [FiatCurrencyMongoPersistenceModule], exposeHttp: true })',
+          moduleExpressionByHost: {
+            'notification-consumer':
+              'FiatCurrencyMainModule.forRoot({ imports: [FiatCurrencyMongoPersistenceModule], exposeHttp: false })',
+            'notification-scheduler':
+              'FiatCurrencyMainModule.forRoot({ imports: [FiatCurrencyMongoPersistenceModule], exposeHttp: false })',
+          },
         },
       ],
     },
@@ -654,6 +668,12 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
           ],
           moduleExpression:
             'PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })',
+          moduleExpressionByHost: {
+            'notification-consumer':
+              'PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: false, scheduler: { enabled: true, intervalMs: 60_000 } })',
+            'notification-scheduler':
+              'PaymentsMainModule.forRoot({ imports: [PaymentsPostgresModule], exposeHttp: false, scheduler: { enabled: true, intervalMs: 60_000 } })',
+          },
         },
       ],
       mongodb: [
@@ -669,6 +689,12 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
           ],
           moduleExpression:
             'PaymentsMainModule.forRoot({ imports: [PaymentsMongoPersistenceModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })',
+          moduleExpressionByHost: {
+            'notification-consumer':
+              'PaymentsMainModule.forRoot({ imports: [PaymentsMongoPersistenceModule], exposeHttp: false, scheduler: { enabled: true, intervalMs: 60_000 } })',
+            'notification-scheduler':
+              'PaymentsMainModule.forRoot({ imports: [PaymentsMongoPersistenceModule], exposeHttp: false, scheduler: { enabled: true, intervalMs: 60_000 } })',
+          },
         },
       ],
     },

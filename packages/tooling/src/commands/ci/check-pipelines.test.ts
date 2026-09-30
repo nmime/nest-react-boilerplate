@@ -1,6 +1,9 @@
 // @requirements REQ-ASSURANCE-RELEASE-003
 import assert from 'node:assert/strict';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { parse } from 'yaml';
 import { describe, it } from 'node:test';
 
 import { collectForgeSources, configuredForges, declaredPipelineFiles, loadCiContract, runCiPipelineCheck } from './check-pipelines';
@@ -9,11 +12,38 @@ import { evaluateParity } from './pipeline-parity';
 const workspaceRoot = resolve(import.meta.dirname, '../../../../..');
 
 describe('shipped CI gate descriptor', () => {
+  it('returns failure when a valid descriptor has no configured pipeline', () => {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-absent-forges-'));
+    try {
+      mkdirSync(join(root, 'scripts/ci'), { recursive: true });
+      writeFileSync(join(root, 'scripts/ci/gates.json'), JSON.stringify(loadCiContract(workspaceRoot)));
+      const lines: string[] = [];
+      assert.equal(runCiPipelineCheck({ workspaceRoot: root, write: (line) => lines.push(line) }), 1);
+      assert.ok(lines.some((line) => line.includes('no-configured-forge')));
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+
+  it('allows the schedule-only operational need without making mandatory merge jobs optional', () => {
+    const pipeline = parse(readFileSync(join(workspaceRoot, '.gitlab-ci.yml'), 'utf8')) as Record<string, {
+      needs?: Array<{ job: string; optional?: boolean }>;
+      rules?: Array<{ if?: string }>;
+    }>;
+    assert.deepEqual(pipeline['ops-gates']?.rules, [{ if: '$CI_PIPELINE_SOURCE == "schedule"' }]);
+    const needs = pipeline['ci-status-summary']?.needs ?? [];
+    assert.equal(needs.find((need) => need.job === 'ops-gates')?.optional, true);
+    for (const job of ['fast-check', 'full-check', 'component-tests']) {
+      const need = needs.find((need) => need.job === job);
+      assert.ok(need, `${job} remains required by the merge aggregate`);
+      assert.notEqual(need.optional, true);
+    }
+  });
+
   it('is a valid contract', () => {
     const contract = loadCiContract(workspaceRoot);
 
     assert.ok(contract.gates.length > 0, 'the descriptor must inventory at least one gate');
     assert.ok(Object.keys(contract.forges).includes('gitlab'), 'GitLab must be a first-class forge');
+    assert.ok(Object.keys(contract.forges).includes('github'), 'the protected GitHub upstream must be configured');
   });
 
   // This is the drift gate: adding a job to one forge and not the other, or dropping a
@@ -58,11 +88,11 @@ describe('descriptor-driven pipeline discovery', () => {
     const files = declaredPipelineFiles(workspaceRoot);
 
     assert.ok(files.includes('.gitlab-ci.yml'), 'the GitLab pipeline must be in scope');
-    assert.deepEqual(
-      files.filter((file) => file.startsWith('.github/')),
-      [],
-      'the descriptor must not name a pipeline this checkout no longer ships',
-    );
+    assert.deepEqual(files.filter((file) => file.startsWith('.github/')), [
+      '.github/workflows/ci.yml', '.github/workflows/deploy.yml', '.github/workflows/quality-presets.yml',
+      '.github/workflows/release-images.yml', '.github/workflows/release.yml',
+      '.github/workflows/spec-assurance-nightly.yml', '.github/workflows/spec-assurance-runtime.yml',
+    ]);
     assert.deepEqual([...files].sort(), files, 'the order must be stable for reproducible reports');
   });
 
@@ -75,14 +105,20 @@ describe('descriptor-driven pipeline discovery', () => {
 
     assert.deepEqual(
       forges.map(({ id }) => id).sort(),
-      ['gitlab'],
-      'GitLab is the only forge this repository ships, and the descriptor must say so',
+      ['github', 'gitlab'],
+      'both shipped forges are explicit in the descriptor',
     );
-    assert.equal(forges[0]?.jobStyle, 'gitlab');
-    assert.equal(forges[0]?.pipeline, '.gitlab-ci.yml');
-    assert.equal(forges[0]?.releasePipeline, '.gitlab-ci.yml');
-    assert.equal(forges[0]?.provenancePipeline, '.gitlab-ci.yml');
-    assert.equal(forges[0]?.promotionPipeline, undefined, 'no promotion pipeline is shipped');
+    const gitlab = forges.find(({ id }) => id === 'gitlab');
+    const github = forges.find(({ id }) => id === 'github');
+    assert.equal(gitlab?.jobStyle, 'gitlab');
+    assert.equal(gitlab?.pipeline, '.gitlab-ci.yml');
+    assert.equal(gitlab?.releasePipeline, '.gitlab-ci.yml');
+    assert.equal(gitlab?.provenancePipeline, '.gitlab-ci.yml');
+    assert.equal(gitlab?.promotionPipeline, undefined);
+    assert.equal(github?.pipeline, '.github/workflows/ci.yml');
+    assert.equal(github?.releasePipeline, '.github/workflows/release-images.yml');
+    assert.equal(github?.provenancePipeline, '.github/workflows/release.yml');
+    assert.equal(github?.promotionPipeline, '.github/workflows/deploy.yml');
   });
 
   it('omits a forge whose pipeline file this checkout does not contain', () => {

@@ -50,20 +50,20 @@ export class NotificationAdminService {
     return this.broadcasts.getTemplate(id, tenantId);
   }
 
-  createTemplate(input: CreateAdminNotificationTemplateInput) {
-    return this.broadcasts.createAdminTemplate(input);
+  createTemplate(input: CreateAdminNotificationTemplateInput, transaction?: unknown) {
+    return this.broadcasts.createAdminTemplate(input, transaction);
   }
 
-  updateTemplate(id: string, tenantId: string, input: UpdateAdminNotificationTemplateInput) {
-    return this.broadcasts.updateAdminTemplate(id, tenantId, input);
+  updateTemplate(id: string, tenantId: string, input: UpdateAdminNotificationTemplateInput, transaction?: unknown) {
+    return this.broadcasts.updateAdminTemplate(id, tenantId, input, transaction);
   }
 
-  publishTemplate(id: string, tenantId: string, actorId: string) {
-    return this.broadcasts.publishAdminTemplate(id, tenantId, actorId);
+  publishTemplate(id: string, tenantId: string, actorId: string, transaction?: unknown) {
+    return this.broadcasts.publishAdminTemplate(id, tenantId, actorId, transaction);
   }
 
-  archiveTemplate(id: string, tenantId: string, actorId: string) {
-    return this.broadcasts.archiveAdminTemplate(id, tenantId, actorId);
+  archiveTemplate(id: string, tenantId: string, actorId: string, transaction?: unknown) {
+    return this.broadcasts.archiveAdminTemplate(id, tenantId, actorId, transaction);
   }
 
   async previewTemplate(
@@ -111,33 +111,39 @@ export class NotificationAdminService {
     return message;
   }
 
-  async testSend(input: {
-    id: string;
-    tenantId: string;
-    targetType: NotificationTargetType;
-    targetId: string;
-    channel: NotificationDeliveryChannel;
-    provider: NotificationDeliveryProvider;
-    language?: string;
-    variables: NotificationData;
-  }) {
-    const template = await this.requireTemplate(input.id, input.tenantId);
+  async testSend(
+    input: {
+      id: string;
+      tenantId: string;
+      targetType: NotificationTargetType;
+      targetId: string;
+      channel: NotificationDeliveryChannel;
+      provider: NotificationDeliveryProvider;
+      language?: string;
+      variables: NotificationData;
+    },
+    transaction?: unknown,
+  ) {
+    const template = await this.requireTemplate(input.id, input.tenantId, transaction);
     const version = template.versions.find((item) => item.id === template.currentVersionId && item.publishedAt);
     if (!version) {
       throw new Error('notification_template_version_not_published');
     }
     const [data, sensitiveData] = splitSensitive(version.variablesSchema, input.variables);
-    return this.notifications.create({
-      tenantId: input.tenantId,
-      targetType: input.targetType,
-      targetId: input.targetId,
-      templateCode: template.code,
-      deliveries: [{ channel: input.channel, provider: input.provider }],
-      inAppVisible: false,
-      data,
-      sensitiveData,
-      extra: input.language ? { useLanguage: input.language } : undefined,
-    });
+    return this.notifications.create(
+      {
+        tenantId: input.tenantId,
+        targetType: input.targetType,
+        targetId: input.targetId,
+        templateCode: template.code,
+        deliveries: [{ channel: input.channel, provider: input.provider }],
+        inAppVisible: false,
+        data,
+        sensitiveData,
+        extra: input.language ? { useLanguage: input.language } : undefined,
+      },
+      transaction,
+    );
   }
 
   listSegments(tenantId: string, includeArchived = false) {
@@ -148,22 +154,22 @@ export class NotificationAdminService {
     return this.broadcasts.getSegment(id, tenantId);
   }
 
-  createSegment(input: CreateNotificationSegmentInput) {
+  createSegment(input: CreateNotificationSegmentInput, transaction?: unknown) {
     if (input.kind === NotificationSegmentKind.Dynamic) {
       this.requireResolver(input.resolverKey);
     }
-    return this.broadcasts.createSegment(input);
+    return this.broadcasts.createSegment(input, transaction);
   }
 
-  updateSegment(id: string, tenantId: string, input: UpdateNotificationSegmentInput) {
+  updateSegment(id: string, tenantId: string, input: UpdateNotificationSegmentInput, transaction?: unknown) {
     if (input.resolverKey) {
       this.requireResolver(input.resolverKey);
     }
-    return this.broadcasts.updateSegment(id, tenantId, input);
+    return this.broadcasts.updateSegment(id, tenantId, input, transaction);
   }
 
-  archiveSegment(id: string, tenantId: string, actorId: string) {
-    return this.broadcasts.archiveSegment(id, tenantId, actorId);
+  archiveSegment(id: string, tenantId: string, actorId: string, transaction?: unknown) {
+    return this.broadcasts.archiveSegment(id, tenantId, actorId, transaction);
   }
 
   listResolvers() {
@@ -181,14 +187,17 @@ export class NotificationAdminService {
     };
   }
 
-  async uploadSegmentCsv(input: {
-    id: string;
-    tenantId: string;
-    actorId: string;
-    filename: string;
-    contentBase64: string;
-  }) {
-    const segment = await this.requireSegment(input.id, input.tenantId);
+  async uploadSegmentCsv(
+    input: {
+      id: string;
+      tenantId: string;
+      actorId: string;
+      filename: string;
+      contentBase64: string;
+    },
+    transaction?: unknown,
+  ) {
+    const segment = await this.requireSegment(input.id, input.tenantId, transaction);
     if (segment.kind !== NotificationSegmentKind.Static) {
       throw new Error('notification_segment_upload_static_only');
     }
@@ -207,12 +216,15 @@ export class NotificationAdminService {
       contentType: 'text/csv; charset=utf-8',
       metadata: { checksum, segmentId: segment.id },
     });
-    return this.broadcasts.createSegmentUpload({
-      segmentId: segment.id,
-      objectKey,
-      checksum,
-      actorId: input.actorId,
-    });
+    return this.broadcasts.createSegmentUpload(
+      {
+        segmentId: segment.id,
+        objectKey,
+        checksum,
+        actorId: input.actorId,
+      },
+      transaction,
+    );
   }
 
   getSegmentUpload(id: string, tenantId: string) {
@@ -227,19 +239,22 @@ export class NotificationAdminService {
     return this.broadcasts.getBroadcast(id, tenantId);
   }
 
-  createBroadcast(input: CreateNotificationBroadcastInput) {
-    return this.broadcasts.createBroadcast(input);
+  createBroadcast(input: CreateNotificationBroadcastInput, transaction?: unknown) {
+    return this.broadcasts.createBroadcast(input, transaction);
   }
 
-  updateBroadcast(id: string, tenantId: string, input: UpdateNotificationBroadcastInput) {
-    return this.broadcasts.updateBroadcast(id, tenantId, input);
+  updateBroadcast(id: string, tenantId: string, input: UpdateNotificationBroadcastInput, transaction?: unknown) {
+    return this.broadcasts.updateBroadcast(id, tenantId, input, transaction);
   }
 
-  command(input: NotificationBroadcastTransitionInput) {
-    return this.broadcasts.transitionBroadcast({
-      ...input,
-      requireIndependentApproval: this.requireIndependentApproval,
-    });
+  command(input: NotificationBroadcastTransitionInput, transaction?: unknown) {
+    return this.broadcasts.transitionBroadcast(
+      {
+        ...input,
+        requireIndependentApproval: this.requireIndependentApproval,
+      },
+      transaction,
+    );
   }
 
   private requireResolver(key: string | null | undefined) {
@@ -250,16 +265,20 @@ export class NotificationAdminService {
     return resolver;
   }
 
-  private async requireTemplate(id: string, tenantId: string): Promise<NotificationTemplateAdminRecord> {
-    const template = await this.broadcasts.getTemplate(id, tenantId);
+  private async requireTemplate(
+    id: string,
+    tenantId: string,
+    transaction?: unknown,
+  ): Promise<NotificationTemplateAdminRecord> {
+    const template = await this.broadcasts.getTemplate(id, tenantId, transaction);
     if (!template) {
       throw new Error('notification_template_not_found');
     }
     return template;
   }
 
-  private async requireSegment(id: string, tenantId: string) {
-    const segment = await this.broadcasts.getSegment(id, tenantId);
+  private async requireSegment(id: string, tenantId: string, transaction?: unknown) {
+    const segment = await this.broadcasts.getSegment(id, tenantId, transaction);
     if (!segment) {
       throw new Error('notification_segment_not_found');
     }

@@ -1,4 +1,4 @@
-// @requirements REQ-SOCIAL-COMMANDS-003
+// @requirements REQ-SOCIAL-COMMANDS-003 REQ-SOCIAL-CONFIG-004
 import { describe, expect, it, vi } from 'vitest';
 import { createTelegramBot, handleLink, handleStart, telegramBotCommands } from './bot';
 import { goBack, goHome, navigateTo, replaceCurrentRoute } from '../navigation';
@@ -813,6 +813,24 @@ describe('createTelegramBot', () => {
     expect(texts(calls)).toContain('👋 Welcome!\n\nEverything you need is one tap away.');
   });
 
+  it.each(supportedLocales)('renders and dispatches the owned account-link label in %s', async (locale) => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+    await bot.handleUpdate(messageUpdate('/start', locale) as never);
+    const label = (key: Parameters<typeof translate>[0]) => translate(key, { locale });
+    await bot.handleUpdate(
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), label('bot.menu.profile'))) as never,
+    );
+    await bot.handleUpdate(
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), label('bot.menu.link'))) as never,
+    );
+    const menu = latestPayload(calls, 'editMessageText');
+    expect(JSON.stringify(menu)).not.toContain('auth.social.button.linkTelegram');
+    const callback = callbackDataFor(menu, label('bot.menu.link'));
+    await bot.handleUpdate(callbackUpdate(callback) as never);
+    expect(latestPayload(calls, 'editMessageText').text).toBe(label('bot.route.link'));
+  });
+
   it('falls back to localized link text when instructions are unavailable from a menu callback', async () => {
     const { calls, fetchMock } = apiMock();
     const { bot } = createTelegramBot(config(), { fetch: fetchMock });
@@ -821,9 +839,7 @@ describe('createTelegramBot', () => {
     await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'My account')) as never);
     await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Link')) as never);
     await bot.handleUpdate(
-      callbackUpdate(
-        callbackDataFor(latestPayload(calls, 'editMessageText'), 'auth.social.button.linkTelegram'),
-      ) as never,
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), translate('bot.menu.link'))) as never,
     );
 
     expect(latestPayload(calls, 'editMessageText').text).toBe(
@@ -952,9 +968,7 @@ describe('createTelegramBot', () => {
     );
 
     await bot.handleUpdate(
-      callbackUpdate(
-        callbackDataFor(latestPayload(calls, 'editMessageText'), 'auth.social.button.linkTelegram'),
-      ) as never,
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), translate('bot.menu.link'))) as never,
     );
     expect(createLinkInstructions).toHaveBeenCalledWith(expect.objectContaining({ providerSubject: '100' }));
     expect(latestPayload(calls, 'editMessageText').text).toBe('Open this Telegram-only link from your account page.');

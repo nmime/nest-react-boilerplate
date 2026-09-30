@@ -161,10 +161,7 @@ function productAllowlist() {
 }
 
 export function isAllowedSecretScanValue(value: string, relativePath = "", fileText = "") {
-  if (value.includes("${")) return true;
-  if (/example|sample|fixture|test|dummy|changeme|placeholder|process\.env/i.test(value)) return true;
   if (migrationClassNamePattern.test(value)) return true;
-  if (relativePath.endsWith("env-loader.ts") && /postgres/i.test(value)) return true;
   if (relativePath === "scripts/validate-deployment-config.mjs" && value.startsWith("SITE_DIST_ROOT=/workspace/")) return true;
   if (isGeneratedArtifact(relativePath, fileText) && isGeneratedArtifactValue(value)) return true;
   return isProductAllowedSecretScanValue(productAllowlist(), value, relativePath);

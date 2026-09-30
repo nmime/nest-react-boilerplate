@@ -35,7 +35,8 @@ export interface AuthAccessPolicy {
 }
 
 // Resolve the bootstrap ROLE keys a freshly created account should receive.
-// Everyone gets `user`; bootstrap-allowlisted admins additionally get `admin`.
+// Only a verified provider email can opt into allowlisted bootstrap authority.
+// Public registration and callers that omit verification always receive `user`.
 // This is the preferred entry point: callers assign these roles to the
 // normalized RBAC tables and let the effective-permission resolver derive the
 // permission set, instead of persisting hardcoded permission arrays.
@@ -43,9 +44,10 @@ export function resolveBootstrapRoleKeys(
   email: string,
   env: Record<string, string | undefined> = process.env,
   tenantId = DefaultAuthTenantId,
+  emailVerified = false,
 ): string[] {
   const normalizedEmail = email.trim().toLowerCase();
-  const isAdmin = isAdminBootstrapAllowed(normalizedEmail, tenantId, env);
+  const isAdmin = emailVerified && isAdminBootstrapAllowed(normalizedEmail, tenantId, env);
 
   return isAdmin ? [UserRole, AdminRole] : [UserRole];
 }
@@ -54,8 +56,9 @@ export function createDefaultAccessPolicy(
   email: string,
   env: Record<string, string | undefined> = process.env,
   tenantId = DefaultAuthTenantId,
+  emailVerified = false,
 ): AuthAccessPolicy {
-  const roles = resolveBootstrapRoleKeys(email, env, tenantId);
+  const roles = resolveBootstrapRoleKeys(email, env, tenantId, emailVerified);
 
   return {
     roles,

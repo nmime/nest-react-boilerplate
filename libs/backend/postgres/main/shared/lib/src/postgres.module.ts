@@ -33,7 +33,7 @@ class PostgresDurableDatabaseRuntime implements DurableDatabaseRuntime, OnModule
     if (!databaseUrl) {
       throw new Error('DATABASE_URL is required for PostgreSQL-backed server-side sessions.');
     }
-    return new PostgresSessionStore(databaseUrl, options.defaultMaxAgeSeconds, options.sweepIntervalMs);
+    return new PostgresSessionStore(databaseUrl, options.defaultMaxAgeSeconds, options.sweepIntervalMs, options.env);
   }
 }
 

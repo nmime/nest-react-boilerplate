@@ -28,6 +28,28 @@ function defaultArgs(overrides = {}) {
 }
 
 describe("db seed safety guard", () => {
+  it("rejects known demo passwords independently of the selected email", () => {
+    for (const password of [DefaultAdminPassword, "Admin@Secure1!"]) {
+      assert.throws(() => assertSeedSafety(defaultArgs({
+        email: "owner@example.com", password, force: true,
+      }), productionDatabase, { env: { DB_SEED_ALLOW_NON_LOCAL: "true" } }),
+      /Default seed admin credentials/);
+    }
+  });
+
+  it("requires a non-default password of at least 16 characters for a non-local seed", () => {
+    assert.throws(() => assertSeedSafety(defaultArgs({
+      email: "owner@example.com", password: "Short@123!", force: true,
+    }), productionDatabase, { env: { DB_SEED_ALLOW_NON_LOCAL: "true" } }),
+    /at least 16 characters/);
+  });
+
+  it("requires force guards even when no caller-specific local assertion is supplied", () => {
+    assert.throws(() => assertSeedSafety(defaultArgs({
+      email: "owner@example.com", password: "A-nondefault-local-password",
+    }), productionDatabase, { env: {} }), /explicit --force seed guards/);
+  });
+
   it("rejects default seed credentials in production before any database connection", () => {
     assert.throws(
       () =>

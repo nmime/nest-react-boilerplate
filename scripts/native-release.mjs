@@ -126,13 +126,14 @@ export function buildNativeReleasePlan(options = {}) {
 }
 
 /** Wrap a command so it runs with the resolved native environment. Pure. */
-export function nativeEnvironmentWrapper({ productionEnv, node = process.execPath }) {
+export function nativeEnvironmentWrapper({ productionEnv, secretsEnv, node = process.execPath }) {
   return (command, args, { secrets = true } = {}) => ({
     command: node,
     args: [
       'scripts/native-runtime-env.mjs',
       'exec',
       `--production-env=${productionEnv}`,
+      ...(secrets && secretsEnv ? [`--secrets-env=${secretsEnv}`] : []),
       ...(secrets ? [] : ['--no-secrets']),
       '--',
       command,

@@ -34,10 +34,12 @@ launch.
 The following are not complete product workflows merely because lower-level
 storage or framework hooks exist:
 
-- Wire password-reset and email-verification delivery to a real provider. The
-  checked-in Better Auth reset hook logs the URL and is not production email
-  delivery. Add branded templates, retry/bounce policy, and safe consume/update
-  screens without exposing token values in logs.
+- Validate password-reset and email-verification delivery through the product's
+  configured real provider, branded templates, retry/bounce policy, and safe
+  consume/update screens. First-party recovery uses the auth notification
+  publisher; the current Better Auth factory has no reset-URL logging hook and
+  does not enable a parallel password-recovery workflow. Local fixtures do not
+  prove live email delivery. Never expose token values in logs.
 - Choose account lockout or adaptive abuse controls beyond the shared rate
   limiter, and test distributed enforcement with the production Redis mode.
 - Add product-owned audit events and monitoring for logout, session revocation,

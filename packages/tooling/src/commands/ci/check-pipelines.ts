@@ -48,6 +48,9 @@ export function declaredPipelineFiles(workspaceRoot: string): string[] {
   for (const lane of Object.values(contract.lanes)) {
     for (const executor of Object.values(lane.executors)) files.add(executor.file);
   }
+  for (const gate of contract.gates) {
+    for (const file of Object.values(gate.files ?? {})) files.add(file);
+  }
 
   return [...files].sort();
 }
@@ -138,6 +141,10 @@ export function collectForgeSources(
       const executor = lane.executors[forgeId];
       if (executor === undefined || executor.file in laneFiles) continue;
       laneFiles[executor.file] = readIfPresent(workspaceRoot, executor.file);
+    }
+    for (const gate of contract.gates) {
+      const file = gate.files?.[forgeId];
+      if (file !== undefined && !(file in laneFiles)) laneFiles[file] = readIfPresent(workspaceRoot, file);
     }
 
     sources[forgeId] = {

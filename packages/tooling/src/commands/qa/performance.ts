@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-import { commandExists, ensureDir, envList, parseArgs, run, writeJson } from "./runtime-utils.ts";
+import { commandExists, ensureDir, envList, parseArgs, readJson, run, writeJson } from "./runtime-utils.ts";
+
+import { boundedInteger, finiteNumber } from "./world-class-policy.ts";
 
 const args = parseArgs();
 const dryRun = args.flags.has("dry-run");
@@ -8,7 +10,15 @@ const urls = envList("PERF_URLS");
 const apiUrls = envList("PERF_API_URLS");
 const reportPath = args.options.get("report") ?? "test-results/performance/report.json";
 const lighthouseVersion = args.options.get("lighthouse-version") ?? process.env.LIGHTHOUSE_VERSION ?? "13.3.0";
-const budget = { ttfbMs: Number(process.env.PERF_TTFB_BUDGET_MS ?? 1500), htmlBytes: Number(process.env.PERF_HTML_BUDGET_BYTES ?? 500000), lighthousePerformance: Number(process.env.PERF_LIGHTHOUSE_PERFORMANCE_MIN ?? 0.7), apiP95Ms: Number(process.env.PERF_API_P95_BUDGET_MS ?? 750) };
+if (!['native', 'lighthouse'].includes(engine)) throw new Error(`Unknown performance engine: ${engine}`);
+const budget = {
+  ttfbMs: finiteNumber({fallback: 1500, label: 'PERF_TTFB_BUDGET_MS', max: 120_000, value: process.env.PERF_TTFB_BUDGET_MS}),
+  htmlBytes: boundedInteger({fallback: 500000, label: 'PERF_HTML_BUDGET_BYTES', max: 100_000_000, value: process.env.PERF_HTML_BUDGET_BYTES}),
+  lighthousePerformance: finiteNumber({fallback: 0.7, label: 'PERF_LIGHTHOUSE_PERFORMANCE_MIN', min: 0, max: 1, value: process.env.PERF_LIGHTHOUSE_PERFORMANCE_MIN}),
+  apiP95Ms: finiteNumber({fallback: 750, label: 'PERF_API_P95_BUDGET_MS', max: 120_000, value: process.env.PERF_API_P95_BUDGET_MS}),
+};
+const count = boundedInteger({fallback: 20, label: 'PERF_API_REQUESTS', max: 200, value: process.env.PERF_API_REQUESTS});
+const timeoutMs = boundedInteger({fallback: 10000, label: 'PERF_TIMEOUT_MS', min: 100, max: 120_000, value: process.env.PERF_TIMEOUT_MS});
 const results: Record<string, unknown>[] = [];
 const findings: Record<string, unknown>[] = [];
 ensureDir("test-results/performance");
@@ -20,8 +30,9 @@ if (dryRun) {
 }
 
 if (!urls.length && !apiUrls.length) {
+  const status = process.env.PERF_REQUIRE_TARGET === "1" ? "violations" : "skipped";
   writeJson(reportPath, {
-    status: "skipped",
+    status,
     engine,
     urls,
     apiUrls,
@@ -30,13 +41,13 @@ if (!urls.length && !apiUrls.length) {
     reason: "No performance targets configured. Set PERF_URLS and/or PERF_API_URLS to real HTTP(S) targets to enforce budgets.",
   });
   console.log(JSON.stringify({
-    status: "skipped",
+    status,
     preset: "performance",
     engine,
     reason: "No PERF_URLS or PERF_API_URLS configured",
     report: reportPath,
   }));
-  process.exit(0);
+  process.exit(status === "violations" ? 1 : 0);
 }
 
 if ((engine === "lighthouse" || process.env.PERF_LIGHTHOUSE === "1") && urls.length) {
@@ -45,8 +56,19 @@ if ((engine === "lighthouse" || process.env.PERF_LIGHTHOUSE === "1") && urls.len
     for (const [index, url] of urls.entries()) {
       const outputPath = `test-results/performance/lighthouse-${index + 1}.json`;
       const result = run("pnpm", ["dlx", `lighthouse@${lighthouseVersion}`, url, "--quiet", "--chrome-flags=--headless --no-sandbox", "--output=json", `--output-path=${outputPath}`]);
-      results.push({ engine: "lighthouse", url, status: result.status, outputPath, ok: result.status === 0 });
-      if (result.status !== 0) findings.push({ url, rule: "lighthouse", severity: "high", stderr: result.stderr.slice(-2000) });
+      let score: number | undefined;
+      let error: string | undefined;
+      try {
+        const report = readJson<{categories?: {performance?: {score?: unknown}}; runtimeError?: unknown}>(outputPath);
+        const value = report.categories?.performance?.score;
+        if (report.runtimeError || typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+          throw new Error('Lighthouse report must contain a finite performance score without a runtime error.');
+        }
+        score = value;
+      } catch (cause) { error = cause instanceof Error ? cause.message : String(cause); }
+      const ok = result.status === 0 && score !== undefined && score >= budget.lighthousePerformance;
+      results.push({ engine: "lighthouse", url, status: result.status, outputPath, score, minimum: budget.lighthousePerformance, error, ok });
+      if (!ok) findings.push({ url, rule: "lighthouse", severity: "high", score, minimum: budget.lighthousePerformance, error, stderr: result.stderr.slice(-2000) });
     }
   }
 }
@@ -54,7 +76,7 @@ if ((engine === "lighthouse" || process.env.PERF_LIGHTHOUSE === "1") && urls.len
 for (const url of urls) {
   try {
     const started = performance.now();
-    const response = await fetch(url, { signal: AbortSignal.timeout(Number(process.env.PERF_TIMEOUT_MS ?? 10000)) });
+    const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
     const ttfbMs = Math.round(performance.now() - started);
     const text = await response.text();
     const htmlBytes = Buffer.byteLength(text);
@@ -68,13 +90,12 @@ for (const url of urls) {
 
 for (const url of apiUrls) {
   const samples: { ms: number; status?: number; ok: boolean; error?: string }[] = [];
-  const count = Number(process.env.PERF_API_REQUESTS ?? 20);
   for (let index = 0; index < count; index += 1) {
     const started = performance.now();
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(Number(process.env.PERF_TIMEOUT_MS ?? 10000)) });
+      const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
       await response.arrayBuffer();
-      samples.push({ ms: Math.round(performance.now() - started), status: response.status, ok: response.status < 500 });
+      samples.push({ ms: Math.round(performance.now() - started), status: response.status, ok: response.ok });
     } catch (error) {
       samples.push({ ms: Math.round(performance.now() - started), ok: false, error: error instanceof Error ? error.message : String(error) });
     }

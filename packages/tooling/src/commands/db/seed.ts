@@ -61,20 +61,20 @@ export async function runSeedCommand(argv: string[] = process.argv.slice(2)): Pr
   args.password = resolvePassword(args) ?? args.password;
   const provider = await resolveDatabaseMigrationProvider();
   const implementation = await loadProviderCommandModule(provider, 'seed');
-  const seedUsers = buildSeedUsers(args.password, defaultLocale);
 
   let connectionString: string;
   let database: string;
+  let localDevelopmentDatabase: boolean;
   if (provider === 'postgres') {
     const postgresConnectionString = implementation.postgresConnectionString as () => string;
     const redact = implementation.redactedPostgresConnectionString as (value: string) => string;
     const assertLocal = implementation.assertLocalPostgresDatabase as (value: string) => void;
     const isLocal = implementation.isLocalPostgresDatabase as (value: string, env: NodeJS.ProcessEnv) => boolean;
     connectionString = postgresConnectionString();
-    assertSeedSafety(args, connectionString, {
+    ({ localDevelopmentDatabase } = assertSeedSafety(args, connectionString, {
       assertLocalDevelopmentDatabase: assertLocal,
       isLocalDevelopmentDatabase: isLocal,
-    });
+    }));
     database = redact(connectionString);
   } else {
     const createEnvironment = implementation.createMongoOperationEnvironment as () => {
@@ -86,13 +86,18 @@ export async function runSeedCommand(argv: string[] = process.argv.slice(2)): Pr
     const isLocal = implementation.isLocalMongoDatabase as (value: string, env: NodeJS.ProcessEnv) => boolean;
     const environment = createEnvironment();
     connectionString = environment.uri;
-    assertSeedSafety(args, connectionString, {
+    ({ localDevelopmentDatabase } = assertSeedSafety(args, connectionString, {
       assertLocalDevelopmentDatabase: assertLocal,
       isLocalDevelopmentDatabase: isLocal,
-    });
+    }));
     database = redact(connectionString);
   }
 
+  const seedUsers = buildSeedUsers(args.password, defaultLocale, {
+    email: args.email,
+    displayName: args.displayName,
+    includeDemoUsers: localDevelopmentDatabase,
+  });
   const plan = {
     ...(provider === 'mongodb' ? { provider } : {}),
     database,

@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
 import type { SpawnSyncOptions, StdioOptions } from "node:child_process";
 import type { Stats } from "node:fs";
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, extname, join, relative } from "node:path";
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, statSync, writeFileSync } from "node:fs";
+import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import {
   commandExists as commandExistsInPath,
   packageManagerInvocation as resolvePackageManagerInvocation,
@@ -195,6 +195,21 @@ export function parseArgs(argv: string[] = process.argv.slice(2)): ParsedArgs {
 
 export function ensureDir(path: string): void {
   mkdirSync(path, { recursive: true });
+}
+
+/** Resolve only existing regular files inside the owned static fixture root. */
+export function resolveStaticFile(root: string, requestTarget: string): string | undefined {
+  try {
+    const pathname = decodeURIComponent(requestTarget.split(/[?#]/u, 1)[0] ?? '');
+    if (!pathname.startsWith('/') || /[\\\u0000]/u.test(pathname) || pathname.split('/').includes('..')) return undefined;
+    const realRoot = realpathSync(root);
+    const file = realpathSync(resolve(realRoot, `.${pathname === '/' ? '/index.html' : pathname}`));
+    const child = relative(realRoot, file);
+    if (child === '..' || child.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`) || isAbsolute(child)) return undefined;
+    return statSync(file).isFile() ? file : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function readJson<T = JsonValue>(path: string): T {

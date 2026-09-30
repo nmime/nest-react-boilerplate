@@ -41,6 +41,9 @@ evidence.
 
 - Dry-run proof is identified as planned, never as executed recovery.
 - Environment blockers are reported separately from code failures.
+- Default recovery drills restore only into a newly owned disposable namespace
+  or container, verify retained data, and clean up only their owned resources.
+  They never restore an ambient backup over its source database.
 
 **Failure behavior:**
 
@@ -105,6 +108,11 @@ redaction, batching, and failure isolation.
 
 - Telemetry failure does not corrupt product state.
 - Secret or credential material is never emitted.
+- Optional developer observability uses immutable reviewed images, only local
+  listeners, and anonymous Viewer access with no initial administrator. It
+  provisions only its deployed log/trace backends and requires explicit service
+  profiles independently from the selected durable database. Documentation
+  distinguishes backend availability from actual telemetry ingestion.
 
 **Failure behavior:**
 
@@ -156,6 +164,11 @@ failure conversion without leaking data across owners.
 
 - Keys remain inside their owned namespace.
 - Provider errors do not expose credentials.
+- Local object-store fixtures SHALL retain object bytes and metadata within a
+  private, current-user-owned root. Decoded keys, absolute paths, traversal,
+  malformed encoding, and symlink components SHALL never select files outside
+  that root. Fixture request bodies SHALL be bounded to 8 MiB and request logs
+  SHALL omit credential values and raw message bodies.
 
 **Failure behavior:**
 
@@ -173,6 +186,12 @@ failure conversion without leaking data across owners.
 - **WHEN** a storage key attempts to escape its namespace
 - **THEN** the adapter rejects it before provider access
 
+#### Scenario: Local fixture path and payload rejection
+
+- **WHEN** a loopback fixture receives an escaping or symlinked object path for get, head, put, or delete
+- **THEN** it rejects the operation and leaves external sentinel bytes and metadata unchanged
+- **AND** an oversized request returns a bounded failure while a valid nested object still round-trips
+
 ### Requirement: [REQ-RUNTIME-DATABASE-008] Database changes preserve integrity
 
 PostgreSQL and MongoDB transactions, migrations, repositories, sessions, and
@@ -188,6 +207,11 @@ atomic failure behavior, idempotency, and tenant boundaries.
   deterministic for the selected provider.
 - The canonical MongoDB ledger includes every shipped persistence provider,
   including payments, so runtime migration verifiers can accept a fresh database.
+- PostgreSQL ORM, provider-auth, and first-party-session connections SHALL use
+  one TLS policy. URI TLS mode, CA, certificate, key, and negotiation settings
+  SHALL survive ORM composition; environment flags SHALL apply consistently
+  when the URI does not select a policy. Explicit URI policy takes precedence
+  over legacy environment defaults, and invalid TLS modes fail closed.
 
 **Failure behavior:**
 
@@ -199,6 +223,16 @@ atomic failure behavior, idempotency, and tenant boundaries.
 - **WHEN** an operation fails before durable completion
 - **THEN** the selected provider leaves no partial durable state
 
+#### Scenario: TLS-required PostgreSQL connection
+
+- **WHEN** a selected PostgreSQL connection requires verified TLS in its URI or environment
+- **THEN** the ORM, provider-auth pool, and session pool connect with that policy and reject untrusted certificates and a plaintext-only server
+
+#### Scenario: Explicit URI trust material
+
+- **WHEN** an operator configures a URI CA, client certificate, or TLS negotiation mode
+- **THEN** every PostgreSQL consumer retains that material and does not silently replace it with default flags
+
 ### Requirement: [REQ-RUNTIME-DELIVERY-009] Deployment artifacts are reproducible
 
 Docker, Compose, Helm, GitOps, PM2, and single-server artifacts SHALL derive
@@ -209,7 +243,34 @@ from validated source and render deterministic, secret-safe runtime topology.
 **Invariants:**
 
 - Validation does not deploy.
+- Frontend HTML navigation and public runtime configuration are never stored in
+  browser or shared caches. Location-specific cache headers retain the complete
+  security header policy, including failures. Only build-generated asset paths
+  with the declared fingerprint naming convention use immutable caching.
+  Frontend API proxies retain an exact HTTP/HTTPS forwarded protocol only from
+  explicitly configured immediate proxy CIDRs; other senders cannot spoof it.
+- Runtime stack readiness SHALL require a successfully parsed selected Compose
+  configuration and observed ready containers for every selected long-running
+  service. An empty container list, failed inspection, malformed state, or
+  missing expected service SHALL never count as ready. One-shot jobs run and
+  complete successfully before dependent services start.
 - Bundled and external database modes remain explicit.
+- One-shot PM2 plans initialize deployment configuration before building and
+  load the emitted private secrets file for migrations and supervised processes.
+  Credentials travel through the child environment, never command arguments.
+  Build children exclude secrets from both configuration and inherited ambient
+  variables; native managed-host and one-shot paths share the same wrapper.
+- Managed native deployments configure the existing PostgreSQL role, database,
+  and Redis credential before migrations. Reconfiguration never drops data.
+  Selected notification worker listeners bind to loopback and participate in
+  port collision detection and readiness checks. Doctor only observes runtime
+  state; removal of obsolete supervised processes belongs to deployment.
+  Native operator rollback instructions explicitly skip forward migrations.
+- Single-server toolchain validation SHALL accept the repository's supported
+  pinned pnpm major and refuse unsupported majors. Unattended bootstrap SHALL
+  use the declared upstream repository rather than a placeholder owner.
+- Fresh external PostgreSQL scaffolding SHALL default to verified TLS while
+  preserving an existing operator-owned environment and explicit URI policy.
 - Generated build outputs do not re-enter Nx source-project discovery before
   deployment artifacts are staged.
 - Production apps, public hostnames, generatable secrets, Helm value-file

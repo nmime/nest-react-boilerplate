@@ -18,3 +18,8 @@ pnpm exec nx run @app/backend-mongodb-main-payments:build
 pnpm exec nx run @app/backend-mongodb-main-payments:test -- --coverage
 pnpm exec nx run @app/backend-mongodb-main-payments:component-test
 ```
+
+Component evidence requires Docker and starts an owned MongoDB container.
+It never reads ambient database URLs or falls back to an existing local server;
+a fixture startup failure fails the component lane. Teardown removes only the
+fixture namespace and container.

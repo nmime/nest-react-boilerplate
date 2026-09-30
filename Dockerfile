@@ -246,7 +246,11 @@ RUN PROJECT="${RUNTIME_PROJECT:-$NX_PROJECT}" \
 # environment instead of the Vite build. Only runtime-config.js is made writable
 # by the runtime user — the rest of the bundle stays immutable.
 COPY docker/frontend-runtime-config.sh /docker-entrypoint.d/40-frontend-runtime-config.sh
+COPY docker/frontend-proxy-trust.sh /docker-entrypoint.d/30-frontend-proxy-trust.sh
 RUN chmod +x /docker-entrypoint.d/40-frontend-runtime-config.sh \
+  && chmod +x /docker-entrypoint.d/30-frontend-proxy-trust.sh \
+  && touch /etc/nginx/nrb-trusted-proxies.conf \
+  && chown 101:101 /etc/nginx/nrb-trusted-proxies.conf \
   && touch /usr/share/nginx/html/runtime-config.js \
   && chown 101:101 /usr/share/nginx/html/runtime-config.js
 USER 101

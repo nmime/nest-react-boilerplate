@@ -85,6 +85,12 @@ requirements:
         - vitest
     evidence:
       - kind: vitest
+        file: libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
         file: libs/backend/feature/telegram/bot/lib/src/service/menus.spec.ts
         target: '@app/backend-feature-telegram-bot:test'
         lanes:
@@ -104,6 +110,7 @@ requirements:
       - '@app/backend-feature-discord-bot'
       - '@app/i18n-en-bots'
       - '@app/i18n-ru-bots'
+      - '@app/i18n-zh-bots'
     risk: high
     profiles:
       - domain
@@ -116,6 +123,12 @@ requirements:
         - security
         - documentation
     evidence:
+      - kind: vitest
+        file: libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/backend/feature/telegram/bot/lib/src/service/config.spec.ts
         target: '@app/backend-feature-telegram-bot:test'

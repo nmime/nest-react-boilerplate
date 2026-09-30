@@ -186,11 +186,18 @@ export function oneShotServices(plan) {
 }
 
 const docker = (args, options = {}) =>
-  spawnSync('docker', args, { encoding: 'utf8', stdio: options.capture === true ? 'pipe' : 'inherit' });
+  spawnSync('docker', args, {
+    encoding: 'utf8',
+    stdio: options.capture === true ? 'pipe' : 'inherit',
+    ...(options.capture === true ? { timeout: 30_000 } : {}),
+  });
 
 const dockerOutput = (args) => {
   const result = docker(args, { capture: true });
-  return result.status === 0 ? result.stdout.trim() : '';
+  if (result.error || result.status !== 0) {
+    throw new Error(`Docker runtime inspection failed (exit ${result.status ?? 'unknown'}).`);
+  }
+  return result.stdout.trim();
 };
 
 const warn = (message) => {
@@ -205,16 +212,78 @@ const group = (title, body) => {
   }
 };
 
+export function parseRuntimeComposeConfig(raw) {
+  let config;
+  try {
+    config = JSON.parse(raw);
+  } catch {
+    throw new Error('Runtime Compose configuration is not valid JSON.');
+  }
+  if (
+    !config?.services ||
+    Array.isArray(config.services) ||
+    typeof config.services !== 'object' ||
+    Object.keys(config.services).length === 0
+  ) {
+    throw new Error('Runtime Compose configuration must select at least one service.');
+  }
+  return config;
+}
+
 function resolveComposeConfig() {
   const raw = dockerOutput(['compose', '-f', composeFile, 'config', '--format', 'json']);
-  if (raw === '') {
-    return undefined;
+  return parseRuntimeComposeConfig(raw);
+}
+
+export function runtimeSnapshotReadiness(expectedServices, snapshots, oneShots = []) {
+  if (!Array.isArray(expectedServices) || expectedServices.length === 0 || !Array.isArray(snapshots))
+    return { ready: false, failed: ['invalid runtime state'], pending: [] };
+  const observed = new Set();
+  const failed = [];
+  const pending = [];
+  for (const snapshot of snapshots) {
+    const service = snapshot?.Config?.Labels?.['com.docker.compose.service'];
+    const state = snapshot?.State;
+    if (
+      typeof service !== 'string' ||
+      !service ||
+      !state ||
+      !['running', 'restarting', 'paused', 'exited', 'dead', 'created', 'removing'].includes(state.Status) ||
+      !Number.isInteger(state.ExitCode) ||
+      state.ExitCode < 0 ||
+      (!expectedServices.includes(service) && !oneShots.includes(service))
+    ) {
+      failed.push('unrecognized or malformed container state');
+      continue;
+    }
+    observed.add(service);
+    const health = state.Health?.Status ?? 'none';
+    const verdict =
+      state.Status !== 'running' && health === 'healthy' && !oneShots.includes(service)
+        ? 'failed'
+        : classifyContainerReadiness({
+            health,
+            status: state.Status,
+            exitCode: state.ExitCode,
+            oneShot: oneShots.includes(service),
+          });
+    if (verdict === 'failed') failed.push(service);
+    if (verdict === 'pending') pending.push(service);
   }
+  for (const service of expectedServices) if (!observed.has(service)) pending.push(`${service}(missing)`);
+  return { ready: failed.length === 0 && pending.length === 0, failed, pending };
+}
+
+export function readRuntimeReadiness(expectedServices, oneShots, runDocker = dockerOutput) {
+  const ids = runDocker(['compose', '-f', composeFile, 'ps', '--all', '--quiet']).split('\n').filter(Boolean);
+  if (ids.length === 0) return runtimeSnapshotReadiness(expectedServices, [], oneShots);
+  let snapshots;
   try {
-    return JSON.parse(raw);
+    snapshots = JSON.parse(runDocker(['inspect', ...ids]));
   } catch {
-    return undefined;
+    throw new Error('Runtime container inspection did not return valid JSON.');
   }
+  return runtimeSnapshotReadiness(expectedServices, snapshots, oneShots);
 }
 
 function containers() {
@@ -251,38 +320,17 @@ function dumpDiagnostics() {
 
 const sleep = (seconds) => spawnSync(process.execPath, ['-e', `setTimeout(()=>{}, ${seconds * 1000})`]);
 
-function assertReady(oneShots) {
+function assertReady(expectedServices, oneShots) {
   const deadline = Date.now() + readinessTimeoutSeconds * 1000;
 
   while (Date.now() < deadline) {
-    const pending = [];
-    const failed = [];
-
-    for (const container of containers()) {
-      const name = inspect(container, '{{.Name}}').replace(/^\//u, '') || container;
-      const service = inspect(container, '{{index .Config.Labels "com.docker.compose.service"}}');
-      const status = inspect(container, '{{.State.Status}}');
-      const health = inspect(container, '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}');
-      const exitCode = Number.parseInt(inspect(container, '{{.State.ExitCode}}') || '0', 10);
-
-      const verdict = classifyContainerReadiness({
-        health,
-        status,
-        exitCode,
-        oneShot: oneShots.includes(service),
-      });
-      if (verdict === 'failed') {
-        failed.push(`${name}(${health === 'none' ? `exit=${exitCode}` : health})`);
-      } else if (verdict === 'pending') {
-        pending.push(`${name}(${health === 'none' ? status : health})`);
-      }
-    }
+    const { ready, failed } = readRuntimeReadiness(expectedServices, oneShots);
 
     if (failed.length > 0) {
       warn(`Unhealthy service(s): ${failed.join(' ')}`);
       return false;
     }
-    if (pending.length === 0) {
+    if (ready) {
       return true;
     }
 
@@ -295,11 +343,10 @@ function assertReady(oneShots) {
 
 function startStack() {
   const config = resolveComposeConfig();
-  const plan = config === undefined ? undefined : composeStartupPlan(config);
-
-  if (plan === undefined) {
-    warn('Could not resolve the compose configuration; starting the whole stack unsequenced.');
-  }
+  const plan = composeStartupPlan(config);
+  const oneShots = oneShotServices(plan);
+  const expectedServices = Object.keys(config.services).filter((name) => !oneShots.includes(name));
+  if (expectedServices.length === 0) throw new Error('Runtime stack must select a long-running service.');
 
   for (const args of startupCommands({ composeFile, plan })) {
     const isBake = args[0] === 'scripts/build-images.mjs';
@@ -310,18 +357,28 @@ function startStack() {
     }
   }
 
-  return assertReady(oneShotServices(plan));
+  return assertReady(expectedServices, oneShots);
 }
 
 function main() {
   for (let attempt = 1; attempt <= startAttempts; attempt += 1) {
-    if (startStack()) {
+    let ready = false;
+    try {
+      ready = startStack();
+    } catch (error) {
+      warn(error.message);
+    }
+    if (ready) {
       process.stdout.write(`Runtime stack ready on attempt ${attempt}.\n`);
       return 0;
     }
 
     warn(`Runtime stack start attempt ${attempt} failed.`);
-    dumpDiagnostics();
+    try {
+      dumpDiagnostics();
+    } catch {
+      warn('Runtime diagnostics are unavailable because Docker inspection failed.');
+    }
 
     if (attempt === startAttempts) {
       const message = `Runtime stack failed to start after ${attempt} attempt(s).`;

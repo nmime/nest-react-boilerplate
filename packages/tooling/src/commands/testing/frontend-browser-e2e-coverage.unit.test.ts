@@ -23,11 +23,18 @@ import {
 } from "./frontend-browser-e2e-coverage-paths.ts";
 import {
   contentType,
+  initialCoverageVisits,
   mergeVisitCoverage,
   normalizeRoutePath,
   parseCoverageArgs,
   selectRouteLinks,
 } from "./frontend-browser-e2e-coverage.ts";
+
+it('refuses an empty browser coverage route set after exclusions', () => {
+  assert.throws(() => initialCoverageVisits({visits: [], skipVisits: ['/']}), /requires at least one entry route/u);
+  assert.deepEqual(initialCoverageVisits({visits: ['/profile', '/profile'], skipVisits: ['/']}), ['/profile']);
+  assert.deepEqual(initialCoverageVisits({visits: ['/profile'], skipVisits: ['/profile']}), ['/']);
+});
 
 /**
  * Unit tests for the frontend-browser-e2e-coverage.ts module.

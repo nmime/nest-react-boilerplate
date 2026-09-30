@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-ACCESS-001
+// @requirements REQ-AUTH-ACCESS-001 REQ-AUTH-SESSION-002 REQ-AUTH-IDENTITY-005
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { supportedLocales } from '@app/backend-common-i18n';
 import {
@@ -166,7 +166,8 @@ function createRequest(
 function toController(
   service: AuthControllerService,
   externalAuth: ExternalAuthControllerService = createExternalAuthService(),
-  betterAuthTelegramSession: Pick<BetterAuthTelegramSessionService, 'requireTelegramProfile'> = {
+  betterAuthTelegramSession: Partial<Pick<BetterAuthTelegramSessionService, 'revokeSession'>> &
+    Pick<BetterAuthTelegramSessionService, 'requireTelegramProfile'> = {
     requireTelegramProfile: vi.fn(() =>
       Promise.resolve({
         avatarUrl: 'https://cdn.example.test/ada.png',
@@ -182,7 +183,7 @@ function toController(
   return new AuthController(
     service as AuthService,
     externalAuth as ExternalAuthService,
-    betterAuthTelegramSession as BetterAuthTelegramSessionService,
+    { revokeSession: vi.fn().mockResolvedValue([]), ...betterAuthTelegramSession } as BetterAuthTelegramSessionService,
     loginAnalytics,
   );
 }
@@ -496,10 +497,13 @@ describe('AuthController', () => {
     });
 
     await expect(
-      controller.telegramBotLink({
-        linkToken: 'link-token',
-        providerSubject: 'telegram-subject',
-      }),
+      controller.telegramBotLink(
+        {
+          linkToken: 'link-token',
+          providerSubject: '777',
+        },
+        createRequest().request,
+      ),
     ).resolves.toMatchObject({ data: { status: 'linked' } });
 
     await expect(
@@ -638,5 +642,71 @@ describe('AuthController', () => {
     expect(passthroughResponse.clearCookie).toHaveBeenCalledWith('custom.sid', {
       path: '/',
     });
+  });
+
+  it('requires verified Telegram ownership and never dispatches an attacker-selected subject', async () => {
+    const externalAuth = createExternalAuthService();
+    const controller = toController(createService(), externalAuth);
+    await expect(
+      controller.telegramBotLink({ linkToken: 'token', providerSubject: '888' }, createRequest().request),
+    ).rejects.toThrow('telegram_identity_mismatch');
+    expect(externalAuth.telegramBotLink).not.toHaveBeenCalled();
+
+    const unverified = toController(createService(), externalAuth, {
+      requireTelegramProfile: vi.fn().mockRejectedValue(new Error('verified profile required')),
+    });
+    await expect(
+      unverified.telegramBotLink({ linkToken: 'token', providerSubject: '777' }, createRequest().request),
+    ).rejects.toThrow('verified profile required');
+    expect(externalAuth.telegramBotLink).not.toHaveBeenCalled();
+  });
+
+  it('stores browser proof outside request DTOs and passes only that proof to the callback', async () => {
+    const externalAuth = createExternalAuthService();
+    const controller = toController(createService(), externalAuth);
+    const { request, session } = createRequest();
+    await controller.discordAuthorizationRequest({}, request);
+    const nonce = request.session?.['discordOAuthBrowserNonce'];
+    expect(nonce).toEqual(expect.any(String));
+    expect(String(nonce)).toHaveLength(43);
+    expect(session.save).toHaveBeenCalledOnce();
+    expect(externalAuth.createDiscordAuthorizationRequest).toHaveBeenCalledWith({
+      principal: null,
+      binding: { kind: 'browser', nonce },
+    });
+    await controller.discordCallback({ state: 'state', code: 'code' }, request, { send: vi.fn() });
+    expect(externalAuth.discordCallback).toHaveBeenCalledWith({
+      state: 'state',
+      code: 'code',
+      principal: null,
+      browserNonce: nonce,
+    });
+    await expect(controller.discordAuthorizationRequest({}, {})).rejects.toThrow('browser_session_required');
+  });
+
+  it('revokes provider credentials for a guest and forwards their cookies before clearing the custom session', async () => {
+    const cookies = ['provider_session=; Max-Age=0; Path=/', 'provider_cache=; Max-Age=0; Path=/'];
+    const revokeSession = vi.fn().mockResolvedValue(cookies);
+    const controller = toController(createService(), createExternalAuthService(), {
+      requireTelegramProfile: vi.fn(),
+      revokeSession,
+    });
+    const { request, session } = createRequest();
+    request.headers = { cookie: 'provider_session=original' };
+    const response = { header: vi.fn(), clearCookie: vi.fn() };
+    await expect(controller.logout(request, response)).resolves.toEqual({ data: { loggedOut: true } });
+    expect(revokeSession).toHaveBeenCalledWith(request.headers);
+    expect(response.header).toHaveBeenCalledWith('set-cookie', cookies);
+    expect(session.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('clears the custom session but does not report logout success when provider revocation fails', async () => {
+    const controller = toController(createService(), createExternalAuthService(), {
+      requireTelegramProfile: vi.fn(),
+      revokeSession: vi.fn().mockRejectedValue(new Error('revocation failed')),
+    });
+    const { request, session } = createRequest();
+    await expect(controller.logout(request, { clearCookie: vi.fn() })).rejects.toThrow('revocation failed');
+    expect(session.destroy).toHaveBeenCalledOnce();
   });
 });

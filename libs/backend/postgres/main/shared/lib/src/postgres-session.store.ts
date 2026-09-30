@@ -1,6 +1,7 @@
 import type { FastifySessionObject as Session } from '@fastify/session';
 import { Logger } from '@nestjs/common';
 import { Pool, type PoolClient } from 'pg';
+import { createPostgresConnectionOptions } from './postgres-connection-options';
 import {
   completeSessionGet,
   completeSessionMutation,
@@ -22,8 +23,9 @@ export class PostgresSessionStore implements BackendSessionStore {
     databaseUrl: string,
     private readonly defaultMaxAgeSeconds: number,
     private readonly sweepIntervalMs: number,
+    env: Readonly<Record<string, unknown>> = process.env,
   ) {
-    this.pool = new Pool({ connectionString: databaseUrl });
+    this.pool = new Pool(createPostgresConnectionOptions(databaseUrl, env));
   }
 
   async init(): Promise<void> {

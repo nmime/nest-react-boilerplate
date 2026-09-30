@@ -1,0 +1,32 @@
+## 1. Specification and ownership
+
+- [x] 1.1 Record the completed source-audit correctness queue and trace setup owners.
+- [x] 1.2 Specify namespace retention and safe PostgreSQL migration probes with v3 evidence.
+- [ ] 1.3 Specify each remaining runtime, quality, frontend, and tooling repair before editing its owner.
+
+## 2. Implementation
+
+- [x] 2.1 Preserve customized namespaces through additive, preset, and interactive setup.
+- [x] 2.2 Probe missing, empty, applied, and failed PostgreSQL migration state safely.
+- [ ] 2.3 Complete the remaining traced correctness queue with proportional evidence.
+- [x] 2.4 Validate generator scope/layer and port exhaustion before writes.
+- [x] 2.5 Remove ambient and localhost payment component database fallbacks.
+- [x] 2.6 Require complete selected Compose service evidence before reporting readiness.
+- [x] 2.7 Refuse CI parity without configured pipelines and align schedule-only aggregate dependencies.
+- [x] 2.8 Align managed-host runtime validation and upstream bootstrap defaults.
+- [x] 2.9 Render localized Telegram account-link actions and fallback callbacks.
+- [x] 2.10 Join notification mutations and projection reads to the audit transaction on both providers.
+- [x] 2.11 Disable worker browser sessions and generate service-only payment/fiat wiring.
+- [x] 2.12 Restore the configured GitHub gate inventory and protected aggregate without weakening checks.
+- [x] 2.13 Enforce real runtime quality targets, meaningful probes, and strict budgets.
+- [x] 2.14 Use filesystem-contained accessibility fixtures and narrow secret exemptions.
+- [x] 2.15 Exercise actual property helpers and isolate default recovery drills.
+- [x] 2.16 Initialize one-shot PM2 configuration before builds and load private runtime secrets through the shared wrapper.
+- [x] 2.17 Preserve frontend security/cache headers and explicitly trusted forwarded protocol, with real Nginx responses.
+- [x] 2.18 Upgrade the optional local observability stack, restrict anonymous authority, and verify owned log/trace round trips.
+
+## 3. Final assurance
+
+- [ ] 3.1 Regenerate source-owned artifacts and reconcile documentation and skills.
+- [ ] 3.2 Run the excellent final quality gate against the final source revision.
+- [ ] 3.3 Finish independent review and present the concrete PR for specific merge approval.

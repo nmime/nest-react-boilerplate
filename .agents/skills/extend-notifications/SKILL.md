@@ -18,7 +18,7 @@ description: Extend notification events, templates, providers, scheduling, and d
 2. Put provider choice and credentials behind the notification provider resolver. Validate provider-specific configuration without exposing secrets.
 3. Make template inputs typed, localized, escaped appropriately, and version-compatible with queued events.
 4. Define deduplication, scheduling, retry/backoff, terminal failure, and observability behavior before adding a delivery path.
-5. Keep the scheduler responsible for due-work selection and the consumer responsible for execution; do not create competing schedule owners.
+5. Trace the actual work owner before adding a timer or handler. The notification scheduler claims due delivery rows, executes provider transports, records retry/terminal outcomes, and maintains partitions. The consumer validates segment uploads, captures audience snapshots, and materializes delivery rows; it does not send provider messages. Preserve those responsibilities and avoid competing dispatch owners.
 6. Add provider contract tests plus end-to-end scheduler/consumer coverage for success, retryable failure, permanent failure, and duplicate delivery.
 
 ## Specification lifecycle

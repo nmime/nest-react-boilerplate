@@ -9648,363 +9648,6 @@
     },
     {
       "display": "silent",
-      "id": "admin-app-api:DELETE:/api/v1/webhooks/{provider}:200",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "DELETE",
-        "status": 200
-      },
-      "toast": {
-        "category": "success"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_delete",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown delete completed successfully."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:DELETE:/api/v1/webhooks/{provider}:ERR",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "DELETE",
-        "kind": "unknown"
-      },
-      "toast": {},
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_delete",
-        "status": "ERR",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown delete failed before an HTTP response was available."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:DELETE:/api/v1/webhooks/{provider}:NET",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "DELETE",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_delete",
-        "status": "NET",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown delete could not reach the service."
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/api/v1/webhooks/{provider}:200",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_get",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown get completed successfully."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/api/v1/webhooks/{provider}:ERR",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {},
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_get",
-        "status": "ERR",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown get failed before an HTTP response was available."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/api/v1/webhooks/{provider}:NET",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_get",
-        "status": "NET",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown get could not reach the service."
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:HEAD:/api/v1/webhooks/{provider}:200",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "HEAD",
-        "status": 200
-      },
-      "toast": {
-        "category": "success"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_head",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown head completed successfully."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:HEAD:/api/v1/webhooks/{provider}:ERR",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "HEAD",
-        "kind": "unknown"
-      },
-      "toast": {},
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_head",
-        "status": "ERR",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown head failed before an HTTP response was available."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:HEAD:/api/v1/webhooks/{provider}:NET",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "HEAD",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_head",
-        "status": "NET",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown head could not reach the service."
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:OPTIONS:/api/v1/webhooks/{provider}:200",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "OPTIONS",
-        "status": 200
-      },
-      "toast": {
-        "category": "success"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_options",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown options completed successfully."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:OPTIONS:/api/v1/webhooks/{provider}:ERR",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "OPTIONS",
-        "kind": "unknown"
-      },
-      "toast": {},
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_options",
-        "status": "ERR",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown options failed before an HTTP response was available."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:OPTIONS:/api/v1/webhooks/{provider}:NET",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "OPTIONS",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_options",
-        "status": "NET",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown options could not reach the service."
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/api/v1/webhooks/{provider}:200",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "PATCH",
-        "status": 200
-      },
-      "toast": {
-        "category": "success"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_patch",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown patch completed successfully."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/api/v1/webhooks/{provider}:ERR",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "PATCH",
-        "kind": "unknown"
-      },
-      "toast": {},
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_patch",
-        "status": "ERR",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown patch failed before an HTTP response was available."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/api/v1/webhooks/{provider}:NET",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "PATCH",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_patch",
-        "status": "NET",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown patch could not reach the service."
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/api/v1/webhooks/{provider}:200",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "POST",
-        "status": 200
-      },
-      "toast": {
-        "category": "success"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_post",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown post completed successfully."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/api/v1/webhooks/{provider}:ERR",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "POST",
-        "kind": "unknown"
-      },
-      "toast": {},
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_post",
-        "status": "ERR",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown post failed before an HTTP response was available."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/api/v1/webhooks/{provider}:NET",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "POST",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_post",
-        "status": "NET",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown post could not reach the service."
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PUT:/api/v1/webhooks/{provider}:200",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "PUT",
-        "status": 200
-      },
-      "toast": {
-        "category": "success"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_put",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown put completed successfully."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PUT:/api/v1/webhooks/{provider}:ERR",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "PUT",
-        "kind": "unknown"
-      },
-      "toast": {},
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_put",
-        "status": "ERR",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown put failed before an HTTP response was available."
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PUT:/api/v1/webhooks/{provider}:NET",
-      "match": {
-        "endpoint": "/api/v1/webhooks/{provider}",
-        "method": "PUT",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning"
-      },
-      "catalog": {
-        "operationId": "PaymentsWebhooksController_unknown_put",
-        "status": "NET",
-        "tags": ["PaymentsWebhooks"],
-        "defaultMessage": "Payments Webhooks unknown put could not reach the service."
-      }
-    },
-    {
-      "display": "silent",
       "id": "admin-app-api:POST:/api/v1/webhooks/adyen:200",
       "match": {
         "endpoint": "/api/v1/webhooks/adyen",
@@ -10018,6 +9661,134 @@
         "operationId": "PaymentsWebhooksController_adyen",
         "tags": ["PaymentsWebhooks"],
         "defaultMessage": "Payments Webhooks adyen completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/adyen:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/adyen:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/adyen:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/adyen:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/adyen:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/adyen:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/adyen:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/adyen:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook Processing Error."
       }
     },
     {
@@ -10073,6 +9844,134 @@
     },
     {
       "display": "toast",
+      "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
       "id": "admin-app-api:GET:/api/v1/webhooks/cloudpayments:ERR",
       "match": {
         "endpoint": "/api/v1/webhooks/cloudpayments",
@@ -10120,6 +10019,134 @@
         "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
         "tags": ["PaymentsWebhooks"],
         "defaultMessage": "Payments Webhooks cloud Payments Post completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cloudpayments:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cloudpayments:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cloudpayments:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cloudpayments:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cloudpayments:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cloudpayments:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cloudpayments:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cloudpayments:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook Processing Error."
       }
     },
     {
@@ -10175,6 +10202,134 @@
     },
     {
       "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
       "id": "admin-app-api:POST:/api/v1/webhooks/cryptobot:ERR",
       "match": {
         "endpoint": "/api/v1/webhooks/cryptobot",
@@ -10222,6 +10377,134 @@
         "operationId": "PaymentsWebhooksController_heleket",
         "tags": ["PaymentsWebhooks"],
         "defaultMessage": "Payments Webhooks heleket completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/heleket:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/heleket:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/heleket:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/heleket:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/heleket:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/heleket:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/heleket:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/heleket:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook Processing Error."
       }
     },
     {
@@ -10277,6 +10560,134 @@
     },
     {
       "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
       "id": "admin-app-api:POST:/api/v1/webhooks/nowpayments:ERR",
       "match": {
         "endpoint": "/api/v1/webhooks/nowpayments",
@@ -10324,6 +10735,134 @@
         "operationId": "PaymentsWebhooksController_stripe",
         "tags": ["PaymentsWebhooks"],
         "defaultMessage": "Payments Webhooks stripe completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/stripe:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/stripe:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/stripe:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/stripe:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/stripe:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/stripe:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/stripe:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/stripe:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook Processing Error."
       }
     },
     {
@@ -10379,6 +10918,134 @@
     },
     {
       "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
       "id": "admin-app-api:POST:/api/v1/webhooks/x-rocket:ERR",
       "match": {
         "endpoint": "/api/v1/webhooks/x-rocket",
@@ -10426,6 +11093,134 @@
         "operationId": "PaymentsWebhooksController_yooKassa",
         "tags": ["PaymentsWebhooks"],
         "defaultMessage": "Payments Webhooks yoo Kassa completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/yookassa:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/yookassa:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/yookassa:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/yookassa:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/yookassa:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/yookassa:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/yookassa:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/api/v1/webhooks/yookassa:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook Processing Error."
       }
     },
     {
@@ -10711,6 +11506,23 @@
     },
     {
       "display": "toast",
+      "id": "admin-app-api:GET:/payments:503",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "status": 503
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list failed: Service Unavailable."
+      }
+    },
+    {
+      "display": "toast",
       "id": "admin-app-api:GET:/payments:ERR",
       "match": {
         "endpoint": "/payments",
@@ -10835,6 +11647,23 @@
         "operationId": "PaymentsController_create",
         "tags": ["Payments"],
         "defaultMessage": "Payments create failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/payments:503",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "status": 503
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create failed: Service Unavailable."
       }
     },
     {

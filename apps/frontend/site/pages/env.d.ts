@@ -14,3 +14,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Public server-owned destinations serialized by Vike before hydration.
+declare namespace Vike {
+  interface PageContext {
+    siteDestinations?: import('../server/site-destinations').SiteDestinations;
+  }
+}

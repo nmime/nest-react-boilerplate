@@ -1,4 +1,6 @@
 import { All, Controller, Get, HttpCode, HttpStatus, Param, Post, Req } from '@nestjs/common';
+import { ApiExcludeEndpoint } from '@nestjs/swagger';
+import { ApiProblemTypes } from '@app/backend-common-swagger';
 import { requestContext } from '@app/backend-common-bootstrap';
 import { TenantScopeExempt } from '@app/backend-common-tenant-context';
 import { Public } from '@app/backend-feature-auth-shared';
@@ -23,6 +25,7 @@ function headerRecord(headers: RawWebhookRequest['headers']): WebhookHeaders {
   return out;
 }
 
+@ApiProblemTypes('webhook-signature-invalid', 'webhook-replayed', 'webhook-stale', 'webhook-processing-error')
 @Controller('api/v1/webhooks')
 @Public()
 @TenantScopeExempt('payment provider callbacks carry no authenticated tenant principal')
@@ -88,6 +91,8 @@ export class PaymentsWebhooksController {
     return this.post('adyen', request);
   }
 
+  // Terminal rejection adapter, never a successful provider operation.
+  @ApiExcludeEndpoint()
   @All(':provider')
   unknown(@Param('provider') providerCode: string): never {
     throw new WebhookSignatureInvalidException({ meta: { providerCode } });

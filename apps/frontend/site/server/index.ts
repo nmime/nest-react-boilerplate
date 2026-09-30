@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { renderPage } from 'vike/server';
+import { resolveSiteDestinations } from './site-destinations.js';
 
 const appRoot = resolve(import.meta.dirname, '..');
 const workspaceDistRoot = resolve(appRoot, '../../../dist/apps/frontend/site');
@@ -51,6 +52,7 @@ if (process.env.NODE_ENV === 'production') {
 const app = fastify({
   logger: process.env.NODE_ENV !== 'test',
 });
+const siteDestinations = resolveSiteDestinations(process.env);
 
 app.addHook('onSend', async (_request, reply, payload) => {
   reply.header('X-Content-Type-Options', 'nosniff');
@@ -79,6 +81,7 @@ app.get('/ready', () => healthPayload);
 
 app.get('/*', async (request, reply) => {
   const pageContext = await renderPage({
+    siteDestinations,
     headersOriginal: request.headers,
     urlOriginal: request.raw.url ?? '/',
   });

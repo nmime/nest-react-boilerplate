@@ -137,6 +137,9 @@ export const composeEnv = {
   USER_APP_PORT: ports.userApp,
   LANDING_APP_PORT: ports.landingApp,
   SITE_APP_PORT: ports.siteApp,
+  SITE_USER_APP_URL: urls.userApp,
+  SITE_LANDING_APP_URL: urls.landingApp,
+  SITE_ALLOW_LOOPBACK_HTTP: 'true',
   // Cap parallel targets rather than serializing the full stack. Docker shares
   // the dependency layers across this one invocation, so two builders is a
   // useful default without exhausting a typical CI runner.

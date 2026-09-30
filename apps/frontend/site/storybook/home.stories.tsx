@@ -2,14 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
-import { Page } from '../pages/index/+Page';
+import { SiteHome } from '../pages/index/+Page';
 import siteStyles from '../styles/site.css?inline';
 
 const SiteHomeComposition = () => (
   <FrontendStateProvider>
     <FrontendI18nProvider initialLocale="en" translations={userFrontendTranslations}>
       <main className="site-shell">
-        <Page />
+        <SiteHome destinations={{ userApp: '/account', landingApp: '/landing' }} />
       </main>
     </FrontendI18nProvider>
   </FrontendStateProvider>
@@ -44,8 +44,8 @@ export const Default: Story = {
     await expect(
       canvas.getByRole('heading', { name: 'A dependable home for the pages people return to.' }),
     ).toBeVisible();
-    await expect(canvas.getByRole('link', { name: 'Open account' })).toHaveAttribute('href', '/app');
-    await expect(canvas.getByRole('link', { name: 'View public landing' })).toHaveAttribute('href', '/');
+    await expect(canvas.getByRole('link', { name: 'Open account' })).toHaveAttribute('href', '/account');
+    await expect(canvas.getByRole('link', { name: 'View public landing' })).toHaveAttribute('href', '/landing');
     await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth);
     document.documentElement.setAttribute('data-visual-ready', 'true');
   },

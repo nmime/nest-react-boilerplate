@@ -1,3 +1,5 @@
+import { ApiResponse } from '@nestjs/swagger';
+import { getProblemDetailsSchema, getRegisteredProblemDetailsSchema } from '@app/backend-common-exception';
 import {
   Body,
   Controller,
@@ -274,6 +276,15 @@ export class AuthController {
     );
   }
 
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid callback parameters or rejected authorization callback',
+    content: {
+      'application/problem+json': {
+        schema: { oneOf: [getProblemDetailsSchema(400), getRegisteredProblemDetailsSchema('client-data-validation')] },
+      },
+    },
+  })
   @Get('discord/callback')
   @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)

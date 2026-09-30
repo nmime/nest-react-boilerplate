@@ -512,6 +512,10 @@ services:
       args:
         NX_PROJECT: site-app
     restart: unless-stopped
+    environment:
+      SITE_USER_APP_URL: ${SITE_USER_APP_URL:-}
+      SITE_LANDING_APP_URL: ${SITE_LANDING_APP_URL:-}
+      SITE_ALLOW_LOOPBACK_HTTP: ${SITE_ALLOW_LOOPBACK_HTTP:-false}
     ports:
       - target: 80
         published: '${SITE_APP_PORT:-4203}'

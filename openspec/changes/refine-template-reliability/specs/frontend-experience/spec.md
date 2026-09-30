@@ -53,3 +53,34 @@ primitives.
 
 - **WHEN** a supported locale is built
 - **THEN** required product and common messages remain available
+
+### Requirement: [REQ-FRONTEND-SSR-007] Server-rendered frontends hydrate consistently
+
+Astro and Vike surfaces SHALL preserve server/client rendering, locale, theme,
+navigation, and error-state consistency.
+
+**Evidence profile:** domain, journey
+
+**Invariants:**
+
+- Hydration does not replace semantically different initial content.
+- Server code does not depend on browser-only state.
+- Site account and landing actions use explicitly configured safe public destinations
+  with identical server and hydration hrefs; unconfigured actions are omitted.
+- Unknown site routes return a localized, safe 404 page with the same shell and
+  response security policy; internal errors retain a generic safe error page.
+
+**Failure behavior:**
+
+- SSR, hydration, or route mismatch fails build or browser evidence.
+
+#### Scenario: Hydrated route
+
+- **WHEN** a server-rendered route becomes interactive
+- **THEN** its accessible content and state remain consistent
+
+#### Scenario: Unknown site route
+
+- **WHEN** a visitor opens a route that the SSR site does not own
+- **THEN** the response is 404 and displays a localized recovery link
+- **AND** framework diagnostics and internal exception text are not rendered

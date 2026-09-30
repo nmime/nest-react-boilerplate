@@ -198,6 +198,10 @@ void describe('real runtime quality boundaries', () => {
     });
     assert.equal(result.status, 0, result.stderr);
     const args = JSON.parse(readFileSync(join(result.cwd, 'argv.json'), 'utf8'));
+    assert.equal(args[args.indexOf('--url') + 1], 'http://127.0.0.1:1');
+    assert.ok(!args.includes('--base-url'));
+    assert.equal(args[args.indexOf('--generation-database') + 1], ':memory:');
+    assert.equal(args[args.indexOf('--request-timeout') + 1], '10');
     assert.equal(args[args.indexOf('--include-method-regex') + 1], '^(GET|HEAD|OPTIONS)$');
     assert.equal(args[args.indexOf('--phases') + 1], 'examples,fuzzing');
     assert.ok(!args[args.indexOf('--checks') + 1].includes('unsupported_method'));

@@ -29,6 +29,19 @@ There is intentionally no repository-root API contract manifest or artifact dire
 - Treat generated files as read-only; fix source decorators/DTOs, OpenAPI metadata, or generator scripts and regenerate.
 - Be careful with optional frontend handling: generated contracts describe successful backend responses, while UI code may still handle missing data during failed/partial requests.
 
+## Wildcard transport boundaries
+
+The Better Auth wildcard forwards the provider-owned protocol; it is excluded
+from generated first-party OpenAPI because Nest cannot infer that protocol from
+`@All('*')`. Its forwarding, cookie and revocation behavior has dedicated HTTP
+and browser evidence. The unknown-provider webhook fallback is also excluded:
+its only purpose is rejection, rather than a successful provider operation.
+Each supported provider webhook remains documented with its registered
+signature, replay, stale and processing failure responses. Discord callback
+400 responses include both generic rejection and request validation failures.
+External safe-method fuzzing covers the documented operations; it does not
+claim authenticated or third-party wildcard protocol coverage.
+
 ## Current contract layout and ownership
 
 | Surface                       | Current path or owner                                                                                                                                        | Notes                                                                                |

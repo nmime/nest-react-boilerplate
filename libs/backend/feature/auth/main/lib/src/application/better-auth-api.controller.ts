@@ -2,6 +2,7 @@ import { BetterAuthInstanceToken, getBaseUrl } from './better-auth.module';
 import { Controller, Inject, Req, Res, All, HttpCode, HttpException, Logger, Optional } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Auth } from 'better-auth';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { BaseException, InternalException } from '@app/backend-common-exception';
 import { DefaultAuthTenantId, Public, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
 import { AuthLoginAnalyticsService } from './auth-login-analytics.service';
@@ -19,6 +20,9 @@ const UnsafeForwardedResponseHeaders = new Set([
   'upgrade',
 ]);
 
+// Better Auth owns this wildcard transport contract; first-party endpoints are
+// described by AuthController. Nest cannot infer valid operations for '*' .
+@ApiExcludeController()
 @Controller('api/auth')
 @Public()
 export class BetterAuthApiController {

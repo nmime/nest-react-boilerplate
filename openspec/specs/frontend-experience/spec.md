@@ -183,6 +183,10 @@ navigation, and error-state consistency.
 
 - Hydration does not replace semantically different initial content.
 - Server code does not depend on browser-only state.
+- Site account and landing actions use explicitly configured safe public destinations
+  with identical server and hydration hrefs; unconfigured actions are omitted.
+- Unknown site routes return a localized, safe 404 page with the same shell and
+  response security policy; internal errors retain a generic safe error page.
 
 **Failure behavior:**
 
@@ -192,6 +196,12 @@ navigation, and error-state consistency.
 
 - **WHEN** a server-rendered route becomes interactive
 - **THEN** its accessible content and state remain consistent
+
+#### Scenario: Unknown site route
+
+- **WHEN** a visitor opens a route that the SSR site does not own
+- **THEN** the response is 404 and displays a localized recovery link
+- **AND** framework diagnostics and internal exception text are not rendered
 
 ### Requirement: [REQ-FRONTEND-DESIGN-008] Shared design primitives remain source-owned
 

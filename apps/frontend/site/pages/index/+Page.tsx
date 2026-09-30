@@ -1,3 +1,5 @@
+import { usePageContext } from 'vike-react/usePageContext';
+import type { SiteDestinations } from '../../server/site-destinations';
 import { useI18n } from '@app/frontend-runtime';
 
 const sitePrinciples = [
@@ -16,6 +18,11 @@ const sitePrinciples = [
 ] as const;
 
 export function Page() {
+  const { siteDestinations } = usePageContext();
+  return <SiteHome destinations={siteDestinations} />;
+}
+
+export function SiteHome({ destinations = {} }: Readonly<{ destinations?: SiteDestinations }>) {
   const { t } = useI18n();
 
   return (
@@ -26,12 +33,16 @@ export function Page() {
           <h1 id="site-title">{t('site.title')}</h1>
           <p>{t('site.description')}</p>
           <div className="site-actions" aria-label={t('site.actionGroup.label')}>
-            <a className="site-primary-action" href="/app">
-              {t('site.action.app')}
-            </a>
-            <a className="site-secondary-action" href="/">
-              {t('site.action.docs')}
-            </a>
+            {destinations.userApp && (
+              <a className="site-primary-action" href={destinations.userApp}>
+                {t('site.action.app')}
+              </a>
+            )}
+            {destinations.landingApp && (
+              <a className="site-secondary-action" href={destinations.landingApp}>
+                {t('site.action.docs')}
+              </a>
+            )}
           </div>
         </div>
       </div>

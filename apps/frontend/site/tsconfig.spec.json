@@ -10,6 +10,7 @@
     "vitest.config.mts",
     "pages/**/*.spec.ts",
     "pages/**/*.spec.tsx",
+    "server/**/*.spec.ts",
     "pages/**/*.ts",
     "pages/**/*.tsx",
     "src/**/*.d.ts"

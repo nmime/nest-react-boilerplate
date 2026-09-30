@@ -30,6 +30,17 @@ peer edges declared optional by their package metadata, so a combined web/native
 selection does not ship Metro or Android build tooling in SSR. Required peers and
 other optional dependencies, including platform bindings, remain locked.
 
+## Public navigation
+
+Set `SITE_USER_APP_URL` and `SITE_LANDING_APP_URL` to the explicitly selected
+public destinations before starting the server. Values are credential-free HTTPS
+URLs or same-origin paths, without query strings or fragments. Unconfigured or
+unsafe destinations omit the corresponding home action. An owned development
+stack may explicitly set `SITE_ALLOW_LOOPBACK_HTTP=true` for `localhost` or
+`127.0.0.1` HTTP destinations. Vike serializes these public hrefs into the initial
+page context so server rendering and client hydration use the same destinations.
+Unknown routes render a localized 404 recovery page.
+
 ## Docs
 
 - [Frontend app rules](../AGENTS.md)

@@ -18,699 +18,6 @@
   },
   "rules": [
     {
-      "id": "user-app-api:DELETE:/api/v1/webhooks/{provider}:200",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "DELETE",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_delete",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": 200,
-      "errorCode": null,
-      "match": {
-        "variant": "DELETE_200",
-        "fallbackVariant": null,
-        "networkVariant": "DELETE_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "success",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-delete.delete.200",
-          "default": "Payments Webhooks unknown delete completed successfully."
-        },
-        "icon": "check-circle",
-        "color": "green",
-        "durationMs": 4000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": false
-    },
-    {
-      "id": "user-app-api:DELETE:/api/v1/webhooks/{provider}:ERR",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "DELETE",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_delete",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "ERR",
-      "errorCode": null,
-      "match": {
-        "variant": "DELETE_ERR",
-        "fallbackVariant": "DELETE_ERR",
-        "networkVariant": "DELETE_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-delete.delete.err",
-          "default": "Payments Webhooks unknown delete failed before an HTTP response was available."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:DELETE:/api/v1/webhooks/{provider}:NET",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "DELETE",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_delete",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "NET",
-      "errorCode": null,
-      "match": {
-        "variant": "DELETE_NET",
-        "fallbackVariant": null,
-        "networkVariant": "DELETE_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "warning",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-delete.delete.net",
-          "default": "Payments Webhooks unknown delete could not reach the service."
-        },
-        "icon": "alert-triangle",
-        "color": "amber",
-        "durationMs": 6000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:GET:/api/v1/webhooks/{provider}:200",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "GET",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_get",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": 200,
-      "errorCode": null,
-      "match": {
-        "variant": "GET_200",
-        "fallbackVariant": null,
-        "networkVariant": "GET_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "success",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-get.get.200",
-          "default": "Payments Webhooks unknown get completed successfully."
-        },
-        "icon": "check-circle",
-        "color": "green",
-        "durationMs": 4000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": false
-    },
-    {
-      "id": "user-app-api:GET:/api/v1/webhooks/{provider}:ERR",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "GET",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_get",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "ERR",
-      "errorCode": null,
-      "match": {
-        "variant": "GET_ERR",
-        "fallbackVariant": "GET_ERR",
-        "networkVariant": "GET_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-get.get.err",
-          "default": "Payments Webhooks unknown get failed before an HTTP response was available."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:GET:/api/v1/webhooks/{provider}:NET",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "GET",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_get",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "NET",
-      "errorCode": null,
-      "match": {
-        "variant": "GET_NET",
-        "fallbackVariant": null,
-        "networkVariant": "GET_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "warning",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-get.get.net",
-          "default": "Payments Webhooks unknown get could not reach the service."
-        },
-        "icon": "alert-triangle",
-        "color": "amber",
-        "durationMs": 6000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:HEAD:/api/v1/webhooks/{provider}:200",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "HEAD",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_head",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": 200,
-      "errorCode": null,
-      "match": {
-        "variant": "HEAD_200",
-        "fallbackVariant": null,
-        "networkVariant": "HEAD_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "success",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-head.head.200",
-          "default": "Payments Webhooks unknown head completed successfully."
-        },
-        "icon": "check-circle",
-        "color": "green",
-        "durationMs": 4000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": false
-    },
-    {
-      "id": "user-app-api:HEAD:/api/v1/webhooks/{provider}:ERR",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "HEAD",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_head",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "ERR",
-      "errorCode": null,
-      "match": {
-        "variant": "HEAD_ERR",
-        "fallbackVariant": "HEAD_ERR",
-        "networkVariant": "HEAD_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-head.head.err",
-          "default": "Payments Webhooks unknown head failed before an HTTP response was available."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:HEAD:/api/v1/webhooks/{provider}:NET",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "HEAD",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_head",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "NET",
-      "errorCode": null,
-      "match": {
-        "variant": "HEAD_NET",
-        "fallbackVariant": null,
-        "networkVariant": "HEAD_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "warning",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-head.head.net",
-          "default": "Payments Webhooks unknown head could not reach the service."
-        },
-        "icon": "alert-triangle",
-        "color": "amber",
-        "durationMs": 6000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:OPTIONS:/api/v1/webhooks/{provider}:200",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "OPTIONS",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_options",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": 200,
-      "errorCode": null,
-      "match": {
-        "variant": "OPTIONS_200",
-        "fallbackVariant": null,
-        "networkVariant": "OPTIONS_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "success",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-options.options.200",
-          "default": "Payments Webhooks unknown options completed successfully."
-        },
-        "icon": "check-circle",
-        "color": "green",
-        "durationMs": 4000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": false
-    },
-    {
-      "id": "user-app-api:OPTIONS:/api/v1/webhooks/{provider}:ERR",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "OPTIONS",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_options",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "ERR",
-      "errorCode": null,
-      "match": {
-        "variant": "OPTIONS_ERR",
-        "fallbackVariant": "OPTIONS_ERR",
-        "networkVariant": "OPTIONS_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-options.options.err",
-          "default": "Payments Webhooks unknown options failed before an HTTP response was available."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:OPTIONS:/api/v1/webhooks/{provider}:NET",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "OPTIONS",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_options",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "NET",
-      "errorCode": null,
-      "match": {
-        "variant": "OPTIONS_NET",
-        "fallbackVariant": null,
-        "networkVariant": "OPTIONS_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "warning",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-options.options.net",
-          "default": "Payments Webhooks unknown options could not reach the service."
-        },
-        "icon": "alert-triangle",
-        "color": "amber",
-        "durationMs": 6000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:PATCH:/api/v1/webhooks/{provider}:200",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "PATCH",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_patch",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": 200,
-      "errorCode": null,
-      "match": {
-        "variant": "PATCH_200",
-        "fallbackVariant": null,
-        "networkVariant": "PATCH_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "success",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-patch.patch.200",
-          "default": "Payments Webhooks unknown patch completed successfully."
-        },
-        "icon": "check-circle",
-        "color": "green",
-        "durationMs": 4000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": false
-    },
-    {
-      "id": "user-app-api:PATCH:/api/v1/webhooks/{provider}:ERR",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "PATCH",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_patch",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "ERR",
-      "errorCode": null,
-      "match": {
-        "variant": "PATCH_ERR",
-        "fallbackVariant": "PATCH_ERR",
-        "networkVariant": "PATCH_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-patch.patch.err",
-          "default": "Payments Webhooks unknown patch failed before an HTTP response was available."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:PATCH:/api/v1/webhooks/{provider}:NET",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "PATCH",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_patch",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "NET",
-      "errorCode": null,
-      "match": {
-        "variant": "PATCH_NET",
-        "fallbackVariant": null,
-        "networkVariant": "PATCH_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "warning",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-patch.patch.net",
-          "default": "Payments Webhooks unknown patch could not reach the service."
-        },
-        "icon": "alert-triangle",
-        "color": "amber",
-        "durationMs": 6000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:POST:/api/v1/webhooks/{provider}:200",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "POST",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_post",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": 200,
-      "errorCode": null,
-      "match": {
-        "variant": "POST_200",
-        "fallbackVariant": null,
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "success",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-post.post.200",
-          "default": "Payments Webhooks unknown post completed successfully."
-        },
-        "icon": "check-circle",
-        "color": "green",
-        "durationMs": 4000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": false
-    },
-    {
-      "id": "user-app-api:POST:/api/v1/webhooks/{provider}:ERR",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "POST",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_post",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "ERR",
-      "errorCode": null,
-      "match": {
-        "variant": "POST_ERR",
-        "fallbackVariant": "POST_ERR",
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-post.post.err",
-          "default": "Payments Webhooks unknown post failed before an HTTP response was available."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:POST:/api/v1/webhooks/{provider}:NET",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "POST",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_post",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "NET",
-      "errorCode": null,
-      "match": {
-        "variant": "POST_NET",
-        "fallbackVariant": null,
-        "networkVariant": "POST_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "warning",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-post.post.net",
-          "default": "Payments Webhooks unknown post could not reach the service."
-        },
-        "icon": "alert-triangle",
-        "color": "amber",
-        "durationMs": 6000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:PUT:/api/v1/webhooks/{provider}:200",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "PUT",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_put",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": 200,
-      "errorCode": null,
-      "match": {
-        "variant": "PUT_200",
-        "fallbackVariant": null,
-        "networkVariant": "PUT_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "success",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-put.put.200",
-          "default": "Payments Webhooks unknown put completed successfully."
-        },
-        "icon": "check-circle",
-        "color": "green",
-        "durationMs": 4000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": false
-    },
-    {
-      "id": "user-app-api:PUT:/api/v1/webhooks/{provider}:ERR",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "PUT",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_put",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "ERR",
-      "errorCode": null,
-      "match": {
-        "variant": "PUT_ERR",
-        "fallbackVariant": "PUT_ERR",
-        "networkVariant": "PUT_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "error",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-put.put.err",
-          "default": "Payments Webhooks unknown put failed before an HTTP response was available."
-        },
-        "icon": "alert-circle",
-        "color": "red",
-        "durationMs": 8000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
-      "id": "user-app-api:PUT:/api/v1/webhooks/{provider}:NET",
-      "endpoint": {
-        "app": "user-app-api",
-        "method": "PUT",
-        "path": "/api/v1/webhooks/{provider}",
-        "operationId": "PaymentsWebhooksController_unknown_put",
-        "tags": ["PaymentsWebhooks"]
-      },
-      "status": "NET",
-      "errorCode": null,
-      "match": {
-        "variant": "PUT_NET",
-        "fallbackVariant": null,
-        "networkVariant": "PUT_NET"
-      },
-      "display": {
-        "mode": "toast",
-        "category": "warning",
-        "text": {
-          "key": "api.toast.user-app-api.paymentswebhookscontroller-unknown-put.put.net",
-          "default": "Payments Webhooks unknown put could not reach the service."
-        },
-        "icon": "alert-triangle",
-        "color": "amber",
-        "durationMs": 6000,
-        "options": {
-          "dismissible": true,
-          "position": "top-right"
-        }
-      },
-      "enabled": true
-    },
-    {
       "id": "user-app-api:POST:/api/v1/webhooks/adyen:200",
       "endpoint": {
         "app": "user-app-api",
@@ -742,6 +49,270 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/adyen:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/adyen",
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "POST_400_webhook-signature-invalid",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-adyen.post.400.webhook-signature-invalid",
+          "default": "Payments Webhooks adyen failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/adyen:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/adyen",
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-adyen.post.400",
+          "default": "Payments Webhooks adyen failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/adyen:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/adyen",
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "POST_409_webhook-replayed",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-adyen.post.409.webhook-replayed",
+          "default": "Payments Webhooks adyen failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/adyen:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/adyen",
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-adyen.post.409",
+          "default": "Payments Webhooks adyen failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/adyen:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/adyen",
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "POST_410_webhook-stale",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-adyen.post.410.webhook-stale",
+          "default": "Payments Webhooks adyen failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/adyen:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/adyen",
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_410",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-adyen.post.410",
+          "default": "Payments Webhooks adyen failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/adyen:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/adyen",
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "POST_502_webhook-processing-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-adyen.post.502.webhook-processing-error",
+          "default": "Payments Webhooks adyen failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/adyen:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/adyen",
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_502",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-adyen.post.502",
+          "default": "Payments Webhooks adyen failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "user-app-api:POST:/api/v1/webhooks/adyen:ERR",
@@ -843,6 +414,270 @@
       "enabled": false
     },
     {
+      "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "GET_400_webhook-signature-invalid",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentsget.get.400.webhook-signature-invalid",
+          "default": "Payments Webhooks cloud Payments Get failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentsget.get.400",
+          "default": "Payments Webhooks cloud Payments Get failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "GET_409_webhook-replayed",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentsget.get.409.webhook-replayed",
+          "default": "Payments Webhooks cloud Payments Get failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentsget.get.409",
+          "default": "Payments Webhooks cloud Payments Get failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "GET_410_webhook-stale",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentsget.get.410.webhook-stale",
+          "default": "Payments Webhooks cloud Payments Get failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_410",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentsget.get.410",
+          "default": "Payments Webhooks cloud Payments Get failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "GET_502_webhook-processing-error",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentsget.get.502.webhook-processing-error",
+          "default": "Payments Webhooks cloud Payments Get failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_502",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentsget.get.502",
+          "default": "Payments Webhooks cloud Payments Get failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:GET:/api/v1/webhooks/cloudpayments:ERR",
       "endpoint": {
         "app": "user-app-api",
@@ -940,6 +775,270 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "POST_400_webhook-signature-invalid",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentspost.post.400.webhook-signature-invalid",
+          "default": "Payments Webhooks cloud Payments Post failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentspost.post.400",
+          "default": "Payments Webhooks cloud Payments Post failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "POST_409_webhook-replayed",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentspost.post.409.webhook-replayed",
+          "default": "Payments Webhooks cloud Payments Post failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentspost.post.409",
+          "default": "Payments Webhooks cloud Payments Post failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "POST_410_webhook-stale",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentspost.post.410.webhook-stale",
+          "default": "Payments Webhooks cloud Payments Post failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_410",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentspost.post.410",
+          "default": "Payments Webhooks cloud Payments Post failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "POST_502_webhook-processing-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentspost.post.502.webhook-processing-error",
+          "default": "Payments Webhooks cloud Payments Post failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cloudpayments",
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_502",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cloudpaymentspost.post.502",
+          "default": "Payments Webhooks cloud Payments Post failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "user-app-api:POST:/api/v1/webhooks/cloudpayments:ERR",
@@ -1041,6 +1140,270 @@
       "enabled": false
     },
     {
+      "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cryptobot",
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "POST_400_webhook-signature-invalid",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cryptobot.post.400.webhook-signature-invalid",
+          "default": "Payments Webhooks crypto Bot failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cryptobot",
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cryptobot.post.400",
+          "default": "Payments Webhooks crypto Bot failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cryptobot",
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "POST_409_webhook-replayed",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cryptobot.post.409.webhook-replayed",
+          "default": "Payments Webhooks crypto Bot failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cryptobot",
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cryptobot.post.409",
+          "default": "Payments Webhooks crypto Bot failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cryptobot",
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "POST_410_webhook-stale",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cryptobot.post.410.webhook-stale",
+          "default": "Payments Webhooks crypto Bot failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cryptobot",
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_410",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cryptobot.post.410",
+          "default": "Payments Webhooks crypto Bot failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cryptobot",
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "POST_502_webhook-processing-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cryptobot.post.502.webhook-processing-error",
+          "default": "Payments Webhooks crypto Bot failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/cryptobot",
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_502",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-cryptobot.post.502",
+          "default": "Payments Webhooks crypto Bot failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:POST:/api/v1/webhooks/cryptobot:ERR",
       "endpoint": {
         "app": "user-app-api",
@@ -1138,6 +1501,270 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/heleket:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/heleket",
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "POST_400_webhook-signature-invalid",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-heleket.post.400.webhook-signature-invalid",
+          "default": "Payments Webhooks heleket failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/heleket:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/heleket",
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-heleket.post.400",
+          "default": "Payments Webhooks heleket failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/heleket:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/heleket",
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "POST_409_webhook-replayed",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-heleket.post.409.webhook-replayed",
+          "default": "Payments Webhooks heleket failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/heleket:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/heleket",
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-heleket.post.409",
+          "default": "Payments Webhooks heleket failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/heleket:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/heleket",
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "POST_410_webhook-stale",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-heleket.post.410.webhook-stale",
+          "default": "Payments Webhooks heleket failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/heleket:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/heleket",
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_410",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-heleket.post.410",
+          "default": "Payments Webhooks heleket failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/heleket:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/heleket",
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "POST_502_webhook-processing-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-heleket.post.502.webhook-processing-error",
+          "default": "Payments Webhooks heleket failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/heleket:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/heleket",
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_502",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-heleket.post.502",
+          "default": "Payments Webhooks heleket failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "user-app-api:POST:/api/v1/webhooks/heleket:ERR",
@@ -1239,6 +1866,270 @@
       "enabled": false
     },
     {
+      "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/nowpayments",
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "POST_400_webhook-signature-invalid",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-nowpayments.post.400.webhook-signature-invalid",
+          "default": "Payments Webhooks now Payments failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/nowpayments",
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-nowpayments.post.400",
+          "default": "Payments Webhooks now Payments failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/nowpayments",
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "POST_409_webhook-replayed",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-nowpayments.post.409.webhook-replayed",
+          "default": "Payments Webhooks now Payments failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/nowpayments",
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-nowpayments.post.409",
+          "default": "Payments Webhooks now Payments failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/nowpayments",
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "POST_410_webhook-stale",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-nowpayments.post.410.webhook-stale",
+          "default": "Payments Webhooks now Payments failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/nowpayments",
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_410",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-nowpayments.post.410",
+          "default": "Payments Webhooks now Payments failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/nowpayments",
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "POST_502_webhook-processing-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-nowpayments.post.502.webhook-processing-error",
+          "default": "Payments Webhooks now Payments failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/nowpayments",
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_502",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-nowpayments.post.502",
+          "default": "Payments Webhooks now Payments failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:POST:/api/v1/webhooks/nowpayments:ERR",
       "endpoint": {
         "app": "user-app-api",
@@ -1336,6 +2227,270 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/stripe:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/stripe",
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "POST_400_webhook-signature-invalid",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-stripe.post.400.webhook-signature-invalid",
+          "default": "Payments Webhooks stripe failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/stripe:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/stripe",
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-stripe.post.400",
+          "default": "Payments Webhooks stripe failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/stripe:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/stripe",
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "POST_409_webhook-replayed",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-stripe.post.409.webhook-replayed",
+          "default": "Payments Webhooks stripe failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/stripe:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/stripe",
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-stripe.post.409",
+          "default": "Payments Webhooks stripe failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/stripe:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/stripe",
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "POST_410_webhook-stale",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-stripe.post.410.webhook-stale",
+          "default": "Payments Webhooks stripe failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/stripe:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/stripe",
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_410",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-stripe.post.410",
+          "default": "Payments Webhooks stripe failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/stripe:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/stripe",
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "POST_502_webhook-processing-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-stripe.post.502.webhook-processing-error",
+          "default": "Payments Webhooks stripe failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/stripe:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/stripe",
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_502",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-stripe.post.502",
+          "default": "Payments Webhooks stripe failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "user-app-api:POST:/api/v1/webhooks/stripe:ERR",
@@ -1437,6 +2592,270 @@
       "enabled": false
     },
     {
+      "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/x-rocket",
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "POST_400_webhook-signature-invalid",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-rocketpayment.post.400.webhook-signature-invalid",
+          "default": "Payments Webhooks rocket Payment failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/x-rocket",
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-rocketpayment.post.400",
+          "default": "Payments Webhooks rocket Payment failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/x-rocket",
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "POST_409_webhook-replayed",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-rocketpayment.post.409.webhook-replayed",
+          "default": "Payments Webhooks rocket Payment failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/x-rocket",
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-rocketpayment.post.409",
+          "default": "Payments Webhooks rocket Payment failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/x-rocket",
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "POST_410_webhook-stale",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-rocketpayment.post.410.webhook-stale",
+          "default": "Payments Webhooks rocket Payment failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/x-rocket",
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_410",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-rocketpayment.post.410",
+          "default": "Payments Webhooks rocket Payment failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/x-rocket",
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "POST_502_webhook-processing-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-rocketpayment.post.502.webhook-processing-error",
+          "default": "Payments Webhooks rocket Payment failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/x-rocket",
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_502",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-rocketpayment.post.502",
+          "default": "Payments Webhooks rocket Payment failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:POST:/api/v1/webhooks/x-rocket:ERR",
       "endpoint": {
         "app": "user-app-api",
@@ -1534,6 +2953,270 @@
         }
       },
       "enabled": false
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/yookassa:400:webhook-signature-invalid",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/yookassa",
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": "webhook-signature-invalid",
+      "match": {
+        "variant": "POST_400_webhook-signature-invalid",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-yookassa.post.400.webhook-signature-invalid",
+          "default": "Payments Webhooks yoo Kassa failed: Webhook signature invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/yookassa:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/yookassa",
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-yookassa.post.400",
+          "default": "Payments Webhooks yoo Kassa failed: Webhook Signature Invalid."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/yookassa:409:webhook-replayed",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/yookassa",
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": "webhook-replayed",
+      "match": {
+        "variant": "POST_409_webhook-replayed",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-yookassa.post.409.webhook-replayed",
+          "default": "Payments Webhooks yoo Kassa failed: Webhook replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/yookassa:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/yookassa",
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-yookassa.post.409",
+          "default": "Payments Webhooks yoo Kassa failed: Webhook Replayed."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/yookassa:410:webhook-stale",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/yookassa",
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": "webhook-stale",
+      "match": {
+        "variant": "POST_410_webhook-stale",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-yookassa.post.410.webhook-stale",
+          "default": "Payments Webhooks yoo Kassa failed: Webhook stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/yookassa:410",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/yookassa",
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 410,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_410",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-yookassa.post.410",
+          "default": "Payments Webhooks yoo Kassa failed: Webhook Stale."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/yookassa:502:webhook-processing-error",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/yookassa",
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": "webhook-processing-error",
+      "match": {
+        "variant": "POST_502_webhook-processing-error",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-yookassa.post.502.webhook-processing-error",
+          "default": "Payments Webhooks yoo Kassa failed: Webhook processing error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/api/v1/webhooks/yookassa:502",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/api/v1/webhooks/yookassa",
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"]
+      },
+      "status": 502,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_502",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentswebhookscontroller-yookassa.post.502",
+          "default": "Payments Webhooks yoo Kassa failed: Webhook Processing Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
     },
     {
       "id": "user-app-api:POST:/api/v1/webhooks/yookassa:ERR",
@@ -2097,6 +3780,39 @@
       "enabled": true
     },
     {
+      "id": "user-app-api:GET:/payments:503",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/payments",
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"]
+      },
+      "status": 503,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_503",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentscontroller-list.get.503",
+          "default": "Payments list failed: Service Unavailable."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:GET:/payments:ERR",
       "endpoint": {
         "app": "user-app-api",
@@ -2349,6 +4065,39 @@
         "text": {
           "key": "api.toast.user-app-api.paymentscontroller-create.post.500",
           "default": "Payments create failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/payments:503",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/payments",
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"]
+      },
+      "status": 503,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_503",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentscontroller-create.post.503",
+          "default": "Payments create failed: Service Unavailable."
         },
         "icon": "alert-circle",
         "color": "red",

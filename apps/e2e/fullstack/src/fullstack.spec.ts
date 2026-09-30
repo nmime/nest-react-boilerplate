@@ -259,6 +259,7 @@ test('public web responses retain security headers and uncached HTML, including 
   for (const base of [urls.adminApp, urls.userApp, urls.landingApp, urls.siteApp]) {
     for (const path of ['/', '/__qa_missing_page__']) {
       const response = await fetch(`${base}${path}`);
+      expect(response.status).toBe(base === urls.siteApp && path !== '/' ? 404 : 200);
       expect(response.headers.get('x-content-type-options')).toBe('nosniff');
       expect(response.headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin');
       expect(response.headers.get('content-security-policy')).toBeTruthy();
@@ -326,6 +327,8 @@ test('site sends meaningful SSR HTML and hydrates client-side navigation without
   const serverHtml = await serverResponse.text();
   expect(serverHtml).toContain('A dependable home for the pages people return to.');
   expect(serverHtml).toMatch(/<script\b/iu);
+  expect(serverHtml).toContain(`href="${urls.userApp}/"`);
+  expect(serverHtml).toContain(`href="${urls.landingApp}/"`);
 
   const hydrationErrors: string[] = [];
   page.on('console', (message) => {
@@ -357,6 +360,13 @@ test('site sends meaningful SSR HTML and hydrates client-side navigation without
     await page.evaluate(() => document.documentElement.dataset['hydrationNavigationProof']),
     'hydrated navigation should preserve the current document',
   ).toBe('preserved');
+  await expect(page.getByRole('link', { name: 'Open account' })).toHaveAttribute('href', `${urls.userApp}/`);
+  await expect(page.getByRole('link', { name: 'View public landing' })).toHaveAttribute('href', `${urls.landingApp}/`);
+  const missing = await page.goto(`${urls.siteApp}/__qa_missing_page__`);
+  expect(missing?.status()).toBe(404);
+  await expect(page.getByRole('heading', { level: 1, name: 'Not Found' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Nest React Boilerplate home' })).toHaveAttribute('href', '/');
+  expect(await page.locator('body').innerText()).not.toMatch(/stack trace|An error occurred|Console logs/i);
   expect(hydrationErrors).toEqual([]);
   await expectPageQuality(page, 'site app');
 });

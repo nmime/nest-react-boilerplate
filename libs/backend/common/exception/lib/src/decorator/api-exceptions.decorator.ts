@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
-import { getProblemTypeDefinition, type ProblemTypeCode } from '@app/common-problem-details';
+import { getProblemTypeDefinition, type RegisteredProblemCode } from '@app/common-problem-details';
 import { mapHttpStatusToProblemTitle } from '../util/map-http-status-to-problem-title.util';
 import { getProblemDetailsSchema, getRegisteredProblemDetailsSchema } from '../util/problem-details-schema.util';
 
@@ -40,8 +40,8 @@ export function ApiExceptions(...statuses: ApiExceptionStatusInput[]): MethodDec
   );
 }
 
-export function ApiProblemTypes(...codes: ProblemTypeCode[]): MethodDecorator & ClassDecorator {
-  const codesByStatus = new Map<number, ProblemTypeCode[]>();
+export function ApiProblemTypes(...codes: RegisteredProblemCode[]): MethodDecorator & ClassDecorator {
+  const codesByStatus = new Map<number, RegisteredProblemCode[]>();
 
   for (const code of codes) {
     const definition = getProblemTypeDefinition(code);

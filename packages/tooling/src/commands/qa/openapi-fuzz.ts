@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { QualityEngineImages } from "./quality-engine-images.ts";
 import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { commandExists, envList, loadOpenApiContracts, parseArgs, run, schemaExample, slug, validateSchema, writeJson } from "./runtime-utils.ts";
 import type { LoadedOpenApiContract, OpenApiOperation } from "./runtime-utils.ts";
 
@@ -68,17 +68,22 @@ if (engine === "schemathesis" && !dryRun) {
     const eligible = cases.filter((item) => item.contract === contract.file && (item.safe || allowUnsafe));
     if (!eligible.length) continue;
     for (const baseUrl of baseUrlsFor(contract)) {
-      const cliArgs = ['run', contract.path, '--base-url', baseUrl, '--checks', checks, '--max-examples', String(maxExamples), ...methodSelection];
+      const cliArgs = ['run', contract.path, '--url', baseUrl, '--checks', checks, '--max-examples', String(maxExamples), '--request-timeout', String(timeoutMs / 1000), '--workers', '1', '--rate-limit', 'auto', '--generation-database', ':memory:', ...methodSelection];
       let result;
       if (commandExists('schemathesis')) result = run('schemathesis', cliArgs);
       else if (commandExists('docker')) {
-        result = run('docker', ['run', '--rm', '-v', `${process.cwd()}:/work:ro`, '--workdir', '/work', QualityEngineImages.schemathesis, ...cliArgs]);
+        const dockerCliArgs = [...cliArgs];
+        dockerCliArgs[1] = join('/work', contract.path);
+        result = run('docker', ['run', '--rm', '-v', `${process.cwd()}:/work:ro`, '--workdir', '/tmp', QualityEngineImages.schemathesis, ...dockerCliArgs]);
       } else {
         live.push({engine: 'schemathesis', ok: false, error: 'Install schemathesis or Docker to run the selected fuzz engine.'});
         continue;
       }
       executed += 1;
-      live.push({engine: 'schemathesis', contract: contract.file, status: result.status, ok: result.status === 0, stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-4000)});
+      const engineLog = `${out}.${slug(contract.doc.info?.title ?? contract.file)}.schemathesis.log`;
+      mkdirSync(dirname(engineLog), { recursive: true });
+      writeFileSync(engineLog, `${result.stdout}\n${result.stderr}`);
+      live.push({engine: 'schemathesis', contract: contract.file, status: result.status, ok: result.status === 0, engineLog, stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-4000)});
     }
   }
 }

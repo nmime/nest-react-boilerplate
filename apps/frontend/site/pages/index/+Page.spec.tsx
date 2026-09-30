@@ -3,6 +3,10 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('vike-react/usePageContext', () => ({
+  usePageContext: () => ({ siteDestinations: { userApp: '/account', landingApp: '/landing' } }),
+}));
+
 vi.mock('@app/frontend-runtime', () => ({
   useI18n: () => ({
     t: (key: string) => {
@@ -42,10 +46,17 @@ describe('site home page', () => {
     expect(heading).toBeTruthy();
 
     const appLink = screen.getByRole('link', { name: 'Open account' });
-    expect(appLink.getAttribute('href')).toBe('/app');
+    expect(appLink.getAttribute('href')).toBe('/account');
 
     const landingLink = screen.getByRole('link', { name: 'View public landing' });
-    expect(landingLink.getAttribute('href')).toBe('/');
+    expect(landingLink.getAttribute('href')).toBe('/landing');
+  });
+
+  it('omits account and landing actions when no destinations are configured', async () => {
+    const { SiteHome } = await import('./+Page');
+    render(<SiteHome />);
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'A dependable home' })).toBeTruthy();
   });
 
   it('renders three metric articles', async () => {

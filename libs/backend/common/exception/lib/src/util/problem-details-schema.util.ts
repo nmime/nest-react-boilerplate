@@ -1,4 +1,4 @@
-import { getProblemTypeDefinition, problemTypeForCode, type ProblemTypeCode } from '@app/common-problem-details';
+import { getProblemTypeDefinition, problemTypeForCode, type RegisteredProblemCode } from '@app/common-problem-details';
 import type { OpenApiSchemaObject } from '../type/open-api-schema.type';
 import { mapHttpStatusToProblemTitle } from './map-http-status-to-problem-title.util';
 
@@ -66,7 +66,7 @@ export function getProblemDetailsSchema(status: number): OpenApiSchemaObject {
 }
 
 /** The exact response profile for a registered problem type. */
-export function getRegisteredProblemDetailsSchema(code: ProblemTypeCode): OpenApiSchemaObject {
+export function getRegisteredProblemDetailsSchema(code: RegisteredProblemCode): OpenApiSchemaObject {
   const definition = getProblemTypeDefinition(code);
   if (!definition) {
     throw new TypeError(`Unknown registered problem type: ${JSON.stringify(code)}`);

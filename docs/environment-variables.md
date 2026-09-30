@@ -402,3 +402,10 @@ single server, use `deploy/single-server/bootstrap.sh`; its rerunnable
 controller generates locally generatable secrets, installs/pins Node and pnpm,
 configures Nginx/Certbot, validates the rendered topology, and leaves
 provider-issued credentials for the operator.
+
+The optional SSR site navigation uses `SITE_USER_APP_URL` and
+`SITE_LANDING_APP_URL`. Set them to credential-free HTTPS destinations or
+same-origin paths without query strings or fragments. Missing or unsafe values
+omit their home actions. `SITE_ALLOW_LOOPBACK_HTTP=true` permits exact loopback
+HTTP destinations only for an explicitly owned development stack. The initial
+Vike page context carries these public URLs through hydration.

@@ -5,9 +5,6 @@
  * Every export here is derived from the OpenAPI document, so `pnpm api:clients:check`
  * fails when a renamed or removed operation leaves this module stale. Hand-written
  * additions belong beside it, never inside it.
- *
- * Not emitted:
- * - SEARCH /api/v1/webhooks/{provider} (unsupported by openapi-fetch)
  */
 
 import createClient from 'openapi-fetch';
@@ -44,13 +41,6 @@ export const paymentsWebhooksControllerCloudPaymentsPostPath = '/api/v1/webhooks
 export const paymentsWebhooksControllerCloudPaymentsGetPath = '/api/v1/webhooks/cloudpayments' as const;
 export const paymentsWebhooksControllerStripePath = '/api/v1/webhooks/stripe' as const;
 export const paymentsWebhooksControllerAdyenPath = '/api/v1/webhooks/adyen' as const;
-export const paymentsWebhooksControllerUnknownGetPath = '/api/v1/webhooks/{provider}' as const;
-export const paymentsWebhooksControllerUnknownPostPath = '/api/v1/webhooks/{provider}' as const;
-export const paymentsWebhooksControllerUnknownPutPath = '/api/v1/webhooks/{provider}' as const;
-export const paymentsWebhooksControllerUnknownDeletePath = '/api/v1/webhooks/{provider}' as const;
-export const paymentsWebhooksControllerUnknownPatchPath = '/api/v1/webhooks/{provider}' as const;
-export const paymentsWebhooksControllerUnknownOptionsPath = '/api/v1/webhooks/{provider}' as const;
-export const paymentsWebhooksControllerUnknownHeadPath = '/api/v1/webhooks/{provider}' as const;
 
 export const baseHealthControllerGetHealth = (options?: ApiClientRequestOptions) =>
   client.GET(baseHealthControllerGetHealthPath, toOpenApiFetchOptions(options));
@@ -163,76 +153,6 @@ export type PaymentsWebhooksControllerAdyenResponse = OpenApiData<typeof payment
 export type PaymentsWebhooksControllerAdyenData = EnvelopeData<PaymentsWebhooksControllerAdyenResponse>;
 export type PaymentsWebhooksControllerAdyenError = OpenApiError<typeof paymentsWebhooksControllerAdyen>;
 
-export const paymentsWebhooksControllerUnknownGet = (provider: string, options?: ApiClientRequestOptions) =>
-  client.GET(paymentsWebhooksControllerUnknownGetPath, {
-    ...toOpenApiFetchOptions(options),
-    params: { path: { provider } },
-  });
-export type PaymentsWebhooksControllerUnknownGetResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownGet>;
-export type PaymentsWebhooksControllerUnknownGetData = EnvelopeData<PaymentsWebhooksControllerUnknownGetResponse>;
-export type PaymentsWebhooksControllerUnknownGetError = OpenApiError<typeof paymentsWebhooksControllerUnknownGet>;
-
-export const paymentsWebhooksControllerUnknownPost = (provider: string, options?: ApiClientRequestOptions) =>
-  client.POST(paymentsWebhooksControllerUnknownPostPath, {
-    ...toOpenApiFetchOptions(options),
-    params: { path: { provider } },
-  });
-export type PaymentsWebhooksControllerUnknownPostResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownPost>;
-export type PaymentsWebhooksControllerUnknownPostData = EnvelopeData<PaymentsWebhooksControllerUnknownPostResponse>;
-export type PaymentsWebhooksControllerUnknownPostError = OpenApiError<typeof paymentsWebhooksControllerUnknownPost>;
-
-export const paymentsWebhooksControllerUnknownPut = (provider: string, options?: ApiClientRequestOptions) =>
-  client.PUT(paymentsWebhooksControllerUnknownPutPath, {
-    ...toOpenApiFetchOptions(options),
-    params: { path: { provider } },
-  });
-export type PaymentsWebhooksControllerUnknownPutResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownPut>;
-export type PaymentsWebhooksControllerUnknownPutData = EnvelopeData<PaymentsWebhooksControllerUnknownPutResponse>;
-export type PaymentsWebhooksControllerUnknownPutError = OpenApiError<typeof paymentsWebhooksControllerUnknownPut>;
-
-export const paymentsWebhooksControllerUnknownDelete = (provider: string, options?: ApiClientRequestOptions) =>
-  client.DELETE(paymentsWebhooksControllerUnknownDeletePath, {
-    ...toOpenApiFetchOptions(options),
-    params: { path: { provider } },
-  });
-export type PaymentsWebhooksControllerUnknownDeleteResponse = OpenApiData<
-  typeof paymentsWebhooksControllerUnknownDelete
->;
-export type PaymentsWebhooksControllerUnknownDeleteData = EnvelopeData<PaymentsWebhooksControllerUnknownDeleteResponse>;
-export type PaymentsWebhooksControllerUnknownDeleteError = OpenApiError<typeof paymentsWebhooksControllerUnknownDelete>;
-
-export const paymentsWebhooksControllerUnknownPatch = (provider: string, options?: ApiClientRequestOptions) =>
-  client.PATCH(paymentsWebhooksControllerUnknownPatchPath, {
-    ...toOpenApiFetchOptions(options),
-    params: { path: { provider } },
-  });
-export type PaymentsWebhooksControllerUnknownPatchResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownPatch>;
-export type PaymentsWebhooksControllerUnknownPatchData = EnvelopeData<PaymentsWebhooksControllerUnknownPatchResponse>;
-export type PaymentsWebhooksControllerUnknownPatchError = OpenApiError<typeof paymentsWebhooksControllerUnknownPatch>;
-
-export const paymentsWebhooksControllerUnknownOptions = (provider: string, options?: ApiClientRequestOptions) =>
-  client.OPTIONS(paymentsWebhooksControllerUnknownOptionsPath, {
-    ...toOpenApiFetchOptions(options),
-    params: { path: { provider } },
-  });
-export type PaymentsWebhooksControllerUnknownOptionsResponse = OpenApiData<
-  typeof paymentsWebhooksControllerUnknownOptions
->;
-export type PaymentsWebhooksControllerUnknownOptionsData =
-  EnvelopeData<PaymentsWebhooksControllerUnknownOptionsResponse>;
-export type PaymentsWebhooksControllerUnknownOptionsError = OpenApiError<
-  typeof paymentsWebhooksControllerUnknownOptions
->;
-
-export const paymentsWebhooksControllerUnknownHead = (provider: string, options?: ApiClientRequestOptions) =>
-  client.HEAD(paymentsWebhooksControllerUnknownHeadPath, {
-    ...toOpenApiFetchOptions(options),
-    params: { path: { provider } },
-  });
-export type PaymentsWebhooksControllerUnknownHeadResponse = OpenApiData<typeof paymentsWebhooksControllerUnknownHead>;
-export type PaymentsWebhooksControllerUnknownHeadData = EnvelopeData<PaymentsWebhooksControllerUnknownHeadResponse>;
-export type PaymentsWebhooksControllerUnknownHeadError = OpenApiError<typeof paymentsWebhooksControllerUnknownHead>;
-
 export const getBaseHealthControllerGetHealthQueryKey = () => ['get', baseHealthControllerGetHealthPath] as const;
 export const getBaseHealthControllerGetPrivateHealthQueryKey = () =>
   ['get', baseHealthControllerGetPrivateHealthPath] as const;
@@ -259,17 +179,3 @@ export const getPaymentsWebhooksControllerStripeMutationKey = () =>
   ['post', paymentsWebhooksControllerStripePath] as const;
 export const getPaymentsWebhooksControllerAdyenMutationKey = () =>
   ['post', paymentsWebhooksControllerAdyenPath] as const;
-export const getPaymentsWebhooksControllerUnknownGetQueryKey = () =>
-  ['get', paymentsWebhooksControllerUnknownGetPath] as const;
-export const getPaymentsWebhooksControllerUnknownPostMutationKey = () =>
-  ['post', paymentsWebhooksControllerUnknownPostPath] as const;
-export const getPaymentsWebhooksControllerUnknownPutMutationKey = () =>
-  ['put', paymentsWebhooksControllerUnknownPutPath] as const;
-export const getPaymentsWebhooksControllerUnknownDeleteMutationKey = () =>
-  ['delete', paymentsWebhooksControllerUnknownDeletePath] as const;
-export const getPaymentsWebhooksControllerUnknownPatchMutationKey = () =>
-  ['patch', paymentsWebhooksControllerUnknownPatchPath] as const;
-export const getPaymentsWebhooksControllerUnknownOptionsMutationKey = () =>
-  ['options', paymentsWebhooksControllerUnknownOptionsPath] as const;
-export const getPaymentsWebhooksControllerUnknownHeadMutationKey = () =>
-  ['head', paymentsWebhooksControllerUnknownHeadPath] as const;

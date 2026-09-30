@@ -393,6 +393,10 @@ services:
     logging: *default-logging
     networks: [app]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/site-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
+    environment:
+      SITE_USER_APP_URL: ${SITE_USER_APP_URL:-}
+      SITE_LANDING_APP_URL: ${SITE_LANDING_APP_URL:-}
+      SITE_ALLOW_LOOPBACK_HTTP: ${SITE_ALLOW_LOOPBACK_HTTP:-false}
     ports:
       - target: 80
         published: '${SITE_APP_PORT:-4203}'

@@ -4,6 +4,6 @@ import type { Config } from 'vike/types';
 export default {
   clientRouting: true,
   extends: [vikeReact],
-  passToClient: ['routeParams'],
+  passToClient: ['routeParams', 'siteDestinations'],
   ssr: true,
 } satisfies Config;

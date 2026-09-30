@@ -173,10 +173,13 @@ export const composeEnv = {
   USER_APP_URL: urls.userApp,
   FULLSTACK_BASE_URL: urls.userApp,
   SESSION_SECRET: process.env.SESSION_SECRET ?? 'fullstack-e2e-session-secret-change-me',
-  // The isolated full-stack lane intentionally starts no Redis service. Keep
-  // rate limiting enabled, but explicitly permit the test-only in-memory store.
+  // Browser projects share one proxy address in this disposable fixture. Retain
+  // the request limit with a short fixture window so independent browser journeys
+  // do not spend a production minute waiting on another project's rate counter.
+  // Production configuration keeps its own window and store defaults.
   RATE_LIMIT_STORE: process.env.RATE_LIMIT_STORE ?? 'memory',
   RATE_LIMIT_IN_MEMORY_ALLOWED: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED ?? 'true',
+  RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS ?? '1000',
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'fullstack-e2e-better-auth-secret-change-me',
   NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:
     process.env.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY ?? Buffer.alloc(32, 7).toString('base64'),

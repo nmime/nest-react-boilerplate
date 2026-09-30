@@ -29,6 +29,13 @@ Public registration always remains ordinary. Hosted runtime lanes opt into this
 same fixture through the runtime-stack action; an external-stack matrix must
 already have this owned fixture prepared by its stack owner.
 
+The disposable managed fixture keeps rate limiting enabled with its usual
+request count and a one-second window, because six browser projects share the
+proxy address. `RATE_LIMIT_WINDOW_MS` can explicitly override that fixture
+window. Production retains its separate window and store defaults. An external
+stack must supply suitable isolated test capacity; Playwright never resets an
+external server's counters or treats a 429 response as a passing auth assertion.
+
 ## Docs
 
 - [Local agent rules](AGENTS.md)

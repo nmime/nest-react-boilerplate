@@ -255,6 +255,19 @@ test('API and SSR readiness endpoints identify the Docker services', async () =>
   await expect(siteReady.json()).resolves.toEqual({ runtime: 'node', service: 'site-app', status: 'ok' });
 });
 
+test('public web responses retain security headers and uncached HTML, including missing routes', async () => {
+  for (const base of [urls.adminApp, urls.userApp, urls.landingApp, urls.siteApp]) {
+    for (const path of ['/', '/__qa_missing_page__']) {
+      const response = await fetch(`${base}${path}`);
+      expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+      expect(response.headers.get('referrer-policy')).toBe('strict-origin-when-cross-origin');
+      expect(response.headers.get('content-security-policy')).toBeTruthy();
+      expect(response.headers.get('cache-control')).toContain('no-store');
+      await response.arrayBuffer();
+    }
+  }
+});
+
 test('landing journey exposes public destinations at the 320px viewport floor', async ({ browserName, page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
   await gotoWithRetry(page, urls.landingApp);

@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { createJiti } from 'jiti';
 
 import { RuntimeAdminFixtureEmail, RuntimeAdminFixturePassword } from './runtime-admin-fixture-constants.mjs';
-export { RuntimeAdminFixtureEmail, RuntimeAdminFixturePassword } from './runtime-admin-fixture-constants.mjs';
+export * from './runtime-admin-fixture-constants.mjs';
 const root = resolve(import.meta.dirname, '../..');
 const composeFile = resolve(root, 'docker/docker-compose.yml');
 

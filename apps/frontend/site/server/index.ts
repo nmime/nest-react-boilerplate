@@ -52,6 +52,17 @@ const app = fastify({
   logger: process.env.NODE_ENV !== 'test',
 });
 
+app.addHook('onSend', async (_request, reply, payload) => {
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  reply.header('X-Frame-Options', 'SAMEORIGIN');
+  reply.header('Content-Security-Policy', "frame-ancestors 'self'; base-uri 'self'; object-src 'none'");
+  if (String(reply.getHeader('content-type') ?? '').includes('text/html')) {
+    reply.header('Cache-Control', 'no-store');
+  }
+  return payload;
+});
+
 if (existsSync(clientAssetsRoot)) {
   await app.register(fastifyStatic, {
     root: clientAssetsRoot,

@@ -2720,7 +2720,8 @@
     "ZAP warning result retained",
     "Unchanged PostgreSQL component scans use their earlier immutable build references",
     "Real Discord/Telegram/email/payment provider acceptance, native/device mobile, amd64 runtime, long soak and production rollout unverified",
-    "Complete selected-stack readiness unavailable with placeholder external bot identities"
+    "Complete selected-stack readiness unavailable with placeholder external bot identities",
+    "GitGuardian inventory entropy alerts unresolved; matched values unavailable in public check"
   ],
   "dependencyAudit": {
     "source": "79a121dec952e393920ff555b2957c860a2fe066",
@@ -2734,5 +2735,40 @@
     },
     "report": "/tmp/nrb-final-audit-all.json",
     "sha256": "2c07787718e4bde28a59521ab77a3bb18bf6039206448c6d03c71e7692e92d2e"
+  },
+  "publicationHistory": {
+    "kind": "commit-message-only-rewrite",
+    "oldPublication": "5a7f487bea278b2bdcfbd8d4ead58d9379b8ffd7",
+    "rewrittenPublication": "4f0c3c14a55eccae84b840f4d075ca83f5614a3a",
+    "backupBranch": "chore/audit-publication-backup-5a7f487",
+    "originalVerifiedSource": "79a121dec952e393920ff555b2957c860a2fe066",
+    "rewrittenVerifiedSource": "c19a77ccb9771ac2c39ee1cc20f4625e2fd486a2",
+    "verifiedSourceTree": "5dcd2c408d6b3da620b20e6f9985e2f8d5c2e35c",
+    "allCommitTreesEqual": true,
+    "messageChanges": [
+      "e36851ae3aa3b5c758cdcfc6a4114455d3c8e32e",
+      "a18f39b38b202cc6fa34b6de551881f8de348c84",
+      "8ab735162a663f2a0113dd79d97b1ca719a9f98b",
+      "c247b25dfd79c50853dc05cb58f17f2512eac6fc",
+      "6dca9b82ada265caacd56ccb33f5af064df1a2ec",
+      "5a7f487bea278b2bdcfbd8d4ead58d9379b8ffd7"
+    ]
+  },
+  "hostedInitialPublication": {
+    "head": "5a7f487bea278b2bdcfbd8d4ead58d9379b8ffd7",
+    "run": "https://github.com/nmime/nest-react-boilerplate/actions/runs/36783805386",
+    "gitleaks": "success",
+    "helmVariants": ["provider-free", "postgres", "mongodb"],
+    "helmResult": "success",
+    "conventions": "failure corrected by message-only rewrite; local 33-commit check passes",
+    "gitGuardian": {
+      "conclusion": "failure",
+      "detector": "Generic High Entropy Secret",
+      "incidentIds": [37768428, 37768429],
+      "path": "docs/boilerplate/template-audit-2026-10-01/evidence.json",
+      "matchedValuesAvailable": false,
+      "localFileInspection": "metadata, versions and checksums; no credential-bearing keys or URLs",
+      "disposition": "requires GitGuardian review; not dismissed"
+    }
   }
 }

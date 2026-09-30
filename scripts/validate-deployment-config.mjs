@@ -144,6 +144,13 @@ has(
   'deployment-artifact.ts link-source-dependencies',
   'Docker links only selected app roots to the flattened source dependency closure',
 );
+const sourceInstall = dockerfile.indexOf('pnpm install --frozen-lockfile --offline');
+const sourceMetadata = dockerfile.indexOf('COPY package.json ./package.json');
+const sourceLink = dockerfile.indexOf('deployment-artifact.ts link-source-dependencies');
+assert.ok(
+  sourceInstall >= 0 && sourceMetadata > sourceInstall && sourceLink > sourceMetadata,
+  'Canonical source metadata must restore production dependency classification after the selected frozen install.',
+);
 has(dockerfile, 'FROM nginxinc/nginx-unprivileged:', 'unprivileged frontend base image');
 has(
   dockerfile,

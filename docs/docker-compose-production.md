@@ -537,3 +537,12 @@ and validate with `amtool check-config` before enabling alert delivery. The file
 is native Alertmanager YAML, so shell environment placeholders are not expanded.
 Grafana provisions only the bundled Prometheus and Alertmanager datasources;
 add Loki/Tempo provisioning when those external services are actually deployed.
+
+The source image installs the selected frozen closure, then restores the
+canonical source `package.json` solely for build metadata. Nx uses that
+production/development classification when generating backend runtime
+manifests. The flattened install closure also includes selected test roots;
+using it as runtime metadata would ship Vitest, browser fixtures, and other
+development tools. Metadata restoration never performs another installation
+or expands the selected installed dependency tree. Migrator runtime loaders
+remain an explicit separate dependency contract.

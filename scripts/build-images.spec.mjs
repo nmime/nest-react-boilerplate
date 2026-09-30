@@ -97,6 +97,13 @@ test('Dockerfile builder compile is independent of per-image RUNTIME_PROJECT', a
   assert.doesNotMatch(builder, /^\s*ARG RUNTIME_PROJECT/mu);
   assert.doesNotMatch(builder, /\$RUNTIME_PROJECT/u);
   assert.match(builder, /PROJECTS="\$\{NX_BUILD_PROJECTS:-\$NX_PROJECT\}"/u);
+  const workspace = dockerfile.match(/FROM node:[\s\S]*? AS workspace[\s\S]*?(?=\nFROM )/u)?.[0];
+  assert.ok(workspace, 'workspace stage');
+  const install = workspace.indexOf('pnpm install --frozen-lockfile --offline');
+  const canonicalMetadata = workspace.indexOf('COPY package.json ./package.json');
+  const linkSource = workspace.indexOf('deployment-artifact.ts link-source-dependencies');
+  assert.ok(install >= 0 && canonicalMetadata > install && linkSource > canonicalMetadata);
+  assert.doesNotMatch(workspace.slice(canonicalMetadata), /pnpm (install|fetch)/u);
   assert.match(dockerfile, /FROM builder AS backend-deps[\s\S]*^ARG RUNTIME_PROJECT/mu);
   assert.match(
     dockerfile,

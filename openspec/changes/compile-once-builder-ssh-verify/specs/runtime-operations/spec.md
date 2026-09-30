@@ -51,6 +51,15 @@ from validated source and render deterministic, secret-safe runtime topology.
   declares the peer optional, retaining required dependencies, other optional dependencies,
   selected versions, integrity metadata, workspace policy, and native application locks
 
+#### Scenario: Canonical source dependency classification
+
+- **GIVEN** the selected closure includes source build and test tools
+- **WHEN** the Docker source layer has completed its frozen selected dependency install
+- **THEN** it restores the canonical source package manifest before Nx runtime manifest generation
+- **AND** that metadata restoration performs no additional dependency resolution or installation
+- **AND** the generated backend runtime manifest excludes canonical development-only tools
+- **AND** runtime staging retains selected exact versions and frozen policy while required migrator loaders remain explicit
+
 #### Scenario: Bounded local image loading
 
 - **GIVEN** the canonical driver selects multiple release images

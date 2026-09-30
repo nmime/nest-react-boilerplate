@@ -42,6 +42,11 @@ COPY apps ./apps
 COPY libs ./libs
 COPY packages ./packages
 COPY i18n ./i18n
+# The selected closure owns installation. Canonical source metadata owns Nx's
+# production/dev classification; the flattened closure promotes test tools used
+# by selected test roots and must not classify the generated runtime manifest.
+# No dependency resolution or installation runs after this metadata restoration.
+COPY package.json ./package.json
 RUN node packages/tooling/bin/run-ts-command.mjs \
       packages/tooling/src/runtime/deployment-artifact.ts link-source-dependencies
 

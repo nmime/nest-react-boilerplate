@@ -92,6 +92,11 @@ export function createFrontendViteConfig({ appName, port }) {
             // independently of app code. Grouped rather than one-chunk-per-
             // package to avoid a long request waterfall on first load.
             manualChunks: (id) => {
+              // Generated response rules are pure, shared data. Keep their
+              // expanded provider contracts out of the application entry.
+              if (/[\\/]libs[\\/]frontend[\\/]api-client[\\/]lib[\\/]src[\\/]generated[\\/]toast[\\/]/u.test(id)) {
+                return 'api-toast-rules';
+              }
               if (!id.includes('node_modules')) {
                 return undefined;
               }

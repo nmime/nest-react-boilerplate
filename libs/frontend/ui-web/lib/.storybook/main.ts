@@ -20,6 +20,9 @@ const config: StorybookConfig = {
   addons: ['@storybook/addon-a11y', '@storybook/addon-vitest'],
   viteFinal: (viteConfig) =>
     mergeConfig(viteConfig, {
+      // Discovering this SSR hook during a browser test reloads Vite's module
+      // graph mid-suite. Prebundle it before any story begins executing.
+      optimizeDeps: { include: ['vike-react/usePageContext'] },
       plugins: [
         tsconfigPaths({
           projects: [resolve(import.meta.dirname, '../../../../../tsconfig.base.json')],

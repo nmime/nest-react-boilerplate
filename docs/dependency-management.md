@@ -20,6 +20,8 @@ Use this policy to keep dependency updates low-risk and reproducible.
 
 Nx React's optional Express 4 development-server peer is declared on that
 consumer through a package extension; Nest's Express 5 adapter stays separate.
+React and React DOM are pinned together in the workspace overrides so optional
+Storybook and renderer peers use the same runtime as application hooks.
 Metro configuration is aligned with React Native 0.86.3. Do not suppress those
 peer mismatches with an unrestricted allowed-version rule.
 

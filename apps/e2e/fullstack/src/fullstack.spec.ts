@@ -421,6 +421,7 @@ test('@critical user login honors safe return navigation, survives reload, and l
 
   // Hold a real authenticated refetch behind logout. Its late response must not
   // restore the old principal or private QueryClient data in the live renderer.
+  let interceptionStarted = false;
   let captured = false;
   let delivered = false;
   let releaseLateResponse: () => void = () => undefined;
@@ -429,10 +430,11 @@ test('@critical user login honors safe return navigation, survives reload, and l
   });
   const sessionRead = (url: URL) => url.pathname.endsWith('/auth/me');
   await page.route(sessionRead, async (route) => {
-    if (captured) {
+    if (interceptionStarted) {
       await route.continue();
       return;
     }
+    interceptionStarted = true;
     const response = await route.fetch();
     expect(response.status()).toBe(200);
     expect(await response.text()).toContain(email);

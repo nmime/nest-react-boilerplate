@@ -9,6 +9,10 @@ packages:
 shamefullyHoist: true
 
 overrides:
+  # One React/DOM cohort across app, native, Storybook and auto-installed peers.
+  # Expo 57 owns this version; unconstrained optional peers must not fork it.
+  'react': '19.2.3'
+  'react-dom': '19.2.3'
   '@fastify/static': '10.1.5'
   'better-call': '1.4.0'
   'better-auth': '1.7.6'

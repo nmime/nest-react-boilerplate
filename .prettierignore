@@ -49,3 +49,6 @@ tmp
 docs/command-matrix.md
 
 docs/testing/modern-qa.md
+
+# The image build driver owns this ignored, generated Bake plan.
+/docker-bake.json

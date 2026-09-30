@@ -56,7 +56,7 @@ RUN node packages/tooling/bin/run-ts-command.mjs \
       /workspace/packages/tooling/src/runtime/deployment-artifact.ts stage-migrator /migrator
 WORKDIR /migrator
 RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
-  pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts \
+  pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
   && node --input-type=commonjs -e "const fs=require('node:fs'); const readVersion=(name)=>JSON.parse(fs.readFileSync('node_modules/'+name+'/package.json','utf8')).version; const common={version:readVersion('@nestjs/common')}; const core={version:readVersion('@nestjs/core')}; if (common.version!==core.version) { throw new Error('Nest version mismatch: @nestjs/common@'+common.version+' vs @nestjs/core@'+core.version); }"
 
 FROM node:${NODE_VERSION} AS migrator
@@ -156,8 +156,7 @@ WORKDIR /runtime
 # re-resolve silently discards overrides and can reintroduce fixed CVEs.
 COPY --from=nrb-closure pnpm-workspace.yaml ./pnpm-workspace.yaml
 RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
-  node -e "const fs=require('node:fs'); const p='pnpm-workspace.yaml'; fs.writeFileSync(p, fs.readFileSync(p,'utf8').replace(/^minimumReleaseAge:\\s*\\d+/mu, 'minimumReleaseAge: 0'));" \
-  && pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
+  pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
   && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} +
 
 FROM node:${NODE_VERSION} AS backend
@@ -196,10 +195,7 @@ RUN PROJECT="${RUNTIME_PROJECT:-${NX_PROJECT:-site-app}}" \
        packages/tooling/src/runtime/deployment-artifact.ts stage "${PROJECT}" /site-deploy
 WORKDIR /site-deploy
 RUN --mount=type=cache,id=nrb-pnpm-store,target=/root/.local/share/pnpm/store \
-  if [ -f pnpm-workspace.yaml ]; then \
-    node -e "const fs=require('node:fs'); const p='pnpm-workspace.yaml'; fs.writeFileSync(p, fs.readFileSync(p,'utf8').replace(/^minimumReleaseAge:\\s*\\d+/mu, 'minimumReleaseAge: 0'));"; \
-  fi \
-  && pnpm install --prod --prefer-offline --no-frozen-lockfile --ignore-scripts \
+  pnpm install --prod --prefer-offline --frozen-lockfile --ignore-scripts \
   && if [ -d node_modules/.pnpm ]; then \
        find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} +; \
      fi

@@ -32,7 +32,7 @@ export interface PaymentsMongoOrderedWriteObserver {
   after(stage: PaymentsMongoOrderedWriteStage): void | Promise<void>;
 }
 
-export const PaymentsMongoOrderedWriteObserverInjectToken = Symbol('PaymentsMongoOrderedWriteObserver');
+export const PaymentsMongoOrderedWriteObserverInjectToken = Symbol('PaymentsMongoOrderedWriteObserverInjectToken');
 import {
   PaymentEventsCollectionName,
   PaymentProviderHealthCollectionName,

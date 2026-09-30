@@ -182,12 +182,13 @@ export function stageSelectedMigratorManifest(
   );
   assertOppositeProviderPackages(closure, Object.keys(dependencies));
   const exactDependencies = selectedExactDependencies(closure, dependencies, 'Migrator');
+  const packageManager = selectedPackageManager(resolvedWorkspaceRoot);
   mkdirSync(resolvedArtifactRoot, { recursive: true });
   writeFileSync(
     join(resolvedArtifactRoot, 'package.json'),
-    `${JSON.stringify({ ...sourceManifest, dependencies: exactDependencies }, null, 2)}\n`,
+    `${JSON.stringify({ ...sourceManifest, packageManager, dependencies: exactDependencies }, null, 2)}\n`,
   );
-  cpSync(selectedWorkspacePath, join(resolvedArtifactRoot, 'pnpm-workspace.yaml'));
+  stageFrozenRuntimeLockfile(resolvedWorkspaceRoot, undefined, resolvedArtifactRoot, packageManager, exactDependencies);
 }
 
 export function selectedProjectClosure(
@@ -322,7 +323,13 @@ export function stageDeploymentArtifact(options: {
       join(artifactRoot, 'package.json'),
       `${JSON.stringify({ ...manifest, dependencies: selectedDependencies }, null, 2)}\n`,
     );
-    stageBackendLockfile(workspaceRoot, generatedLock, artifactRoot, manifest.packageManager, selectedDependencies);
+    stageFrozenRuntimeLockfile(
+      workspaceRoot,
+      generatedLock,
+      artifactRoot,
+      manifest.packageManager,
+      selectedDependencies,
+    );
     const i18n = join(workspaceRoot, 'i18n');
     if (existsSync(i18n)) {
       copyConfinedOutput(i18n, join(artifactRoot, 'i18n'));
@@ -354,6 +361,7 @@ export function stageDeploymentArtifact(options: {
       Object.fromEntries(runtimeDependencies.map((dependency) => [dependency, dependency])),
       'Site',
     );
+    const packageManager = selectedPackageManager(workspaceRoot);
     writeFileSync(
       join(artifactRoot, 'package.json'),
       `${JSON.stringify(
@@ -362,13 +370,14 @@ export function stageDeploymentArtifact(options: {
           version: '0.0.0',
           private: true,
           type: 'module',
+          packageManager,
           dependencies,
         },
         null,
         2,
       )}\n`,
     );
-    cpSync(selectedWorkspacePath, join(artifactRoot, 'pnpm-workspace.yaml'));
+    stageFrozenRuntimeLockfile(workspaceRoot, undefined, artifactRoot, packageManager, dependencies);
     const entry = confinedPath(artifactRoot, 'dist/apps/frontend/site/server/index.js', 'site runtime entry');
     requireFile(entry, 'Staged site runtime entry is missing');
     return { project: options.project, artifactRoot, entry, outputPaths, kind: 'site' };
@@ -377,16 +386,26 @@ export function stageDeploymentArtifact(options: {
   throw new Error(`Deployment project "${options.project}" is not a server runtime image.`);
 }
 
-function stageBackendLockfile(
+function selectedPackageManager(workspaceRoot: string): string {
+  const path = confinedPath(workspaceRoot, '.nrb/closure/package.json', 'selected package manifest');
+  requireFile(path, 'Selected package manifest is missing');
+  const manifest = JSON.parse(readFileSync(path, 'utf8')) as { packageManager?: unknown };
+  if (typeof manifest.packageManager !== 'string' || !manifest.packageManager.startsWith('pnpm@')) {
+    throw new Error('Selected package manifest is missing its package-manager pin.');
+  }
+  return manifest.packageManager;
+}
+
+function stageFrozenRuntimeLockfile(
   workspaceRoot: string,
-  generatedLock: string,
+  generatedLock: string | undefined,
   artifactRoot: string,
   packageManager: unknown,
   dependencies: Record<string, string>,
 ): void {
   const destination = join(artifactRoot, 'pnpm-lock.yaml');
   if (typeof packageManager !== 'string') {
-    throw new Error('Generated backend package manifest is missing its package-manager pin.');
+    throw new Error('Runtime package manifest is missing its package-manager pin.');
   }
 
   // Nx prunes the application document but currently drops pnpm 12's separate
@@ -397,7 +416,7 @@ function stageBackendLockfile(
   requireFile(selectedLock, 'Selected pnpm lock is missing');
   requireFile(selectedWorkspace, 'Selected pnpm policy is missing');
   const selectedDocuments = parseAllDocuments(readFileSync(selectedLock, 'utf8'));
-  const generatedDocuments = parseAllDocuments(readFileSync(generatedLock, 'utf8'));
+  const generatedDocuments = parseAllDocuments(readFileSync(generatedLock ?? selectedLock, 'utf8'));
   const errors = [...selectedDocuments, ...generatedDocuments].flatMap((document) => document.errors);
   if (errors.length > 0) {
     throw new Error(`Cannot stage invalid pnpm lockfile: ${errors[0]?.message}`);
@@ -411,7 +430,7 @@ function stageBackendLockfile(
   const application = generatedDocuments.filter((document) => !isEnvironment(document));
   const selectedApplication = selectedDocuments.filter((document) => !isEnvironment(document));
   if (application.length !== 1 || selectedApplication.length !== 1) {
-    throw new Error('Generated backend pnpm lock must contain exactly one application dependency document.');
+    throw new Error('Runtime pnpm lock must contain exactly one application dependency document.');
   }
   const dependencyKeys = new Set(['importers', 'packages', 'snapshots']);
   const selectedData: unknown = selectedApplication[0]?.toJSON();
@@ -424,7 +443,7 @@ function stageBackendLockfile(
     Array.isArray(selectedData) ||
     Array.isArray(generatedData)
   ) {
-    throw new Error('Backend pnpm lock dependency documents must be mappings.');
+    throw new Error('Runtime pnpm lock dependency documents must be mappings.');
   }
   // Nx also omits overrides, settings, and package-extension checksums. These
   // belong to the selected policy; only the three dependency trees are pruned.
@@ -434,18 +453,26 @@ function stageBackendLockfile(
   });
   const importer = runtimeLock.getIn(['importers', '.']);
   if (!importer || typeof importer !== 'object') {
-    throw new Error('Generated backend pnpm lock is missing its root importer.');
+    throw new Error('Runtime pnpm lock is missing its root importer.');
   }
   const selectedLockedDependencies = Object.fromEntries(
     Object.keys(dependencies).map((dependency) => {
-      const locked = runtimeLock.getIn(['importers', '.', 'dependencies', dependency]);
+      const locked = ['dependencies', 'devDependencies', 'optionalDependencies']
+        .map((section) => runtimeLock.getIn(['importers', '.', section, dependency]))
+        .find(Boolean);
       if (!locked) {
-        throw new Error(`Generated backend pnpm lock has no locked dependency for ${dependency}.`);
+        throw new Error(`Runtime pnpm lock has no locked dependency for ${dependency}.`);
       }
       return [dependency, locked];
     }),
   );
-  runtimeLock.setIn(['importers', '.', 'dependencies'], selectedLockedDependencies);
+  // SSR/migrator have no Nx-generated lock. Keep selected transitive snapshots
+  // immutable and narrow their sole importer; unused snapshots are not installed.
+  if (generatedLock === undefined) {
+    runtimeLock.set('importers', { '.': { dependencies: selectedLockedDependencies } });
+  } else {
+    runtimeLock.setIn(['importers', '.', 'dependencies'], selectedLockedDependencies);
+  }
   writeFileSync(
     destination,
     `${environment.toString({ directives: true })}${runtimeLock.toString({ directives: true })}`,
@@ -457,10 +484,7 @@ export function deploymentInstallPlan(artifact: StagedDeploymentArtifact): Deplo
   const common = ['install', '--prod', '--prefer-offline'];
   return {
     command: 'pnpm',
-    args:
-      artifact.kind === 'backend'
-        ? [...common, '--frozen-lockfile', '--ignore-scripts']
-        : [...common, '--no-frozen-lockfile', '--ignore-scripts'],
+    args: [...common, '--frozen-lockfile', '--ignore-scripts'],
     cwd: artifact.artifactRoot,
   };
 }

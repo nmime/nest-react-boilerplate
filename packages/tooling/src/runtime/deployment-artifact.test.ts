@@ -165,6 +165,36 @@ function writeBackendOutputs(root: string, provider: 'postgres' | 'mongodb' = 'p
   );
 }
 
+function writeSelectedRuntimeLock(root: string, dependencies: string[], devDependencies: string[] = []) {
+  const locked = (names: string[]) =>
+    Object.fromEntries(names.map((name) => [name, { specifier: '1.0.0', version: '1.0.0' }]));
+  const environment = {
+    lockfileVersion: '9.0',
+    importers: { '.': { packageManagerDependencies: { pnpm: { specifier: '12.8.1', version: '12.8.1' } } } },
+    packages: { 'pnpm@12.8.1': { resolution: { integrity: 'sha512-selected-package-manager-integrity' } } },
+  };
+  const application = {
+    lockfileVersion: '9.0',
+    settings: { autoInstallPeers: true, excludeLinksFromLockfile: false },
+    overrides: { 'transitive-runtime': '1.0.0' },
+    packageExtensionsChecksum: 'sha256-selected-package-extensions',
+    importers: {
+      '.': { dependencies: locked(dependencies), devDependencies: locked(devDependencies) },
+      'unselected-app': { dependencies: locked(['unselected-package']) },
+    },
+    packages: { 'transitive-runtime@1.0.0': { resolution: { integrity: 'sha512-locked-transitive-runtime' } } },
+    snapshots: { 'transitive-runtime@1.0.0': {} },
+  };
+  mkdirSync(join(root, '.nrb/closure'), { recursive: true });
+  writeFileSync(join(root, '.nrb/closure/package.json'), JSON.stringify({ packageManager: 'pnpm@12.8.1' }));
+  writeFileSync(join(root, '.nrb/closure/pnpm-workspace.yaml'), "packages:\n  - '.'\nminimumReleaseAge: 1440\n");
+  writeFileSync(
+    join(root, '.nrb/closure/pnpm-lock.yaml'),
+    `${JSON.stringify(environment)}\n---\n${JSON.stringify(application)}\n`,
+  );
+  return { environment, application };
+}
+
 void describe('deployment artifact closure', () => {
   void it('keeps product graph validation exact while accepting locked all-reference package classification', () => {
     const actual = closure('mongodb');
@@ -338,7 +368,11 @@ void describe('deployment artifact closure', () => {
       join(root, 'apps/frontend/site/runtime-dependencies.json'),
       JSON.stringify(['@fastify/static', 'fastify']),
     );
-    writeFileSync(join(root, '.nrb/closure/pnpm-workspace.yaml'), "packages:\n  - '.'\n");
+    const { environment, application } = writeSelectedRuntimeLock(root, [
+      '@fastify/static',
+      'fastify',
+      'unselected-browser',
+    ]);
     writeFileSync(join(root, 'dist/apps/frontend/site/server/index.js'), 'process.exitCode = 0;\n');
 
     const artifact = stageDeploymentArtifact({
@@ -352,13 +386,52 @@ void describe('deployment artifact closure', () => {
     const manifest = JSON.parse(readFileSync(join(artifactRoot, 'package.json'), 'utf8')) as {
       name: string;
       type: string;
+      packageManager: string;
       dependencies: Record<string, string>;
     };
     assert.equal(artifact.kind, 'site');
     assert.deepEqual(artifact.outputPaths, ['dist/apps/frontend/site']);
     assert.equal(manifest.name, 'site-app');
     assert.equal(manifest.type, 'module');
+    assert.equal(manifest.packageManager, 'pnpm@12.8.1');
     assert.deepEqual(manifest.dependencies, { '@fastify/static': '1.0.0', fastify: '1.0.0' });
+    assert.ok(deploymentInstallPlan(artifact).args.includes('--frozen-lockfile'));
+    assert.deepEqual(
+      parseAllDocuments(readFileSync(join(artifactRoot, 'pnpm-lock.yaml'), 'utf8')).map((document) =>
+        document.toJSON(),
+      ),
+      [
+        environment,
+        {
+          ...application,
+          importers: {
+            '.': {
+              dependencies: {
+                '@fastify/static': application.importers['.'].dependencies['@fastify/static'],
+                fastify: application.importers['.'].dependencies.fastify,
+              },
+            },
+          },
+        },
+      ],
+    );
+    assert.equal(
+      readFileSync(join(artifactRoot, 'pnpm-workspace.yaml'), 'utf8'),
+      readFileSync(join(root, '.nrb/closure/pnpm-workspace.yaml'), 'utf8'),
+    );
+
+    const stage = () =>
+      stageDeploymentArtifact({
+        workspaceRoot: root,
+        artifactRoot,
+        graph: siteGraph(),
+        closure: siteClosure(),
+        project: 'site-app',
+      });
+    writeSelectedRuntimeLock(root, ['fastify']);
+    assert.throws(stage, /no locked dependency for @fastify\/static/u);
+    rmSync(join(root, '.nrb/closure/package.json'));
+    assert.throws(stage, /Selected package manifest is missing/u);
   });
 
   void it('rejects missing generated backend manifests and locks', () => {
@@ -446,13 +519,39 @@ void describe('deployment artifact closure', () => {
       join(root, 'docker/migrator-package.json'),
       JSON.stringify({ dependencies: { pg: '1.0.0', mongodb: '1.0.0', jiti: '1.0.0' } }),
     );
-    writeFileSync(join(root, '.nrb/closure/pnpm-workspace.yaml'), "packages:\n  - '.'\n");
+    const { environment, application } = writeSelectedRuntimeLock(root, ['pg', 'mongodb'], ['jiti', 'unselected-tool']);
 
     stageSelectedMigratorManifest(root, artifactRoot, closure('postgres'));
     const manifest = JSON.parse(readFileSync(join(artifactRoot, 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
+      packageManager: string;
     };
     assert.deepEqual(manifest.dependencies, { pg: '1.0.0', jiti: '1.0.0' });
+    assert.equal(manifest.packageManager, 'pnpm@12.8.1');
+    assert.deepEqual(
+      parseAllDocuments(readFileSync(join(artifactRoot, 'pnpm-lock.yaml'), 'utf8')).map((document) =>
+        document.toJSON(),
+      ),
+      [
+        environment,
+        {
+          ...application,
+          importers: {
+            '.': {
+              dependencies: {
+                pg: application.importers['.'].dependencies.pg,
+                jiti: application.importers['.'].devDependencies.jiti,
+              },
+            },
+          },
+        },
+      ],
+    );
+    writeFileSync(join(root, '.nrb/closure/pnpm-lock.yaml'), JSON.stringify(application));
+    assert.throws(
+      () => stageSelectedMigratorManifest(root, artifactRoot, closure('postgres')),
+      /missing package-manager integrity metadata/u,
+    );
   });
 
   void it('removes NODE_PATH from the artifact process environment', () => {

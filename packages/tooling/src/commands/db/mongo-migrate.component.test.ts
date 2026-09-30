@@ -7,6 +7,7 @@ import { MongoClient } from "mongodb";
 import { AuthMongoCollectionDefinitions } from "../../../../../libs/backend/mongodb/main/auth/lib/src/auth-mongo.collections.ts";
 import { FeatureFlagCollectionName } from "../../../../../libs/backend/mongodb/main/feature-flags/lib/src/feature-flag-mongo.collection.ts";
 import { NotificationMongoCollectionDefinitions } from "../../../../../libs/backend/mongodb/main/notification/lib/src/notification-mongo.collections.ts";
+import { PaymentsMongoCollectionDefinitions, verifyPaymentsCollections } from "../../../../../libs/backend/mongodb/main/payments/lib/src/payments-mongo.collection.ts";
 import { TenantOwnedNotificationMongoCollectionDefinitions } from "../../../../../libs/backend/mongodb/main/notification/lib/src/notification-mongo.tenant-collections.ts";
 import {
   MongoMigrationLedgerCollection,
@@ -62,8 +63,10 @@ describe("complete MongoDB migration ledger", { skip: dockerAvailable ? false : 
       ...AuthMongoCollectionDefinitions.map(({ name }) => name),
       FeatureFlagCollectionName,
       ...NotificationMongoCollectionDefinitions.map(({ name }) => name),
+      ...PaymentsMongoCollectionDefinitions.map(({ name }) => name),
     ];
     assert.ok([...new Set(expectedCollections)].every((name) => actualCollections.has(name)));
+    await verifyPaymentsCollections(database);
   });
 
   it("keeps concurrent migrators idempotent with unique ledger records", { timeout: 120_000 }, async () => {

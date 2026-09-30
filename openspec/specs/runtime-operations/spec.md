@@ -177,6 +177,8 @@ atomic failure behavior, idempotency, and tenant boundaries.
 - Failed transactional writes do not expose partial durable state.
 - Migration ordering, tracking, validators, constraints, and indexes remain
   deterministic for the selected provider.
+- The canonical MongoDB ledger includes every shipped persistence provider,
+  including payments, so runtime migration verifiers can accept a fresh database.
 
 **Failure behavior:**
 

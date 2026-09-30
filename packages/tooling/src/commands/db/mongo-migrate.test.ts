@@ -7,6 +7,8 @@ import { sharedMongoMigrations } from "../../../../../libs/backend/mongodb/main/
 import { authMongoMigrations } from "../../../../../libs/backend/mongodb/main/auth/lib/src/migrations/index.ts";
 import { featureFlagMongoMigrations } from "../../../../../libs/backend/mongodb/main/feature-flags/lib/src/migrations/index.ts";
 import { notificationMongoMigrations } from "../../../../../libs/backend/mongodb/main/notification/lib/src/migrations/index.ts";
+import { fiatCurrencyMongoMigrations } from "../../../../../libs/backend/mongodb/main/fiat-currency/lib/src/migrations/index.ts";
+import { paymentsMongoMigrations } from "../../../../../libs/backend/mongodb/main/payments/lib/src/migrations/index.ts";
 import {
   createMongoMigrationClientOptions,
   createMongoMigrationEnvironment,
@@ -29,6 +31,8 @@ describe("MongoDB migration environment", () => {
       auth: authMongoMigrations,
       "feature-flags": featureFlagMongoMigrations,
       notification: notificationMongoMigrations,
+      "fiat-currency": fiatCurrencyMongoMigrations,
+      payments: paymentsMongoMigrations,
     })) {
       assert.ok(migrations.length > 0, `${provider} contributes no migrations`);
       for (const migration of migrations) {

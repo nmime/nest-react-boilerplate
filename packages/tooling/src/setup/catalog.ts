@@ -663,12 +663,12 @@ export const baseCapabilityCatalog: Readonly<Record<BaseCapabilityId, Readonly<C
           importPath: '@app/backend-feature-payments-main',
           additionalImports: [
             {
-              importName: 'PaymentsMongoModule',
+              importName: 'PaymentsMongoPersistenceModule',
               importPath: '@app/backend-mongodb-main-payments',
             },
           ],
           moduleExpression:
-            'PaymentsMainModule.forRoot({ imports: [PaymentsMongoModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })',
+            'PaymentsMainModule.forRoot({ imports: [PaymentsMongoPersistenceModule], exposeHttp: true, scheduler: { enabled: true, intervalMs: 60_000 } })',
         },
       ],
     },

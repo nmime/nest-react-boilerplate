@@ -50,6 +50,8 @@ product code.
   of whether deployment owns the service or connects to an external instance.
 - Provider-backed payments are wired only into selected durable backend hosts;
   stateless bot hosts retain their database-independent capabilities.
+- MongoDB payment wiring imports the module that binds and exports the
+  storage-neutral persistence port, using the shared selected connection.
 - Component-only Docker availability probes do not introduce PostgreSQL test
   helpers into a selected MongoDB production build graph.
 - Managed full-stack MongoDB uses the selected port consistently for the

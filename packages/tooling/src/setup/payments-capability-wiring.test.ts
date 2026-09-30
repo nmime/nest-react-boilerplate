@@ -144,11 +144,11 @@ describe('payments capability — catalog entry', () => {
     assert.equal(mongo?.importName, 'PaymentsMainModule');
     assert.equal(mongo?.importPath, '@app/backend-feature-payments-main');
     assert.deepEqual(mongo?.additionalImports, [
-      { importName: 'PaymentsMongoModule', importPath: '@app/backend-mongodb-main-payments' },
+      { importName: 'PaymentsMongoPersistenceModule', importPath: '@app/backend-mongodb-main-payments' },
     ]);
     assert.match(
       mongo?.moduleExpression ?? '',
-      /PaymentsMainModule\.forRoot\(\{ imports: \[PaymentsMongoModule\], exposeHttp: true, scheduler: \{ enabled: true, intervalMs: 60_000 \} \}\)/,
+      /PaymentsMainModule\.forRoot\(\{ imports: \[PaymentsMongoPersistenceModule\], exposeHttp: true, scheduler: \{ enabled: true, intervalMs: 60_000 \} \}\)/,
     );
   });
 
@@ -173,6 +173,17 @@ describe('payments capability — planner wiring list', () => {
       // expression and the export membership without pinning the line layout.
       assert.ok(content.includes(`${PAYMENTS_MODULE_EXPRESSION},`), 'postgres module expression in imports list');
       assert.match(content, /exports: \[[^\]]*PaymentsMainModule[^\]]*\],/u);
+    });
+
+    it(`wires the exported MongoDB payment persistence binding in ${appId}`, () => {
+      const mongoSummary = planSummaryFixture({
+        apps: [...SELECTED_BACKENDS] as AppId[],
+        capabilities: ['payments', 'mongodb'],
+      });
+      const { content } = generateBackendCapabilityModule(appId as AppId, mongoSummary);
+      assert.match(content, /imports: \[PaymentsMongoPersistenceModule\]/u);
+      assert.doesNotMatch(content, /imports: \[PaymentsMongoModule\]/u);
+      assert.doesNotMatch(content, /PaymentsPostgresModule/u);
     });
   }
 

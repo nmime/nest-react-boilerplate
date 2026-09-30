@@ -1,7 +1,10 @@
-// @requirements REQ-RUNTIME-DATABASE-008
-import { afterEach, describe, expect, it } from 'vitest';
+// @requirements REQ-RUNTIME-DATABASE-008 REQ-RUNTIME-HEALTH-001
+import { MikroORM } from '@mikro-orm/core';
+import { Test } from '@nestjs/testing';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PostgresMainModule } from './postgres.module';
 import { PostgresSessionStore } from './postgres-session.store';
+import { PostgresHealthAdapter, PostgresReadinessHealthIndicator } from './postgres.health';
 
 interface DurableRuntimeForTest {
   readonly healthIndicators: readonly unknown[];
@@ -46,6 +49,32 @@ describe('PostgresMainModule', () => {
     await expect(dynamicModule.imports?.[0]).resolves.toMatchObject({
       module: expect.any(Function) as unknown,
     });
+  });
+
+  it('injects the selected ORM into readiness and treats a missing adapter as required failure', async () => {
+    const execute = vi.fn().mockResolvedValue([]);
+    const providers = PostgresMainModule.forRoot().providers ?? [];
+    const moduleRef = await Test.createTestingModule({
+      providers: [...providers, { provide: MikroORM, useValue: { em: { getConnection: () => ({ execute }) } } }],
+    }).compile();
+    const readiness = moduleRef.get(PostgresReadinessHealthIndicator);
+    await expect(readiness.check()).resolves.toMatchObject({ status: 'ok', details: { skipped: false } });
+    expect(execute).toHaveBeenCalledWith('select 1');
+    execute.mockRejectedValue(new Error('owned database unavailable'));
+    await expect(readiness.check()).resolves.toMatchObject({ status: 'error' });
+    await moduleRef.close();
+
+    const missingAdapter = await Test.createTestingModule({
+      providers: [...providers, { provide: MikroORM, useValue: {} }],
+    })
+      .overrideProvider(PostgresHealthAdapter)
+      .useValue(null)
+      .compile();
+    await expect(missingAdapter.get(PostgresReadinessHealthIndicator).check()).resolves.toMatchObject({
+      status: 'error',
+      details: { skipped: false, reason: 'not_configured' },
+    });
+    await missingAdapter.close();
   });
 
   it('exposes the selected provider and its health indicators through the durable runtime', () => {

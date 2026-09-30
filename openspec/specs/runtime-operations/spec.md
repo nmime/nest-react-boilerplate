@@ -19,6 +19,8 @@ required failed dependency as healthy.
 
 - Health output contains no secret configuration.
 - Shutdown and readiness reflect dependency lifecycle.
+- A selected durable database is checked through its actual runtime client; a
+  missing readiness adapter cannot satisfy a required database check.
 
 **Failure behavior:**
 
@@ -28,6 +30,12 @@ required failed dependency as healthy.
 
 - **WHEN** a required runtime dependency cannot respond
 - **THEN** health does not report an unconditional healthy state
+
+#### Scenario: Selected database readiness wiring
+
+- **WHEN** the compiled application wires a selected PostgreSQL runtime
+- **THEN** its readiness adapter uses the initialized ORM client
+- **AND** an unavailable database or missing adapter makes readiness unhealthy
 
 ### Requirement: [REQ-RUNTIME-RECOVERY-002] Failure and recovery procedures are executable
 

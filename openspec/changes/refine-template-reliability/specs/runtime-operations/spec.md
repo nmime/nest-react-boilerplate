@@ -205,3 +205,33 @@ redaction, batching, and failure isolation.
 - **AND** Grafana provisions one dashboard provider and only deployed datasources
 - **AND** Alertmanager groups alerts without claiming notification delivery until real receivers are configured
 - **AND** collector readiness is checked through HTTP rather than a shell absent from its image
+
+### Requirement: [REQ-RUNTIME-HEALTH-001] Runtime health is truthful and fail-safe
+
+Health endpoints and dependency indicators SHALL identify the running app,
+redact internals, distinguish degraded from failed state, and never report a
+required failed dependency as healthy.
+
+**Evidence profile:** domain, operations
+
+**Invariants:**
+
+- Health output contains no secret configuration.
+- Shutdown and readiness reflect dependency lifecycle.
+- A selected durable database is checked through its actual runtime client; a
+  missing readiness adapter cannot satisfy a required database check.
+
+**Failure behavior:**
+
+- Dependency failure produces a bounded unhealthy or degraded result.
+
+#### Scenario: Failed required dependency
+
+- **WHEN** a required runtime dependency cannot respond
+- **THEN** health does not report an unconditional healthy state
+
+#### Scenario: Selected database readiness wiring
+
+- **WHEN** the compiled application wires a selected PostgreSQL runtime
+- **THEN** its readiness adapter uses the initialized ORM client
+- **AND** an unavailable database or missing adapter makes readiness unhealthy

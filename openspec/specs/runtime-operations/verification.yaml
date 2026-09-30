@@ -9,6 +9,7 @@ requirements:
   - id: REQ-RUNTIME-HEALTH-001
     projects:
       - '@app/backend-common-health'
+      - '@app/backend-postgres-main'
     risk: high
     profiles:
       - domain
@@ -31,6 +32,18 @@ requirements:
         script: test:canary
         lanes:
           - nightly
+      - kind: vitest
+        file: libs/backend/postgres/main/shared/lib/src/postgres.module.spec.ts
+        target: '@app/backend-postgres-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: component
+        file: libs/backend/postgres/main/shared/lib/src/readiness-wiring.component-spec.ts
+        target: '@app/backend-postgres-main:component-test'
+        lanes:
+          - main
+          - runtime
   - id: REQ-RUNTIME-RECOVERY-002
     projects:
       - '@app/backend-common-component-test'

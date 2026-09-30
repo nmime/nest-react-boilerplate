@@ -10,7 +10,7 @@ import { composeEnv, urls } from './compose';
 import {
   RuntimeAdminFixtureEmail,
   RuntimeAdminFixturePassword,
-} from '../../../../scripts/ci/runtime-admin-fixture.mjs';
+} from '../../../../scripts/ci/runtime-admin-fixture-constants.mjs';
 
 interface HealthCheckResponse {
   name: string;

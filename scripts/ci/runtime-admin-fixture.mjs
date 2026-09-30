@@ -4,8 +4,8 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createJiti } from 'jiti';
 
-export const RuntimeAdminFixtureEmail = 'admin@example.com';
-export const RuntimeAdminFixturePassword = 'Fullstack-admin-fixture-2026!';
+import { RuntimeAdminFixtureEmail, RuntimeAdminFixturePassword } from './runtime-admin-fixture-constants.mjs';
+export { RuntimeAdminFixtureEmail, RuntimeAdminFixturePassword } from './runtime-admin-fixture-constants.mjs';
 const root = resolve(import.meta.dirname, '../..');
 const composeFile = resolve(root, 'docker/docker-compose.yml');
 

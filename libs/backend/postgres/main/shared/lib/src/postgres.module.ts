@@ -1,4 +1,5 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { MikroORM } from '@mikro-orm/core';
 import { DynamicModule, Global, Module, type OnModuleInit } from '@nestjs/common';
 import {
   assertDurableDatabaseEnvironment,
@@ -12,6 +13,7 @@ import {
   PostgresHealthAdapter,
   PostgresMigrationsHealthIndicator,
   PostgresReadinessHealthIndicator,
+  PostgresReadinessHealthOptions,
 } from './postgres.health';
 import { PostgresSessionStore } from './postgres-session.store';
 
@@ -45,11 +47,16 @@ export class PostgresMainModule {
       module: PostgresMainModule,
       imports: [MikroOrmModule.forRoot(createPostgresMikroOrmOptions(overrides))],
       providers: [
-        MikroOrmPostgresHealthAdapter,
+        {
+          provide: MikroOrmPostgresHealthAdapter,
+          inject: [MikroORM],
+          useFactory: (orm: MikroORM) => new MikroOrmPostgresHealthAdapter(orm),
+        },
         {
           provide: PostgresHealthAdapter,
           useExisting: MikroOrmPostgresHealthAdapter,
         },
+        { provide: PostgresReadinessHealthOptions, useValue: { mandatory: true } },
         PostgresReadinessHealthIndicator,
         PostgresMigrationsHealthIndicator,
         {

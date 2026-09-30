@@ -255,6 +255,8 @@ row — and the mongodb axis MUST use the documented ordered-write pattern
   of them, and NOWPayments is polled to terminal because it sends no
   expiry IPN.
 - Outbox publication is at-least-once; consumers MUST be idempotent.
+- MongoDB payment persistence starts without an ordered-write diagnostic
+  observer; when supplied, that observer uses an explicit optional injection token.
 - Provider-specific polling notes are honored: X-Rocket every tick
   (unsigned webhooks), cryptobot `getMe` liveness every 5 minutes with a
   24 h silence alert, YooKassa/CP/Stripe/Adyen only stuck rows.

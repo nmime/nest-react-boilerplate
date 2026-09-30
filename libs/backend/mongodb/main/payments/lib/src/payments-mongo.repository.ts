@@ -23,7 +23,7 @@ import type {
   UpsertPaymentProviderParams,
 } from '@app/backend-feature-payments-shared';
 import { MongoDatabaseToken } from '@app/backend-mongodb-main';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { Collection, Db, Filter, MongoServerError } from 'mongodb';
 
 export type PaymentsMongoOrderedWriteStage = 'receipt' | 'event' | 'payment';
@@ -31,6 +31,8 @@ export type PaymentsMongoOrderedWriteStage = 'receipt' | 'event' | 'payment';
 export interface PaymentsMongoOrderedWriteObserver {
   after(stage: PaymentsMongoOrderedWriteStage): void | Promise<void>;
 }
+
+export const PaymentsMongoOrderedWriteObserverInjectToken = Symbol('PaymentsMongoOrderedWriteObserver');
 import {
   PaymentEventsCollectionName,
   PaymentProviderHealthCollectionName,
@@ -254,6 +256,7 @@ export class PaymentsMongoPersistence extends PaymentsPersistence {
 
   constructor(
     @Inject(MongoDatabaseToken) database: Db,
+    @Optional() @Inject(PaymentsMongoOrderedWriteObserverInjectToken)
     private readonly orderedWriteObserver?: PaymentsMongoOrderedWriteObserver,
   ) {
     super();

@@ -12,7 +12,10 @@ vi.mock('@app/backend-mongodb-main', async (importOriginal) => {
 });
 
 import { PaymentsPersistence } from '@app/backend-feature-payments-shared';
-import { MongoMainModule } from '@app/backend-mongodb-main';
+import { MongoDatabaseToken, MongoMainModule } from '@app/backend-mongodb-main';
+import { Global, Module } from '@nestjs/common';
+// nx-ignore-next-line -- This composition test is not a runtime package dependency.
+import { Test, type TestingModule } from '@nestjs/testing';
 import {
   PaymentsMongoMigrationVerifier,
   PaymentsMongoModule,
@@ -22,6 +25,38 @@ import { PaymentsMongoPersistence } from './payments-mongo.repository';
 import { paymentsMongoMigrations } from './migrations';
 
 describe('PaymentsMongoModule', () => {
+  it('resolves the persistence port without an optional observer under production constructor metadata', async () => {
+    const database = { collection: vi.fn(() => ({ find: () => ({ toArray: async () => [] }) })) } as unknown as Db;
+    class MongoDatabaseFixtureModule {}
+    Global()(MongoDatabaseFixtureModule);
+    Module({
+      providers: [{ provide: MongoDatabaseToken, useValue: database }],
+      exports: [MongoDatabaseToken],
+    })(MongoDatabaseFixtureModule);
+
+    // Vite omits design:paramtypes. Use the interface metadata emitted by
+    // production tsc so this test cannot hide a missing optional DI binding.
+    const metadata = Reflect.getMetadata('design:paramtypes', PaymentsMongoPersistence) as unknown;
+    Reflect.defineMetadata('design:paramtypes', [Object, Object], PaymentsMongoPersistence);
+    let module: TestingModule | undefined;
+    try {
+      module = await Test.createTestingModule({
+        imports: [MongoDatabaseFixtureModule, PaymentsMongoPersistenceModule],
+      }).compile();
+      await module.init();
+      const persistence = module.get(PaymentsPersistence);
+      expect(persistence).toBe(module.get(PaymentsMongoPersistence));
+      await expect(persistence.listPayments()).resolves.toEqual([]);
+    } finally {
+      await module?.close();
+      if (metadata === undefined) {
+        Reflect.deleteMetadata('design:paramtypes', PaymentsMongoPersistence);
+      } else {
+        Reflect.defineMetadata('design:paramtypes', metadata, PaymentsMongoPersistence);
+      }
+    }
+  });
+
   it('binds the storage-neutral persistence port', () => {
     expect(Reflect.getMetadata('providers', PaymentsMongoPersistenceModule)).toEqual(
       expect.arrayContaining([

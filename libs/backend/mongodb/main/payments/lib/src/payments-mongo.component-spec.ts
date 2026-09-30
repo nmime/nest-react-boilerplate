@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002 REQ-SCAFFOLD-SAFETY-008
+// @requirements REQ-PAYMENT-ORDER-001 REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002 REQ-SCAFFOLD-SAFETY-008
 import { randomUUID } from 'node:crypto';
 import type { StartedMongoDBContainer } from '@testcontainers/mongodb';
 import { MongoClient, type Db, type Document } from 'mongodb';
@@ -230,6 +230,54 @@ describe('MongoDB payments persistence', () => {
         .insertOne({ ...receipt, _id: randomUUID() }),
     ).rejects.toMatchObject({ code: 11000 });
   });
+
+  liveMongoTest(
+    'rejects illegal or cross-provider transitions and persists same-status partial amounts',
+    async (active) => {
+      await runMongoMigrations(active.database, paymentsMongoMigrations);
+      const repository = new PaymentsMongoPersistence(active.database);
+      for (const [status, providerCode] of [
+        ['failed', 'stripe'],
+        ['processing', 'yookassa'],
+      ] as const) {
+        const paymentId = randomUUID();
+        await repository.createPaymentRecord({
+          id: paymentId,
+          tenantId: randomUUID(),
+          providerCode,
+          status,
+          amount: '10.00',
+          currency: 'USD',
+        });
+        await expect(
+          repository.commitWebhookPaymentTransition(transitionInput(randomUUID(), paymentId)),
+        ).rejects.toThrow('ownership or state');
+        expect(await repository.findPaymentRecord(paymentId)).toMatchObject({ status, version: 1 });
+        expect(
+          (await repository.listPaymentEvents(paymentId)).filter((event) => event.type === 'state_change'),
+        ).toHaveLength(0);
+      }
+      const paymentId = randomUUID();
+      await repository.createPaymentRecord({
+        id: paymentId,
+        tenantId: randomUUID(),
+        providerCode: 'stripe',
+        status: 'processing',
+        amount: '10.00',
+        currency: 'USD',
+      });
+      await repository.commitWebhookPaymentTransition({
+        ...transitionInput(randomUUID(), paymentId),
+        toStatus: 'processing',
+        partialAmount: '4.00',
+      });
+      expect(await repository.findPaymentRecord(paymentId)).toMatchObject({
+        status: 'processing',
+        partialAmount: '4.00',
+        version: 2,
+      });
+    },
+  );
 
   liveMongoTest('recovers every ordered-write crash prefix by replay', async (active) => {
     await runMongoMigrations(active.database, paymentsMongoMigrations);

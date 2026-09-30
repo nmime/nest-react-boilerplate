@@ -1,6 +1,6 @@
-# Local verification, artifacts, and fallback CI policy
+# Local verification, artifacts, and CI evidence policy
 
-The checked-in CI descriptor declares GitLab as the supported forge. GitHub hosts this repository and dependency pull requests, but there are no checked-in GitHub Actions workflows. Historical GitHub runs are not evidence for current commits. Use the declared GitLab pipeline or a trusted local runner for current verification.
+Both GitHub and GitLab are configured in `scripts/ci/gates.json`. The checked-in pipelines include protected CI aggregation, release provenance, and runtime specification assurance. Historical runs on either forge are not evidence for current commits. Verify the exact topic-branch SHA through its configured runner or a trusted local runner.
 
 ## Canonical local gate
 

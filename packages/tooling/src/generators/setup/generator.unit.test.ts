@@ -181,6 +181,7 @@ describe('setup generator', () => {
       const tree = await createTree();
       const { setupGenerator } = await import('./generator.js');
 
+      const beforeChanges = tree.listChanges();
       // Capture console.log
       const logs: string[] = [];
       const origLog = console.log;
@@ -193,6 +194,7 @@ describe('setup generator', () => {
         });
 
         // Dry run should not create files
+        assert.deepEqual(tree.listChanges(), beforeChanges);
         assert.ok(!tree.exists('nrb.config.json'));
         assert.ok(logs.some((l) => l.includes('DRY-RUN')));
       } finally {

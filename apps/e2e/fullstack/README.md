@@ -20,6 +20,15 @@ The extended Playwright matrix can target an existing stack by setting all of
 `FULLSTACK_USER_APP_URL`; every other service URL remains explicit so a matrix
 run cannot silently fall back to generated local ports.
 
+The managed driver seeds its canonical administrator only after the selected
+developer stack is ready. `scripts/ci/runtime-admin-fixture.mjs` proves the
+running Compose database's project, source file, provider, and loopback port,
+then uses the real provider seeder and verifies that fixture account. It rejects
+production, production overlays, foreign containers, and ambient database URLs.
+Public registration always remains ordinary. Hosted runtime lanes opt into this
+same fixture through the runtime-stack action; an external-stack matrix must
+already have this owned fixture prepared by its stack owner.
+
 ## Docs
 
 - [Local agent rules](AGENTS.md)

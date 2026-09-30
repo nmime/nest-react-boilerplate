@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { PaymentProblemCodes, registerPaymentProblemTypes } from './provider-problem-types';
 
 /**
- * The fifteen payment problem types (design §5.1), registered into
+ * The sixteen payment problem types (design §5.1), registered into
  * @app/common-problem-details and asserted code by code: every code a
  * payment failure can raise is documented problem+json before the U5/U9
  * exception classes may reference it.
@@ -18,6 +18,7 @@ registerPaymentProblemTypes();
 
 /** The §5.1 status per problem code — the exact contract. */
 const ExpectedStatus = new Map<string, number>([
+  ['payment-customer-unavailable', 503],
   ['payment-provider-unavailable', 503],
   ['payment-provider-rate-limited', 503],
   ['payment-provider-credential-invalid', 503],
@@ -36,9 +37,9 @@ const ExpectedStatus = new Map<string, number>([
 ]);
 
 describe('payment problem types (design §5.1)', () => {
-  it('declares exactly the fifteen codes, each once', () => {
-    expect(PaymentProblemCodes).toHaveLength(15);
-    expect(new Set(PaymentProblemCodes).size).toBe(15);
+  it('declares exactly the sixteen codes, each once', () => {
+    expect(PaymentProblemCodes).toHaveLength(16);
+    expect(new Set(PaymentProblemCodes).size).toBe(16);
     for (const code of PaymentProblemCodes) {
       expect(ExpectedStatus.has(code)).toBe(true);
     }
@@ -72,9 +73,9 @@ describe('payment problem types (design §5.1)', () => {
     }
   });
 
-  it('keeps the base catalog intact: 6 base + 15 payment definitions composed', () => {
+  it('keeps the base catalog intact: 6 base + 16 payment definitions composed', () => {
     const definitions = registeredProblemTypeDefinitions();
-    expect(definitions).toHaveLength(21);
+    expect(definitions).toHaveLength(22);
     const codes = definitions.map((definition) => definition.code);
     for (const code of PaymentProblemCodes) {
       expect(codes).toContain(code);
@@ -85,7 +86,7 @@ describe('payment problem types (design §5.1)', () => {
     expect(() => {
       registerPaymentProblemTypes();
     }).toThrow(/already registered/);
-    expect(registeredProblemTypeDefinitions()).toHaveLength(21);
+    expect(registeredProblemTypeDefinitions()).toHaveLength(22);
 
     const other = {
       id: 'payments-spec-other',

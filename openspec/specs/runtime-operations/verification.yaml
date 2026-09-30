@@ -143,6 +143,12 @@ requirements:
         - operations
         - vitest
     evidence:
+      - kind: operations
+        file: scripts/otel-privacy.component-spec.mjs
+        script: test:otel-privacy
+        lanes:
+          - nightly
+          - runtime
       - kind: vitest
         file: libs/backend/common/analytics/lib/src/analytics.service.spec.ts
         target: '@app/backend-common-analytics:test'
@@ -317,7 +323,19 @@ requirements:
         - security
     evidence:
       - kind: operations
+        file: scripts/helm-template.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
         file: scripts/ci/runtime-stack.spec.mjs
+        script: test:scripts
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/ci/runtime-admin-fixture.spec.mjs
         script: test:scripts
         lanes:
           - pr

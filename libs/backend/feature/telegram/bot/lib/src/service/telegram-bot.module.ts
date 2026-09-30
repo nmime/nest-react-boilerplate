@@ -4,11 +4,12 @@ import { TelegramBotInstanceInjectToken } from '../const';
 import { createTelegramBot } from './bot';
 import { resolveTelegramBotConfig } from './config';
 import { createTelegramSessionStorage, toRatelimiterRedisClient } from './session';
-import type { TelegramBotInstance } from '../type';
+import type { TelegramBotInstance, TelegramBotAuthPort } from '../type';
 
 export interface TelegramBotModuleOptions {
   imports?: NonNullable<DynamicModule['imports']>;
   useRedis?: boolean;
+  auth?: TelegramBotAuthPort;
 }
 
 @Global()
@@ -19,18 +20,22 @@ export class TelegramBotModule {
     return {
       module: TelegramBotModule,
       imports: options.imports ?? [],
-      providers: [createTelegramBotProvider(useRedis)],
+      providers: [createTelegramBotProvider(useRedis, options.auth)],
       exports: [TelegramBotInstanceInjectToken],
     };
   }
 }
 
-function createTelegramBotProvider(useRedis: boolean): FactoryProvider<TelegramBotInstance> {
+function createTelegramBotProvider(
+  useRedis: boolean,
+  auth?: TelegramBotAuthPort,
+): FactoryProvider<TelegramBotInstance> {
   return {
     provide: TelegramBotInstanceInjectToken,
     useFactory: (redis?: RedisClientLike) => {
       const config = resolveTelegramBotConfig();
       return createTelegramBot(config, {
+        ...(auth ? { auth } : {}),
         ...(redis
           ? {
               sessionStorage: createTelegramSessionStorage({

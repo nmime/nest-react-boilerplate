@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { PaymentsPersistence } from '@app/backend-feature-payments-shared';
+import { isLegalPaymentTransition, PaymentsPersistence } from '@app/backend-feature-payments-shared';
 import type {
   ClaimPaymentOutboxParams,
   CommittedWebhookPaymentTransition,
@@ -526,11 +526,22 @@ export class PaymentsMongoPersistence extends PaymentsPersistence {
         eventId,
       );
     assertRecoverableEvent(event, input);
+    if (
+      paymentBefore.providerCode !== input.receipt.providerCode ||
+      !event.fromStatus ||
+      (!isLegalPaymentTransition(event.fromStatus, input.toStatus) &&
+        !(event.fromStatus === 'processing' && input.toStatus === 'processing' && input.partialAmount !== undefined))
+    ) {
+      throw new Error('Webhook payment ownership or state transition does not match.');
+    }
     await this.events.updateOne({ _id: eventId }, { $setOnInsert: event }, { upsert: true });
     await this.observeOrderedWrite('event');
 
     let payment = paymentBefore;
-    if (payment.status !== input.toStatus) {
+    if (
+      payment.status !== input.toStatus ||
+      (input.partialAmount !== undefined && payment.partialAmount !== input.partialAmount)
+    ) {
       if (payment.status !== event.fromStatus) {
         throw new Error(`Payment ${input.paymentId} changed concurrently; replay the webhook transition.`);
       }

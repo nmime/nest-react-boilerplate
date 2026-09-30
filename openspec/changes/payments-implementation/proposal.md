@@ -1,3 +1,19 @@
+## Current implementation
+
+Current implementation is staged through U6: storage-neutral domain contracts,
+PostgreSQL and MongoDB persistence, a provider registry/HTTP policy framework,
+and receipt-first webhook ingress. The registry has no built-in provider
+adapters. Eight provider adapters are planned for U7/U8; the design's VERIFIED
+labels refer to reviewed upstream protocol documents, not running adapters.
+Customer routes remain unavailable with 503 until U9 supplies tenant ownership,
+exact positive amounts, provider selection, and authorization. U9/U10 own
+reconciliation, manual escalation, and full-stack provider acceptance.
+
+MongoDB is a selectable persistence axis with migrations and the shared
+PaymentsPersistence port. A PostgreSQL selection does not wire MongoDB, and a
+MongoDB selection does not wire PostgreSQL. MongoDB payments deliberately use
+ordered receipt/event/payment writes and version guards, not transactions.
+
 ## Why
 
 The product needs to accept crypto and fiat payments through eight verified
@@ -12,7 +28,7 @@ provider registry, no webhook receipt wall, no credential envelope.
 - Add five Nx projects: `@app/backend-feature-payments-shared`,
   `@app/backend-feature-payments-main`, `@app/backend-feature-payments-admin`,
   `@app/backend-postgres-main-payments`, `@app/backend-mongodb-main-payments`
-  (postgres is the wired axis; mongodb ships as an inert reference axis).
+  (setup selects either PostgreSQL or MongoDB persistence).
 - Add a setup capability `payments` and wire it into the five selected
   backends (customer + webhook HTTP uniformly; admin surface on
   admin-app-api only).
@@ -62,7 +78,7 @@ hoisted `@mikroorm/*` and `mongodb`. The lockfile does not move.
 - New: the five payments projects, their specs and verification sidecars,
   the `payments` setup-catalog entry, the `payments-implementation` change
   and its three delta specs, 4 postgres migrations (additive-only) + the
-  inert mongo initializer, 8 env vars across the catalog and all five
+  selection-owned MongoDB initializer, 8 env vars across the catalog and all five
   `.env*.example` files, and regenerated OpenAPI/contract/client artifacts
   and `docs/project-catalog.md`.
 - Modified (generated or app-owned, per design): `tsconfig.base.json`

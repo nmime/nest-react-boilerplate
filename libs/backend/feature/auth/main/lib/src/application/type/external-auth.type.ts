@@ -38,6 +38,8 @@ export interface TelegramOidcSessionInput {
 export interface TelegramBotLinkInput {
   linkToken: string;
   providerSubject: string;
+  /** Trusted stateless bot host configuration; never exposed by the public link DTO. */
+  expectedTenantId?: string;
   username?: string | null;
   displayName?: string | null;
   locale?: string | null;

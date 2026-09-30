@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { QualityEngineImages } from "./quality-engine-images.ts";
 import { readFileSync } from "node:fs";
 import { extname, relative } from "node:path";
 import { collectFiles, commandExists, parseArgs, run, workspaceRoot, writeJson } from "./runtime-utils.ts";
@@ -9,7 +10,7 @@ const engine = args.options.get("engine") ?? process.env.SECURITY_SAST_ENGINE ??
 const failOnUnavailableExternal = (process.env.SECURITY_SAST_FAIL_ON_UNAVAILABLE_EXTERNAL ?? "true") !== "false";
 const reportPath = args.options.get("report") ?? "test-results/security-sast/report.json";
 const semgrepReportPath = `${reportPath.replace(/\.json$/u, "")}.semgrep.json`;
-const semgrepImage = args.options.get("semgrep-image") ?? process.env.SEMGREP_DOCKER_IMAGE ?? "semgrep/semgrep:1.178.0";
+const semgrepImage = args.options.get("semgrep-image") ?? process.env.SEMGREP_DOCKER_IMAGE ?? QualityEngineImages.semgrep;
 interface SastFinding { rule: string; severity: string; message?: string; file?: string; line?: number; stdout?: string; stderr?: string; }
 const findings: SastFinding[] = [];
 function recordSemgrepResult(result: ReturnType<typeof run>, rule: string): void {

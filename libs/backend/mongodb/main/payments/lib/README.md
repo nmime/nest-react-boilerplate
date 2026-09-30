@@ -3,8 +3,9 @@
 ## Purpose
 
 Payments native MongoDB collections, strict validators, replay-wall indexes, and the ordered-write
-repository. This is the reference persistence axis: it ships complete but is not wired while the
-workspace closure selects PostgreSQL.
+repository. Setup selects this persistence axis when the workspace closure chooses MongoDB;
+a PostgreSQL selection wires its own implementation instead. Built-in provider adapters and
+customer checkout remain planned stages, as recorded in the payment implementation change.
 
 The repository intentionally does not use MongoDB transactions. Webhook transitions write
 `receipt → event → payment`; the unique receipt index, deterministic event id, idempotent payment

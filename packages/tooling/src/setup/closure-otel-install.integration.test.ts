@@ -102,7 +102,8 @@ describe('selected OTel closure lock and install isolation', () => {
 
 function runPnpm(cwd: string, args: string[]): void {
   // eslint-disable-next-line sonarjs/no-os-command-from-path -- the integration test exercises the repository-required pnpm executable.
-  const result = spawnSync('pnpm', args, { cwd, encoding: 'utf8' });
+  const result = spawnSync('pnpm', args, { cwd, encoding: 'utf8', timeout: 60_000, maxBuffer: 8 * 1024 * 1024 });
+  assert.equal(result.error, undefined, result.error?.message);
   assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 

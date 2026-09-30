@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync } from 'node:fs';
 import { availableParallelism, totalmem } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -105,7 +105,7 @@ async function installCommand(workspaceRoot: string, dependencies: ClosureComman
   const install = execute('pnpm', ['install', '--frozen-lockfile'], { cwd: closureRoot, stdio: 'inherit' });
   if (install.status !== 0) throw new Error(`pnpm selected install failed with exit code ${install.status}.`);
   if (!existsSync(modulesDir)) throw new Error('pnpm selected install did not create .nrb/closure/node_modules.');
-  symlinkSync(modulesDir, workspaceModules, 'junction');
+  linkDependencyEntries(modulesDir, workspaceModules);
   linkSelectedProjectDependencies(workspaceRoot, closure, modulesDir);
   writeClosureLockMetadata(workspaceRoot, closure);
   synchronizeProductClosureBuildContext(workspaceRoot, closure);
@@ -129,6 +129,17 @@ function removeNestedDependencyTrees(path: string): void {
     } else if (entry.isDirectory()) {
       removeNestedDependencyTrees(child);
     }
+  }
+}
+
+/** pnpm 12 refuses a symlinked node_modules root for task-state writes. Keep
+ * each task's directory real while resolving packages from the selected tree. */
+export function linkDependencyEntries(modulesDir: string, destination: string): void {
+  mkdirSync(destination, { recursive: true });
+  for (const entry of readdirSync(modulesDir)) {
+    if (entry.startsWith('.pnpm-task-run-state') || entry.startsWith('.pnpm-workspace-state')) continue;
+    const source = resolve(modulesDir, entry);
+    symlinkSync(source, resolve(destination, entry), statSync(source).isDirectory() ? 'junction' : 'file');
   }
 }
 
@@ -159,7 +170,7 @@ function linkProjectDependencyTrees(
   if (existsSync(projectPath)) {
     const project = JSON.parse(readFileSync(projectPath, 'utf8')) as { name?: unknown };
     if (typeof project.name === 'string' && selected.has(project.name)) {
-      symlinkSync(modulesDir, resolve(path, 'node_modules'), 'junction');
+      linkDependencyEntries(modulesDir, resolve(path, 'node_modules'));
       linked.add(project.name);
     }
   }

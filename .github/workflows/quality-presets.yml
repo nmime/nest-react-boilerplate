@@ -128,6 +128,8 @@ jobs:
         run: pnpm nrb closure materialize --all-reference --provider postgres
       - name: Start local runtime stack
         uses: ./.github/actions/runtime-stack
+        with:
+          seed-admin-fixture: 'true'
       - name: Run quality presets
         run: pnpm run quality:presets
       - name: Docker smoke and fullstack (compiled images)

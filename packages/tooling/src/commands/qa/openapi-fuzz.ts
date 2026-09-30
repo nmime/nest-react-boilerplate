@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { QualityEngineImages } from "./quality-engine-images.ts";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { commandExists, envList, loadOpenApiContracts, parseArgs, run, schemaExample, slug, validateSchema, writeJson } from "./runtime-utils.ts";
@@ -71,7 +72,7 @@ if (engine === "schemathesis" && !dryRun) {
       let result;
       if (commandExists('schemathesis')) result = run('schemathesis', cliArgs);
       else if (commandExists('docker')) {
-        result = run('docker', ['run', '--rm', '-v', `${process.cwd()}:/work:ro`, '--workdir', '/work', 'schemathesis/schemathesis:stable', ...cliArgs]);
+        result = run('docker', ['run', '--rm', '-v', `${process.cwd()}:/work:ro`, '--workdir', '/work', QualityEngineImages.schemathesis, ...cliArgs]);
       } else {
         live.push({engine: 'schemathesis', ok: false, error: 'Install schemathesis or Docker to run the selected fuzz engine.'});
         continue;

@@ -16,6 +16,8 @@ export interface UserPreferenceControls {
 }
 
 export interface UserPreferenceControlsOptions {
+  /** Disable server writes for an explicitly local-only native shell. */
+  persistenceEnabled?: boolean;
   // When true, once the user has explicitly persisted a preference, later
   // server-derived `apply*` calls stop overriding it (the admin console's
   // behavior). The mini-app leaves this off so it always tracks the latest
@@ -34,7 +36,7 @@ export interface UserPreferenceControlsOptions {
  * to latch explicit choices) is injected through options.
  */
 export function useSessionPreferenceControls(options: UserPreferenceControlsOptions = {}): UserPreferenceControls {
-  const { guardExplicitOverrides = false, invalidateQueryKeys } = options;
+  const { guardExplicitOverrides = false, invalidateQueryKeys, persistenceEnabled = true } = options;
   const [userLocale, setUserLocale] = useState<Locale | null>(null);
   const [userTheme, setUserTheme] = useState<UiTheme | null>(null);
   const explicitLocale = useRef<Locale | null>(null);
@@ -85,6 +87,10 @@ export function useSessionPreferenceControls(options: UserPreferenceControlsOpti
 
   const persistUserLocale = useCallback(
     async (nextLocale: Locale) => {
+      if (!persistenceEnabled) {
+        setUserLocale(nextLocale);
+        return;
+      }
       if (guardExplicitOverrides) {
         explicitLocale.current = nextLocale;
         setUserLocale(nextLocale);
@@ -95,10 +101,14 @@ export function useSessionPreferenceControls(options: UserPreferenceControlsOpti
         // Locale is still persisted locally; retry on the next explicit change.
       }
     },
-    [guardExplicitOverrides, preferencesMutation],
+    [guardExplicitOverrides, preferencesMutation, persistenceEnabled],
   );
   const persistUserTheme = useCallback(
     async (nextTheme: UiTheme) => {
+      if (!persistenceEnabled) {
+        setUserTheme(nextTheme);
+        return;
+      }
       if (guardExplicitOverrides) {
         explicitTheme.current = nextTheme;
         setUserTheme(nextTheme);
@@ -109,7 +119,7 @@ export function useSessionPreferenceControls(options: UserPreferenceControlsOpti
         // Theme is still persisted locally; retry on the next explicit change.
       }
     },
-    [guardExplicitOverrides, preferencesMutation],
+    [guardExplicitOverrides, preferencesMutation, persistenceEnabled],
   );
 
   return {

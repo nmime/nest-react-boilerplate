@@ -1,5 +1,6 @@
 // @requirements REQ-SCAFFOLD-SELECTION-002
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,7 +12,7 @@ import {
   synchronizeClosureArtifacts,
   writeClosureLockMetadata,
 } from '../../setup/closure-materializer.js';
-import { runClosureCommand } from './closure.js';
+import { linkDependencyEntries, runClosureCommand } from './closure.js';
 
 function closure(): SelectedClosureManifest {
   return parseSelectedClosure({
@@ -297,8 +298,8 @@ describe('closure command', () => {
         args: ['install', '--frozen-lockfile'],
         cwd: join(root, '.nrb/closure'),
       });
-      assert.ok(lstatSync(join(root, 'node_modules')).isSymbolicLink());
-      assert.ok(lstatSync(join(root, 'apps/landing-app/node_modules')).isSymbolicLink());
+      assert.ok(lstatSync(join(root, 'node_modules')).isDirectory());
+      assert.ok(lstatSync(join(root, 'apps/landing-app/node_modules')).isDirectory());
       assert.equal(existsSync(join(root, 'apps/landing-app/node_modules/stale-marker')), false);
       assert.equal(readClosureLockStatus(root, closure()), 'current');
       for (const file of ['closure.json', 'nrb.config.json', 'workspace.json', 'pnpm-lock.yaml', 'lock.json']) {
@@ -312,6 +313,36 @@ describe('closure command', () => {
         assert.equal(existsSync(join(root, '.nrb/closure', file)), true, file);
       }
       assert.equal(readFileSync(join(root, '.nrb/closure/closure.json'), 'utf8'), readFileSync(join(root, '.nrb/closure.json'), 'utf8'));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('runs actual filtered pnpm tasks with selected dependencies and private task-state directories', () => {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-pnpm-task-state-'));
+    const source = join(root, '.nrb/closure/node_modules');
+    const project = join(root, 'apps/owned-fixture');
+    try {
+      mkdirSync(join(source, 'fixture-dependency'), { recursive: true });
+      mkdirSync(join(source, '.pnpm-task-run-state-v1'), { recursive: true });
+      writeFileSync(join(source, 'fixture-dependency/package.json'), JSON.stringify({ name: 'fixture-dependency', main: 'index.js' }));
+      writeFileSync(join(source, 'fixture-dependency/index.js'), 'module.exports = "selected-only";');
+      const script = 'node -e "process.stdout.write(require(\'fixture-dependency\'))"';
+      writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'owned-workspace', packageManager: 'pnpm@12.8.1', scripts: { proof: script } }));
+      writeFileSync(join(root, 'pnpm-workspace.yaml'), 'packages:\n  - apps/*\n');
+      mkdirSync(project, { recursive: true });
+      writeFileSync(join(project, 'package.json'), JSON.stringify({ name: 'owned-fixture', scripts: { proof: script } }));
+      linkDependencyEntries(source, join(root, 'node_modules'));
+      linkDependencyEntries(source, join(project, 'node_modules'));
+      assert.equal(existsSync(join(root, 'node_modules/.pnpm-task-run-state-v1')), false);
+      for (const args of [['run', 'proof'], ['--filter', 'owned-fixture', 'run', 'proof']]) {
+        const output = execFileSync('pnpm', args, { cwd: root, encoding: 'utf8', timeout: 20_000 });
+        assert.match(output, /selected-only/);
+      }
+      assert.ok(lstatSync(join(root, 'node_modules')).isDirectory());
+      assert.ok(lstatSync(join(project, 'node_modules')).isDirectory());
+      assert.ok(lstatSync(join(root, 'node_modules/fixture-dependency')).isSymbolicLink());
+      assert.ok(lstatSync(join(source, '.pnpm-task-run-state-v1')).isDirectory());
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

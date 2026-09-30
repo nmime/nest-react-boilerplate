@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { QualityEngineImages } from "./quality-engine-images.ts";
 import { commandExists, envList, parseArgs, run, writeJson } from "./runtime-utils.ts";
 import { boundedInteger } from './world-class-policy.ts';
 
@@ -41,7 +42,7 @@ function sensitiveContent(path: string, contentType: string, text: string): bool
 if (engine === "zap") {
   if (commandExists("docker")) {
     for (const url of urls) {
-      const result = run("docker", ["run", "--rm", "-t", "ghcr.io/zaproxy/zaproxy:stable", "zap-baseline.py", "-t", url]);
+      const result = run("docker", ["run", "--rm", "-t", QualityEngineImages.zap, "zap-baseline.py", "-t", url]);
       results.push({ engine: "zap-docker", url, status: result.status, ok: result.status === 0, stdout: result.stdout.slice(-4000), stderr: result.stderr.slice(-4000) });
       if (result.status !== 0) findings.push({ url, rule: "zap-baseline", severity: "high", message: "OWASP ZAP baseline reported alerts" });
     }

@@ -17,4 +17,5 @@ export default async function globalSetup(): Promise<void> {
       waitForText(probe.service, `${serviceUrls[probe.service]}${probe.path}`, probe.marker),
     ),
   );
+  await run(process.execPath, ['scripts/ci/runtime-admin-fixture.mjs']);
 }

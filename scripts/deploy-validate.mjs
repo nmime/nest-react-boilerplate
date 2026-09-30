@@ -161,12 +161,13 @@ const validateHelm = () => {
     options,
   );
   run('Helm rate-limit static config', process.execPath, ['scripts/validate-helm-rate-limit-config.mjs'], options);
-  run(
-    'Kubernetes no-deploy live preflight plan',
-    process.execPath,
-    ['scripts/validate-kubernetes-live.mjs', '--context=validation-only', '--plan'],
-    options,
-  );
+  if (!allReference)
+    run(
+      'Kubernetes no-deploy live preflight plan',
+      process.execPath,
+      ['scripts/validate-kubernetes-live.mjs', '--context=validation-only', '--plan'],
+      options,
+    );
 
   if (commandExists('helm')) {
     run('Helm render validation', 'bash', ['scripts/validate-helm.sh'], options);

@@ -1,5 +1,21 @@
 # Payments — Definitive Implementation Design
 
+## Implementation status
+
+Current implementation is staged through U6: storage-neutral domain contracts,
+PostgreSQL and MongoDB persistence, a provider registry/HTTP policy framework,
+and receipt-first webhook ingress. The registry has no built-in provider
+adapters. Eight provider adapters are planned for U7/U8; the design's VERIFIED
+labels refer to reviewed upstream protocol documents, not running adapters.
+Customer routes remain unavailable with 503 until U9 supplies tenant ownership,
+exact positive amounts, provider selection, and authorization. U9/U10 own
+reconciliation, manual escalation, and full-stack provider acceptance.
+
+MongoDB is a selectable persistence axis with migrations and the shared
+PaymentsPersistence port. A PostgreSQL selection does not wire MongoDB, and a
+MongoDB selection does not wire PostgreSQL. MongoDB payments deliberately use
+ordered receipt/event/payment writes and version guards, not transactions.
+
 > **In-repo denotation.** The repository's stale-reference denylist (`pnpm run tooling:static-check`)
 > forbids the retired product token that is the §4.1 provider's vendor spelling, so this in-repo
 > copy writes it hyphenated — **X-Rocket** (any case), the vendor's spec/fixture filename as

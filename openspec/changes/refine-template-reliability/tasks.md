@@ -2,7 +2,7 @@
 
 - [x] 1.1 Record the completed source-audit correctness queue and trace setup owners.
 - [x] 1.2 Specify namespace retention and safe PostgreSQL migration probes with v3 evidence.
-- [ ] 1.3 Specify each remaining runtime, quality, frontend, and tooling repair before editing its owner.
+- [x] 1.3 Specify each remaining runtime, quality, frontend, and tooling repair before editing its owner.
 
 ## 2. Implementation
 
@@ -24,6 +24,18 @@
 - [x] 2.16 Initialize one-shot PM2 configuration before builds and load private runtime secrets through the shared wrapper.
 - [x] 2.17 Preserve frontend security/cache headers and explicitly trusted forwarded protocol, with real Nginx responses.
 - [x] 2.18 Upgrade the optional local observability stack, restrict anonymous authority, and verify owned log/trace round trips.
+- [x] 2.19 Require fresh product selection and provider-owned backups for existing-release Kubernetes preflight.
+- [x] 2.20 Preserve local pnpm task-state directories in selected dependency installation.
+- [x] 2.21 Filter default automatic tracing payloads and verify real HTTP, PostgreSQL, MongoDB, and Redis exports.
+- [x] 2.22 Correct nullable scalar response metadata and regenerate OpenAPI, shared contracts, and clients.
+- [x] 2.23 Align MongoDB fiat and health documentation with transactions and actual durability boundaries.
+
+- [x] 2.24 Reject malformed provider webhooks and illegal persistence transitions; disable the legacy customer facade before orchestration.
+- [x] 2.25 Resolve Telegram bot principals through an opt-in authenticated stateless bridge and verify actual grammY updates.
+- [x] 2.26 Make fixture ownership, dry runs, HTTP deadlines, and optional quality-engine image pins explicit and executable.
+- [x] 2.27 Repair Chinese presentation semantics without changing catalog keys, placeholders, brands, or literal commands.
+- [x] 2.28 Keep native API origin and credential configuration explicit; preserve local preferences when no native API is configured.
+- [ ] 2.29 Verify the owned runtime administrator, dual-cookie revocation, delayed browser queries, and authenticated RBAC on both final stacks.
 
 ## 3. Final assurance
 

@@ -66,6 +66,28 @@ transport-focused:
 - Keep session, menu, rate-limit, and i18n plugins close to the bot adapter.
 - Keep account-link tokens short lived and single use.
 
+The reference `telegram-bot-api` host stays stateless. To enable linked-account
+profiles and persisted language changes, set `TELEGRAM_BOT_AUTH_URL` on the bot
+to the full auth endpoint prefix, for example
+`https://auth-app-api.example.com/api/v1/auth/internal/telegram-bot`. Set the
+same dedicated random `TELEGRAM_BOT_AUTH_SECRET` (32–256 printable characters)
+on the bot and auth hosts. Supply this through each host's private environment
+or secret injection; do not put it in public frontend configuration or a Helm
+ConfigMap. HTTPS is required; non-production loopback fixtures may use HTTP.
+Partial or malformed configuration fails startup. Without this configuration,
+the bot keeps local chat preferences and reports no linked account.
+
+The auth host's optional `TELEGRAM_BOT_AUTH_TENANT_ID` selects one canonical
+UUID tenant; omission selects the default auth tenant. Requests carry only the
+transport-verified numeric Telegram sender and, for linking, a browser-created
+one-time token. The auth service checks the token's tenant before linking,
+resolves the stored provider identity to the local user UUID, and repeats that
+lookup before locale writes. Browser cookies and caller-selected local IDs or
+tenants do not authorize these internal operations. The bridge returns only
+local profile identifiers and locale. Responses are bounded, requests time out,
+and redirects cannot forward the service credential. Native Telegram account
+acceptance requires a separately configured attended provider session.
+
 The bot publishes a language-neutral default command menu from `defaultLocale`,
 then one localized menu for every entry in `supportedLocales`. Every menu uses
 Telegram's `all_private_chats` scope, so group chats do not advertise product

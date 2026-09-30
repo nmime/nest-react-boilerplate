@@ -10,6 +10,26 @@ that directory as production routes, so route-local tests can pull Vitest/Vite
 into Metro's application graph. `src/expo-route-boundary.spec.ts` enforces this
 boundary.
 
+## API configuration
+
+Expo web uses same-origin cookies by default. On iOS/Android, an unconfigured
+shell applies preferences locally without attempting server writes. Configure
+`EXPO_PUBLIC_API_BASE_URL` with an absolute HTTP(S) gateway URL, or configure all
+three `EXPO_PUBLIC_ADMIN_API_URL`, `EXPO_PUBLIC_AUTH_API_URL`, and
+`EXPO_PUBLIC_USER_API_URL` values for separate services. URLs cannot include
+userinfo, query strings, or fragments; relative and `same-origin` native URLs
+fail closed. Use reachable HTTPS origins for device deployments.
+
+Native requests use `credentials: omit`. Products supply `sessionFetch` to
+`MobileAppProviders` to attach their current credential from secure native
+storage. This template does not supply a native login/token exchange or secure
+storage implementation, and browser cookie acceptance is not device session
+acceptance. Never put credentials in `EXPO_PUBLIC_*`: Expo embeds those values
+in the application bundle. Include the deployment path prefix in direct API URLs
+(for example, `https://auth.example.invalid/api/v1`); gateway URLs can use
+their documented root routes. Runtime reads use the static property syntax
+required by [Expo's environment-variable guide](https://docs.expo.dev/guides/environment-variables/).
+
 ## Commands
 
 ```bash

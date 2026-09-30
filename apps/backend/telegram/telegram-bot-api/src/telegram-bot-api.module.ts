@@ -1,7 +1,12 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { BaseHealthController, HealthPrivateNetworkIpGuard } from '@app/backend-common-health';
 import { InboundCallbackReplayGuard } from '@app/backend-common-redis';
-import { resolveTelegramBotConfig, TelegramBotModule } from '@app/backend-feature-telegram-bot';
+import {
+  createTelegramAuthBridge,
+  resolveTelegramAuthBridgeConfig,
+  resolveTelegramBotConfig,
+  TelegramBotModule,
+} from '@app/backend-feature-telegram-bot';
 import { TelegramBotApiHealthServiceProvider } from './health.config';
 import { TelegramBotApiCapabilitiesModule } from './capabilities.generated';
 import { TelegramWebhookController } from './telegram-webhook.controller';
@@ -13,6 +18,7 @@ export class TelegramBotApiModule {
     const config = resolveTelegramBotConfig();
     const usePolling = config.mode === 'polling';
     const useWebhook = config.mode === 'webhook';
+    const authBridge = resolveTelegramAuthBridgeConfig();
 
     return {
       module: TelegramBotApiModule,
@@ -20,6 +26,7 @@ export class TelegramBotApiModule {
         TelegramBotModule.register({
           imports: [TelegramBotApiCapabilitiesModule],
           useRedis: useWebhook,
+          ...(authBridge ? { auth: createTelegramAuthBridge(authBridge, { appUrl: config.appUrl }) } : {}),
         }),
       ],
       controllers: [BaseHealthController, ...(useWebhook ? [TelegramWebhookController] : [])],

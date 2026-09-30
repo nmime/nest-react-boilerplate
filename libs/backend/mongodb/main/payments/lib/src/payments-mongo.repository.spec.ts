@@ -505,7 +505,7 @@ describe('PaymentsMongoPersistence', () => {
     ['refunded', 'refundedAt'],
     ['failed', undefined],
   ] as const)('commits receipt-event-payment in order for %s', async (toStatus, timestampField) => {
-    const before = payment();
+    const before = payment({ status: toStatus === 'refunded' ? 'paid' : 'processing' });
     const after = payment({ status: toStatus, version: 2, ...(timestampField ? { [timestampField]: now } : {}) });
     const receipt = {
       _id: 'receipt-1',
@@ -527,7 +527,7 @@ describe('PaymentsMongoPersistence', () => {
       _id: 'receipt-1:state_change',
       paymentId,
       type: 'state_change',
-      fromStatus: 'processing',
+      fromStatus: toStatus === 'refunded' ? 'paid' : 'processing',
       toStatus,
       actor: 'webhook',
       reason: null,
@@ -598,7 +598,7 @@ describe('PaymentsMongoPersistence', () => {
       'receipt-applied',
     ]);
     expect(payments.updateOne).toHaveBeenCalledWith(
-      { _id: paymentId, version: 1, status: 'processing' },
+      { _id: paymentId, version: 1, status: toStatus === 'refunded' ? 'paid' : 'processing' },
       expect.objectContaining({
         $set: expect.objectContaining({ status: toStatus, ...(timestampField ? { [timestampField]: now } : {}) }),
         $inc: { version: 1 },

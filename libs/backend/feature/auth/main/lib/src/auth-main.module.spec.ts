@@ -6,6 +6,7 @@ import { ProblemPresentationsController } from './interfaces/http/problem-presen
 import { BetterAuthApiController } from './application/better-auth-api.controller';
 import { BetterAuthModule } from './application/better-auth.module';
 import { AuthService } from './application/auth.service';
+import { TelegramBotAuthBridgeController } from './interfaces/http/telegram-bot-auth-bridge.controller';
 
 import {
   AuthTokenStoreInjectToken,
@@ -21,6 +22,11 @@ import {
 } from './infrastructure/auth-user-store';
 
 describe('AuthMainModule', () => {
+  it('exposes the Telegram service bridge only for the explicit auth HTTP host', () => {
+    expect(AuthMainModule.forRoot({ telegramBotBridge: true }).controllers).toContain(TelegramBotAuthBridgeController);
+    expect(AuthMainModule.forRoot({ telegramBotBridge: true, exposeHttp: false }).controllers).toEqual([]);
+    expect(AuthMainModule.forRoot().controllers).not.toContain(TelegramBotAuthBridgeController);
+  });
   it('creates memory and durable modules without importing a database provider', () => {
     const memoryModule = AuthMainModule.forRoot(AuthPersistenceMode.Memory);
     const postgresModule = AuthMainModule.forRoot(AuthPersistenceMode.Postgres);

@@ -8,10 +8,12 @@ them, and the repository implementing `FiatCurrencyPersistence`.
 
 The currency code is the document `_id`, and the localized name and symbol are
 locale maps on the document, mirroring the `jsonb` columns on the other axis so
-the port answers identically either way. A rate write is two statements without a
-transaction, ordered so the history document lands first: a crash in between
-leaves a recorded observation whose headline rate is one tick stale, which is
-recoverable, where the other order would leave a rate with no evidence behind it.
+the port answers identically either way. Rate history and headline updates share
+one native MongoDB transaction for the complete provider batch. An invalid or
+conflicting observation rolls back the batch; retries preserve the original
+history observation, and older observations do not replace a newer headline.
+The runtime requires a transaction-capable replica set, as provided by the
+selected MongoDB deployment topology.
 
 ## Commands
 

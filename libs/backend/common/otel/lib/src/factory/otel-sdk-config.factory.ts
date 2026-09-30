@@ -17,6 +17,7 @@ import {
 import type { OpenTelemetryEnvironment } from '../type/otel-environment.type';
 import type { OpenTelemetryOptions, OpenTelemetrySdkConfig } from '../type/otel-options.type';
 import { readOtlpHeaders, resolveOtlpEndpoint } from '../util/otel-env.util';
+import { PrivacyTraceExporter } from './privacy-trace-exporter';
 
 const DefaultMetricExportIntervalMs = 60_000;
 
@@ -38,11 +39,14 @@ export function createOpenTelemetrySdkConfig(
   }
 
   return {
+    autoDetectResources: false,
     resource: resourceFromAttributes(resourceAttributes),
-    traceExporter: new OTLPTraceExporter({
-      headers: readOtlpHeaders(env, 'traces'),
-      url: resolveOtlpEndpoint(env, 'traces'),
-    }),
+    traceExporter: new PrivacyTraceExporter(
+      new OTLPTraceExporter({
+        headers: readOtlpHeaders(env, 'traces'),
+        url: resolveOtlpEndpoint(env, 'traces'),
+      }),
+    ),
     metricReader: new PeriodicExportingMetricReader({
       exporter: new OTLPMetricExporter({
         headers: readOtlpHeaders(env, 'metrics'),
@@ -61,7 +65,7 @@ export function createOpenTelemetryInstrumentations(
     new HttpInstrumentation(),
     new FastifyOtelInstrumentation({ registerOnInitialization: true }),
     new NestInstrumentation(),
-    new RedisInstrumentation(),
+    new RedisInstrumentation({ dbStatementSerializer: (command) => command }),
     new RuntimeNodeInstrumentation(),
     ...providerInstrumentations,
   ];

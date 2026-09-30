@@ -45,6 +45,9 @@ contract, generated client, and consumer checks in the same source revision.
 
 - Generated artifacts are derived from canonical sources.
 - Provider and consumer schemas cannot silently drift.
+- Nullable response scalars retain their concrete scalar type and format in
+  OpenAPI and generated clients; a TypeScript union must not become an object
+  schema through decorator metadata inference.
 
 **Failure behavior:**
 

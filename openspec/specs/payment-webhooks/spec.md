@@ -157,14 +157,24 @@ signature — MUST always re-fetch, accepting finality only on
 **U6 implementation boundary:** U6 enforces the universal inline `getStatus`
 re-fetch before a `paid` transition and returns 502 on any transient re-fetch
 or persistence failure so provider redelivery resumes the durable receipt.
-Provider-specific realized-amount comparison, X-Rocket `finalizedAt` mapping,
-P1/manual-queue escalation, and reconciler completion remain U7-U9 work and
-MUST NOT be claimed by U6 evidence.
+The audit hardens the normalized port boundary with protocol signature modes,
+provider ownership, exact amount/currency comparisons, fetched X-Rocket finality,
+and legal persistence edges. Provider-specific signature implementations and
+status/finality mapping, P1/manual-queue escalation, and reconciler completion
+remain U7-U9 work and MUST NOT be claimed by scaffold evidence.
 
 **Invariants:**
 
 - The double-check rule is universal: no provider's webhook body alone
   ever moves a payment to `paid`.
+- Only the explicitly unsigned provider protocols may return `none` from
+  signature verification. Invalid verification modes and blank idempotency
+  keys fail before receipt claim. Resolved adapter identity and payment provider
+  ownership must agree, and event hints cannot replace a stored provider reference.
+- Paid transitions require exact valid amount/currency agreement with the
+  persisted payment and any supplied webhook amounts. X-Rocket requires a valid
+  provider-fetched finality timestamp. Provider re-fetch is evidence only;
+  terminal or illegal state changes are refused by the shared state machine.
 - U6 accepts exactly zero or one normalized event per delivery. A provider
   adapter that produces multiple events is rejected before receipt claim;
   receipt-wide batch finalization is not partially acknowledged.
@@ -175,8 +185,8 @@ MUST NOT be claimed by U6 evidence.
 
 **Failure behavior:**
 
-- U6 treats any adapter-reported amount/finality contradiction as not-paid and
-  makes no transition; U7-U9 add explicit amount/finality fields and escalation.
+- Adapter-reported amount/finality contradictions make no transition and
+  leave a retryable error receipt. U7-U9 add real adapter mappings and escalation.
 - A re-fetch timeout or transient provider failure answers 502. It never sends
   200 for a non-durable or unresolved paid transition.
 

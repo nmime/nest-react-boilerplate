@@ -6,7 +6,7 @@ import { AuthAppHealthServiceProvider } from './health.config';
 import { AuthAppApiCapabilitiesModule } from './capabilities.generated';
 
 @Module({
-  imports: [AuthMainModule.forRoot({ imports: [AuthAppApiCapabilitiesModule] })],
+  imports: [AuthMainModule.forRoot({ imports: [AuthAppApiCapabilitiesModule], telegramBotBridge: true })],
   controllers: [BaseHealthController],
   providers: [
     AuthAppHealthServiceProvider,

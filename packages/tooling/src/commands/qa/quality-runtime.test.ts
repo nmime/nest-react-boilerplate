@@ -6,6 +6,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
 import { after, describe, it } from 'node:test';
+import { QualityEngineImages } from './quality-engine-images.ts';
 
 const repo = process.cwd();
 const owned = mkdtempSync(join(tmpdir(), 'nrb-quality-runtime-'));
@@ -21,7 +22,7 @@ async function runQuality(command: string, environment: NodeJS.ProcessEnv = {}, 
   const report = join(cwd, 'report.json');
   const child = spawn(process.execPath, [resolve(repo, 'packages/tooling/bin/run-ts-command.mjs'),
     resolve(repo, `packages/tooling/src/commands/qa/${command}.ts`), '--report', report, ...args], {
-    cwd, env: {...env, ...environment, PATH: `${join(cwd, 'bin')}${delimiter}${env.PATH ?? ''}`},
+    cwd, env: {...env, ...environment, PATH: `${join(cwd, 'bin')}${delimiter}${environment.PATH ?? env.PATH ?? ''}`},
   });
   let stdout = '', stderr = '';
   child.stdout.on('data', (value) => {stdout += String(value);});
@@ -73,6 +74,24 @@ function contractFixture(cwd: string) {
 }
 
 void describe('real runtime quality boundaries', () => {
+  void it('uses immutable reviewed images when external engines fall back to Docker', async () => {
+    await withHttp(healthy, async (url) => {
+      for (const [command, engine, image, environment] of [
+        ['security-dast', 'zap', QualityEngineImages.zap, {SECURITY_DAST_URLS: url}],
+        ['openapi-fuzz', 'schemathesis', QualityEngineImages.schemathesis, {OPENAPI_FUZZ_BASE_URL: url, OPENAPI_CONTRACTS_ROOT: 'contracts'}],
+        ['security-sast', 'semgrep', QualityEngineImages.semgrep, {}],
+      ] as const) {
+        const result = await runQuality(command, {...environment, PATH: ''}, ['--engine', engine], (cwd) => {
+          contractFixture(cwd);
+          executable(cwd, 'docker', `const fs = require('node:fs'); fs.writeFileSync('docker-arguments.json', JSON.stringify(process.argv.slice(2))); process.stdout.write(JSON.stringify({results: [], errors: []}));`);
+        });
+        assert.equal(result.status, 0, result.stderr);
+        const args: string[] = JSON.parse(readFileSync(join(result.cwd, 'docker-arguments.json'), 'utf8'));
+        assert.ok(args.includes(image), `${command} must use its reviewed immutable image`);
+        assert.match(image, /:[0-9.]+@sha256:[a-f0-9]{64}$/u);
+      }
+    });
+  });
   for (const [command, required] of [['performance', 'PERF_REQUIRE_TARGET'], ['accessibility', 'A11Y_REQUIRE_TARGET'], ['security-dast', 'SECURITY_DAST_REQUIRE_TARGET']]) {
     void it(`${command} distinguishes required target failure, optional skip, and an explicit plan`, async () => {
       const absent = await runQuality(command, {[required]: '1'});

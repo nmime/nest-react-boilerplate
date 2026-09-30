@@ -98,6 +98,8 @@ jobs:
 
       - name: Start local runtime stack
         uses: ./.github/actions/runtime-stack
+        with:
+          seed-admin-fixture: 'true'
 
       - name: Execute all nightly requirement evidence
         run: pnpm run spec:verify -- --all --lane nightly --report test-results/spec-evidence/nightly.json

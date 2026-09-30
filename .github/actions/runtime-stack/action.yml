@@ -25,6 +25,10 @@ inputs:
     description: Seconds to wait for every long-running service to report healthy.
     required: false
     default: '300'
+  seed-admin-fixture:
+    description: Seed the canonical administrator in this owned developer fullstack fixture.
+    required: false
+    default: 'false'
 
 runs:
   using: composite
@@ -38,3 +42,7 @@ runs:
       # The compose file path is workspace-relative, so this has to run from the
       # workspace root -- which is a composite action's default directory.
       run: node scripts/ci/runtime-stack.mjs
+    - name: Seed owned fullstack administrator
+      if: inputs.seed-admin-fixture == 'true'
+      shell: bash
+      run: node scripts/ci/runtime-admin-fixture.mjs

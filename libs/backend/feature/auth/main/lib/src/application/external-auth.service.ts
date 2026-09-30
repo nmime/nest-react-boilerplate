@@ -161,7 +161,7 @@ export class ExternalAuthService {
       ExternalAuthIntent.Link,
       AuthProvider.Telegram,
     );
-    if (!consumed.userId) {
+    if (!consumed.userId || (input.expectedTenantId && parseTenantId(input.expectedTenantId) !== consumed.tenantId)) {
       throw new UnauthorizedException('link_token_expired');
     }
     return this.linkProfileToUser({

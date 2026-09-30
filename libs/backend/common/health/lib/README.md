@@ -5,6 +5,12 @@
 Owns the standard health, liveness, readiness, and private health endpoints,
 indicator contracts, response mapping, sanitization, and shutdown support.
 
+Indicators describe the configured dependency lane. An in-memory/Map fixture's
+`ok` is process-level evidence and makes no durability claim. Auth memory mode
+skips database checks and is refused in production. MongoDB provider readiness
+requires reachability, transaction-compatible topology, and shared migration
+verification; selected feature migration execution remains a separate job.
+
 ## Commands
 
 ```bash

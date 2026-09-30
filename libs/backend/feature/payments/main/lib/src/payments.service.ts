@@ -1,33 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { InternalException } from '@app/backend-common-exception';
-import { PaymentsPersistence, type CreatePaymentsDto, type PaymentsDto } from '@app/backend-feature-payments-shared';
+import { type CreatePaymentsDto, type PaymentsDto } from '@app/backend-feature-payments-shared';
+import { PaymentCustomerUnavailableException } from './providers/provider-errors';
 
-/**
- * Scaffold service for the payments feature.
- *
- * Depends only on the `PaymentsPersistence` port, so the module never names a storage axis — the
- * same service runs on the Postgres and MongoDB axes. U9 replaces the scaffold surface with the
- * real customer orchestration (create with FX snapshot + orderRef idempotency, query, cancel,
- * refund, manual-status).
- */
+/** Customer orchestration is staged for U9; the legacy unscoped facade stays unavailable. */
 /* v8 ignore next -- Nest's bare class-decorator helper has one synthetic branch. */
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly persistence: PaymentsPersistence) {}
-
   async list(): Promise<PaymentsDto[]> {
-    try {
-      return await this.persistence.listPayments();
-    } catch (cause) {
-      throw new InternalException({ feature: 'payments', operation: 'list' }, cause as Error);
-    }
+    throw new PaymentCustomerUnavailableException();
   }
 
-  async create(input: CreatePaymentsDto): Promise<PaymentsDto> {
-    try {
-      return await this.persistence.createPayment(input);
-    } catch (cause) {
-      throw new InternalException({ feature: 'payments', operation: 'create' }, cause as Error);
-    }
+  async create(_input: CreatePaymentsDto): Promise<PaymentsDto> {
+    throw new PaymentCustomerUnavailableException();
   }
 }

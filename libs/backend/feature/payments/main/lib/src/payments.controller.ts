@@ -30,7 +30,7 @@ class PaymentsResponseDto implements PaymentsDto {
   createdAt!: string;
 }
 
-@ApiExceptions(400, 401, 403, 429, 500)
+@ApiExceptions(400, 401, 403, 429, 500, 503)
 @ApiSessionCookieAuth()
 @Controller('payments')
 @UseGuards(new SessionAuthGuard(), new RbacGuard())

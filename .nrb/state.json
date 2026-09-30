@@ -3,7 +3,7 @@
   "configHash": "5a2dd196b284c8045769eb207da4870fbe55e2c8bd2f6e3c00513c161ffb0036",
   "files": {
     ".nrb/capabilities.env": "90a0cfc749a9d700c5098ae1895307ba90278dbe72d0a13717467c85e6bcf6af",
-    ".nrb/capabilities.json": "5fe411da6118c8b1f5d9c3d864aa799ef0aa5d14089940f9222d2efaa85f53b7",
+    ".nrb/capabilities.json": "10324d8e1aa0e5a41bf37f84707df04d0a691e8c4d3f43862d50f049ed9ef028",
     ".nrb/summary.md": "15c5a6c36bdeb43e73ad3066e4824ee20757f9d96e573d6854a8f5a8cdc5d32a",
     ".nrb/workspace.json": "90dde55d7139e41bc9e91e0ba7eb9eed26a22783e92c7b40d81091884c8ef7f1",
     "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
@@ -23,5 +23,5 @@
     "nrb.config.json": "f7945ee8758ecd0b25da7046cb6f6972993ed93f0b71634b72afcc07fa6249d1",
     "packages/tooling/src/commands/db/capability-migrations.generated.ts": "e1c5df42fb621f054b49f3bd9c4c42ec920ac3db91958281f9c77d00a6408513"
   },
-  "digest": "c2186714497b6edeef83d7e42f4dbefa0e8f12a569174d506edc74549d345366"
+  "digest": "e80926bee4dcac98fdc6514804ac567656411e2c93382dac8663782a60deda34"
 }

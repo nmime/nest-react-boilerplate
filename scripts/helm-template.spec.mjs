@@ -1,7 +1,7 @@
 // @requirements REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
@@ -9,6 +9,7 @@ import test from 'node:test';
 import {
   assertRecentBackup,
   buildLiveValidationPlan,
+  loadLiveValidationSelection,
   parseLiveValidationOptions,
   selectPreviousRevision,
 } from './validate-kubernetes-live.mjs';
@@ -96,7 +97,7 @@ test('live Kubernetes preflight plans only read or use server-side dry-run opera
     '--release=nrb',
     '--backup-cronjob=platform-postgres-backup',
   ]);
-  const plan = buildLiveValidationPlan(options, resolve(root, 'candidate.yaml'), 7);
+  const plan = buildLiveValidationPlan({ ...options, provider: 'postgres' }, resolve(root, 'candidate.yaml'), 7);
   const byId = Object.fromEntries(plan.map((step) => [step.id, step]));
 
   assert.ok(byId['helm-server-dry-run'].args.includes('--dry-run=server'));
@@ -109,6 +110,63 @@ test('live Kubernetes preflight plans only read or use server-side dry-run opera
   assert.ok(byId['backup-admission-dry-run'].args.includes('--dry-run=server'));
   assert.equal(byId['backup-freshness'].args.includes('secret'), false);
   assert.throws(() => parseLiveValidationOptions(['--plan']), /--context is required/);
+  assert.throws(() => parseLiveValidationOptions(['--context=nrb', '--timeout=0s']), /positive Kubernetes duration/);
+});
+
+test('live preflight uses ordered product values and provider-owned backup checks', () => {
+  const options = parseLiveValidationOptions(['--context=nrb', '--release=nrb']);
+  assert.throws(() => buildLiveValidationPlan(options), /validated selected closure provider/);
+  for (const provider of ['postgres', 'mongodb', null]) {
+    const plan = buildLiveValidationPlan({ ...options, provider });
+    for (const step of plan.filter((entry) => ['render', 'helm-server-dry-run'].includes(entry.id))) {
+      assert.deepEqual(
+        step.args.filter((_, index) => step.args[index - 1] === '-f'),
+        ['.helm/values.yaml', '.helm/values-production.yaml', '.helm/values-selection.yaml'],
+      );
+    }
+    const backup = plan.find((step) => step.id === 'backup-freshness');
+    if (provider === null) {
+      assert.equal(backup, undefined);
+      assert.equal(plan.length, 6);
+    } else {
+      assert.ok(backup.args.includes(`nrb-${provider}-backup`));
+      assert.ok(
+        plan
+          .find((step) => step.id === 'backup-admission-dry-run')
+          .args.includes(`--from=cronjob/nrb-${provider}-backup`),
+      );
+    }
+  }
+  assert.throws(
+    () => buildLiveValidationPlan({ ...options, provider: null, backupCronJob: 'foreign-backup' }),
+    /Provider-free selection/,
+  );
+});
+
+test('live preflight checks canonical closure freshness before reading provider metadata', () => {
+  const fixture = mkdtempSync(join(tmpdir(), 'nrb-live-selection-'));
+  try {
+    assert.throws(() => loadLiveValidationSelection(fixture, () => ({ status: 1 })), /missing or stale/);
+    mkdirSync(join(fixture, '.nrb'));
+    for (const provider of ['postgres', 'mongodb', null]) {
+      writeFileSync(join(fixture, '.nrb/closure.json'), JSON.stringify({ provider, configHash: 'owned-fixture' }));
+      const selected = loadLiveValidationSelection(fixture, (command, args, settings) => {
+        assert.equal(command, 'pnpm');
+        assert.deepEqual(args, ['nrb', 'closure', 'check']);
+        assert.equal(settings.cwd, fixture);
+        assert.equal(settings.stdio, 'pipe');
+        return { status: 0 };
+      });
+      assert.deepEqual(selected, { provider, configHash: 'owned-fixture' });
+    }
+    writeFileSync(join(fixture, '.nrb/closure.json'), JSON.stringify({ provider: 'unsupported' }));
+    assert.throws(
+      () => loadLiveValidationSelection(fixture, () => ({ status: 0 })),
+      /Invalid selected closure provider/,
+    );
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
 });
 
 test('live Kubernetes preflight requires rollback history and a recent successful backup', () => {
@@ -535,7 +593,10 @@ test('frontend proxy trust requires an explicit safe immediate-proxy CIDR list',
   assert.ok(config.includes('::1/128 1;'));
   assert.ok(config.includes('default $scheme;'));
   for (const value of [['0.0.0.0/0'], ['::/0'], ['10.23.0.0/33'], ['10.23.0.0/24;include /private/file;']]) {
-    assert.throws(() => render('nrbtest', ['--set-json', `frontendNginx.trustedProxyCidrs=${JSON.stringify(value)}`]), /trustedProxyCidrs/u);
+    assert.throws(
+      () => render('nrbtest', ['--set-json', `frontendNginx.trustedProxyCidrs=${JSON.stringify(value)}`]),
+      /trustedProxyCidrs/u,
+    );
   }
 });
 

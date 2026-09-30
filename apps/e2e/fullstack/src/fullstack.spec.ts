@@ -6,6 +6,10 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 // REQ-FRONTEND-JOURNEY-001.
 import { sign } from '@tma.js/init-data-node';
 import { composeEnv, urls } from './compose';
+import {
+  RuntimeAdminFixtureEmail,
+  RuntimeAdminFixturePassword,
+} from '../../../../scripts/ci/runtime-admin-fixture.mjs';
 
 interface HealthCheckResponse {
   name: string;
@@ -61,17 +65,6 @@ const successfulAuthStatuses = [200, 201];
 
 const healthyStatuses = ['ok', 'degraded'];
 
-function bootstrapAdminEnabledFor(email: string): boolean {
-  if (composeEnv.ADMIN_BOOTSTRAP_ENABLED !== 'true') {
-    return false;
-  }
-
-  const normalizedEmail = email.toLowerCase();
-  return composeEnv.ADMIN_BOOTSTRAP_EMAILS.split(',')
-    .map((item) => item.trim().toLowerCase())
-    .includes(normalizedEmail);
-}
-
 async function parseSessionResponse(response: Response, action: string): Promise<SessionResponse> {
   expect(successfulAuthStatuses, `${action} should return a successful session response`).toContain(response.status);
   return (await response.json()) as SessionResponse;
@@ -83,15 +76,15 @@ async function login(baseUrl: string, email: string): Promise<SessionResponse> {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       email,
-      password: authPassword,
+      password: email === RuntimeAdminFixtureEmail ? RuntimeAdminFixturePassword : authPassword,
     }),
   });
 
   return parseSessionResponse(response, `login for ${email}`);
 }
 
-function assertBootstrapAdminSession(session: SessionResponse, email: string): void {
-  if (!bootstrapAdminEnabledFor(email)) {
+function assertSeededAdminSession(session: SessionResponse, email: string): void {
+  if (email !== RuntimeAdminFixtureEmail) {
     return;
   }
 
@@ -205,12 +198,15 @@ async function register(baseUrl: string, email: string): Promise<SessionResponse
 
   if (response.status === 409) {
     const session = await login(baseUrl, email);
-    assertBootstrapAdminSession(session, email);
+    assertSeededAdminSession(session, email);
     return session;
   }
 
   const session = await parseSessionResponse(response, `registration for ${email}`);
-  assertBootstrapAdminSession(session, email);
+  expect(session.data.user.roles).not.toContain('admin');
+  if (email === RuntimeAdminFixtureEmail) {
+    throw new Error('The owned runtime administrator must be seeded before running the fullstack suite.');
+  }
   return session;
 }
 
@@ -422,15 +418,53 @@ test('@critical user login honors safe return navigation, survives reload, and l
   await expect(page.getByRole('combobox', { name: 'Язык' })).toContainText('Русский');
   await expect(page.getByRole('combobox', { name: 'Тема' })).toContainText('Тёмная');
 
-  await page.getByRole('button', { name: 'Выйти' }).click();
-  await expect(page).toHaveURL(`${urls.userApp}/auth`);
-  await expect(page.getByText('Войдите или зарегистрируйтесь, чтобы продолжить.')).toBeVisible();
-  const revokedSession = await page.context().request.get(`${urls.authApi}/auth/me`);
-  expect(revokedSession.status()).toBe(401);
+  // Hold a real authenticated refetch behind logout. Its late response must not
+  // restore the old principal or private QueryClient data in the live renderer.
+  let captured = false;
+  let delivered = false;
+  let releaseLateResponse: () => void = () => undefined;
+  const release = new Promise<void>((done) => {
+    releaseLateResponse = done;
+  });
+  const sessionRead = (url: URL) => url.pathname.endsWith('/auth/me');
+  await page.route(sessionRead, async (route) => {
+    if (captured) {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch();
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toContain(email);
+    captured = true;
+    await release;
+    await route.fulfill({ response });
+    delivered = true;
+  });
+  try {
+    await page.getByRole('combobox', { name: 'Тема' }).click();
+    await page.getByRole('option', { name: 'Системная' }).click();
+    await expect.poll(() => captured).toBe(true);
+    await page.getByRole('button', { name: 'Выйти' }).click();
+    await expect(page).toHaveURL(`${urls.userApp}/auth`);
+    releaseLateResponse();
+    await expect.poll(() => delivered).toBe(true);
+    await expect(page.getByText('Войдите или зарегистрируйтесь, чтобы продолжить.')).toBeVisible();
+    await expect(page.getByText(`Ready: ${email}`)).toHaveCount(0);
+    const revokedSession = await page.context().request.get(`${urls.authApi}/auth/me`);
+    expect(revokedSession.status()).toBe(401);
+    await gotoWithRetry(page, `${urls.userApp}/profile`);
+    await expect(page).toHaveURL(/\/auth(?:\?|$)/u);
+    await page.reload();
+    await expect(page.getByText('Войдите или зарегистрируйтесь, чтобы продолжить.')).toBeVisible();
+  } finally {
+    releaseLateResponse();
+    await page.unroute(sessionRead);
+  }
 });
 
-test('Telegram TMA establishes Better Auth and application sessions through the same-origin proxy', async ({
+test('Telegram TMA establishes and revokes both local credentials through the same-origin proxy', async ({
   request,
+  playwright,
 }) => {
   const telegramUserId = 9_000_000 + (Date.now() % 999_999);
   const initData = sign(
@@ -508,6 +542,23 @@ test('Telegram TMA establishes Better Auth and application sessions through the 
       ],
     },
   });
+
+  // Replay both original cookie credentials after logout, independent of client-side clearing.
+  const replay = await playwright.request.newContext({ storageState: await request.storageState() });
+  try {
+    const logout = await request.post(`${urls.userApp}/auth/logout`);
+    expect(logout.status()).toBe(200);
+    for (const client of [request, replay]) {
+      expect((await client.get(`${urls.userApp}/auth/me`)).status()).toBe(401);
+      const providerSession = await client.get(`${urls.userApp}/api/auth/get-session`);
+      expect(providerSession.status()).toBe(200);
+      expect(await providerSession.json()).toBeNull();
+      expect((await client.post(`${urls.userApp}/auth/telegram/tma`, { data: { initData } })).status()).toBe(401);
+    }
+    expect((await request.post(`${urls.userApp}/auth/logout`)).status()).toBe(200);
+  } finally {
+    await replay.dispose();
+  }
 });
 
 test('admin API accepts only its cookie session and ignores browser URL tokens', async ({ page }) => {
@@ -523,7 +574,7 @@ test('admin API accepts only its cookie session and ignores browser URL tokens',
   expect(bearerProfile.status).toBe(401);
 
   const loginResponse = await page.context().request.post(`${urls.authApi}/auth/login`, {
-    data: { email: 'admin@example.com', password: authPassword },
+    data: { email: RuntimeAdminFixtureEmail, password: RuntimeAdminFixturePassword },
   });
   expect(successfulAuthStatuses).toContain(loginResponse.status());
   const adminProfile = await page.context().request.get(`${urls.adminApi}/admin/profile/me`);

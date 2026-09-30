@@ -19,6 +19,7 @@ import {
   type PaymentRefundRecord,
   type PaymentsDto,
   PaymentsPersistence,
+  isLegalPaymentTransition,
   type PaymentWebhookReceiptClaimOutcome,
   type PaymentWebhookReceiptRecord,
   type UpdatePaymentWebhookReceiptParams,
@@ -454,6 +455,13 @@ export class PaymentsPostgresPersistence extends PaymentsPersistence {
         throw new Error(`Payment ${input.paymentId} does not exist.`);
       }
 
+      if (
+        payment.providerCode !== input.receipt.providerCode ||
+        (!isLegalPaymentTransition(payment.status, input.toStatus) &&
+          !(payment.status === 'processing' && input.toStatus === 'processing' && input.partialAmount !== undefined))
+      ) {
+        throw new Error('Webhook payment ownership or state transition does not match.');
+      }
       const at = input.transitionedAt ?? new Date();
       const event = new PaymentEventEntity({
         paymentId: payment.id,

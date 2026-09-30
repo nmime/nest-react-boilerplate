@@ -17,6 +17,10 @@ product code.
 - Selected closures retain packages required by source, shared configuration,
   test environments, and renderer commands without leaking unselected apps or
   the opposite durable provider.
+- Selected installation links dependency entries into real workspace and
+  selected-project `node_modules` directories. Repository package-manager tasks
+  can own their local task state without following a directory symlink or
+  reinstalling an implicit all-application dependency tree.
 - Bot application selections retain Redis for replay protection independently
   of whether deployment owns the service or connects to an external instance.
 - Provider-backed payments are wired only into selected durable backend hosts;
@@ -159,6 +163,12 @@ blockers.
   explicitly configured authoritative argv command executes successfully.
 - URL-only reachability remains canary or reliability evidence.
 - External commands and request concurrency have finite validated bounds.
+- Default external quality-engine container fallbacks use reviewed immutable
+  digests. Registry-resolving installation proofs are explicitly classified as
+  integration suites with finite process timeouts, outside the unit-test burst.
+- Repository path checks resolve from their source file and require every
+  expected reference file to exist. Setup dry-run evidence compares the complete
+  virtual filesystem change set instead of testing only one absent file.
 - Required accessibility, performance, DAST, and live-fuzz targets cannot be
   omitted to produce success. Optional omissions report an explicit skip;
   only an explicit dry run reports planned work.

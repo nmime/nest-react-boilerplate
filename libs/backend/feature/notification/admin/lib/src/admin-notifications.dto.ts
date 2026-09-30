@@ -301,7 +301,7 @@ export class AdminNotificationTemplateViewDto {
   @ApiPropertyOptional({ nullable: true, type: String }) description!: string | null;
   @ApiProperty() source!: string;
   @ApiProperty() status!: string;
-  @ApiPropertyOptional({ nullable: true }) currentVersionId!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String }) currentVersionId!: string | null;
   @ApiProperty({ format: 'date-time' }) updatedAt!: string;
   @ApiProperty({ type: () => [AdminNotificationTemplateVersionViewDto] })
   versions!: AdminNotificationTemplateVersionViewDto[];
@@ -312,7 +312,7 @@ export class AdminNotificationTemplateVersionViewDto {
   @ApiProperty() version!: number;
   @ApiProperty({ type: 'object', additionalProperties: true }) variablesSchema!: Record<string, unknown>;
   @ApiProperty({ type: 'object', additionalProperties: true }) channels!: Record<string, unknown>;
-  @ApiPropertyOptional({ nullable: true, format: 'date-time' }) publishedAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String, format: 'date-time' }) publishedAt!: string | null;
   @ApiProperty({ format: 'date-time' }) updatedAt!: string;
 }
 
@@ -363,7 +363,7 @@ export class AdminNotificationBroadcastViewDto {
   @ApiProperty() rejectedCount!: number;
   @ApiProperty() errorCount!: number;
   @ApiProperty() cancelledCount!: number;
-  @ApiPropertyOptional({ nullable: true, format: 'date-time' }) scheduledAt!: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String, format: 'date-time' }) scheduledAt!: string | null;
   @ApiProperty({ format: 'date-time' }) updatedAt!: string;
 }
 

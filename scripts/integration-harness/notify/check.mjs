@@ -11,8 +11,8 @@
  *   notification-scheduler — claims pending deliveries and dispatches them through
  *                           the Telegram/Discord/email providers to the mocks
  *
- * Evidence: transport calls appended to ./calls.log.jsonl by the mocks, S3 objects
- * persisted under ./s3-store/, and delivery state transitions observed via the
+ * Evidence: transport calls and S3 objects live in the owned temporary fixture
+ * directory created by this run, and delivery state transitions are observed via the
  * admin API. Prints one JSON line and exits 0 (pass) or 1 (fail).
  */
 import { spawn, execFileSync } from 'node:child_process';

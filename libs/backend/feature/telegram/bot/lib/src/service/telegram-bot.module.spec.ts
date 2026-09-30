@@ -68,6 +68,15 @@ describe('TelegramBotModule', () => {
     expect(TelegramBotModule.register().imports).toEqual([]);
   });
 
+  it('passes the actual host auth port into the bot factory', () => {
+    mocks.resolveTelegramBotConfig.mockReturnValue(mocks.config);
+    const auth = { findLinkedUser: vi.fn() } as unknown as import('../type').TelegramBotAuthPort;
+    const module = TelegramBotModule.register({ auth });
+    const provider = module.providers?.[0] as FactoryProvider<TelegramBotInstance>;
+    (provider.useFactory as () => TelegramBotInstance)();
+    expect(mocks.createTelegramBot).toHaveBeenCalledWith(mocks.config, { auth });
+  });
+
   it('passes host imports through the dynamic module scope', () => {
     class HostRedisModule {}
     const module = TelegramBotModule.register({ imports: [HostRedisModule], useRedis: true });

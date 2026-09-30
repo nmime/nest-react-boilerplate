@@ -1,12 +1,12 @@
 {
-  "user.appName": "Nest React样板",
-  "user.eyebrow": "您的帐号",
+  "user.appName": "Nest React Boilerplate",
+  "user.eyebrow": "您的账号",
   "user.title": "清晰的账号管理平台。",
-  "user.description": "登录、查看您的个人资料，并管理整个网页和Telegram的偏好设置。",
+  "user.description": "登录、查看个人资料，并在网页和 Telegram 中管理偏好设置。",
   "user.status": "账户",
-  "user.action.profile": "個人檔案",
-  "user.action.open": "开启",
-  "user.action.signOut": "登出",
+  "user.action.profile": "个人资料",
+  "user.action.open": "打开",
+  "user.action.signOut": "退出登录",
   "user.action.signingOut": "正在退出…",
   "user.auth.eyebrow": "身份验证",
   "user.auth.title": "选择登录方式",
@@ -30,7 +30,7 @@
   "user.form.loginPasswordPlaceholder": "密码",
   "user.form.registerEmailPlaceholder": "new@example.com",
   "user.form.registerPasswordPlaceholder": "至少 8 个字符",
-  "user.error.profileRequestFailed": "个人资料移除要求失败",
+  "user.error.profileRequestFailed": "个人资料请求失败",
   "user.error.authenticationFailed": "身份验证失败。",
   "user.state.unauthenticated": "请登录或注册后继续。",
   "user.state.ready": "已就绪：{{subject}}",
@@ -39,7 +39,7 @@
   "user.profile.unknown": "未知",
   "user.nav.home": "首页",
   "user.nav.auth": "身份验证",
-  "user.nav.profile": "個人檔案",
+  "user.nav.profile": "个人资料",
   "user.nav.settings": "设置",
   "user.settings.title": "设置",
   "user.settings.description": "选择语言和外观，或管理与个人资料关联的账号。",
@@ -52,5 +52,5 @@
   "user.home.profile.description": "查看当前会话可用的身份和个人资料详情。",
   "user.home.settings.description": "在一个位置管理语言、主题、退出登录和关联账号。",
   "user.home.telegram.description": "以全屏 Telegram 小程序打开同一账号流程。",
-  "user.profile.emailFallback": "服务提供商账号"
+  "user.profile.emailFallback": "身份提供商账号"
 }

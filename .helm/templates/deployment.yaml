@@ -100,6 +100,15 @@ spec:
             {{- end }}
             {{- end }}
             {{- if or (eq $app.kind "backend") (eq $app.kind "background") }}
+            {{- if has (kebabcase $name) (list "auth-app-api" "telegram-bot-api") }}
+            # This dedicated service credential reaches only the auth and bot hosts.
+            - name: TELEGRAM_BOT_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "boilerplate.secretName" $root }}
+                  key: TELEGRAM_BOT_AUTH_SECRET
+                  optional: true
+            {{- end }}
             {{- range $runtimeSecretKeys }}
             - name: {{ . }}
               valueFrom:

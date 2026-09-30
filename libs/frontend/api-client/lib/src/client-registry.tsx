@@ -12,6 +12,7 @@ export interface ApiClientRuntimeConfig {
   baseUrls: Record<ApiServiceName, string>;
   fetchImpl?: typeof fetch;
   headers?: HeadersInit;
+  credentials?: RequestCredentials;
 }
 
 export interface ApiServiceClient<TApi> {
@@ -44,6 +45,7 @@ const buildServiceRequestOptions = (
   baseUrl: config.baseUrls[service],
   fetchImpl: config.fetchImpl,
   headers: config.headers,
+  credentials: config.credentials,
 });
 
 export const createApiClientRegistry = (config: ApiClientRuntimeConfig): ApiClientRegistry => ({
@@ -91,6 +93,7 @@ export const ApiClientProvider = ({
   children,
   fetchImpl,
   headers,
+  credentials,
   loadProblemPresentationOverrides = false,
 }: ApiClientProviderProps) => {
   const { admin: adminBaseUrl, auth: authBaseUrl, user: userBaseUrl } = baseUrls;
@@ -100,8 +103,9 @@ export const ApiClientProvider = ({
         baseUrls: { admin: adminBaseUrl, auth: authBaseUrl, user: userBaseUrl },
         fetchImpl,
         headers,
+        credentials,
       }),
-    [adminBaseUrl, authBaseUrl, userBaseUrl, fetchImpl, headers],
+    [adminBaseUrl, authBaseUrl, userBaseUrl, fetchImpl, headers, credentials],
   );
 
   useEffect(() => {

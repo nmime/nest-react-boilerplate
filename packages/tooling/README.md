@@ -38,8 +38,10 @@ TS-first command implementations live under `packages/tooling/src/commands` grou
   `closure` derives and enforces setup-selected Nx projects, exact product
   external packages, and separately declared tooling support packages. Setup
   writes selected manifests only; lock generation and installation require the
-  explicit `closure install` command, which replaces prior workspace links with
-  `.nrb/closure/node_modules`. Use `pnpm run tooling:install` only when
+  explicit `closure install` command. It creates real workspace and selected
+  project `node_modules` directories whose dependency entries link into
+  `.nrb/closure/node_modules`, leaving pnpm task state local to each directory.
+  Use `pnpm run tooling:install` only when
   explicitly restoring the full maintainer workspace. Maintainer reference
   closure generation is explicit and provider-specific.
 - `images/` asset optimization helpers such as PNG/JPG/JPEG to WebP conversion.
@@ -117,3 +119,9 @@ explicit behavior command; HTTP-only probes remain canary/reliability evidence.
 - `pnpm run git:conventions` validates typed branch names, Conventional Commit subjects, linear history, and agent attribution. Human and trusted dependency-bot identities are accepted; known assistant identities must be replaced by exact `nmime` author/committer ownership. Use `--branch <name> --range <revision-range>` for CI or history audits.
 
 Node and package-manager versions are intentionally pinned through `.nvmrc`, `packageManager`, `engines`, and `.npmrc` strictness. Use Node 24.21.0 and pnpm 12.8.1 for the canonical toolchain.
+
+The registry-resolving OTel closure install proof is named
+`closure-otel-install.integration.test.ts`; tooling runs it serially with the
+other integration suites. `SKIP_INTEGRATION=1` runs hermetic unit suites and
+reports no installation/network acceptance. Each package-manager fixture
+process has a finite timeout.

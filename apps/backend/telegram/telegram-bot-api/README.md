@@ -16,6 +16,11 @@ for every supported locale. Commands are scoped to private chats. It also
 publishes the persistent Mini App menu button when
 `TELEGRAM_MINI_APP_URL` is safe.
 
+Linked-account resolution is opt-in through `TELEGRAM_BOT_AUTH_URL` and a
+dedicated `TELEGRAM_BOT_AUTH_SECRET`. The bot has no durable auth database;
+the auth service owns tenant selection and canonical provider identity mapping.
+See the [bridge configuration](../../../../docs/social-auth-bots.md#telegram-bots-with-grammy).
+
 ## Commands
 
 ```bash

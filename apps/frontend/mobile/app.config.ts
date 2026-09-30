@@ -1,6 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
-const defaultApiBaseUrl = 'same-origin';
 // Kept in step with `defaultProductBrand.name` in @app/frontend-api-support, which the spec asserts
 // against. Expo's config loader resolves this file without the workspace TypeScript paths, so the
 // shared constant cannot be imported here and the default has to be restated.
@@ -35,6 +34,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     ...config.extra,
-    apiBaseUrl: (process.env['EXPO_PUBLIC_API_BASE_URL'] as string | undefined) ?? defaultApiBaseUrl,
+    // Runtime reads public EXPO_PUBLIC_* URLs directly; no credential or duplicate API setting is serialized here.
   },
 });

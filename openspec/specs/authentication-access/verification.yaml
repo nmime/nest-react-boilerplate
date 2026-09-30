@@ -247,6 +247,9 @@ requirements:
           - nightly
   - id: REQ-AUTH-IDENTITY-005
     projects:
+      - auth-app-api
+      - telegram-bot-api
+      - '@app/backend-feature-telegram-bot'
       - discord-app-api
       - '@app/backend-feature-auth-main'
       - '@app/backend-postgres-main-auth'
@@ -265,6 +268,18 @@ requirements:
         - security
         - playwright
     evidence:
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/interfaces/http/telegram-bot-auth-bridge.controller.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: libs/backend/feature/telegram/bot/lib/src/service/auth-bridge.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes:
+          - pr
+          - main
       - kind: security
         file: libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts
         target: '@app/backend-feature-auth-main:test'

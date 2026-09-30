@@ -3,6 +3,11 @@ import { AuthController, PersistentSessionAccessGuard, ProblemPresentationsContr
 import { BetterAuthApiController } from './application/better-auth-api.controller';
 import { BetterAuthModule } from './application/better-auth.module';
 import {
+  TelegramBotAuthBridgeController,
+  TelegramBotAuthBridgeGuard,
+  TelegramBotAuthBridgeService,
+} from './interfaces/http/telegram-bot-auth-bridge.controller';
+import {
   AuthService,
   AuthLoginAnalyticsService,
   AuthNotificationPublisher,
@@ -43,6 +48,8 @@ export interface AuthMainModuleOptions {
   imports?: NonNullable<ModuleMetadata['imports']>;
   /** Bot and worker hosts use services without duplicating the auth HTTP surface. */
   exposeHttp?: boolean;
+  /** Only the owning auth API exposes service-authenticated Telegram bridge routes. */
+  telegramBotBridge?: boolean;
 }
 
 function assertSafePersistenceMode(mode: AuthPersistenceMode): void {
@@ -70,19 +77,21 @@ interface NormalizedAuthMainModuleOptions {
   mode: AuthPersistenceMode;
   imports: NonNullable<ModuleMetadata['imports']>;
   exposeHttp: boolean;
+  telegramBotBridge: boolean;
 }
 
 function normalizeOptions(
   optionsOrMode: AuthPersistenceMode | AuthMainModuleOptions = {},
 ): NormalizedAuthMainModuleOptions {
   if (typeof optionsOrMode === 'string') {
-    return { mode: optionsOrMode, imports: [], exposeHttp: true };
+    return { mode: optionsOrMode, imports: [], exposeHttp: true, telegramBotBridge: false };
   }
 
   return {
     mode: optionsOrMode.mode ?? resolvePersistenceMode(),
     imports: optionsOrMode.imports ?? [],
     exposeHttp: optionsOrMode.exposeHttp ?? true,
+    telegramBotBridge: optionsOrMode.telegramBotBridge ?? false,
   };
 }
 
@@ -122,7 +131,14 @@ export class AuthMainModule {
     return {
       module: AuthMainModule,
       imports: [...options.imports, BetterAuthModule.forRoot()],
-      controllers: options.exposeHttp ? [AuthController, BetterAuthApiController, ProblemPresentationsController] : [],
+      controllers: options.exposeHttp
+        ? [
+            AuthController,
+            BetterAuthApiController,
+            ProblemPresentationsController,
+            ...(options.telegramBotBridge ? [TelegramBotAuthBridgeController] : []),
+          ]
+        : [],
       providers: [
         AuthService,
         AuthLoginAnalyticsService,
@@ -132,6 +148,9 @@ export class AuthMainModule {
         BetterAuthTelegramSessionService,
         PersistentSessionAccessGuard,
         EffectivePermissionService,
+        ...(options.exposeHttp && options.telegramBotBridge
+          ? [TelegramBotAuthBridgeService, TelegramBotAuthBridgeGuard]
+          : []),
         ...(options.mode === AuthPersistenceMode.Memory
           ? []
           : [

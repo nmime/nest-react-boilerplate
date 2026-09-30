@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // Non-persisting read and server-dry-run evidence for REQ-RUNTIME-DELIVERY-009.
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { helmValueFiles } from './delivery-inventory.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const kubernetesNamePattern = /^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$/u;
@@ -46,20 +47,37 @@ export function parseLiveValidationOptions(argv) {
     else fail(`Unknown argument: ${argument}`);
   }
 
-  options.backupCronJob ??= `${options.release}-postgres-backup`;
   if (!options.context.trim()) fail('--context is required; implicit current-context access is forbidden');
   for (const [label, value] of [
     ['namespace', options.namespace],
     ['release', options.release],
     ['backup CronJob', options.backupCronJob],
   ]) {
-    if (!kubernetesNamePattern.test(value) || value.length > 63) fail(`Invalid Kubernetes ${label}: ${value}`);
+    if (value !== undefined && (!kubernetesNamePattern.test(value) || value.length > 63)) {
+      fail(`Invalid Kubernetes ${label}: ${value}`);
+    }
   }
   if (!Number.isInteger(options.maxBackupAgeMinutes) || options.maxBackupAgeMinutes < 1) {
     fail('--max-backup-age-minutes must be a positive integer');
   }
-  if (!/^\d+[smh]$/u.test(options.timeout)) fail('--timeout must be a positive Kubernetes duration in s, m, or h');
+  if (!/^[1-9]\d*[smh]$/u.test(options.timeout)) fail('--timeout must be a positive Kubernetes duration in s, m, or h');
   return options;
+}
+
+export function loadLiveValidationSelection(workspaceRoot = rootDir, checkClosure = spawnSync) {
+  // The canonical checker compares generated selection bytes to the live graph,
+  // configuration, and provider. Merely finding an overlay is not freshness.
+  const checked = checkClosure('pnpm', ['nrb', 'closure', 'check'], {
+    cwd: workspaceRoot,
+    encoding: 'utf8',
+    stdio: 'pipe',
+  });
+  if (checked.error || checked.status !== 0) {
+    fail('Selected closure is missing or stale; run pnpm nrb setup and pnpm nrb closure install before preflight');
+  }
+  const closure = JSON.parse(readFileSync(join(workspaceRoot, '.nrb/closure.json'), 'utf8'));
+  if (![null, 'postgres', 'mongodb'].includes(closure.provider)) fail('Invalid selected closure provider');
+  return { provider: closure.provider, configHash: closure.configHash };
 }
 
 const helmArgs = (options) => ['--namespace', options.namespace, '--kube-context', options.context];
@@ -70,21 +88,25 @@ export function buildLiveValidationPlan(
   manifestPath = '<rendered-manifest>',
   previousRevision = '<previous>',
 ) {
+  if (![null, 'postgres', 'mongodb'].includes(options.provider)) {
+    fail('Kubernetes preflight requires a validated selected closure provider');
+  }
+  if (options.provider === null && options.backupCronJob !== undefined) {
+    fail('Provider-free selection cannot validate a database backup CronJob');
+  }
+  const backupCronJob =
+    options.backupCronJob ?? (options.provider === null ? null : `${options.release}-${options.provider}-backup`);
+  if (backupCronJob !== null && backupCronJob.length > 63) {
+    fail('Default backup CronJob name exceeds 63 characters; provide --backup-cronjob explicitly');
+  }
+  const valuesArgs = helmValueFiles.flatMap((path) => ['-f', path]);
   const backupJob = `${options.release}-backup-preflight`;
+  if (options.provider !== null && backupJob.length > 63) fail('Release name is too long for the backup preflight job');
   return [
     {
       id: 'render',
       command: 'helm',
-      args: [
-        'template',
-        options.release,
-        '.helm',
-        '--namespace',
-        options.namespace,
-        '-f',
-        '.helm/values-production.yaml',
-        '--include-crds',
-      ],
+      args: ['template', options.release, '.helm', '--namespace', options.namespace, ...valuesArgs, '--include-crds'],
     },
     {
       id: 'helm-server-dry-run',
@@ -94,8 +116,7 @@ export function buildLiveValidationPlan(
         '--install',
         options.release,
         '.helm',
-        '-f',
-        '.helm/values-production.yaml',
+        ...valuesArgs,
         ...helmArgs(options),
         '--dry-run=server',
         '--hide-secret',
@@ -146,24 +167,28 @@ export function buildLiveValidationPlan(
         `--timeout=${options.timeout}`,
       ],
     },
-    {
-      id: 'backup-freshness',
-      command: 'kubectl',
-      args: [...kubectlArgs(options), 'get', 'cronjob', options.backupCronJob, '--output', 'json'],
-    },
-    {
-      id: 'backup-admission-dry-run',
-      command: 'kubectl',
-      args: [
-        ...kubectlArgs(options),
-        'create',
-        'job',
-        backupJob,
-        `--from=cronjob/${options.backupCronJob}`,
-        '--dry-run=server',
-        '--output=name',
-      ],
-    },
+    ...(options.provider === null
+      ? []
+      : [
+          {
+            id: 'backup-freshness',
+            command: 'kubectl',
+            args: [...kubectlArgs(options), 'get', 'cronjob', backupCronJob, '--output', 'json'],
+          },
+          {
+            id: 'backup-admission-dry-run',
+            command: 'kubectl',
+            args: [
+              ...kubectlArgs(options),
+              'create',
+              'job',
+              backupJob,
+              `--from=cronjob/${backupCronJob}`,
+              '--dry-run=server',
+              '--output=name',
+            ],
+          },
+        ]),
   ];
 }
 
@@ -212,8 +237,30 @@ function runStep(step, { capture = false } = {}) {
 
 function main() {
   const options = parseLiveValidationOptions(process.argv.slice(2));
+  const selectionPath = resolve(rootDir, helmValueFiles.at(-1));
+  if (
+    process.env.NRB_ALL_REFERENCE === 'true' ||
+    (process.env.HELM_SELECTION_VALUES && resolve(rootDir, process.env.HELM_SELECTION_VALUES) !== selectionPath)
+  ) {
+    fail(
+      'Existing-release preflight requires the current product selection, not an all-reference or alternate overlay',
+    );
+  }
+  Object.assign(options, loadLiveValidationSelection());
   if (options.plan) {
-    console.log(JSON.stringify({ mode: 'no-deploy', steps: buildLiveValidationPlan(options) }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          mode: 'no-deploy',
+          provider: options.provider,
+          configHash: options.configHash,
+          backup: options.provider === null ? 'not-applicable: provider-free selection' : 'required',
+          steps: buildLiveValidationPlan(options),
+        },
+        null,
+        2,
+      ),
+    );
     return;
   }
 
@@ -231,9 +278,15 @@ function main() {
     plan = buildLiveValidationPlan(options, manifestPath, previousRevision);
     runStep(plan[5]);
 
-    const backupCronJob = JSON.parse(runStep(plan[6], { capture: true }));
-    const backupAgeMinutes = assertRecentBackup(backupCronJob, options.maxBackupAgeMinutes);
-    runStep(plan[7]);
+    let backupAgeMinutes = null;
+    let backupCronJob = null;
+    if (options.provider !== null) {
+      const backupStep = plan.find((step) => step.id === 'backup-freshness');
+      backupCronJob = backupStep.args.at(-3);
+      const observedBackup = JSON.parse(runStep(backupStep, { capture: true }));
+      backupAgeMinutes = Math.floor(assertRecentBackup(observedBackup, options.maxBackupAgeMinutes));
+      runStep(plan.find((step) => step.id === 'backup-admission-dry-run'));
+    }
 
     console.log(
       JSON.stringify({
@@ -243,8 +296,11 @@ function main() {
         namespace: options.namespace,
         release: options.release,
         previousRevision,
-        backupCronJob: options.backupCronJob,
-        backupAgeMinutes: Math.floor(backupAgeMinutes),
+        provider: options.provider,
+        configHash: options.configHash,
+        backupCronJob,
+        backupAgeMinutes,
+        backup: options.provider === null ? 'not-applicable: provider-free selection' : 'validated',
       }),
     );
   } finally {

@@ -326,7 +326,10 @@ const fastify = appRequire('fastify')({trustProxy: true});
             cookies.some((value) => value.includes('Secure') && value.includes('HttpOnly')),
             `${variant}: trusted HTTPS must set the secure session cookie`,
           );
-          const direct = await fetch(`${base}/api/auth/edge-session`, { headers: { 'x-forwarded-proto': 'https' } });
+          const direct = await fetch(`${base}/api/auth/edge-session`, {
+            headers: { 'x-forwarded-proto': 'https' },
+            signal: AbortSignal.timeout(5000),
+          });
           assert.equal(direct.status, 200);
           assert.equal((await direct.json()).protocol, 'http');
           assert.equal(direct.headers.get('set-cookie'), null, 'an untrusted claim cannot mint a secure cookie');
@@ -336,7 +339,7 @@ const fastify = appRequire('fastify')({trustProxy: true});
               backend,
               'node',
               '-e',
-              `fetch('http://frontend:8080/api/auth/edge-session',{headers:{'x-forwarded-proto':${JSON.stringify(protocol)}}}).then(async r=>{require('node:assert/strict').equal((await r.json()).protocol,'http');require('node:assert/strict').equal(r.headers.get('set-cookie'),null);}).catch(()=>process.exit(1));`,
+              `fetch('http://frontend:8080/api/auth/edge-session',{headers:{'x-forwarded-proto':${JSON.stringify(protocol)}},signal:AbortSignal.timeout(5000)}).then(async r=>{require('node:assert/strict').equal((await r.json()).protocol,'http');require('node:assert/strict').equal(r.headers.get('set-cookie'),null);}).catch(()=>process.exit(1));`,
             );
             assert.equal(probe, '');
           }

@@ -60,17 +60,19 @@ persistence rather than partially finalized.
 
 ## Runtime and Environment Boundary
 
-The U6 closure ran against fresh local PostgreSQL. A live MongoDB run was
-observed during implementation, while the final post-migration rerun honestly
-self-skipped after the local server became unavailable. The Mongo component
-harness can also use a configured URI or Testcontainers and self-skips with an
-explicit reason only when no server/runtime exists. Hosted
+Current component harnesses require owned Testcontainers databases and fail
+when the container runtime is unavailable. They do not use ambient configured
+URIs or silently self-skip. The audit has exercised PostgreSQL and MongoDB
+component suites; final assurance reruns both against the final source revision. Hosted
 forge evidence occurs only after a revision is pushed; U6 does not claim it.
 
 ## Residual Risk
 
-- U7/U8 still own provider-specific signature algorithms, realized-amount
-  comparison, X-Rocket `finalizedAt` mapping, and normalized provider evidence.
+- U7/U8 still own actual provider adapters, signature algorithms, status/finality
+  mapping, and provider fixtures. Normalized port checks already reject unsigned
+  signed protocols, cross-provider references, contradictory exact amounts,
+  missing X-Rocket finality, and illegal transitions. These mock-port tests are
+  not credentialed or funded provider acceptance.
 - U9 owns reconciler completion, manual-queue/P1 escalation, and the outbox
   dispatcher.
 - U10 owns the mock-provider full-stack acceptance journey and operational

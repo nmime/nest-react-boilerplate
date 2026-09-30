@@ -42,6 +42,9 @@ modified.
 
 - The transition function is the single definition of legal edges; no
   other code path writes `payments.status` outside it.
+- Webhook persistence rechecks legal edges and provider ownership against the
+  locked PostgreSQL row or version-guarded MongoDB snapshot. A concurrent close
+  cannot be reopened by a previously fetched webhook status.
 - Terminal states accept no further transition, including `refunded`.
 - Partial refunds keep the payment `paid` with `refunded_amount > 0` and
   append-only refund rows; only a confirmed full refund reaches
@@ -164,6 +167,12 @@ created" — fetch the invoice, do not error.
   creation.
 - `meta.orderRef` is unique per tenant and resolves to exactly one
   payment.
+- Until U9 customer orchestration supplies tenant ownership, positive exact
+  amounts, provider selection, and registered permissions, the legacy customer
+  list/create scaffold returns 503 `payment-customer-unavailable` without reading
+  or writing payment records. HTTP authentication and authorization still run
+  first: anonymous callers receive 401 and callers without the unregistered
+  payment grants receive 403. The service never exposes the unscoped persistence facade.
 
 **Failure behavior:**
 

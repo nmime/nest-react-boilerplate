@@ -235,6 +235,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: vitest
+        file: apps/frontend/mobile/src/mobile-api-config.spec.ts
+        target: mobile-app:test
+        lanes:
+          - pr
+          - main
       - kind: static
         file: apps/frontend/mobile/src/expo-route-boundary.spec.ts
         target: mobile-app:typecheck

@@ -60,6 +60,16 @@ separate checks. `pnpm run test:local-observability` uses an isolated project to
 prove readiness, owned trace/log round trips, Grafana datasource queries, and
 denial of anonymous dashboard writes.
 
+Default application tracing exports bounded operation, status, route-template,
+and correlation attributes. It omits raw URLs/query strings, request headers
+and bodies, database statements/arguments, and free-form exception details.
+Keep custom operation names static; injected exporters own their privacy
+policy. `pnpm run test:otel` checks real automatic HTTP/Fastify exports.
+`pnpm run test:otel-privacy` checks actual selected-provider and Redis operations
+against an owned local OTLP receiver. Run both provider selections to establish
+both driver lanes. These tests prove SDK export behavior independently from
+the local Grafana/Loki/Tempo ingestion test.
+
 ## Stop
 
 ```bash

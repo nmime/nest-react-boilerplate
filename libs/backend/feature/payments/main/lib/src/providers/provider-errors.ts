@@ -6,6 +6,12 @@ import { type ProviderHttpError, registerPaymentProblemTypes } from '@app/backen
 // PaymentsMainModule.
 registerPaymentProblemTypes();
 
+export class PaymentCustomerUnavailableException extends Exception({
+  name: 'PaymentCustomerUnavailableException',
+  kind: ExceptionKind.Server,
+  problemType: 'payment-customer-unavailable',
+}) {}
+
 export class PaymentProviderUnavailableException extends Exception({
   name: 'PaymentProviderUnavailableException',
   kind: ExceptionKind.Server,

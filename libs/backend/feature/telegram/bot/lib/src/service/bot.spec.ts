@@ -1,6 +1,7 @@
-// @requirements REQ-SOCIAL-COMMANDS-003 REQ-SOCIAL-CONFIG-004
+// @requirements REQ-SOCIAL-COMMANDS-003 REQ-SOCIAL-CONFIG-004 REQ-AUTH-IDENTITY-005
 import { describe, expect, it, vi } from 'vitest';
 import { createTelegramBot, handleLink, handleStart, telegramBotCommands } from './bot';
+import { createTelegramAuthBridge } from './auth-bridge';
 import { goBack, goHome, navigateTo, replaceCurrentRoute } from '../navigation';
 import { defaultLocale, supportedLocales, translate, type Locale } from '../i18n';
 import { initialTelegramBotSession } from './session';
@@ -302,6 +303,56 @@ async function waitForTelegramText(
 }
 
 describe('createTelegramBot', () => {
+  it('refreshes the canonical account through the stateless host bridge in actual grammY updates', async () => {
+    const { calls, fetchMock } = apiMock();
+    const sessions = new Map<string, TelegramBotSession>();
+    const profile = {
+      userId: '9c720a13-80c9-473a-aa70-e6f9e2d35455',
+      tenantId: '00000000-0000-0000-0000-000000000000',
+      locale: 'zh',
+    };
+    let linked = false;
+    const auth = createTelegramAuthBridge(
+      {
+        url: 'https://auth.example.test/api/v1/auth/internal/telegram-bot',
+        secret: 'owned-bridge-fixture-credential-32-characters',
+      },
+      {
+        fetch: async (input, init) => {
+          expect(JSON.parse(String(init?.body)).providerSubject).toBe('100');
+          if (String(input).endsWith('/link')) linked = true;
+          return new Response(JSON.stringify(linked ? profile : null), {
+            headers: { 'content-type': 'application/json' },
+          });
+        },
+      },
+    );
+    const { bot } = createTelegramBot(config(), {
+      auth,
+      fetch: fetchMock,
+      sessionStorage: {
+        read: (key) => sessions.get(key),
+        write: (key, value) => {
+          sessions.set(key, value);
+        },
+        delete: (key) => {
+          sessions.delete(key);
+        },
+      },
+    });
+    await bot.handleUpdate(messageUpdate(`/start link_${'a'.repeat(43)}`) as never);
+    await bot.handleUpdate(messageUpdate('/profile') as never);
+    expect(sessions.get('telegram-bot:100')?.auth).toMatchObject({
+      linked: true,
+      userId: profile.userId,
+      tenantId: profile.tenantId,
+      linkedLocale: 'zh',
+    });
+    expect(latestPayload(calls, 'sendMessage').text).toBe(translate('bot.message.profileLinked', { locale: 'zh' }));
+    linked = false;
+    await bot.handleUpdate(messageUpdate('/profile') as never);
+    expect(sessions.get('telegram-bot:100')?.auth).toEqual({ linked: false });
+  });
   it('uses the normalized API root for Telegram requests', async () => {
     const { calls, fetchMock } = apiMock();
     const { bot } = createTelegramBot(config({ apiRoot: 'http://127.0.0.1:9099' }), { fetch: fetchMock });

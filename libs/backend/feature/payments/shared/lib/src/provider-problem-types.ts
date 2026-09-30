@@ -1,7 +1,7 @@
 import { registerProblemTypes, type ProblemTypeExtension } from '@app/common-problem-details';
 
 /**
- * The fifteen payment problem types (design §5.1).
+ * The payment problem types (design §5.1).
  *
  * Registered into `@app/common-problem-details`' product namespace so every
  * payment failure is RFC 9457 problem+json before a controller raises it. The
@@ -12,6 +12,7 @@ import { registerProblemTypes, type ProblemTypeExtension } from '@app/common-pro
  */
 
 export const PaymentProblemCodes = [
+  'payment-customer-unavailable',
   'payment-provider-unavailable',
   'payment-provider-rate-limited',
   'payment-provider-credential-invalid',
@@ -36,6 +37,15 @@ const CodeExtension = { name: 'code', description: 'Stable short alias for the p
 const PaymentProblemTypesExtension: ProblemTypeExtension = {
   id: 'payments',
   problems: [
+    {
+      code: 'payment-customer-unavailable',
+      title: 'Payment Customer API Unavailable',
+      status: 503,
+      detail: 'Customer payment orchestration has not been activated.',
+      resolution:
+        'Implement tenant ownership, exact amounts, provider adapters, and customer authorization before activating this API.',
+      extensions: [CodeExtension],
+    },
     {
       code: 'payment-provider-unavailable',
       title: 'Payment Provider Unavailable',
@@ -172,7 +182,7 @@ const PaymentProblemTypesExtension: ProblemTypeExtension = {
 };
 
 /**
- * Register all fifteen payment problem types. Called once at boot by the
+ * Register all payment problem types. Called once at boot by the
  * payments module; a second call throws, matching the registry contract.
  */
 export function registerPaymentProblemTypes(): void {

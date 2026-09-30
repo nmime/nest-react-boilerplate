@@ -51,6 +51,12 @@ See [architecture docs](../architecture.md) for module boundaries and [API conve
 
 Sensitive detail keys (e.g. `password`, `token`, `secret`, `private_key`) are always redacted to `[redacted]` in public endpoints.
 
+An `ok` response from a Map-backed in-memory fixture proves that process's
+configured checks only. `AUTH_PERSISTENCE=memory` skips durable database checks
+and loses accounts, sessions, and link state on restart; auth composition refuses
+that mode in production. Runtime acceptance must identify the configured
+PostgreSQL or MongoDB provider and its required indicators separately.
+
 ## `/ready` — orchestrator probe
 
 Kubernetes `readinessProbe`, Compose health-check, and load-balancer probes should target `/ready`.
@@ -62,7 +68,7 @@ When any required indicator fails, `/ready` returns **HTTP 503** with the failur
 2. **Common indicators and fixes:**
    - `database` — the selected PostgreSQL or MongoDB provider is unreachable. Check `DATABASE_URL`, or `MONGODB_URI`/`MONGODB_DATABASE`, network, and provider logs. See [dependency readiness triage](dependency-triage.md).
    - `database-transactions` — MongoDB is reachable but its topology is not transaction-capable. Standalone, session-less, non-primary, replica-set-mismatched, and unsupported wire-version deployments fail this required check.
-   - `database-migrations` — optional PostgreSQL migration-drift detail. MongoDB startup and the migration job verify its native ledger, validators, and indexes separately.
+   - `database-migrations` — optional PostgreSQL migration-drift detail. For MongoDB this is a required readiness check: the adapter verifies the shared native migration ledger and expected collection validators/indexes on each probe. The migration job separately applies and verifies selected feature migrations; this shared indicator does not certify every feature migration or provider delivery.
    - `redis` — Redis connection refused. Check `REDIS_URL` or `REDIS_HOSTS`. See [dependency readiness triage](dependency-triage.md).
    - `nats` — NATS connection refused. Check `NATS_SERVERS`. See [dependency readiness triage](dependency-triage.md).
 3. **Verify from inside the container** (if accessible):

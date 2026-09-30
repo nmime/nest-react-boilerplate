@@ -36,10 +36,10 @@ export function initOpenTelemetry(options: OpenTelemetryOptions): TracerLike {
   // while we keep serving spans as if the SDK were healthy. Fall back to the
   // noop tracer and surface a warning instead.
   if (isPromiseLike(startResult)) {
-    void Promise.resolve(startResult).catch((error: unknown) => {
+    void Promise.resolve(startResult).catch(() => {
       activeSdk = undefined;
       activeTracer = new NoopTracer();
-      process.stderr.write(`OpenTelemetry SDK failed to start; falling back to noop tracer: ${String(error)}\n`);
+      process.stderr.write('OpenTelemetry SDK failed to start; falling back to noop tracer\n');
     });
   }
 

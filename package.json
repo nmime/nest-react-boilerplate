@@ -19,6 +19,7 @@
     "test": "pnpm nrb closure run test",
     "test:all": "pnpm --filter @repo/tooling tooling qa test-aggregate",
     "test:otel": "nx run @app/backend-common-otel:test",
+    "test:otel-privacy": "node --test scripts/otel-privacy.component-spec.mjs",
     "test:storybook": "pnpm --filter @repo/tooling tooling testing storybook",
     "test:visual": "pnpm --filter @repo/tooling tooling testing storybook-visual",
     "test:visual:matrix": "pnpm --filter @repo/tooling tooling testing storybook-visual --projects chromium,firefox,webkit,mobile-chrome,mobile-safari",

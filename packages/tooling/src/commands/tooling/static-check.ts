@@ -2356,9 +2356,9 @@ function walk(root: string): string[] {
 
   for (const entry of readdirSync(root)) {
     const path = join(root, entry);
-    // lstat, not stat: after `nrb closure install` the per-app node_modules are symlinks into
-    // .nrb/closure, whose pnpm links point back at the workspace. Following them recursed until
-    // the stack overflowed. Matches the walkers in commands/project/check-library-configs.ts.
+    // lstat, not stat: selected dependency entries link into .nrb/closure and
+    // pnpm workspace links can point back at source. Never follow dependency
+    // links or scan node_modules. Matches check-library-configs.ts.
     const stat = lstatSync(path);
 
     if (stat.isSymbolicLink()) {

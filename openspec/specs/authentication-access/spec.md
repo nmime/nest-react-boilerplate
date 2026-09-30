@@ -177,6 +177,16 @@ URLs, nonces, and provider subjects to the initiating authenticated boundary.
   verify the same provider subject and never creates a browser login session.
 - Bot identity linking derives the provider subject from authenticated bot
   handling or a verified provider session; a caller-supplied subject is not proof.
+- The stateless Telegram host resolves and updates linked users through an
+  opt-in authenticated auth-service bridge. A dedicated service credential
+  is accepted only by the owning auth API host's internal bridge routes and
+  authenticates the trusted bot transport; no browser session or raw public
+  provider ID authorizes the bridge. Missing configuration fails closed.
+- The bridge tenant is server-configured. Canonical users are read from stored
+  provider identities in that tenant, locale writes repeat that lookup, and
+  one-time link tokens must match the configured tenant before identity mutation.
+  Bridge responses contain profile identifiers and locale only, never sessions
+  or credentials. Requests are bounded and redirects cannot forward credentials.
 - Link tokens match the provider, purpose, tenant and intended account. A
   conflicting current principal does not override or silently ignore the token.
 

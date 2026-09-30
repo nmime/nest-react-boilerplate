@@ -190,7 +190,7 @@ describe('PaymentsPostgresPersistence edge paths', () => {
     ['refunded', 'refundedAt'],
     ['failed', 'paidAt'],
   ] as const)('sets %s terminal timestamp during an atomic transition', async (toStatus, timestampField) => {
-    const row = payment('processing');
+    const row = payment(toStatus === 'refunded' ? 'paid' : 'processing');
     const transaction = {
       persist: vi.fn((entity: unknown) => {
         if (entity instanceof PaymentEventEntity) {

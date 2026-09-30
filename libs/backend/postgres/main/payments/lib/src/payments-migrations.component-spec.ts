@@ -1,4 +1,4 @@
-// @requirements REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002 REQ-SCAFFOLD-SAFETY-008
+// @requirements REQ-PAYMENT-ORDER-001 REQ-PAYMENT-ORDER-003 REQ-PAYMENT-PROVIDER-005 REQ-PAYMENT-WEBHOOK-002 REQ-SCAFFOLD-SAFETY-008
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { createHash, randomUUID } from 'node:crypto';
 import { MikroORM, type Options } from '@mikro-orm/core';
@@ -310,6 +310,47 @@ describe('payments postgres migrations against PostgreSQL', () => {
       { paymentId, providerRefundId: 'refund-1' },
     ]);
     await expect(repository.findPaymentProviderHealth('adyen')).resolves.toMatchObject({ state: 'up' });
+  });
+
+  it('rejects illegal or cross-provider transitions against the locked row', async () => {
+    const repository = new PaymentsPostgresPersistence(orm!.em.fork());
+    for (const [status, providerCode] of [
+      ['failed', 'stripe'],
+      ['processing', 'yookassa'],
+    ] as const) {
+      await repository.upsertPaymentProvider({
+        code: providerCode,
+        kind: 'fiat',
+        enabled: false,
+        priority: 100,
+        supportedCurrencies: ['USD'],
+        config: {},
+        baseUrl: 'https://provider.invalid',
+        version: 'fixture',
+        timeoutMs: 1000,
+      });
+      const paymentId = randomUUID();
+      await repository.createPaymentRecord({
+        id: paymentId,
+        tenantId: randomUUID(),
+        providerCode,
+        status,
+        amount: '10.00',
+        currency: 'USD',
+      });
+      await expect(
+        repository.commitWebhookPaymentTransition({
+          receipt: { providerCode: 'stripe', idempotencyKey: randomUUID(), rawBody: '{}', signatureValid: 'valid' },
+          paymentId,
+          toStatus: 'paid',
+          actor: 'webhook',
+        }),
+      ).rejects.toThrow('ownership or state');
+      expect(await repository.findPaymentRecord(paymentId)).toMatchObject({ status, version: 1 });
+      expect(
+        (await repository.listPaymentEvents(paymentId)).filter((event) => event.type === 'state_change'),
+      ).toHaveLength(0);
+    }
   });
 
   it('rolls back receipt, event, and payment transition together when the atomic commit fails', async () => {

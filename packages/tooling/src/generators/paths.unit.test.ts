@@ -10,9 +10,9 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
-const __dirname = process.cwd();
-const ROOT = path.resolve(__dirname, '../../../../../../../..'); // up to repo root
+const ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
 
 // ---------------------------------------------------------------------------
 
@@ -171,7 +171,8 @@ describe('generated path resolution', () => {
     ];
     for (const dir of existing) {
       const tcPath = path.join(ROOT, dir, 'tsconfig.json');
-      if (fs.existsSync(tcPath)) {
+      assert.ok(fs.existsSync(tcPath), `${tcPath}: expected repository reference is missing`);
+      {
         const data = JSON.parse(fs.readFileSync(tcPath, 'utf-8'));
         const extendsPath = data.extends;
         const resolved = path.resolve(path.join(ROOT, dir), extendsPath);
@@ -190,7 +191,8 @@ describe('generated path resolution', () => {
     const frontendDirs = ['apps/frontend/app', 'apps/frontend/admin'];
     for (const dir of frontendDirs) {
       const tcPath = path.join(ROOT, dir, 'tsconfig.json');
-      if (fs.existsSync(tcPath)) {
+      assert.ok(fs.existsSync(tcPath), `${tcPath}: expected repository reference is missing`);
+      {
         const data = JSON.parse(fs.readFileSync(tcPath, 'utf-8'));
         const opts = data.compilerOptions;
         assert.ok(opts?.lib?.includes('dom'), `${dir}: tsconfig.json should include "dom" in lib`);

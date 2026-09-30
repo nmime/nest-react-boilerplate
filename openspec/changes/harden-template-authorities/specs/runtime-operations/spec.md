@@ -126,6 +126,11 @@ from validated source and render deterministic, secret-safe runtime topology.
 - Helm install and upgrade apply `.helm/values.yaml`,
   `.helm/values-production.yaml`, and `.helm/values-selection.yaml` in that
   order.
+- Existing-release Kubernetes preflight validates the current selected closure
+  before any cluster access and uses that same ordered Helm selection for both
+  rendering and server dry-run. Backup ownership follows the selected durable
+  provider; provider-free selections explicitly omit database backup checks.
+  Missing or stale selection cannot silently become an all-reference release.
 - Image promotion uses `scripts/update-deploy-tags.mjs` only.
 - Product images compile only through Bake (`scripts/build-images.mjs`) when
   `NRB_IMAGE_COMPILE=1`. Merge CI, Compose up, and one-VPS deploy start with

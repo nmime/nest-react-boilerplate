@@ -46,6 +46,12 @@ from validated source and render deterministic, secret-safe runtime topology.
   service. An empty container list, failed inspection, malformed state, or
   missing expected service SHALL never count as ready. One-shot jobs run and
   complete successfully before dependent services start.
+- Manual runtime assurance materializes its explicit reference provider and owns
+  stack startup, readiness, and cleanup before executing runtime evidence.
+  A checkout with installed browser binaries alone is not runtime proof.
+- Privileged runtime fixtures are seeded through the selected provider only
+  after proving ownership of the running developer Compose database and its
+  loopback port. Public registration never supplies administrator authority.
 - Bundled and external database modes remain explicit.
 - One-shot PM2 plans initialize deployment configuration before building and
   load the emitted private secrets file for migrations and supervised processes.
@@ -71,6 +77,11 @@ from validated source and render deterministic, secret-safe runtime topology.
 - Helm install and upgrade apply `.helm/values.yaml`,
   `.helm/values-production.yaml`, and `.helm/values-selection.yaml` in that
   order.
+- Existing-release Kubernetes preflight validates the current selected closure
+  before any cluster access and uses that same ordered Helm selection for both
+  rendering and server dry-run. Backup ownership follows the selected durable
+  provider; provider-free selections explicitly omit database backup checks.
+  Missing or stale selection cannot silently become an all-reference release.
 - Image promotion uses `scripts/update-deploy-tags.mjs` only.
 - Product images compile only through Bake (`scripts/build-images.mjs`) when
   `NRB_IMAGE_COMPILE=1`. Merge CI, Compose up, and one-VPS deploy start with
@@ -164,6 +175,13 @@ redaction, batching, and failure isolation.
 
 - Telemetry failure does not corrupt product state.
 - Secret or credential material is never emitted.
+- The default tracing exporter preserves operation timing, status, route
+  templates, and bounded infrastructure/correlation metadata while omitting
+  request URLs, query strings, headers, bodies, database statements/arguments,
+  action payloads, and free-form exception messages/stacks. Exported resources
+  use explicit service metadata rather than ambient resource attributes.
+  Real automatic HTTP instrumentation evidence covers both inbound and outbound
+  credential-bearing requests; manual spans alone cannot prove that boundary.
 - Optional developer observability uses immutable reviewed images, only local
   listeners, and anonymous Viewer access with no initial administrator. It
   provisions only its deployed log/trace backends and requires explicit service

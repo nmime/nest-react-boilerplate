@@ -8,6 +8,6 @@ export type { UserPreferenceControls } from '@app/frontend-feature-shared-prefer
  * session hook wired to invalidate the user profile query after a write. The
  * admin console consumes the same shared hook with its own profile query key.
  */
-export function useUserPreferenceControls() {
-  return useSessionPreferenceControls({ invalidateQueryKeys: () => [profileQueryKey()] });
+export function useUserPreferenceControls(options: { persistenceEnabled?: boolean } = {}) {
+  return useSessionPreferenceControls({ ...options, invalidateQueryKeys: () => [profileQueryKey()] });
 }

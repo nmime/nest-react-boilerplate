@@ -92,6 +92,7 @@ function receipt(input: Partial<PaymentWebhookReceiptRecord> = {}): PaymentWebho
 }
 
 interface SetupInput {
+  providerCode?: string;
   verification?: Awaited<ReturnType<PaymentProviderPort['verifyWebhook']>>;
   status?: Awaited<ReturnType<PaymentProviderPort['getStatus']>>;
   claim?: PaymentWebhookReceiptClaimOutcome;
@@ -107,7 +108,7 @@ interface SetupInput {
 
 function setup(input: SetupInput = {}) {
   const provider = {
-    providerCode: 'stripe',
+    providerCode: input.providerCode ?? 'stripe',
     verifyWebhook: vi.fn(async () => {
       if (input.verifyError !== undefined) {
         throw asTestError(input.verifyError);
@@ -175,7 +176,7 @@ function setup(input: SetupInput = {}) {
       if (input.resolveError !== undefined) {
         throw asTestError(input.resolveError);
       }
-      return { record: providerRecord, provider };
+      return { record: { ...providerRecord, code: input.providerCode ?? 'stripe' }, provider };
     }),
   } as unknown as PaymentProviderResolver & Record<string, ReturnType<typeof vi.fn>>;
   const metrics = {
@@ -350,7 +351,10 @@ describe('PaymentsWebhooksService', () => {
   });
 
   it('ignores empty, unroutable, missing, and no-op deliveries only after a durable receipt', async () => {
-    const empty = setup({ verification: { result: 'none', idempotencyKey: 'empty', events: [] } });
+    const empty = setup({
+      providerCode: 'yookassa',
+      verification: { result: 'none', idempotencyKey: 'empty', events: [] },
+    });
     await expect(empty.service.handle({ ...request, providerCode: 'yookassa' })).resolves.toMatchObject({
       processing: 'ignored',
     });
@@ -367,7 +371,7 @@ describe('PaymentsWebhooksService', () => {
     await expect(noOp.service.handle(request)).resolves.toMatchObject({ processing: 'ignored' });
   });
 
-  it('uses the event provider id for status re-fetch when the stored provider id is absent', async () => {
+  it('re-fetches by the stored local reference rather than an event-supplied provider id', async () => {
     const scenario = setup({
       payment: { ...payment, providerPaymentId: null },
       verification: {
@@ -380,8 +384,145 @@ describe('PaymentsWebhooksService', () => {
     await expect(scenario.service.handle(request)).resolves.toMatchObject({ processing: 'applied' });
     expect(scenario.provider.getStatus).toHaveBeenCalledWith({
       clientId: payment.id,
-      providerPaymentId: 'pi_from_event',
     });
+  });
+
+  it('rejects unsigned signed-protocol deliveries and malformed verification before receipt claim', async () => {
+    for (const providerCode of ['stripe', 'adyen', 'cloudpayments', 'cryptobot', 'heleket', 'nowpayments']) {
+      const scenario = setup({
+        providerCode,
+        verification: { result: 'none', idempotencyKey: 'unsigned', events: [] },
+      });
+      await expect(scenario.service.handle({ ...request, providerCode })).rejects.toBeInstanceOf(
+        WebhookSignatureInvalidException,
+      );
+      expect(scenario.persistence.claimWebhookReceipt).not.toHaveBeenCalled();
+    }
+    for (const idempotencyKey of ['', '  ', 'x'.repeat(256)]) {
+      const scenario = setup({ verification: { result: 'valid', idempotencyKey, events: [] } });
+      await expect(scenario.service.handle(request)).rejects.toBeInstanceOf(WebhookSignatureInvalidException);
+      expect(scenario.persistence.claimWebhookReceipt).not.toHaveBeenCalled();
+    }
+  });
+
+  it('cannot route a local hint across provider ownership or conflicting provider references', async () => {
+    for (const scenario of [
+      setup({ payment: { ...payment, providerCode: 'yookassa' } }),
+      setup({
+        verification: {
+          result: 'valid',
+          idempotencyKey: 'wrong-reference',
+          events: [
+            {
+              paymentIdHint: payment.id,
+              providerPaymentIdHint: 'another_invoice',
+              providerStatusRaw: 'paid',
+            },
+          ],
+        },
+      }),
+    ]) {
+      await expect(scenario.service.handle(request)).resolves.toMatchObject({ processing: 'ignored' });
+      expect(scenario.provider.getStatus).not.toHaveBeenCalled();
+      expect(scenario.persistence.commitWebhookPaymentTransition).not.toHaveBeenCalled();
+    }
+  });
+
+  it('refuses contradictory fetched amounts, currencies, and reported webhook amounts', async () => {
+    for (const status of [
+      { paidAmount: undefined, paidCurrency: 'USD' },
+      { paidAmount: '9.99', paidCurrency: 'USD' },
+      { paidAmount: '10.00', paidCurrency: 'EUR' },
+      { paidAmount: 'NaN', paidCurrency: 'USD' },
+      { paidAmount: '-10.00', paidCurrency: 'USD' },
+    ]) {
+      const scenario = setup({ status: { status: 'paid', providerStatusRaw: 'paid', ...status } });
+      await expect(scenario.service.handle(request)).rejects.toBeInstanceOf(WebhookProcessingException);
+      expect(scenario.persistence.commitWebhookPaymentTransition).not.toHaveBeenCalled();
+      expect(scenario.persistence.updateWebhookReceipt).toHaveBeenCalledWith(
+        'receipt-1',
+        expect.objectContaining({ processingStatus: 'error' }),
+      );
+    }
+    const mismatch = setup({
+      verification: {
+        result: 'valid',
+        idempotencyKey: 'amount-mismatch',
+        events: [
+          {
+            paymentIdHint: payment.id,
+            providerStatusRaw: 'paid',
+            paidAmount: '100.00',
+            paidCurrency: 'USD',
+          },
+        ],
+      },
+    });
+    await expect(mismatch.service.handle(request)).rejects.toBeInstanceOf(WebhookProcessingException);
+    expect(mismatch.persistence.commitWebhookPaymentTransition).not.toHaveBeenCalled();
+  });
+
+  it('requires fetched X-Rocket finality and refuses reopening terminal payments', async () => {
+    for (const finalizedAt of [undefined, new Date('invalid'), new Date(now.getTime() + 1)]) {
+      const scenario = setup({
+        providerCode: 'x' + 'rocket',
+        payment: { ...payment, providerCode: 'x' + 'rocket' },
+        status: { status: 'paid', providerStatusRaw: 'paid', paidAmount: '10.00', paidCurrency: 'USD', finalizedAt },
+      });
+      await expect(scenario.service.handle({ ...request, providerCode: 'x' + 'rocket' })).rejects.toBeInstanceOf(
+        WebhookProcessingException,
+      );
+      expect(scenario.persistence.commitWebhookPaymentTransition).not.toHaveBeenCalled();
+    }
+    for (const state of ['failed', 'expired', 'cancelled', 'refunded'] as const) {
+      const scenario = setup({ payment: { ...payment, status: state } });
+      await expect(scenario.service.handle(request)).rejects.toBeInstanceOf(WebhookProcessingException);
+      expect(scenario.persistence.commitWebhookPaymentTransition).not.toHaveBeenCalled();
+    }
+  });
+
+  it('accepts finalized unsigned protocols and signed exact equivalent decimal evidence', async () => {
+    for (const providerCode of ['x' + 'rocket', 'yookassa', 'stripe']) {
+      const scenario = setup({
+        providerCode,
+        payment: { ...payment, providerCode },
+        verification: {
+          result: providerCode === 'stripe' ? 'valid' : 'none',
+          idempotencyKey: 'accepted',
+          events: [{ paymentIdHint: payment.id, providerStatusRaw: 'paid', paidAmount: '10', paidCurrency: 'USD' }],
+        },
+        status: {
+          status: 'paid',
+          providerStatusRaw: 'paid',
+          paidAmount: '10.00',
+          paidCurrency: 'USD',
+          finalizedAt: now,
+        },
+      });
+      await expect(scenario.service.handle({ ...request, providerCode })).resolves.toMatchObject({
+        processing: 'applied',
+      });
+      expect(scenario.persistence.commitWebhookPaymentTransition).toHaveBeenCalledOnce();
+    }
+  });
+
+  it('fails closed on malformed adapter envelopes before receipt claim', async () => {
+    for (const verification of [
+      null,
+      { result: 'unknown', events: [], idempotencyKey: 'unknown' },
+      { result: 'valid', idempotencyKey: 'bad-event', events: [null] },
+      {
+        result: 'valid',
+        idempotencyKey: 'bad-time',
+        events: [{ providerStatusRaw: 'paid', eventTime: new Date('invalid') }],
+      },
+    ]) {
+      const scenario = setup({ verification: verification as never });
+      // Override the defaulting helper to preserve intentionally malformed runtime values.
+      vi.mocked(scenario.provider.verifyWebhook).mockResolvedValue(verification as never);
+      await expect(scenario.service.handle(request)).rejects.toBeInstanceOf(WebhookSignatureInvalidException);
+      expect(scenario.persistence.claimWebhookReceipt).not.toHaveBeenCalled();
+    }
   });
 
   it('resolves payment identity by provider reference when our id is absent', async () => {

@@ -61,7 +61,7 @@
   "devDependencies": {
     "@stryker-mutator/core": "10.0.0",
     "@testcontainers/mongodb": "12.2.0",
-    "@types/node": "24.19.0",
+    "@types/node": "26.6.2",
     "nx": "23.2.1",
     "typescript": "6.0.3",
     "vitest": "4.1.11"

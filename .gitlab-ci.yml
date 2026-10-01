@@ -488,7 +488,7 @@ ops-gates:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   before_script:
     - apt-get update
-    - apt-get install -y --no-install-recommends bash curl git jq python3 make postgresql-client docker.io docker-compose-v2
+    - apt-get install -y --no-install-recommends bash curl git jq python3 make postgresql-client docker.io docker-compose-v2 docker-buildx
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile
@@ -590,7 +590,7 @@ spec-evidence-nightly:
     POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.11-alpine
   before_script:
     - apt-get update
-    - apt-get install -y --no-install-recommends bash curl git jq python3 make postgresql-client docker.io docker-compose-v2
+    - apt-get install -y --no-install-recommends bash curl git jq python3 make postgresql-client docker.io docker-compose-v2 docker-buildx
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile

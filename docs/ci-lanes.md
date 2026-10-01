@@ -31,6 +31,17 @@ Image publication also checks current main and the successful CI run for that
 exact SHA before building or obtaining publication permissions. Manual GitOps
 promotion opens a reviewable PR; it does not merge main or deploy a workload.
 
+## Browser prerequisites
+
+The PR/main assurance lane can select browser-backed commands, including
+Storybook interactions and the existing Expo web export guard. Its runner
+installs Chromium, Firefox and WebKit before executing mapped evidence; an Nx
+cache entry does not provision browser executables or system libraries. Static
+e2e coverage also provisions all three engines. GitLab browser-backed assurance
+and operational lanes use the digest-pinned Playwright Noble image, which
+provides the supported Node 24 major and glibc browser environment. Their runtime
+tools use Ubuntu packages rather than Alpine package commands.
+
 ## Shared pins
 
 Helm and Mongo versions are owned by

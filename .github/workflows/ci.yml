@@ -179,6 +179,9 @@ jobs:
         with:
           scope: spec-evidence
 
+      - name: Install assurance browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
       - name: Verify impacted requirements
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -441,8 +444,8 @@ jobs:
         with:
           scope: e2e
 
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: E2E coverage
         run: pnpm run test:e2e:coverage:all

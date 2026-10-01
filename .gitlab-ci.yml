@@ -181,7 +181,7 @@ fast-check:
 
 spec-evidence:
   stage: test
-  image: node:24.21.0-alpine
+  image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
   needs:
     - fast-check
   variables:
@@ -191,6 +191,7 @@ spec-evidence:
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile
   script:
+    - pnpm exec playwright install --with-deps chromium firefox webkit
     - |
       if [ -n "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-}" ]; then
         git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
@@ -427,7 +428,7 @@ storybook-tests:
 # `storybook-tests:`, and this job legitimately pins COMPOSE_PROFILES.
 ops-gates:
   stage: e2e
-  image: node:24.21.0-alpine
+  image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
   needs:
     - docker-smoke-test
   services:
@@ -486,7 +487,8 @@ ops-gates:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   before_script:
-    - apk add --no-cache bash curl git jq python3 make postgresql-client docker-cli docker-cli-compose
+    - apt-get update
+    - apt-get install -y --no-install-recommends bash curl git jq python3 make postgresql-client docker.io docker-compose-v2
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile
@@ -534,7 +536,7 @@ visual-regression-matrix:
 # executor of the `nightly` lane.
 spec-evidence-nightly:
   stage: reports
-  image: node:24.21.0-alpine
+  image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
   services:
     - docker:29.4.0-dind
   variables:
@@ -587,7 +589,8 @@ spec-evidence-nightly:
     QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
     POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.11-alpine
   before_script:
-    - apk add --no-cache bash curl git jq python3 make postgresql-client docker-cli docker-cli-compose
+    - apt-get update
+    - apt-get install -y --no-install-recommends bash curl git jq python3 make postgresql-client docker.io docker-compose-v2
     - corepack enable pnpm
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile

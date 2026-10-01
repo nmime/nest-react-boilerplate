@@ -4,6 +4,7 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { Test } from '@nestjs/testing';
 import type { Response as InjectResponse } from 'light-my-request';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { DurableDatabaseRuntimeInjectToken, type DurableDatabaseRuntime } from '@app/backend-common-bootstrap';
 import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
 import { createValidationPipe } from '@app/backend-common-validation';
 import type { AuthenticatedPrincipal, AuthenticatedSession } from '@app/backend-feature-auth-shared';
@@ -140,18 +141,44 @@ function sessionCookieHeader(response: Pick<InjectResponse, 'headers'>): string 
 
 describe('auth-app-api e2e', () => {
   let app: NestFastifyApplication;
+  let databaseAvailable = true;
+  const originalEnv = {
+    AUTH_PERSISTENCE: process.env.AUTH_PERSISTENCE,
+    DATABASE_URL: process.env.DATABASE_URL,
+    MONGODB_DATABASE: process.env.MONGODB_DATABASE,
+    MONGODB_URI: process.env.MONGODB_URI,
+    SESSION_SECRET: process.env.SESSION_SECRET,
+  };
+  // This route/session suite owns an in-memory fixture, not a live database.
+  // Real provider connectivity and stop/restart acceptance run separately.
+  const databaseRuntime: DurableDatabaseRuntime = {
+    provider: selectedPersistence === 'mongodb' ? 'mongodb' : 'postgres',
+    healthIndicators: (selectedPersistence === 'mongodb'
+      ? ['database', 'database-transactions', 'database-migrations']
+      : ['database', 'database-migrations']
+    ).map((name) => ({
+      name,
+      required: true,
+      check: () => ({ name, status: databaseAvailable ? 'ok' : 'error' }),
+    })),
+    createSessionStore: () => {
+      throw new Error('Session storage is supplied by the in-memory route fixture.');
+    },
+  };
 
   beforeAll(async () => {
     process.env.AUTH_PERSISTENCE = selectedPersistence;
-    process.env.DATABASE_URL ??= 'postgresql://test:test@127.0.0.1:1/test';
-    process.env.MONGODB_DATABASE ??= 'test';
-    process.env.MONGODB_URI ??= 'mongodb://127.0.0.1:1/test';
+    process.env.DATABASE_URL = 'postgresql://test:test@127.0.0.1:1/test';
+    process.env.MONGODB_DATABASE = 'test';
+    process.env.MONGODB_URI = 'mongodb://127.0.0.1:1/test';
     process.env.SESSION_SECRET = 'e2e-test-session-secret-at-least-32-characters';
     const moduleRef = await Test.createTestingModule({
       imports: [AuthAppApiModule],
     })
       .overrideProvider(BetterAuthInstanceToken)
       .useValue(mockAuth)
+      .overrideProvider(DurableDatabaseRuntimeInjectToken)
+      .useValue(databaseRuntime)
       .compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
@@ -163,9 +190,18 @@ describe('auth-app-api e2e', () => {
   });
 
   afterAll(async () => {
-    await app.getHttpAdapter().close();
-    delete process.env.AUTH_PERSISTENCE;
-    delete process.env.SESSION_SECRET;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- setup can fail before the app is created
+      await app?.close();
+    } finally {
+      for (const [name, value] of Object.entries(originalEnv)) {
+        if (value === undefined) {
+          delete process.env[name];
+        } else {
+          process.env[name] = value;
+        }
+      }
+    }
   }, 30_000);
 
   it('GET / returns localized RFC 9457 problem details with an occurrence URI', async () => {
@@ -450,5 +486,31 @@ describe('auth-app-api e2e', () => {
       status: 'ok',
       required: false,
     });
+  });
+
+  it('keeps liveness independent of database readiness and recovers readiness', async () => {
+    databaseAvailable = false;
+    try {
+      const [health, ready, live] = await Promise.all([
+        app.inject({ method: 'GET', url: '/health' }),
+        app.inject({ method: 'GET', url: '/ready' }),
+        app.inject({ method: 'GET', url: '/live' }),
+      ]);
+      const expectedStatus = selectedPersistence === 'memory' ? 200 : 503;
+
+      expect(health.statusCode).toBe(expectedStatus);
+      expect(ready.statusCode).toBe(expectedStatus);
+      expect(live.statusCode).toBe(200);
+      if (selectedPersistence !== 'memory') {
+        expect(parseHealthEnvelope(ready).data?.dependencies).toEqual(
+          expect.arrayContaining([expect.objectContaining({ name: 'database', status: 'error', required: true })]),
+        );
+      }
+    } finally {
+      databaseAvailable = true;
+    }
+
+    const recovered = await app.inject({ method: 'GET', url: '/ready' });
+    expect(recovered.statusCode).toBe(200);
   });
 });

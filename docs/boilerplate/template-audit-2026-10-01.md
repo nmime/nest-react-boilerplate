@@ -61,6 +61,10 @@ The next hosted run at `27bbf5cb` passed the fast PR gate, all three Helm varian
 
 Real Discord application identity/public-key configuration and a live Telegram token are absent. Discord readiness correctly fails; the synthetic Telegram poller is stopped. Workers have no health controller, so TCP process presence is not an invented HTTP-readiness pass. Native/device mobile work is deferred as requested; responsive web profiles are not native mobile acceptance. Linux amd64 runtime, live external email/auth/payment/bot delivery, funded operations, production rollout and long stress/soak remain unverified.
 
+The final hosted run at `e5c165a7` passed all 80 mapped requirements and 69 assurance runs at GitHub-generated merge source `d5e8cf6adaf306d9a4c1c06a2ac0cc24ca6bcd63`. It also passed lint, typecheck, builds and bundle budgets. Coverage passed 85 of 86 owning projects; two auth health assertions failed because the isolated route/session fixture used unreachable database URLs while retaining the real database health adapter. That test now supplies an explicit durable-runtime fixture, verifies required-database failure and recovery while liveness remains healthy, restores its environment, and closes the complete Nest application. Production readiness and its real provider stop/restart evidence are unchanged; fresh hosted acceptance of the test repair remains required.
+
+The maintainer instructed us to skip the inaccessible GitGuardian dashboard review. The two alerts remain unverified and the current app check remains failing. No scanner exclusion, alert dismissal, synthetic green status or branch-protection bypass was introduced. Main currently requires the actual `CI status summary` context; that requirement is unchanged.
+
 ## Integration boundary
 
 The immutable main-to-source patch is 712 files and 26,291,481 bytes, with SHA-256 `7bbabf36585207717871c16e92319ea1c705a23dcb46a6765783520c6895d292`. The validated patch-risk Markdown/JSON is outside the checkout; the inventory identifies its retained location and hashes. This is self-review plus earlier independent read-only baseline analysis, not final-head human approval.

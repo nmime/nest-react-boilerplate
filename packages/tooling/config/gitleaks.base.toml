@@ -76,6 +76,16 @@ regexes = [
   '''Discord/Telegram''',
 ]
 
+# The historical audit records these owned Docker image references, not API credentials.
+# Match the entire JSON metadata line so a credential on the same line or elsewhere in this
+# file is still scanned. Neither another tag nor another file inherits this exception.
+[[rules.allowlists]]
+description = "Published local Docker image references in the immutable template audit"
+condition = "AND"
+paths = ['''^docs/boilerplate/template-audit-2026-10-01/evidence\.json$''']
+regexTarget = "line"
+regexes = ['''^\s*"scanReference"\s*:\s*"nrb/(admin|auth|user)-app-api:final\-pg\-6dca9b8",?\s*$''']
+
 [[rules]]
 id = "discord-client-id"
 

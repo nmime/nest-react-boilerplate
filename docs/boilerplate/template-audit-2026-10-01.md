@@ -63,7 +63,7 @@ Real Discord application identity/public-key configuration and a live Telegram t
 
 The preceding hosted run at `e5c165a7` passed all 80 mapped requirements and 69 assurance runs at GitHub-generated merge source `d5e8cf6adaf306d9a4c1c06a2ac0cc24ca6bcd63`. It also passed lint, typecheck, builds and bundle budgets. Coverage passed 85 of 86 owning projects; two auth health assertions failed because the isolated route/session fixture used unreachable database URLs while retaining the real database health adapter. That test now supplies an explicit durable-runtime fixture, verifies required-database failure and recovery while liveness remains healthy, restores its environment, and closes the complete Nest application. Production readiness and its real provider stop/restart evidence are unchanged; fresh hosted acceptance of the test repair is recorded below.
 
-The maintainer instructed us to skip the inaccessible GitGuardian dashboard review. The two alerts remain unverified and the current app check remains failing. No scanner exclusion, alert dismissal, synthetic green status or branch-protection bypass was introduced. Main currently requires the actual `CI status summary` context; that requirement is unchanged.
+The maintainer instructed us to skip the inaccessible GitGuardian dashboard review. The two alerts remain unverified and the current app check remains failing. No alert dismissal, synthetic green status or branch-protection bypass was introduced. The narrowly bounded Gitleaks Docker-metadata false-positive disposition is recorded below. Main currently requires the actual `CI status summary` context; that requirement is unchanged.
 
 ## Final hosted acceptance
 
@@ -72,6 +72,14 @@ The maintainer instructed us to skip the inaccessible GitGuardian dashboard revi
 The hosted assurance dossier passed all **80 requirements and 69 mapped runs** at GitHub-generated merge source `fe3eaaabdaf781246b7cd2eeed1e1a923f30dc29`. Its tree exactly equals the PR head's tree `a57c64f6eb82cbf453f2f1d54affc3195cd8352e`; the dossier retains its actual checked source. Clean local auth coverage passed **14/14 tests** with all four owning-app thresholds at **100%**. Auth lint, typecheck and build, the repository PR gate and all 37 commit conventions passed.
 
 The initial local mapped run passed 68/69 commands and failed when its disposable SSH host did not become ready. That failed dossier is retained unchanged. Subsequent package-access, isolated SSH tests (**11/11**) and the full script suite (**315/315**) passed at the same source without a code or timeout change. Mapped assurance is not substituted for owning-app coverage or live-provider acceptance.
+
+## Push-to-main secret scan follow-up
+
+PR #329 was integrated at `9b74d8c4` after all 13 required CI jobs passed. The subsequent push-to-main run 36836437565 exposed three `generic-api-key` findings in historical commit `4f0c3c14`. All three matches are the public Docker image tag `final-pg-6dca9b8` in the audit's `scanReference` fields for the admin, auth and user API images; no credential is present in these matches. The same failing commit range reproduced all three findings locally with Gitleaks 8.30.1.
+
+The base policy now requires both the exact audit-inventory path and an entire JSON `scanReference` line for one of those three exact published image references. Another file, tag, credential assignment or a credential added on the same line does not inherit the exception. The historical inventory and scanner reports remain unchanged; no history, rule or file was broadly excluded. GitGuardian's separate matched values remain unavailable and its dashboard review remains skipped, with its alerts unverified.
+
+The required GitHub Gitleaks job explicitly pins 8.30.1, matching GitLab, and executes seven real-engine canaries with its installed binary. The focused test is optional only in static tooling environments without that binary; the required scanner job supplies it and fails for a missing/wrong engine. Local canaries pass all seven cases, including same-file, same-line, different-file, credential-assignment and unreviewed-tag negative controls. Replaying the original failing Git range with the repaired policy reports zero findings. Hosted acceptance and the follow-up integration are recorded separately in the follow-up PR and retained evidence.
 
 ## Integration boundary
 

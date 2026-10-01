@@ -1077,14 +1077,14 @@ importers:
         specifier: ^1.48.0
         version: 1.48.0(react@19.2.3)
       mobx:
-        specifier: ^6.16.1
-        version: 6.16.1
+        specifier: ^7.0.4
+        version: 7.0.5
       mobx-react-lite:
         specifier: ^4.1.1
-        version: 4.1.1(mobx@6.16.1)(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
+        version: 4.1.1(mobx@7.0.5)(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
       mobx-tanstack-query:
         specifier: 7.3.0
-        version: 7.3.0(@tanstack/query-core@5.104.0)(mobx@6.16.1)(react@19.2.3)
+        version: 7.3.0(@tanstack/query-core@5.104.0)(mobx@7.0.5)(react@19.2.3)
       openapi-fetch:
         specifier: ^0.17.0
         version: 0.17.0
@@ -12562,8 +12562,8 @@ packages:
       '@tanstack/query-core': ^5.90.2
       mobx: ^6.12.4
 
-  mobx@6.16.1:
-    resolution: {integrity: sha512-syNcDdX3KT+Jq3je6eGjBhuc24Z68td2VG0zNFqRswaE433D9SNH5VRy/xrGbJsUixfppLLccXhAW9JSf6n+SQ==}
+  mobx@7.0.5:
+    resolution: {integrity: sha512-Q3TZfmgJhhHfEVyQ2Wl+1Q9nkfH+y3DnoAB/Gny/gm7Yga43kMdwmfwa8lO4aiGmkty3NNy4rgjfjVM1D8vYAQ==}
 
   module-details-from-path@1.0.4:
     resolution: {integrity: sha512-EGWKgxALGMgzvxYF1UyGTy0HXX/2vHLkw6+NvDKW2jypWbHpjQuj4UMcqQWXHERJhVGKikolT06G3bcKe4fi7w==}
@@ -19958,7 +19958,7 @@ snapshots:
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
-      '@emnapi/core': 1.11.2
+      '@emnapi/core': 1.11.3
       '@emnapi/runtime': 1.11.3
       '@tybys/wasm-util': 0.10.3
     optional: true
@@ -29455,25 +29455,25 @@ snapshots:
 
   mmdb-lib@3.0.3: {}
 
-  mobx-react-lite@4.1.1(mobx@6.16.1)(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
+  mobx-react-lite@4.1.1(mobx@7.0.5)(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
     dependencies:
-      mobx: 6.16.1
+      mobx: 7.0.5
       react: 19.2.3
       use-sync-external-store: 1.6.0(react@19.2.3)
     optionalDependencies:
       react-dom: 19.2.3(react@19.2.3)
       react-native: 0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2)
 
-  mobx-tanstack-query@7.3.0(@tanstack/query-core@5.104.0)(mobx@6.16.1)(react@19.2.3):
+  mobx-tanstack-query@7.3.0(@tanstack/query-core@5.104.0)(mobx@7.0.5)(react@19.2.3):
     dependencies:
       '@tanstack/query-core': 5.104.0
       linked-abort-controller: 1.1.1
-      mobx: 6.16.1
-      yummies: 7.20.1(mobx@6.16.1)(react@19.2.3)
+      mobx: 7.0.5
+      yummies: 7.20.1(mobx@7.0.5)(react@19.2.3)
     transitivePeerDependencies:
       - react
 
-  mobx@6.16.1: {}
+  mobx@7.0.5: {}
 
   module-details-from-path@1.0.4: {}
 
@@ -33619,7 +33619,7 @@ snapshots:
 
   yoctocolors@2.1.2: {}
 
-  yummies@7.20.1(mobx@6.16.1)(react@19.2.3):
+  yummies@7.20.1(mobx@7.0.5)(react@19.2.3):
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1
@@ -33628,7 +33628,7 @@ snapshots:
       nanoid: 5.1.16
       tailwind-merge: 3.7.0
     optionalDependencies:
-      mobx: 6.16.1
+      mobx: 7.0.5
       react: 19.2.3
 
   yup@1.7.1:

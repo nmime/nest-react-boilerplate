@@ -230,6 +230,50 @@ export function parseRuntimeComposeConfig(raw) {
   return config;
 }
 
+const databaseProviders = ['postgres', 'mongodb'];
+
+/**
+ * The database provider the pinned compose profiles select.
+ *
+ * Deployment migrations refuse to guess a provider -- `resolveDeploymentDatabaseProvider` fails
+ * unless `DATABASE_ENGINE` and `AUTH_PERSISTENCE` both name one and agree -- and a runtime lane's
+ * explicit selection is exactly the profiles it pins: `postgres` carries `migrate`, `mongodb`
+ * carries `mongodb-migrate`. Deriving the two keys here, in the one start sequence every driver
+ * runs through, is what stops each lane having to repeat an environment block: the spec-assurance
+ * lanes never grew one and stayed red on the migrator's first explicit-provider check.
+ *
+ * The environment keeps the last word, the same contract `validateFullstackEnvironment` enforces
+ * for the Playwright driver: a value that contradicts the pinned profiles is a configuration error
+ * worth failing on, never something to quietly override. When no provider profile is pinned at all
+ * this returns undefined and the deployment guard keeps failing loudly rather than being guessed
+ * for.
+ */
+export function runtimeDatabaseProvider(environment = process.env) {
+  const configured = String(environment.COMPOSE_PROFILES ?? '')
+    .split(',')
+    .map((profile) => profile.trim())
+    .filter((profile) => profile.length > 0);
+  const selected = databaseProviders.filter((provider) => configured.includes(provider));
+
+  if (selected.length > 1) {
+    throw new Error(`COMPOSE_PROFILES selects conflicting database providers: ${selected.join(', ')}.`);
+  }
+
+  const provider = selected[0];
+  if (provider === undefined) {
+    return undefined;
+  }
+
+  for (const name of ['DATABASE_ENGINE', 'AUTH_PERSISTENCE']) {
+    const value = environment[name]?.trim();
+    if (value && value !== provider) {
+      throw new Error(`${name} conflicts with the ${provider} provider selected by COMPOSE_PROFILES.`);
+    }
+  }
+
+  return provider;
+}
+
 function resolveComposeConfig() {
   const raw = dockerOutput(['compose', '-f', composeFile, 'config', '--format', 'json']);
   return parseRuntimeComposeConfig(raw);
@@ -342,6 +386,15 @@ function assertReady(expectedServices, oneShots) {
 }
 
 function startStack() {
+  // Export the profile-selected provider before any compose command runs: the config
+  // interpolation and every one-shot's environment read the same two keys the migration
+  // guard validates.
+  const provider = runtimeDatabaseProvider();
+  if (provider !== undefined) {
+    process.env.DATABASE_ENGINE = provider;
+    process.env.AUTH_PERSISTENCE = provider;
+  }
+
   const config = resolveComposeConfig();
   const plan = composeStartupPlan(config);
   const oneShots = oneShotServices(plan);

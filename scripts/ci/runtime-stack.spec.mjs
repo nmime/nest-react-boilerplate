@@ -10,6 +10,7 @@ import {
   composeStartupPlan,
   startupCommands,
   parseRuntimeComposeConfig,
+  runtimeDatabaseProvider,
   runtimeSnapshotReadiness,
   readRuntimeReadiness,
 } from './runtime-stack.mjs';
@@ -125,6 +126,59 @@ describe('runtime stack readiness classification', () => {
     assert.equal(
       classifyContainerReadiness({ health: 'unhealthy', status: 'running', exitCode: 0, oneShot: false }),
       'failed',
+    );
+  });
+});
+
+describe('runtime database provider selection', () => {
+  // The deployment migration guard refuses to guess a provider. The spec-assurance lanes pinned
+  // COMPOSE_PROFILES=postgres,... without the two keys the guard reads, so the migrator refused
+  // every start attempt and the runtime stack never came up.
+  it('derives both guard keys from the pinned provider profile', () => {
+    assert.equal(runtimeDatabaseProvider({ COMPOSE_PROFILES: 'postgres,redis,nats' }), 'postgres');
+    assert.equal(runtimeDatabaseProvider({ COMPOSE_PROFILES: 'mongodb,redis' }), 'mongodb');
+    assert.equal(runtimeDatabaseProvider({ COMPOSE_PROFILES: ' postgres , redis ' }), 'postgres');
+  });
+
+  it('leaves an explicit environment authoritative when it agrees with the profiles', () => {
+    assert.equal(
+      runtimeDatabaseProvider({
+        COMPOSE_PROFILES: 'postgres',
+        DATABASE_ENGINE: 'postgres',
+        AUTH_PERSISTENCE: 'postgres',
+      }),
+      'postgres',
+    );
+  });
+
+  it('fails when the environment contradicts the pinned provider', () => {
+    for (const name of ['DATABASE_ENGINE', 'AUTH_PERSISTENCE']) {
+      assert.throws(
+        () => runtimeDatabaseProvider({ COMPOSE_PROFILES: 'postgres', [name]: 'mongodb' }),
+        new RegExp(`${name} conflicts with the postgres provider`),
+      );
+    }
+  });
+
+  it('fails when the pinned profiles select conflicting providers', () => {
+    assert.throws(
+      () => runtimeDatabaseProvider({ COMPOSE_PROFILES: 'postgres,mongodb' }),
+      /conflicting database providers: postgres, mongodb/u,
+    );
+  });
+
+  it('never guesses a provider the profiles do not select', () => {
+    assert.equal(runtimeDatabaseProvider({ COMPOSE_PROFILES: 'redis,nats' }), undefined);
+    assert.equal(runtimeDatabaseProvider({}), undefined);
+    // An environment-only selection passes through untouched; the guard it feeds keeps owning
+    // the decision when nothing is pinned.
+    assert.equal(
+      runtimeDatabaseProvider({
+        COMPOSE_PROFILES: 'redis',
+        DATABASE_ENGINE: 'postgres',
+        AUTH_PERSISTENCE: 'postgres',
+      }),
+      undefined,
     );
   });
 });

@@ -92,6 +92,10 @@ overrides:
   # Expo 57's native matrix, rather than unconstrained transitive peer ranges,
   # owns the React Native animation/screen runtime above.
   'image-size@>=2.0.0 <2.0.3': '2.0.4'
+  # October 4 fix for GHSA-ch52-4w7c-c8xp (max-stale cross-user cache
+  # disclosure). Astro and cacheable-request still resolve <=4.2.0 through
+  # their ^4.1.0 ranges, which the fix satisfies.
+  'http-cache-semantics@<=4.2.0': '4.3.0'
 
 peerDependencyRules:
   allowedVersions:
@@ -141,6 +145,18 @@ trustPolicy: no-downgrade
 # trust downgrades in releases from the last week still fail closed.
 trustPolicyIgnoreAfter: 10080
 blockExoticSubdeps: true
+
+auditConfig:
+  # Two production advisories currently have no fixed release anywhere in the
+  # tree, so no dependency action can clear them:
+  # - GHSA-86w9-cpqp-85rv (node-forge, via Expo CLI tooling)
+  # - GHSA-vfj7-8cjw-p6xm (braces, via Metro/Tamagui file watchers)
+  # Both are DoS vectors in build-time tooling, not in shipped server request
+  # paths. Scope the exceptions to exactly these advisories instead of raising
+  # the audit level, and revisit once upstream ships fixed releases.
+  ignoreGhsas:
+    - GHSA-86w9-cpqp-85rv
+    - GHSA-vfj7-8cjw-p6xm
 
 # Keep dependency reconciliation explicit. The pnpm resolver otherwise attempts an
 # implicit install before every script, which makes local and CI runs mutate

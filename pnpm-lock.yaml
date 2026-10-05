@@ -1080,8 +1080,8 @@ importers:
         specifier: ^6.16.1
         version: 6.16.1
       mobx-react-lite:
-        specifier: ^4.1.1
-        version: 4.1.1(mobx@6.16.1)(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3)
+        specifier: ^5.1.0
+        version: 5.1.0(mobx@6.16.1)(react@19.2.3)
       mobx-tanstack-query:
         specifier: 7.3.0
         version: 7.3.0(@tanstack/query-core@5.104.0)(mobx@6.16.1)(react@19.2.3)
@@ -12543,18 +12543,11 @@ packages:
     resolution: {integrity: sha512-xQPoBXcNjjHiOvOraFBKtA++uNWF6aCVHL9dRKFXEov8eI3QJwtgiw3qApsonFT5SpoqsEVISUTg3HIDs2DiXw==}
     engines: {node: '>=10', npm: '>=6'}
 
-  mobx-react-lite@4.1.1:
-    resolution: {integrity: sha512-iUxiMpsvNraCKXU+yPotsOncNNmyeS2B5DKL+TL6Tar/xm+wwNJAubJmtRSeAoYawdZqwv8Z/+5nPRHeQxTiXg==}
+  mobx-react-lite@5.1.0:
+    resolution: {integrity: sha512-++LQTCRr4FJCWuaEvYl5gCtGBwOpOwrnWjm9uhCUDI5nmkzLR8eT1jgMeYfJ8wc88YOYyC/ygjw2KpYPBYGsww==}
     peerDependencies:
-      mobx: ^6.9.0
+      mobx: ^7.0.0
       react: 19.2.3
-      react-dom: '*'
-      react-native: '*'
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
 
   mobx-tanstack-query@7.3.0:
     resolution: {integrity: sha512-VDTmcrfKkYuGZaBd6rR/X54lN/2OMRuKq/MsOpC5FCxmEGJbex0MsLqb90qaifhUDF7glbMqhC0twfXLZAleIg==}
@@ -19958,7 +19951,7 @@ snapshots:
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
-      '@emnapi/core': 1.11.2
+      '@emnapi/core': 1.11.3
       '@emnapi/runtime': 1.11.3
       '@tybys/wasm-util': 0.10.3
     optional: true
@@ -29455,14 +29448,10 @@ snapshots:
 
   mmdb-lib@3.0.3: {}
 
-  mobx-react-lite@4.1.1(mobx@6.16.1)(react-dom@19.2.3(react@19.2.3))(react-native@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2))(react@19.2.3):
+  mobx-react-lite@5.1.0(mobx@6.16.1)(react@19.2.3):
     dependencies:
       mobx: 6.16.1
       react: 19.2.3
-      use-sync-external-store: 1.6.0(react@19.2.3)
-    optionalDependencies:
-      react-dom: 19.2.3(react@19.2.3)
-      react-native: 0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(@react-native/metro-config@0.86.3(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2))(@types/react@19.2.18)(react@19.2.3)(supports-color@10.2.2)
 
   mobx-tanstack-query@7.3.0(@tanstack/query-core@5.104.0)(mobx@6.16.1)(react@19.2.3):
     dependencies:

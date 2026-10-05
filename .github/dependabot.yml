@@ -17,6 +17,22 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    ignore:
+      # Majors that cross a workspace policy boundary are reviewed by hand, not
+      # opened as PRs:
+      # - @types/node is pinned at the Node 24 engine line (`>=24 <25`) in
+      #   pnpm-workspace.yaml; Dependabot bumps fight the override and can never
+      #   merge.
+      # - mobx 7 / mobx-react-lite 5 and expo-router 58 are breaking majors that
+      #   leave the pinned Expo 57 native matrix.
+      - dependency-name: '@types/node'
+        versions: ['>=25']
+      - dependency-name: mobx
+        update-types: ['version-update:semver-major']
+      - dependency-name: mobx-react-lite
+        update-types: ['version-update:semver-major']
+      - dependency-name: expo-router
+        update-types: ['version-update:semver-major']
     groups:
       npm-minor-patch:
         update-types: [minor, patch]

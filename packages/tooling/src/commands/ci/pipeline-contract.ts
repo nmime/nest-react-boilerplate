@@ -64,6 +64,10 @@ export interface CiLaneExecutor {
 export interface CiLane {
   description: string;
   executors: Record<string, CiLaneExecutor>;
+  /** Present only when the lane deliberately holds on some forges and not others. */
+  forges?: string[];
+  /** Why the restriction above exists. Mandatory whenever `forges` is set. */
+  reason?: string;
 }
 
 export interface SupplyChainControl {
@@ -202,7 +206,18 @@ function parseLanes(raw: unknown, forgeIds: Set<string>, problems: string[]): Re
       executors[forgeId] = { file: executor.file, job: executor.job };
     }
 
-    lanes[id] = { description: value.description, executors };
+    let forges: string[] | undefined;
+    if (value.forges !== undefined) {
+      forges = readStringArray(value.forges, `lanes.${id}.forges`, problems);
+      for (const forgeId of forges) {
+        if (!forgeIds.has(forgeId)) problems.push(`lanes.${id}.forges references unknown forge "${forgeId}"`);
+      }
+      if (typeof value.reason !== 'string' || value.reason.length === 0) {
+        problems.push(`lanes.${id} restricts itself to one forge and must record a reason`);
+      }
+    }
+
+    lanes[id] = { description: value.description, executors, ...(forges === undefined ? {} : { forges, reason: typeof value.reason === 'string' ? value.reason : '' }) };
   }
 
   return lanes;

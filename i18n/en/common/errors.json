@@ -24,7 +24,7 @@
   "errors.last-auth-method-unlink-forbidden.detail": "Link another authentication method before unlinking this one.",
   "errors.validation-error.title": "Validation failed",
   "errors.validation-error.detail": "Request validation failed.",
-  "errors.api.requestFailed": "Request failed with {{status}}.",
+  "errors.api.requestFailed": "We couldn't complete your request. Please try again.",
   "errors.api.networkFailed": "Network connection failed.",
   "errors.auth.invalidCredentials": "Invalid email or password.",
   "errors.auth.userInactive": "User is not active.",

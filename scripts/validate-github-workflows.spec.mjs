@@ -68,7 +68,12 @@ describe('GitHub workflow hardening', () => {
   it('hardens every shipped upstream GitHub workflow', () => {
     const result = validate(rootDir);
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-    assert.deepEqual(JSON.parse(result.stdout), { status: 'ok', workflows: 7 });
+    // Counted from the checkout rather than pinned: this repository ships the trimmed
+    // GitHub surface while upstream keeps the full set, and both must stay green.
+    const expectedWorkflows = readdirSync(join(rootDir, '.github/workflows')).filter((entry) =>
+      entry.endsWith('.yml'),
+    ).length;
+    assert.deepEqual(JSON.parse(result.stdout), { status: 'ok', workflows: expectedWorkflows });
   });
 
   it('reports not-applicable when the checkout configures no github forge', () => {
@@ -115,12 +120,12 @@ describe('GitHub workflow hardening', () => {
     const result = validate(
       checkoutWith('summary-missing-result', {
         '.github/workflows/ci.yml': repositoryFile('.github/workflows/ci.yml').replace(
-          '          ${{ needs.mongodb-validation.result }}\n',
+          /^.*needs\.fast-check\.result.*\n/gmu,
           '',
         ),
       }),
     );
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /REQUIRED_RESULTS must enforce every gate job; missing: mongodb-validation/u);
+    assert.match(result.stderr, /REQUIRED_RESULTS must enforce every gate job; missing: fast-check/u);
   });
 });

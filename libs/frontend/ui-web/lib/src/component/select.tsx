@@ -1,5 +1,6 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import * as SelectPrimitive from '@radix-ui/react-select';
+import { ChevronDown } from 'lucide-react';
 import { forwardRef, useId, type ComponentPropsWithoutRef, type ComponentRef, type ReactNode } from 'react';
 import { UiLabel } from './label';
 import { cn } from '../util/cn';
@@ -23,7 +24,7 @@ export const SelectTrigger = forwardRef<ComponentRef<typeof SelectPrimitive.Trig
     >
       {children}
       <SelectPrimitive.Icon aria-hidden="true" className="text-muted-foreground" data-slot="select-icon">
-        ▾
+        <ChevronDown aria-hidden="true" size={16} strokeWidth={2.2} />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   ),

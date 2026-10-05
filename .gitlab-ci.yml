@@ -179,6 +179,23 @@ fast-check:
     - pnpm run ci:pr
   timeout: 15m
 
+# The five cheap contract checks every change proposal must keep green, split out
+# of non-runtime-validation so the merge lane stays fast while the deep evidence
+# tier below moves to the default-branch and scheduled lanes. scripts/ci/gates.json
+# maps the gates to this job.
+contract-validation:
+  extends: .node
+  stage: test
+  needs:
+    - fast-check
+  script:
+    - pnpm run db:migrations:check
+    - pnpm run frontend:fsd:check
+    - pnpm run api:contracts:check
+    - pnpm run api:clients:check
+    - pnpm run api:openapi:lint
+  timeout: 15m
+
 spec-evidence:
   stage: test
   image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
@@ -214,6 +231,12 @@ spec-evidence:
     paths:
       - test-results/spec-evidence/
     expire_in: 14 days
+  # Exact-SHA evidence is the deep tier: full-inventory runs on the default branch
+  # and schedules rather than on every merge request.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
   timeout: 45m
 
 non-runtime-validation:
@@ -229,16 +252,11 @@ non-runtime-validation:
     - curl -fsSL https://get.helm.sh/helm-v4.2.3-linux-amd64.tar.gz | tar xz
     - mv linux-amd64/helm /usr/local/bin/
     - pnpm run onboarding:verify
-    - pnpm run db:migrations:check
     - pnpm run test:scripts
     - pnpm run lib:configs:check
-    - pnpm run frontend:fsd:check
     - pnpm run api:toast-config:check
     - pnpm run audit:licenses
     - pnpm run audit:full
-    - pnpm run api:contracts:check
-    - pnpm run api:clients:check
-    - pnpm run api:openapi:lint
     - pnpm run api:contracts:consumer
     - pnpm run api:openapi:fuzz
     - pnpm run test:property
@@ -247,6 +265,12 @@ non-runtime-validation:
     # leaves the rest to the supply-chain controls that ci-pipeline-parity evaluates.
     - pnpm run deploy:validate:pm2
     - pnpm run deploy:validate:gitops
+  # Deep evidence tier, not a merge-request gate: it runs on the default branch and
+  # on schedules. scripts/ci/gates.json records these gates as not merge-required.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
   timeout: 30m
 
 full-check:
@@ -301,6 +325,12 @@ component-tests:
   script:
     - pnpm exec nx run @app/backend-feature-auth-test:component-test
     - pnpm exec nx run-many -t component-test --projects=@app/backend-postgres-main-auth,@app/backend-postgres-main-notification,@app/backend-postgres-main-payments --parallel=1
+  # Deep evidence tier: container-backed component suites run on the default
+  # branch and schedules, not in the merge-request lane.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
   timeout: 30m
 
 mongodb-validation:
@@ -320,9 +350,13 @@ mongodb-validation:
     - node --test --import jiti/register packages/tooling/src/commands/db/mongo-migrate.component.test.ts
     - pnpm exec nx run-many -t component-test --projects=@app/backend-mongodb-main,@app/backend-mongodb-main-auth,@app/backend-mongodb-main-feature-flags,@app/backend-mongodb-main-notification,@app/backend-mongodb-main-payments --parallel=1
     - pnpm exec nx run-many -t test --projects=@app/backend-feature-auth-main,@app/backend-feature-admin-main,@app/backend-feature-notification-main
+  # Deep evidence tier: the second-provider suite runs on the default branch and
+  # schedules. The merge lane runs the PostgreSQL path through contract-validation
+  # and full-check.
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
   timeout: 35m
 
 e2e-tests:
@@ -356,6 +390,12 @@ docker-smoke-test:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ''
     NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/reference/postgres'
+  # Deep evidence tier: compose-mode rendering and the Docker smoke stack run on
+  # the default branch and schedules.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
   timeout: 30m
 
 docker-fullstack:
@@ -421,6 +461,12 @@ storybook-tests:
       - playwright-report/storybook-visual/
       - test-results/storybook-visual/
     expire_in: 7 days
+  # Deep evidence tier: interaction and visual evidence runs on the default branch
+  # and schedules; the scheduled visual matrix below owns the full browser matrix.
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
   timeout: 30m
 
 # Runtime-backed lane. Deliberately placed after storybook-tests: the workflow
@@ -661,16 +707,24 @@ ci-status-summary:
       optional: true
     - job: helm-validation
     - job: fast-check
-    - job: spec-evidence
-    - job: non-runtime-validation
+    - job: contract-validation
     - job: full-check
+    # Deep-evidence tier below: these jobs run on the default branch and
+    # schedules only. When present in a pipeline, each must pass.
+    - job: spec-evidence
+      optional: true
+    - job: non-runtime-validation
+      optional: true
     - job: component-tests
+      optional: true
     - job: mongodb-validation
       optional: true
     - job: e2e-tests
       optional: true
     - job: storybook-tests
+      optional: true
     - job: docker-smoke-test
+      optional: true
     - job: ops-gates
       # This runtime lane exists only on schedules. When present, it must pass.
       optional: true

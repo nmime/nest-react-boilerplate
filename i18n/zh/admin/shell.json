@@ -27,7 +27,7 @@
   "admin.profile.unknown": "未知",
   "admin.profile.emailLine": "邮箱： {{value}}",
   "admin.profile.subjectLine": "主体：{{value}}",
-  "admin.forbidden.title": "RBAC 拒绝访问",
+  "admin.forbidden.title": "没有访问权限",
   "admin.forbidden.eyebrow": "禁止",
   "admin.forbidden.accessDeniedTitle": "拒绝访问",
   "admin.notFound.title": "未知路由",

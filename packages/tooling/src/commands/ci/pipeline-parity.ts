@@ -1,4 +1,4 @@
-import type { CiContract, CiForge, CiGate, PipelineKind, SupplyChainControl } from './pipeline-contract';
+import type { CiContract, CiForge, CiGate, CiLane, PipelineKind, SupplyChainControl } from './pipeline-contract';
 import { extractJob, referencesJob } from './pipeline-contract';
 
 export type ParityProblemCode =
@@ -39,7 +39,7 @@ export interface ParityReport {
   skippedForges: string[];
 }
 
-function appliesTo(declaration: CiGate | SupplyChainControl, forgeId: string): boolean {
+function appliesTo(declaration: CiGate | CiLane | SupplyChainControl, forgeId: string): boolean {
   return declaration.forges === undefined || declaration.forges.includes(forgeId);
 }
 
@@ -179,6 +179,7 @@ export function evaluateParity(contract: CiContract, sources: Record<string, For
     }
 
     for (const [laneId, lane] of Object.entries(contract.lanes)) {
+      if (!appliesTo(lane, forgeId)) continue;
       const executor = lane.executors[forgeId];
       if (executor === undefined) {
         problems.push({

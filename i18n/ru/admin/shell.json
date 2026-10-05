@@ -27,7 +27,7 @@
   "admin.profile.unknown": "неизвестно",
   "admin.profile.emailLine": "Email: {{value}}",
   "admin.profile.subjectLine": "Идентификатор: {{value}}",
-  "admin.forbidden.title": "Отказано по RBAC",
+  "admin.forbidden.title": "Недостаточно прав",
   "admin.forbidden.eyebrow": "Доступ ограничен",
   "admin.forbidden.accessDeniedTitle": "Доступ запрещён",
   "admin.notFound.title": "Неизвестный маршрут",

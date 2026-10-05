@@ -305,6 +305,6 @@ describe('ProviderIdentitiesPanel', () => {
 
     renderPanel(fetchMock);
 
-    expect(await screen.findByText('Request failed with 503.')).toBeTruthy();
+    expect(await screen.findByText("We couldn't complete your request. Please try again.")).toBeTruthy();
   });
 });

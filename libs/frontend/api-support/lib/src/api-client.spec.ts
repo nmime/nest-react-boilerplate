@@ -97,7 +97,7 @@ describe('frontend API client', () => {
 
     await expect(apiFetch('/profile', { fetchImpl })).rejects.toMatchObject({
       body: {},
-      message: 'Запрос не удался со статусом 500.',
+      message: 'Не удалось выполнить запрос. Попробуйте ещё раз.',
       status: 500,
     } satisfies Partial<ApiError>);
   });

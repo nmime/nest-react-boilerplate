@@ -241,7 +241,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Request failed with 409.')).toBeTruthy();
+    expect(await screen.findByText("We couldn't complete your request. Please try again.")).toBeTruthy();
     expect(fetchMock.mock.calls).toHaveLength(1);
     const input = fetchMock.mock.calls[0]?.[0];
     const url = input instanceof Request ? input.url : String(input);
@@ -266,7 +266,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Request failed with 401.')).toBeTruthy();
+    expect(await screen.findByText("We couldn't complete your request. Please try again.")).toBeTruthy();
     expect(window.location.pathname).toBe('/tma/auth');
     expect(
       fetchMock.mock.calls.some(([input]) =>
@@ -291,7 +291,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Request failed with 409.')).toBeTruthy();
+    expect(await screen.findByText("We couldn't complete your request. Please try again.")).toBeTruthy();
     expect(window.location.pathname).toBe('/telegram-mini-app');
     expect(
       fetchMock.mock.calls.some(([input]) =>
@@ -311,7 +311,7 @@ describe('social auth and TMA UI', () => {
 
     expect(await screen.findByText('Loading Telegram Mini App…')).toBeTruthy();
     pending.resolve(jsonResponse({}, false, 409));
-    expect(await screen.findByText('Request failed with 409.')).toBeTruthy();
+    expect(await screen.findByText("We couldn't complete your request. Please try again.")).toBeTruthy();
   });
 
   it('submits raw TMA initData to backend, stores session, and navigates', async () => {
@@ -387,7 +387,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Request failed with 409.')).toBeTruthy();
+    expect(await screen.findByText("We couldn't complete your request. Please try again.")).toBeTruthy();
     const tmaCall = fetchMock.mock.calls.find(([input]) => {
       const url = input instanceof Request ? input.url : String(input);
       return new URL(url, window.location.origin).pathname === '/auth/telegram/tma';
@@ -418,7 +418,7 @@ describe('social auth and TMA UI', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('Request failed with 409.')).toBeTruthy();
+    expect(await screen.findByText("We couldn't complete your request. Please try again.")).toBeTruthy();
     const tmaCall = fetchMock.mock.calls.find(([input]) => {
       const url = input instanceof Request ? input.url : String(input);
       return new URL(url, window.location.origin).pathname === '/auth/telegram/tma';

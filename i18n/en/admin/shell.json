@@ -27,7 +27,7 @@
   "admin.profile.unknown": "unknown",
   "admin.profile.emailLine": "Email: {{value}}",
   "admin.profile.subjectLine": "Subject: {{value}}",
-  "admin.forbidden.title": "RBAC denied",
+  "admin.forbidden.title": "You don't have permission",
   "admin.forbidden.eyebrow": "Forbidden",
   "admin.forbidden.accessDeniedTitle": "Access denied",
   "admin.notFound.title": "Unknown route",

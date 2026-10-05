@@ -963,6 +963,11 @@
   background: transparent;
 }
 
+.admin-state-page {
+  padding-inline: clamp(1.25rem, 5vw, 3rem);
+  padding-block: clamp(1rem, 3vw, 2rem);
+}
+
 .admin-state-page .xr-section__content {
   min-height: 18rem;
   place-items: center;

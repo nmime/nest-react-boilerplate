@@ -230,6 +230,9 @@
 body {
   margin: 0;
   min-width: 320px;
+  /* Cover the viewport so the body gradient cannot end at the content box: with an
+     explicit html background behind it, anything shorter paints a visible seam. */
+  min-height: 100vh;
   background: var(--xr-body-gradient);
   color: var(--xr-color-text);
   font-family: var(--xr-font-family);

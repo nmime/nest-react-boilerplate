@@ -24,7 +24,7 @@
   "errors.last-auth-method-unlink-forbidden.detail": "在取消关联此身份验证方法之前，请关联其他身份验证方法。",
   "errors.validation-error.title": "验证失败",
   "errors.validation-error.detail": "请求数据验证失败。",
-  "errors.api.requestFailed": "请求失败， {{status}}。",
+  "errors.api.requestFailed": "请求未能完成，请重试。",
   "errors.api.networkFailed": "网络连接失败了。",
   "errors.auth.invalidCredentials": "无效的电子邮件或密码。",
   "errors.auth.userInactive": "用户未处于活跃状态。",

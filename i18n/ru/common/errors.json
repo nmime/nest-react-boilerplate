@@ -24,7 +24,7 @@
   "errors.last-auth-method-unlink-forbidden.detail": "Привяжите другой способ входа, прежде чем отвязывать этот.",
   "errors.validation-error.title": "Ошибка валидации",
   "errors.validation-error.detail": "Валидация запроса не удалась.",
-  "errors.api.requestFailed": "Запрос не удался со статусом {{status}}.",
+  "errors.api.requestFailed": "Не удалось выполнить запрос. Попробуйте ещё раз.",
   "errors.api.networkFailed": "Ошибка сетевого подключения.",
   "errors.auth.invalidCredentials": "Неверный email или пароль.",
   "errors.auth.userInactive": "Пользователь неактивен.",

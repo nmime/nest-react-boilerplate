@@ -431,7 +431,7 @@ describe('User app shell', () => {
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), jsonResponse({}, false, 403));
     const { unmount } = render(<App />);
     await submitLogin();
-    expect(await screen.findByText('Forbidden: Request failed with 403.')).toBeTruthy();
+    expect(await screen.findByText("Forbidden: We couldn't complete your request. Please try again.")).toBeTruthy();
     unmount();
 
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), {
@@ -631,7 +631,7 @@ describe('User app shell', () => {
       target: { value: 'password123' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^(Register|Registrarse)$/u }));
-    expect(await screen.findByText('Forbidden: Request failed with 409.')).toBeTruthy();
+    expect(await screen.findByText("Forbidden: We couldn't complete your request. Please try again.")).toBeTruthy();
     unmount();
 
     setFetch(jsonResponse({ data: {} }));

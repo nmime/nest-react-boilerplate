@@ -29,7 +29,11 @@
           "file": ".github/workflows/ci.yml",
           "job": "spec-evidence"
         }
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub runs the fast gate, the secret scan and the release machinery only."
     },
     "main": {
       "description": "Evidence for the requirements a default-branch push touches.",
@@ -42,7 +46,11 @@
           "file": ".github/workflows/ci.yml",
           "job": "spec-evidence"
         }
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub runs the fast gate, the secret scan and the release machinery only."
     },
     "nightly": {
       "description": "Scheduled full-inventory evidence for every declared requirement.",
@@ -55,7 +63,11 @@
           "file": ".github/workflows/spec-assurance-nightly.yml",
           "job": "assurance"
         }
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub runs the fast gate, the secret scan and the release machinery only."
     },
     "runtime": {
       "description": "Evidence that needs a live runtime stack rather than a build sandbox.",
@@ -68,7 +80,11 @@
           "file": ".github/workflows/spec-assurance-runtime.yml",
           "job": "assurance"
         }
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub runs the fast gate, the secret scan and the release machinery only."
     },
     "scheduled-quality": {
       "description": "Scheduled cross-browser and mobile visual regression matrix.",
@@ -81,7 +97,11 @@
           "file": ".github/workflows/quality-presets.yml",
           "job": "presets"
         }
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub runs the fast gate, the secret scan and the release machinery only."
     },
     "release": {
       "description": "Tagged build that publishes signed, scanned, attested images.",
@@ -110,8 +130,14 @@
     {
       "id": "secret-scan-history",
       "description": "Full-history secret scan over the repository.",
-      "commands": ["gitleaks/gitleaks-action", "gitleaks detect"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "gitleaks/gitleaks-action",
+        "gitleaks detect"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "gitleaks",
@@ -121,20 +147,35 @@
     {
       "id": "helm-render",
       "description": "Render the selected Helm deployment for every provider selection.",
-      "commands": ["pnpm run deploy:validate:helm"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run deploy:validate:helm"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
-      "toolchain": ["helm"],
+      "toolchain": [
+        "helm"
+      ],
       "jobs": {
-        "gitlab": "helm-validation",
-        "github": "helm-validation"
-      }
+        "gitlab": "helm-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "ci-pipeline-parity",
       "description": "Every forge renders this gate inventory and no forge silently drops a gate.",
-      "commands": ["node scripts/ci/check-pipelines.mjs"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "node scripts/ci/check-pipelines.mjs"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "helm-validation",
@@ -144,8 +185,13 @@
     {
       "id": "git-conventions",
       "description": "Branch naming, commit messages, linear history, and agent attribution.",
-      "commands": ["pnpm run git:conventions"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run git:conventions"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -155,8 +201,14 @@
     {
       "id": "tooling-static-check",
       "description": "TS-first static validation and import smoke checks for repo tooling.",
-      "commands": ["pnpm run tooling:static-check", "pnpm run ci:pr"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run tooling:static-check",
+        "pnpm run ci:pr"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -166,8 +218,14 @@
     {
       "id": "locale-artifact-freshness",
       "description": "Generated locale catalog bindings and translation keys match the i18n tree.",
-      "commands": ["pnpm run i18n:catalogs:check", "pnpm run ci:pr"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run i18n:catalogs:check",
+        "pnpm run ci:pr"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -177,8 +235,14 @@
     {
       "id": "docs-check",
       "description": "Project catalog freshness and documentation link integrity.",
-      "commands": ["pnpm run docs:check", "pnpm run ci:pr"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run docs:check",
+        "pnpm run ci:pr"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -188,8 +252,14 @@
     {
       "id": "spec-validate",
       "description": "OpenSpec artifacts and repository evidence ownership.",
-      "commands": ["pnpm run spec:validate", "pnpm run ci:pr"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run spec:validate",
+        "pnpm run ci:pr"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -199,8 +269,14 @@
     {
       "id": "format-changed",
       "description": "Prettier over the changed files only, for a memory-safe PR check.",
-      "commands": ["pnpm run format:changed", "pnpm run ci:pr"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run format:changed",
+        "pnpm run ci:pr"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -210,8 +286,14 @@
     {
       "id": "secret-scan-native",
       "description": "Repository-owned secret scanning independent of any forge feature tier.",
-      "commands": ["pnpm run test:security:secrets", "pnpm run ci:pr"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run test:security:secrets",
+        "pnpm run ci:pr"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -221,8 +303,14 @@
     {
       "id": "sast-native",
       "description": "Repository-owned static application security testing.",
-      "commands": ["pnpm run test:security:sast", "pnpm run ci:pr"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run test:security:sast",
+        "pnpm run ci:pr"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -232,8 +320,14 @@
     {
       "id": "production-dependency-audit",
       "description": "Moderate-and-above advisories in the production dependency tree.",
-      "commands": ["pnpm run audit:ci", "pnpm run ci:pr"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run audit:ci",
+        "pnpm run ci:pr"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "fast-check",
@@ -243,245 +337,424 @@
     {
       "id": "spec-evidence",
       "description": "Fresh evidence for every requirement the change impacts, bound to the exact SHA.",
-      "commands": ["pnpm run spec:verify"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run spec:verify"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "spec-evidence",
-        "github": "spec-evidence"
-      }
+        "gitlab": "spec-evidence"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "onboarding-verify",
       "description": "Fresh onboarding, agent scaffolding, and generated application scaffolds.",
-      "commands": ["pnpm run onboarding:verify"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run onboarding:verify"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "migration-freshness",
       "description": "Database migration naming, ordering, and entity drift.",
-      "commands": ["pnpm run db:migrations:check"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run db:migrations:check"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "contract-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "repository-script-specs",
       "description": "Every executable spec under scripts/ runs, discovered rather than listed.",
-      "commands": ["pnpm run test:scripts"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run test:scripts"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "library-configs",
       "description": "Nx library configuration placement and standards.",
-      "commands": ["pnpm run lib:configs:check"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run lib:configs:check"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "frontend-fsd",
       "description": "Strict frontend Feature-Sliced Design boundaries.",
-      "commands": ["pnpm run frontend:fsd:check"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run frontend:fsd:check"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "contract-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "toast-config",
       "description": "Generated app-local API toast rules match the OpenAPI contracts.",
-      "commands": ["pnpm run api:toast-config:check"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run api:toast-config:check"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "licence-audit",
       "description": "Dependency licences stay inside the allowed set.",
-      "commands": ["pnpm run audit:licenses"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run audit:licenses"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "full-dependency-audit",
       "description": "High-and-above advisories across the whole dependency tree.",
-      "commands": ["pnpm run audit:full"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run audit:full"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "api-contracts",
       "description": "Generated OpenAPI contracts are current.",
-      "commands": ["pnpm run api:contracts:check"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run api:contracts:check"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "contract-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "api-clients",
       "description": "Generated API clients are current.",
-      "commands": ["pnpm run api:clients:check"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run api:clients:check"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "contract-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "openapi-lint",
       "description": "OpenAPI contract lint rules.",
-      "commands": ["pnpm run api:openapi:lint"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run api:openapi:lint"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "contract-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "consumer-contracts",
       "description": "Consumer-driven contract checks against the generated API surface.",
-      "commands": ["pnpm run api:contracts:consumer"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run api:contracts:consumer"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "openapi-fuzz",
       "description": "Bounded OpenAPI fuzz case generation.",
-      "commands": ["pnpm run api:openapi:fuzz"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run api:openapi:fuzz"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "property-invariants",
       "description": "Property-based invariant checks.",
-      "commands": ["pnpm run test:property"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run test:property"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "pm2-deployment-config",
       "description": "Native PM2 deployment configuration validates against the selected closure.",
-      "commands": ["pnpm run deploy:validate:pm2"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run deploy:validate:pm2"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "gitops-deployment-config",
       "description": "GitOps manifests, promotion safety, and release supply-chain wiring.",
-      "commands": ["pnpm run deploy:validate:gitops"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
-      "toolchain": ["helm"],
+      "commands": [
+        "pnpm run deploy:validate:gitops"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
+      "toolchain": [
+        "helm"
+      ],
       "jobs": {
-        "gitlab": "non-runtime-validation",
-        "github": "non-runtime-validation"
-      }
+        "gitlab": "non-runtime-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "format-check",
       "description": "Prettier over the whole workspace.",
-      "commands": ["pnpm run format:check"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run format:check"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "full-check",
-        "github": "quality"
-      }
+        "gitlab": "full-check"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "lint-typecheck-build",
-      "description": "Lint, typecheck, and build \u2014 affected on proposals, everything on the default branch.",
-      "commands": ["nx affected -t lint typecheck build", "pnpm run lint:all"],
-      "lanes": ["pr", "main"],
+      "description": "Lint, typecheck, and build — affected on proposals, everything on the default branch.",
+      "commands": [
+        "nx affected -t lint typecheck build",
+        "pnpm run lint:all"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "full-check",
-        "github": "quality"
-      }
+        "gitlab": "full-check"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "coverage-thresholds",
       "description": "Unit test coverage floors.",
-      "commands": ["pnpm run test:coverage:all"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run test:coverage:all"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "full-check",
-        "github": "quality"
-      }
+        "gitlab": "full-check"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "bundle-budget",
       "description": "Per-app JavaScript, CSS, and single-chunk byte budgets.",
-      "commands": ["pnpm run test:bundle-budget"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run test:bundle-budget"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "full-check",
-        "github": "quality"
-      }
+        "gitlab": "full-check"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "postgres-component-tests",
       "description": "Testcontainers-backed PostgreSQL component tests.",
-      "commands": ["nx run @app/backend-feature-auth-test:component-test"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "nx run @app/backend-feature-auth-test:component-test"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "component-tests",
-        "github": "quality"
-      }
+        "gitlab": "component-tests"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "mongodb-validation",
@@ -489,147 +762,238 @@
       "commands": [
         "--projects=@app/backend-mongodb-main,@app/backend-mongodb-main-auth,@app/backend-mongodb-main-feature-flags,@app/backend-mongodb-main-notification"
       ],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "mongodb-validation",
-        "github": "mongodb-validation"
-      }
+        "gitlab": "mongodb-validation"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "e2e-coverage",
       "description": "Static and browser end-to-end coverage.",
-      "commands": ["pnpm run test:e2e:coverage:all"],
-      "lanes": ["pr", "main"],
+      "commands": [
+        "pnpm run test:e2e:coverage:all"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
       "requiredForMerge": true,
       "jobs": {
-        "gitlab": "e2e-tests",
-        "github": "e2e"
-      }
+        "gitlab": "e2e-tests"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "storybook-interaction",
       "description": "Storybook interaction tests.",
-      "commands": ["pnpm run test:storybook"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run test:storybook"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "storybook-tests",
-        "github": "visual-regression"
-      }
+        "gitlab": "storybook-tests"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "visual-baselines",
       "description": "Reviewed visual regression baselines.",
-      "commands": ["pnpm run test:visual"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run test:visual"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "storybook-tests",
-        "github": "visual-regression"
-      }
+        "gitlab": "storybook-tests"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "docker-smoke",
       "description": "Production Compose renders without compiling product images.",
-      "commands": ["pnpm run docker:prod:config:check", "node scripts/validate-compose-modes.mjs"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "pnpm run docker:prod:config:check",
+        "node scripts/validate-compose-modes.mjs"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "docker-smoke-test",
-        "github": "docker-smoke"
-      }
+        "gitlab": "docker-smoke-test"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "compose-deployment-modes",
       "description": "Production Compose database-mode matrix renders without compiling images.",
-      "commands": ["node scripts/validate-compose-modes.mjs"],
-      "lanes": ["pr", "main"],
-      "requiredForMerge": true,
+      "commands": [
+        "node scripts/validate-compose-modes.mjs"
+      ],
+      "lanes": [
+        "pr",
+        "main"
+      ],
+      "requiredForMerge": false,
       "jobs": {
-        "gitlab": "docker-smoke-test",
-        "github": "docker-smoke"
-      }
+        "gitlab": "docker-smoke-test"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "world-class-ops",
       "description": "Runtime-backed load, chaos, disaster-recovery, observability, and canary gates.",
-      "commands": ["pnpm run quality:presets", "pnpm run test:world-class"],
-      "lanes": ["nightly"],
+      "commands": [
+        "pnpm run quality:presets",
+        "pnpm run test:world-class"
+      ],
+      "lanes": [
+        "nightly"
+      ],
       "requiredForMerge": false,
       "jobs": {
-        "gitlab": "ops-gates",
-        "github": "presets"
+        "gitlab": "ops-gates"
       },
       "files": {
         "github": ".github/workflows/quality-presets.yml"
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "accessibility",
       "description": "Axe accessibility scan against the running frontends.",
-      "commands": ["pnpm run test:a11y", "pnpm run quality:presets"],
-      "lanes": ["nightly"],
+      "commands": [
+        "pnpm run test:a11y",
+        "pnpm run quality:presets"
+      ],
+      "lanes": [
+        "nightly"
+      ],
       "requiredForMerge": false,
       "jobs": {
-        "gitlab": "ops-gates",
-        "github": "presets"
+        "gitlab": "ops-gates"
       },
       "files": {
         "github": ".github/workflows/quality-presets.yml"
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "fullstack-e2e-postgres",
       "description": "Fullstack Playwright e2e against the PostgreSQL closure.",
-      "commands": ["pnpm run test:fullstack"],
-      "lanes": ["nightly"],
+      "commands": [
+        "pnpm run test:fullstack"
+      ],
+      "lanes": [
+        "nightly"
+      ],
       "requiredForMerge": false,
       "jobs": {
-        "gitlab": "docker-fullstack",
-        "github": "presets"
+        "gitlab": "docker-fullstack"
       },
       "files": {
         "github": ".github/workflows/quality-presets.yml"
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "fullstack-e2e-mongodb",
       "description": "Fullstack Playwright e2e against the MongoDB closure.",
-      "commands": ["pnpm run test:fullstack"],
-      "lanes": ["nightly"],
+      "commands": [
+        "pnpm run test:fullstack"
+      ],
+      "lanes": [
+        "nightly"
+      ],
       "requiredForMerge": false,
       "jobs": {
-        "gitlab": "docker-fullstack-mongodb",
-        "github": "mongodb-fullstack"
+        "gitlab": "docker-fullstack-mongodb"
       },
       "files": {
         "github": ".github/workflows/quality-presets.yml"
-      }
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "release-image-build",
       "description": "Build and publish the affected release images through the generated Bake plan.",
-      "commands": ["docker buildx bake -f docker-bake.json"],
+      "commands": [
+        "docker buildx bake -f docker-bake.json"
+      ],
       "pipeline": "release",
-      "lanes": ["release"],
+      "lanes": [
+        "release"
+      ],
       "requiredForMerge": false,
       "jobs": {
-        "gitlab": "release-images",
-        "github": "build-scan-sign"
-      }
+        "gitlab": "release-images"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     },
     {
       "id": "release-image-signing",
       "description": "Sign, attest, and vulnerability-gate every published digest.",
-      "commands": ["cosign sign --yes \"$ref\""],
+      "commands": [
+        "cosign sign --yes \"$ref\""
+      ],
       "pipeline": "release",
-      "lanes": ["release"],
+      "lanes": [
+        "release"
+      ],
       "requiredForMerge": false,
       "jobs": {
-        "gitlab": "release-images",
-        "github": "build-scan-sign"
-      }
+        "gitlab": "release-images"
+      },
+      "forges": [
+        "gitlab"
+      ],
+      "reason": "GitLab is the primary CI forge; GitHub renders only the fast gate, the secret scan and the release machinery. See docs/ci-lanes.md."
     }
   ],
   "supplyChain": [
@@ -637,55 +1001,80 @@
       "id": "affected-image-plan",
       "requirement": "The images built are selected by the shared plan from the installed product closure, not enumerated per forge.",
       "scope": "release",
-      "evidence": ["scripts/release-image-plan.mjs", "generate-bake-file.mjs --only"]
+      "evidence": [
+        "scripts/release-image-plan.mjs",
+        "generate-bake-file.mjs --only"
+      ]
     },
     {
       "id": "bake-only-build",
       "requirement": "Images are produced only by the generated Bake plan, so every image shares one build definition.",
       "scope": "release",
-      "evidence": ["docker buildx bake -f docker-bake.json"]
+      "evidence": [
+        "docker buildx bake -f docker-bake.json"
+      ]
     },
     {
       "id": "build-attestations",
       "requirement": "Every image carries max-mode BuildKit provenance and an SBOM attestation.",
       "scope": "release",
-      "evidence": ["*.attest=type=provenance,mode=max", "*.attest=type=sbom"]
+      "evidence": [
+        "*.attest=type=provenance,mode=max",
+        "*.attest=type=sbom"
+      ]
     },
     {
       "id": "immutable-digest",
       "requirement": "Post-build steps address images by the digest the build reported, never by a mutable tag.",
       "scope": "release",
-      "evidence": ["bake-metadata.json", "^sha256:[0-9a-f]{64}$"]
+      "evidence": [
+        "bake-metadata.json",
+        "^sha256:[0-9a-f]{64}$"
+      ]
     },
     {
       "id": "sbom-generation",
       "requirement": "An SPDX SBOM is generated for every published digest.",
       "scope": "release",
-      "evidence": ["syft \"$ref\"", "spdx-json=sboms/sbom-"]
+      "evidence": [
+        "syft \"$ref\"",
+        "spdx-json=sboms/sbom-"
+      ]
     },
     {
       "id": "vulnerability-gate",
       "requirement": "A CRITICAL or HIGH finding fails the release rather than warning.",
       "scope": "release",
-      "evidence": ["trivy image --format sarif", "--severity CRITICAL,HIGH", "--exit-code 1"]
+      "evidence": [
+        "trivy image --format sarif",
+        "--severity CRITICAL,HIGH",
+        "--exit-code 1"
+      ]
     },
     {
       "id": "keyless-signature",
       "requirement": "Every published digest is signed with keyless cosign against the forge OIDC identity.",
       "scope": "release",
-      "evidence": ["cosign sign --yes \"$ref\""]
+      "evidence": [
+        "cosign sign --yes \"$ref\""
+      ]
     },
     {
       "id": "sbom-attestation",
       "requirement": "The SBOM is attached to the digest as a verifiable SPDX attestation.",
       "scope": "release",
-      "evidence": ["cosign attest --yes --type spdxjson"]
+      "evidence": [
+        "cosign attest --yes --type spdxjson"
+      ]
     },
     {
       "id": "provenance-attestation",
       "requirement": "SLSA provenance naming the exact source commit is attached to the digest.",
       "scope": "release",
-      "evidence": ["cosign attest --yes --type slsaprovenance1", "resolvedDependencies"]
+      "evidence": [
+        "cosign attest --yes --type slsaprovenance1",
+        "resolvedDependencies"
+      ]
     },
     {
       "id": "scan-attestation",
@@ -701,14 +1090,21 @@
       "id": "release-exact-revision",
       "requirement": "A release is cut from the exact source revision the pipeline verified, never from a branch tip re-resolved at build time.",
       "scope": "provenance",
-      "evidence": ["git rev-parse HEAD"]
+      "evidence": [
+        "git rev-parse HEAD"
+      ]
     },
     {
       "id": "release-follows-verified-gates",
       "requirement": "The release stage follows the reports fan-in and has no needs override that bypasses earlier quality stages.",
       "scope": "provenance",
-      "evidence": ["stage: reports", "stage: release"],
-      "forges": ["gitlab"],
+      "evidence": [
+        "stage: reports",
+        "stage: release"
+      ],
+      "forges": [
+        "gitlab"
+      ],
       "reason": "GitLab enforces the reports fan-in before its release stage; GitHub verifies a completed CI workflow instead of using GitLab stage names."
     },
     {
@@ -722,14 +1118,18 @@
         "github.event.workflow_run.head_branch == 'main'",
         "ref: ${{ github.event.workflow_run.head_sha }}"
       ],
-      "forges": ["github"],
+      "forges": [
+        "github"
+      ],
       "reason": "GitHub release provenance follows its completed CI workflow; GitLab performs release in the same staged pipeline."
     },
     {
       "id": "release-refuses-stale-head",
       "requirement": "The current default-branch head is re-read from the remote before a release is published, so a revision it has already moved past is refused.",
       "scope": "provenance",
-      "evidence": ["git fetch"]
+      "evidence": [
+        "git fetch"
+      ]
     }
   ]
 }

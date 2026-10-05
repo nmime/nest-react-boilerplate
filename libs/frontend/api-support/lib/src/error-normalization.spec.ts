@@ -56,7 +56,7 @@ describe('normalizeApiError', () => {
     expect(error).toMatchObject({
       code: 'network.error',
       kind: 'unknown',
-      message: 'Request failed with ERR.',
+      message: "We couldn't complete your request. Please try again.",
       method: 'PATCH',
       status: null,
     });
@@ -186,19 +186,19 @@ describe('normalizeApiError', () => {
         error: new Error('boom'),
         response: { status: 500, statusText: '' },
       }).message,
-    ).toBe('Request failed with 500.');
+    ).toBe("We couldn't complete your request. Please try again.");
 
     expect(
       normalizeApiError({
         response: { status: 500, statusText: 'Server Error' },
       }).message,
-    ).toBe('Request failed with 500.');
+    ).toBe("We couldn't complete your request. Please try again.");
 
-    expect(normalizeApiError({ response: { status: 500, statusText: '' } }).message).toBe('Request failed with 500.');
+    expect(normalizeApiError({ response: { status: 500, statusText: '' } }).message).toBe("We couldn't complete your request. Please try again.");
 
     configureApiLocale({ locale: 'ru' });
     expect(normalizeApiError({ response: { status: 500, statusText: '' } }).message).toBe(
-      'Запрос не удался со статусом 500.',
+      'Не удалось выполнить запрос. Попробуйте ещё раз.',
     );
     expect(normalizeApiError({}).message).toBe('Ошибка сетевого подключения.');
   });

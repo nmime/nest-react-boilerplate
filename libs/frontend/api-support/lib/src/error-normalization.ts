@@ -217,13 +217,10 @@ const extractMessage = (status: number | null, body: unknown, fallbackKind: Norm
   if (status === null) {
     return fallbackKind === 'network'
       ? translate('errors.api.networkFailed', { locale: getApiLocale() })
-      : translate('errors.api.requestFailed', { locale: getApiLocale(), params: { status: 'ERR' } });
+      : translate('errors.api.requestFailed', { locale: getApiLocale() });
   }
 
-  return translate('errors.api.requestFailed', {
-    locale: getApiLocale(),
-    params: { status },
-  });
+  return translate('errors.api.requestFailed', { locale: getApiLocale() });
 };
 
 export const normalizeApiError = ({

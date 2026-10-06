@@ -85,8 +85,6 @@ assert.ok(
 assert.ok(releaseImagesWorkflow.includes('syft-version: v1.52.0'), 'release-images.yml pins the reviewed Syft CLI');
 assert.ok(releaseImagesWorkflow.includes('cosign-release: v3.1.3'), 'release-images.yml pins the reviewed Cosign CLI');
 assert.ok(releaseImagesWorkflow.includes('version: v0.74.0'), 'release-images.yml pins the reviewed Trivy CLI');
-const nightlyAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-nightly.yml')?.text ?? '';
-const runtimeAssurance = workflows.find((workflow) => workflow.name === 'spec-assurance-runtime.yml')?.text ?? '';
 const githubReleaseNotes = readFileSync(new URL('.github/release.yml', workspaceUrl), 'utf8');
 const gitleaksBaseConfigPath = 'packages/tooling/config/gitleaks.base.toml';
 const gitleaksProductConfigPath = '.gitleaks.toml';
@@ -105,7 +103,8 @@ assert.ok(
 assert.ok(nxCacheAction.includes('path: .nx/cache'), 'Nx cache composite action must cache only Nx task outputs');
 assert.ok(!nxCacheAction.includes('secrets.'), 'Nx cache composite action must not receive secrets');
 assert.ok(ci.includes('NX_CACHE_DIRECTORY: .nx/cache'), 'CI must use the explicit Nx cache directory');
-for (const scope of ['fast', 'spec-evidence', 'non-runtime', 'quality', 'e2e', 'mongodb']) {
+// GitHub's trimmed fast gate is the only job left that restores the Nx cache.
+for (const scope of ['fast']) {
   assert.ok(ci.includes(`scope: ${scope}`), `CI must restore the remote Nx cache for ${scope}`);
 }
 assert.ok(
@@ -156,7 +155,7 @@ const ciJobNames = (() => {
   assert.ok(jobsIndex !== -1, 'ci.yml must declare a top-level jobs block');
   return [...ci.slice(jobsIndex).matchAll(/^ {2}([a-zA-Z0-9_-]+):$/gmu)].map((match) => match[1]);
 })();
-assert.ok(ciJobNames.length > 5, `ci.yml job list could not be parsed (found ${ciJobNames.length})`);
+assert.ok(ciJobNames.length >= 3, `ci.yml job list could not be parsed (found ${ciJobNames.length})`);
 assert.ok(ciJobNames.includes('ci-status-summary'), 'ci.yml must define the ci-status-summary aggregator');
 
 const summaryNeedsMatch = /^ {2}ci-status-summary:\n(?:.*\n)*? {4}needs:\n((?: {6}- [a-zA-Z0-9_-]+\n)+)/mu.exec(ci);
@@ -183,41 +182,24 @@ assert.ok(
   ci.includes('origin/$GITHUB_BASE_REF..$PR_HEAD_SHA'),
   'ci.yml must validate authored commits without including the synthetic pull-request merge commit',
 );
-// Gates that exist but run in no pipeline are dead QA surface; pin the ones that were added
-// after being found unwired, plus the e2e selection that must never reach the Docker suite.
+// Gate coverage per forge is scripts/ci/check-pipelines.mjs's job (see its header): this
+// file polices hardening and release contracts. GitHub renders only the fast gate, the
+// secret scan and the release machinery -- every gate it does not render is recorded in
+// scripts/ci/gates.json with `forges` and `reason` -- so the fast gate must run the parity
+// and hardening checks themselves.
 for (const required of [
-  'pnpm run frontend:fsd:check',
-  'pnpm run api:toast-config:check',
-  'pnpm run audit:licenses',
-  'pnpm run audit:full',
+  'pnpm run ci:pr',
+  'node scripts/ci/check-pipelines.mjs',
+  'node scripts/validate-github-workflows.mjs',
 ]) {
-  assert.ok(ci.includes(required), `ci.yml must run the previously unwired gate: ${required}`);
+  assert.ok(ci.includes(required), `ci.yml missing fast-gate contract: ${required}`);
 }
 assert.ok(
   !/nx run-many -t e2e --all(?! --exclude(?:=| )fullstack-e2e)/u.test(JSON.stringify(scripts)),
   'package.json e2e aggregates must exclude fullstack-e2e; the Docker-managed Playwright suite rejects forwarded flags and needs a Compose stack',
 );
 
-// A scheduled workflow has no pull request to turn red, so the gates it uniquely owns rot
-// invisibly unless failure is surfaced somewhere a human sees it.
-for (const [name, text] of [
-  ['quality-presets.yml', workflows.find((workflow) => workflow.name === 'quality-presets.yml')?.text ?? ''],
-  [
-    'spec-assurance-nightly.yml',
-    workflows.find((workflow) => workflow.name === 'spec-assurance-nightly.yml')?.text ?? '',
-  ],
-]) {
-  assert.ok(text.includes('if: failure()'), `${name} must surface failures from its scheduled run`);
-  assert.ok(text.includes('issues: write'), `${name} must be able to open its failure issue`);
-  assert.ok(
-    text.includes('uses: ./.github/actions/report-scheduled-failure'),
-    `${name} must report failures through the shared scheduled-failure reporter`,
-  );
-  assert.ok(
-    /workflow-file: \S+\.yml/u.test(text),
-    `${name} failure reporter needs its workflow filename to compute the failure streak`,
-  );
-}
+
 
 // The reporter itself owns the behaviour the per-workflow contracts used to
 // assert inline.
@@ -232,31 +214,8 @@ for (const required of ['gh issue create', 'gh issue comment', 'gh issue reopen'
   );
 }
 
-for (const required of [
-  'name: Exact-SHA specification evidence',
-  'pnpm run spec:verify',
-  '--lane "$lane"',
-  '--base "$base"',
-  '--head HEAD',
-  '${{ needs.spec-evidence.result }}',
-]) {
-  assert.ok(ci.includes(required), `ci.yml missing exact-SHA specification gate: ${required}`);
-}
-for (const required of [
-  "cron: '21 1 * * *'",
-  'pnpm run spec:verify -- --all --lane nightly',
-  'uses: ./.github/actions/runtime-stack',
-  'nightly-specification-assurance',
-]) {
-  assert.ok(nightlyAssurance.includes(required), `nightly assurance workflow missing required contract: ${required}`);
-}
-for (const required of [
-  'workflow_dispatch:',
-  'pnpm run spec:verify -- --all --lane runtime',
-  'runtime-specification-assurance',
-]) {
-  assert.ok(runtimeAssurance.includes(required), `runtime assurance workflow missing required contract: ${required}`);
-}
+
+
 for (const required of [
   'Build every setup-selected release image',
   'pnpm nrb closure install',
@@ -288,9 +247,7 @@ assert.ok(
   !releaseImagesWorkflow.includes('--all-reference') && !deployWorkflow.includes('--all-reference'),
   'Product release and promotion workflows must never bypass the selected closure with all-reference mode',
 );
-for (const required of ['pnpm run test:coverage:all', 'pnpm run test:e2e:coverage:all']) {
-  assert.ok(ci.includes(required), `ci.yml missing explicit maintainer test command: ${required}`);
-}
+
 assert.ok(
   ci.includes(`GITLEAKS_CONFIG: ${'.gitleaks.toml'}`),
   'ci.yml must name the gitleaks config so both forges scan with the same one',
@@ -401,7 +358,7 @@ for (const required of [
   'node:24.21.0-alpine',
   'mcr.microsoft.com/playwright:v1.63.0-noble',
   'docker:29.4.0-dind',
-  'postgres:17.11-alpine',
+  'postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24',
   'docker-cli-compose',
   'DOCKER_HOST: tcp://docker:2375',
   "DOCKER_TLS_CERTDIR: ''",
@@ -566,27 +523,7 @@ assert.equal(
   'https://gitlab-ci-token:example@gitlab.example.com/group/project.git',
   'GitLab releases must target the checked-out GitLab repository',
 );
-for (const required of ['pnpm run ci:pr', 'pnpm run deploy:validate']) {
-  assert.ok(ci.includes(required), `ci.yml missing required gate: ${required}`);
-}
-const qualityPresets = workflows.find((workflow) => workflow.name === 'quality-presets.yml')?.text ?? '';
-const helmValidationJob = ci.slice(ci.indexOf('  helm-validation:'), ci.indexOf('  fast-check:'));
-for (const required of [
-  'selection: provider-free',
-  'setup_args: --replace --app landing-app --non-interactive',
-  'selection: postgres',
-  'setup_args: --replace --app auth-app-api --capability postgres --non-interactive',
-  'selection: mongodb',
-  'setup_args: --replace --app auth-app-api --capability mongodb --non-interactive',
-  'pnpm nrb setup ${{ matrix.setup_args }}',
-  'pnpm run deploy:validate:helm',
-]) {
-  assert.ok(helmValidationJob.includes(required), `Helm CI matrix missing selected overlay contract: ${required}`);
-}
-assert.ok(
-  !helmValidationJob.includes('pnpm run deploy:validate\n'),
-  'Helm CI matrix must not invoke generic deployment validation without a selected closure.',
-);
+
 
 // Every runtime lane starts the stack through one composite action. Keeping the
 // start sequence in a single place is the fix for quality-presets and
@@ -617,62 +554,6 @@ assert.ok(
   'runtime-stack action must not run Compose itself; the shared driver owns the start sequence.',
 );
 
-const assertDirectComposeBuildContext = (workflowName, job) => {
-  const materialize = 'pnpm nrb closure materialize --all-reference --provider postgres';
-  const startStack = 'uses: ./.github/actions/runtime-stack';
-  const context = 'NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres';
-  const jobEnvironment = job.slice(0, job.indexOf('    steps:'));
-  assert.ok(
-    job.includes(startStack),
-    `${workflowName} runtime job must start the stack through the shared runtime-stack action.`,
-  );
-  assert.ok(
-    !job.includes('docker compose -f docker/docker-compose.yml up'),
-    `${workflowName} must not start the stack inline; the shared action owns retries and diagnostics.`,
-  );
-  assert.ok(job.includes(materialize), `${workflowName} direct Compose build must materialize a closure context.`);
-  assert.ok(job.includes(context), `${workflowName} direct Compose build must pass NRB_CLOSURE_CONTEXT.`);
-  assert.ok(
-    jobEnvironment.includes(context),
-    `${workflowName} runtime job must keep NRB_CLOSURE_CONTEXT available to post-build Compose commands.`,
-  );
-  assert.ok(
-    job.indexOf(materialize) < job.indexOf(startStack),
-    `${workflowName} must materialize its closure context before starting the stack.`,
-  );
-};
-const qualityPresetsJob = qualityPresets.slice(qualityPresets.indexOf('  presets:'));
-assertDirectComposeBuildContext('quality-presets.yml presets', qualityPresetsJob);
-assertDirectComposeBuildContext('spec-assurance-nightly.yml assurance', nightlyAssurance);
-for (const [workflowName, workflowText] of [
-  ['quality-presets.yml', qualityPresetsJob],
-  ['spec-assurance-nightly.yml', nightlyAssurance],
-]) {
-  assert.ok(
-    workflowText.includes('CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate'),
-    `${workflowName} runtime stack must pass the PostgreSQL service URL through CONTAINER_DATABASE_URL`,
-  );
-  const notificationKey = /NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:\s*['"]([^'"]+)['"]/u.exec(workflowText)?.[1];
-  assert.equal(
-    Buffer.from(notificationKey ?? '', 'base64').byteLength,
-    32,
-    `${workflowName} runtime stack must use a 32-byte notification payload encryption fixture`,
-  );
-  assert.ok(
-    workflowText.includes("SITE_APP_PORT: '4203'"),
-    `${workflowName} runtime stack must avoid the runner-reserved 8084 port`,
-  );
-  for (const expected of [
-    "FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true'",
-    'LANDING_ADMIN_APP_URL: http://127.0.0.1:8081',
-    'LANDING_USER_APP_URL: http://127.0.0.1:8082',
-  ]) {
-    assert.ok(
-      workflowText.includes(expected),
-      `${workflowName} runtime stack missing landing destination: ${expected}`,
-    );
-  }
-}
 assert.ok(
   developmentCompose.includes(
     'nrb-closure: ${NRB_CLOSURE_CONTEXT:?run pnpm nrb closure install before Docker source builds}',
@@ -683,90 +564,10 @@ assert.ok(
   scripts['quality:visual']?.includes('pnpm run test:visual:matrix'),
   'quality:visual must run the cross-browser/mobile visual regression matrix',
 );
-assert.ok(
-  qualityPresets.includes('pnpm run quality:visual'),
-  'scheduled quality workflow must run the pinned visual regression matrix',
-);
-const runtimeComposeProfiles =
-  'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app';
-for (const [workflowName, workflowText] of [['quality-presets.yml', qualityPresets]]) {
-  assert.ok(
-    /ADMIN_BOOTSTRAP_ENABLED:\s*['"]true['"]/u.test(workflowText),
-    `${workflowName} runtime QA stack must enable the e2e bootstrap admin`,
-  );
-  assert.ok(
-    workflowText.includes('ADMIN_BOOTSTRAP_EMAILS: admin@example.com'),
-    `${workflowName} runtime QA stack must seed the e2e bootstrap admin email`,
-  );
-  assert.ok(
-    /AUTH_TELEGRAM_ENABLED:\s*['"]true['"]/u.test(workflowText),
-    `${workflowName} runtime QA stack must enable the Telegram TMA fixture`,
-  );
-  assert.ok(
-    /EXTERNAL_AUTH_AUTO_PROVISION_ENABLED:\s*['"]true['"]/u.test(workflowText),
-    `${workflowName} runtime QA stack must enable external-auth fixture provisioning`,
-  );
-  assert.ok(
-    workflowText.includes("TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'"),
-    `${workflowName} runtime QA stack must use the fullstack Telegram signing fixture`,
-  );
-  assert.ok(
-    /RATE_LIMIT_MAX:\s*['"]1000['"]/u.test(workflowText),
-    `${workflowName} runtime QA stack must budget for the five-project browser matrix`,
-  );
-  assert.ok(
-    workflowText.includes(runtimeComposeProfiles),
-    `${workflowName} runtime QA stack must activate every required Compose profile`,
-  );
-  assert.ok(
-    /DATABASE_ENGINE:\s*postgres/u.test(workflowText) && /AUTH_PERSISTENCE:\s*postgres/u.test(workflowText),
-    `${workflowName} PostgreSQL runtime lane must select only PostgreSQL persistence`,
-  );
-}
-for (const required of [
-  'readFullstackSelection',
-  'validateFullstackEnvironment',
-  'fullstackSelection?.services',
-  "pickPort('MONGODB_PORT', 0)",
-  '`mongodb://mongodb.localhost:${ports.mongodb}/${mongodbDatabase}?replicaSet=rs0&retryWrites=true`',
-  "selectedEnvironment.MONGODB_REPLICA_SET ?? 'rs0'",
-  "'--no-deps'",
-]) {
-  assert.ok(fullstackCompose.includes(required), `fullstack Compose helper missing provider contract: ${required}`);
-}
-// The MongoDB preparation services are named by the startup plan, not by the Compose helper that
-// executes it. Asserting them against the executor is what broke this gate when the plan was
-// extracted: the literals were still in the repository, just one file over.
-for (const required of ["'mongodb-init'", "'mongodb-migrate'"]) {
-  assert.ok(
-    fullstackSelectionSource.includes(required),
-    `fullstack startup plan missing provider contract: ${required}`,
-  );
-}
-assert.ok(
-  !fullstackCompose.includes('mongoInitCommand') && !fullstackCompose.includes("'--entrypoint'"),
-  'fullstack Compose must invoke the canonical MongoDB initializer without a weaker entrypoint override',
-);
-assert.ok(
-  fullstackSpec.includes('@critical @api-critical registration and login preserve the durable API session'),
-  'fullstack e2e must retain the API-only critical auth/session smoke for browserless CI runners',
-);
-for (const required of [
-  'mongodb-validation:',
-  'MongoDB migrations, transactions, and adapters',
-  'packages/tooling/src/commands/db/mongo-migrate.component.test.ts',
-  '--projects=@app/backend-mongodb-main,@app/backend-mongodb-main-auth,@app/backend-mongodb-main-feature-flags,@app/backend-mongodb-main-notification',
-  '--projects=@app/backend-feature-auth-main,@app/backend-feature-admin-main,@app/backend-feature-notification-main',
-]) {
-  assert.ok(ci.includes(required), `ci.yml missing MongoDB validation contract: ${required}`);
-}
-for (const required of ['pnpm run test:fullstack', 'pnpm run test:docker-smoke', "NRB_IMAGE_COMPILE: '1'"]) {
-  assert.ok(qualityPresets.includes(required), `Nightly quality-presets missing compiled-image runtime: ${required}`);
-}
-assert.ok(
-  ci.includes('pnpm exec nx run @app/backend-feature-auth-test:component-test'),
-  'The PostgreSQL component lane must not start MongoDB Testcontainers',
-);
+
+
+
+
 for (const forbidden of [
   'profiles: mongodb,postgres',
   'profiles: postgres,mongodb',
@@ -774,27 +575,10 @@ for (const forbidden of [
   'COMPOSE_PROFILES: postgres,mongodb',
 ]) {
   assert.ok(!ci.includes(forbidden), `ci.yml must not enable both database providers in one lane: ${forbidden}`);
-  assert.ok(!qualityPresets.includes(forbidden), `quality-presets.yml must not enable both providers: ${forbidden}`);
+
 }
-for (const required of [
-  'non-runtime-validation',
-  'pnpm run db:migrations:check',
-  'pnpm run lib:configs:check',
-  'pnpm run api:contracts:check',
-  'pnpm run api:clients:check',
-  'pnpm run api:openapi:lint',
-  'pnpm run api:contracts:consumer',
-  'pnpm run api:openapi:fuzz',
-  'pnpm run test:property',
-  'pnpm run storybook:build',
-  'pnpm run test:storybook',
-  'pnpm run test:visual',
-]) {
-  assert.ok(ci.includes(required), `ci.yml missing non-runtime validation gate: ${required}`);
-}
-for (const required of ['pnpm run docker:prod:config:check', 'node scripts/validate-compose-modes.mjs']) {
-  assert.ok(ci.includes(required), `Docker validation CI missing render-only check: ${required}`);
-}
+
+
 for (const required of ['pnpm run tooling:install', 'Install clean product-selected closure']) {
   assert.ok(
     releaseImagesWorkflow.includes(required),

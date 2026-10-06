@@ -1,0 +1,130 @@
+# Opt-in production observability stack (OpenTelemetry Collector, Prometheus,
+# Alertmanager, Grafana). Selected by scripts/compose-production.mjs when
+# GRAFANA_ADMIN_PASSWORD_FILE is set in the production environment - see the
+# "observability" row in docker/optional-integrations.json. YAML anchors do not
+# cross Compose files, so the logging anchor is restated here.
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '${DOCKER_LOG_MAX_SIZE:-10m}'
+    max-file: '${DOCKER_LOG_MAX_FILES:-5}'
+
+services:
+  # Observability: OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.161.0@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1
+    command: ['--config=/etc/otelcol/config.yaml']
+    environment:
+      NODE_ENV: production
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - target: 4317
+        published: '${OTEL_COLLECTOR_GRPC_PORT:-4317}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+      - target: 4318
+        published: '${OTEL_COLLECTOR_HTTP_PORT:-4318}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+      - target: 9464
+        published: '${OTEL_PROMETHEUS_PORT:-9464}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+    # The official collector has no shell or wget. Probe its health_check HTTP
+    # endpoint from the monitoring network; Helm uses native HTTP probes.
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [app]
+
+  # Observability: Prometheus
+  prometheus:
+    image: prom/prometheus:v3.15.0@sha256:efd719c99d83b060d9daefdcf00360461adf279f45ef5391f8d111892118753e
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - target: 9090
+        published: '${PROMETHEUS_PORT:-9090}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:9090/-/healthy || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [app]
+    depends_on:
+      alertmanager:
+        condition: service_healthy
+
+  # Observability: Alertmanager
+  alertmanager:
+    image: prom/alertmanager:v0.34.1@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - target: 9093
+        published: '${ALERTMANAGER_PORT:-9093}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:9093/-/healthy || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [app]
+
+  # Observability: Grafana
+  grafana:
+    image: grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - target: 3000
+        published: '${GRAFANA_PORT:-3000}'
+        host_ip: 127.0.0.1
+        protocol: tcp
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:3000/api/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [app]
+    secrets: [grafana_admin_password]
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:
+
+secrets:
+  grafana_admin_password:
+    file: ${GRAFANA_ADMIN_PASSWORD_FILE:-./secrets/grafana_admin_password.txt}

@@ -42,6 +42,11 @@
       "id": "notification-scheduler",
       "profile": "notification-scheduler",
       "app": "notification-scheduler"
+    },
+    {
+      "id": "observability",
+      "requiredEnv": ["GRAFANA_ADMIN_PASSWORD_FILE"],
+      "overlayFile": "docker/docker-compose.prod.observability.yml"
     }
   ]
 }

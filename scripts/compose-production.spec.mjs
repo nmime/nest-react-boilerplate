@@ -967,6 +967,7 @@ test('optional integrations are registry rows, not branches in this script', () 
     'discord',
     'notification-consumer',
     'notification-scheduler',
+    'observability',
     'redis',
     'telegram',
   ]);
@@ -974,6 +975,8 @@ test('optional integrations are registry rows, not branches in this script', () 
   assert.equal(byId.telegram.app, 'telegram-bot-api');
   assert.equal(byId.redis.service, 'redis');
   assert.equal(byId['notification-consumer'].overlayFile, undefined);
+  assert.deepEqual(byId.observability.requiredEnv, ['GRAFANA_ADMIN_PASSWORD_FILE']);
+  assert.equal(byId.observability.overlayFile, 'docker/docker-compose.prod.observability.yml');
 
   assert.deepEqual(optionalProfileIds(optionalIntegrations).sort(), [
     'discord',

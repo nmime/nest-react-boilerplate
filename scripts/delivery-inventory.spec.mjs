@@ -61,9 +61,13 @@ test('Mongo images share one pin', () => {
 
 test('reference monitoring pins agree across Compose and Helm without duplicate providers', () => {
   const compose = parse(read('docker/docker-compose.prod.yml'));
+  // The stack is opt-in: its services live in the optional overlay and must not be duplicated
+  // in the base file.
+  const observability = parse(read('docker/docker-compose.prod.observability.yml'));
   const helm = parse(read('.helm/values.yaml'));
   for (const service of ['otel-collector', 'prometheus', 'alertmanager', 'grafana']) {
-    assert.equal(compose.services[service].image, observabilityImages[service]);
+    assert.equal(compose.services[service], undefined);
+    assert.equal(observability.services[service].image, observabilityImages[service]);
     assert.match(observabilityImages[service], /@sha256:[a-f0-9]{64}$/u);
   }
   for (const [name, image] of [
@@ -80,10 +84,10 @@ test('reference monitoring pins agree across Compose and Helm without duplicate 
     assert.ok(read('.env.example').includes(`${key}=${postgresImage}`));
   }
   assert.equal(
-    compose.services.grafana.environment.GF_SECURITY_ADMIN_PASSWORD__FILE,
+    observability.services.grafana.environment.GF_SECURITY_ADMIN_PASSWORD__FILE,
     '/run/secrets/grafana_admin_password',
   );
-  assert.equal(compose.services.grafana.environment.GF_SECURITY_ADMIN_PASSWORD_FILE, undefined);
+  assert.equal(observability.services.grafana.environment.GF_SECURITY_ADMIN_PASSWORD_FILE, undefined);
   const dashboards = parse(read('docker/grafana/provisioning/dashboards/dashboards.yml'));
   assert.equal(dashboards.providers.length, 1);
   assert.equal(dashboards.providers[0].options.path, '/var/lib/grafana/dashboards');
@@ -103,8 +107,8 @@ test('reference monitoring pins agree across Compose and Helm without duplicate 
   assert.deepEqual(collector.processors.resource.attributes, [
     { key: 'deployment.environment', value: '${env:NODE_ENV}', action: 'upsert' },
   ]);
-  assert.equal(compose.services['otel-collector'].environment.NODE_ENV, 'production');
-  assert.equal(compose.services['otel-collector'].healthcheck, undefined);
+  assert.equal(observability.services['otel-collector'].environment.NODE_ENV, 'production');
+  assert.equal(observability.services['otel-collector'].healthcheck, undefined);
 });
 
 test('developer databases and observability are explicit and Grafana cannot grant anonymous admin authority', () => {

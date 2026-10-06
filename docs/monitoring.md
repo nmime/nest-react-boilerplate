@@ -49,6 +49,14 @@ endpoint and header variables are documented in
 [the OpenTelemetry runbook](operations/otel.md). When the SDK is disabled, no
 application telemetry reaches the collector.
 
+## Production observability stack
+
+The self-hosted stack (OpenTelemetry Collector, Prometheus, Alertmanager,
+Grafana) is opt-in. Set `GRAFANA_ADMIN_PASSWORD_FILE` in the production
+environment (for example `./secrets/grafana_admin_password.txt`) and
+`scripts/compose-production.mjs` adds `docker/docker-compose.prod.observability.yml`
+to the Compose file chain; leave it empty to run without the stack.
+
 ## Prometheus scraping
 
 The committed Docker configuration is the reference:

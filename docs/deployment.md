@@ -10,7 +10,7 @@ belong to the generated product.
 | Compose + bundled DB        | production wrapper + bundled DB and Compose Caddy or host Nginx edge                              | PostgreSQL service or one-node MongoDB replica set inside Compose        | `pnpm run deploy:validate:docker` |
 | Compose + external DB       | production wrapper + external DB and Compose Caddy or host Nginx edge                             | Secret-file URL to operator/cloud PostgreSQL or MongoDB; no Compose DB   | `pnpm run deploy:validate:docker` |
 | Direct Kubernetes           | `.helm/` + `.helm/values-production.yaml`                                                         | Platform-managed PostgreSQL or multi-node MongoDB replica set, and Redis | `pnpm run deploy:validate:helm`   |
-| Kubernetes GitOps           | Helm chart through `deploy/argocd/` or `deploy/flux/`                                             | Same externally managed database contract as direct Helm                 | `pnpm run deploy:validate:gitops` |
+| Kubernetes GitOps           | Helm chart through `deploy/argocd/`                                             | Same externally managed database contract as direct Helm                 | `pnpm run deploy:validate:gitops` |
 | PM2 (advanced, native Node) | Shipped `ecosystem.config.cjs`; build, migrate, and export secrets first                          | Product/platform-owned                                                   | `pnpm run deploy:validate:pm2`    |
 
 ## One line: bare VM to live HTTPS
@@ -99,7 +99,7 @@ The Compose plan is: optionally provision the host → scaffold `.env.production
 
 The generic `pnpm run deploy:validate` command runs all static contracts,
 renders both production Compose topologies when Docker Compose is available,
-validates Argo CD and Flux manifests, and renders the Helm chart when Helm is
+validates Argo CD manifests, and renders the Helm chart when Helm is
 available. CI requires the relevant CLIs, so optional local skips cannot hide a
 broken deployment artifact.
 
@@ -130,7 +130,7 @@ flowchart TD
   k8s -- No --> pm2[PM2: pnpm run deploy --target=pm2 with a host-owned proxy]
   k8s -- Yes --> controller{GitOps controller owns reconciliation?}
   controller -- No --> helm[Direct Helm upgrade/install]
-  controller -- Yes --> gitops[Argo CD or Flux]
+  controller -- Yes --> gitops[Argo CD]
   single --> verify[Migration, readiness, logs, backup, rollback]
   multi --> verify
   proxy --> verify
@@ -231,7 +231,7 @@ The complete runbook is [deploy/kubernetes/README.md](../deploy/kubernetes/READM
 
 ## Kubernetes with GitOps
 
-Argo CD and Flux consume the same chart and production values:
+Argo CD consumes the same chart and production values:
 
 ```bash
 pnpm run deploy:validate:gitops
@@ -239,7 +239,6 @@ pnpm run deploy:validate:gitops
 # Choose one controller, never both for the same release.
 kubectl apply -k deploy/argocd
 # or
-kubectl apply -k deploy/flux
 ```
 
 The manual promotion workflow resolves the images published for one full Git

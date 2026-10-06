@@ -141,7 +141,7 @@
       "type": "string",
       "enum": ["single-domain", "per-app-domains", "external-proxy"]
     },
-    "kubernetesDelivery": { "type": "string", "enum": ["direct", "argocd", "flux"] },
+    "kubernetesDelivery": { "type": "string", "enum": ["direct", "argocd"] },
     "redisOwnership": { "type": "string", "enum": ["bundled", "external"] },
     "natsOwnership": { "type": "string", "enum": ["bundled", "external"] },
     "s3Ownership": { "type": "string", "enum": ["bundled", "external"] },

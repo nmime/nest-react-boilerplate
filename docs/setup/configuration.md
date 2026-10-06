@@ -306,7 +306,7 @@ shipped pipeline does not trigger:
   `values-staging.yaml` overlay in the repo).
 - **Namespace:** `nest-react-boilerplate`.
 - **GitOps:** commits the updated deploy tags to a `gitops/sha-<git_sha>`
-  branch for Argo CD / Flux to reconcile.
+  branch for Argo CD to reconcile.
 - **Rollback:** re-run the deploy with the previous known-good Git SHA.
 
 ### Running Staging Locally

@@ -28,9 +28,6 @@ const has = (text, needle, label = needle) =>
 
 const argo = read('deploy/argocd/application.yaml');
 const argoKustomization = read('deploy/argocd/kustomization.yaml');
-const fluxSource = read('deploy/flux/source.yaml');
-const fluxRelease = read('deploy/flux/release.yaml');
-const fluxKustomization = read('deploy/flux/kustomization.yaml');
 const tagUpdater = read('scripts/update-deploy-tags.mjs');
 const releaseImagePlan = read('scripts/release-image-plan.mjs');
 
@@ -49,37 +46,9 @@ for (const expected of [
 }
 has(argoKustomization, '- application.yaml', 'Argo CD kustomization resource');
 
-for (const expected of [
-  'apiVersion: source.toolkit.fluxcd.io/v1',
-  'kind: GitRepository',
-  'namespace: flux-system',
-  'branch: main',
-]) {
-  has(fluxSource, expected, `Flux source ${expected}`);
-}
-for (const expected of [
-  'apiVersion: helm.toolkit.fluxcd.io/v2',
-  'kind: HelmRelease',
-  'namespace: flux-system',
-  'targetNamespace: nest-react-boilerplate',
-  'chart: ./.helm',
-  'kind: GitRepository',
-  'values.yaml',
-  'values-production.yaml',
-  'values-selection.yaml',
-  'createNamespace: true',
-  'strategy: rollback',
-]) {
-  has(fluxRelease, expected, `Flux release ${expected}`);
-}
-for (const resource of ['source.yaml', 'release.yaml']) {
-  has(fluxKustomization, `- ${resource}`, `Flux kustomization includes ${resource}`);
-}
 
 const argoRepo = argo.match(/repoURL:\s*(\S+)/u)?.[1];
-const fluxRepo = fluxSource.match(/url:\s*(\S+)/u)?.[1];
 assert.ok(argoRepo, 'Argo CD source must declare repoURL.');
-assert.equal(fluxRepo, argoRepo, 'Argo CD and Flux must reconcile the same repository.');
 assert.match(
   argoRepo,
   /^https:\/\/github\.com\/your-github-org\/nest-react-boilerplate\.git$/u,
@@ -240,7 +209,7 @@ if (!kubectlAvailable) {
   process.exit(0);
 }
 
-for (const directory of ['deploy/argocd', 'deploy/flux']) {
+for (const directory of ['deploy/argocd']) {
   const result = spawnSync('kubectl', ['kustomize', directory], {
     cwd: rootDir,
     encoding: 'utf8',
@@ -255,7 +224,7 @@ for (const directory of ['deploy/argocd', 'deploy/flux']) {
 console.log(
   JSON.stringify({
     status: 'ok',
-    controllers: ['argocd', 'flux'],
+    controllers: ['argocd'],
     pipelinesValidated: validatedForges,
     // Named, not hidden: a forge whose release supply chain is proved by the descriptor's
     // supplyChain controls instead of by this validator should be visible in the output.

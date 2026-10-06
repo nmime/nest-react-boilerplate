@@ -31,7 +31,7 @@ migrator outside the fresh selected closure.
 
 ## GitOps reconciliation
 
-No promotion pipeline is shipped. Argo CD and Flux manifests are
+No promotion pipeline is shipped. Argo CD manifests are
 provider-agnostic, so a product wires its own promotion lane:
 
 1. Build and verify full-SHA image digests for the fresh selected closure.
@@ -39,7 +39,7 @@ provider-agnostic, so a product wires its own promotion lane:
    exactly those image tags and digests in `.helm/values-production.yaml` on a
    topic branch.
 3. Run `pnpm run deploy:validate:gitops` and merge through normal review.
-4. Let Argo CD or Flux reconcile the same chart and values.
+4. Let Argo CD reconcile the same chart and values.
 
 See [GITOPS.md](../GITOPS.md) for both controller setups.
 

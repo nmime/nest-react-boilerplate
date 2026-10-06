@@ -845,7 +845,7 @@ Options:
   --public-domain <domain>   Public base domain every app hostname is derived from
   --primary-app <id>         App served on the base domain itself, or none
   --public-topology <mode>   Public routing (single-domain, per-app-domains, external-proxy)
-  --kubernetes-delivery <id> Kubernetes delivery (direct, argocd, flux)
+  --kubernetes-delivery <id> Kubernetes delivery (direct, argocd)
   --redis-ownership <mode>   Redis ownership (bundled, external)
   --nats-ownership <mode>    NATS ownership (bundled, external)
   --s3-ownership <mode>      S3 ownership (bundled, external)

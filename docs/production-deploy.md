@@ -4,7 +4,7 @@ Production starts from one reviewed Git commit and images published under
 `sha-<full-40-character-git-sha>` tags or pinned by digest. A digest is the
 immutable artifact identity; a SHA-shaped registry tag still requires
 repository policy that prevents mutation. The repository supports
-single-host Compose, direct Helm, and Helm through Argo CD or Flux. PM2 remains
+single-host Compose, direct Helm, and Helm through Argo CD. PM2 remains
 an advanced native Node path through the shipped `ecosystem.config.cjs`.
 
 Use the canonical runbooks:
@@ -15,7 +15,7 @@ Use the canonical runbooks:
 - idempotent host Nginx + Certbot deployment:
   [single-server-deployment.md](single-server-deployment.md)
 - direct Kubernetes/Helm: [deploy/kubernetes/README.md](../deploy/kubernetes/README.md)
-- Argo CD and Flux GitOps: [GITOPS.md](../GITOPS.md)
+- Argo CD GitOps: [GITOPS.md](../GITOPS.md)
 - environment keys: [environment-variables.md](environment-variables.md)
 - production checklist: [production-readiness.md](production-readiness.md)
 
@@ -28,7 +28,7 @@ flowchart LR
   verify --> runtime{Selected runtime}
   runtime --> compose[Compose database + domain + TLS topology]
   runtime --> helm[Direct Helm]
-  runtime --> gitops[Promotion PR then Argo CD or Flux]
+  runtime --> gitops[Promotion PR then Argo CD]
   compose --> migrate[Controlled migration]
   helm --> migrate
   gitops --> migrate
@@ -115,7 +115,6 @@ Choose one controller for a release:
 ```bash
 kubectl apply -k deploy/argocd
 # or
-kubectl apply -k deploy/flux
 ```
 
 Run the manual **Promote GitOps release** workflow with the exact source SHA

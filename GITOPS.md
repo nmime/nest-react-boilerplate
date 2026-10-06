@@ -1,12 +1,11 @@
 # GitOps deployment
 
-This repository supports both Argo CD and Flux. Each controller reconciles the
-same application-owned Helm chart and production values:
+This repository supports Argo CD as its GitOps controller. It reconciles the
+application-owned Helm chart and production values:
 
 - chart: `.helm/`
 - release values: `.helm/values-production.yaml`
 - Argo CD entrypoint: `deploy/argocd/`
-- Flux entrypoint: `deploy/flux/`
 
 Run `pnpm nrb init --name ... --domain ... --owner ...` before configuring a
 cluster. Initialization replaces the template repository owner, product slug,
@@ -16,9 +15,8 @@ still contains `your-github-org`, `example.com`, or
 
 Nothing stops you from applying such a manifest, so prove the rename
 instead of trusting it: `pnpm run onboarding:verify` fails on surviving
-placeholders. The `repoURL` in `deploy/argocd/application.yaml` and the
-`url` in `deploy/flux/source.yaml` are the two that silently do nothing
-useful when wrong — the cluster syncs from a repository that does not
+placeholders. The `repoURL` in `deploy/argocd/application.yaml` silently does
+nothing useful when wrong — the cluster syncs from a repository that does not
 exist. See [Product identity](docs/product-identity.md) for the full
 surface and the repeatable rename path.
 
@@ -45,7 +43,7 @@ flowchart LR
   images --> promote[Run Promote GitOps release with the full 40-character Git SHA]
   promote --> verify[Verify digest, signature, scan, SBOM, provenance, and render Helm]
   verify --> pr[Open a promotion pull request updating values-production.yaml]
-  pr --> reconcile[Merge after CI; Argo CD or Flux reconciles]
+  pr --> reconcile[Merge after CI; Argo CD reconciles]
 ```
 
 The promotion workflow is manual by design. It:
@@ -61,7 +59,7 @@ The promotion workflow is manual by design. It:
 4. rejects missing required digests and supplied unselected or disabled image
    digests, then updates the exact set to the full-SHA tag plus digest;
 5. leaves image values outside the selected-and-enabled set unchanged;
-6. renders the chart and validates both GitOps controller manifests;
+6. renders the chart and validates the GitOps controller manifests;
 7. pushes `release/gitops-sha-<full-sha>` with the repository owner identity and
    opens a pull request.
 
@@ -96,20 +94,18 @@ target bypasses that plan.
   MongoDB replica set;
 - ingress, DNS, and TLS configured for every enabled application domain.
 
-The current manifests use the stable APIs documented by each controller:
-`argoproj.io/v1alpha1` Application, `source.toolkit.fluxcd.io/v1`
-GitRepository, and `helm.toolkit.fluxcd.io/v2` HelmRelease.
+The current manifests use the stable API documented by the controller:
+`argoproj.io/v1alpha1` Application.
 
 ## Validate before applying
 
 ```bash
 pnpm run deploy:validate:gitops
 kubectl kustomize deploy/argocd >/dev/null
-kubectl kustomize deploy/flux >/dev/null
 ```
 
 `deploy:validate:gitops` performs strict Helm lint/render validation, checks the
-Argo CD and Flux contracts, and renders both Kustomize entrypoints. It does not
+Argo CD contracts, and renders the Kustomize entrypoint. It does not
 contact or mutate a cluster.
 
 ## Argo CD
@@ -131,23 +127,6 @@ manifest.
 `scripts/` ships no Argo CD sync shortcut. A product that wants one adds a
 pipeline job that uses a version-pinned, checksum-verified Argo CD CLI and reads
 `ARGOCD_SERVER` plus `ARGOCD_AUTH_TOKEN` from protected CI variables.
-
-## Flux
-
-Install Flux through the platform layer, then apply the source and release:
-
-```bash
-kubectl apply -k deploy/flux
-flux get sources git -n flux-system
-flux get helmreleases -n flux-system
-flux reconcile helmrelease nest-react-boilerplate -n flux-system --with-source
-```
-
-The GitRepository tracks `main`. The HelmRelease reads `.helm/`, merges
-`values.yaml` with `values-production.yaml`, creates the application namespace,
-waits up to ten minutes, retries failed installs/upgrades, and rolls back failed
-upgrades. For a private repository, add a same-namespace `secretRef` through the
-platform overlay instead of committing credentials.
 
 ## Secrets and image pulls
 

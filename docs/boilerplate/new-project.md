@@ -78,7 +78,7 @@ marks the E2E project as non-deployable.
 4. Review `CODEOWNERS`, issue templates, Dependabot, CodeQL, and branch protection.
 5. Configure production auth lifecycle decisions before launch: session lifetime/renewal/revocation, password reset, email verification, rate limits, and audit events.
 6. Export OpenAPI and generate typed client scaffolding if the frontend will consume generated API types.
-7. Run migrations, seed only local/test environments, configure backups, then deploy through one of the documented production paths (Compose, direct Helm, or Argo CD/Flux GitOps) in `docs/production-deploy.md`.
+7. Run migrations, seed only local/test environments, configure backups, then deploy through one of the documented production paths (Compose, direct Helm, or Argo CD GitOps) in `docs/production-deploy.md`.
 
 ## Placeholder audit expectations
 

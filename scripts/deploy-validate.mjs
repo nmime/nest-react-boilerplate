@@ -187,18 +187,18 @@ const validateHelm = () => {
 };
 
 const validateGitOps = () => {
-  const manifests = ['deploy/argocd/application.yaml', 'deploy/flux/release.yaml'];
+  const manifests = ['deploy/argocd/application.yaml'];
   if (!hasAny(manifests)) {
     if (mode === 'gitops') {
-      console.error(`GitOps mode selected but no Argo CD or Flux manifests are present.`);
+      console.error(`GitOps mode selected but no Argo CD manifests are present.`);
       process.exit(1);
     }
-    console.log('GitOps validation skipped: no Argo CD or Flux manifests are present.');
+    console.log('GitOps validation skipped: no Argo CD manifests are present.');
     return;
   }
   run('Affected release-image plan tests', process.execPath, ['--test', 'scripts/release-image-plan.spec.mjs']);
   run('Selective GitOps image-promotion tests', process.execPath, ['--test', 'scripts/update-deploy-tags.spec.mjs']);
-  run('GitOps/Argo CD and Flux config', process.execPath, ['scripts/validate-gitops-config.mjs']);
+  run('GitOps/Argo CD config', process.execPath, ['scripts/validate-gitops-config.mjs']);
 };
 
 const validatePm2 = () => {

@@ -288,9 +288,8 @@ async function promptProductAndDeployment(
     [
       { label: 'Direct Helm', value: 'direct' },
       { label: 'Argo CD', value: 'argocd' },
-      { label: 'Flux', value: 'flux' },
     ],
-    ['direct', 'argocd', 'flux'].indexOf(currentDeployment.kubernetesDelivery),
+    ['direct', 'argocd'].indexOf(currentDeployment.kubernetesDelivery),
   )) as NrbConfig['deployment']['kubernetesDelivery'];
   const infrastructure = { ...currentDeployment.infrastructure };
   for (const capability of ['redis', 'nats', 's3'] as const) {

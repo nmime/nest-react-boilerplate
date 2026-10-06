@@ -76,7 +76,7 @@ push images, or restart PM2 processes.
 - Single-server Docker Compose: [docker-compose-production.md](docker-compose-production.md)
 - Turnkey Ubuntu/Debian host lifecycle: [single-server-deployment.md](single-server-deployment.md)
 - Direct Kubernetes/Helm: [deploy/kubernetes/README.md](../deploy/kubernetes/README.md)
-- Argo CD and Flux GitOps: [GITOPS.md](../GITOPS.md)
+- Argo CD GitOps: [GITOPS.md](../GITOPS.md)
 - Preflight checklist: [production-readiness.md](production-readiness.md)
 
 Mode-specific validation:
@@ -85,7 +85,7 @@ Mode-specific validation:
 pnpm run deploy:validate          # generic bundle; skips Helm render if Helm is missing
 pnpm run deploy:validate:docker   # Compose/static deployment checks
 pnpm run deploy:validate:pm2      # validates the shipped ecosystem.config.cjs contract
-pnpm run deploy:validate:gitops   # strict Helm plus Argo CD and Flux Kustomize validation
+pnpm run deploy:validate:gitops   # strict Helm plus Argo CD Kustomize validation
 pnpm run deploy:validate:helm     # strict Helm 4 render/lint path
 REQUIRE_HELM=true pnpm run deploy:validate
 ```
@@ -98,7 +98,7 @@ Rollback summary:
   environment when a product-owned PM2 config exists.
 - Helm: use `helm history` and `helm rollback` for direct releases.
 - GitOps: revert the promotion commit, image digest, or verified full-SHA tag and let
-  the selected Argo CD or Flux controller reconcile.
+  the selected Argo CD controller reconcile.
 
 For every mode, take and test a selected-provider backup before migrations and
 decide whether the change is backward compatible before restoring or rolling

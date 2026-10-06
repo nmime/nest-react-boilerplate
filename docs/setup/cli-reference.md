@@ -143,7 +143,7 @@ the selected-only `.nrb/closure/package.json` and
 `.nrb/closure/pnpm-workspace.yaml`. Setup does not install dependencies or
 generate `.nrb/closure/pnpm-lock.yaml`; use the explicit closure command below.
 Setup also refreshes the tracked, fail-closed `.helm/values-selection.yaml`
-overlay consumed by direct Helm, Argo CD, and Flux releases.
+overlay consumed by direct Helm and Argo CD releases.
 The closure's `releaseImages` come from setup catalog ownership; durable
 provider selections include `migrator`, while provider-free selections do not.
 

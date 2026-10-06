@@ -41,7 +41,7 @@ Every literal below is load-bearing. Counts are for tracked files, excluding
 | ------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------- |
 | `.env*.example` (5 files)            | `appSlug`, `dbName`, `owner`, `domain`, `appTitle` | Header block in each file lists the identity-derived variables      |
 | `.helm/**`                           | `appSlug`, `dbName`, `owner`, `domain`             | Image repositories, release name, namespace, TLS secret, dashboards |
-| `deploy/argocd/**`, `deploy/flux/**` | `appSlug`, `owner`                                 | `repoURL` / `url` point at the sync source — wrong value = no sync  |
+| `deploy/argocd/**` | `appSlug`, `owner`                                 | `repoURL` / `url` point at the sync source — wrong value = no sync  |
 | `docker/**`                          | `appSlug`, `dbName`, `upstreamOwner`               | Compose project name, Grafana dashboard, alert runbook URLs         |
 | `scripts/**`                         | `appSlug`, `dbName`, `upstreamOwner`               | Validators assert the literals; see [Known gaps](#known-gaps)       |
 | `packages/tooling/**`                | `dbName`, `upstreamOwner`                          | Planner-generated env URLs, git-convention owner constants          |

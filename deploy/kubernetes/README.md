@@ -1,7 +1,7 @@
 # Direct Kubernetes deployment
 
 This directory documents the direct Helm release path. The chart itself lives in
-`.helm/` so the same artifact is consumed by direct Helm, Argo CD, and Flux.
+`.helm/` so the same artifact is consumed by direct Helm and Argo CD.
 
 ## Prerequisites
 
@@ -58,7 +58,7 @@ changes. It performs read queries, local rendering, `--dry-run=server`, and
 
 - submits the candidate render through strict server-side apply validation so
   installed CRD schemas and dry-run-safe admission policies evaluate it; the
-  dry-run uses `--force-conflicts` so fields owned by Helm, Argo CD, or Flux do
+  dry-run uses `--force-conflicts` so fields owned by Helm or Argo CD do
   not produce false failures and no ownership is persisted;
 - checks current Deployment rollout status and requires at least one usable
   previous Helm revision;

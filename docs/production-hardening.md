@@ -104,7 +104,7 @@ Before deploying, provide values for:
 ## Deployment notes
 
 Deployment modes are optional and composable: Docker/Compose, PM2, Helm, and
-Helm with Argo CD or Flux is selected per environment. Helm is required only for
+Helm with Argo CD is selected per environment. Helm is required only for
 strict Helm render/lint validation and actual Helm releases, not for generic
 deployment validation.
 

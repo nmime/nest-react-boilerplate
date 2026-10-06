@@ -1,6 +1,6 @@
 // @requirements REQ-SCAFFOLD-TOOLING-005
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { after, describe, it } from 'node:test';
@@ -65,9 +65,16 @@ describe('descriptor-driven pnpm pin sources', () => {
     const names = pnpmPinSources(workspaceRoot).map(({ name }) => name);
 
     assert.ok(names.includes('.gitlab-ci.yml'), 'the GitLab pipeline pins pnpm too');
+    // Counted from the checkout rather than pinned: this repository ships the trimmed
+    // GitHub surface while upstream keeps the full set, and every shipped workflow must
+    // be scanned for package-manager pins in both.
+    const shippedWorkflows = readdirSync(join(workspaceRoot, '.github', 'workflows'))
+      .filter((entry) => entry.endsWith('.yml'))
+      .map((entry) => `.github/workflows/${entry}`)
+      .sort();
     assert.deepEqual(
-      names.filter((name) => name.startsWith('.github/')),
-      ['.github/workflows/ci.yml', '.github/workflows/deploy.yml', '.github/workflows/quality-presets.yml', '.github/workflows/release-images.yml', '.github/workflows/release.yml', '.github/workflows/spec-assurance-nightly.yml', '.github/workflows/spec-assurance-runtime.yml'],
+      names.filter((name) => name.startsWith('.github/')).sort(),
+      shippedWorkflows,
       'every configured GitHub lane must be scanned for package-manager pins',
     );
   });

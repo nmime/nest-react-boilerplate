@@ -31,7 +31,10 @@ describe('shipped CI gate descriptor', () => {
     assert.deepEqual(pipeline['ops-gates']?.rules, [{ if: '$CI_PIPELINE_SOURCE == "schedule"' }]);
     const needs = pipeline['ci-status-summary']?.needs ?? [];
     assert.equal(needs.find((need) => need.job === 'ops-gates')?.optional, true);
-    for (const job of ['fast-check', 'full-check', 'component-tests']) {
+    // Deep-evidence jobs (spec-evidence, component-tests, mongodb-validation, storybook-tests,
+    // docker-smoke-test) run on the default branch and schedules only and are optional needs;
+    // the jobs every merge pipeline runs stay hard requirements of the aggregate.
+    for (const job of ['helm-validation', 'fast-check', 'contract-validation', 'full-check']) {
       const need = needs.find((need) => need.job === job);
       assert.ok(need, `${job} remains required by the merge aggregate`);
       assert.notEqual(need.optional, true);

@@ -31,8 +31,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..');
 
 // What actually runs your code. Edge/TLS/database/images are separate axes, so a
-// "single-server VM" is not a runtime — it is a preset over these targets.
-export const deployTargets = ['compose', 'pm2', 'helm'];
+// "single-server VM" is not a runtime — it is a preset over these targets. PM2 is
+// the legacy native tier, demoted behind Compose and Helm: it stays a supported
+// explicit `--target`, but no preset or wizard promotes it first.
+export const deployTargets = ['compose', 'helm', 'pm2'];
 // `native` = PostgreSQL installed on this host (no container). Only meaningful for
 // a native runtime; buildDeployPlan rejects it for container/cluster targets.
 const databaseModes = ['bundled-db', 'external-db', 'native'];
@@ -56,7 +58,7 @@ const legacyTlsAliases = { automatic: 'acme', provided: 'provided' };
 
 const TARGET_SUMMARY = {
   compose: 'Docker Compose containers on a single host',
-  pm2: 'Native Node processes on this host (no containers)',
+  pm2: 'Legacy native tier: Node processes on this host behind an operator-owned proxy',
   helm: 'Kubernetes via the in-repo Helm chart',
 };
 
@@ -82,7 +84,7 @@ export const deployPresets = {
     tls: 'certbot',
     database: 'native',
     provisionHost: true,
-    summary: 'Fully native: PostgreSQL/Redis + Node processes on this host, no Docker. Builds from the checkout.',
+    summary: 'Legacy fully native tier: PostgreSQL/Redis + Node processes on this host, no Docker. Builds from the checkout.',
   },
 };
 

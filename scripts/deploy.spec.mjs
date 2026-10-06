@@ -34,7 +34,7 @@ const commandLine = (step) => [step.command, ...step.args].join(' ');
 const stepFor = (plan, fragment) => plan.steps.find((step) => step.title.toLowerCase().includes(fragment));
 
 test('every documented target is plannable', () => {
-  assert.deepEqual(deployTargets, ['compose', 'pm2', 'helm']);
+  assert.deepEqual(deployTargets, ['compose', 'helm', 'pm2']);
   // Each target gets axes that are legal for it: a Caddy edge for plain Compose and
   // Helm, a host proxy for PM2 and the single-server preset.
   const perTarget = {

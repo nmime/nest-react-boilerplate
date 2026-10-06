@@ -29,14 +29,14 @@ void describe('actual backup clients restore only into independently owned fixtu
     let container: Awaited<ReturnType<PostgreSqlContainer['start']>> | undefined;
     let source: pg.Client | undefined, target: pg.Client | undefined;
     try {
-      container = await new PostgreSqlContainer('postgres:17.11-alpine').withDatabase('nrb_test_source').start();
+      container = await new PostgreSqlContainer('postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24').withDatabase('nrb_test_source').start();
       source = new pg.Client({connectionString: container.getConnectionUri()});
       await source.connect();
       await source.query('CREATE DATABASE nrb_test_restore');
       await source.query('CREATE TABLE recovery_roundtrip(id integer PRIMARY KEY, payload jsonb NOT NULL)');
       for (const record of payloads) await source.query('INSERT INTO recovery_roundtrip VALUES ($1,$2)', [record.id, record.payload]);
       const archive = join(directory, 'source.dump');
-      const env = {DB_BACKUP_USE_DOCKER: '1', POSTGRES_CLIENT_DOCKER_IMAGE: 'postgres:17.11-alpine'};
+      const env = {DB_BACKUP_USE_DOCKER: '1', POSTGRES_CLIENT_DOCKER_IMAGE: 'postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24'};
       const backup = createPostgresClientInvocation({connectionString: container.getConnectionUri(), operation: 'backup', outputPath: archive, env});
       assert.equal(backup.mode, 'docker');
       await runClient(backup.selected);
@@ -64,8 +64,8 @@ void describe('actual backup clients restore only into independently owned fixtu
     const database = 'nrb_recovery_test';
     const connection = (value: string) => {const url = new URL(value); url.pathname = `/${database}`; url.searchParams.set('directConnection', 'true'); url.searchParams.set('replicaSet', 'rs0'); return url.toString();};
     try {
-      sourceContainer = await new MongoDBContainer('mongo:8.0.32-noble').start();
-      targetContainer = await new MongoDBContainer('mongo:8.0.32-noble').start();
+      sourceContainer = await new MongoDBContainer('mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66').start();
+      targetContainer = await new MongoDBContainer('mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66').start();
       const sourceUrl = connection(sourceContainer.getConnectionString());
       const targetUrl = connection(targetContainer.getConnectionString());
       assert.notEqual(sourceUrl, targetUrl);

@@ -27,7 +27,7 @@ describeIfDocker('fiat currency persistence against MongoDB', () => {
   let persistence: FiatCurrencyMongoPersistence;
 
   beforeAll(async () => {
-    container = await new MongoDBContainer('mongo:8.0.32-noble').start();
+    container = await new MongoDBContainer('mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66').start();
     const connectionString = container.getConnectionString();
     const separator = connectionString.includes('?') ? '&' : '?';
     client = new MongoClient(`${connectionString}${separator}directConnection=true&replicaSet=rs0`);

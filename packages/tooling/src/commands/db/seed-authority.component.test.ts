@@ -34,7 +34,7 @@ describe('privileged seed authority on owned real databases', {
 
   before(async () => {
     // No ambient DATABASE_URL or MONGODB_URI is accepted by this fixture.
-    postgres = await new PostgreSqlContainer('postgres:17.11-alpine').start();
+    postgres = await new PostgreSqlContainer('postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24').start();
     const runProbe = () => probePostgresMigrationState(postgres.getConnectionUri(), workspaceRoot,
       async (statement) => {
         const result = await postgres.exec(['psql', '-U', postgres.getUsername(), '-d', postgres.getDatabase(),
@@ -67,7 +67,7 @@ describe('privileged seed authority on owned real databases', {
     });
     sql = new pg.Client({ connectionString: postgres.getConnectionUri() });
     await sql.connect();
-    mongo = await new MongoDBContainer('mongo:8.0.32-noble').start();
+    mongo = await new MongoDBContainer('mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66').start();
     const url = new URL(mongo.getConnectionString());
     url.searchParams.set('directConnection', 'true');
     url.searchParams.set('replicaSet', 'rs0');

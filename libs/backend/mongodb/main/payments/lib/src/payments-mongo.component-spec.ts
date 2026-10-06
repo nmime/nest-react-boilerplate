@@ -36,7 +36,7 @@ let harnessPromise: Promise<MongoHarness> | undefined;
 
 async function createHarness(): Promise<MongoHarness> {
   const { MongoDBContainer } = await import('@testcontainers/mongodb');
-  const container = await new MongoDBContainer('mongo:8.0.32-noble').start();
+  const container = await new MongoDBContainer('mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66').start();
   const client = new MongoClient(container.getConnectionString(), {
     directConnection: true,
     replicaSet: 'rs0',

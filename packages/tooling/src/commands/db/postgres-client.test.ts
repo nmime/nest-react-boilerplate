@@ -69,7 +69,7 @@ describe("postgres backup/restore client selection", () => {
     const invocation = createDockerInvocation({
       connectionString: databaseUrl,
       cwd: "/repo",
-      image: "postgres:17.11-alpine",
+      image: "postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
       operation: "backup",
       outputPath: "test-results/dr/postgres.dump",
     });
@@ -105,7 +105,7 @@ describe("postgres backup/restore client selection", () => {
     const docker = createDockerInvocation({
       connectionString: databaseUrl,
       cwd: "/repo",
-      image: "postgres:17.11-alpine",
+      image: "postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
       operation: "restore",
       outputPath: "test-results/dr/postgres.dump",
     });

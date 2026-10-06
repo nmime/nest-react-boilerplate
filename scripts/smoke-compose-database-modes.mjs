@@ -223,7 +223,7 @@ try {
     'POSTGRES_PASSWORD',
     '--env',
     'POSTGRES_DB',
-    'postgres:17.11-alpine',
+    'postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24',
   ]);
   compose(externalProject, externalFiles, ['create', '--no-build', 'migrate']);
   run(['network', 'connect', `${externalProject}_app`, externalContainer]);
@@ -286,7 +286,7 @@ try {
     externalMongoContainer,
     '--network',
     `${externalMongoProject}_app`,
-    'mongo:8.0.32-noble',
+    'mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66',
     '--replSet',
     'rs0',
     '--bind_ip_all',

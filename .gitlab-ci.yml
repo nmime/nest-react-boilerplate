@@ -279,7 +279,7 @@ full-check:
   needs:
     - fast-check
   services:
-    - postgres:17.11-alpine
+    - postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
   variables:
     NX_SELF_HOSTED_REMOTE_CACHE_SERVER: $NX_REMOTE_CACHE_URL
     NX_SELF_HOSTED_REMOTE_CACHE_ACCESS_TOKEN: $NX_REMOTE_CACHE_TOKEN_READ
@@ -528,7 +528,7 @@ ops-gates:
     QA_CONCURRENCY_COMMAND: '["pnpm","exec","nx","run","@app/backend-postgres-main-notification:component-test","--","src/repositories/notification-concurrency.component-spec.ts","--maxWorkers=1"]'
     QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
     QA_MIGRATION_ROLLBACK_COMMAND: '["pnpm","run","db:migrations:rollback-check"]'
-    POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.11-alpine
+    POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
     NRB_IMAGE_COMPILE: '1'
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -633,7 +633,7 @@ spec-evidence-nightly:
     QA_USER_JOURNEY_COMMAND: '["pnpm","run","test:e2e:matrix","--","--project","chromium"]'
     QA_CONCURRENCY_COMMAND: '["pnpm","exec","nx","run","@app/backend-postgres-main-notification:component-test","--","src/repositories/notification-concurrency.component-spec.ts","--maxWorkers=1"]'
     QA_OBSERVABILITY_COMMAND: '["pnpm","run","test:otel","--","--maxWorkers=1"]'
-    POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.11-alpine
+    POSTGRES_CLIENT_DOCKER_IMAGE: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
   before_script:
     - apt-get update
     - apt-get install -y --no-install-recommends bash curl git jq python3 make postgresql-client docker.io docker-compose-v2 docker-buildx

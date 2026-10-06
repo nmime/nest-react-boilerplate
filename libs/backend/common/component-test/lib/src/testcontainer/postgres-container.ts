@@ -3,7 +3,7 @@ import type { MikroOrmModuleSyncOptions } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 
-export const DefaultPostgresTestImage = 'postgres:17.11-alpine';
+export const DefaultPostgresTestImage = 'postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24';
 export const DefaultPostgresTestDatabase = 'app_component_test';
 export const DefaultPostgresTestUsername = 'component_test';
 export const DefaultPostgresTestPassword = ['component', 'test', `${'pass'}${'word'}`].join('_');

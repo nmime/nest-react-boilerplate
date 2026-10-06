@@ -116,7 +116,7 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
       `POSTGRES_DB=${TEST_DB_NAME}`,
       "-p",
       `${port}:5432`,
-      "postgres:17.11-alpine",
+      "postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24",
     ]);
     assert.strictEqual(startCode, 0, "Failed to start test PostgreSQL container");
 

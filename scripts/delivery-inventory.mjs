@@ -7,8 +7,8 @@
  * asserts the public-app rows stay identical to the TypeScript setup catalog.
  */
 export const helmVersion = 'v4.2.3';
-export const mongoImage = 'mongo:8.0.32-noble';
-export const postgresImage = 'postgres:17.11-alpine';
+export const mongoImage = 'mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66';
+export const postgresImage = 'postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24';
 
 export const observabilityImages = Object.freeze({
   'otel-collector':

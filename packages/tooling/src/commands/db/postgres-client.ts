@@ -4,7 +4,7 @@ import { basename, dirname, resolve } from "node:path";
 // Keep the fallback tag identical to the Compose runtime image. Docker can then
 // reuse the image that the runtime stack already pulled instead of performing a
 // second registry request during backup/restore gates.
-export const DefaultPostgresClientImage = "postgres:17.11-alpine";
+export const DefaultPostgresClientImage = "postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24";
 
 type SpawnSync = typeof spawnSync;
 type PostgresOperation = "backup" | "restore";

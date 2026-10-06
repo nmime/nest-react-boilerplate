@@ -68,7 +68,7 @@ describe('PostgreSQL credential-store TLS', () => {
     const wrong = certificate(directory, 'wrong');
     trustedCertificate = trusted.cert;
     wrongCertificate = wrong.cert;
-    encrypted = await new PostgreSqlContainer('postgres:17.11-alpine')
+    encrypted = await new PostgreSqlContainer('postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24')
       .withCopyFilesToContainer([
         // eslint-disable-next-line sonarjs/publicly-writable-directories -- This absolute path is inside the owned disposable container; only PostgreSQL reads its certificate.
         { source: trusted.cert, target: '/tmp/nrb-server.crt' },
@@ -81,7 +81,7 @@ describe('PostgreSQL credential-store TLS', () => {
         'chown postgres:postgres /tmp/nrb-server.crt /tmp/nrb-server.key && chmod 600 /tmp/nrb-server.key && exec docker-entrypoint.sh postgres -c ssl=on -c ssl_cert_file=/tmp/nrb-server.crt -c ssl_key_file=/tmp/nrb-server.key',
       ])
       .start();
-    plaintext = await new PostgreSqlContainer('postgres:17.11-alpine').start();
+    plaintext = await new PostgreSqlContainer('postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24').start();
   });
 
   afterAll(async () => {

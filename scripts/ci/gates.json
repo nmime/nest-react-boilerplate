@@ -179,7 +179,7 @@
       "requiredForMerge": true,
       "jobs": {
         "gitlab": "helm-validation",
-        "github": "helm-validation"
+        "github": "fast-check"
       }
     },
     {

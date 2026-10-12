@@ -24,14 +24,14 @@
     "tsconfig.json"
   ],
   "dependencies": {
-    "@mikro-orm/core": "7.2.2",
-    "@nestjs/common": "12.1.1",
-    "@nestjs/core": "12.1.1",
-    "@nestjs/platform-fastify": "12.1.1",
+    "@mikro-orm/core": "7.2.3",
+    "@nestjs/common": "12.1.2",
+    "@nestjs/core": "12.1.2",
+    "@nestjs/platform-fastify": "12.1.2",
     "@nx/devkit": "23.2.1",
     "@playwright/test": "1.63.0",
     "@swc-node/register": "1.12.1",
-    "@swc/core": "1.16.12",
+    "@swc/core": "1.16.13",
     "@testcontainers/postgresql": "12.2.0",
     "@types/istanbul-lib-coverage": "2.0.6",
     "@types/istanbul-lib-report": "3.0.3",
@@ -45,7 +45,7 @@
     "jiti": "2.7.0",
     "mongodb": "7.7.0",
     "mongodb-connection-string-url": "7.0.2",
-    "pg": "8.23.0",
+    "pg": "8.23.1",
     "sharp": "0.35.5",
     "tsconfig-paths": "4.2.0",
     "yaml": "2.9.1",
@@ -61,7 +61,7 @@
   "devDependencies": {
     "@stryker-mutator/core": "10.0.0",
     "@testcontainers/mongodb": "12.2.0",
-    "@types/node": "24.19.0",
+    "@types/node": "24.19.1",
     "nx": "23.2.1",
     "typescript": "6.0.3",
     "vitest": "4.1.11"

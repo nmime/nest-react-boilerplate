@@ -24,20 +24,20 @@
     "tsconfig.json"
   ],
   "dependencies": {
-    "@mikro-orm/core": "7.2.2",
-    "@nestjs/common": "12.1.1",
-    "@nestjs/core": "12.1.1",
-    "@nestjs/platform-fastify": "12.1.1",
-    "@nx/devkit": "23.2.1",
-    "@playwright/test": "1.63.0",
+    "@mikro-orm/core": "7.2.5",
+    "@nestjs/common": "12.1.2",
+    "@nestjs/core": "12.1.2",
+    "@nestjs/platform-fastify": "12.1.2",
+    "@nx/devkit": "23.3.0",
+    "@playwright/test": "1.64.0",
     "@swc-node/register": "1.12.1",
-    "@swc/core": "1.16.12",
+    "@swc/core": "1.16.18",
     "@testcontainers/postgresql": "12.2.0",
     "@types/istanbul-lib-coverage": "2.0.6",
     "@types/istanbul-lib-report": "3.0.3",
     "@types/istanbul-reports": "3.0.4",
     "ajv": "8.20.0",
-    "axe-core": "4.13.0",
+    "axe-core": "4.14.0",
     "fast-check": "4.10.2",
     "istanbul-lib-coverage": "3.2.2",
     "istanbul-lib-report": "3.0.1",
@@ -45,11 +45,11 @@
     "jiti": "2.7.0",
     "mongodb": "7.7.0",
     "mongodb-connection-string-url": "7.0.2",
-    "pg": "8.23.0",
+    "pg": "8.23.1",
     "sharp": "0.35.5",
     "tsconfig-paths": "4.2.0",
     "yaml": "2.9.1",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "generators": "./generators.json",
   "exports": {
@@ -61,8 +61,8 @@
   "devDependencies": {
     "@stryker-mutator/core": "10.0.0",
     "@testcontainers/mongodb": "12.2.0",
-    "@types/node": "24.19.0",
-    "nx": "23.2.1",
+    "@types/node": "24.19.2",
+    "nx": "23.3.0",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
   }
